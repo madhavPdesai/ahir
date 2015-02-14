@@ -25,7 +25,8 @@ void hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 
 void hierSystemInstance::Print(ostream& ofile)
 {
-	ofile << "$compinst " << this->Get_Id() << " " << this->_base_system->Get_Id() << " " << endl;
+	ofile << "$instance " << this->Get_Id() << " " <<  this->_base_system->Get_Library() << " : "
+		<< this->_base_system->Get_Id() << " " << endl;
 	for(map<string,string>::iterator iter = _port_map.begin(), fiter = _port_map.end(); iter != fiter; iter++)
 		ofile << "   " << (*iter).first << " => " << (*iter).second << " " << endl;	
 	ofile << endl;
@@ -85,23 +86,23 @@ void hierSystem::Print(ostream& ofile)
 {
 
 	ofile << endl;
-	ofile << "$system " << this->_id << endl;
+	ofile << "$system " <<  this->_id << endl;
+	ofile << "$library " << this->_library << endl;
+	ofile << "$in " << endl;
 	if(_in_pipes.size() > 0)
 	{
-		ofile << "$ipipe " ;
 		this->Print_Pipe_Map(_in_pipes, ofile);
 		ofile << endl; 
 	}
+	ofile << "$out " << endl;
 	if(_out_pipes.size() > 0)
 	{
-		ofile << "$opipe " ;
 		this->Print_Pipe_Map(_out_pipes, ofile);
 		ofile << endl; 
 	}
 	ofile << "{" << endl;
 	if(_internal_pipes.size() > 0)
 	{
-		ofile << "$pipe " ;
 		this->Print_Pipe_Map(_internal_pipes, ofile);
 		ofile << endl; 
 	}
@@ -124,9 +125,16 @@ void hierSystem::Print_Vhdl_Port_Declarations(ostream& ofile)
 		string pipe_name = (*iter).first;
 		int pipe_width   = (*iter).second;
 
-		ofile << pipe_name << "_pipe_write_data : in std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		ofile << pipe_name << "_pipe_write_req  : out std_logic_vector(0  downto 0);" << endl;
-		ofile << pipe_name << "_pipe_write_ack  : in std_logic_vector(0  downto 0);" << endl;
+		if(!this->Is_Signal(pipe_name))
+		{
+			ofile << pipe_name << "_pipe_write_data : in std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+			ofile << pipe_name << "_pipe_write_req  : out std_logic_vector(0  downto 0);" << endl;
+			ofile << pipe_name << "_pipe_write_ack  : in std_logic_vector(0  downto 0);" << endl;
+		}
+		else
+		{
+			ofile << pipe_name << " : in std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		}
 	}
 	for(map<string, int>::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end();
 		iter != fiter; iter++)
@@ -134,9 +142,16 @@ void hierSystem::Print_Vhdl_Port_Declarations(ostream& ofile)
 		string pipe_name = (*iter).first;
 		int pipe_width   = (*iter).second;
 
-		ofile << pipe_name << "_pipe_read_data : out std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		ofile << pipe_name << "_pipe_read_req  : out std_logic_vector(0  downto 0);" << endl;
-		ofile << pipe_name << "_pipe_read_ack  : in std_logic_vector(0  downto 0);" << endl;
+		if(!this->Is_Signal(pipe_name))
+		{
+			ofile << pipe_name << "_pipe_read_data : out std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+			ofile << pipe_name << "_pipe_read_req  : out std_logic_vector(0  downto 0);" << endl;
+			ofile << pipe_name << "_pipe_read_ack  : in std_logic_vector(0  downto 0);" << endl;
+		}
+		else
+		{
+			ofile << pipe_name << " : out std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		}
 	}
 	ofile << " clk, reset: in std_logic " << endl; 
 	ofile << " -- }" << endl;
@@ -182,9 +197,16 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile)
 		string pipe_name = (*iter).first;
 		int pipe_width   = (*iter).second;
 
-		ofile << "signal " << pipe_name << "_pipe_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		ofile << "signal " << pipe_name << "_pipe_read_req_write_ack  : std_logic_vector(0  downto 0);" << endl;
-		ofile << "signal " << pipe_name << "_pipe_read_ack_write_req  : std_logic_vector(0  downto 0);" << endl;
+		if(!this->Is_Signal(pipe_name))
+		{
+			ofile << "signal " << pipe_name << "_pipe_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+			ofile << "signal " << pipe_name << "_pipe_read_req_write_ack  : std_logic_vector(0  downto 0);" << endl;
+			ofile << "signal " << pipe_name << "_pipe_read_ack_write_req  : std_logic_vector(0  downto 0);" << endl;
+		}	
+		else
+		{
+			ofile << "signal " << pipe_name << " : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		}
 	}
 
 	// configuration specifications.
@@ -217,24 +239,62 @@ void hierSystem::Print_Vhdl_Instance_In_Testbench(string inst_name, ostream& ofi
 		string pipe_id = (*iter).first;
 		int pipe_width = (*iter).second;
 
-		ofile << pipe_id << "_pipe_write_data => " << pipe_id << "_pipe_write_data," << endl;
-		ofile << pipe_id << "_pipe_write_req => " << pipe_id << "_pipe_write_req," << endl;
-		ofile << pipe_id << "_pipe_write_ack => " << pipe_id << "_pipe_write_ack," << endl;
+		if(!this->Is_Signal(pipe_id))
+		{
+			ofile << pipe_id << "_pipe_write_data => " << pipe_id << "_pipe_write_data," << endl;
+			ofile << pipe_id << "_pipe_write_req => " << pipe_id << "_pipe_write_req," << endl;
+			ofile << pipe_id << "_pipe_write_ack => " << pipe_id << "_pipe_write_ack," << endl;
+		}
+		else
+		{
+			ofile << pipe_id << " => " << pipe_id << "," << endl;
+		}
 	}
 	for(map<string,int>::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end(); iter != fiter; iter++)
 	{
 		string pipe_id = (*iter).first;
 		int pipe_width = (*iter).second;
 
-		ofile << pipe_id << "_pipe_read_data => " << pipe_id << "_pipe_read_data," << endl;
-		ofile << pipe_id << "_pipe_read_req => " << pipe_id << "_pipe_read_req," << endl;
-		ofile << pipe_id << "_pipe_read_ack => " << pipe_id << "_pipe_read_ack," << endl;
+
+		if(!this->Is_Signal(pipe_id))
+		{
+			ofile << pipe_id << "_pipe_read_data => " << pipe_id << "_pipe_read_data," << endl;
+			ofile << pipe_id << "_pipe_read_req => " << pipe_id << "_pipe_read_req," << endl;
+			ofile << pipe_id << "_pipe_read_ack => " << pipe_id << "_pipe_read_ack," << endl;
+		}
+		else
+		{
+			ofile << pipe_id << " => " << pipe_id << "," << endl;
+		}
+			
 	}
 	ofile << "clk => clk, reset => reset " << endl;
 	ofile << "); -- }" << endl;
 }
 
-// utility function.
+// utility functions.
+
+// write signal interfacing assignments in testbench.
+// note: signals are pipes which behave like flags..
+//
+void Write_Signal_Interface_Assignments(int num_reads, int num_writes, string pipe_id, ostream& ofile)
+{
+      // skip internal pipes.
+      if(num_reads > 0 && num_writes > 0)
+	return;
+
+      if(num_reads > 0 && num_writes ==  0)
+      {
+	      ofile << pipe_id << "_pipe_write_ack(0) <= '1';" << endl;
+	      ofile << "TruncateOrPad(" << pipe_id << "_pipe_write_data," << pipe_id << ");" << endl;	
+      }
+      else if(num_writes > 0 && num_reads == 0)
+      {
+		ofile << pipe_id << "_pipe_read_ack(0) <= '1';" << endl;
+		ofile << "TruncateOrPad(" << pipe_id << ", " << pipe_id << "_pipe_read_data);" << endl;	
+      }
+}
+
 void Write_Pipe_Access_Process(string sim_link_prefix, string pipe_id, int pipe_width, int num_reads, int num_writes, ostream& ofile)
 {
 	if(num_reads > 0 && num_writes > 0)
@@ -328,6 +388,12 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		ofile << "signal " << pipe_name << "_pipe_read_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
 		ofile << "signal " << pipe_name << "_pipe_read_req  : std_logic_vector(0  downto 0);" << endl;
 		ofile << "signal " << pipe_name << "_pipe_read_ack  : std_logic_vector(0  downto 0);" << endl;
+
+		if(this->Is_Signal(pipe_name))
+		{
+			ofile << "signal " << pipe_name << ": std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		}
+
 	}
 	for(map<string, int>::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end();
 			iter != fiter; iter++)
@@ -338,6 +404,11 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		ofile << "signal " << pipe_name << "_pipe_write_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
 		ofile << "signal " << pipe_name << "_pipe_write_req  : std_logic_vector(0  downto 0);" << endl;
 		ofile << "signal " <<  pipe_name << "_pipe_write_ack  : std_logic_vector(0  downto 0);" << endl;
+
+		if(this->Is_Signal(pipe_name))
+		{
+			ofile << "signal " << pipe_name << ": std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		}
 	}
 	ofile << "signal clk, reset: std_logic; " << endl; 
 	ofile << "-- }\n begin --{" << endl;
@@ -365,6 +436,9 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		int num_reads = 1;
 		int num_writes = 0;
 
+		if(this->Is_Signal(pipe_id))
+			Write_Signal_Interface_Assignments(num_reads, num_writes, pipe_id, ofile);
+
 		Write_Pipe_Access_Process(sim_link_prefix, pipe_id, pipe_width, num_reads, num_writes,ofile); 
 	}
 
@@ -376,6 +450,9 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		int pipe_width = (*pipe_iter).second;
 		int num_reads = 0;
 		int num_writes = 1;
+
+		if(this->Is_Signal(pipe_id))
+			Write_Signal_Interface_Assignments(num_reads, num_writes, pipe_id, ofile);
 
 		Write_Pipe_Access_Process(sim_link_prefix, pipe_id, pipe_width, num_reads, num_writes,ofile); 
 	}

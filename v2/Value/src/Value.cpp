@@ -1089,22 +1089,23 @@ string _base_value_::Hex_To_Binary(string& hex_string)
 			case '9':
 				binary_string += "1001";
 				break;
-			case 'a'|'A':
+			case 'a':;
+			case 'A':
 				binary_string += "1010";
 				break;
-			case 'b'|'B':
+			case 'b':; case 'B':
 				binary_string += "1011";
 				break;
-			case 'c'|'C':
+			case 'c':; case 'C':
 				binary_string += "1100";
 				break;
-			case 'd'|'D':
+			case 'd':; case 'D':
 				binary_string += "1101";
 				break;
-			case 'e'|'E':
+			case 'e':; case 'E':
 				binary_string += "1110";
 				break;
-			case 'f'|'F':
+			case 'f':; case 'F':
 				binary_string += "1111";
 				break;
 			default:

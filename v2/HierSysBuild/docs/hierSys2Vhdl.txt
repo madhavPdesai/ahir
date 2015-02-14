@@ -14,31 +14,47 @@ ARGUMENTS
        hierarchical system format, which is a simple 
        way of describing a system hierarchy.
 
-       For e.g.
-
-	$system Left 
-		$ipipe A 16
-		$opipe TMP 16
+       For example
+	$system Left  $library LLIB
+		$in 
+			$pipe A 16
+			$signal  Asig 16
+		$out 
+			$pipe TMP 16
+			$signal TMPsig 16
 	{
-		// empty, leaf module
+		// empty, this treated as a leaf
+		// module
 	}
 	
-	$system Right 
-		$ipipe TMP 16
-		$opipe B 16
+	$system Right  $library RLIB
+	
+		$in 
+			$pipe TMP 16
+			$signal TMPsig 16
+		$out 
+			$pipe B 16
+			$signal Bsig 16
 	{
-		// empty, leaf module.
+		// empty, this treated as a leaf
+		// module
 	}
 	
 	$system Top 
-		$ipipe a 16 
-        	$opipe b 16
+		$in 
+			$pipe a 16 
+	 		$signal asig 16
+        	$out 
+			$pipe b 16
+			$signal bsig 16
 	{
+		// non-empty, this treated as a structural
+		// module
+
         	$pipe tmp 16
-	
-		// instances of systems with port map.
-        	$compinst i0  Left   A => a TMP => tmp
-        	$compinst i1  Right  TMP => tmp B => b
+        	$signal tmp_sig 16
+        	$instance i0  LLIB:Left   A => a Asig => asig  TMP => tmp TMPsig => tmp_sig 
+        	$instance i1  RLIB:Right  TMPsig => tmp_sig TMP => tmp B => b Bsig => bsig
 	}
 	
 
@@ -58,13 +74,15 @@ ARGUMENTS
        while those that do not are considered as leaf
        systems.
 
-RESTRICTIONS
+NOTES
 
        The systems should be specified from leaves to
        the root.
 
        The last system specified is considered to be the
        root, for which the top-level VHDL file is generated.
+
+       The systems are organized into libraries (think VHDL)!
 
 OUTPUTS
 	
@@ -74,6 +92,9 @@ OUTPUTS
        named HierSysComponentPackage, followed
        by entity/architecture pairs for all non-leaf
        systems.
+
+       The last system specified is considered to be the
+       root, for which the top-level VHDL file is generated.
 
 RETURN VALUES
 

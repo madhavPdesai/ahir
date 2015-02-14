@@ -25,7 +25,7 @@ class hierSysParser extends Parser;
 
 options {
 	// go with LL(3) grammar
-	k=6;
+	k=3;
 	defaultErrorHandler=true;
 } 
 {
@@ -44,10 +44,7 @@ sys_Description [vector<hierSystem*>& sys_vec]
 	hierSystem* sys = NULL;
 }
 :
-      (sys = hier_System [sys_vec]
-          {
-             sys_vec.push_back(sys);
-          })+
+      (sys = hier_System [sys_vec] {sys_vec.push_back(sys); })+
 ;
 
 //---------------------------------------------------------------------------------------------------------------
@@ -57,39 +54,61 @@ hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
 { 
 	sys =  NULL;
 	hierSystemInstance* subsys = NULL;
+	bool signal_flag = false;
+	string lib_id = "work";
 
 }:
-	SYSTEM sysid:SIMPLE_IDENTIFIER  
-	{
-		sys = new hierSystem(sysid->getText());
-	}
+	(SYSTEM 
+		sysid:SIMPLE_IDENTIFIER  
 
-        (LIBRARY libid: SIMPLE_IDENTIFIER {sys->Set_Library(libid->getText());})?
+		(LIBRARY libid: SIMPLE_IDENTIFIER {lib_id = libid->getText();})? 
+		{
+			sys = new hierSystem(sysid->getText());
+			sys->Set_Library(lib_id);
+		}
+	)
+	
 
-	(INPIPE
-		( sidi: SIMPLE_IDENTIFIER  uidi: UINTEGER 
+	IN 
+	( 
+		(PIPE | (SIGNAL {signal_flag = true;}))
+		sidi: SIMPLE_IDENTIFIER  uidi: UINTEGER 
 			{
 				sys->Add_In_Pipe(sidi->getText(), atoi(uidi->getText().c_str()));
+				if(signal_flag)
+					sys->Add_Signal(sidi->getText());
+				signal_flag = false;
 			} 
-		)+
+
 	)*
 
-	(OUTPIPE ( sido: SIMPLE_IDENTIFIER  uido: UINTEGER 
+	OUT
+	( 
+		(PIPE | (SIGNAL {signal_flag = true;}))
+		 sido: SIMPLE_IDENTIFIER  uido: UINTEGER 
 			{
 				sys->Add_Out_Pipe(sido->getText(), atoi(uido->getText().c_str()));
+				if(signal_flag)
+					sys->Add_Signal(sido->getText());
+				signal_flag = false;
 			} 
- 		     )+
+ 		     
 	)*
 
 	LBRACE
 
-	( INTERNALPIPE 
-		( sidint: SIMPLE_IDENTIFIER  
+
+	( 
+		(PIPE |  (SIGNAL {signal_flag = true;}))
+		  sidint: SIMPLE_IDENTIFIER  
 			uidint: UINTEGER 
 				{
 					sys->Add_Internal_Pipe(sidint->getText(), atoi(uidint->getText().c_str()));
+					if(signal_flag)
+						sys->Add_Signal(sidint->getText());
+					signal_flag = false;
 				} 
-		)
+	
 	)*
 
 
@@ -110,9 +129,12 @@ hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
 hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector] returns [hierSystemInstance* sys_inst]
 {
 	sys_inst = NULL;
+	string lib_id = "work";
 }
 :
 	INSTANCE inst_name: SIMPLE_IDENTIFIER  
+		(libid: SIMPLE_IDENTIFIER {lib_id = libid->getText();})?
+		COLON
 		mod_name: SIMPLE_IDENTIFIER  
 			{
 				hierSystem* base_sys = NULL;
@@ -121,15 +143,20 @@ hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector] returns [
 				{
 					if(sys_vector[I]->Get_Id() == mod_name->getText())
 					{
-						base_sys = sys_vector[I];
-						break;
+						if(sys_vector[I]->Get_Library() == lib_id)
+						{
+							base_sys = sys_vector[I];
+							break;
+						}
 					}
 				}
 				if(base_sys)
 					sys_inst = new hierSystemInstance(sys, base_sys, inst_name->getText());
 				else
 				{
-					cerr << "Error: could not find base system " << mod_name->getText() << endl;
+					cerr << "Error: could not find base system " << mod_name->getText() <<
+						" in library " << lib_id << endl;
+				        sys->Set_Error(true);
 				}
 			}
 			( 
@@ -146,7 +173,7 @@ hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector] returns [
 class hierSysLexer extends Lexer;
 
 options {
-	k = 2;
+	k = 6;
 	testLiterals = true;
 	charVocabulary = '\3'..'\377';
 	defaultErrorHandler=true;
@@ -154,13 +181,17 @@ options {
 
 LBRACE : '{';
 RBRACE : '}';
+LPAREN : '(';
+RPAREN : ')';
 IMPLIES: "=>";
+COLON: ":";
 
 SYSTEM: "$system";
-INPIPE: "$ipipe";
-OUTPIPE: "$opipe";
-INTERNALPIPE: "$pipe";
-INSTANCE: "$compinst";
+IN: "$in";
+OUT: "$out";
+PIPE: "$pipe";
+SIGNAL: "$signal";
+INSTANCE: "$instance";
 LIBRARY: "$library";
 
 

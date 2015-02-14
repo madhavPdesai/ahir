@@ -53,7 +53,7 @@ class hierSystemInstance: public hierRoot
 	map<string, string> _port_map;
 	map<string, string> _reverse_port_map;
 
-	
+
 	hierSystemInstance(hierSystem* parent, hierSystem* base_sys, string id):hierRoot(id) 
 	{	
 		_parent = parent;
@@ -72,6 +72,7 @@ class hierSystemInstance: public hierRoot
 			ret_string = _port_map[formal];
 		return(ret_string);
 	}
+
 
 	string Get_Formal(string actual)
 	{
@@ -99,6 +100,7 @@ class hierSystem: public hierRoot
 	map<hierSystemInstance*, vector<string> > _subsystem_pipe_connection_map;
 	map<string,  hierSystemInstance* > _child_map;
 
+	set<string> _signals;
 
 public:
 	hierSystem(string id) :hierRoot(id)
@@ -107,8 +109,18 @@ public:
 	}
 
         bool Is_Leaf() {return(_child_map.size() == 0);}
-	void Set_Library(string s) {_library = s;}
+	void Set_Library(string s) {cerr << "Info: setting library for " << _id << " to " << s << endl; _library = s;}
 	string Get_Library() {return(_library);}
+
+	void Add_Signal(string pname)
+	{
+		_signals.insert(pname);
+	}
+
+	bool Is_Signal(string pname)
+	{
+		return(_signals.find(pname) != _signals.end());
+	}
 
 	int Get_Pipe_Width(map<string, int>& pmap, string pipe_id)
 	{
@@ -151,7 +163,9 @@ public:
 	{
 		for(map<string,int>::iterator iter = pmap.begin(), fiter = pmap.end(); iter != fiter; iter++)
 		{
+			ofile << (this->Is_Signal((*iter).first) ? "  $signal " : "  $pipe ");
 			ofile << " " << (*iter).first << " " << (*iter).second << " ";
+			ofile << endl;
 		}
 	}
 

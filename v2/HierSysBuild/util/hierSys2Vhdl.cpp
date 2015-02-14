@@ -20,7 +20,7 @@ struct option long_options[] = {
 
 void Handle_Segfault(int signal)
 {
-  cerr << "Error: in vcAnalyze: segmentation fault! giving up!!" << endl;
+  cerr << "Error: in hierSys2Vhdl: segmentation fault! giving up!!" << endl;
   exit(-1);
 }
 

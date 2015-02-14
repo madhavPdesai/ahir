@@ -1,23 +1,34 @@
-$system Left 
-$library LLIB
-	$ipipe A 16
-	$opipe TMP 16
+$system Left  $library LLIB
+	$in 
+		$pipe A 16
+		$signal  Asig 16
+	$out 
+		$pipe TMP 16
+		$signal TMPsig 16
 {
 }
 
-$system Right 
-$library RLIB
+$system Right  $library RLIB
 
-	$ipipe TMP 16
-	$opipe B 16
+	$in 
+		$pipe TMP 16
+		$signal TMPsig 16
+	$out 
+		$pipe B 16
+		$signal Bsig 16
 {
 }
 
 $system Top 
-	$ipipe a 16 
-        $opipe b 16
+	$in 
+		$pipe a 16 
+	 	$signal asig 16
+        $out 
+		$pipe b 16
+		$signal bsig 16
 {
         $pipe tmp 16
-        $compinst i0  Left   A => a TMP => tmp
-        $compinst i1  Right  TMP => tmp B => b
+        $signal tmp_sig 16
+        $instance i0  LLIB:Left   A => a Asig => asig  TMP => tmp TMPsig => tmp_sig 
+        $instance i1  RLIB:Right  TMPsig => tmp_sig TMP => tmp B => b Bsig => bsig
 }
