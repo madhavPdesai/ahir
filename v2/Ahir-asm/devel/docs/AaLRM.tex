@@ -526,7 +526,8 @@ The merge assignments inside a merge block are all of a specific
 form, called the phi-statement.  A phi-statement has the following
 form
 \begin{verbatim}
-phi-spec target-expr := expr1 on-spec place-spec-1  [expr2 on-spec place-spec-2 ... ]
+phi-spec target-expr := expr1 on-spec place-spec-1  
+                         [expr2 on-spec place-spec-2 ... ]
 \end{verbatim}
 For example:
 \begin{verbatim}
@@ -538,7 +539,9 @@ token passed from its predecessor) and is to take the value of $c$
 if the merge statement was started from the place ``loopback''.
 Note that if the merge statement is to be triggered by a
 token in its default entry place, one of the labels in the
-label-list for the merge must contain the identifier \$entry.
+label-list for the merge must contain the identifier \$entry,
+which corresponds to the merge statement being triggered
+by the immediately preceding statement.
 The target of a phi-statement must be an implicit variable
 (declared by the statement itself, not a storage or a pipe
 object).
