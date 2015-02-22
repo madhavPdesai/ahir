@@ -1417,7 +1417,7 @@ $is
                        s1 := ($mux (I == 0)  0 (s + mem[I]))
                        $place [loopback]
                     $endif
-               } 
+               } (s => sb1_s)
                $branchblock[sb2]{
                     $storage  J:$uint<10>
                     J := (mp + 1)
@@ -1429,11 +1429,11 @@ $is
                          s1 := ($mux (J == (mp+1))  0 (s + mem[J]))
                          $place [loopback]
                     $endif
-               } 
-           }
+               } (s => sb2_s)
+           }(sb1_s => sb1_s sb2_s => sb2_s)
  
            // combine results from parallel statement above
-           snontriv := (%parsum%sb1:s  + %parsum%sb2:s)
+           snontriv := (sb1_s  + sb2_s)
            $place [nontrivsum]
       $else
 
