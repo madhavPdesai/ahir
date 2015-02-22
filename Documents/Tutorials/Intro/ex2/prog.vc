@@ -2,11 +2,11 @@
 // $pipe  in_data : $uint<32>  $depth 1 
 // can point into 
 // in scope  top-level
-$pipe [in_data] 32 $depth 1
+$pipe [in_data] 32 $depth 1 
 // $pipe  out_data : $uint<32>  $depth 1 
 // can point into 
 // in scope  top-level
-$pipe [out_data] 32 $depth 1
+$pipe [out_data] 32 $depth 1 
 $module [maxDaemon] 
 {
   // pipe-declarations for block %maxDaemon

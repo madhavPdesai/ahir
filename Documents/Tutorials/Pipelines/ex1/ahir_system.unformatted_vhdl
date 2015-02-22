@@ -60,29 +60,29 @@ signal input_sample_reenable_symbol: Boolean;
 signal vectorSum_CP_1112_start: Boolean;
 signal vectorSum_CP_1112_symbol: Boolean;
 -- links between control-path and data-path
-signal W_iNsTr_3_201_delayed_24_272_inst_ack_1 : boolean;
-signal ADD_f32_f32_270_inst_req_0 : boolean;
-signal W_iNsTr_3_201_delayed_24_272_inst_req_1 : boolean;
-signal do_while_stmt_262_branch_ack_0 : boolean;
-signal do_while_stmt_262_branch_req_0 : boolean;
-signal RPIPE_in_data_pipe_265_inst_req_1 : boolean;
-signal MUL_f32_f32_278_inst_req_0 : boolean;
-signal W_iNsTr_3_201_delayed_24_272_inst_req_0 : boolean;
-signal ADD_f32_f32_270_inst_req_1 : boolean;
-signal do_while_stmt_262_branch_ack_1 : boolean;
 signal WPIPE_out_data_pipe_280_inst_ack_1 : boolean;
-signal W_iNsTr_3_201_delayed_24_272_inst_ack_0 : boolean;
-signal ADD_f32_f32_270_inst_ack_1 : boolean;
+signal WPIPE_out_data_pipe_280_inst_ack_0 : boolean;
+signal MUL_f32_f32_278_inst_req_1 : boolean;
 signal ADD_f32_f32_270_inst_ack_0 : boolean;
+signal ADD_f32_f32_270_inst_req_0 : boolean;
+signal W_iNsTr_3_201_delayed_24_272_inst_req_0 : boolean;
+signal MUL_f32_f32_278_inst_ack_1 : boolean;
+signal RPIPE_in_data_pipe_265_inst_ack_1 : boolean;
+signal RPIPE_in_data_pipe_265_inst_req_1 : boolean;
 signal WPIPE_out_data_pipe_280_inst_req_1 : boolean;
 signal WPIPE_out_data_pipe_280_inst_req_0 : boolean;
-signal WPIPE_out_data_pipe_280_inst_ack_0 : boolean;
+signal ADD_f32_f32_270_inst_req_1 : boolean;
+signal W_iNsTr_3_201_delayed_24_272_inst_req_1 : boolean;
 signal RPIPE_in_data_pipe_265_inst_req_0 : boolean;
+signal ADD_f32_f32_270_inst_ack_1 : boolean;
 signal RPIPE_in_data_pipe_265_inst_ack_0 : boolean;
+signal MUL_f32_f32_278_inst_req_0 : boolean;
+signal do_while_stmt_262_branch_req_0 : boolean;
+signal do_while_stmt_262_branch_ack_1 : boolean;
+signal W_iNsTr_3_201_delayed_24_272_inst_ack_0 : boolean;
 signal MUL_f32_f32_278_inst_ack_0 : boolean;
-signal RPIPE_in_data_pipe_265_inst_ack_1 : boolean;
-signal MUL_f32_f32_278_inst_req_1 : boolean;
-signal MUL_f32_f32_278_inst_ack_1 : boolean;
+signal do_while_stmt_262_branch_ack_0 : boolean;
+signal W_iNsTr_3_201_delayed_24_272_inst_ack_1 : boolean;
 
 -- }
 begin --  {
@@ -190,28 +190,28 @@ end block;
 always_true_symbol <= true; 
 default_zero_sig <= '0';
 vectorSum_CP_1112: Block -- control-path {
-signal cp_elements: BooleanArray(57 downto 0);
+signal vectorSum_CP_1112_elements: BooleanArray(57 downto 0);
 -- }
 begin -- {
-cp_elements(0) <= vectorSum_CP_1112_start;
-vectorSum_CP_1112_symbol <= cp_elements(57);
+vectorSum_CP_1112_elements(0) <= vectorSum_CP_1112_start;
+vectorSum_CP_1112_symbol <= vectorSum_CP_1112_elements(57);
 -- CP-element group 0 transition  place  bypass 
 -- predecessors 
 -- successors 7 
 -- members (14) {
--- 	$entry
--- 	branch_block_stmt_259/bb_0_bb_1_PhiReq/$entry
--- 	branch_block_stmt_259/bb_0_bb_1_PhiReq/$exit
--- 	branch_block_stmt_259/merge_stmt_261__exit__
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262__entry__
--- 	branch_block_stmt_259/do_while_stmt_262__entry__
--- 	branch_block_stmt_259/merge_stmt_261_PhiAck/$entry
--- 	branch_block_stmt_259/$entry
--- 	branch_block_stmt_259/merge_stmt_261_PhiReqMerge
 -- 	branch_block_stmt_259/do_while_stmt_262/$entry
 -- 	branch_block_stmt_259/bb_0_bb_1
--- 	branch_block_stmt_259/merge_stmt_261_PhiAck/dummy
+-- 	branch_block_stmt_259/do_while_stmt_262__entry__
+-- 	$entry
+-- 	branch_block_stmt_259/merge_stmt_261__exit__
+-- 	branch_block_stmt_259/$entry
 -- 	branch_block_stmt_259/merge_stmt_261_PhiAck/$exit
+-- 	branch_block_stmt_259/merge_stmt_261_PhiAck/$entry
+-- 	branch_block_stmt_259/merge_stmt_261_PhiAck/dummy
+-- 	branch_block_stmt_259/merge_stmt_261_PhiReqMerge
+-- 	branch_block_stmt_259/bb_0_bb_1_PhiReq/$exit
+-- 	branch_block_stmt_259/bb_0_bb_1_PhiReq/$entry
 -- 	branch_block_stmt_259/branch_block_stmt_259__entry__
 -- }
 -- CP-element group 1 merge  place  bypass 
@@ -220,66 +220,66 @@ vectorSum_CP_1112_symbol <= cp_elements(57);
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262__exit__
 -- }
--- Element group cp_elements(1) is bound as output of CP function.
+-- Element group vectorSum_CP_1112_elements(1) is bound as output of CP function.
 -- CP-element group 2 merge  place  bypass 
 -- predecessors 
 -- successors 6 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/loop_back
 -- }
--- Element group cp_elements(2) is bound as output of CP function.
+-- Element group vectorSum_CP_1112_elements(2) is bound as output of CP function.
 -- CP-element group 3 branch  place  bypass 
 -- predecessors 9 
 -- successors 55 53 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/condition_done
 -- }
-cp_elements(3) <= cp_elements(9);
+vectorSum_CP_1112_elements(3) <= vectorSum_CP_1112_elements(9);
 -- CP-element group 4 branch  place  bypass 
 -- predecessors 48 
 -- successors 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/loop_body_done
 -- }
-cp_elements(4) <= cp_elements(48);
+vectorSum_CP_1112_elements(4) <= vectorSum_CP_1112_elements(48);
 -- CP-element group 5 fork  transition  bypass 
 -- predecessors 8 
--- successors 20 39 10 47 12 31 
+-- successors 12 20 39 47 31 10 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/$entry
 -- }
-cp_elements(5) <= cp_elements(8);
+vectorSum_CP_1112_elements(5) <= vectorSum_CP_1112_elements(8);
 -- CP-element group 6 transition  bypass 
 -- predecessors 2 
 -- successors 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/back_edge_to_loop_body
 -- }
-cp_elements(6) <= cp_elements(2);
+vectorSum_CP_1112_elements(6) <= vectorSum_CP_1112_elements(2);
 -- CP-element group 7 transition  bypass 
 -- predecessors 0 
 -- successors 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/first_time_through_loop_body
 -- }
-cp_elements(7) <= cp_elements(0);
+vectorSum_CP_1112_elements(7) <= vectorSum_CP_1112_elements(0);
 -- CP-element group 8 fork  transition  bypass 
 -- predecessors 
--- successors 9 5 
+-- successors 5 9 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/loop_body_start
 -- }
--- Element group cp_elements(8) is bound as output of CP function.
+-- Element group vectorSum_CP_1112_elements(8) is bound as output of CP function.
 -- CP-element group 9 transition  output  bypass 
 -- predecessors 8 
 -- successors 3 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/condition_evaluated
 -- }
-cp_elements(9) <= cp_elements(8);
+vectorSum_CP_1112_elements(9) <= vectorSum_CP_1112_elements(8);
 condition_evaluated_1138_symbol_link_to_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => cp_elements(9), ack => do_while_stmt_262_branch_req_0); -- } 
+port map(clk => clk, reset => reset, req => vectorSum_CP_1112_elements(9), ack => do_while_stmt_262_branch_req_0); -- } 
 -- CP-element group 10 join  transition  bypass 
 -- predecessors 5 
 -- marked predecessors 11 
@@ -294,9 +294,9 @@ constant place_delays: IntegerArray(0 to 1) := (0 => 0,1 => 1);
 constant joinName: string(1 to 19) := "cp_element_group_10"; 
 signal preds: BooleanArray(1 to 2); -- }
 begin -- { 
-preds <= cp_elements(5) & cp_elements(11);
+preds <= vectorSum_CP_1112_elements(5) & vectorSum_CP_1112_elements(11);
  gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {
- port map(preds => preds, symbol_out => cp_elements(10), clk => clk, reset => reset); --}}
+ port map(preds => preds, symbol_out => vectorSum_CP_1112_elements(10), clk => clk, reset => reset); --}}
 end block;
 -- CP-element group 11 fork  transition  bypass 
 -- predecessors 15 
@@ -305,7 +305,7 @@ end block;
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_sample_completed_
 -- }
-cp_elements(11) <= cp_elements(15);
+vectorSum_CP_1112_elements(11) <= vectorSum_CP_1112_elements(15);
 -- CP-element group 12 join  transition  bypass 
 -- predecessors 5 
 -- marked predecessors 19 30 
@@ -320,17 +320,17 @@ constant place_delays: IntegerArray(0 to 2) := (0 => 0,1 => 0,2 => 0);
 constant joinName: string(1 to 19) := "cp_element_group_12"; 
 signal preds: BooleanArray(1 to 3); -- }
 begin -- { 
-preds <= cp_elements(5) & cp_elements(19) & cp_elements(30);
+preds <= vectorSum_CP_1112_elements(5) & vectorSum_CP_1112_elements(19) & vectorSum_CP_1112_elements(30);
  gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {
- port map(preds => preds, symbol_out => cp_elements(12), clk => clk, reset => reset); --}}
+ port map(preds => preds, symbol_out => vectorSum_CP_1112_elements(12), clk => clk, reset => reset); --}}
 end block;
 -- CP-element group 13 fork  transition  bypass 
 -- predecessors 17 
--- successors 23 28 22 
+-- successors 28 23 22 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_update_completed_
 -- }
-cp_elements(13) <= cp_elements(17);
+vectorSum_CP_1112_elements(13) <= vectorSum_CP_1112_elements(17);
 -- CP-element group 14 transition  output  bypass 
 -- predecessors 10 
 -- successors 15 
@@ -338,10 +338,10 @@ cp_elements(13) <= cp_elements(17);
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_Sample/$entry
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_Sample/rr
 -- }
-cp_elements(14) <= cp_elements(10);
+vectorSum_CP_1112_elements(14) <= vectorSum_CP_1112_elements(10);
 rr_1147_symbol_link_to_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => cp_elements(14), ack => RPIPE_in_data_pipe_265_inst_req_0); -- } 
+port map(clk => clk, reset => reset, req => vectorSum_CP_1112_elements(14), ack => RPIPE_in_data_pipe_265_inst_req_0); -- } 
 -- CP-element group 15 transition  input  bypass 
 -- predecessors 14 
 -- successors 11 
@@ -351,28 +351,28 @@ port map(clk => clk, reset => reset, req => cp_elements(14), ack => RPIPE_in_dat
 -- }
 ra_1148_symbol_link_from_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => RPIPE_in_data_pipe_265_inst_ack_0, ack => cp_elements(15)); -- } 
+port map(clk => clk, reset => reset, req => RPIPE_in_data_pipe_265_inst_ack_0, ack => vectorSum_CP_1112_elements(15)); -- } 
 -- CP-element group 16 transition  output  bypass 
 -- predecessors 12 
 -- successors 17 
 -- members (2) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_Update/$entry
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_Update/cr
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_Update/$entry
 -- }
-cp_elements(16) <= cp_elements(12);
+vectorSum_CP_1112_elements(16) <= vectorSum_CP_1112_elements(12);
 cr_1152_symbol_link_to_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => cp_elements(16), ack => RPIPE_in_data_pipe_265_inst_req_1); -- } 
+port map(clk => clk, reset => reset, req => vectorSum_CP_1112_elements(16), ack => RPIPE_in_data_pipe_265_inst_req_1); -- } 
 -- CP-element group 17 transition  input  bypass 
 -- predecessors 16 
 -- successors 13 
 -- members (2) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_Update/$exit
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_Update/ca
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_Update/$exit
 -- }
 ca_1153_symbol_link_from_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => RPIPE_in_data_pipe_265_inst_ack_1, ack => cp_elements(17)); -- } 
+port map(clk => clk, reset => reset, req => RPIPE_in_data_pipe_265_inst_ack_1, ack => vectorSum_CP_1112_elements(17)); -- } 
 -- CP-element group 18 join  transition  bypass 
 -- predecessors 23 22 
 -- marked predecessors 19 
@@ -387,18 +387,18 @@ constant place_delays: IntegerArray(0 to 2) := (0 => 0,1 => 0,2 => 1);
 constant joinName: string(1 to 19) := "cp_element_group_18"; 
 signal preds: BooleanArray(1 to 3); -- }
 begin -- { 
-preds <= cp_elements(23) & cp_elements(22) & cp_elements(19);
+preds <= vectorSum_CP_1112_elements(23) & vectorSum_CP_1112_elements(22) & vectorSum_CP_1112_elements(19);
  gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {
- port map(preds => preds, symbol_out => cp_elements(18), clk => clk, reset => reset); --}}
+ port map(preds => preds, symbol_out => vectorSum_CP_1112_elements(18), clk => clk, reset => reset); --}}
 end block;
 -- CP-element group 19 fork  transition  bypass 
 -- predecessors 25 
 -- successors 
--- marked successors 18 12 
+-- marked successors 12 18 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_sample_completed_
 -- }
-cp_elements(19) <= cp_elements(25);
+vectorSum_CP_1112_elements(19) <= vectorSum_CP_1112_elements(25);
 -- CP-element group 20 join  transition  bypass 
 -- predecessors 5 
 -- marked predecessors 38 
@@ -413,41 +413,41 @@ constant place_delays: IntegerArray(0 to 1) := (0 => 0,1 => 0);
 constant joinName: string(1 to 19) := "cp_element_group_20"; 
 signal preds: BooleanArray(1 to 2); -- }
 begin -- { 
-preds <= cp_elements(5) & cp_elements(38);
+preds <= vectorSum_CP_1112_elements(5) & vectorSum_CP_1112_elements(38);
  gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {
- port map(preds => preds, symbol_out => cp_elements(20), clk => clk, reset => reset); --}}
+ port map(preds => preds, symbol_out => vectorSum_CP_1112_elements(20), clk => clk, reset => reset); --}}
 end block;
 -- CP-element group 21 transition  bypass 
 -- predecessors 27 
 -- successors 37 
 -- members (5) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_4_277_update_start_
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_update_completed_
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_4_277_update_completed_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_4_277_sample_completed_
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_4_277_update_completed_
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_update_completed_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_4_277_sample_start_
 -- }
-cp_elements(21) <= cp_elements(27);
+vectorSum_CP_1112_elements(21) <= vectorSum_CP_1112_elements(27);
 -- CP-element group 22 transition  bypass 
 -- predecessors 13 
 -- successors 18 
 -- members (4) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_268_update_completed_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_268_sample_start_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_268_sample_completed_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_268_update_start_
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_268_update_completed_
 -- }
-cp_elements(22) <= cp_elements(13);
+vectorSum_CP_1112_elements(22) <= vectorSum_CP_1112_elements(13);
 -- CP-element group 23 transition  bypass 
 -- predecessors 13 
 -- successors 18 
 -- members (4) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_269_update_completed_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_269_sample_start_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_269_update_start_
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_269_update_completed_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_269_sample_completed_
 -- }
-cp_elements(23) <= cp_elements(13);
+vectorSum_CP_1112_elements(23) <= vectorSum_CP_1112_elements(13);
 -- CP-element group 24 transition  output  bypass 
 -- predecessors 18 
 -- successors 25 
@@ -455,31 +455,31 @@ cp_elements(23) <= cp_elements(13);
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_Sample/rr
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_Sample/$entry
 -- }
-cp_elements(24) <= cp_elements(18);
+vectorSum_CP_1112_elements(24) <= vectorSum_CP_1112_elements(18);
 rr_1169_symbol_link_to_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => cp_elements(24), ack => ADD_f32_f32_270_inst_req_0); -- } 
+port map(clk => clk, reset => reset, req => vectorSum_CP_1112_elements(24), ack => ADD_f32_f32_270_inst_req_0); -- } 
 -- CP-element group 25 transition  input  bypass 
 -- predecessors 24 
 -- successors 19 
 -- members (2) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_Sample/$exit
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_Sample/ra
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_Sample/$exit
 -- }
 ra_1170_symbol_link_from_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => ADD_f32_f32_270_inst_ack_0, ack => cp_elements(25)); -- } 
+port map(clk => clk, reset => reset, req => ADD_f32_f32_270_inst_ack_0, ack => vectorSum_CP_1112_elements(25)); -- } 
 -- CP-element group 26 transition  output  bypass 
 -- predecessors 20 
 -- successors 27 
 -- members (2) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_Update/cr
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_Update/$entry
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_Update/cr
 -- }
-cp_elements(26) <= cp_elements(20);
+vectorSum_CP_1112_elements(26) <= vectorSum_CP_1112_elements(20);
 cr_1174_symbol_link_to_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => cp_elements(26), ack => ADD_f32_f32_270_inst_req_1); -- } 
+port map(clk => clk, reset => reset, req => vectorSum_CP_1112_elements(26), ack => ADD_f32_f32_270_inst_req_1); -- } 
 -- CP-element group 27 transition  input  bypass 
 -- predecessors 26 
 -- successors 21 
@@ -489,17 +489,17 @@ port map(clk => clk, reset => reset, req => cp_elements(26), ack => ADD_f32_f32_
 -- }
 ca_1175_symbol_link_from_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => ADD_f32_f32_270_inst_ack_1, ack => cp_elements(27)); -- } 
+port map(clk => clk, reset => reset, req => ADD_f32_f32_270_inst_ack_1, ack => vectorSum_CP_1112_elements(27)); -- } 
 -- CP-element group 28 transition  bypass 
 -- predecessors 13 
 -- successors 29 
 -- members (4) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_273_update_start_
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_273_update_completed_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_273_sample_start_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_273_sample_completed_
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_273_update_start_
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_273_update_completed_
 -- }
-cp_elements(28) <= cp_elements(13);
+vectorSum_CP_1112_elements(28) <= vectorSum_CP_1112_elements(13);
 -- CP-element group 29 join  transition  bypass 
 -- predecessors 28 
 -- marked predecessors 30 
@@ -514,18 +514,18 @@ constant place_delays: IntegerArray(0 to 1) := (0 => 0,1 => 1);
 constant joinName: string(1 to 19) := "cp_element_group_29"; 
 signal preds: BooleanArray(1 to 2); -- }
 begin -- { 
-preds <= cp_elements(28) & cp_elements(30);
+preds <= vectorSum_CP_1112_elements(28) & vectorSum_CP_1112_elements(30);
  gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {
- port map(preds => preds, symbol_out => cp_elements(29), clk => clk, reset => reset); --}}
+ port map(preds => preds, symbol_out => vectorSum_CP_1112_elements(29), clk => clk, reset => reset); --}}
 end block;
 -- CP-element group 30 fork  transition  bypass 
 -- predecessors 34 
 -- successors 
--- marked successors 29 12 
+-- marked successors 12 29 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_sample_completed_
 -- }
-cp_elements(30) <= cp_elements(34);
+vectorSum_CP_1112_elements(30) <= vectorSum_CP_1112_elements(34);
 -- CP-element group 31 join  transition  bypass 
 -- predecessors 5 
 -- marked predecessors 38 
@@ -540,9 +540,9 @@ constant place_delays: IntegerArray(0 to 1) := (0 => 0,1 => 0);
 constant joinName: string(1 to 19) := "cp_element_group_31"; 
 signal preds: BooleanArray(1 to 2); -- }
 begin -- { 
-preds <= cp_elements(5) & cp_elements(38);
+preds <= vectorSum_CP_1112_elements(5) & vectorSum_CP_1112_elements(38);
  gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {
- port map(preds => preds, symbol_out => cp_elements(31), clk => clk, reset => reset); --}}
+ port map(preds => preds, symbol_out => vectorSum_CP_1112_elements(31), clk => clk, reset => reset); --}}
 end block;
 -- CP-element group 32 transition  bypass 
 -- predecessors 36 
@@ -554,7 +554,7 @@ end block;
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_201_delayed_24_276_sample_completed_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_3_201_delayed_24_276_sample_start_
 -- }
-cp_elements(32) <= cp_elements(36);
+vectorSum_CP_1112_elements(32) <= vectorSum_CP_1112_elements(36);
 -- CP-element group 33 transition  output  bypass 
 -- predecessors 29 
 -- successors 34 
@@ -562,41 +562,41 @@ cp_elements(32) <= cp_elements(36);
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Sample/req
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Sample/$entry
 -- }
-cp_elements(33) <= cp_elements(29);
+vectorSum_CP_1112_elements(33) <= vectorSum_CP_1112_elements(29);
 req_1187_symbol_link_to_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => cp_elements(33), ack => W_iNsTr_3_201_delayed_24_272_inst_req_0); -- } 
+port map(clk => clk, reset => reset, req => vectorSum_CP_1112_elements(33), ack => W_iNsTr_3_201_delayed_24_272_inst_req_0); -- } 
 -- CP-element group 34 transition  input  bypass 
 -- predecessors 33 
 -- successors 30 
 -- members (2) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Sample/ack
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Sample/$exit
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Sample/ack
 -- }
 ack_1188_symbol_link_from_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => W_iNsTr_3_201_delayed_24_272_inst_ack_0, ack => cp_elements(34)); -- } 
+port map(clk => clk, reset => reset, req => W_iNsTr_3_201_delayed_24_272_inst_ack_0, ack => vectorSum_CP_1112_elements(34)); -- } 
 -- CP-element group 35 transition  output  bypass 
 -- predecessors 31 
 -- successors 36 
 -- members (2) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Update/req
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Update/$entry
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Update/req
 -- }
-cp_elements(35) <= cp_elements(31);
+vectorSum_CP_1112_elements(35) <= vectorSum_CP_1112_elements(31);
 req_1192_symbol_link_to_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => cp_elements(35), ack => W_iNsTr_3_201_delayed_24_272_inst_req_1); -- } 
+port map(clk => clk, reset => reset, req => vectorSum_CP_1112_elements(35), ack => W_iNsTr_3_201_delayed_24_272_inst_req_1); -- } 
 -- CP-element group 36 transition  input  bypass 
 -- predecessors 35 
 -- successors 32 
 -- members (2) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Update/ack
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Update/$exit
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Update/ack
 -- }
 ack_1193_symbol_link_from_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => W_iNsTr_3_201_delayed_24_272_inst_ack_1, ack => cp_elements(36)); -- } 
+port map(clk => clk, reset => reset, req => W_iNsTr_3_201_delayed_24_272_inst_ack_1, ack => vectorSum_CP_1112_elements(36)); -- } 
 -- CP-element group 37 join  transition  bypass 
 -- predecessors 32 21 
 -- marked predecessors 38 
@@ -611,9 +611,9 @@ constant place_delays: IntegerArray(0 to 2) := (0 => 0,1 => 0,2 => 1);
 constant joinName: string(1 to 19) := "cp_element_group_37"; 
 signal preds: BooleanArray(1 to 3); -- }
 begin -- { 
-preds <= cp_elements(32) & cp_elements(21) & cp_elements(38);
+preds <= vectorSum_CP_1112_elements(32) & vectorSum_CP_1112_elements(21) & vectorSum_CP_1112_elements(38);
  gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {
- port map(preds => preds, symbol_out => cp_elements(37), clk => clk, reset => reset); --}}
+ port map(preds => preds, symbol_out => vectorSum_CP_1112_elements(37), clk => clk, reset => reset); --}}
 end block;
 -- CP-element group 38 fork  transition  bypass 
 -- predecessors 42 
@@ -622,7 +622,7 @@ end block;
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/MUL_f32_f32_278_sample_completed_
 -- }
-cp_elements(38) <= cp_elements(42);
+vectorSum_CP_1112_elements(38) <= vectorSum_CP_1112_elements(42);
 -- CP-element group 39 join  transition  bypass 
 -- predecessors 5 
 -- marked predecessors 46 
@@ -637,32 +637,32 @@ constant place_delays: IntegerArray(0 to 1) := (0 => 0,1 => 0);
 constant joinName: string(1 to 19) := "cp_element_group_39"; 
 signal preds: BooleanArray(1 to 2); -- }
 begin -- { 
-preds <= cp_elements(5) & cp_elements(46);
+preds <= vectorSum_CP_1112_elements(5) & vectorSum_CP_1112_elements(46);
  gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {
- port map(preds => preds, symbol_out => cp_elements(39), clk => clk, reset => reset); --}}
+ port map(preds => preds, symbol_out => vectorSum_CP_1112_elements(39), clk => clk, reset => reset); --}}
 end block;
 -- CP-element group 40 transition  bypass 
 -- predecessors 44 
 -- successors 45 
 -- members (5) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_5_281_update_completed_
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_5_281_update_start_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_5_281_sample_start_
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_5_281_update_completed_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_5_281_sample_completed_
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/R_iNsTr_5_281_update_start_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/MUL_f32_f32_278_update_completed_
 -- }
-cp_elements(40) <= cp_elements(44);
+vectorSum_CP_1112_elements(40) <= vectorSum_CP_1112_elements(44);
 -- CP-element group 41 transition  output  bypass 
 -- predecessors 37 
 -- successors 42 
 -- members (2) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/MUL_f32_f32_278_Sample/rr
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/MUL_f32_f32_278_Sample/$entry
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/MUL_f32_f32_278_Sample/rr
 -- }
-cp_elements(41) <= cp_elements(37);
+vectorSum_CP_1112_elements(41) <= vectorSum_CP_1112_elements(37);
 rr_1209_symbol_link_to_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => cp_elements(41), ack => MUL_f32_f32_278_inst_req_0); -- } 
+port map(clk => clk, reset => reset, req => vectorSum_CP_1112_elements(41), ack => MUL_f32_f32_278_inst_req_0); -- } 
 -- CP-element group 42 transition  input  bypass 
 -- predecessors 41 
 -- successors 38 
@@ -672,7 +672,7 @@ port map(clk => clk, reset => reset, req => cp_elements(41), ack => MUL_f32_f32_
 -- }
 ra_1210_symbol_link_from_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => MUL_f32_f32_278_inst_ack_0, ack => cp_elements(42)); -- } 
+port map(clk => clk, reset => reset, req => MUL_f32_f32_278_inst_ack_0, ack => vectorSum_CP_1112_elements(42)); -- } 
 -- CP-element group 43 transition  output  bypass 
 -- predecessors 39 
 -- successors 44 
@@ -680,10 +680,10 @@ port map(clk => clk, reset => reset, req => MUL_f32_f32_278_inst_ack_0, ack => c
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/MUL_f32_f32_278_Update/$entry
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/MUL_f32_f32_278_Update/cr
 -- }
-cp_elements(43) <= cp_elements(39);
+vectorSum_CP_1112_elements(43) <= vectorSum_CP_1112_elements(39);
 cr_1214_symbol_link_to_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => cp_elements(43), ack => MUL_f32_f32_278_inst_req_1); -- } 
+port map(clk => clk, reset => reset, req => vectorSum_CP_1112_elements(43), ack => MUL_f32_f32_278_inst_req_1); -- } 
 -- CP-element group 44 transition  input  bypass 
 -- predecessors 43 
 -- successors 40 
@@ -693,7 +693,7 @@ port map(clk => clk, reset => reset, req => cp_elements(43), ack => MUL_f32_f32_
 -- }
 ca_1215_symbol_link_from_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => MUL_f32_f32_278_inst_ack_1, ack => cp_elements(44)); -- } 
+port map(clk => clk, reset => reset, req => MUL_f32_f32_278_inst_ack_1, ack => vectorSum_CP_1112_elements(44)); -- } 
 -- CP-element group 45 join  transition  bypass 
 -- predecessors 40 
 -- marked predecessors 46 
@@ -708,18 +708,18 @@ constant place_delays: IntegerArray(0 to 1) := (0 => 0,1 => 1);
 constant joinName: string(1 to 19) := "cp_element_group_45"; 
 signal preds: BooleanArray(1 to 2); -- }
 begin -- { 
-preds <= cp_elements(40) & cp_elements(46);
+preds <= vectorSum_CP_1112_elements(40) & vectorSum_CP_1112_elements(46);
  gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {
- port map(preds => preds, symbol_out => cp_elements(45), clk => clk, reset => reset); --}}
+ port map(preds => preds, symbol_out => vectorSum_CP_1112_elements(45), clk => clk, reset => reset); --}}
 end block;
 -- CP-element group 46 fork  transition  bypass 
 -- predecessors 50 
 -- successors 
--- marked successors 39 45 
+-- marked successors 45 39 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_sample_completed_
 -- }
-cp_elements(46) <= cp_elements(50);
+vectorSum_CP_1112_elements(46) <= vectorSum_CP_1112_elements(50);
 -- CP-element group 47 join  transition  bypass 
 -- predecessors 5 
 -- marked predecessors 48 
@@ -734,9 +734,9 @@ constant place_delays: IntegerArray(0 to 1) := (0 => 0,1 => 0);
 constant joinName: string(1 to 19) := "cp_element_group_47"; 
 signal preds: BooleanArray(1 to 2); -- }
 begin -- { 
-preds <= cp_elements(5) & cp_elements(48);
+preds <= vectorSum_CP_1112_elements(5) & vectorSum_CP_1112_elements(48);
  gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {
- port map(preds => preds, symbol_out => cp_elements(47), clk => clk, reset => reset); --}}
+ port map(preds => preds, symbol_out => vectorSum_CP_1112_elements(47), clk => clk, reset => reset); --}}
 end block;
 -- CP-element group 48 fork  transition  bypass 
 -- predecessors 52 
@@ -746,28 +746,28 @@ end block;
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_update_completed_
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/$exit
 -- }
-cp_elements(48) <= cp_elements(52);
+vectorSum_CP_1112_elements(48) <= vectorSum_CP_1112_elements(52);
 -- CP-element group 49 transition  output  bypass 
 -- predecessors 45 
 -- successors 50 
 -- members (2) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_Sample/$entry
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_Sample/req
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_Sample/$entry
 -- }
-cp_elements(49) <= cp_elements(45);
+vectorSum_CP_1112_elements(49) <= vectorSum_CP_1112_elements(45);
 req_1227_symbol_link_to_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => cp_elements(49), ack => WPIPE_out_data_pipe_280_inst_req_0); -- } 
+port map(clk => clk, reset => reset, req => vectorSum_CP_1112_elements(49), ack => WPIPE_out_data_pipe_280_inst_req_0); -- } 
 -- CP-element group 50 transition  input  bypass 
 -- predecessors 49 
 -- successors 46 
 -- members (2) {
--- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_Sample/$exit
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_Sample/ack
+-- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_Sample/$exit
 -- }
 ack_1228_symbol_link_from_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => WPIPE_out_data_pipe_280_inst_ack_0, ack => cp_elements(50)); -- } 
+port map(clk => clk, reset => reset, req => WPIPE_out_data_pipe_280_inst_ack_0, ack => vectorSum_CP_1112_elements(50)); -- } 
 -- CP-element group 51 transition  output  bypass 
 -- predecessors 47 
 -- successors 52 
@@ -775,10 +775,10 @@ port map(clk => clk, reset => reset, req => WPIPE_out_data_pipe_280_inst_ack_0, 
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_Update/req
 -- 	branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_Update/$entry
 -- }
-cp_elements(51) <= cp_elements(47);
+vectorSum_CP_1112_elements(51) <= vectorSum_CP_1112_elements(47);
 req_1232_symbol_link_to_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => cp_elements(51), ack => WPIPE_out_data_pipe_280_inst_req_1); -- } 
+port map(clk => clk, reset => reset, req => vectorSum_CP_1112_elements(51), ack => WPIPE_out_data_pipe_280_inst_req_1); -- } 
 -- CP-element group 52 transition  input  bypass 
 -- predecessors 51 
 -- successors 48 
@@ -788,62 +788,62 @@ port map(clk => clk, reset => reset, req => cp_elements(51), ack => WPIPE_out_da
 -- }
 ack_1233_symbol_link_from_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => WPIPE_out_data_pipe_280_inst_ack_1, ack => cp_elements(52)); -- } 
+port map(clk => clk, reset => reset, req => WPIPE_out_data_pipe_280_inst_ack_1, ack => vectorSum_CP_1112_elements(52)); -- } 
 -- CP-element group 53 transition  bypass 
 -- predecessors 3 
 -- successors 54 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/loop_exit/$entry
 -- }
-cp_elements(53) <= cp_elements(3);
+vectorSum_CP_1112_elements(53) <= vectorSum_CP_1112_elements(3);
 -- CP-element group 54 transition  input  bypass 
 -- predecessors 53 
 -- successors 
 -- members (2) {
--- 	branch_block_stmt_259/do_while_stmt_262/loop_exit/ack
 -- 	branch_block_stmt_259/do_while_stmt_262/loop_exit/$exit
+-- 	branch_block_stmt_259/do_while_stmt_262/loop_exit/ack
 -- }
 ack_1237_symbol_link_from_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => do_while_stmt_262_branch_ack_0, ack => cp_elements(54)); -- } 
+port map(clk => clk, reset => reset, req => do_while_stmt_262_branch_ack_0, ack => vectorSum_CP_1112_elements(54)); -- } 
 -- CP-element group 55 transition  bypass 
 -- predecessors 3 
 -- successors 56 
 -- members (1) {
 -- 	branch_block_stmt_259/do_while_stmt_262/loop_taken/$entry
 -- }
-cp_elements(55) <= cp_elements(3);
+vectorSum_CP_1112_elements(55) <= vectorSum_CP_1112_elements(3);
 -- CP-element group 56 transition  input  bypass 
 -- predecessors 55 
 -- successors 
 -- members (2) {
--- 	branch_block_stmt_259/do_while_stmt_262/loop_taken/ack
 -- 	branch_block_stmt_259/do_while_stmt_262/loop_taken/$exit
+-- 	branch_block_stmt_259/do_while_stmt_262/loop_taken/ack
 -- }
 ack_1241_symbol_link_from_dp: control_delay_element -- { 
 generic map (delay_value => 0)
-port map(clk => clk, reset => reset, req => do_while_stmt_262_branch_ack_1, ack => cp_elements(56)); -- } 
+port map(clk => clk, reset => reset, req => do_while_stmt_262_branch_ack_1, ack => vectorSum_CP_1112_elements(56)); -- } 
 -- CP-element group 57 transition  place  bypass 
 -- predecessors 1 
 -- successors 
 -- members (5) {
 -- 	$exit
 -- 	branch_block_stmt_259/do_while_stmt_262__exit__
--- 	branch_block_stmt_259/$exit
 -- 	branch_block_stmt_259/do_while_stmt_262/$exit
+-- 	branch_block_stmt_259/$exit
 -- 	branch_block_stmt_259/branch_block_stmt_259__exit__
 -- }
-cp_elements(57) <= cp_elements(1);
+vectorSum_CP_1112_elements(57) <= vectorSum_CP_1112_elements(1);
 do_while_stmt_262_terminator_1242: loop_terminator -- {
 generic map (max_iterations_in_flight =>63) 
-port map(loop_body_exit => cp_elements(4),loop_continue => cp_elements(56),loop_terminate => cp_elements(54),loop_back => cp_elements(2),loop_exit => cp_elements(1),clk => clk, reset => reset); -- } 
+port map(loop_body_exit => vectorSum_CP_1112_elements(4),loop_continue => vectorSum_CP_1112_elements(56),loop_terminate => vectorSum_CP_1112_elements(54),loop_back => vectorSum_CP_1112_elements(2),loop_exit => vectorSum_CP_1112_elements(1),clk => clk, reset => reset); -- } 
 entry_tmerge_1139_block : block -- { 
 signal preds : BooleanArray(0 to 1);
 begin -- { 
-preds(0)  <= cp_elements(6);
-preds(1)  <= cp_elements(7);
+preds(0)  <= vectorSum_CP_1112_elements(6);
+preds(1)  <= vectorSum_CP_1112_elements(7);
 entry_tmerge_1139 : transition_merge -- { 
-port map (preds => preds, symbol_out => cp_elements(8));
+port map (preds => preds, symbol_out => vectorSum_CP_1112_elements(8));
  -- } } } 
 end block;
 --  hookup: inputs to control-path 

@@ -58,7 +58,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpadd32]
       R_L_19_sample_completed_ <-& (R_L_19_sample_start_)
       R_L_19_update_start_ <-& (R_L_19_sample_completed_)
       R_L_19_update_completed_ <-& (R_L_19_update_start_)
-      R_L_19_sample_start_ <-& (L_update_enable)
+      R_L_19_sample_start_ <-& ($entry)
       // R
       $T[R_R_20_sample_start_] 
       $T[R_R_20_sample_completed_] 
@@ -69,7 +69,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpadd32]
       R_R_20_sample_completed_ <-& (R_R_20_sample_start_)
       R_R_20_update_start_ <-& (R_R_20_sample_completed_)
       R_R_20_update_completed_ <-& (R_R_20_update_start_)
-      R_R_20_sample_start_ <-& (R_update_enable)
+      R_R_20_sample_start_ <-& ($entry)
       ADD_f32_f32_21_sample_start_ <-& (R_L_19_update_completed_)
       ADD_f32_f32_21_sample_start_ <-& (R_R_20_update_completed_)
       ;;[ADD_f32_f32_21_Sample] 
@@ -88,9 +88,9 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpadd32]
       ADD_f32_f32_21_update_start_ &-> (ADD_f32_f32_21_Update)
       ADD_f32_f32_21_update_completed_ <-& (ADD_f32_f32_21_Update)
       // RAW reenables for L
-      L_update_enable o<-& (ADD_f32_f32_21_sample_completed_ 1)
+      L_update_enable o<-& (ADD_f32_f32_21_sample_completed_ 0)
       // RAW reenables for R
-      R_update_enable o<-& (ADD_f32_f32_21_sample_completed_ 1)
+      R_update_enable o<-& (ADD_f32_f32_21_sample_completed_ 0)
       // self-release: 
       ADD_f32_f32_21_sample_start_ o<-& (ADD_f32_f32_21_sample_completed_ 1)
       ADD_f32_f32_21_update_start_ o<-& (ADD_f32_f32_21_update_completed_ 0)
@@ -182,7 +182,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpadd64]
       R_L_30_sample_completed_ <-& (R_L_30_sample_start_)
       R_L_30_update_start_ <-& (R_L_30_sample_completed_)
       R_L_30_update_completed_ <-& (R_L_30_update_start_)
-      R_L_30_sample_start_ <-& (L_update_enable)
+      R_L_30_sample_start_ <-& ($entry)
       // R
       $T[R_R_31_sample_start_] 
       $T[R_R_31_sample_completed_] 
@@ -193,7 +193,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpadd64]
       R_R_31_sample_completed_ <-& (R_R_31_sample_start_)
       R_R_31_update_start_ <-& (R_R_31_sample_completed_)
       R_R_31_update_completed_ <-& (R_R_31_update_start_)
-      R_R_31_sample_start_ <-& (R_update_enable)
+      R_R_31_sample_start_ <-& ($entry)
       ADD_f64_f64_32_sample_start_ <-& (R_L_30_update_completed_)
       ADD_f64_f64_32_sample_start_ <-& (R_R_31_update_completed_)
       ;;[ADD_f64_f64_32_Sample] 
@@ -212,9 +212,9 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpadd64]
       ADD_f64_f64_32_update_start_ &-> (ADD_f64_f64_32_Update)
       ADD_f64_f64_32_update_completed_ <-& (ADD_f64_f64_32_Update)
       // RAW reenables for L
-      L_update_enable o<-& (ADD_f64_f64_32_sample_completed_ 1)
+      L_update_enable o<-& (ADD_f64_f64_32_sample_completed_ 0)
       // RAW reenables for R
-      R_update_enable o<-& (ADD_f64_f64_32_sample_completed_ 1)
+      R_update_enable o<-& (ADD_f64_f64_32_sample_completed_ 0)
       // self-release: 
       ADD_f64_f64_32_sample_start_ o<-& (ADD_f64_f64_32_sample_completed_ 1)
       ADD_f64_f64_32_update_start_ o<-& (ADD_f64_f64_32_update_completed_ 0)
@@ -306,7 +306,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpmul32]
       R_L_40_sample_completed_ <-& (R_L_40_sample_start_)
       R_L_40_update_start_ <-& (R_L_40_sample_completed_)
       R_L_40_update_completed_ <-& (R_L_40_update_start_)
-      R_L_40_sample_start_ <-& (L_update_enable)
+      R_L_40_sample_start_ <-& ($entry)
       // R
       $T[R_R_41_sample_start_] 
       $T[R_R_41_sample_completed_] 
@@ -317,7 +317,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpmul32]
       R_R_41_sample_completed_ <-& (R_R_41_sample_start_)
       R_R_41_update_start_ <-& (R_R_41_sample_completed_)
       R_R_41_update_completed_ <-& (R_R_41_update_start_)
-      R_R_41_sample_start_ <-& (R_update_enable)
+      R_R_41_sample_start_ <-& ($entry)
       MUL_f32_f32_42_sample_start_ <-& (R_L_40_update_completed_)
       MUL_f32_f32_42_sample_start_ <-& (R_R_41_update_completed_)
       ;;[MUL_f32_f32_42_Sample] 
@@ -336,9 +336,9 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpmul32]
       MUL_f32_f32_42_update_start_ &-> (MUL_f32_f32_42_Update)
       MUL_f32_f32_42_update_completed_ <-& (MUL_f32_f32_42_Update)
       // RAW reenables for L
-      L_update_enable o<-& (MUL_f32_f32_42_sample_completed_ 1)
+      L_update_enable o<-& (MUL_f32_f32_42_sample_completed_ 0)
       // RAW reenables for R
-      R_update_enable o<-& (MUL_f32_f32_42_sample_completed_ 1)
+      R_update_enable o<-& (MUL_f32_f32_42_sample_completed_ 0)
       // self-release: 
       MUL_f32_f32_42_sample_start_ o<-& (MUL_f32_f32_42_sample_completed_ 1)
       MUL_f32_f32_42_update_start_ o<-& (MUL_f32_f32_42_update_completed_ 0)
@@ -430,7 +430,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpmul64]
       R_L_50_sample_completed_ <-& (R_L_50_sample_start_)
       R_L_50_update_start_ <-& (R_L_50_sample_completed_)
       R_L_50_update_completed_ <-& (R_L_50_update_start_)
-      R_L_50_sample_start_ <-& (L_update_enable)
+      R_L_50_sample_start_ <-& ($entry)
       // R
       $T[R_R_51_sample_start_] 
       $T[R_R_51_sample_completed_] 
@@ -441,7 +441,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpmul64]
       R_R_51_sample_completed_ <-& (R_R_51_sample_start_)
       R_R_51_update_start_ <-& (R_R_51_sample_completed_)
       R_R_51_update_completed_ <-& (R_R_51_update_start_)
-      R_R_51_sample_start_ <-& (R_update_enable)
+      R_R_51_sample_start_ <-& ($entry)
       MUL_f64_f64_52_sample_start_ <-& (R_L_50_update_completed_)
       MUL_f64_f64_52_sample_start_ <-& (R_R_51_update_completed_)
       ;;[MUL_f64_f64_52_Sample] 
@@ -460,9 +460,9 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpmul64]
       MUL_f64_f64_52_update_start_ &-> (MUL_f64_f64_52_Update)
       MUL_f64_f64_52_update_completed_ <-& (MUL_f64_f64_52_Update)
       // RAW reenables for L
-      L_update_enable o<-& (MUL_f64_f64_52_sample_completed_ 1)
+      L_update_enable o<-& (MUL_f64_f64_52_sample_completed_ 0)
       // RAW reenables for R
-      R_update_enable o<-& (MUL_f64_f64_52_sample_completed_ 1)
+      R_update_enable o<-& (MUL_f64_f64_52_sample_completed_ 0)
       // self-release: 
       MUL_f64_f64_52_sample_start_ o<-& (MUL_f64_f64_52_sample_completed_ 1)
       MUL_f64_f64_52_update_start_ o<-& (MUL_f64_f64_52_update_completed_ 0)
@@ -554,7 +554,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpsub32]
       R_L_60_sample_completed_ <-& (R_L_60_sample_start_)
       R_L_60_update_start_ <-& (R_L_60_sample_completed_)
       R_L_60_update_completed_ <-& (R_L_60_update_start_)
-      R_L_60_sample_start_ <-& (L_update_enable)
+      R_L_60_sample_start_ <-& ($entry)
       // R
       $T[R_R_61_sample_start_] 
       $T[R_R_61_sample_completed_] 
@@ -565,7 +565,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpsub32]
       R_R_61_sample_completed_ <-& (R_R_61_sample_start_)
       R_R_61_update_start_ <-& (R_R_61_sample_completed_)
       R_R_61_update_completed_ <-& (R_R_61_update_start_)
-      R_R_61_sample_start_ <-& (R_update_enable)
+      R_R_61_sample_start_ <-& ($entry)
       SUB_f32_f32_62_sample_start_ <-& (R_L_60_update_completed_)
       SUB_f32_f32_62_sample_start_ <-& (R_R_61_update_completed_)
       ;;[SUB_f32_f32_62_Sample] 
@@ -584,9 +584,9 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpsub32]
       SUB_f32_f32_62_update_start_ &-> (SUB_f32_f32_62_Update)
       SUB_f32_f32_62_update_completed_ <-& (SUB_f32_f32_62_Update)
       // RAW reenables for L
-      L_update_enable o<-& (SUB_f32_f32_62_sample_completed_ 1)
+      L_update_enable o<-& (SUB_f32_f32_62_sample_completed_ 0)
       // RAW reenables for R
-      R_update_enable o<-& (SUB_f32_f32_62_sample_completed_ 1)
+      R_update_enable o<-& (SUB_f32_f32_62_sample_completed_ 0)
       // self-release: 
       SUB_f32_f32_62_sample_start_ o<-& (SUB_f32_f32_62_sample_completed_ 1)
       SUB_f32_f32_62_update_start_ o<-& (SUB_f32_f32_62_update_completed_ 0)
@@ -678,7 +678,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpsub64]
       R_L_70_sample_completed_ <-& (R_L_70_sample_start_)
       R_L_70_update_start_ <-& (R_L_70_sample_completed_)
       R_L_70_update_completed_ <-& (R_L_70_update_start_)
-      R_L_70_sample_start_ <-& (L_update_enable)
+      R_L_70_sample_start_ <-& ($entry)
       // R
       $T[R_R_71_sample_start_] 
       $T[R_R_71_sample_completed_] 
@@ -689,7 +689,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpsub64]
       R_R_71_sample_completed_ <-& (R_R_71_sample_start_)
       R_R_71_update_start_ <-& (R_R_71_sample_completed_)
       R_R_71_update_completed_ <-& (R_R_71_update_start_)
-      R_R_71_sample_start_ <-& (R_update_enable)
+      R_R_71_sample_start_ <-& ($entry)
       SUB_f64_f64_72_sample_start_ <-& (R_L_70_update_completed_)
       SUB_f64_f64_72_sample_start_ <-& (R_R_71_update_completed_)
       ;;[SUB_f64_f64_72_Sample] 
@@ -708,9 +708,9 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpsub64]
       SUB_f64_f64_72_update_start_ &-> (SUB_f64_f64_72_Update)
       SUB_f64_f64_72_update_completed_ <-& (SUB_f64_f64_72_Update)
       // RAW reenables for L
-      L_update_enable o<-& (SUB_f64_f64_72_sample_completed_ 1)
+      L_update_enable o<-& (SUB_f64_f64_72_sample_completed_ 0)
       // RAW reenables for R
-      R_update_enable o<-& (SUB_f64_f64_72_sample_completed_ 1)
+      R_update_enable o<-& (SUB_f64_f64_72_sample_completed_ 0)
       // self-release: 
       SUB_f64_f64_72_sample_start_ o<-& (SUB_f64_f64_72_sample_completed_ 1)
       SUB_f64_f64_72_update_start_ o<-& (SUB_f64_f64_72_update_completed_ 0)
@@ -803,7 +803,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       R_OP_ID_81_sample_completed_ <-& (R_OP_ID_81_sample_start_)
       R_OP_ID_81_update_start_ <-& (R_OP_ID_81_sample_completed_)
       R_OP_ID_81_update_completed_ <-& (R_OP_ID_81_update_start_)
-      R_OP_ID_81_sample_start_ <-& (OP_ID_update_enable)
+      R_OP_ID_81_sample_start_ <-& ($entry)
       // Target expression
       // (as target) OP_ID_81_delayed_1
       // OP_ID_81_delayed_1
@@ -828,7 +828,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       assign_stmt_82_update_completed_ <-& (assign_stmt_82_Update)
       assign_stmt_82_sample_start_ <-& (R_OP_ID_81_update_completed_)
       // RAW reenables for OP_ID
-      OP_ID_update_enable o<-& (assign_stmt_82_sample_completed_ 1)
+      OP_ID_update_enable o<-& (assign_stmt_82_sample_completed_ 0)
       // self-release: 
       assign_stmt_82_sample_start_ o<-& (assign_stmt_82_sample_completed_ 1)
       assign_stmt_82_update_start_ o<-& (assign_stmt_82_update_completed_ 0)
@@ -888,7 +888,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       R_OP_ID_90_sample_completed_ <-& (R_OP_ID_90_sample_start_)
       R_OP_ID_90_update_start_ <-& (R_OP_ID_90_sample_completed_)
       R_OP_ID_90_update_completed_ <-& (R_OP_ID_90_update_start_)
-      R_OP_ID_90_sample_start_ <-& (OP_ID_update_enable)
+      R_OP_ID_90_sample_start_ <-& ($entry)
       // Target expression
       // (as target) OP_ID_87_delayed_1
       // OP_ID_87_delayed_1
@@ -913,7 +913,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       assign_stmt_91_update_completed_ <-& (assign_stmt_91_Update)
       assign_stmt_91_sample_start_ <-& (R_OP_ID_90_update_completed_)
       // RAW reenables for OP_ID
-      OP_ID_update_enable o<-& (assign_stmt_91_sample_completed_ 1)
+      OP_ID_update_enable o<-& (assign_stmt_91_sample_completed_ 0)
       // self-release: 
       assign_stmt_91_sample_start_ o<-& (assign_stmt_91_sample_completed_ 1)
       assign_stmt_91_update_start_ o<-& (assign_stmt_91_update_completed_ 0)
@@ -973,7 +973,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       R_OP_ID_98_sample_completed_ <-& (R_OP_ID_98_sample_start_)
       R_OP_ID_98_update_start_ <-& (R_OP_ID_98_sample_completed_)
       R_OP_ID_98_update_completed_ <-& (R_OP_ID_98_update_start_)
-      R_OP_ID_98_sample_start_ <-& (OP_ID_update_enable)
+      R_OP_ID_98_sample_start_ <-& ($entry)
       // Target expression
       // (as target) OP_ID_92_delayed_1
       // OP_ID_92_delayed_1
@@ -998,7 +998,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       assign_stmt_99_update_completed_ <-& (assign_stmt_99_Update)
       assign_stmt_99_sample_start_ <-& (R_OP_ID_98_update_completed_)
       // RAW reenables for OP_ID
-      OP_ID_update_enable o<-& (assign_stmt_99_sample_completed_ 1)
+      OP_ID_update_enable o<-& (assign_stmt_99_sample_completed_ 0)
       // self-release: 
       assign_stmt_99_sample_start_ o<-& (assign_stmt_99_sample_completed_ 1)
       assign_stmt_99_update_start_ o<-& (assign_stmt_99_update_completed_ 0)
@@ -1058,7 +1058,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       R_L_106_sample_completed_ <-& (R_L_106_sample_start_)
       R_L_106_update_start_ <-& (R_L_106_sample_completed_)
       R_L_106_update_completed_ <-& (R_L_106_update_start_)
-      R_L_106_sample_start_ <-& (L_update_enable)
+      R_L_106_sample_start_ <-& ($entry)
       // Target expression
       // (as target) L_97_delayed_2
       // L_97_delayed_2
@@ -1083,7 +1083,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       assign_stmt_107_update_completed_ <-& (assign_stmt_107_Update)
       assign_stmt_107_sample_start_ <-& (R_L_106_update_completed_)
       // RAW reenables for L
-      L_update_enable o<-& (assign_stmt_107_sample_completed_ 1)
+      L_update_enable o<-& (assign_stmt_107_sample_completed_ 0)
       // self-release: 
       assign_stmt_107_sample_start_ o<-& (assign_stmt_107_sample_completed_ 1)
       assign_stmt_107_update_start_ o<-& (assign_stmt_107_update_completed_ 0)
@@ -1100,7 +1100,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       R_R_109_sample_completed_ <-& (R_R_109_sample_start_)
       R_R_109_update_start_ <-& (R_R_109_sample_completed_)
       R_R_109_update_completed_ <-& (R_R_109_update_start_)
-      R_R_109_sample_start_ <-& (R_update_enable)
+      R_R_109_sample_start_ <-& ($entry)
       // Target expression
       // (as target) R_98_delayed_2
       // R_98_delayed_2
@@ -1125,23 +1125,19 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       assign_stmt_110_update_completed_ <-& (assign_stmt_110_Update)
       assign_stmt_110_sample_start_ <-& (R_R_109_update_completed_)
       // RAW reenables for R
-      R_update_enable o<-& (assign_stmt_110_sample_completed_ 1)
+      R_update_enable o<-& (assign_stmt_110_sample_completed_ 0)
       // self-release: 
       assign_stmt_110_sample_start_ o<-& (assign_stmt_110_sample_completed_ 1)
       assign_stmt_110_update_start_ o<-& (assign_stmt_110_update_completed_ 0)
       // 	$guard (is_add) oadd := (L_97_delayed_2 + R_98_delayed_2)
       //  file prog.linked.opt.aa, line 63
-      // Guard expression
+      // Guard expression 
       // is_add
       $T[R_is_add_116_sample_start_] 
       $T[R_is_add_116_sample_completed_] 
       $T[R_is_add_116_update_start_] 
       $T[R_is_add_116_update_completed_] 
       // implicit reference
-      // Guard dependency
-      R_is_add_116_sample_start_ <-& (EQ_u8_u1_86_update_completed_)
-      // RAW reenables for is_add
-      EQ_u8_u1_86_update_start_ o<-& (R_is_add_116_sample_completed_ 0)
       R_is_add_116_sample_start_ <-& (EQ_u8_u1_86_update_completed_)
       R_is_add_116_sample_completed_ <-& (R_is_add_116_sample_start_)
       R_is_add_116_update_start_ <-& (R_is_add_116_sample_completed_)
@@ -1152,7 +1148,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       $T[ADD_f32_f32_114_sample_completed_] 
       $T[ADD_f32_f32_114_update_start_] 
       $T[ADD_f32_f32_114_update_completed_] 
-      // Guard dependency
+      // Guard dependency for expression ADD_f32_f32_114 with guard R_is_add_116
       ADD_f32_f32_114_sample_start_ <-& (EQ_u8_u1_86_update_completed_)
       // RAW reenables for is_add
       EQ_u8_u1_86_update_start_ o<-& (ADD_f32_f32_114_sample_completed_ 0)
@@ -1162,7 +1158,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       $T[R_L_97_delayed_2_112_update_start_] 
       $T[R_L_97_delayed_2_112_update_completed_] 
       // implicit reference
-      // Guard dependency
+      // Guard dependency for expression R_L_97_delayed_2_112 with guard R_is_add_116
       R_L_97_delayed_2_112_sample_start_ <-& (EQ_u8_u1_86_update_completed_)
       // RAW reenables for is_add
       EQ_u8_u1_86_update_start_ o<-& (R_L_97_delayed_2_112_sample_completed_ 0)
@@ -1176,7 +1172,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       $T[R_R_98_delayed_2_113_update_start_] 
       $T[R_R_98_delayed_2_113_update_completed_] 
       // implicit reference
-      // Guard dependency
+      // Guard dependency for expression R_R_98_delayed_2_113 with guard R_is_add_116
       R_R_98_delayed_2_113_sample_start_ <-& (EQ_u8_u1_86_update_completed_)
       // RAW reenables for is_add
       EQ_u8_u1_86_update_start_ o<-& (R_R_98_delayed_2_113_sample_completed_ 0)
@@ -1225,7 +1221,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       R_L_118_sample_completed_ <-& (R_L_118_sample_start_)
       R_L_118_update_start_ <-& (R_L_118_sample_completed_)
       R_L_118_update_completed_ <-& (R_L_118_update_start_)
-      R_L_118_sample_start_ <-& (L_update_enable)
+      R_L_118_sample_start_ <-& ($entry)
       // Target expression
       // (as target) L_103_delayed_2
       // L_103_delayed_2
@@ -1250,7 +1246,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       assign_stmt_119_update_completed_ <-& (assign_stmt_119_Update)
       assign_stmt_119_sample_start_ <-& (R_L_118_update_completed_)
       // RAW reenables for L
-      L_update_enable o<-& (assign_stmt_119_sample_completed_ 1)
+      L_update_enable o<-& (assign_stmt_119_sample_completed_ 0)
       // self-release: 
       assign_stmt_119_sample_start_ o<-& (assign_stmt_119_sample_completed_ 1)
       assign_stmt_119_update_start_ o<-& (assign_stmt_119_update_completed_ 0)
@@ -1267,7 +1263,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       R_R_121_sample_completed_ <-& (R_R_121_sample_start_)
       R_R_121_update_start_ <-& (R_R_121_sample_completed_)
       R_R_121_update_completed_ <-& (R_R_121_update_start_)
-      R_R_121_sample_start_ <-& (R_update_enable)
+      R_R_121_sample_start_ <-& ($entry)
       // Target expression
       // (as target) R_104_delayed_2
       // R_104_delayed_2
@@ -1292,23 +1288,19 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       assign_stmt_122_update_completed_ <-& (assign_stmt_122_Update)
       assign_stmt_122_sample_start_ <-& (R_R_121_update_completed_)
       // RAW reenables for R
-      R_update_enable o<-& (assign_stmt_122_sample_completed_ 1)
+      R_update_enable o<-& (assign_stmt_122_sample_completed_ 0)
       // self-release: 
       assign_stmt_122_sample_start_ o<-& (assign_stmt_122_sample_completed_ 1)
       assign_stmt_122_update_start_ o<-& (assign_stmt_122_update_completed_ 0)
       // 	$guard (is_sub) osub := (L_103_delayed_2 - R_104_delayed_2)
       //  file prog.linked.opt.aa, line 66
-      // Guard expression
+      // Guard expression 
       // is_sub
       $T[R_is_sub_128_sample_start_] 
       $T[R_is_sub_128_sample_completed_] 
       $T[R_is_sub_128_update_start_] 
       $T[R_is_sub_128_update_completed_] 
       // implicit reference
-      // Guard dependency
-      R_is_sub_128_sample_start_ <-& (EQ_u8_u1_95_update_completed_)
-      // RAW reenables for is_sub
-      EQ_u8_u1_95_update_start_ o<-& (R_is_sub_128_sample_completed_ 0)
       R_is_sub_128_sample_start_ <-& (EQ_u8_u1_95_update_completed_)
       R_is_sub_128_sample_completed_ <-& (R_is_sub_128_sample_start_)
       R_is_sub_128_update_start_ <-& (R_is_sub_128_sample_completed_)
@@ -1319,7 +1311,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       $T[SUB_f32_f32_126_sample_completed_] 
       $T[SUB_f32_f32_126_update_start_] 
       $T[SUB_f32_f32_126_update_completed_] 
-      // Guard dependency
+      // Guard dependency for expression SUB_f32_f32_126 with guard R_is_sub_128
       SUB_f32_f32_126_sample_start_ <-& (EQ_u8_u1_95_update_completed_)
       // RAW reenables for is_sub
       EQ_u8_u1_95_update_start_ o<-& (SUB_f32_f32_126_sample_completed_ 0)
@@ -1329,7 +1321,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       $T[R_L_103_delayed_2_124_update_start_] 
       $T[R_L_103_delayed_2_124_update_completed_] 
       // implicit reference
-      // Guard dependency
+      // Guard dependency for expression R_L_103_delayed_2_124 with guard R_is_sub_128
       R_L_103_delayed_2_124_sample_start_ <-& (EQ_u8_u1_95_update_completed_)
       // RAW reenables for is_sub
       EQ_u8_u1_95_update_start_ o<-& (R_L_103_delayed_2_124_sample_completed_ 0)
@@ -1343,7 +1335,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       $T[R_R_104_delayed_2_125_update_start_] 
       $T[R_R_104_delayed_2_125_update_completed_] 
       // implicit reference
-      // Guard dependency
+      // Guard dependency for expression R_R_104_delayed_2_125 with guard R_is_sub_128
       R_R_104_delayed_2_125_sample_start_ <-& (EQ_u8_u1_95_update_completed_)
       // RAW reenables for is_sub
       EQ_u8_u1_95_update_start_ o<-& (R_R_104_delayed_2_125_sample_completed_ 0)
@@ -1392,7 +1384,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       R_L_130_sample_completed_ <-& (R_L_130_sample_start_)
       R_L_130_update_start_ <-& (R_L_130_sample_completed_)
       R_L_130_update_completed_ <-& (R_L_130_update_start_)
-      R_L_130_sample_start_ <-& (L_update_enable)
+      R_L_130_sample_start_ <-& ($entry)
       // Target expression
       // (as target) L_109_delayed_2
       // L_109_delayed_2
@@ -1417,7 +1409,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       assign_stmt_131_update_completed_ <-& (assign_stmt_131_Update)
       assign_stmt_131_sample_start_ <-& (R_L_130_update_completed_)
       // RAW reenables for L
-      L_update_enable o<-& (assign_stmt_131_sample_completed_ 1)
+      L_update_enable o<-& (assign_stmt_131_sample_completed_ 0)
       // self-release: 
       assign_stmt_131_sample_start_ o<-& (assign_stmt_131_sample_completed_ 1)
       assign_stmt_131_update_start_ o<-& (assign_stmt_131_update_completed_ 0)
@@ -1434,7 +1426,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       R_R_133_sample_completed_ <-& (R_R_133_sample_start_)
       R_R_133_update_start_ <-& (R_R_133_sample_completed_)
       R_R_133_update_completed_ <-& (R_R_133_update_start_)
-      R_R_133_sample_start_ <-& (R_update_enable)
+      R_R_133_sample_start_ <-& ($entry)
       // Target expression
       // (as target) R_110_delayed_2
       // R_110_delayed_2
@@ -1459,23 +1451,19 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       assign_stmt_134_update_completed_ <-& (assign_stmt_134_Update)
       assign_stmt_134_sample_start_ <-& (R_R_133_update_completed_)
       // RAW reenables for R
-      R_update_enable o<-& (assign_stmt_134_sample_completed_ 1)
+      R_update_enable o<-& (assign_stmt_134_sample_completed_ 0)
       // self-release: 
       assign_stmt_134_sample_start_ o<-& (assign_stmt_134_sample_completed_ 1)
       assign_stmt_134_update_start_ o<-& (assign_stmt_134_update_completed_ 0)
       // 	$guard (is_mul) omul := (L_109_delayed_2 * R_110_delayed_2)
       //  file prog.linked.opt.aa, line 69
-      // Guard expression
+      // Guard expression 
       // is_mul
       $T[R_is_mul_140_sample_start_] 
       $T[R_is_mul_140_sample_completed_] 
       $T[R_is_mul_140_update_start_] 
       $T[R_is_mul_140_update_completed_] 
       // implicit reference
-      // Guard dependency
-      R_is_mul_140_sample_start_ <-& (EQ_u8_u1_103_update_completed_)
-      // RAW reenables for is_mul
-      EQ_u8_u1_103_update_start_ o<-& (R_is_mul_140_sample_completed_ 0)
       R_is_mul_140_sample_start_ <-& (EQ_u8_u1_103_update_completed_)
       R_is_mul_140_sample_completed_ <-& (R_is_mul_140_sample_start_)
       R_is_mul_140_update_start_ <-& (R_is_mul_140_sample_completed_)
@@ -1486,7 +1474,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       $T[MUL_f32_f32_138_sample_completed_] 
       $T[MUL_f32_f32_138_update_start_] 
       $T[MUL_f32_f32_138_update_completed_] 
-      // Guard dependency
+      // Guard dependency for expression MUL_f32_f32_138 with guard R_is_mul_140
       MUL_f32_f32_138_sample_start_ <-& (EQ_u8_u1_103_update_completed_)
       // RAW reenables for is_mul
       EQ_u8_u1_103_update_start_ o<-& (MUL_f32_f32_138_sample_completed_ 0)
@@ -1496,7 +1484,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       $T[R_L_109_delayed_2_136_update_start_] 
       $T[R_L_109_delayed_2_136_update_completed_] 
       // implicit reference
-      // Guard dependency
+      // Guard dependency for expression R_L_109_delayed_2_136 with guard R_is_mul_140
       R_L_109_delayed_2_136_sample_start_ <-& (EQ_u8_u1_103_update_completed_)
       // RAW reenables for is_mul
       EQ_u8_u1_103_update_start_ o<-& (R_L_109_delayed_2_136_sample_completed_ 0)
@@ -1510,7 +1498,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       $T[R_R_110_delayed_2_137_update_start_] 
       $T[R_R_110_delayed_2_137_update_completed_] 
       // implicit reference
-      // Guard dependency
+      // Guard dependency for expression R_R_110_delayed_2_137 with guard R_is_mul_140
       R_R_110_delayed_2_137_sample_start_ <-& (EQ_u8_u1_103_update_completed_)
       // RAW reenables for is_mul
       EQ_u8_u1_103_update_start_ o<-& (R_R_110_delayed_2_137_sample_completed_ 0)
@@ -1807,10 +1795,10 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
       // RAW reenables for oadd
       ADD_f32_f32_114_update_start_ o<-& (MUX_160_sample_completed_ 0)
       // RAW reenables for ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  ) 
-      SUB_f32_f32_126_update_start_ o<-& (MUX_160_sample_completed_ 0)
       assign_stmt_149_update_start_ o<-& (MUX_160_sample_completed_ 0)
       MUL_f32_f32_138_update_start_ o<-& (MUX_160_sample_completed_ 0)
       assign_stmt_146_update_start_ o<-& (MUX_160_sample_completed_ 0)
+      SUB_f32_f32_126_update_start_ o<-& (MUX_160_sample_completed_ 0)
       // self-release: 
       MUX_160_sample_start_ o<-& (MUX_160_sample_completed_ 1)
       MUX_160_update_start_ o<-& (MUX_160_update_completed_ 0)
@@ -1848,7 +1836,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu32]
     // ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  ) 
     // ( $mux is_mul_119_delayed_24 omul  0  ) 
     // 0 
-    $constant $W[expr_157_wire_constant] : $float<8,23> := _b00000000000000000000000000000000// 0.000000e+00
+    $constant $W[expr_157_wire_constant] : $float<8,23> := _b10000000000000000000000000000000// 0.000000e+00
     // 	OP_ID_81_delayed_1 := OP_ID
     //  file prog.linked.opt.aa, line 55
     // OP_ID_81_delayed_1
@@ -2176,7 +2164,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       R_OP_ID_169_sample_completed_ <-& (R_OP_ID_169_sample_start_)
       R_OP_ID_169_update_start_ <-& (R_OP_ID_169_sample_completed_)
       R_OP_ID_169_update_completed_ <-& (R_OP_ID_169_update_start_)
-      R_OP_ID_169_sample_start_ <-& (OP_ID_update_enable)
+      R_OP_ID_169_sample_start_ <-& ($entry)
       // Target expression
       // (as target) OP_ID_133_delayed_1
       // OP_ID_133_delayed_1
@@ -2201,7 +2189,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       assign_stmt_170_update_completed_ <-& (assign_stmt_170_Update)
       assign_stmt_170_sample_start_ <-& (R_OP_ID_169_update_completed_)
       // RAW reenables for OP_ID
-      OP_ID_update_enable o<-& (assign_stmt_170_sample_completed_ 1)
+      OP_ID_update_enable o<-& (assign_stmt_170_sample_completed_ 0)
       // self-release: 
       assign_stmt_170_sample_start_ o<-& (assign_stmt_170_sample_completed_ 1)
       assign_stmt_170_update_start_ o<-& (assign_stmt_170_update_completed_ 0)
@@ -2261,7 +2249,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       R_OP_ID_177_sample_completed_ <-& (R_OP_ID_177_sample_start_)
       R_OP_ID_177_update_start_ <-& (R_OP_ID_177_sample_completed_)
       R_OP_ID_177_update_completed_ <-& (R_OP_ID_177_update_start_)
-      R_OP_ID_177_sample_start_ <-& (OP_ID_update_enable)
+      R_OP_ID_177_sample_start_ <-& ($entry)
       // Target expression
       // (as target) OP_ID_138_delayed_1
       // OP_ID_138_delayed_1
@@ -2286,7 +2274,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       assign_stmt_178_update_completed_ <-& (assign_stmt_178_Update)
       assign_stmt_178_sample_start_ <-& (R_OP_ID_177_update_completed_)
       // RAW reenables for OP_ID
-      OP_ID_update_enable o<-& (assign_stmt_178_sample_completed_ 1)
+      OP_ID_update_enable o<-& (assign_stmt_178_sample_completed_ 0)
       // self-release: 
       assign_stmt_178_sample_start_ o<-& (assign_stmt_178_sample_completed_ 1)
       assign_stmt_178_update_start_ o<-& (assign_stmt_178_update_completed_ 0)
@@ -2346,7 +2334,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       R_OP_ID_185_sample_completed_ <-& (R_OP_ID_185_sample_start_)
       R_OP_ID_185_update_start_ <-& (R_OP_ID_185_sample_completed_)
       R_OP_ID_185_update_completed_ <-& (R_OP_ID_185_update_start_)
-      R_OP_ID_185_sample_start_ <-& (OP_ID_update_enable)
+      R_OP_ID_185_sample_start_ <-& ($entry)
       // Target expression
       // (as target) OP_ID_143_delayed_1
       // OP_ID_143_delayed_1
@@ -2371,7 +2359,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       assign_stmt_186_update_completed_ <-& (assign_stmt_186_Update)
       assign_stmt_186_sample_start_ <-& (R_OP_ID_185_update_completed_)
       // RAW reenables for OP_ID
-      OP_ID_update_enable o<-& (assign_stmt_186_sample_completed_ 1)
+      OP_ID_update_enable o<-& (assign_stmt_186_sample_completed_ 0)
       // self-release: 
       assign_stmt_186_sample_start_ o<-& (assign_stmt_186_sample_completed_ 1)
       assign_stmt_186_update_start_ o<-& (assign_stmt_186_update_completed_ 0)
@@ -2431,7 +2419,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       R_L_193_sample_completed_ <-& (R_L_193_sample_start_)
       R_L_193_update_start_ <-& (R_L_193_sample_completed_)
       R_L_193_update_completed_ <-& (R_L_193_update_start_)
-      R_L_193_sample_start_ <-& (L_update_enable)
+      R_L_193_sample_start_ <-& ($entry)
       // Target expression
       // (as target) L_148_delayed_2
       // L_148_delayed_2
@@ -2456,7 +2444,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       assign_stmt_194_update_completed_ <-& (assign_stmt_194_Update)
       assign_stmt_194_sample_start_ <-& (R_L_193_update_completed_)
       // RAW reenables for L
-      L_update_enable o<-& (assign_stmt_194_sample_completed_ 1)
+      L_update_enable o<-& (assign_stmt_194_sample_completed_ 0)
       // self-release: 
       assign_stmt_194_sample_start_ o<-& (assign_stmt_194_sample_completed_ 1)
       assign_stmt_194_update_start_ o<-& (assign_stmt_194_update_completed_ 0)
@@ -2473,7 +2461,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       R_R_196_sample_completed_ <-& (R_R_196_sample_start_)
       R_R_196_update_start_ <-& (R_R_196_sample_completed_)
       R_R_196_update_completed_ <-& (R_R_196_update_start_)
-      R_R_196_sample_start_ <-& (R_update_enable)
+      R_R_196_sample_start_ <-& ($entry)
       // Target expression
       // (as target) R_149_delayed_2
       // R_149_delayed_2
@@ -2498,23 +2486,19 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       assign_stmt_197_update_completed_ <-& (assign_stmt_197_Update)
       assign_stmt_197_sample_start_ <-& (R_R_196_update_completed_)
       // RAW reenables for R
-      R_update_enable o<-& (assign_stmt_197_sample_completed_ 1)
+      R_update_enable o<-& (assign_stmt_197_sample_completed_ 0)
       // self-release: 
       assign_stmt_197_sample_start_ o<-& (assign_stmt_197_sample_completed_ 1)
       assign_stmt_197_update_start_ o<-& (assign_stmt_197_update_completed_ 0)
       // 	$guard (is_add) oadd := (L_148_delayed_2 + R_149_delayed_2)
       //  file prog.linked.opt.aa, line 88
-      // Guard expression
+      // Guard expression 
       // is_add
       $T[R_is_add_203_sample_start_] 
       $T[R_is_add_203_sample_completed_] 
       $T[R_is_add_203_update_start_] 
       $T[R_is_add_203_update_completed_] 
       // implicit reference
-      // Guard dependency
-      R_is_add_203_sample_start_ <-& (EQ_u8_u1_174_update_completed_)
-      // RAW reenables for is_add
-      EQ_u8_u1_174_update_start_ o<-& (R_is_add_203_sample_completed_ 0)
       R_is_add_203_sample_start_ <-& (EQ_u8_u1_174_update_completed_)
       R_is_add_203_sample_completed_ <-& (R_is_add_203_sample_start_)
       R_is_add_203_update_start_ <-& (R_is_add_203_sample_completed_)
@@ -2525,7 +2509,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       $T[ADD_f64_f64_201_sample_completed_] 
       $T[ADD_f64_f64_201_update_start_] 
       $T[ADD_f64_f64_201_update_completed_] 
-      // Guard dependency
+      // Guard dependency for expression ADD_f64_f64_201 with guard R_is_add_203
       ADD_f64_f64_201_sample_start_ <-& (EQ_u8_u1_174_update_completed_)
       // RAW reenables for is_add
       EQ_u8_u1_174_update_start_ o<-& (ADD_f64_f64_201_sample_completed_ 0)
@@ -2535,7 +2519,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       $T[R_L_148_delayed_2_199_update_start_] 
       $T[R_L_148_delayed_2_199_update_completed_] 
       // implicit reference
-      // Guard dependency
+      // Guard dependency for expression R_L_148_delayed_2_199 with guard R_is_add_203
       R_L_148_delayed_2_199_sample_start_ <-& (EQ_u8_u1_174_update_completed_)
       // RAW reenables for is_add
       EQ_u8_u1_174_update_start_ o<-& (R_L_148_delayed_2_199_sample_completed_ 0)
@@ -2549,7 +2533,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       $T[R_R_149_delayed_2_200_update_start_] 
       $T[R_R_149_delayed_2_200_update_completed_] 
       // implicit reference
-      // Guard dependency
+      // Guard dependency for expression R_R_149_delayed_2_200 with guard R_is_add_203
       R_R_149_delayed_2_200_sample_start_ <-& (EQ_u8_u1_174_update_completed_)
       // RAW reenables for is_add
       EQ_u8_u1_174_update_start_ o<-& (R_R_149_delayed_2_200_sample_completed_ 0)
@@ -2598,7 +2582,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       R_L_205_sample_completed_ <-& (R_L_205_sample_start_)
       R_L_205_update_start_ <-& (R_L_205_sample_completed_)
       R_L_205_update_completed_ <-& (R_L_205_update_start_)
-      R_L_205_sample_start_ <-& (L_update_enable)
+      R_L_205_sample_start_ <-& ($entry)
       // Target expression
       // (as target) L_154_delayed_2
       // L_154_delayed_2
@@ -2623,7 +2607,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       assign_stmt_206_update_completed_ <-& (assign_stmt_206_Update)
       assign_stmt_206_sample_start_ <-& (R_L_205_update_completed_)
       // RAW reenables for L
-      L_update_enable o<-& (assign_stmt_206_sample_completed_ 1)
+      L_update_enable o<-& (assign_stmt_206_sample_completed_ 0)
       // self-release: 
       assign_stmt_206_sample_start_ o<-& (assign_stmt_206_sample_completed_ 1)
       assign_stmt_206_update_start_ o<-& (assign_stmt_206_update_completed_ 0)
@@ -2640,7 +2624,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       R_R_208_sample_completed_ <-& (R_R_208_sample_start_)
       R_R_208_update_start_ <-& (R_R_208_sample_completed_)
       R_R_208_update_completed_ <-& (R_R_208_update_start_)
-      R_R_208_sample_start_ <-& (R_update_enable)
+      R_R_208_sample_start_ <-& ($entry)
       // Target expression
       // (as target) R_155_delayed_2
       // R_155_delayed_2
@@ -2665,23 +2649,19 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       assign_stmt_209_update_completed_ <-& (assign_stmt_209_Update)
       assign_stmt_209_sample_start_ <-& (R_R_208_update_completed_)
       // RAW reenables for R
-      R_update_enable o<-& (assign_stmt_209_sample_completed_ 1)
+      R_update_enable o<-& (assign_stmt_209_sample_completed_ 0)
       // self-release: 
       assign_stmt_209_sample_start_ o<-& (assign_stmt_209_sample_completed_ 1)
       assign_stmt_209_update_start_ o<-& (assign_stmt_209_update_completed_ 0)
       // 	$guard (is_sub) osub := (L_154_delayed_2 - R_155_delayed_2)
       //  file prog.linked.opt.aa, line 91
-      // Guard expression
+      // Guard expression 
       // is_sub
       $T[R_is_sub_215_sample_start_] 
       $T[R_is_sub_215_sample_completed_] 
       $T[R_is_sub_215_update_start_] 
       $T[R_is_sub_215_update_completed_] 
       // implicit reference
-      // Guard dependency
-      R_is_sub_215_sample_start_ <-& (EQ_u8_u1_182_update_completed_)
-      // RAW reenables for is_sub
-      EQ_u8_u1_182_update_start_ o<-& (R_is_sub_215_sample_completed_ 0)
       R_is_sub_215_sample_start_ <-& (EQ_u8_u1_182_update_completed_)
       R_is_sub_215_sample_completed_ <-& (R_is_sub_215_sample_start_)
       R_is_sub_215_update_start_ <-& (R_is_sub_215_sample_completed_)
@@ -2692,7 +2672,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       $T[SUB_f64_f64_213_sample_completed_] 
       $T[SUB_f64_f64_213_update_start_] 
       $T[SUB_f64_f64_213_update_completed_] 
-      // Guard dependency
+      // Guard dependency for expression SUB_f64_f64_213 with guard R_is_sub_215
       SUB_f64_f64_213_sample_start_ <-& (EQ_u8_u1_182_update_completed_)
       // RAW reenables for is_sub
       EQ_u8_u1_182_update_start_ o<-& (SUB_f64_f64_213_sample_completed_ 0)
@@ -2702,7 +2682,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       $T[R_L_154_delayed_2_211_update_start_] 
       $T[R_L_154_delayed_2_211_update_completed_] 
       // implicit reference
-      // Guard dependency
+      // Guard dependency for expression R_L_154_delayed_2_211 with guard R_is_sub_215
       R_L_154_delayed_2_211_sample_start_ <-& (EQ_u8_u1_182_update_completed_)
       // RAW reenables for is_sub
       EQ_u8_u1_182_update_start_ o<-& (R_L_154_delayed_2_211_sample_completed_ 0)
@@ -2716,7 +2696,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       $T[R_R_155_delayed_2_212_update_start_] 
       $T[R_R_155_delayed_2_212_update_completed_] 
       // implicit reference
-      // Guard dependency
+      // Guard dependency for expression R_R_155_delayed_2_212 with guard R_is_sub_215
       R_R_155_delayed_2_212_sample_start_ <-& (EQ_u8_u1_182_update_completed_)
       // RAW reenables for is_sub
       EQ_u8_u1_182_update_start_ o<-& (R_R_155_delayed_2_212_sample_completed_ 0)
@@ -2765,7 +2745,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       R_L_217_sample_completed_ <-& (R_L_217_sample_start_)
       R_L_217_update_start_ <-& (R_L_217_sample_completed_)
       R_L_217_update_completed_ <-& (R_L_217_update_start_)
-      R_L_217_sample_start_ <-& (L_update_enable)
+      R_L_217_sample_start_ <-& ($entry)
       // Target expression
       // (as target) L_160_delayed_2
       // L_160_delayed_2
@@ -2790,7 +2770,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       assign_stmt_218_update_completed_ <-& (assign_stmt_218_Update)
       assign_stmt_218_sample_start_ <-& (R_L_217_update_completed_)
       // RAW reenables for L
-      L_update_enable o<-& (assign_stmt_218_sample_completed_ 1)
+      L_update_enable o<-& (assign_stmt_218_sample_completed_ 0)
       // self-release: 
       assign_stmt_218_sample_start_ o<-& (assign_stmt_218_sample_completed_ 1)
       assign_stmt_218_update_start_ o<-& (assign_stmt_218_update_completed_ 0)
@@ -2807,7 +2787,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       R_R_220_sample_completed_ <-& (R_R_220_sample_start_)
       R_R_220_update_start_ <-& (R_R_220_sample_completed_)
       R_R_220_update_completed_ <-& (R_R_220_update_start_)
-      R_R_220_sample_start_ <-& (R_update_enable)
+      R_R_220_sample_start_ <-& ($entry)
       // Target expression
       // (as target) R_161_delayed_2
       // R_161_delayed_2
@@ -2832,23 +2812,19 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       assign_stmt_221_update_completed_ <-& (assign_stmt_221_Update)
       assign_stmt_221_sample_start_ <-& (R_R_220_update_completed_)
       // RAW reenables for R
-      R_update_enable o<-& (assign_stmt_221_sample_completed_ 1)
+      R_update_enable o<-& (assign_stmt_221_sample_completed_ 0)
       // self-release: 
       assign_stmt_221_sample_start_ o<-& (assign_stmt_221_sample_completed_ 1)
       assign_stmt_221_update_start_ o<-& (assign_stmt_221_update_completed_ 0)
       // 	$guard (is_mul) omul := (L_160_delayed_2 * R_161_delayed_2)
       //  file prog.linked.opt.aa, line 94
-      // Guard expression
+      // Guard expression 
       // is_mul
       $T[R_is_mul_227_sample_start_] 
       $T[R_is_mul_227_sample_completed_] 
       $T[R_is_mul_227_update_start_] 
       $T[R_is_mul_227_update_completed_] 
       // implicit reference
-      // Guard dependency
-      R_is_mul_227_sample_start_ <-& (EQ_u8_u1_190_update_completed_)
-      // RAW reenables for is_mul
-      EQ_u8_u1_190_update_start_ o<-& (R_is_mul_227_sample_completed_ 0)
       R_is_mul_227_sample_start_ <-& (EQ_u8_u1_190_update_completed_)
       R_is_mul_227_sample_completed_ <-& (R_is_mul_227_sample_start_)
       R_is_mul_227_update_start_ <-& (R_is_mul_227_sample_completed_)
@@ -2859,7 +2835,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       $T[MUL_f64_f64_225_sample_completed_] 
       $T[MUL_f64_f64_225_update_start_] 
       $T[MUL_f64_f64_225_update_completed_] 
-      // Guard dependency
+      // Guard dependency for expression MUL_f64_f64_225 with guard R_is_mul_227
       MUL_f64_f64_225_sample_start_ <-& (EQ_u8_u1_190_update_completed_)
       // RAW reenables for is_mul
       EQ_u8_u1_190_update_start_ o<-& (MUL_f64_f64_225_sample_completed_ 0)
@@ -2869,7 +2845,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       $T[R_L_160_delayed_2_223_update_start_] 
       $T[R_L_160_delayed_2_223_update_completed_] 
       // implicit reference
-      // Guard dependency
+      // Guard dependency for expression R_L_160_delayed_2_223 with guard R_is_mul_227
       R_L_160_delayed_2_223_sample_start_ <-& (EQ_u8_u1_190_update_completed_)
       // RAW reenables for is_mul
       EQ_u8_u1_190_update_start_ o<-& (R_L_160_delayed_2_223_sample_completed_ 0)
@@ -2883,7 +2859,7 @@ $pipeline $depth 1 $buffering 1 $fullrate $module [fpu64]
       $T[R_R_161_delayed_2_224_update_start_] 
       $T[R_R_161_delayed_2_224_update_completed_] 
       // implicit reference
-      // Guard dependency
+      // Guard dependency for expression R_R_161_delayed_2_224 with guard R_is_mul_227
       R_R_161_delayed_2_224_sample_start_ <-& (EQ_u8_u1_190_update_completed_)
       // RAW reenables for is_mul
       EQ_u8_u1_190_update_start_ o<-& (R_R_161_delayed_2_224_sample_completed_ 0)
