@@ -1538,6 +1538,9 @@ class AaTernaryExpression: public AaExpression
 };
 
 
+AaExpression* Make_Vector_Concat_Expression(AaScope* scope, int line_no, vector<AaExpression*>& expr_vector);
+AaExpression* Make_Priority_Mux_Expression(AaScope* scope, int line_no, int sindex, vector<pair<AaExpression*,AaExpression*> >& expr_vector,
+						AaExpression* default_expr);
 
 
 #endif

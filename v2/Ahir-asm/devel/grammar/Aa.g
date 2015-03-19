@@ -596,6 +596,7 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
     AaExpression* expr;
     AaSimpleObjectReference* target;
     set<string,StringCompare> tset;
+    vector<string> labels;
 }
     : pl: PHI tgt:SIMPLE_IDENTIFIER 
         {
@@ -609,29 +610,40 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
             expr = aA_Expression[scope]
             ON
             ( 
-                (sid: SIMPLE_IDENTIFIER {label = sid->getText(); }) |
-                (eid: ENTRY {label = eid->getText(); }) |
-                (bid: LOOPBACK {label = bid->getText(); }) 
+                (sid: SIMPLE_IDENTIFIER {label = sid->getText(); labels.push_back(label); }) |
+                (eid: ENTRY {label = eid->getText(); labels.push_back(label); }) |
+                (bid: LOOPBACK {label = bid->getText(); labels.push_back(label); }) 
             )
+	    ( COMMA 
+			(asid: SIMPLE_IDENTIFIER {labels.push_back(asid->getText());}) |
+			(aeid: ENTRY {labels.push_back(aeid->getText());}) |
+			(abid: LOOPBACK {labels.push_back(abid->getText());}) 
+	    )*
             {
-                bool errflag = false;
-                if(lbl_set.find(label) == lbl_set.end())
-                {
-                    AaRoot::Error("statement label in phi statement is  not in merge label set",new_ps);
-                    errflag = true;
-                }
-                if(tset.find(label) != tset.end())
-                {
-                    AaRoot::Error("statement label repeated in phi statement",new_ps);
-                    errflag = true;
-                }
-                else
-                tset.insert(label);
+		int I;
+		for(I=0; I < labels.size(); I++)
+		{
+			label = labels[I];
+                	bool errflag = false;
+                	if(lbl_set.find(label) == lbl_set.end())
+                	{
+                    		AaRoot::Error("statement label in phi statement is  not in merge label set",new_ps);
+                    		errflag = true;
+                	}
+                	if(tset.find(label) != tset.end())
+                	{
+                    	AaRoot::Error("statement label repeated in phi statement",new_ps);
+                    	errflag = true;
+                	}
+                	else
+                		tset.insert(label);
 
-                if(!errflag)
-                { 
-                    new_ps->Add_Source_Pair(label,expr); 
-                }
+                	if(!errflag)
+                	{ 
+                    		new_ps->Add_Source_Pair(label,expr); 
+                	}
+		}
+		labels.clear();
             }
         )+ 
 ;
@@ -895,7 +907,9 @@ aA_Expression[AaScope* scope] returns [AaExpression* expr]
             (expr = aA_Object_Reference[scope]) |
             (expr = aA_Unary_Expression[scope]) |
             (expr = aA_Binary_Expression[scope]) |
-            (expr = aA_Ternary_Expression[scope]) 
+            (expr = aA_Ternary_Expression[scope])  |
+	    (expr = aA_PriorityMux_Expression[scope]) |
+	    (expr = aA_VectorConcatenate_Expression[scope])
         )
 ;
 
@@ -1001,8 +1015,7 @@ aA_Slice_Expression[AaScope* scope] returns [AaExpression* expr]
 {       
     AaExpression* rest = NULL;
 }:
-        lpid: LPAREN 
-		SLICE rest=aA_Expression[scope] hid:UINTEGER lid:UINTEGER
+		lpid: LPAREN SLICE rest=aA_Expression[scope] hid:UINTEGER lid:UINTEGER RPAREN
 		{
 			pair<int,int> slice;
 			slice.first = atoi(hid->getText().c_str());
@@ -1013,14 +1026,13 @@ aA_Slice_Expression[AaScope* scope] returns [AaExpression* expr]
 				AaRoot::Error("Slice specification error: high-index < low-index. line " 
 							+ IntToStr(hid->getLine()), NULL);
 			}
-		}
-        RPAREN
-        {
-	    int tw = (slice.first - slice.second) + 1;
-	    AaType* t = AaProgram::Make_Uinteger_Type(tw);
-	    expr = new AaSliceExpression(scope, t, slice.second, rest);
-            if(expr) expr->Set_Line_Number(lpid->getLine());
-        }
+	
+		
+	    		int tw = (slice.first - slice.second) + 1;
+	    		AaType* t = AaProgram::Make_Uinteger_Type(tw);
+	    		expr = new AaSliceExpression(scope, t, slice.second, rest);
+            		if(expr) expr->Set_Line_Number(hid->getLine());
+        	}
 ;
 
 aA_Bitmap_Expression[AaScope* scope] returns [AaExpression* expr]
@@ -1078,7 +1090,8 @@ aA_Ternary_Expression[AaScope* scope] returns [AaExpression* expr]
     AaExpression* iffalse;
 }
 : lp: LPAREN 
-        MUX testexpr = aA_Expression[scope] 
+	MUX
+        testexpr = aA_Expression[scope] 
         (iftrue = aA_Expression[scope])  
         (iffalse = aA_Expression[scope])
   RPAREN
@@ -1088,6 +1101,50 @@ aA_Ternary_Expression[AaScope* scope] returns [AaExpression* expr]
         }
 ;   
 
+//----------------------------------------------------------------------------------------------------------
+// aA_VectorConcatenate_Expression: LPAREN $concat (aA_Expression)+ RPAREN
+//----------------------------------------------------------------------------------------------------------
+// put the ? in the beginning to make it easy to parse
+//----------------------------------------------------------------------------------------------------------
+aA_VectorConcatenate_Expression[AaScope* scope] returns [AaExpression* expr]
+{
+    vector<AaExpression*> expr_vector;
+    AaExpression* nexpr = NULL;
+    expr = NULL;
+}
+: lp: LPAREN 
+	VECTORCONCAT
+	(nexpr = aA_Expression[scope]  {expr_vector.push_back(nexpr);})+
+  RPAREN
+        {
+            expr = Make_Vector_Concat_Expression(scope, lp->getLine(), expr_vector);
+        }
+;   
+
+//----------------------------------------------------------------------------------------------------------
+// aA_PriorityMux_Expression: LPAREN $prioritymux (aA_Expression aA_Expression)+ RPAREN
+//----------------------------------------------------------------------------------------------------------
+aA_PriorityMux_Expression[AaScope* scope] returns [AaExpression* expr]
+{
+    vector<pair<AaExpression*,AaExpression*> > expr_pair_vector;
+    AaExpression *te = NULL;
+    AaExpression *ce = NULL;
+    AaExpression *de = NULL;
+
+    expr = NULL;
+}
+: lp: LPAREN 
+	PRIORITYMUX
+	(te = aA_Expression[scope] ce = aA_Expression[scope]  
+		{
+			expr_pair_vector.push_back(pair<AaExpression*,AaExpression*> (te,ce));
+		}
+	)+ ( DEFAULT de = aA_Expression[scope])
+  RPAREN
+        {
+            expr = Make_Priority_Mux_Expression(scope, lp->getLine(),0, expr_pair_vector, de);
+        }
+;   
 //----------------------------------------------------------------------------------------------------------
 // aA_Binary_Op : OR | AND | NOR | NAND | XOR | XNOR | SHL | SHR | ROL | ROR | PLUS | MINUS | DIV | MUL | EQUAL | NOTEQUAL | LESS | LESSEQUAL | GREATER | GREATEREQUAL 
 //----------------------------------------------------------------------------------------------------------
@@ -1679,6 +1736,12 @@ XNOR             : "~^"    ;
 
 // Mux
 MUX : "$mux";
+
+// vector-concatenate
+VECTORCONCAT : "$concat";
+
+// Priority-mux
+PRIORITYMUX : "$prioritymux";
 
 // types
 UINT           : "$uint"    ;

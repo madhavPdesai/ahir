@@ -11,7 +11,7 @@ FUNCTIONLIB=../../../v2/functionLibrary/
 #DEFS= -DADD -DMUL -DSUB
 #DEFS= -DCMP
 #DEFS=-DBUG
-DEFS= -DDOT
+DEFS= -DDOT -DCONCAT -DPMUX
 
 
 #TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
@@ -19,7 +19,7 @@ DEFS= -DDOT
 #TOPMODULES= -t fpadd -t fpmul -t fpsub -t fpincr
 #TOPMODULES= -t fpsub
 #TOPMODULES= -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
-TOPMODULES= -t dotProduct
+TOPMODULES= -t dotProduct -t concat -t pmux
 
 all: SW HW 
 TOVC: c2llvmbc llvmbc2aa aa2vc 

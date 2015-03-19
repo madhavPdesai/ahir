@@ -13,3 +13,17 @@ $is
 {
     ret_val__ := (x + y)
 }
+
+$pipeline $depth 32 $fullrate $module[concat]
+$in (w: $uint<8> x: $uint<8> y: $uint<8> z: $uint<8>)
+$out (result : $uint<32>) $is
+{
+  result := ($concat w x y z)
+}
+
+$pipeline $depth 32 $fullrate $module[pmux]
+$in (w: $uint<8> x: $uint<8> y: $uint<8> z: $uint<8> def: $uint<8>)
+$out (result : $uint<8>) $is
+{
+	result := ($prioritymux ($bitcast ($uint<1>) w) x ($bitcast ($uint<1>) y) z $default def)
+}

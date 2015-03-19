@@ -4866,3 +4866,49 @@ void AaTernaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 			root_set.insert(this);
 	}
 }
+
+/////////////////////////////////////////////////  Utilities //////////////////////////////////////////////
+AaExpression* Make_Vector_Concat_Expression(AaScope* scope, int line_no, vector<AaExpression*>& expr_vector)
+{
+	AaExpression* ret_expr = NULL;
+	if(expr_vector.size() == 1)
+	{
+		ret_expr = expr_vector[0];
+	}
+	else
+	{
+		AaExpression* head_expr = new AaBinaryExpression(scope, __CONCAT, expr_vector[0], expr_vector[1]);
+		head_expr->Set_Line_Number(line_no);
+		int I;
+		for(I = 2; I < expr_vector.size(); I++)
+		{
+			head_expr = new AaBinaryExpression(scope, __CONCAT, head_expr, expr_vector[I]);
+			head_expr->Set_Line_Number(line_no);
+		}
+		ret_expr = head_expr;
+	}
+	if(ret_expr != NULL)
+	   ret_expr->Set_Line_Number(line_no);
+
+	return(ret_expr);
+}
+
+AaExpression* Make_Priority_Mux_Expression(AaScope* scope, int line_no, int sindex, vector<pair<AaExpression*,AaExpression*> >& expr_vector,
+						AaExpression* default_expr)
+{
+	AaExpression* ret_expr = NULL;
+	if(sindex == expr_vector.size())
+	{
+		ret_expr = default_expr;
+	}
+	else if(sindex < expr_vector.size())
+	{
+		AaExpression* rest = Make_Priority_Mux_Expression(scope, line_no, sindex+1, expr_vector, default_expr);
+		ret_expr = new AaTernaryExpression(scope, expr_vector[sindex].first, expr_vector[sindex].second, rest);
+	}
+
+	if(ret_expr != NULL)
+	   ret_expr->Set_Line_Number(line_no);
+
+	return(ret_expr);
+}

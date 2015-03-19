@@ -17,10 +17,13 @@ void Exit(int sig)
 	exit(0);
 }
 
+#ifdef BUG
 float bug(float a, float b)
 {
 	return(fpsub(a,b));
 }
+#endif
+
 
 // usage: testbench [rng-seed] [num-tests]
 // both rng-seed and num-tests should be positive integers.
@@ -214,6 +217,36 @@ int main(int argc, char* argv[])
 			fprintf(stdout,"Info: (%f == %f) = %d.\n", X,X, cmpresult);
 
 #endif
+
+
+#ifdef CONCAT
+	uint32_t concat_result = concat(0xff, 0, 0xff, 0x0);
+	if(concat_result != 0xff00ff00)
+	{
+		fprintf(stdout, "Error: concat result = %x, expected 0xff00ff00\n", concat_result);
+		err_flag = 1;
+	}
+	else
+	{
+		fprintf(stdout, "Info: concat result = %x\n", concat_result);
+	}
+#endif
+
+
+#ifdef PMUX
+	uint8_t pmux_result = pmux(0x0, 0xf, 0x0, 0xa, 0xff);
+	if(pmux_result != 0xff)
+	{
+		fprintf(stdout, "Error: pmux result = %x, expected 0xff\n", pmux_result);
+		err_flag = 1;
+	}
+	else
+	{
+		fprintf(stdout, "Info: pmux result = %x\n", pmux_result);
+	}
+#endif
+
+
 
 	}
 
