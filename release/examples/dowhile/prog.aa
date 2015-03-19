@@ -9,13 +9,13 @@ $module [asum] $in() $out (c: $uint<32> ) $is
 
 	$branchblock[run] {
 
-		$do
+		$dopipeline $depth 8 $buffering 2 $fullrate
 			$merge $entry $loopback
 			$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
 			$phi R := 0 $on $entry R4 $on $loopback
 			$endmerge
 			R1 := (R + 1)
-			$call sum_macro (R1 1) (R2)
+                        R2 := (R1 + 1)
 			R3 := (R2 + 1)
 			R4 := (R3 + 1)
 			NI := (I+1)
@@ -31,7 +31,7 @@ $module [ssum] $in() $out (c: $uint<32> ) $is
 	$storage a: $array [10] $of $uint<32>
 
 	$branchblock[init] {
-		$do
+		$dopipeline $depth 8 $buffering 2  $fullrate
 			$merge $entry $loopback
 			$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
 			$endmerge
@@ -42,7 +42,7 @@ $module [ssum] $in() $out (c: $uint<32> ) $is
 
 	$branchblock[run] {
 
-		$do
+		$dopipeline $depth 8 $buffering 2  $fullrate
 			$merge $entry $loopback
 			$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
 			$phi result := 0 $on $entry nresult $on $loopback

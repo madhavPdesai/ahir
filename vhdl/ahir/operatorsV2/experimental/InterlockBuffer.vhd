@@ -38,9 +38,24 @@ begin  -- default_arch
   assert buffer_size > 0 report " interlock buffer size must be > 0 " severity failure;
  
   flowThrough: if flow_through generate
-		write_ack <= write_req;
-		read_ack <= read_req;
-		read_data <= write_data;
+
+	write_ack <= write_req;
+	read_ack <= read_req;
+
+    	inSmaller: if in_data_width <= out_data_width generate
+                process(write_data)
+                    variable rvar : std_logic_vector(out_data_width-1 downto 0);
+                begin
+ 		    rvar := (others => '0');
+		    rvar(in_data_width-1 downto 0) := write_data;
+                    read_data <= rvar;
+                end process;
+        end generate inSmaller;
+
+        outSmaller: if out_data_width < in_data_width generate
+                read_data <= write_data(out_data_width-1 downto 0);
+        end generate outSmaller;
+
   end generate flowThrough;
 
   NoFlowThrough: if (not flow_through) generate
