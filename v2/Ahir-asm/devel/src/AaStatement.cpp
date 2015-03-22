@@ -172,7 +172,33 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
 
 }
 
+// return true if one of the sources or targets is a pipe.
+bool AaStatement::Can_Block(bool pipeline_flag)
+{
+	for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
+			siter != this->_target_objects.end();
+			siter++)
+	{
+	    if((*siter)->Is("AaPipeObject"))
+	    {
+		    if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
+			    return(true);
+	    }
+	}
 
+	for(set<AaRoot*>::iterator siter = this->_source_objects.begin();
+			siter != this->_source_objects.end();
+			siter++)
+	{
+	    if((*siter)->Is("AaPipeObject"))
+	    {
+		    if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
+			    return(true);
+	    }
+	}
+
+	return(false);
+}
 
 void AaStatement::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
 {
@@ -615,6 +641,18 @@ AaStatementSequence::AaStatementSequence(AaScope* scope, vector<AaStatement*>& s
 }
 AaStatementSequence::~AaStatementSequence() {}
   
+  
+bool AaStatementSequence::Can_Block(bool pipeline_flag)
+{
+	for(int i = 0, imax = _statement_sequence.size(); i < imax; i++)
+	{
+		if(_statement_sequence[i]->Can_Block(pipeline_flag))
+			return(true);
+	}
+	return(false);
+}
+
+
 void AaStatementSequence::Print(ostream& ofile)
 {
   for(unsigned int i=0; i < this->_statement_sequence.size();i++)
@@ -1036,33 +1074,6 @@ void AaAssignmentStatement::PrintC_Implicit_Declarations(ofstream& ofile)
 	}
 }
 
-// return true if one of the sources or targets is a pipe.
-bool AaAssignmentStatement::Can_Block(bool pipeline_flag)
-{
-	for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
-			siter != this->_target_objects.end();
-			siter++)
-	{
-	    if((*siter)->Is("AaPipeObject"))
-	    {
-		    if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
-			    return(true);
-	    }
-	}
-
-	for(set<AaRoot*>::iterator siter = this->_source_objects.begin();
-			siter != this->_source_objects.end();
-			siter++)
-	{
-	    if((*siter)->Is("AaPipeObject"))
-	    {
-		    if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
-			    return(true);
-	    }
-	}
-
-	return(false);
-}
 
 
 void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
@@ -1796,28 +1807,9 @@ void AaCallStatement::Map_Source_References()
 // return true if one of the sources or targets is a pipe.
 bool AaCallStatement::Can_Block(bool pipeline_flag)
 {
-  for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
-      siter != this->_target_objects.end();
-      siter++)
-  {
-	  if((*siter)->Is("AaPipeObject"))
-	  {
-		  if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
-			  return(true);
-	  }
-  }
 
-  for(set<AaRoot*>::iterator siter = this->_source_objects.begin();
-		  siter != this->_source_objects.end();
-      siter++)
-    {
-	    if((*siter)->Is("AaPipeObject"))
-	    {
-		    if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
-			    return(true);
-	    }
-    }
-
+  if(this->AaStatement::Can_Block(pipeline_flag))
+	return(true);
 
   if(((AaModule*) this->_called_module)->Can_Block(pipeline_flag))
 	return(true);
@@ -2303,6 +2295,9 @@ void AaBlockStatement::Map_Source_References()
 // Yes, if one of the constituent statements can block
 bool AaBlockStatement::Can_Block(bool pipeline_flag)
 {
+	if(this->AaStatement::Can_Block(pipeline_flag))
+		return(true);
+
 	if(this->_statement_sequence == NULL)
 		return(false);
 
@@ -2500,10 +2495,6 @@ void AaSeriesBlockStatement::Add_Delayed_Versions( map<AaRoot*, vector< pair<AaR
 	}
 }
 
-bool AaSeriesBlockStatement::Can_Block(bool pipeline_flag)
-{
-	return(this->AaBlockStatement::Can_Block(pipeline_flag));
-}
 
 //---------------------------------------------------------------------
 // AaParallelBlockStatement: public AaBlockStatement
@@ -2958,6 +2949,17 @@ AaMergeStatement::AaMergeStatement(AaBranchBlockStatement* scope):AaSeriesBlockS
 }
 
 AaMergeStatement::~AaMergeStatement() {}
+
+bool AaMergeStatement::Can_Block(bool pipeline_flag)
+{
+	for(int I = 0, fI = _wait_on_statements.size(); I < fI; I++)
+	{
+		if(_wait_on_statements[I]->Can_Block(pipeline_flag))
+			return(true);
+	}
+	return(false);
+}
+
 void AaMergeStatement::Print(ostream& ofile)
 {
 	ofile << this->Tab();
@@ -3620,6 +3622,28 @@ AaSwitchStatement::AaSwitchStatement(AaBranchBlockStatement* scope):AaStatement(
 }
 AaSwitchStatement::~AaSwitchStatement() {}
 
+
+bool AaSwitchStatement::Can_Block(bool pipeline_flag)
+{
+	if(this->AaStatement::Can_Block(pipeline_flag))
+		return(true);
+
+
+	for(int i = 0, imax = _choice_pairs.size(); i < imax; i++)
+	{
+		AaStatementSequence* sseq = _choice_pairs[i].second;
+		if(sseq)
+		{
+			if(sseq->Can_Block(pipeline_flag))
+				return(true);
+		}
+	}	
+	if(_default_sequence && _default_sequence->Can_Block(pipeline_flag))
+		return(true);
+
+	return(false);
+}
+
 void AaSwitchStatement::Coalesce_Storage()
 {
   for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
@@ -4143,89 +4167,108 @@ void AaIfStatement::Print(ostream& ofile)
   ofile << this->Tab() << "$endif" << endl;
 }
 
+bool AaIfStatement::Can_Block(bool pipeline_flag)
+{
+	if(this->AaStatement::Can_Block(pipeline_flag))
+		return(true);
+
+	if(this->_if_sequence)
+	{
+		if(this->_if_sequence->Can_Block(pipeline_flag))
+			return(true);
+	}
+	if(this->_else_sequence)
+	{
+		if(this->_else_sequence->Can_Block(pipeline_flag))
+			return(true);
+	}
+	return(false);
+}
+
+
 void AaIfStatement::PrintC(ofstream& ofile)
 {
-  ofile << "// if statement " << endl;
-  ofile << "// " << this->Get_Source_Info() << endl;
-  this->_test_expression->PrintC_Declaration(ofile);
-  this->_test_expression->PrintC(ofile);
-  ofile << "if (";
-  Print_C_Value_Expression(this->_test_expression->C_Reference_String(), this->_test_expression->Get_Type(), ofile);
-  ofile << ") { " << endl;
-  if(this->_if_sequence)
-    {
-      this->_if_sequence->PrintC(ofile);
-    }
-  else
-    {
-      ofile <<  " ;" << endl;
-    }
-  ofile << "} " << endl; 
-  ofile << "else {" << endl;
-  if(this->_else_sequence)
-    {
-      this->_else_sequence->PrintC(ofile);
-    }
-  else
-    {
-      ofile <<  " ;" << endl;
-    }
-   ofile << "}" << endl;
+	ofile << "// if statement " << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
+	this->_test_expression->PrintC_Declaration(ofile);
+	this->_test_expression->PrintC(ofile);
+	ofile << "if (";
+	Print_C_Value_Expression(this->_test_expression->C_Reference_String(), this->_test_expression->Get_Type(), ofile);
+	ofile << ") { " << endl;
+	if(this->_if_sequence)
+	{
+		this->_if_sequence->PrintC(ofile);
+	}
+	else
+	{
+		ofile <<  " ;" << endl;
+	}
+	ofile << "} " << endl; 
+	ofile << "else {" << endl;
+	if(this->_else_sequence)
+	{
+		this->_else_sequence->PrintC(ofile);
+	}
+	else
+	{
+		ofile <<  " ;" << endl;
+	}
+	ofile << "}" << endl;
 }
 
 
 
 void AaIfStatement::Write_VC_Control_Path(ostream& ofile)
 {
-  this->Write_VC_Control_Path(false,ofile);
+	this->Write_VC_Control_Path(false,ofile);
 }
 
 void AaIfStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
 {
 
-  ofile << "// if-statement  ";
-  ofile << endl;
-  ofile << "// " << this->Get_Source_Info() << endl;
+	ofile << "// if-statement  ";
+	ofile << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
 
-  string exit_place = this->Get_VC_Exit_Place_Name();
+	string exit_place = this->Get_VC_Exit_Place_Name();
 
-  // a dead-link: to show that the normal path of control
-  // flow is from entry to exit.. but this normal path is
-  // not taken.
-  //
-  // this is needed because we do structure checks on
-  // CP regions which would fail otherwise.
-  string dead_link = this->Get_VC_Name() + "_dead_link";
-  ofile << ";;[" << dead_link << "] { $T [dead_transition] $dead } " << endl;
+	// a dead-link: to show that the normal path of control
+	// flow is from entry to exit.. but this normal path is
+	// not taken.
+	//
+	// this is needed because we do structure checks on
+	// CP regions which would fail otherwise.
+	string dead_link = this->Get_VC_Name() + "_dead_link";
+	ofile << ";;[" << dead_link << "] { $T [dead_transition] $dead } " << endl;
 
-  // tie up the dead link..
-  ofile << this->Get_VC_Entry_Place_Name() << " |-> (" << dead_link << ")" << endl;
-  ofile << exit_place << " <-| (" << dead_link << ")" << endl;
-  
-
-  AaScope* pscope = this->Get_Scope();
-  assert(pscope->Is("AaBranchBlockStatement"));
-
-  // first the CP for the test expression
-  string eval_test_region = this->Get_VC_Name() + "_eval_test";
-  string if_link = this->Get_VC_Name() + "_if_link";
-  string else_link = this->Get_VC_Name() + "_else_link";
+	// tie up the dead link..
+	ofile << this->Get_VC_Entry_Place_Name() << " |-> (" << dead_link << ")" << endl;
+	ofile << exit_place << " <-| (" << dead_link << ")" << endl;
 
 
-  ofile << ";;[" << eval_test_region << "] { // test expression evaluate and trigger branch "  << endl;
-  this->_test_expression->Write_VC_Control_Path(ofile);
-    
-  ofile << " $T [branch_req] " << endl;
-  ofile << "}" << endl;
-  ofile << this->Get_VC_Name() << "__entry__ |-> (" << eval_test_region << ")" << endl;
-  
-  // now the test-place.
-  ofile << "$P [" << _test_expression->Get_VC_Name() << "_place]" << endl;
-  ofile << _test_expression->Get_VC_Name() << "_place <-| (" << eval_test_region << ")" << endl;
-  string test_place_successors = if_link + " " + else_link;
+	AaScope* pscope = this->Get_Scope();
+	assert(pscope->Is("AaBranchBlockStatement"));
 
-  ofile << ";;[" << if_link << "] { $T [if_choice_transition] } " << endl;
-  ofile << ";;[" << else_link << "] { $T [else_choice_transition] } " << endl;
+	// first the CP for the test expression
+	string eval_test_region = this->Get_VC_Name() + "_eval_test";
+	string if_link = this->Get_VC_Name() + "_if_link";
+	string else_link = this->Get_VC_Name() + "_else_link";
+
+
+	ofile << ";;[" << eval_test_region << "] { // test expression evaluate and trigger branch "  << endl;
+	this->_test_expression->Write_VC_Control_Path(ofile);
+
+	ofile << " $T [branch_req] " << endl;
+	ofile << "}" << endl;
+	ofile << this->Get_VC_Name() << "__entry__ |-> (" << eval_test_region << ")" << endl;
+
+	// now the test-place.
+	ofile << "$P [" << _test_expression->Get_VC_Name() << "_place]" << endl;
+	ofile << _test_expression->Get_VC_Name() << "_place <-| (" << eval_test_region << ")" << endl;
+	string test_place_successors = if_link + " " + else_link;
+
+	ofile << ";;[" << if_link << "] { $T [if_choice_transition] } " << endl;
+	ofile << ";;[" << else_link << "] { $T [else_choice_transition] } " << endl;
 
   ofile << _test_expression->Get_VC_Name() << "_place |-> (" << test_place_successors << ")" << endl;  
 
@@ -4447,6 +4490,11 @@ AaDoWhileStatement::AaDoWhileStatement(AaBranchBlockStatement* scope):AaStatemen
 AaDoWhileStatement::~AaDoWhileStatement() {}
 
   
+bool AaDoWhileStatement::Can_Block(bool pipeline_flag)
+{
+	return(true);
+}
+
 void AaDoWhileStatement::Set_Test_Expression(AaExpression* te) 
 { 
 	this->_test_expression = te;  

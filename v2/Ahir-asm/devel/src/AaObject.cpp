@@ -305,7 +305,7 @@ void AaStorageObject::PrintC_Global_Declaration(ofstream& ofile)
 void AaStorageObject::PrintC_Global_Initialization(ofstream& ofile)
 {
 	AaType* t = this->Get_Type();
-	Print_C_Global_Initialization(this->C_Reference_String(), t, ofile);
+	Print_C_Global_Initialization(this->C_Reference_String(), t,  ofile);
 	if(_value != NULL)
 	{
 		this->_value->Evaluate();
@@ -430,6 +430,16 @@ string AaPipeObject::Get_VC_Name()
 	return(ret_string);
 }
 
+
+void AaPipeObject::PrintC_Pipe_Registration(ofstream& ofile)
+{
+	AaType* t = this->Get_Type();
+	string pname = this->C_Reference_String();
+
+	// register the pipe.
+	Print_C_Pipe_Registration(pname, t, _depth, _port, _in_mode,  _lifo_mode, ofile);
+}
+
 //---------------------------------------------------------------------
 // AaConstantObject
 //---------------------------------------------------------------------
@@ -483,3 +493,6 @@ void Print_Storage_Object_Set(set<AaStorageObject*>& ss, ostream& ofile)
 		ofile << " " << (*iter)->Get_Hierarchical_Name();
 	}
 }
+
+
+

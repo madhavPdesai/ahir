@@ -140,6 +140,12 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 	  
       
+      // if both are implicit, then declare an interlock.
+      bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
+      bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
+
+      ofile << "// both source and target are implicit: use interlock " << endl;
+      __DeclTransSplitProtocolPattern
 
       ofile << "// Target expression" << endl;
       this->_target->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
@@ -152,15 +158,11 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 	// four cases.
 
-      // if both are implicit, then declare an interlock.
-      bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
-      bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
 
       if(source_is_implicit && target_is_implicit)
 	// both are implicit.. introduce an interlock.
 	{
 	  ofile << "// Interlock " << endl;
-	  __DeclTransSplitProtocolPattern
 
 	  ofile <<  ";;[" << this->Get_VC_Name() << "_Sample] { " << endl;
 	  ofile << "$T [req] $T [ack] // interlock-sample." << endl;

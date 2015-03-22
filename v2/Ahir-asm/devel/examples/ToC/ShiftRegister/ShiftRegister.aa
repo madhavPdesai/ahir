@@ -1,59 +1,62 @@
+$pipe inpipe: $uint<16>
+$pipe outpipe: $uint<16>
+$pipe midpipe: $uint<20>
 // a simple example.. of a shift-register.
 // pipes are used extensively, and foreign
 // modules are used to read and print.
-$module [shiftregister]
-	$in(a: $uint<16>)
-	$out(b: $uint<16>)
+$module [stage_0]
+$in()
+$out()
 $is
 {
-	$pipe inpipe: $uint<16>
-	$pipe outpipe: $uint<16>
-
-	$parallelblock[p1]
-	{
-		$pipe midpipe: $uint<16>
-
-		//
-		// For Aa2C, the order is important!
-		// This example will hang in Aa2C (in the current implementation)
-		//
-		//
-		$branchblock[writer]
-		{
-			$merge $entry loopback $endmerge
-	
-			// data comes in from here.
-			$call Read () (inpipe)
-			$place [loopback]
-		}
-		$branchblock[b1]
-		{
-			$merge $entry loopback $endmerge
-			midpipe := inpipe  
-			$place [loopback]
-		}
-		$branchblock[b2]
-		{
-			$merge $entry loopback $endmerge
-			outpipe := midpipe
-			$place [loopback]
-		}
-		$branchblock[reader] {
-			$merge $entry loopback $endmerge
-
-			// data goes out from here.
-			$call Print(outpipe)()
-			$place [loopback]
-		}
-	}
-	$call Print(5) ()
+  $branchblock[main]
+  {
+    $merge $entry loopback $endmerge
+    // data comes in from here.
+    $call Read () (inpipe)
+    $place [loopback]
+  }
 }
-
+$module [stage_1]
+$in()
+$out()
+$is
+{
+  $branchblock[main]
+  {
+    $merge $entry loopback $endmerge
+    midpipe := ($bitcast ($uint<20>) inpipe)
+    $place [loopback]
+  }
+}
+$module [stage_2]
+$in()
+$out()
+$is
+{
+  $branchblock[main]
+  {
+    $merge $entry loopback $endmerge
+    outpipe := ($bitcast ($uint<16>) midpipe)
+    $place [loopback]
+  }
+}
+$module [stage_3]
+$in()
+$out()
+$is
+{
+  $branchblock[reader] 
+  {
+    $merge $entry loopback $endmerge
+    // data goes out from here.
+    $call Print(outpipe)()
+    $place [loopback]
+  }
+}
 $foreign $module [Print] 
-	$in (a: $uint<16>)
-	$out ()
-
+$in (a: $uint<16>)
+$out ()
 $foreign $module [Read] 
-	$in ()
-	$out (result: $uint<16>)
-
+$in ()
+$out (result: $uint<16>)

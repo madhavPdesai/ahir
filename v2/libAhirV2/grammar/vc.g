@@ -510,9 +510,12 @@ vc_CPBind[vcCPBlock* cp]
 	string pl_lbl, rgn_label, rgn_internal_lbl;
     bool input_binding;
 }
-: BIND pl_lbl = vc_Identifier ( ( IMPLIES { input_binding = true; } ) | (ULE_OP {input_binding = false;}) )  rgn_label = vc_Identifier COLON rgn_internal_lbl = vc_Identifier
+: BIND pl_id : SIMPLE_IDENTIFIER ( ( IMPLIES { input_binding = true; } ) | (ULE_OP {input_binding = false;}) )  
+	rgn_id: SIMPLE_IDENTIFIER
+	COLON 
+	rgn_internal_id: SIMPLE_IDENTIFIER
   {
-	cp->Bind(pl_lbl,rgn_label,rgn_internal_lbl,input_binding);
+	cp->Bind(pl_id->getText(),rgn_id->getText(),rgn_internal_id->getText(),input_binding);
   }
 ;
 
@@ -1667,7 +1670,7 @@ PIPELINE      : "$pipeline";
 SERIESBLOCK   : ";;";
 PARALLELBLOCK : "||";
 FORKBLOCK     : "::";
-PIPELINEDFORKBLOCK     : ":o:";
+PIPELINEDFORKBLOCK     : ":|:";
 BRANCHBLOCK   : "<>";
 LOOPBLOCK     : "<o>";
 OF            : "$of";

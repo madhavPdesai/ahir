@@ -159,7 +159,7 @@ static string vcLexerKeywords[] =
       ";;"		, // series block
       "||"		, // parallel block
       "::"		, // fork-join block
-      ":o:"		, // pipelined-fork-join block
+      ":|:"		, // pipelined-fork-join block
       "<>"		, // branch-merge block
       "<o>"		, // simple-loop block
       "$of"		,

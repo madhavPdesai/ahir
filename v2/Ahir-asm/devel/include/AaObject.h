@@ -78,6 +78,10 @@ class AaObject: public AaRoot
   
   bool Get_Is_Dereferenced() {return(_is_dereferenced);}
   void Set_Is_Dereferenced(bool v) {_is_dereferenced = v;}
+
+  virtual void PrintC_Global_Declaration(ofstream& ofile) {assert(0);}
+  virtual void PrintC_Global_Initialization(ofstream& ofile) {assert(0);}
+
 };
 
 // interface object: function arguments
@@ -221,8 +225,8 @@ class AaStorageObject: public AaObject
       return(_access_widths);
     }
 
-   void PrintC_Global_Declaration(ofstream& ofile);
-   void PrintC_Global_Initialization(ofstream& ofile);
+   virtual void PrintC_Global_Declaration(ofstream& ofile);
+   virtual void PrintC_Global_Initialization(ofstream& ofile);
 };
 
 
@@ -305,8 +309,11 @@ class AaPipeObject: public AaObject
   // in C. references to pipes are replaced by 
   // calls to special functions write_*, read_*
   // 
-  virtual void PrintC_Declaration(ofstream& ofile) {}
+  void PrintC_Pipe_Registration(ofstream& ofile);
+  virtual void PrintC_Declaration(ofstream& ofile) {this->PrintC_Pipe_Registration(ofile);}
   virtual void PrintC(ofstream& ofile) {}
+  virtual void PrintC_Global_Declaration(ofstream& ofile) {}
+  virtual void PrintC_Global_Initialization(ofstream& ofile) {this->PrintC_Pipe_Registration(ofile);}
 
   virtual string Kind() {return("AaPipeObject");}
   virtual string Get_Valid_Flag_Name() { return(this->Get_Name() + "_valid__");}

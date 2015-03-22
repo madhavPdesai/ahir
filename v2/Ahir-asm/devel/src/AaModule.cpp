@@ -912,7 +912,7 @@ void AaModule::Write_VC_Control_Path_Optimized_Base(ostream& ofile)
 	  trans_decls += "$T [" + tname + "_out] \n";
 	  trans_decls += tname + " &-> (" + tname + "_out)\n";
 	  trans_decls += "$null &-> (" + tname + ")\n";
-	  binding_string += "$bind " + tname + " <= " + region_name + ":" + tname + "_out\n"; 
+	  binding_string += "$bind " + tname + " <= " + region_name + " : " + tname + "_out\n"; 
 	}
 
       for(int idx = 0,  fidx = this->Get_Number_Of_Output_Arguments(); 
@@ -929,10 +929,10 @@ void AaModule::Write_VC_Control_Path_Optimized_Base(ostream& ofile)
 	  trans_decls +=  "$null <-& (" + tname + "_in) \n";
 	  trans_decls += "$null &-> (" + tname + ")\n";
 	  trans_decls += tname + " o<-& (" + tname + "_in  0) \n"; // 0-delay, else wasted cycle.
-	  binding_string += "$bind " + tname + " => " + region_name + ":" + tname + "_in\n"; 
+	  binding_string += "$bind " + tname + " => " + region_name + " : " + tname + "_in\n"; 
 	}
 
-      ofile << ":o:[" << region_name << "] {" << endl;
+      ofile << ":|:[" << region_name << "] {" << endl;
       set<AaRoot*> visited_elements;
       map<string, vector<AaExpression*> > load_store_ordering_map;
       map<string, vector<AaExpression*> >  pipe_map;

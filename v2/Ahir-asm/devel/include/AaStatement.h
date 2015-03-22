@@ -137,7 +137,7 @@ class AaStatement: public AaScope
   virtual string Get_C_Inner_Wrap_Function_Name() { return("_" + this->Get_C_Name() + "_"); }
   virtual string Get_C_Outer_Wrap_Function_Name() { return(this->Get_C_Name()); }
   
-  virtual bool Can_Block(bool pipeline_flag) { assert(0); }
+  virtual bool Can_Block(bool pipeline_flag);
   virtual void Write_VC_Constant_Declarations(ostream& ofile) {};
 
   
@@ -275,6 +275,8 @@ class AaStatementSequence: public AaScope
     else
       return(NULL);
   }
+
+  bool Can_Block(bool pipeline_flag);
 
   void Renumber_Statements()
   {
@@ -453,9 +455,6 @@ class AaAssignmentStatement: public AaStatement
 
 
   void Replace_Source_Expression(AaExpression* old_arg, AaSimpleObjectReference* new_arg);
-
-  // return true if one of the sources or targets is a pipe.
-  virtual bool Can_Block(bool pipeline_flag);
 
   virtual void PrintC(ofstream& ofile);
   virtual void PrintC_Implicit_Declarations(ofstream& ofile);
@@ -768,7 +767,6 @@ class AaSeriesBlockStatement: public AaBlockStatement
   virtual string Get_VC_Name() {return ("series_block_stmt_" + Int64ToStr(this->Get_Index()));}
   
   
-  virtual bool Can_Block(bool pipeline_flag);
   void Write_VC_Links_Optimized_Base(string hier_id, ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized_Base(ostream& ofile);
 
@@ -990,6 +988,7 @@ class AaMergeStatement: public AaSeriesBlockStatement
     return(this->_merge_label_set.find(lbl) != this->_merge_label_set.end());
   }
 
+  virtual bool Can_Block(bool pipeline_flag);
   void Set_In_Do_While(bool v);
   bool Get_In_Do_While() {return(_in_do_while);}
 
@@ -1147,8 +1146,7 @@ class AaSwitchStatement: public AaStatement
   virtual string Kind() {return("AaSwitchStatement");}
   virtual void Map_Source_References();
 
-
-
+  virtual bool Can_Block(bool pipeline_flag);
   virtual void PrintC(ofstream& ofile);
   virtual void PrintC_Implicit_Declarations(ofstream& ofile) 
   { 
@@ -1209,6 +1207,7 @@ class AaIfStatement: public AaStatement
 		return(NULL);
   } 
 
+  virtual bool Can_Block(bool pipeline_flag);
   AaIfStatement(AaBranchBlockStatement* scope);
   ~AaIfStatement();
   virtual void Print(ostream& ofile);
@@ -1289,6 +1288,7 @@ class AaDoWhileStatement: public AaStatement
   void Set_Merge_Statement(AaMergeStatement* ms) { this->_merge_statement = ms; }
   void Set_Loop_Body_Sequence(AaStatementSequence* lbs);
 
+  virtual bool Can_Block(bool pipeline_flag);
 
   int Get_Number_Of_Loop_Body_Statements()
   {
