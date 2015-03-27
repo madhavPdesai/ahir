@@ -1371,4 +1371,5 @@ class AaDoWhileStatement: public AaStatement
 
 
 
+bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector<string>& targets, vector<AaStatement*>& slist);
 #endif

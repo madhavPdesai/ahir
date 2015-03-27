@@ -4982,3 +4982,9 @@ AaSimpleObjectReference* AaCallStatement::Get_Implicit_Target(string tgt_name)
 	}	
 	return(ret);
 }
+
+// return true on error.
+bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector<string>& targets, vector<AaStatement*>& slist)
+{
+	return(true);
+}

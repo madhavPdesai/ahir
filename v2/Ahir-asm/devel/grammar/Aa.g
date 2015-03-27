@@ -231,36 +231,67 @@ aA_Out_Args[AaModule* parent]
 //-----------------------------------------------------------------------------------------------
 // aA_Atomic_Statement : aA_Assignment_Statement | aA_Call_Statement | aA_Null_Statement | aA_Block_Statement
 //-----------------------------------------------------------------------------------------------
-aA_Atomic_Statement[AaScope* scope] returns [AaStatement* stmt]
+aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist] 
 {
+    AaStatement* stmt;
     bool guard_flag = false; 
     bool not_flag   = false;
+    bool mark_flag  = false;	
+    bool synch_flag = false;
+    string ms;
+    string gs;
+    string ss;
+    vector<AaStatement*> llist;
 }
-    :  ( (GUARD LPAREN (NOT {not_flag = true;})? gid:SIMPLE_IDENTIFIER RPAREN {guard_flag = true;} ) ? 
+    :  
+      ( 
 	(
-	      ( stmt = aA_Assignment_Statement[scope] |
-        	stmt = aA_Call_Statement[scope]) 
-	{
-		if(guard_flag)
-		{
-			string gs = gid->getText();
-			AaSimpleObjectReference* oref = new AaSimpleObjectReference(scope,gs);
-			oref->Set_Object_Root_Name(gs);
-			stmt->Set_Guard_Expression(oref);
-			stmt->Set_Guard_Complement(not_flag);
-		}
-	}  
+	(GUARD LPAREN (NOT {not_flag = true;})? gid:SIMPLE_IDENTIFIER RPAREN {guard_flag = true;} ) ? 
+	   ( aA_Assignment_Statement[scope,llist] |  aA_Call_Statement[scope,llist] | aA_Split_Statement[scope,llist]) 
 	   (MARK mid: SIMPLE_IDENTIFIER 
 		{
-			stmt->Set_Mark(mid->getText()); 
-			if(scope->Is_Statement())
-				((AaStatement*)scope)->Mark_Statement(mid->getText(), stmt);
+			mark_flag = true;
+			ms = mid->getText();
 		}
 	   )?
-	   (SYNCH LPAREN (syid: SIMPLE_IDENTIFIER {stmt->Add_Synch(syid->getText());})+ RPAREN )? 
-	))  |
-        	stmt = aA_Null_Statement[scope] |
-        	stmt = aA_Block_Statement[scope]
+	   (SYNCH LPAREN (syid: SIMPLE_IDENTIFIER {synch_flag = true; ss = syid->getText();})+ RPAREN )? 
+	   {
+		for(int I = 0, fI = llist.size(); I < fI; I++)
+		{
+			stmt = llist[I];
+			if(guard_flag)
+			{
+				AaSimpleObjectReference* oref = new AaSimpleObjectReference(scope,gs);
+				oref->Set_Object_Root_Name(gs);
+				stmt->Set_Guard_Expression(oref);
+				stmt->Set_Guard_Complement(not_flag);
+			}
+			if(mark_flag)
+			{
+				string ms_ext;
+				if( I > 0)
+					ms_ext = ms + IntToStr(I);
+				else
+					ms_ext = ms;
+				stmt->Set_Mark(ms_ext); 
+				if(scope->Is_Statement())
+					((AaStatement*)scope)->Mark_Statement(ms_ext, stmt);
+			}
+			if(synch_flag)
+			{	
+				stmt->Add_Synch(ss);
+			}
+		}  
+		
+	   }
+	) | 
+	(
+		(stmt = aA_Null_Statement[scope]) | (stmt = aA_Block_Statement[scope])
+		{
+			slist.push_back(stmt);
+		}
+	)
+      )
     ;
 
 //-----------------------------------------------------------------------------------------------
@@ -277,8 +308,9 @@ aA_Null_Statement[AaScope* scope] returns[AaStatement* new_stmt]
 //-----------------------------------------------------------------------------------------------
 // aA_Assignment: ASSIGN aA_Object_Reference  aA_Expression
 //-----------------------------------------------------------------------------------------------
-aA_Assignment_Statement[AaScope* scope] returns[AaStatement* new_stmt]
+aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
 {
+    AaStatement* new_stmt = NULL;
     AaObjectReference* target = NULL;
     AaExpression* source = NULL;
 }
@@ -290,15 +322,17 @@ aA_Assignment_Statement[AaScope* scope] returns[AaStatement* new_stmt]
         {
             new_stmt = new AaAssignmentStatement(scope,target,source, al->getLine());
             new_stmt->Set_Line_Number(al->getLine());
+	    slist.push_back(new_stmt);
         }
 	(BUFFERING bid: UINTEGER {int buf_val = atoi(bid->getText().c_str());  ((AaAssignmentStatement*)new_stmt)->Set_Buffering(buf_val);})?
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Call_Statement: CALL aA_Argv_Out aA_Argv_In
+// aA_Call_Statement: CALL aA_Argv_In aA_Argv_Out
 //-----------------------------------------------------------------------------------------------
-aA_Call_Statement[AaScope* scope] returns[AaStatement* new_stmt]
+aA_Call_Statement[AaScope* scope, vector<AaStatement*>& slist]
 {
+    AaStatement* new_stmt;
     vector<AaExpression*> input_args;
     vector<AaObjectReference*> output_args;
     string func_name = "";
@@ -312,9 +346,40 @@ aA_Call_Statement[AaScope* scope] returns[AaStatement* new_stmt]
         // (except for a declared global/local/pipe)
         {
             new_stmt = new AaCallStatement(scope,func_name,input_args,output_args,cl->getLine());
+	    slist.push_back(new_stmt);
         }
     ;
 
+//-----------------------------------------------------------------------------------------------
+// aA_Split_Statement: SPLIT  ( UINTEGER+ ) ( SIMPLE_IDENTIFIER+ ) 
+//-----------------------------------------------------------------------------------------------
+aA_Split_Statement[AaScope* scope, vector<AaStatement*>& slist]
+{
+    AaStatement* new_stmt;
+
+    string src;
+    vector<int> sizes;
+    vector<string> targets;
+
+    vector<AaExpression*> input_args;
+    vector<AaObjectReference*> output_args;
+    string func_name = "";
+}
+    : 
+        cl: SPLIT
+	LPAREN
+	srcid: SIMPLE_IDENTIFIER {src = srcid->getText();}
+	(sid: UINTEGER {sizes.push_back(atoi(sid->getText().c_str()));})+
+	RPAREN
+	LPAREN
+        (id:SIMPLE_IDENTIFIER { targets.push_back(id->getText()); })+
+	RPAREN
+        {
+		bool err = Make_Split_Statement(scope, src, sizes, targets, slist);
+		if(err)
+			AaRoot::Error("incorrect split statement specification, line " + IntToStr(cl->getLine()), NULL);
+        }
+    ;
 
 //-----------------------------------------------------------------------------------------------
 // aA_Block_Statement : aA_Series_Block_Statement | aA_Parallel_Block_Statement | aA_Fork_Block_Statement | aA_Branch_Block_Statement
@@ -353,7 +418,7 @@ aA_Fork_Block_Statement_Sequence[AaForkBlockStatement* scope] returns [AaStateme
         ( 
             ( new_statement = aA_Join_Fork_Statement[scope] { slist.push_back(new_statement); }) 
             |
-            ( new_statement = aA_Atomic_Statement[scope] { slist.push_back(new_statement); }) 
+            ( aA_Atomic_Statement[scope,slist]) 
         )+ 
         {
             nsb = new AaStatementSequence(scope,slist);
@@ -371,7 +436,8 @@ aA_Branch_Block_Statement_Sequence[AaBranchBlockStatement* scope] returns [AaSta
     nsb = NULL;
 } 
     :
-        (
+        ( 
+          (
             (
                 (
                     new_statement = aA_Merge_Statement[scope]
@@ -380,10 +446,6 @@ aA_Branch_Block_Statement_Sequence[AaBranchBlockStatement* scope] returns [AaSta
                 (
                     ( new_statement = aA_Switch_Statement[scope] |
                         new_statement = aA_If_Statement[scope] )
-                )
-            |
-                (
-                    new_statement = aA_Atomic_Statement[scope]
                 )
             |
                 (
@@ -398,7 +460,12 @@ aA_Branch_Block_Statement_Sequence[AaBranchBlockStatement* scope] returns [AaSta
             { 
                 slist.push_back(new_statement); 
             }   
-        )+
+  	 )
+            |
+                (
+                    aA_Atomic_Statement[scope,slist]
+                )
+     )+
         {
             nsb = new AaStatementSequence(scope,slist);
         }
@@ -414,7 +481,7 @@ aA_Atomic_Statement_Sequence[AaScope* scope] returns [AaStatementSequence* nsb]
     nsb = NULL;
 } 
     :
-        ( new_statement = aA_Atomic_Statement[scope] { slist.push_back(new_statement); })+ 
+        (  aA_Atomic_Statement[scope,slist] )+ 
         {
             nsb = new AaStatementSequence(scope,slist);
         }
@@ -909,6 +976,8 @@ aA_Expression[AaScope* scope] returns [AaExpression* expr]
             (expr = aA_Binary_Expression[scope]) |
             (expr = aA_Ternary_Expression[scope])  |
 	    (expr = aA_PriorityMux_Expression[scope]) |
+	    (expr = aA_ExclusiveMux_Expression[scope]) |
+	    (expr = aA_Reduce_Expression[scope]) |
 	    (expr = aA_VectorConcatenate_Expression[scope])
         )
 ;
@@ -1104,8 +1173,6 @@ aA_Ternary_Expression[AaScope* scope] returns [AaExpression* expr]
 //----------------------------------------------------------------------------------------------------------
 // aA_VectorConcatenate_Expression: LPAREN $concat (aA_Expression)+ RPAREN
 //----------------------------------------------------------------------------------------------------------
-// put the ? in the beginning to make it easy to parse
-//----------------------------------------------------------------------------------------------------------
 aA_VectorConcatenate_Expression[AaScope* scope] returns [AaExpression* expr]
 {
     vector<AaExpression*> expr_vector;
@@ -1118,6 +1185,28 @@ aA_VectorConcatenate_Expression[AaScope* scope] returns [AaExpression* expr]
   RPAREN
         {
             expr = Make_Vector_Concat_Expression(scope, lp->getLine(), expr_vector);
+        }
+;   
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Reduce_Expression: LPAREN $reduce (OR | AND | XOR) (aA_Expression)+ RPAREN
+//----------------------------------------------------------------------------------------------------------
+aA_Reduce_Expression[AaScope* scope] returns [AaExpression* expr]
+{
+    vector<AaExpression*> expr_vector;
+    AaExpression* nexpr = NULL;
+    AaOperation op;
+    expr = NULL;
+}
+: lp: LPAREN 
+	REDUCE
+
+	( (OR {op = __OR;}) |  (AND {op = __AND;}) | (XOR {op = __XOR;}))
+
+	(nexpr = aA_Expression[scope]  {expr_vector.push_back(nexpr);})+
+  RPAREN
+        {
+            expr = Make_Reduce_Expression(scope, lp->getLine(), op, expr_vector);
         }
 ;   
 
@@ -1145,6 +1234,32 @@ aA_PriorityMux_Expression[AaScope* scope] returns [AaExpression* expr]
             expr = Make_Priority_Mux_Expression(scope, lp->getLine(),0, expr_pair_vector, de);
         }
 ;   
+
+//----------------------------------------------------------------------------------------------------------
+// aA_ExclusiveMux_Expression: LPAREN $excmux (aA_Expression aA_Expression)+ RPAREN
+//----------------------------------------------------------------------------------------------------------
+aA_ExclusiveMux_Expression[AaScope* scope] returns [AaExpression* expr]
+{
+    vector<pair<AaExpression*,AaExpression*> > expr_pair_vector;
+    AaExpression *te = NULL;
+    AaExpression *ce = NULL;
+    AaExpression *de = NULL;
+
+    expr = NULL;
+}
+: lp: LPAREN 
+	EXCMUX
+	(te = aA_Expression[scope] ce = aA_Expression[scope]  
+		{
+			expr_pair_vector.push_back(pair<AaExpression*,AaExpression*> (te,ce));
+		}
+	)+ 
+  RPAREN
+        {
+            expr = Make_Exclusive_Mux_Expression(scope, lp->getLine(),0, expr_pair_vector);
+        }
+;   
+
 //----------------------------------------------------------------------------------------------------------
 // aA_Binary_Op : OR | AND | NOR | NAND | XOR | XNOR | SHL | SHR | ROL | ROR | PLUS | MINUS | DIV | MUL | EQUAL | NOTEQUAL | LESS | LESSEQUAL | GREATER | GREATEREQUAL 
 //----------------------------------------------------------------------------------------------------------
@@ -1742,6 +1857,15 @@ VECTORCONCAT : "$concat";
 
 // Priority-mux
 PRIORITYMUX : "$prioritymux";
+
+// Exclusive-mux
+EXCMUX : "$excmux";
+
+// reduce
+REDUCE : "$reduce";
+
+
+
 
 // types
 UINT           : "$uint"    ;

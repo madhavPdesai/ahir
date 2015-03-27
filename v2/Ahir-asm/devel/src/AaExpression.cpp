@@ -4912,3 +4912,13 @@ AaExpression* Make_Priority_Mux_Expression(AaScope* scope, int line_no, int sind
 
 	return(ret_expr);
 }
+
+AaExpression* Make_Reduce_Expression(AaScope* scope, int line_no, AaOperation op,  vector<AaExpression*>& expr_vector)
+{
+	assert(0);
+}
+AaExpression* Make_Exclusive_Mux_Expression(AaScope* scope, int line_no, int sindex, 
+				vector<pair<AaExpression*,AaExpression*> >& expr_vector)
+{
+	assert(0);
+}
