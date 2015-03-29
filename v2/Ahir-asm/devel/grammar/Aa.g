@@ -247,6 +247,8 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
       ( 
 	(
 	(GUARD LPAREN (NOT {not_flag = true;})? gid:SIMPLE_IDENTIFIER RPAREN {guard_flag = true;} ) ? 
+		// NOTE: the split statement can create a group of statements..
+		//       Thus, we put the created statement(s) in a list.
 	   ( aA_Assignment_Statement[scope,llist] |  aA_Call_Statement[scope,llist] | aA_Split_Statement[scope,llist]) 
 	   (MARK mid: SIMPLE_IDENTIFIER 
 		{
@@ -281,6 +283,9 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 			{	
 				stmt->Add_Synch(ss);
 			}
+
+			// add the statement!
+			slist.push_back(stmt);
 		}  
 		
 	   }
@@ -359,11 +364,8 @@ aA_Split_Statement[AaScope* scope, vector<AaStatement*>& slist]
 
     string src;
     vector<int> sizes;
-    vector<string> targets;
-
-    vector<AaExpression*> input_args;
-    vector<AaObjectReference*> output_args;
-    string func_name = "";
+    AaExpression* expr  = NULL;
+    vector<AaExpression*> targets;
 }
     : 
         cl: SPLIT
@@ -372,10 +374,10 @@ aA_Split_Statement[AaScope* scope, vector<AaStatement*>& slist]
 	(sid: UINTEGER {sizes.push_back(atoi(sid->getText().c_str()));})+
 	RPAREN
 	LPAREN
-        (id:SIMPLE_IDENTIFIER { targets.push_back(id->getText()); })+
+        (expr = aA_Expression[scope]  { targets.push_back(expr); })+
 	RPAREN
         {
-		bool err = Make_Split_Statement(scope, src, sizes, targets, slist);
+		bool err = Make_Split_Statement(scope, src, sizes, targets, slist, cl->getLine());
 		if(err)
 			AaRoot::Error("incorrect split statement specification, line " + IntToStr(cl->getLine()), NULL);
         }
@@ -1184,7 +1186,7 @@ aA_VectorConcatenate_Expression[AaScope* scope] returns [AaExpression* expr]
 	(nexpr = aA_Expression[scope]  {expr_vector.push_back(nexpr);})+
   RPAREN
         {
-            expr = Make_Vector_Concat_Expression(scope, lp->getLine(), expr_vector);
+            expr = Make_Reduce_Expression(scope, lp->getLine(), __CONCAT, expr_vector);
         }
 ;   
 
@@ -1256,7 +1258,7 @@ aA_ExclusiveMux_Expression[AaScope* scope] returns [AaExpression* expr]
 	)+ 
   RPAREN
         {
-            expr = Make_Exclusive_Mux_Expression(scope, lp->getLine(),0, expr_pair_vector);
+            expr = Make_Exclusive_Mux_Expression(scope, lp->getLine(),0, expr_pair_vector.size()-1,  expr_pair_vector);
         }
 ;   
 
@@ -1863,6 +1865,9 @@ EXCMUX : "$excmux";
 
 // reduce
 REDUCE : "$reduce";
+
+// split
+SPLIT : "$split";
 
 
 

@@ -4868,30 +4868,37 @@ void AaTernaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 }
 
 /////////////////////////////////////////////////  Utilities //////////////////////////////////////////////
-AaExpression* Make_Vector_Concat_Expression(AaScope* scope, int line_no, vector<AaExpression*>& expr_vector)
+AaExpression* Make_Reduce_Expression_Base(AaScope* scope, int line_no, 
+						int sindex, int findex, 
+						AaOperation op,  vector<AaExpression*>& expr_vector)
 {
 	AaExpression* ret_expr = NULL;
-	if(expr_vector.size() == 1)
+	int SZ = (findex-sindex)+1;
+	if(SZ == 1)
 	{
-		ret_expr = expr_vector[0];
+		ret_expr = expr_vector[sindex];
 	}
 	else
 	{
-		AaExpression* head_expr = new AaBinaryExpression(scope, __CONCAT, expr_vector[0], expr_vector[1]);
-		head_expr->Set_Line_Number(line_no);
-		int I;
-		for(I = 2; I < expr_vector.size(); I++)
-		{
-			head_expr = new AaBinaryExpression(scope, __CONCAT, head_expr, expr_vector[I]);
-			head_expr->Set_Line_Number(line_no);
-		}
-		ret_expr = head_expr;
+		int MP = sindex + ((findex-sindex)/2);
+		AaExpression* le = Make_Reduce_Expression_Base(scope, line_no, sindex, MP, op, expr_vector);
+		AaExpression* re = Make_Reduce_Expression_Base(scope, line_no, MP+1, findex, op, expr_vector);
+
+		ret_expr = new AaBinaryExpression(scope,op, le, re);
+		ret_expr->Set_Line_Number(line_no);
 	}
-	if(ret_expr != NULL)
-	   ret_expr->Set_Line_Number(line_no);
 
 	return(ret_expr);
 }
+
+AaExpression* Make_Reduce_Expression(AaScope* scope, int line_no, AaOperation op,  vector<AaExpression*>& expr_vector)
+{
+
+	AaExpression* ret_expr = Make_Reduce_Expression_Base(scope, line_no, 0, expr_vector.size()-1, op, expr_vector);
+	return(ret_expr);
+
+}
+
 
 AaExpression* Make_Priority_Mux_Expression(AaScope* scope, int line_no, int sindex, vector<pair<AaExpression*,AaExpression*> >& expr_vector,
 						AaExpression* default_expr)
@@ -4913,12 +4920,18 @@ AaExpression* Make_Priority_Mux_Expression(AaScope* scope, int line_no, int sind
 	return(ret_expr);
 }
 
-AaExpression* Make_Reduce_Expression(AaScope* scope, int line_no, AaOperation op,  vector<AaExpression*>& expr_vector)
-{
-	assert(0);
-}
-AaExpression* Make_Exclusive_Mux_Expression(AaScope* scope, int line_no, int sindex, 
+AaExpression* Make_Exclusive_Mux_Expression(AaScope* scope, int line_no, int sindex, int findex,
 				vector<pair<AaExpression*,AaExpression*> >& expr_vector)
 {
-	assert(0);
+	vector<AaExpression*> and_expr_vector;
+	
+	for(int I = 0, fI = expr_vector.size(); I < fI; I++)
+	{
+		AaExpression* ne = new AaBinaryExpression(scope, __AND, expr_vector[I].first, expr_vector[I].second);
+		ne->Set_Line_Number(line_no);
+		and_expr_vector.push_back(ne);
+	}
+
+	AaExpression* ret_expr = Make_Reduce_Expression(scope, line_no, __OR, and_expr_vector);
+	return(ret_expr);
 }

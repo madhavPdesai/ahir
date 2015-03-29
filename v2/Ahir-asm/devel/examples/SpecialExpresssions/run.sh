@@ -1,0 +1,1 @@
+../../bin/AaOpt HelloWorld.aa

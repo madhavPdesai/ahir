@@ -4984,7 +4984,40 @@ AaSimpleObjectReference* AaCallStatement::Get_Implicit_Target(string tgt_name)
 }
 
 // return true on error.
-bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector<string>& targets, vector<AaStatement*>& slist)
+bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector<AaExpression*>& targets, 
+				vector<AaStatement*>& slist, int line_number)
 {
-	return(true);
+	if(sizes.size() != targets.size())
+	{
+		return(true);
+	}
+	// total size
+
+	int SIZE = 0;
+	for(int I = 0, fI = sizes.size(); I < fI; I++)
+		SIZE += sizes[I];
+
+	int HIGH = SIZE-1;
+	int LOW  = HIGH;
+	for(int J = 0, fJ = sizes.size(); J < fJ; J++)
+	{
+		int slice_width = sizes[J];
+		LOW = (HIGH - slice_width)+1;
+
+		AaExpression* tgt_expr = targets[J];
+
+		AaSimpleObjectReference* root_ref = new AaSimpleObjectReference(scope, src);
+		root_ref->Set_Object_Root_Name(src);
+		root_ref->Set_Line_Number(line_number);
+		
+		AaType* slice_type = AaProgram::Make_Uinteger_Type(slice_width);
+		AaExpression* src_expr = new AaSliceExpression(scope, slice_type, LOW, root_ref);
+
+		AaAssignmentStatement* new_stmt = new AaAssignmentStatement(scope, tgt_expr, src_expr, line_number);
+		slist.push_back(new_stmt);
+
+		HIGH = LOW-1;
+	}
+	
+	return(false);
 }

@@ -1,0 +1,16 @@
+// a simple example..
+$module [special_exprs]
+    $in (a: $uint<4> b: $uint<4>)
+    $out (c: $uint<4>)
+$is
+{
+	$split (a 1 1 1 1) (a3 a2 a1 a0)
+	$split (b 1 1 1 1) (b3 b2 b1 b0)
+
+	c3 := ($reduce | a3 a2 a1 a0)
+	c2 := ($prioritymux a3 b3 a2 b2 a1 b1 a0 b0 $default b0)
+	c1 := ($excmux a3 b3 a2 b2 a1 b1 a0 b0 )
+	c0 := ($reduce & a3 b3 a2 b2 a1 b1)
+
+	c := ($concat c3 c2 c1 c0)
+}

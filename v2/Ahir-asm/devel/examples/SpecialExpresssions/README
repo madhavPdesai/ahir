@@ -1,0 +1,14 @@
+Introduced some special composite expressions
+	($concat a b c d e)
+	($reduce | a b c d e)
+		instead of |, can be any operator.
+	($prioritymux s0 e0 s1 e1 $defailt edef)
+	($excmux s0 e0 s1 e1 s2 e2)
+
+and a special composite statement.
+
+	
+	$split (A 1 1 1) (A3 A2 A1 A0)
+
+
+A small program to test the basic functionality.
