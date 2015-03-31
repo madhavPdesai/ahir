@@ -246,7 +246,7 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
     :  
       ( 
 	(
-	(GUARD LPAREN (NOT {not_flag = true;})? gid:SIMPLE_IDENTIFIER RPAREN {guard_flag = true;} ) ? 
+	(GUARD LPAREN (NOT {not_flag = true;})? gid:SIMPLE_IDENTIFIER RPAREN {guard_flag = true; gs = gid->getText();} ) ? 
 		// NOTE: the split statement can create a group of statements..
 		//       Thus, we put the created statement(s) in a list.
 	   ( aA_Assignment_Statement[scope,llist] |  aA_Call_Statement[scope,llist] | aA_Split_Statement[scope,llist]) 
@@ -291,7 +291,7 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 	   }
 	) | 
 	(
-		(stmt = aA_Null_Statement[scope]) | (stmt = aA_Block_Statement[scope])
+		((stmt = aA_Null_Statement[scope]) | (stmt = aA_Block_Statement[scope]))
 		{
 			slist.push_back(stmt);
 		}

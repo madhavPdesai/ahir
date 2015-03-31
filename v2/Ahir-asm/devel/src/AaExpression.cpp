@@ -4927,7 +4927,22 @@ AaExpression* Make_Exclusive_Mux_Expression(AaScope* scope, int line_no, int sin
 	
 	for(int I = 0, fI = expr_vector.size(); I < fI; I++)
 	{
-		AaExpression* ne = new AaBinaryExpression(scope, __AND, expr_vector[I].first, expr_vector[I].second);
+
+		//
+		// Some ugly stuff here... should make literal forming
+		// easier...
+		//
+		AaConstantLiteralReference* zero_expr = NULL;
+		string zfn = "_b0";
+		vector<string> literals; literals.push_back(zfn);
+		zfn += " ";
+		zero_expr = new AaConstantLiteralReference(scope, zfn, literals);
+
+		//
+		// need to create a mux because test expression type may be different from
+		// choices..
+		// 
+		AaExpression* ne = new AaTernaryExpression(scope, expr_vector[I].first, expr_vector[I].second, zero_expr);
 		ne->Set_Line_Number(line_no);
 		and_expr_vector.push_back(ne);
 	}
