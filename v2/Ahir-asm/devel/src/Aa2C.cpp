@@ -658,7 +658,7 @@ void Print_C_Ternary_Operation(string test,
 		string tgt, AaType* tgt_type, ofstream& ofile)
 {
 	assert(test_type->Is_Integer_Type());
-	ofile << "if(bit_vector_to_uint64(0," << test << ")";
+	ofile << "if(bit_vector_to_uint64(0," << test << "))";
 	ofile << "{" << endl;
 	if(tgt_type->Is_Integer_Type())
 		ofile << "bit_vector_assign_bit_vector(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << if_expr << "), &(" << tgt << "));" << endl;

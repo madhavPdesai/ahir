@@ -1062,7 +1062,7 @@ void AaProgram::Write_C_Model()
       //
       // These are global in the source file.
       //
-	if((*miter).second->Is_Storage_Object())
+	if(((*miter).second->Is_Storage_Object()) || ((*miter).second->Is_Pipe_Object()) || ((*miter).second->Is_Constant()))
       		((AaStorageObject*) (*miter).second)->PrintC_Global_Declaration(source_file);
     }
    header_file << "void __init_aa_globals__(); " << endl;
@@ -1075,7 +1075,7 @@ void AaProgram::Write_C_Model()
       //
       // These are global in the source file.
       //
-	if((*miter).second->Is_Storage_Object())
+	if(((*miter).second->Is_Storage_Object()) || ((*miter).second->Is_Pipe_Object()) || ((*miter).second->Is_Constant()))
       		((AaStorageObject*) (*miter).second)->PrintC_Global_Initialization(source_file);
     }
    source_file << "}" << endl;

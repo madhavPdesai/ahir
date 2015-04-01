@@ -79,8 +79,8 @@ class AaObject: public AaRoot
   bool Get_Is_Dereferenced() {return(_is_dereferenced);}
   void Set_Is_Dereferenced(bool v) {_is_dereferenced = v;}
 
-  virtual void PrintC_Global_Declaration(ofstream& ofile) {assert(0);}
-  virtual void PrintC_Global_Initialization(ofstream& ofile) {assert(0);}
+  virtual void PrintC_Global_Declaration(ofstream& ofile);
+  virtual void PrintC_Global_Initialization(ofstream& ofile);
 
 };
 
@@ -225,8 +225,6 @@ class AaStorageObject: public AaObject
       return(_access_widths);
     }
 
-   virtual void PrintC_Global_Declaration(ofstream& ofile);
-   virtual void PrintC_Global_Initialization(ofstream& ofile);
 };
 
 

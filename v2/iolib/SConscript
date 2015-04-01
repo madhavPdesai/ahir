@@ -2,3 +2,4 @@
 
 source_files = Glob("*.c")
 Library('io', source_files, CCFLAGS = ' -g ')
+SharedLibrary('io', source_files, CCFLAGS = ' -g ')

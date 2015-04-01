@@ -149,6 +149,25 @@ void AaObject::PrintC_Declaration(ofstream& ofile)
 	}
 }
 
+void AaObject::PrintC_Global_Declaration(ofstream& ofile)
+{
+	AaType* t = this->Get_Type();
+	Print_C_Global_Declaration(this->C_Reference_String(), t, ofile);
+}
+   
+
+void AaObject::PrintC_Global_Initialization(ofstream& ofile)
+{
+	AaType* t = this->Get_Type();
+	Print_C_Global_Initialization(this->C_Reference_String(), t,  ofile);
+	if(_value != NULL)
+	{
+		this->_value->Evaluate();
+		// initialization of object...
+		Print_C_Assignment_To_Constant(this->C_Reference_String(), this->Get_Type(), this->_value->_expression_value, ofile);
+	}
+}
+
 void AaObject::PrintC(ofstream& ofile) {}
 
 void AaObject::Write_VC_Model(ostream& ofile)
@@ -295,24 +314,6 @@ void AaStorageObject::Write_VC_Load_Store_Constants(ostream& ofile)
 }
 
 
-void AaStorageObject::PrintC_Global_Declaration(ofstream& ofile)
-{
-	AaType* t = this->Get_Type();
-	Print_C_Global_Declaration(this->C_Reference_String(), t, ofile);
-}
-   
-
-void AaStorageObject::PrintC_Global_Initialization(ofstream& ofile)
-{
-	AaType* t = this->Get_Type();
-	Print_C_Global_Initialization(this->C_Reference_String(), t,  ofile);
-	if(_value != NULL)
-	{
-		this->_value->Evaluate();
-		// initialization of object...
-		Print_C_Assignment_To_Constant(this->C_Reference_String(), this->Get_Type(), this->_value->_expression_value, ofile);
-	}
-}
 
 //---------------------------------------------------------------------
 // AaForeignStorageObject

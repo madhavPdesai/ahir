@@ -444,7 +444,7 @@ void AaModule::Write_C_Source(ofstream& ofile)
     {
 	string o_name =  this->_output_args[i]->Get_C_Name();
 	string n_name = "__p" + o_name;
-	Print_C_Assignment("(*" + n_name + ")", o_name,  this->_input_args[i]->Get_Type(), ofile);
+	Print_C_Assignment("(*" + n_name + ")", o_name,  this->_output_args[i]->Get_Type(), ofile);
     }
 
   ofile << "}" << endl;

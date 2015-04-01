@@ -32,6 +32,7 @@ Release:
 	# copy the IOLIB
 	cp $(IOLIB)/*.h $(RELEASE)/iolib/include/
 	cp $(IOLIB)/libio.a $(RELEASE)/iolib/lib/
+	cp $(IOLIB)/libio.so $(RELEASE)/iolib/lib/
 	# copy the pipeHandler
 	cp $(PIPEHANDLER)/include/*.h $(RELEASE)/pipeHandler/include/
 	cp $(PIPEHANDLER)/lib/* $(RELEASE)/pipeHandler/lib/
