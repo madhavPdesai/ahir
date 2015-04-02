@@ -1,6 +1,10 @@
 #ifndef __pthreadUtils_h__
 #define __pthreadUtils_h__
 
+#define MUTEX_DECL(x) static pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER;
+#define MUTEX_LOCK(x) pthread_mutex_lock(&x);
+#define MUTEX_UNLOCK(x) pthread_mutex_unlock(&x);
+
 #define DEFINE_THREAD(x)  void* __##x() {  x(); }
 #define DEFINE_THREAD_WITH_ARG(x)  void* __##x(void* arg) {  x(arg); }
 

@@ -3,6 +3,9 @@
 void
 __init_aa_globals__ ()
 {
+  register_pipe ("inpipe", 1, 16, 0);
+  register_pipe ("midpipe", 3, 8, 0);
+  register_pipe ("outpipe", 1, 16, 0);
 }
 
 void

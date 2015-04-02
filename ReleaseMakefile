@@ -7,6 +7,7 @@ IOLIB=./v2/iolib/
 PIPEHANDLER=./v2/pipeHandler/
 CTESTBENCH=./v2/CtestBench/
 PTHREADUTILS=./v2/pthreadUtils
+GNUPTHUTILS=./v2/GnuPthUtils
 VHDL=./vhdl/
 FUNCTIONLIB=./v2/functionLibrary
 SCRIPTS=./v2/Scripts
@@ -39,6 +40,7 @@ Release:
 	cp $(PIPEHANDLER)/pipeHandlerTest/* $(RELEASE)/pipeHandler/examples/
 	# copy the pthreadUtils.
 	cp $(PTHREADUTILS)/include/*.h $(RELEASE)/pthreadUtils/include/
+	cp $(GNUPTHUTILS)/include/*.h $(RELEASE)/GnuPthUtils/include/
 	# copy the testbench
 	cp $(CTESTBENCH)/include/*.h $(RELEASE)/CtestBench/include/
 	cp $(CTESTBENCH)/lib/* $(RELEASE)/CtestBench/lib/

@@ -1,9 +1,14 @@
-#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#ifdef SW
+#include <pth.h>
+#include <GnuPthUtils.h>
+#else
+#include <pthread.h>
 #include <pthreadUtils.h>
+#endif 
 #include <Pipes.h>
 #include <pipeHandler.h>
 #include "prog.h"
@@ -44,6 +49,7 @@ int main(int argc, char* argv[])
   	signal(SIGTERM, Exit);
 
 #ifdef SW
+	pth_init();
 	init_pipe_handler();
 	PTHREAD_DECL(vectorSum);
 	PTHREAD_CREATE(vectorSum);

@@ -5,11 +5,24 @@
 #include <assert.h>
 #include <bits/wordsize.h>
 #include <Pipes.h>
-#include <pthread.h>
 
-static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
-#define __LOCKLOG__  pthread_mutex_lock(&log_mutex);
-#define __UNLOCKLOG__  pthread_mutex_unlock(&log_mutex);
+#ifndef USE_GNUPTH
+#include <pthread.h>
+#include <pthreadUtils.h>
+#else
+#include <pth.h>
+#include <GnuPthUtils.h>
+#endif 
+
+MUTEX_DECL(log_mutex);
+#define __LOCKLOG__  MUTEX_LOCK(log_mutex);
+#define __UNLOCKLOG__  MUTEX_UNLOCK(log_mutex);
+
+#ifndef USE_GNUPTH
+#define __SLEEP__(n) usleep(n);
+#else
+#define __SLEEP__(n) pth_usleep(n);
+#endif
 
 #define READ_BURST__(id, width, buf_len, buf) { uint32_t words_read = 0;\
 	while(1)\
@@ -18,7 +31,7 @@ static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 		if(words_read == buf_len)\
 		break;\
 		else\
-		usleep(100);\
+		__SLEEP__(100);\
 	} }
 
 #define WRITE_BURST__(id, width, buf_len,buf) { uint32_t words_written = 0;\
@@ -28,7 +41,7 @@ static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 		if(words_written == buf_len)\
 		break;\
 		else\
-		usleep(100);\
+		__SLEEP__(100);\
 	} }
 
 uint64_t read_uint64(const char *id)

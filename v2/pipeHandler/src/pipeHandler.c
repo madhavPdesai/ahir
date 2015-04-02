@@ -4,7 +4,14 @@
 #include <assert.h>
 #include <signal.h>
 #include <pipeHandler.h>
+#ifndef USE_GNUPTH
 #include <pthread.h>
+#include <pthreadUtils.h>
+#else
+#include <pth.h>
+#include <GnuPthUtils.h>
+#endif
+
 #define ___POP(p,ptr,width) {switch(width) { case 8: POP(p,ptr,8); break;\
 						case 16: POP(p,ptr,16); break;\
 						case 32: POP(p,ptr,32); break;\
@@ -18,13 +25,13 @@
 static FILE* log_file = NULL;
 static PipeRec* pipes = NULL;
 
-static pthread_mutex_t handler_mutex = PTHREAD_MUTEX_INITIALIZER;
-#define ___LOCK___  pthread_mutex_lock(&handler_mutex);
-#define ___UNLOCK___  pthread_mutex_unlock(&handler_mutex);
+MUTEX_DECL(handler_mutex);
+#define ___LOCK___  MUTEX_LOCK(handler_mutex);
+#define ___UNLOCK___  MUTEX_UNLOCK(handler_mutex);
 
-static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
-#define __LOCKLOG__  pthread_mutex_lock(&log_mutex);
-#define __UNLOCKLOG__  pthread_mutex_unlock(&log_mutex);
+MUTEX_DECL(ph_log_mutex);
+#define __LOCKLOG__  MUTEX_LOCK(ph_log_mutex);
+#define __UNLOCKLOG__  MUTEX_UNLOCK(ph_log_mutex);
 
 
 void print_buffer(FILE* lfile, uint8_t* burst_payload,int count)

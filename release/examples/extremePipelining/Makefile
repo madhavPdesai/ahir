@@ -4,6 +4,7 @@ SOCKETLIB_LIB=$(AHIR_RELEASE)/CtestBench/lib
 PIPEHANDLER_INCLUDE=$(AHIR_RELEASE)/pipeHandler/include
 PIPEHANDLER_LIB=$(AHIR_RELEASE)/pipeHandler/lib
 PTHREADUTILS_INCLUDE=$(AHIR_RELEASE)/pthreadUtils/include
+GNUPTHUTILS_INCLUDE=$(AHIR_RELEASE)/GnuPthUtils/include
 VHDL_LIB=$(AHIR_RELEASE)/vhdl
 VHDL_VHPI_LIB=$(AHIR_RELEASE)/CtestBench/vhdl
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
@@ -31,9 +32,9 @@ TOPMODULES=-T vectorSum
 # note the use of IOLIB in building the testbench.
 SW: $(SRC)/prog.c $(SRC)/prog.h $(SRC)/testbench.c 
 	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include -I$(SRC) $(SRC)/prog.c
-	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(PTHREADUTILS_INCLUDE) -I$(SRC) $(SRC)/testbench.c
+	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(GNUPTHUTILS_INCLUDE) -I$(SRC) $(SRC)/testbench.c
 	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include  $(DEFS)  $(FUNCTIONLIB)/src/fpu.c
-	gcc -g -o testbench_sw prog.o fpu.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
+	gcc -g -o testbench_sw prog.o fpu.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandlerGnuPth -lpth
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim

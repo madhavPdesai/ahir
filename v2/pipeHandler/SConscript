@@ -1,11 +1,14 @@
 import os
-
 #modelsimpath = ['/cad/modelsim/modeltech/gcc-4.0.2-rhe21/bin']
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
 
-env.Append(CPPPATH = './src/:./include')
+env.Append(CPPPATH = './src/:./include:../pthreadUtils/include:../GnuPthUtils/include')
 
-env.SharedLibrary('lib/libPipeHandler', ['src/pipeHandler.c','src/Pipes.c'], CCFLAGS='-g -DNDEBUG')
+VariantDir('objPthreads','src',duplicate=0)
+env.SharedLibrary('lib/libPipeHandler', ['objPthreads/pipeHandler.c','objPthreads/Pipes.c'], CCFLAGS='-g -DNDEBUG')
+
+VariantDir('objGnuPth','src',duplicate=0)
+env.SharedLibrary('lib/libPipeHandlerGnuPth', ['objGnuPth/pipeHandler.c','objGnuPth/Pipes.c'], CCFLAGS='-g -DNDEBUG -DUSE_GNUPTH')
 
 
 
