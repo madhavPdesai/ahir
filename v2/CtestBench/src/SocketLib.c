@@ -2,6 +2,9 @@
 #include <string.h>
 #include <fcntl.h>
 #include <SocketLib.h>
+
+#define __SLEEP__(n) usleep(n)
+
 void ADD_SPACE__(char* buf)
 {
    int len = strlen(buf);
@@ -405,7 +408,7 @@ int receive_string(int sock_id, char* buffer)
       if(can_read_from_socket(sock_id))
 	break;
       else
-	usleep(1000);
+	__SLEEP__(1000);
     }
 
   
@@ -475,7 +478,7 @@ void send_packet_and_wait_for_response(char* buffer, int send_len, char* server_
 	  if(can_write_to_socket(sockfd))
 	    break;
 
-	  usleep(1000);
+	  __SLEEP__(1000);
 	}
 
       send(sockfd,buffer,send_len,0);
@@ -489,7 +492,7 @@ void send_packet_and_wait_for_response(char* buffer, int send_len, char* server_
 #endif
       while( (n = receive_string(sockfd,buffer)) <= 0)
 	{
-		usleep(1000);
+		__SLEEP__(1000);
 	}
 	  
 #ifdef DEBUG
