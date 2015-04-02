@@ -3,14 +3,14 @@
 #include <string.h>
 #include <assert.h>
 #include <signal.h>
-#include <pipeHandler.h>
-#ifndef USE_GNUPTH
-#include <pthread.h>
-#include <pthreadUtils.h>
-#else
+#ifdef USE_GNUPTH
 #include <pth.h>
 #include <GnuPthUtils.h>
+#else
+#include <pthread.h>
+#include <pthreadUtils.h>
 #endif
+#include <pipeHandler.h>
 
 #define ___POP(p,ptr,width) {switch(width) { case 8: POP(p,ptr,8); break;\
 						case 16: POP(p,ptr,16); break;\
@@ -115,6 +115,13 @@ uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo
   new_p->buffer.ptr8 = (uint8_t*) malloc(((pipe_depth*pipe_width)/8)*sizeof(uint8_t));
   new_p->lifo_mode = lifo_mode;
 
+#ifdef USE_GNUPTH
+  pth_mutex_init(&(new_p->pm));
+#else
+  pthread_mutex_init (&(new_p->pm), NULL);
+#endif
+
+
   ___LOCK___
   new_p->next = pipes;
   pipes = new_p;
@@ -200,7 +207,7 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
 	return 0;
   }
 
-  ___LOCK___
+  MUTEX_LOCK(p->pm);
   if(p->is_port)
 	ret_val = 1;
   else
@@ -225,7 +232,7 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
 		  ptr = ptr + (width/8);
 	  }
   }
-  ___UNLOCK___
+  MUTEX_UNLOCK(p->pm);
 
 	  if(ret_val > 0)
 	  {
@@ -266,7 +273,7 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 		return 0;
 	}
 
-	___LOCK___
+	MUTEX_LOCK(p->pm);
 		int available = __AVAILABLE(p);
 	if(available >= number_of_words_requested)
 	{
@@ -287,7 +294,7 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 			ptr = ptr + (width/8);
 		}
 	}
-	___UNLOCK___
+	MUTEX_UNLOCK(p->pm);
 
 		if(ret_val > 0)
 		{

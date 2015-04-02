@@ -17,7 +17,11 @@ struct PipeRec_
 
   int lifo_mode;
   int is_port;
-
+#ifdef USE_GNUPTH
+  pth_mutex_t pm;
+#else
+  pthread_mutex_t pm;
+#endif
   PipeRec* next;
   union
   {
