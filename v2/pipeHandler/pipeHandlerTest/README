@@ -1,0 +1,14 @@
+
+Description of tests
+  
+1. Some basic checks with pthreads and with gnu-pth
+	simple_check.c
+	simple_check_gnu_pth.c
+
+2. A pthread-only test
+	test_program.c
+
+3. Performance test with pth and pthreads
+   (two threads pinging integers back and forth)
+	performance_test_gnu_pth.c
+	performance_test_pthread.c
