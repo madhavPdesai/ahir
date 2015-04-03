@@ -21,7 +21,7 @@ MUTEX_DECL(log_mutex);
 #ifndef USE_GNUPTH
 #define __SLEEP__(n) usleep(n);
 #else
-#define __SLEEP__(n) pth_usleep(n);
+#define __SLEEP__(n) pth_yield(NULL);
 #endif
 
 #define READ_BURST__(id, width, buf_len, buf) { uint32_t words_read = 0;\
@@ -31,7 +31,7 @@ MUTEX_DECL(log_mutex);
 		if(words_read == buf_len)\
 		break;\
 		else\
-		__SLEEP__(100);\
+		__SLEEP__(1);\
 	} }
 
 #define WRITE_BURST__(id, width, buf_len,buf) { uint32_t words_written = 0;\
@@ -41,7 +41,7 @@ MUTEX_DECL(log_mutex);
 		if(words_written == buf_len)\
 		break;\
 		else\
-		__SLEEP__(100);\
+		__SLEEP__(1);\
 	} }
 
 uint64_t read_uint64(const char *id)
