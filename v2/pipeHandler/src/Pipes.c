@@ -19,7 +19,7 @@ MUTEX_DECL(log_mutex);
 #define __UNLOCKLOG__  MUTEX_UNLOCK(log_mutex);
 
 #ifndef USE_GNUPTH
-#define __SLEEP__(n) usleep(n);
+#define __SLEEP__(n) pthread_yield();
 #else
 #define __SLEEP__(n) pth_yield(NULL);
 #endif

@@ -5,10 +5,10 @@ env = Environment(ENV = {'PATH' : os.environ['PATH']})
 env.Append(CPPPATH = './src/:./include:../pthreadUtils/include:../GnuPthUtils/include')
 
 VariantDir('objPthreads','src',duplicate=0)
-env.SharedLibrary('lib/libPipeHandler', ['objPthreads/pipeHandler.c','objPthreads/Pipes.c'], CCFLAGS='-g -DNDEBUG')
+env.SharedLibrary('lib/libPipeHandler', ['objPthreads/pipeHandler.c','objPthreads/Pipes.c'], CCFLAGS='-O2 -DNDEBUG')
 
 VariantDir('objGnuPth','src',duplicate=0)
-env.SharedLibrary('lib/libPipeHandlerGnuPth', ['objGnuPth/pipeHandler.c','objGnuPth/Pipes.c'], CCFLAGS='-g -DNDEBUG -DUSE_GNUPTH')
+env.SharedLibrary('lib/libPipeHandlerGnuPth', ['objGnuPth/pipeHandler.c','objGnuPth/Pipes.c'], CCFLAGS='-O2 -DNDEBUG -DUSE_GNUPTH')
 
 
 
