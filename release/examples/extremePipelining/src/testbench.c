@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#ifdef SW
+#ifdef USE_GNUPTH
 #include <pth.h>
 #include <GnuPthUtils.h>
 #else
@@ -49,7 +49,9 @@ int main(int argc, char* argv[])
   	signal(SIGTERM, Exit);
 
 #ifdef SW
+#ifdef USE_GNUPTH
 	pth_init();
+#endif
 	init_pipe_handler();
 	PTHREAD_DECL(vectorSum);
 	PTHREAD_CREATE(vectorSum);

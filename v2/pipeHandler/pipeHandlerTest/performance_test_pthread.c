@@ -15,9 +15,10 @@ void Sender()
 		uint32_t rword = read_uint32("R_to_S");
 		if(rword != word)
 		{
-			fprintf(stderr,"ERROR: Sender received incorrect response: %d (expected %d).\n", rword, word);
+			fprintf(stderr,"Error: Sender received incorrect response: %d (expected %d).\n", rword, word);
 		}
 	}
+	fprintf(stderr,"Info: Sender done.\n");
 }
 
 void Receiver()
@@ -41,7 +42,7 @@ int main(int argc, char* argv[])
 		TSIZE = atoi(argv[1]);
 	}
 
-	fprintf(stderr,"INFO: Test-size = %d.\n", TSIZE);
+	fprintf(stderr,"Info: Test-size = %d.\n", TSIZE);
 
         init_pipe_handler();
 	register_pipe("S_to_R",32,32, 0);
