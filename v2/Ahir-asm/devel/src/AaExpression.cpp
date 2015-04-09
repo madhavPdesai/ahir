@@ -659,7 +659,11 @@ void AaSimpleObjectReference::Set_Type(AaType* t)
 
 string AaSimpleObjectReference::Get_Name()
 {
-	assert(this->_object != NULL);
+	if(this->_object == NULL)
+	{
+		AaRoot::Error("simple object reference to unresolved object " + this->Get_Object_Ref_String(), this);
+		return("");
+	}
 
 	if(this->_object->Is("AaInterfaceObject"))
 		return this->_object->Get_Name();
@@ -669,7 +673,11 @@ string AaSimpleObjectReference::Get_Name()
 
 void AaSimpleObjectReference::Print(ostream& ofile)
 {
-	assert(this->_object != NULL);
+	if(this->_object == NULL)
+	{
+		AaRoot::Error("simple object reference to unresolved object " + this->Get_Object_Ref_String(), this);
+		return;
+	}
 
 	if(this->_object->Is("AaInterfaceObject"))
 		ofile << this->_object->Get_Name();
@@ -688,7 +696,11 @@ string AaSimpleObjectReference::C_Reference_String()
 		
 		AaRoot* obj = this->Get_Object();
 		AaRoot* root_obj = this->Get_Root_Object();
-		assert(obj != NULL);
+		if(obj == NULL)
+		{
+			AaRoot::Error("simple object reference to unresolved object " + this->Get_Object_Ref_String(), this);
+			return("");
+		}
 
 		// 
 		// if this refers to an export of 
