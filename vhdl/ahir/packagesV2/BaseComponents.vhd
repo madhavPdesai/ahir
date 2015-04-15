@@ -493,7 +493,8 @@ package BaseComponents is
              num_writes: integer;
              data_width: integer;
              lifo_mode: boolean := false;
-             depth: integer := 1);
+             depth: integer := 1;
+	     signal_mode: boolean := false);
     port (
       read_req       : in  std_logic_vector(num_reads-1 downto 0);
       read_ack       : out std_logic_vector(num_reads-1 downto 0);

@@ -1,5 +1,4 @@
 # build software version of testbench (to check the "desired behaviour")
-AHIR_RELEASE=/home/madhav/ahirgit/ahir/release/
 SOCKETLIB_INCLUDE=$(AHIR_RELEASE)/CtestBench/include
 SOCKETLIB_LIB=$(AHIR_RELEASE)/CtestBench/lib
 PIPEHANDLER_INCLUDE=$(AHIR_RELEASE)/pipeHandler/include
@@ -25,7 +24,7 @@ LLVM2AAOPTS=-extract_do_while=true --storageinit=true -pipedepths=pipedepths.txt
 PROGDEFS=-DPIPELINE -DALT
 #PROGDEFS=-DUNROLL
 
-TOPMODULES=-T mullerCElement 
+TOPMODULES=-T Rx -T Tx 
 
 
 # compile with SW defined.

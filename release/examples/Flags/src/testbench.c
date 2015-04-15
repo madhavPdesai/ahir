@@ -18,28 +18,11 @@ void Exit(int sig)
 }
 
 	
-void Sender()
-{
-	while(1)
-	{
-		write_uint8("a",0);
-		write_uint8("b",0);
-		usleep(1000);
-		write_uint8("a",0);
-		write_uint8("b",1);
-		usleep(1000);
-		write_uint8("a",1);
-		write_uint8("b",1);
-		usleep(1000);
-		write_uint8("a",1);
-		write_uint8("b",0);
-	}
-}
 
 #ifdef SW
-DEFINE_THREAD(mullerCElement)
+DEFINE_THREAD(Rx)
+DEFINE_THREAD(Tx)
 #endif
-DEFINE_THREAD(Sender)
 
 int main(int argc, char* argv[])
 {
@@ -48,27 +31,72 @@ int main(int argc, char* argv[])
 
 #ifdef SW
 	init_pipe_handler();
-	register_port("a",8,1);
-	register_port("b",8,1);
-	register_port("q",8,0);
-	PTHREAD_DECL(mullerCElement);
-	PTHREAD_CREATE(mullerCElement);
+	PTHREAD_DECL(Rx);
+	PTHREAD_CREATE(Rx);
+	PTHREAD_DECL(Tx);
+	PTHREAD_CREATE(Tx);
 #endif
-	PTHREAD_DECL(Sender);
-	PTHREAD_CREATE(Sender);
 
-	uint8_t idx;
-	
+	write_uint8("env_rx_req",0);
+	write_uint8("env_tx_ack",0);
+	while(1)
+	{
+		uint8_t r = read_uint8("rx_env_ack");
+		uint8_t t = read_uint8("tx_env_req");
+		if(!r && !t)
+			break;
+	}
+	fprintf(stderr,"Env synched.\n");
+	int idx;
 	for(idx = 0; idx < 100; idx++)
 	{
-		uint8_t X = read_uint8("q");
-		fprintf(stdout,"Result = %d\n", X);
+		// signal rx and wait for tx
+		write_uint8("env_rx_req",1);
+		while(1)
+		{
+			uint8_t r = read_uint8("rx_env_ack");
+			if(r)
+				break;
+			
+		}
+		
+		write_uint8("env_rx_req",0);
+		fprintf(stderr,"Env-Rx handshake half-done\n");
+
+		while(1)
+		{
+			uint8_t r = read_uint8("rx_env_ack");
+			if(!r)
+				break;
+		}
+		fprintf(stderr,"Env-Rx handshake full-done\n");
+			
+		while(1)
+		{
+			uint8_t t = read_uint8("tx_env_req");
+			if(t)
+				break;
+			
+		}
+		write_uint8("env_tx_ack",1);
+		fprintf(stderr,"Env-Tx handshake half-done\n");
+
+		while(1)
+		{
+			uint8_t t = read_uint8("tx_env_req");
+			if(!t)
+				break;
+		}
+		write_uint8("env_tx_ack",0);
+		fprintf(stderr,"Env-Tx handshake full-done\n");
+
+		fprintf(stderr,"Completed  %d.\n", idx);
 		usleep(100);
 	}
-	PTHREAD_CANCEL(Sender);
 #ifdef SW
 	close_pipe_handler();
-	PTHREAD_CANCEL(mullerCElement);
+	PTHREAD_CANCEL(Rx);
+	PTHREAD_CANCEL(Tx);
 #endif
 	return(0);
 }

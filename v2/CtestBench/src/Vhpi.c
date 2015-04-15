@@ -912,7 +912,11 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
        fflush(log_file);
 #endif 
        // didnt find it, write zero into it..
-       sprintf(port_value,z32__);
+       // this is needed only for the req port,
+       // because it needs to be deasserted after 
+       // completion of the job.
+      if(strcmp(index_string, "req") == 0)
+        sprintf(port_value,z32__);
     }
 
 #ifdef DEBUG

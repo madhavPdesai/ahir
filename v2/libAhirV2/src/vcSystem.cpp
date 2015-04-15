@@ -669,11 +669,11 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 		ofile << "obj_ref := Pack_String_To_Vhpi_String("
 			<< '"' << pipe_id << " 0" << '"' << ");" << endl;
 		ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,val_string," << 
-			(p->Get_Signal() ? 1 : pipe_width) << ");" << endl;
+			pipe_width << ");" << endl;
 
 
 		string arg_name = pipe_id + "_pipe_write_data";
-		ofile << arg_name << " <= Unpack_String(val_string," << (p->Get_Signal() ? 1 : pipe_width) << ");" << endl;
+		ofile << arg_name << " <= Unpack_String(val_string," << pipe_width << ");" << endl;
 	}
       else if(num_reads == 0 && num_writes >  0)
       {
@@ -892,9 +892,6 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 	  ofile << semi_colon << endl;
 	  if(p->Get_Port() && p->Get_In_Flag())
 	  {
-		if(p->Get_Signal())
-		  ofile << pipe_id << ": in std_logic_vector(0 downto 0)";
-		else
 		  ofile << pipe_id << ": in std_logic_vector(" << pipe_width-1 << " downto 0)";
           }
 	  else
@@ -913,9 +910,6 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 	  ofile << semi_colon << endl;
 	  if(p->Get_Port() && p->Get_Out_Flag())
 	  {
-		if(p->Get_Signal())
-		  ofile << pipe_id << ": out std_logic_vector(0 downto 0)";
-		else
 		  ofile << pipe_id << ": out std_logic_vector(" << pipe_width-1 << " downto 0)";
           }
 	  else

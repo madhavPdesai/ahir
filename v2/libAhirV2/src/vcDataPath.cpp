@@ -30,7 +30,7 @@ void vcPipe::Print_VHDL_Pipe_Port_Signals(ostream& ofile)
 	    {
 		    ofile << "signal " 
 			    << pipe_id 
-			    << ": std_logic_vector(" << (this->Get_Signal() ? 0 : (pipe_width-1)) << " downto 0);" << endl;
+			    << ": std_logic_vector(" << (pipe_width-1) << " downto 0);" << endl;
 	    }
     }
 
@@ -42,7 +42,7 @@ void vcPipe::Print_VHDL_Pipe_Port_Signals(ostream& ofile)
 		  ofile << "signal " << pipe_id << "_pipe_read_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
 		  ofile << "signal " << pipe_id << "_pipe_read_ack : std_logic_vector(0 downto 0);" << endl;
 	  if(this->Get_Port())
-		  ofile << "signal " << pipe_id << ": std_logic_vector(" << (this->Get_Signal() ? 0 : (pipe_width-1)) << " downto 0);" << endl;
+		  ofile << "signal " << pipe_id << ": std_logic_vector(" << (pipe_width-1) << " downto 0);" << endl;
   }
 }
 
@@ -102,7 +102,7 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 			ofile << "generic map( -- { " << endl;
 			ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
 			ofile << "num_reads => " << num_reads << "," << endl;
-			ofile << "in_data_width => " << (this->Get_Signal() ? 1 : pipe_width) << "," << endl;
+			ofile << "in_data_width => " <<  pipe_width << "," << endl;
 			ofile << "out_data_width => " << pipe_width << " --}\n)" << endl;
 			ofile << "port map( -- { " << endl;
 			ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
@@ -119,7 +119,7 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 			ofile << "generic map( -- { " << endl;
 			ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
 			ofile << "num_writes => " << num_writes << "," << endl;
-			ofile << "out_data_width => " << (this->Get_Signal() ? 1 : pipe_width) << "," << endl;
+			ofile << "out_data_width => " << pipe_width << "," << endl;
 			ofile << "in_data_width => " << pipe_width << " --} ) \n" << endl;
 			ofile << "port map( -- { " << endl;
 			ofile << "write_req => " << pipe_id << "_pipe_write_req," << endl 
@@ -140,6 +140,7 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 		  ofile << "num_writes => " << num_writes << "," << endl;
 		  ofile << "data_width => " << pipe_width << "," << endl;
 		  ofile << "lifo_mode => " << (this->Get_Lifo_Mode() ? "true" : "false") << "," << endl;
+		  ofile << "signal_mode => " << (this->Get_Signal() ? "true" : "false") << "," << endl;
 		  ofile << "depth => " << pipe_depth << " --}\n)" << endl;
 		  ofile << "port map( -- { " << endl;
 		  ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 

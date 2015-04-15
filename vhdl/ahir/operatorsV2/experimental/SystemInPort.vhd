@@ -52,11 +52,17 @@ begin
     TruncateOrPad(data_reg, tr_data);
 
     -- padded data is broadcast to all readers.
-    process(tr_data)
-    begin
-	for I in 0 to num_reads-1 loop
-		read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= tr_data;
-	end loop;
-    end process;
+    ReadGen: for I in 0 to num_reads-1 generate
+      process(clk,reset)
+      begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= (others => '0');
+		elsif read_req(I) = '1' then
+			read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= tr_data;
+		end if;
+	end if;
+      end process;
+    end generate ReadGen;
 end Mixed;
 

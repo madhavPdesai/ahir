@@ -5,35 +5,101 @@
 #include <fpu.h>
 #include "prog.h"
 
+//
+// a simple signaling mechanism with three agents.
+//
 
-void mullerCElement()
+
+void Rx()
 {
-	uint8_t q = 0;
+	write_uint8("rx_env_ack",0);
+	write_uint8("rx_tx_req",0);
+
 	while(1)
 	{
-		if(q == 0)
+		uint8_t ack_from_tx  = read_uint8("tx_rx_ack");
+		uint8_t req_from_env = read_uint8("env_rx_req");
+		if(!ack_from_tx && !req_from_env)
+			break;
+	}
+
+	while(1)
+	{
+		// get req from environment.
+		while(1)
 		{
-			while(1)
-			{
-				uint8_t a = read_uint8("a");
-				uint8_t b = read_uint8("b");
-				if((a != 0) && (b != 0))
-					break;
-			}
-			q = 1;
-			write_uint8("q",1);
+			uint8_t reqE = read_uint8("env_rx_req");
+			if(reqE = '1') 
+				break;
 		}
-		else
+		write_uint8("rx_env_ack", 1);
+		while(1)
 		{
-			while(1)
-			{
-				uint8_t a = read_uint8("a");
-				uint8_t b = read_uint8("b");
-				if((a == 0) && (b == 0))
-					break;
-			}
-			q = 0;
-			write_uint8("q",0);
+			uint8_t reqE = read_uint8("env_rx_req");
+			if(!reqE) 
+				break;
+		}
+		write_uint8("rx_env_ack", 0);
+
+		write_uint8("rx_tx_req", 1);
+		while(1)
+		{
+			uint8_t tx_ack = read_uint8("tx_rx_ack");
+			if(tx_ack)
+				break;
+		}
+		write_uint8("rx_tx_req",0);
+		while(1)
+		{
+			uint8_t tx_ack = read_uint8("tx_rx_ack");
+			if(!tx_ack)
+				break;
+		}
+		
+	}
+}
+
+void Tx()
+{
+	write_uint8("tx_rx_ack",0);
+	write_uint8("tx_env_req",0);
+	while(1)
+	{
+		uint8_t req_from_rx  = read_uint8("rx_tx_req");
+		uint8_t ack_from_env = read_uint8("env_tx_ack");
+		if(!req_from_rx && !ack_from_env)
+			break;
+	}
+	while(1)
+	{
+		while(1)
+		{
+			uint8_t rx_req = read_uint8("rx_tx_req");
+			if(rx_req = '1') 
+				break;
+		}
+		write_uint8("tx_rx_ack", 1);
+		while(1)
+		{
+			uint8_t rx_req = read_uint8("rx_tx_req");
+			if(!rx_req) 
+				break;
+		}
+		write_uint8("tx_rx_ack", 0);
+
+		write_uint8("tx_env_req", 1);
+		while(1)
+		{
+			uint8_t env_ack = read_uint8("env_tx_ack");
+			if(env_ack)
+				break;
+		}
+		write_uint8("tx_env_req",0);
+		while(1)
+		{
+			uint8_t env_ack = read_uint8("env_tx_ack");
+			if(!env_ack)
+				break;
 		}
 	}
 }

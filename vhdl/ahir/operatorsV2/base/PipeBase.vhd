@@ -13,7 +13,8 @@ entity PipeBase is
            num_writes: integer;
            data_width: integer;
            lifo_mode: boolean := false;
-           depth: integer := 1);
+           depth: integer := 1;
+	   signal_mode: boolean := false);
   port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
     read_ack       : out std_logic_vector(num_reads-1 downto 0);
@@ -29,7 +30,7 @@ architecture default_arch of PipeBase is
 
   signal pipe_data, pipe_data_repeated : std_logic_vector(data_width-1 downto 0);
   signal pipe_req, pipe_ack, pipe_req_repeated, pipe_ack_repeated: std_logic;
-  
+  signal signal_data : std_logic_vector(data_width-1 downto 0); 
   
 begin  -- default_arch
 
@@ -55,8 +56,45 @@ begin  -- default_arch
     write_ack(0) <= pipe_ack;
     pipe_data <= write_data;
   end generate singleWriter;
+ 
+  -- in signal mode, the pipe is just a flag
+  SignalMode: if signal_mode generate
 
-  Shallow: if (depth < 3) and (not lifo_mode) generate
+	-- write always succeeds.
+     pipe_ack <= '1';
+     process(clk,reset) 
+     begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			signal_data <= (others => '0');	
+		else
+			if(pipe_req = '1') then
+				signal_data <= write_data;
+			end if;
+		end if;
+	end if;
+     end process;
+
+	-- read always succeeds, but output-register is
+	-- updated.
+     ReaderGen: for R in 0 to num_reads-1 generate
+	read_ack(R) <= '1';	
+	process(clk,reset)
+	begin
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				read_data(((R+1)*data_width)-1 downto (R*data_width)) <= (others => '0');
+			else
+				if(read_req(R) = '1') then
+					read_data(((R+1)*data_width)-1 downto (R*data_width)) <= signal_data;
+				end if;
+			end if;
+		end if;
+	end process;
+     end generate ReaderGen;
+  end generate SignalMode;
+
+  Shallow: if (not signal_mode) and (depth < 3) and (not lifo_mode) generate
 
     queue : QueueBase generic map (	
       name => name & ":Queue:",	
@@ -74,7 +112,7 @@ begin  -- default_arch
     
   end generate Shallow;
 
-  DeepFifo: if (depth > 2) and (not lifo_mode) generate
+  DeepFifo: if (not signal_mode) and (depth > 2) and (not lifo_mode) generate
     
     queue : SynchFifo generic map (
       name => name & ":Queue:", 
@@ -93,7 +131,7 @@ begin  -- default_arch
     
   end generate DeepFifo;
 
-  Lifo: if lifo_mode generate
+  Lifo: if (not signal_mode) and  lifo_mode generate
     stack : SynchLifo generic map (
       name => name & ":LIFO:",
       queue_depth => depth,
@@ -111,7 +149,7 @@ begin  -- default_arch
   end generate Lifo;
   
 
-  manyReaders: if (num_reads > 1) generate
+  manyReaders: if  (not signal_mode) and (num_reads > 1) generate
     rmux : InputPortLevel generic map (
       num_reqs       => num_reads,
       data_width     => data_width,
@@ -127,7 +165,7 @@ begin  -- default_arch
         reset => reset);
   end generate manyReaders;
 
-  singleReader: if (num_reads = 1) generate
+  singleReader: if  (not signal_mode) and (num_reads = 1) generate
     read_ack(0) <= pipe_ack_repeated;
     pipe_req_repeated <= read_req(0);
     read_data <= pipe_data_repeated;

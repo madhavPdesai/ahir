@@ -2134,7 +2134,8 @@ package BaseComponents is
              num_writes: integer;
              data_width: integer;
              lifo_mode: boolean := false;
-             depth: integer := 1);
+             depth: integer := 1;
+	     signal_mode: boolean := false);
     port (
       read_req       : in  std_logic_vector(num_reads-1 downto 0);
       read_ack       : out std_logic_vector(num_reads-1 downto 0);
@@ -12162,7 +12163,8 @@ entity PipeBase is
            num_writes: integer;
            data_width: integer;
            lifo_mode: boolean := false;
-           depth: integer := 1);
+           depth: integer := 1;
+	   signal_mode: boolean := false);
   port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
     read_ack       : out std_logic_vector(num_reads-1 downto 0);
@@ -12178,7 +12180,7 @@ architecture default_arch of PipeBase is
 
   signal pipe_data, pipe_data_repeated : std_logic_vector(data_width-1 downto 0);
   signal pipe_req, pipe_ack, pipe_req_repeated, pipe_ack_repeated: std_logic;
-  
+  signal signal_data : std_logic_vector(data_width-1 downto 0); 
   
 begin  -- default_arch
 
@@ -12204,8 +12206,45 @@ begin  -- default_arch
     write_ack(0) <= pipe_ack;
     pipe_data <= write_data;
   end generate singleWriter;
+ 
+  -- in signal mode, the pipe is just a flag
+  SignalMode: if signal_mode generate
 
-  Shallow: if (depth < 3) and (not lifo_mode) generate
+	-- write always succeeds.
+     pipe_ack <= '1';
+     process(clk,reset) 
+     begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			signal_data <= (others => '0');	
+		else
+			if(pipe_req = '1') then
+				signal_data <= write_data;
+			end if;
+		end if;
+	end if;
+     end process;
+
+	-- read always succeeds, but output-register is
+	-- updated.
+     ReaderGen: for R in 0 to num_reads-1 generate
+	read_ack(R) <= '1';	
+	process(clk,reset)
+	begin
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				read_data(((R+1)*data_width)-1 downto (R*data_width)) <= (others => '0');
+			else
+				if(read_req(R) = '1') then
+					read_data(((R+1)*data_width)-1 downto (R*data_width)) <= signal_data;
+				end if;
+			end if;
+		end if;
+	end process;
+     end generate ReaderGen;
+  end generate SignalMode;
+
+  Shallow: if (not signal_mode) and (depth < 3) and (not lifo_mode) generate
 
     queue : QueueBase generic map (	
       name => name & ":Queue:",	
@@ -12223,7 +12262,7 @@ begin  -- default_arch
     
   end generate Shallow;
 
-  DeepFifo: if (depth > 2) and (not lifo_mode) generate
+  DeepFifo: if (not signal_mode) and (depth > 2) and (not lifo_mode) generate
     
     queue : SynchFifo generic map (
       name => name & ":Queue:", 
@@ -12242,7 +12281,7 @@ begin  -- default_arch
     
   end generate DeepFifo;
 
-  Lifo: if lifo_mode generate
+  Lifo: if (not signal_mode) and  lifo_mode generate
     stack : SynchLifo generic map (
       name => name & ":LIFO:",
       queue_depth => depth,
@@ -12260,7 +12299,7 @@ begin  -- default_arch
   end generate Lifo;
   
 
-  manyReaders: if (num_reads > 1) generate
+  manyReaders: if  (not signal_mode) and (num_reads > 1) generate
     rmux : InputPortLevel generic map (
       num_reqs       => num_reads,
       data_width     => data_width,
@@ -12276,7 +12315,7 @@ begin  -- default_arch
         reset => reset);
   end generate manyReaders;
 
-  singleReader: if (num_reads = 1) generate
+  singleReader: if  (not signal_mode) and (num_reads = 1) generate
     read_ack(0) <= pipe_ack_repeated;
     pipe_req_repeated <= read_req(0);
     read_data <= pipe_data_repeated;
@@ -21041,51 +21080,6 @@ begin
 end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
-
-library ahir;
-use ahir.Types.all;
-use ahir.Subprograms.all;
-use ahir.Utilities.all;
-use ahir.BaseComponents.all;
-
--- brief description:
---  as the name indicates, a squash-shift-register
---  provides an implementation of a pipeline.
-entity SquashShiftRegister is
-  generic (name : string;
-	   data_width: integer;
-           depth: integer := 1);
-  port (
-    read_req       : in  std_logic;
-    read_ack       : out std_logic;
-    read_data      : out std_logic_vector(data_width-1 downto 0);
-    write_req       : in  std_logic;
-    write_ack       : out std_logic;
-    write_data      : in std_logic_vector(data_width-1 downto 0);
-    clk, reset : in  std_logic);
-  
-end SquashShiftRegister;
-
-architecture default_arch of SquashShiftRegister is
-
-  signal stage_full: std_logic_vector(0 to depth);
-
-  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  signal stage_data : SSRArray(0 to depth);
-  
-begin  -- default_arch
-
-    -- shift-right if there is a bubble 
-    -- anywhere in the shift-register,
-    -- and if the write-signal is active.
-    --
-    -- stall stage I if I+1 is not ready to
-    -- accept.
-    -- etc.. etc..  TODO.
-
-end default_arch;
-library ieee;
-use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
@@ -21305,12 +21299,18 @@ begin
     TruncateOrPad(data_reg, tr_data);
 
     -- padded data is broadcast to all readers.
-    process(tr_data)
-    begin
-	for I in 0 to num_reads-1 loop
-		read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= tr_data;
-	end loop;
-    end process;
+    ReadGen: for I in 0 to num_reads-1 generate
+      process(clk,reset)
+      begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= (others => '0');
+		elsif read_req(I) = '1' then
+			read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= tr_data;
+		end if;
+	end if;
+      end process;
+    end generate ReadGen;
 end Mixed;
 
 library ieee;
