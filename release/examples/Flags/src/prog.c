@@ -29,7 +29,7 @@ void Rx()
 		while(1)
 		{
 			uint8_t reqE = read_uint8("env_rx_req");
-			if(reqE = '1') 
+			if(reqE) 
 				break;
 		}
 		write_uint8("rx_env_ack", 1);
@@ -75,7 +75,7 @@ void Tx()
 		while(1)
 		{
 			uint8_t rx_req = read_uint8("rx_tx_req");
-			if(rx_req = '1') 
+			if(rx_req) 
 				break;
 		}
 		write_uint8("tx_rx_ack", 1);

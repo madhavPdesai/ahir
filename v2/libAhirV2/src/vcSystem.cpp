@@ -651,7 +651,7 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
       }
 
       ofile << "process" << endl;
-      ofile << "variable val_string, obj_ref: VhpiString;" << endl;
+      ofile << "variable port_val_string, req_val_string, ack_val_string,  obj_ref: VhpiString;" << endl;
       ofile << "begin --{" << endl;
       ofile << "wait until reset = '0';" << endl;
       ofile << "while true loop -- {" << endl;
@@ -663,25 +663,25 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 	{
 		ofile << "obj_ref := Pack_String_To_Vhpi_String("
 			<< '"' << pipe_id << " req" << '"' << ");" << endl;
-		ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,val_string,1);" << endl;
-		ofile << pipe_id  << "_pipe_write_req <= Unpack_String(val_string,1);" << endl;
+		ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,req_val_string,1);" << endl;
+		ofile << pipe_id  << "_pipe_write_req <= Unpack_String(req_val_string,1);" << endl;
 
 		ofile << "obj_ref := Pack_String_To_Vhpi_String("
 			<< '"' << pipe_id << " 0" << '"' << ");" << endl;
-		ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,val_string," << 
+		ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,port_val_string," << 
 			pipe_width << ");" << endl;
 
 
 		string arg_name = pipe_id + "_pipe_write_data";
-		ofile << arg_name << " <= Unpack_String(val_string," << pipe_width << ");" << endl;
+		ofile << arg_name << " <= Unpack_String(port_val_string," << pipe_width << ");" << endl;
 	}
       else if(num_reads == 0 && num_writes >  0)
       {
 
 	      ofile << "obj_ref := Pack_String_To_Vhpi_String("
 		      << '"' << pipe_id << " req" << '"' << ");" << endl;
-	      ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,val_string,1);" << endl;
-	      ofile << pipe_id  << "_pipe_read_req <= Unpack_String(val_string,1);" << endl;
+	      ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,req_val_string,1);" << endl;
+	      ofile << pipe_id  << "_pipe_read_req <= Unpack_String(req_val_string,1);" << endl;
       }
 
 
@@ -691,21 +691,21 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
       {
 	      ofile << "obj_ref := Pack_String_To_Vhpi_String("
 		      << '"' << pipe_id << " ack" << '"' << ");" << endl;
-	      ofile << "val_string := Pack_SLV_To_Vhpi_String(" << pipe_id << "_pipe_write_ack" << ");" << endl;
-	      ofile << vcSystem::_simulator_link_prefix << "Set_Port_Value(obj_ref,val_string,1);" << endl;
+	      ofile << "ack_val_string := Pack_SLV_To_Vhpi_String(" << pipe_id << "_pipe_write_ack" << ");" << endl;
+	      ofile << vcSystem::_simulator_link_prefix << "Set_Port_Value(obj_ref,ack_val_string,1);" << endl;
       }
       else if(num_reads == 0 && num_writes >  0)
       {
 	      ofile << "obj_ref := Pack_String_To_Vhpi_String("
 		      << '"' << pipe_id << " ack" << '"' << ");" << endl;
-	      ofile << "val_string := Pack_SLV_To_Vhpi_String(" << pipe_id << "_pipe_read_ack" << ");" << endl;
-	      ofile << vcSystem::_simulator_link_prefix << "Set_Port_Value(obj_ref,val_string,1);" << endl;
+	      ofile << "ack_val_string := Pack_SLV_To_Vhpi_String(" << pipe_id << "_pipe_read_ack" << ");" << endl;
+	      ofile << vcSystem::_simulator_link_prefix << "Set_Port_Value(obj_ref,ack_val_string,1);" << endl;
 
 	      ofile << "obj_ref := Pack_String_To_Vhpi_String("
 		      << '"' << pipe_id << " " << 0 << '"' << ");" << endl;
 	      string arg_name = pipe_id + "_pipe_read_data";
-	      ofile << "val_string := Pack_SLV_To_Vhpi_String(" << arg_name << ");" << endl;
-	      ofile << vcSystem::_simulator_link_prefix << "Set_Port_Value(obj_ref,val_string," << pipe_width << ");" << endl;
+	      ofile << "port_val_string := Pack_SLV_To_Vhpi_String(" << arg_name << ");" << endl;
+	      ofile << vcSystem::_simulator_link_prefix << "Set_Port_Value(obj_ref,port_val_string," << pipe_width << ");" << endl;
       }
 
       ofile << "-- }" << endl << "end loop;" << endl;
