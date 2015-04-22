@@ -87,13 +87,12 @@ options {
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Program : (aA_Module | (aA_Object_Declaration)+ )*
+// aA_Program : (aA_Module | (aA_Object_Declaration_List)+ )*
 //-----------------------------------------------------------------------------------------------
 aA_Program
 {
     AaModule* nf = NULL;
-    AaObject* obj = NULL;
-    AaScope* null_scope = NULL;
+    AaBlockStatement* null_scope = NULL;
     AaType* nt;
 }
     :
@@ -101,7 +100,7 @@ aA_Program
             (nf = aA_Module {AaProgram::Add_Module(nf);} )
             |
             (  
-                    obj = aA_Object_Declaration[null_scope]  {AaProgram::Add_Object(obj);}
+                     aA_Object_Declaration_List[null_scope]  
             )
             |
             (
@@ -120,7 +119,7 @@ aA_Module returns [AaModule* new_module]
     string lbl = "";
     new_module = NULL;
     AaStatementSequence* stmts = NULL;
-    AaObject* obj = NULL;
+    vector<AaObject*> obj_list;
     bool foreign_flag = false;
     bool inline_flag = false;
     bool pipeline_flag = false;
@@ -157,11 +156,9 @@ aA_Module returns [AaModule* new_module]
         aA_In_Args[new_module] aA_Out_Args[new_module] (IS
             LBRACE
             // first the declarations in this scope
-            (obj = aA_Object_Declaration[new_module] 
+            ( aA_Object_Declaration_List[new_module] 
                 { 
-                    if(!foreign_flag) 
-                        new_module->Add_Object(obj);
-                    else
+                    if(foreign_flag) 
                         AaRoot::Error("foreign module cannot have object declarations",new_module);
                 })*
             
@@ -212,9 +209,17 @@ aA_Label returns [string lbl]
 aA_In_Args[AaModule* parent] 
 {
     AaInterfaceObject* obj;
+    vector<AaInterfaceObject*> obj_list;
     string mode = "in";
 }
-    : IN LPAREN (obj = aA_Interface_Object_Declaration[parent,mode] {parent->Add_Argument(obj);})* RPAREN
+    : IN LPAREN ( aA_Interface_Object_Declaration_List[parent,mode, obj_list] 
+			{
+				int I,fI;
+				for(I = 0, fI = obj_list.size(); I < fI; I++)
+					parent->Add_Argument(obj_list[I]);
+				obj_list.clear();
+			}
+		)* RPAREN
     ;
 
 //-----------------------------------------------------------------------------------------------
@@ -222,10 +227,16 @@ aA_In_Args[AaModule* parent]
 //-----------------------------------------------------------------------------------------------
 aA_Out_Args[AaModule* parent] 
 {
-    AaInterfaceObject* obj;
+    vector<AaInterfaceObject*> obj_list;
     string mode = "out";
 }
-    : OUT LPAREN (obj = aA_Interface_Object_Declaration[parent,"out"] {parent->Add_Argument(obj);})* RPAREN
+    : OUT LPAREN (aA_Interface_Object_Declaration_List[parent,"out",obj_list] 
+		{
+			int I,fI;
+			for(I = 0, fI = obj_list.size(); I < fI; I++)
+				parent->Add_Argument(obj_list[I]);
+			obj_list.clear();
+		})* RPAREN
     ;
 
 //-----------------------------------------------------------------------------------------------
@@ -507,7 +518,7 @@ aA_Block_Statement_Sequence[AaScope* scope] returns [AaStatementSequence* nsb]
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Series_Block_Statement: SERIESBLOCK LABEL LBRACE (aA_Object_Declaration)* aA_Atomic_Statement_Sequence RBRACE
+// aA_Series_Block_Statement: SERIESBLOCK LABEL LBRACE (aA_Object_Declaration_List)* aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 // a series connection of atomic statements.  control passes down the
 // statement sequence
@@ -526,7 +537,7 @@ aA_Series_Block_Statement[AaScope* scope] returns [AaSeriesBlockStatement* new_s
             
 
         LBRACE
-        (obj = aA_Object_Declaration[new_sbs] { new_sbs->Add_Object(obj); })*
+        ( aA_Object_Declaration_List[new_sbs])*
         sseq = aA_Atomic_Statement_Sequence[new_sbs] 
         {
             new_sbs->Set_Statement_Sequence(sseq);
@@ -537,7 +548,7 @@ aA_Series_Block_Statement[AaScope* scope] returns [AaSeriesBlockStatement* new_s
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Parallel_Block_Statement: PARALLELBLOCK LABEL LBRACE aA_Object_Declaration* aA_Atomic_Statement_Sequence RBRACE
+// aA_Parallel_Block_Statement: PARALLELBLOCK LABEL LBRACE aA_Object_Declaration_List* aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 // a parallel connection of atomic statements.  all statements are started in parallel
 // and the block statement terminates when all statements have terminated.
@@ -555,13 +566,13 @@ aA_Parallel_Block_Statement[AaScope* scope] returns [AaParallelBlockStatement* n
             new_pbs->Set_Line_Number(pb->getLine());
         }
         LBRACE
-        (obj = aA_Object_Declaration[new_pbs] { new_pbs->Add_Object(obj); })*
+        (aA_Object_Declaration_List[new_pbs])*
         sseq = aA_Atomic_Statement_Sequence[new_pbs] {new_pbs->Set_Statement_Sequence(sseq);}
         RBRACE
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Fork_Block_Statement: FORKBLOCK LABEL LBRACE aA_Object_Declaration* aA_Fork_Block_Statement_Sequence RBRACE
+// aA_Fork_Block_Statement: FORKBLOCK LABEL LBRACE aA_Object_Declaration_List* aA_Fork_Block_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 // for non series-parallel fork-join structures.  basically describes a directed
 // graph with each node being represented by a statement.  In-arcs describe a join
@@ -587,14 +598,14 @@ aA_Fork_Block_Statement[AaScope* scope] returns [AaForkBlockStatement* new_fbs]
             new_fbs->Set_Line_Number(fb->getLine());
         }
         LBRACE
-        (obj = aA_Object_Declaration[new_fbs] { new_fbs->Add_Object(obj); })*
+        (aA_Object_Declaration_List[new_fbs])*
         sseq = aA_Fork_Block_Statement_Sequence[new_fbs] {new_fbs->Set_Statement_Sequence(sseq);}
         RBRACE
     ;
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Branch_Block_Statement: BRANCHBLOCK LABEL LBRACE aA_Object_Declaration* aA_Branch_Block_Statement_Sequence RBRACE
+// aA_Branch_Block_Statement: BRANCHBLOCK LABEL LBRACE aA_Object_Declaration_List* aA_Branch_Block_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 // for specifying arbitrary branching structures with a single token in flight.
 // the structure is described by two constructs: a switch/if and a merge.
@@ -620,7 +631,7 @@ aA_Branch_Block_Statement[AaScope* scope] returns [AaBranchBlockStatement* new_b
             new_bbs->Set_Line_Number(bb->getLine());
         }
         LBRACE
-        (obj = aA_Object_Declaration[new_bbs] { new_bbs->Add_Object(obj); })*
+        ( aA_Object_Declaration_List[new_bbs])*
         sseq = aA_Branch_Block_Statement_Sequence[new_bbs] {new_bbs->Set_Statement_Sequence(sseq);}
         RBRACE
     ;
@@ -1294,57 +1305,76 @@ aA_Binary_Op returns [AaOperation op] :
 //----------------------------------------------------------------------------------------------------------
 // aA_Object_Declaration : (aA_Storage_Object_Declaration | aA_Constant_Object_Declaration | aA_Pipe_Object_Declaration)
 //----------------------------------------------------------------------------------------------------------
-aA_Object_Declaration[AaScope* scope] returns [AaObject* obj]
-        : (obj = aA_Storage_Object_Declaration[scope]) |
-        (obj = aA_Constant_Object_Declaration[scope]) |
-        (obj = aA_Pipe_Object_Declaration[scope])
+// aA_Object_Declaration[AaScope* scope] returns [AaObject* obj]
+        // : (obj = aA_Storage_Object_Declaration[scope]) |
+        // (obj = aA_Constant_Object_Declaration[scope]) |
+        // (obj = aA_Pipe_Object_Declaration[scope])
+        // ;
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Object_Declaration_List : (aA_Storage_Object_Declaration | aA_Constant_Object_Declaration | aA_Pipe_Object_Declaration)
+//----------------------------------------------------------------------------------------------------------
+aA_Object_Declaration_List[AaBlockStatement* scope]
+        : aA_Storage_Object_Declaration_List[scope] |
+          aA_Constant_Object_Declaration_List[scope] |
+          aA_Pipe_Object_Declaration_List[scope]
         ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Storage_Object_Declaration:  REGISTER? STORAGE SIMPLE_IDENTIFIER COLON aA_Type_Reference (ASSIGNEQUAL aA_Constant_Literal_Reference)?
+// aA_Storage_Object_Declaration_List:  REGISTER? STORAGE SIMPLE_IDENTIFIER+ COLON aA_Type_Reference (ASSIGNEQUAL aA_Constant_Literal_Reference)?
 //----------------------------------------------------------------------------------------------------------
-aA_Storage_Object_Declaration[AaScope* scope] returns [AaObject* obj]
+aA_Storage_Object_Declaration_List[AaBlockStatement* scope]
         {
-            string oname;
+            vector<string> oname_list;
             AaType* otype = NULL;
             AaConstantLiteralReference* initial_value = NULL;
 	    bool register_flag = false;
         }
-        : (REGISTER {register_flag = true;})? (st:STORAGE aA_Object_Declaration_Base[scope,oname,otype,initial_value])
+        : (REGISTER {register_flag = true;})? (st:STORAGE 
+			aA_Object_Declaration_List_Base[scope,oname_list,otype,initial_value])
         {
-            obj = new AaStorageObject(scope,oname,otype,NULL);
+	    int I, fI;
+	    for(I = 0, fI = oname_list.size(); I < fI; I++)
+	    {
+            	AaObject* obj = new AaStorageObject(scope,oname_list[I],otype,NULL);
+            	obj->Set_Line_Number(st->getLine());
+	    	if(register_flag)
+	    		((AaStorageObject*)obj)->Set_Register_Flag(true);
 
-            obj->Set_Line_Number(st->getLine());
-	    if(register_flag)
-	    	((AaStorageObject*)obj)->Set_Register_Flag(true);
+            	if(initial_value != NULL)
+            	{
+              		AaRoot::Warning("initial value not allowed on storage objects, will be ignored.",obj);
+              		delete initial_value;
+            	}
 
-            if(initial_value != NULL)
-            {
-              AaRoot::Warning("initial value not allowed on storage objects, will be ignored.",obj);
-              delete initial_value;
+		if(scope == NULL)
+			AaProgram::Add_Object(obj);
+		else
+			scope->Add_Object(obj);
             }
-        }
+	}
         ;
 
+
 //----------------------------------------------------------------------------------------------------------
-// aA_Object_Declaration_Base: SIMPLE_IDENTIFIER COLON aA_Type_Reference (ASSIGNEQUAL aA_Constant_Literal_Reference)?
+// aA_Object_Declaration_List_Base: SIMPLE_IDENTIFIER+ COLON aA_Type_Reference (ASSIGNEQUAL aA_Constant_Literal_Reference)?
 //----------------------------------------------------------------------------------------------------------
-aA_Object_Declaration_Base[AaScope* scope, string& oname, AaType*& otype, AaConstantLiteralReference*& initial_value]
-        : (id:SIMPLE_IDENTIFIER { oname = id->getText(); }) COLON
+aA_Object_Declaration_List_Base[AaBlockStatement* scope, vector<string>& oname_list, AaType*& otype, AaConstantLiteralReference*& initial_value]
+        : (id:SIMPLE_IDENTIFIER { oname_list.push_back(id->getText()); })+ COLON
             ((otype = aA_Type_Reference[scope]) | (otype = aA_Named_Type_Reference[scope]))
             (ASSIGNEQUAL initial_value = aA_Constant_Literal_Reference[scope])?
         ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Constant_Object_Declaration: CONSTANT aA_Object_Declaration_Base
+// aA_Constant_Object_Declaration_List: CONSTANT aA_Object_Declaration_List_Base
 //----------------------------------------------------------------------------------------------------------
-aA_Constant_Object_Declaration[AaScope* scope] returns [AaObject* obj]
+aA_Constant_Object_Declaration_List[AaBlockStatement* scope]
         {
-            string oname;
+            vector<string> oname_list;
             AaType* otype = NULL;
             AaConstantLiteralReference* initial_value = NULL;
         }
-        : (st: CONSTANT aA_Object_Declaration_Base[scope,oname,otype,initial_value])
+        : (st: CONSTANT aA_Object_Declaration_List_Base[scope,oname_list,otype,initial_value])
         {
             if(otype->Is("AaArrayType"))
             {
@@ -1352,18 +1382,25 @@ aA_Constant_Object_Declaration[AaScope* scope] returns [AaObject* obj]
             }
             else
             {
-               obj = new AaConstantObject(scope,oname,otype,initial_value);
-               obj->Set_Line_Number(st->getLine());
+		for(int I = 0, fI = oname_list.size(); I < fI; I++)
+		{
+               		AaObject* obj = new AaConstantObject(scope,oname_list[I],otype,initial_value);
+               		obj->Set_Line_Number(st->getLine());
+			if(scope == NULL)
+				AaProgram::Add_Object(obj);
+			else
+				scope->Add_Object(obj);
+		}
             }
         }
         ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Pipe_Object_Declaration: PIPE aA_Object_Declaration_Base DEPTH UINTEGER
+// aA_Pipe_Object_Declaration: PIPE aA_Object_Declaration_List_Base DEPTH UINTEGER
 //----------------------------------------------------------------------------------------------------------
-aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
+aA_Pipe_Object_Declaration_List[AaBlockStatement* scope] 
         {
-            string oname;
+            vector<string> oname_list;
             AaType* otype = NULL;
             AaConstantLiteralReference* initial_value = NULL;
             int pipe_depth = 1;
@@ -1371,43 +1408,68 @@ aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
 	    bool lifo_flag = false;
 	    bool in_mode = false;
 	    bool out_mode = false;
+	    bool is_port = false;
+	    bool is_signal = false;
+	    bool is_synch  = false;
         }
         : (LIFO { lifo_flag = true; })? 
-		(st:PIPE aA_Object_Declaration_Base[scope,oname,otype,initial_value]) 
+		(st:PIPE aA_Object_Declaration_List_Base[scope,oname_list,otype,initial_value]) 
         (DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
+		(IN {in_mode = true;} | OUT {out_mode = true;})? 
+		(PORT  {is_port = true;})?
+		(SIGNAL {is_signal = true;})?
+		(SYNCH {is_synch = true;})?
         {
-            if(initial_value != NULL)
-                cerr << "Warning: ignoring initial value for pipe " << oname << endl;
-            obj = new AaPipeObject(scope,oname,otype);
-            if(pipe_depth > 1)
-                ((AaPipeObject*)obj)->Set_Depth(pipe_depth);
-            obj->Set_Line_Number(st->getLine());
-	    ((AaPipeObject*)obj)->Set_Lifo_Mode(lifo_flag);
-        }
-		(IN {((AaPipeObject*)obj)->Set_In_Mode(true);} | OUT {((AaPipeObject*)obj)->Set_Out_Mode(true);})? 
-		(PORT  {((AaPipeObject*)obj)->Set_Port(true);})?
-		(SIGNAL {((AaPipeObject*)obj)->Set_Signal(true);})?
-		(SYNCH {((AaPipeObject*)obj)->Set_Synch(true);})?
+	    for(int I = 0, fI = oname_list.size(); I < fI; I++)
+	    {
+		string oname = oname_list[I];
+            	if(initial_value != NULL)
+                	cerr << "Warning: ignoring initial value for pipe " << oname << endl;
+
+            	AaObject* obj = new AaPipeObject(scope,oname,otype);
+            	if(pipe_depth > 1)
+                	((AaPipeObject*)obj)->Set_Depth(pipe_depth);
+            	obj->Set_Line_Number(st->getLine());
+	    	((AaPipeObject*)obj)->Set_Lifo_Mode(lifo_flag);
+	    	((AaPipeObject*)obj)->Set_In_Mode(in_mode);
+	    	((AaPipeObject*)obj)->Set_Out_Mode(out_mode);
+	    	((AaPipeObject*)obj)->Set_Port(is_port);
+	    	((AaPipeObject*)obj)->Set_Synch(is_synch);
+	    	((AaPipeObject*)obj)->Set_Signal(is_signal);
+
+		if(scope == NULL)
+			AaProgram::Add_Object(obj);
+		else
+			scope->Add_Object(obj);
+            }
+	}
+	 
         ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Interface_Object_Declaration : aA_Object_Declaration_Base
+// aA_Interface_Object_Declaration_List : aA_Object_Declaration_Base
 //----------------------------------------------------------------------------------------------------------
-aA_Interface_Object_Declaration[AaModule* scope, string mode] returns [AaInterfaceObject* obj]
+aA_Interface_Object_Declaration_List[AaModule* scope, string mode, vector<AaInterfaceObject*>& obj_list]
     {       
-            string oname;
+	    vector<string> oname_list;
             AaType* otype = NULL;
             AaConstantLiteralReference* initial_value = NULL;
     }
-    : ( aA_Object_Declaration_Base[scope,oname,otype,initial_value] )
+    : ( aA_Object_Declaration_List_Base[scope,oname_list,otype,initial_value] )
         {
             if(initial_value != NULL)
-                cerr << "Warning: ignoring initial value for interface object " << oname << endl;
-            obj = new AaInterfaceObject(scope,oname, otype, mode);
+                cerr << "Warning: ignoring initial value for interface object declarations " <<  endl;
+		int I, fI;
+		for(I = 0, fI = oname_list.size(); I < fI; I++)
+		{
+            		AaInterfaceObject* obj = new AaInterfaceObject(scope,oname_list[I], otype, mode);
+			obj_list.push_back(obj);
 
-            // this is not exact.. but better something than nothing.
-            if(scope != NULL)
-                obj->Set_Line_Number(scope->Get_Line_Number());
+            		// this is not exact.. but better something than nothing.
+            		if(scope != NULL)
+                		obj->Set_Line_Number(scope->Get_Line_Number());
+		}
+
         }
     ;
 

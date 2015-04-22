@@ -1,9 +1,12 @@
 // a simple example..
 $module [sum_mod]
-    $in (a: $uint<10> b: $uint<10>)
-    $out (c: $uint<20>)
+    $in (a b: $uint<10> P Q : $uint<18>)
+    $out (c d: $uint<20> E: $uint<20>)
 $is
 {
+	$storage u v w : $uint<1>
+	$pipe PP : $uint<1>
+	$constant R S T : $uint<1>
 	// note that q,r,s,c are
 	// all implicitly declared
 	// variables

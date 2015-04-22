@@ -21,6 +21,10 @@ void AaStatement::Write_VC_Synch_Dependency(set<AaRoot*>& visited_elements, bool
 			{
 				ofile << "// forced synch" << endl;
 				__J(__SST(this), __UCT(stmt));
+				if(pipeline_flag)
+				{
+					__MJ(__UST(stmt), __SCT(this), true); // bypass
+				}
 			}
 		}
 	}
