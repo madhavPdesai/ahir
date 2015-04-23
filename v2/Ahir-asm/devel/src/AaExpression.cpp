@@ -3890,7 +3890,6 @@ void AaSliceExpression::Print(ostream& ofile)
 void AaSliceExpression::PrintC(ofstream& ofile)
 {
 	this->_rest->PrintC(ofile);
-	this->PrintC_Declaration(ofile);
 	Print_C_Slice_Operation(this->_rest->C_Reference_String(), 
 				this->_rest->Get_Type(),
 				this->_low_index, 

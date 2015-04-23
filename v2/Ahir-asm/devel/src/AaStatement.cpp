@@ -2997,7 +2997,16 @@ void AaMergeStatement::PrintC(ofstream& ofile)
 	string run_block_name = this->Get_VC_Name() + "_run";
 	string entry_flag_name = this->Get_VC_Name() + "_entry_flag";
 	ofile << "uint8_t " << entry_flag_name << ";" << endl;
-	ofile << entry_flag_name << " = 1;" << endl;
+
+	if(this->Get_In_Do_While())
+	{
+		ofile << entry_flag_name << " = do_while_entry_flag;" << endl;
+	}
+	else
+	{
+		ofile << entry_flag_name << " = 1;" << endl;
+	}
+
 	for(unsigned int i=0; i < this->_wait_on_statements.size(); i++)
 		ofile << "uint8_t " << this->_wait_on_statements[i]->C_Reference_String() << "_flag = 0; " << endl;
 	ofile  << "goto " << run_block_name << ";" << endl;
@@ -3447,15 +3456,24 @@ void AaPhiStatement::PrintC(ofstream& ofile)
 		}
 		else
 		{
-			AaRoot* child = this->Get_Scope()->Find_Child(mlabel);
-			assert(child);
-			string check_string = child->C_Reference_String();
+			string check_string;
+			if(mlabel == "$loopback")
+			{
+				check_string = "do_while_loopback_flag";
+			}
+			else
+			{
+				AaRoot* child = this->Get_Scope()->Find_Child(mlabel);
+				assert(child);
+				check_string = child->C_Reference_String();
+				check_string += "_flag";
+			}
 
 			if(at_least_one)
 			{
 				ofile << " else ";
 			}
-			check_string += "_flag";
+
 			ofile << "if(" << check_string << ") {" << endl;
 			this->_source_pairs[i].second->PrintC(ofile);
 			Print_C_Assignment(tgt_name, this->_source_pairs[i].second->C_Reference_String(),
@@ -4542,14 +4560,22 @@ void AaDoWhileStatement::Print(ostream& ofile)
 
 void AaDoWhileStatement::PrintC(ofstream& ofile)
 {
+	
+    ofile << "{" << endl;
     ofile << "// do-while:  " << this->Get_Source_Info() << endl;
     assert(this->_test_expression);
 
     this->_test_expression->PrintC_Declaration(ofile);
     this->_test_expression->PrintC(ofile);
+    ofile << "uint8_t do_while_entry_flag;" << endl;
+    ofile << "do_while_entry_flag = 1;" << endl;
+    ofile << "uint8_t do_while_loopback_flag;" << endl;
+    ofile << "do_while_loopback_flag = 0;" << endl;
     ofile << "do {" << endl;
   	this->_merge_statement->PrintC(ofile);
   	this->_loop_body_sequence->PrintC(ofile);
+    ofile << "do_while_entry_flag = 0;" << endl;
+    ofile << "do_while_loopback_flag = 1;" << endl;
     ofile << "} " << endl;
     ofile << "while ( ";
     Print_C_Value_Expression(this->_test_expression->C_Reference_String(), 
