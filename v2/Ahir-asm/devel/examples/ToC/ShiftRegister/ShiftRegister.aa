@@ -48,10 +48,12 @@ $is
 {
   $branchblock[reader] 
   {
-    $merge $entry loopback $endmerge
+    $merge $entry $endmerge
     // data goes out from here.
+    $dopipeline $depth 2 $buffering 1
+    $merge $entry $loopback $endmerge
     $call Print(outpipe)()
-    $place [loopback]
+    $while 1
   }
 }
 $foreign $module [Print] 

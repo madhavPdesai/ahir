@@ -197,6 +197,13 @@ bool AaModule::Can_Have_Native_C_Interface()
   return(all_types_native);
 }
 
+// name of the function..
+string AaModule::Get_C_Name()
+{
+    return(AaProgram::_c_vhdl_module_prefix + this->Get_Label());
+}
+
+
 void AaModule::Write_C_Header(ofstream& ofile)
 {
  

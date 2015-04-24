@@ -5,6 +5,9 @@
 #define MUTEX_LOCK(x) pthread_mutex_lock(&x);
 #define MUTEX_UNLOCK(x) pthread_mutex_unlock(&x);
 
+// in the header..
+#define DECLARE_THREAD(x)  void* __##x();
+
 #define DEFINE_THREAD(x)  void* __##x() {  x(); }
 #define DEFINE_THREAD_WITH_ARG(x)  void* __##x(void* arg) {  x(arg); }
 

@@ -4581,6 +4581,7 @@ void AaDoWhileStatement::PrintC(ofstream& ofile)
     Print_C_Value_Expression(this->_test_expression->C_Reference_String(), 
 				this->_test_expression->Get_Type(), ofile);
     ofile << ");" << endl;
+    ofile << "}" << endl;
 }
 
 

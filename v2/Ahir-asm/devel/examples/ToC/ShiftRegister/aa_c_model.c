@@ -134,20 +134,38 @@ _stage_3_ ()
 // merge:  file ShiftRegister.aa, line 51
     uint8_t merge_stmt_35_entry_flag;
     merge_stmt_35_entry_flag = 1;
-    uint8_t loopback_34_flag = 0;
-    goto merge_stmt_35_run;
-  loopback_34:loopback_34_flag = 1;
     goto merge_stmt_35_run;
 
   merge_stmt_35_run:;
-    loopback_34_flag = 0;
     merge_stmt_35_entry_flag = 0;
-//              $call Print (outpipe ) () 
-//  file ShiftRegister.aa, line 53
-    __declare_bit_vector (RPIPE_outpipe_36, 16);
-    bit_vector_assign_uint64 (0, &RPIPE_outpipe_36, read_uint16 ("outpipe"));
-    Print (bit_vector_to_uint64 (0, &RPIPE_outpipe_36));
-    goto loopback_34;
+    {
+// do-while:   file ShiftRegister.aa, line 53
+      __declare_bit_vector (konst_41, 1);
+      konst_41.val.byte_array[0] = 1;
+      uint8_t do_while_entry_flag;
+      do_while_entry_flag = 1;
+      uint8_t do_while_loopback_flag;
+      do_while_loopback_flag = 0;
+      do
+	{
+// merge:  file ShiftRegister.aa, line 54
+	  uint8_t merge_stmt_37_entry_flag;
+	  merge_stmt_37_entry_flag = do_while_entry_flag;
+	  goto merge_stmt_37_run;
+
+	merge_stmt_37_run:;
+	  merge_stmt_37_entry_flag = 0;
+//                      $call Print (outpipe ) () 
+//  file ShiftRegister.aa, line 55
+	  __declare_bit_vector (RPIPE_outpipe_38, 16);
+	  bit_vector_assign_uint64 (0, &RPIPE_outpipe_38,
+				    read_uint16 ("outpipe"));
+	  Print (bit_vector_to_uint64 (0, &RPIPE_outpipe_38));
+	  do_while_entry_flag = 0;
+	  do_while_loopback_flag = 1;
+	}
+      while (bit_vector_to_uint64 (0, &konst_41));
+    }
   }
 // output side transfers...
 }

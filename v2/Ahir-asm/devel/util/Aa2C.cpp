@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 
   if(argc < 2)
     {
-      cerr << "Usage: Aa2C [-I ext-storage-object] <filename> (<filename>) ... " << endl;
+      cerr << "Usage: Aa2C [-I ext-storage-object] [-T top-module]* [-P c-fn-prefix]  <filename> (<filename>) ... " << endl;
       exit(1);
     }
 
@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "I:",
+		      "I:T:P:o:",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -56,6 +56,21 @@ int main(int argc, char* argv[])
 	case 'I':
 	  AaProgram::_keep_extmem_inside  = true;
 	  AaProgram::_extmem_object_name = optarg;
+	  break;
+	case 'T':
+	  opt_string = optarg; 
+	  AaProgram::_top_level_daemons.insert(opt_string);
+	  cerr << "Info: marked " << opt_string << " as a top-level daemon. " << endl;
+	  break;
+	case 'P':
+	  opt_string = optarg; 
+	  AaProgram::_c_vhdl_module_prefix  = opt_string;
+	  cerr << "Info: C function name prefix set to " << opt_string << ". " << endl;
+	  break;
+	case 'o':
+	  opt_string = optarg; 
+	  AaProgram::_aa2c_output_directory  = opt_string;
+	  cerr << "Info: C output directory set to " << opt_string << ". " << endl;
 	  break;
 	default:
 	  cerr << "Error: unknown option " << opt << endl;

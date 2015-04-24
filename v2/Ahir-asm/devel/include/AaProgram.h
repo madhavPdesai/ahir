@@ -111,6 +111,8 @@ class AaProgram
   // modules become reachable).
   static set<AaModule*> _reachable_modules;
 
+
+
  public:
   static int _pointer_width;
   static int _foreign_word_size;
@@ -134,6 +136,20 @@ class AaProgram
   static bool _print_inlined_functions_in_caller;
   static bool _optimize_flag;
   static bool _unordered_memory_flag;
+
+  //// Aa2C related stuff.
+  // top-level threads (daemons)
+  // used by Aa2C to generate thread creation code.
+  static set<string> _top_level_daemons;
+
+  // prefix to be attached to c/vhdl modules.
+  // this is useful to disambiguate different 
+  // functions/entities created as part of a hierarchical
+  // system build.
+  static string _c_vhdl_module_prefix;
+
+  // directory in which aa2c products will be created..
+  static string _aa2c_output_directory;
 
   AaProgram();
   ~AaProgram();

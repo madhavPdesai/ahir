@@ -165,10 +165,7 @@ class AaModule: public AaSeriesBlockStatement
     return(this->_output_args[index]);
   }
 
-  virtual string Get_C_Name()
-  {
-    return(this->Get_Label());
-  }
+  virtual string Get_C_Name();
 
   void Print(ostream& ofile);
   void Print_Body(ostream& ofile);

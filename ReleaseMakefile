@@ -6,6 +6,7 @@ RELEASE=./release
 IOLIB=./v2/iolib/
 PIPEHANDLER=./v2/pipeHandler/
 CTESTBENCH=./v2/CtestBench/
+BITVECTORS=./v2/BitVectors/
 PTHREADUTILS=./v2/pthreadUtils
 GNUPTHUTILS=./v2/GnuPthUtils
 VHDL=./vhdl/
@@ -38,6 +39,9 @@ Release:
 	cp $(PIPEHANDLER)/include/*.h $(RELEASE)/pipeHandler/include/
 	cp $(PIPEHANDLER)/lib/* $(RELEASE)/pipeHandler/lib/
 	cp $(PIPEHANDLER)/pipeHandlerTest/* $(RELEASE)/pipeHandler/examples/
+	# copy the BitVectors
+	cp $(BITVECTORS)/include/*.h $(RELEASE)/BitVectors/include/
+	cp $(BITVECTORS)/lib/* $(RELEASE)/BitVectors/lib/
 	# copy the pthreadUtils.
 	cp $(PTHREADUTILS)/include/*.h $(RELEASE)/pthreadUtils/include/
 	cp $(GNUPTHUTILS)/include/*.h $(RELEASE)/GnuPthUtils/include/

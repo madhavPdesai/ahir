@@ -41,7 +41,16 @@ std::set<int> AaProgram::_extmem_access_widths;
 std::set<AaType*> AaProgram::_extmem_access_types;
 std::set<AaPointerDereferenceExpression*> AaProgram::_pointer_dereferences;
 std::set<string> AaProgram::_root_module_names;
+std::set<string> AaProgram::_top_level_daemons;
 std::set<AaModule*> AaProgram::_reachable_modules;
+
+//
+// prefix to be attached to c/vhdl modules.
+// 
+string AaProgram::_c_vhdl_module_prefix="";
+
+// directory for aa2c outputs.
+string AaProgram::_aa2c_output_directory = ".";
 
 bool AaProgram::_optimize_flag = false;
 bool AaProgram::_unordered_memory_flag = false;
@@ -1028,20 +1037,23 @@ void AaProgram::Elaborate()
 
 void AaProgram::Write_C_Model()
 {
-
   ofstream header_file;
-  string header = "aa_c_model.h";
-  header_file.open(header.c_str());
+  string header = AaProgram::_c_vhdl_module_prefix + "aa_c_model.h";
+  string header_file_name = AaProgram::_aa2c_output_directory + "/" + header;
+  header_file.open(header_file_name.c_str());
   
   ofstream source_file;
-  string source = "aa_c_model.c";
-  source_file.open(source.c_str());
+  string source = AaProgram::_c_vhdl_module_prefix + "aa_c_model.c";
+  string source_file_name = AaProgram::_aa2c_output_directory + "/" + source;
+  source_file.open(source_file_name.c_str());
 
 
   header_file << "#include <BitVectors.h>" << endl;
   // declare all the record types that you have encountered.
 
   source_file << "#include <Pipes.h>" << endl;
+  source_file << "#include <pthread.h>" << endl;
+  source_file << "#include <pthreadUtils.h>" << endl;
   source_file << "#include <" << header << ">" << endl;
   for(std::map<string,AaType*,StringCompare>::iterator miter = AaProgram::_type_map.begin();
       miter != AaProgram::_type_map.end();
@@ -1065,8 +1077,8 @@ void AaProgram::Write_C_Model()
 	if(((*miter).second->Is_Storage_Object()) || ((*miter).second->Is_Pipe_Object()) || ((*miter).second->Is_Constant()))
       		((AaStorageObject*) (*miter).second)->PrintC_Global_Declaration(source_file);
     }
-   header_file << "void __init_aa_globals__(); " << endl;
-   source_file << "void __init_aa_globals__() " << endl; 
+   header_file << "void " << AaProgram::_c_vhdl_module_prefix << "__init_aa_globals__(); " << endl;
+   source_file << "void " << AaProgram::_c_vhdl_module_prefix << "__init_aa_globals__() " << endl; 
    source_file << "{" << endl;
   for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
       miter != AaProgram::_objects.end();
@@ -1081,6 +1093,8 @@ void AaProgram::Write_C_Model()
    source_file << "}" << endl;
 	
 
+  // top-level daemons.
+  vector<AaModule*> top_daemons;
   for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
       miter != AaProgram::_modules.end();
       miter++)
@@ -1089,15 +1103,47 @@ void AaProgram::Write_C_Model()
 	if(!m->Get_Foreign_Flag() && (AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end()))
 	{
       		// Each module is printed in two parts:
-      		//   - as a macro
-      		//       The macro can faithfully reproduce an Aa function.
-      		//   - as a function.
-      		//       The function form will define a function interface 
-      		//       and will in turn use the macro internally.
       		(*miter).second->Write_C_Header(header_file);
       		(*miter).second->Write_C_Source(source_file);
+
+		string mname = m->Get_Label();
+		if(AaProgram::_top_level_daemons.find(mname) != AaProgram::_top_level_daemons.end())
+			top_daemons.push_back(m);
+			
 	}
     }
+
+    for(int I = 0, fI = top_daemons.size(); I < fI; I++)
+    {
+	AaModule* m = top_daemons[I];
+	source_file << "DEFINE_THREAD(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
+	source_file << "PTHREAD_DECL(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
+    }
+
+    source_file << "void " << AaProgram::_c_vhdl_module_prefix << "start_daemons() {" << endl;
+    source_file << AaProgram::_c_vhdl_module_prefix << "__init_aa_globals__(); " << endl;
+    for(int I = 0, fI = top_daemons.size(); I < fI; I++)
+    {
+	AaModule* m = top_daemons[I];
+	source_file << "PTHREAD_CREATE(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
+    }
+    source_file << "}" << endl;
+
+    source_file << "void " << AaProgram::_c_vhdl_module_prefix << "stop_daemons() {" << endl;
+    for(int I = 0, fI = top_daemons.size(); I < fI; I++)
+    {
+	AaModule* m = top_daemons[I];
+	source_file << "PTHREAD_CANCEL(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
+    }
+    for(int I = 0, fI = top_daemons.size(); I < fI; I++)
+    {
+	AaModule* m = top_daemons[I];
+	header_file << "DECLARE_THREAD(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
+    }
+    source_file << "}" << endl;
+
+    source_file.close();
+    header_file.close();
 }
 
 
