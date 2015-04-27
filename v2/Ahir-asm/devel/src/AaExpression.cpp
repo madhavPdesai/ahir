@@ -720,7 +720,7 @@ string AaSimpleObjectReference::C_Reference_String()
 		else
 			return(this->Get_Object_Ref_String());
 	}
-	else if(this->Get_Object() && this->Get_Object()->Is_Storage_Object())
+	else if(this->Get_Object() && this->Get_Object()->Is_Storage_Object() || this->Get_Object()->Is_Constant())
 	{
 		return(this->Get_Object_Ref_String());
 	}
@@ -731,20 +731,24 @@ string AaSimpleObjectReference::C_Reference_String()
 }
 
 void AaSimpleObjectReference::PrintC_Declaration(ofstream& ofile)
-{
+{	
+	// if you can trace yourself to an implicit reference, print
+	// only if root is not already printed.
 	if(this->Get_Is_Target() && this->Is_Implicit_Variable_Reference())
 	{
 		if(!this->Get_Object()->Is_Object())
-			Print_C_Declaration(this->C_Reference_String(), this->Get_Type(),ofile);
+		{
+			this->AaExpression::PrintC_Declaration(ofile);
+		}
 	}
 	else if(this->Get_Object()->Is_Pipe_Object())
 	{
 		Print_C_Declaration(this->C_Reference_String(), this->Get_Type(),ofile);
 	}
-	else
-	{
-		// nothing..  will be declared elsewhere...
-	}
+	//else
+	//{
+		//ofile << "// skipped declaration of " << this->C_Reference_String() << endl;
+	//}
 }
 
 //
@@ -752,6 +756,10 @@ void AaSimpleObjectReference::PrintC_Declaration(ofstream& ofile)
 //
 void AaSimpleObjectReference::PrintC(ofstream& ofile)
 {
+	// constants are declared and initialized.
+	if(this->Is_Constant()) 
+		return;
+
 	if(this->Get_Object()->Is_Pipe_Object())
 	{
 		if(this->Get_Is_Target())
@@ -4652,7 +4660,6 @@ void AaTernaryExpression::PrintC(ofstream& ofile)
 	this->_if_true->PrintC(ofile);
 	this->_if_false->PrintC(ofile);
 
-	this->PrintC_Declaration(ofile);
 	Print_C_Ternary_Operation(this->_test->C_Reference_String(),
 				  this->_test->Get_Type(),
 				  this->_if_true->C_Reference_String(), 

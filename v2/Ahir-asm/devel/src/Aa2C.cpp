@@ -210,7 +210,7 @@ void Print_C_Assignment(string tgt, string src, AaType* t, ofstream& ofile)
 string C_Value_Expression(string cref, AaType* t)
 {
 	string ret_string;
-	if(t->Is_Integer_Type())
+	if(t->Is_Uinteger_Type() || t->Is_Integer_Type())
 	{
 		ret_string  = string("bit_vector_to_uint64(") + (!t->Is_Uinteger_Type() ? "1" : "0") + ", &" + cref + ")" ;
 	}
@@ -658,7 +658,7 @@ void Print_C_Ternary_Operation(string test,
 		string tgt, AaType* tgt_type, ofstream& ofile)
 {
 	assert(test_type->Is_Integer_Type());
-	ofile << "if(bit_vector_to_uint64(0," << test << "))";
+	ofile << "if(" << C_Value_Expression( test, test_type) << ")";
 	ofile << "{" << endl;
 	if(tgt_type->Is_Integer_Type())
 		ofile << "bit_vector_assign_bit_vector(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << if_expr << "), &(" << tgt << "));" << endl;

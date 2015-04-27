@@ -29,6 +29,8 @@ class AaRoot
   int64_t _index;
 
   int _delay; // delay through expression/statement/module etc..
+
+  bool _c_declaration_printed;
  protected:
 
   // vector of references to this object from "anywhere"
@@ -36,6 +38,9 @@ class AaRoot
   set<AaRoot*> _source_references; // objects that use this as a source.
 
  public:
+
+  void Set_C_Declaration_Printed(bool v) { _c_declaration_printed = v;}
+  bool Get_C_Declaration_Printed() {return (_c_declaration_printed);}
   void Set_Delay(int d) {_delay = d;}
   virtual int Get_Delay() {return(_delay);}
 

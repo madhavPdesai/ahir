@@ -60,8 +60,8 @@ namespace _base_value_
     virtual void Bit_Cast_Into(Unsigned& other) {assert(0);}
     virtual int Bit_Width() {assert(0);}
 
-    void Slice(Unsigned& other, int hi, int li) { assert(0); }
-    void Bitmap(Unsigned& other, vector<pair<int,int> >& bitmap_vector) { assert(0); }
+    virtual void Slice(Unsigned& other, int hi, int li) { assert(0); }
+    virtual void Bitmap(Unsigned& other, vector<pair<int,int> >& bitmap_vector) { assert(0); }
     virtual string Kind() {return("Value");}
 
     virtual void Fill_Byte_Array(uint8_t* v_array, uint32_t v_array_size) {assert(0);}
@@ -172,8 +172,8 @@ namespace _base_value_
     void Reset_And_Clear(int width);
     void Set_Bit_Field(int idx, UWord bf);
 
-    void Slice(Unsigned& other, int hi, int li);
-    void Bitmap(Unsigned& other, vector<pair<int,int> >& bitmap_vector);
+    virtual void Slice(Unsigned& other, int hi, int li);
+    virtual void Bitmap(Unsigned& other, vector<pair<int,int> >& bitmap_vector);
 
     // essentially convert the UWord array to a byte-array.
     virtual void Fill_Byte_Array(uint8_t* v_array, uint32_t v_array_size);

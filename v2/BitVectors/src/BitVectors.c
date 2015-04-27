@@ -104,6 +104,32 @@ void print_bit_vector(bit_vector* t, FILE* ofile)
 	}
 }
 
+void printf_bit_vector(bit_vector* t)
+{
+	print_bit_vector(t,stderr);
+}
+
+char* to_string(bit_vector* t)
+{
+	char* ret_string = calloc(1,(t->width*2)*sizeof(char));
+	int QUAD = 4;
+	int I;
+	for(I=t->width-1; I>=0; I--)
+	{
+		char buf[16];
+		QUAD--;
+		if(QUAD == 0)
+		{
+			sprintf(buf," ");
+			QUAD = 4;
+		}
+		
+		sprintf(buf,"%u", bit_vector_get_bit(t,I));
+		strcat(ret_string, buf);
+	}
+	return(ret_string);
+}
+
 // -----------------   utility functions.
 uint32_t  __array_size(bit_vector* x)
 {
@@ -674,6 +700,13 @@ void bit_vector_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vec
 		tval = 1;
 	bit_vector_assign_uint64(0,t,tval);
 		
+}
+void bit_vector_not_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
+{
+	uint64_t tval = 1;
+	if(bit_vector_compare(signed_flag,r,s) == IS_EQUAL)
+		tval = 0;
+	bit_vector_assign_uint64(0,t,tval);
 }
 void bit_vector_less(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {

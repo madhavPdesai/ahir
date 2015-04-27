@@ -1,0 +1,19 @@
+$constant Z1 : $uint<1> := 0
+$constant Z2 : $uint<2> := 0
+$constant Z4 : $uint<4> := 0
+$constant Z8 : $uint<8> := 0
+$constant O1 : $uint<1> := _b1
+$constant O2 : $uint<2> := _b11
+$constant O4 : $uint<4> := _b1111
+$constant O8 : $uint<8> := _b11111111
+
+
+$module [Test] $in () $out (ret_val : $uint<32>) $is
+{
+	cval := ($concat
+			Z1 O1 Z2 O2 Z4 O4 Z8 O8 Z2)
+	$split (cval 1 1 2 2 4 4 8 8 2)
+		(u1 u2 u3 u4 u5 u6 u7 u8 u9)
+	
+	ret_val := ($concat u1 u2 u3 u4 u5 u6 u7 u8 u9)
+}

@@ -38,6 +38,9 @@ uint8_t   __sign_bit(bit_vector* x);
 void init_bit_vector(bit_vector* t, uint32_t width);
 void free_bit_vector(bit_vector* t);
 void print_bit_vector(bit_vector* t, FILE* ofile);
+void printf_bit_vector(bit_vector* t);
+char* to_string(bit_vector* t);
+
 
 
 

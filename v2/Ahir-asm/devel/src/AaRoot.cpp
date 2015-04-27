@@ -26,6 +26,7 @@ AaRoot::AaRoot()
   this->Increment_Root_Counter();
   this->_file_name = AaProgram::_current_file_name;
   this->_delay = 0;
+  this->_c_declaration_printed = false;
 }
 AaRoot::~AaRoot() {};
 string AaRoot::Kind()

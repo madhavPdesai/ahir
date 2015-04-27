@@ -1029,7 +1029,25 @@ void AaAssignmentStatement::PrintC(ofstream& ofile)
 {
 	ofile << "// " << this->To_String();
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->Get_Guard_Expression())
+	{
+		this->Get_Guard_Expression()->PrintC_Declaration(ofile);
+		this->Get_Guard_Expression()->PrintC(ofile);
+	}
+
 	this->_source->PrintC_Declaration(ofile);
+	
+
+	if(this->Get_Guard_Expression())
+	{
+		ofile << "if (" ;
+		if(this->Get_Guard_Complement())
+			ofile << "!";
+		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), ofile);
+		ofile << ") {" << endl;
+
+	}
+
 	this->_source->PrintC(ofile);
 
 
@@ -1063,13 +1081,15 @@ void AaAssignmentStatement::PrintC(ofstream& ofile)
 				   this->_target->Get_Type(),
 				   ofile);
 	}
+	if(this->Get_Guard_Expression())
+		ofile << "}" << endl;
 }
 
 void AaAssignmentStatement::PrintC_Implicit_Declarations(ofstream& ofile)
 {
 	if(this->_target->Get_Root_Object() == ((AaRoot*) this))
 	{
-		ofile << "// implicit declarations for assignment: " << this->Get_Source_Info() << endl;
+		// ofile << "// implicit declarations for assignment: " << this->Get_Source_Info() << endl;
 		this->_target->PrintC_Declaration(ofile);
 	}
 }
@@ -1822,11 +1842,18 @@ bool AaCallStatement::Can_Block(bool pipeline_flag)
 void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 {
 	assert(this->Get_Called_Module() && this->Get_Called_Module()->Is("AaModule"));
+
 	AaModule* m = (AaModule*) this->Get_Called_Module();
 	if(!m->Can_Have_Native_C_Interface())
 	{
 		AaRoot::Error("call to foreign module with unsupported argument types." , this);
 		return;
+	}
+
+	if(this->Get_Guard_Expression())
+	{
+		this->Get_Guard_Expression()->PrintC_Declaration(ofile);
+		this->Get_Guard_Expression()->PrintC(ofile);
 	}
 
 	// print the declarations for output variable recipients of
@@ -1838,6 +1865,15 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 			ofile << this->_output_args[i]->Get_Type()->Native_C_Name() << " __" 
 				<< this->_output_args[i]->C_Reference_String() << ";" << endl;	
 		}
+	}
+
+	if(this->Get_Guard_Expression())
+	{
+		ofile << "if (" ;
+		if(this->Get_Guard_Complement())
+			ofile << "!";
+		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), ofile);
+		ofile << ") {" << endl;
 	}
 
 	// now one has to implement the whole shebang.		
@@ -1882,6 +1918,8 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 	// pass results to output expressions.
 	for(unsigned int i=0; i < this->_output_args.size(); i++)
 		this->_output_args[i]->PrintC(ofile);
+	if(this->Get_Guard_Expression())
+		ofile << "}" << endl;
 }
 
 void AaCallStatement::PrintC(ofstream& ofile)
@@ -1890,10 +1928,15 @@ void AaCallStatement::PrintC(ofstream& ofile)
 	
 	ofile << "// " << this->To_String();
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->Get_Guard_Expression())
+	{
+		this->Get_Guard_Expression()->PrintC_Declaration(ofile);
+		this->Get_Guard_Expression()->PrintC(ofile);
+	}
+
 	for(unsigned int i=0; i < this->_input_args.size(); i++)
 	{
 		this->_input_args[i]->PrintC_Declaration(ofile);
-		this->_input_args[i]->PrintC(ofile);
 	}
 
 	for(unsigned int i=0; i < this->_output_args.size(); i++)
@@ -1909,6 +1952,18 @@ void AaCallStatement::PrintC(ofstream& ofile)
 	{
 		this->PrintC_Call_To_Foreign_Module(ofile);
 		return;
+	}
+
+	if(this->Get_Guard_Expression())
+	{
+		ofile << "if (" ;
+		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), ofile);
+		ofile << ") {" << endl;
+	}
+
+	for(unsigned int i=0; i < this->_input_args.size(); i++)
+	{
+		this->_input_args[i]->PrintC(ofile);
 	}
 
 	bool first_one = true;
@@ -1935,6 +1990,8 @@ void AaCallStatement::PrintC(ofstream& ofile)
 	// pass results to output expressions.
 	for(unsigned int i=0; i < this->_output_args.size(); i++)
 		this->_output_args[i]->PrintC(ofile);
+	if(this->Get_Guard_Expression())
+		ofile << "}" << endl;
 }
 
 void AaCallStatement::PrintC_Implicit_Declarations(ofstream& ofile)
@@ -2946,6 +3003,7 @@ AaMergeStatement::AaMergeStatement(AaBranchBlockStatement* scope):AaSeriesBlockS
 {
 	this->_wait_on_entry = 0;
 	this->_has_entry_place = 0;
+	this->_in_do_while = false;
 }
 
 AaMergeStatement::~AaMergeStatement() {}

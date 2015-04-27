@@ -1,4 +1,6 @@
 #include <Pipes.h>
+#include <pthread.h>
+#include <pthreadUtils.h>
 #include <aa_c_model.h>
 void
 __init_aa_globals__ ()
@@ -168,4 +170,15 @@ _stage_3_ ()
     }
   }
 // output side transfers...
+}
+
+void
+start_daemons ()
+{
+  __init_aa_globals__ ();
+}
+
+void
+stop_daemons ()
+{
 }
