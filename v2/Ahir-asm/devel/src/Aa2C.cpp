@@ -180,17 +180,24 @@ void Print_C_Assignment_To_Constant(string tgt_c_ref, AaType* tgt_type, AaValue*
 		uint8_t* b_array = new uint8_t[nbytes];
 		v->Fill_Byte_Array(b_array,nbytes);
 
+		ofile << "bit_vector_clear(&" << tgt_c_ref << ");" << endl;
 		int i;
 		for(i = 0; i < nbytes; i++)
 		{
-			ofile <<  tgt_c_ref << ".val.byte_array[" << i << "] = " << ((int) b_array[i]) << ";" << endl;
+			if(b_array[i] != 0)
+				ofile <<  tgt_c_ref << ".val.byte_array[" << i << "] = " << ((int) b_array[i]) << ";" << endl;
 		}
 
 		delete [] b_array;
 	}
-	else
+	else  if(tgt_type->Is_Scalar_Type())
 	{
 		ofile << tgt_c_ref << " = " << v->To_C_String() << ";" << endl;
+	}
+	else
+	{
+		AaRoot::Error("Aa2C: assignment to non-scalar constant not currently supported.", NULL);
+		assert(0);
 	}
 }
 void Print_C_Assignment(string tgt, string src, AaType* t, ofstream& ofile)
@@ -199,9 +206,16 @@ void Print_C_Assignment(string tgt, string src, AaType* t, ofstream& ofile)
 	{
 		ofile << "bit_vector_assign_bit_vector(" << (!t->Is_Uinteger_Type() ? 1 : 0) << ", &(" << src << "), &(" << tgt << "));" << endl;
 	}
+	else if(t->Is_Scalar_Type())
+	{
+		ofile << tgt << " = " << src << ";" << endl;
+	}
 	else
 	{
-		// will this work for array assignments.
+		AaRoot::Error("Aa2C: assignment with non-scalar types not currently supported.", NULL);
+		assert(0);
+
+		// will this work for array assignments?
 		ofile << "memcpy( &" << tgt << ", &" <<  src << ", sizeof(" << tgt << "));" << endl;
 	}
 
@@ -214,8 +228,10 @@ string C_Value_Expression(string cref, AaType* t)
 	{
 		ret_string  = string("bit_vector_to_uint64(") + (!t->Is_Uinteger_Type() ? "1" : "0") + ", &" + cref + ")" ;
 	}
-	else
+	else 
+	{
 		ret_string = cref;
+	}
 
 	return(ret_string);
 }

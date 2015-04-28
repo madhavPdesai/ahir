@@ -109,11 +109,14 @@ void printf_bit_vector(bit_vector* t)
 	print_bit_vector(t,stderr);
 }
 
+char to_string_buffer[4096];
 char* to_string(bit_vector* t)
 {
-	char* ret_string = calloc(1,(t->width*2)*sizeof(char));
 	int QUAD = 4;
 	int I;
+
+	sprintf(to_string_buffer,"");
+
 	for(I=t->width-1; I>=0; I--)
 	{
 		char buf[16];
@@ -125,9 +128,9 @@ char* to_string(bit_vector* t)
 		}
 		
 		sprintf(buf,"%u", bit_vector_get_bit(t,I));
-		strcat(ret_string, buf);
+		strcat(to_string_buffer, buf);
 	}
-	return(ret_string);
+	return(to_string_buffer);
 }
 
 // -----------------   utility functions.
@@ -220,7 +223,7 @@ double    bit_vector_to_double(uint8_t signed_flag, bit_vector* t)
 // ----------                assignments -----------------------------
 void bit_vector_assign_bit_vector(uint8_t signed_flag, bit_vector* src, bit_vector* dest)
 {
-	uint32_t min_width = __min(__array_size(src), __array_size(dest));
+	uint32_t min_width = __min(src->width,dest->width);
 	uint32_t J;
 	uint8_t neg_flag = 0;
 
@@ -228,8 +231,8 @@ void bit_vector_assign_bit_vector(uint8_t signed_flag, bit_vector* src, bit_vect
 
 	for(J=0; J < min_width; J++)
 	{
-	  uint8_t tb = __get_byte(src,J);
-	  __set_byte(dest,J, tb);
+	  uint8_t tb = bit_vector_get_bit(src,J);
+	  bit_vector_set_bit(dest,J, tb);
 	}
 
 	if(signed_flag && __sign_bit(src))

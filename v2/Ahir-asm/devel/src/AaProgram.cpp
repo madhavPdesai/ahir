@@ -1135,11 +1135,12 @@ void AaProgram::Write_C_Model()
 	AaModule* m = top_daemons[I];
 	source_file << "PTHREAD_CANCEL(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
     }
-    for(int I = 0, fI = top_daemons.size(); I < fI; I++)
-    {
-	AaModule* m = top_daemons[I];
-	header_file << "DECLARE_THREAD(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
-    }
+
+    //for(int I = 0, fI = top_daemons.size(); I < fI; I++)
+    //{
+	//AaModule* m = top_daemons[I];
+	//header_file << "DECLARE_THREAD(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
+    //}
     source_file << "}" << endl;
 
     source_file.close();
