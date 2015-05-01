@@ -53,6 +53,10 @@
 	- declared storage
 		- declared storage register..
 	- declared pipes.
+
+etc.  ran out of patience.  The grammar is
+the document.
+
  */
 
 
@@ -1519,22 +1523,69 @@ aA_Void_Type_Reference[AaScope* scope] returns [AaType* ret_type]
 //----------------------------------------------------------------------------------------------------------
 aA_Uint_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
-    unsigned int width;
+    uint32_t width;
 }
-    : UINT LESS w:UINTEGER {width = atoi(w->getText().c_str());} GREATER 
+    : UINT LESS width = aA_Uinteger_Constant_Expression[scope] GREATER 
         { 
             ref_type = AaProgram::Make_Uinteger_Type(width);
         }
     ;
+
+// --------------------------------------------------------------------------------------------------------
+// aA_Uinteger_Constant_Expression: UINTEGER | SIMPLE_IDENTIFIER
+// --------------------------------------------------------------------------------------------------------
+aA_Uinteger_Constant_Expression[AaScope* scope] returns [uint32_t width]
+{
+	width = 0;
+}:
+	(w: UINTEGER {width = atoi(w->getText().c_str());} )
+	|
+	(sid: SIMPLE_IDENTIFIER
+		{
+			string const_id = sid->getText();
+			AaRoot* obj = NULL;
+			if(scope != NULL)
+				obj = scope->Find_Child(const_id);
+			else
+				obj = AaProgram::Find_Object(const_id);
+			if(obj == NULL)
+			{
+				AaRoot::Error("did not find object with identifier " + const_id + " at line " + 
+						IntToStr(sid->getLine()), NULL);
+			}
+			else if(!(obj->Is_Object() && obj->Is_Constant()))
+			{
+				AaRoot::Error("in constant expression, found a reference to non-constant/object " + const_id + " at line " + 
+						IntToStr(sid->getLine()), NULL);
+			}
+			else
+			{
+				AaConstantObject* cobj  = (AaConstantObject*) obj;
+				if(cobj->Get_Type()->Is_Uinteger_Type())
+				{
+					cobj->Evaluate();
+					width = cobj->Get_Value()->Get_Expression_Value()->To_Integer();
+				}
+				else
+				{
+					AaRoot::Error("in constant expression, non-constant/object " + 
+							const_id + "must have uint type,  at line " + 
+						IntToStr(sid->getLine()), NULL);
+				}
+			}
+			
+		}
+	)
+;
 
 //----------------------------------------------------------------------------------------------------------
 // aA_Int_Type_Reference: INT LESS UINTEGER GREATER
 //----------------------------------------------------------------------------------------------------------
 aA_Int_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
-    unsigned int width;
+    uint32_t width;
 }
-    : INT LESS w:UINTEGER {width = atoi(w->getText().c_str());} GREATER 
+    : INT LESS width = aA_Uinteger_Constant_Expression[scope]  GREATER 
         { 
             ref_type = AaProgram::Make_Integer_Type(width);
         }
@@ -1546,11 +1597,11 @@ aA_Int_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 //----------------------------------------------------------------------------------------------------------
 aA_Float_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
-    unsigned int c,m;
+    uint32_t c,m;
 }
-    : FLOAT LESS cs:UINTEGER {c = atoi(cs->getText().c_str());} 
+    : FLOAT LESS c = aA_Uinteger_Constant_Expression[scope] 
         COMMA
-        ms:UINTEGER {m = atoi(ms->getText().c_str()); }
+         m = aA_Uinteger_Constant_Expression[scope] 
         GREATER 
         { 
             ref_type = AaProgram::Make_Float_Type(c,m);
@@ -1581,9 +1632,10 @@ aA_Array_Type_Reference[AaScope* scope] returns [AaType* ref_type]
 {
     vector<unsigned int> dims;
     AaType* element_type;
+    unsigned int d;
 }
     : ARRAY 
-        (LBRACKET ds:UINTEGER { dims.push_back(atoi(ds->getText().c_str())); } RBRACKET)+
+        (LBRACKET d = aA_Uinteger_Constant_Expression[scope] {dims.push_back(d);} RBRACKET)+
         OF 
         ((element_type = aA_Type_Reference[scope]) | (element_type = aA_Named_Type_Reference[scope]))
         {
