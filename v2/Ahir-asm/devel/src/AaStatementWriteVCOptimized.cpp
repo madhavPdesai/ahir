@@ -551,7 +551,14 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						    ofile);
 	    }
 
-	  if(stmt->Is_Block_Statement() || (stmt->Is("AaCallStatement") && 
+	  // barriers:
+	  //   to maintain ordering dependencies, we will create a
+	  //   barrier if
+	  //      stmt is a block statement (it may modify memory/access a pipe)
+	  //      stmt is a call which modifies memory or writes to a pipe.
+	  // this can be made less restrictive. 
+	  if(stmt->Is_Block_Statement() || 
+		(stmt->Is("AaCallStatement") && 
 					    !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
 	     || stmt->Can_Block(pipeline_flag))
 	    {

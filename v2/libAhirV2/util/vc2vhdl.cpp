@@ -209,7 +209,7 @@ int main(int argc, char* argv[])
 	  break;
 	case 'v':
 	  vcSystem::_verbose_flag = true;
-	  cerr << "Info: -v option selected: lots of info will be printed to stderr." << endl;
+	  cerr << "Info: -v option selected: lots of info will be printed (to stderr, and also dot-files of control-paths if -O option is selected)." << endl;
 	  break;
 	case 'W':
 	  vcSystem::_vhdl_work_library = string(optarg);
@@ -373,7 +373,7 @@ int main(int argc, char* argv[])
 	  sys_tb_file.close();
 	}
 
-	if(vcSystem::_opt_flag)
+	if(vcSystem::_opt_flag && vcSystem::_verbose_flag)
 	{
 		test_system.Print_Reduced_Control_Paths_As_Dot_Files();
 	}

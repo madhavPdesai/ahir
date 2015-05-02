@@ -671,11 +671,17 @@ void AaModule::Write_VC_Links(bool opt_flag, ostream& ofile)
   if(this->_statement_sequence)
     {
       if(opt_flag)
-	this->Write_VC_Links_Optimized_Base("",ofile);
+	{
+		if(this->Is_Pipelined())
+			this->AaBlockStatement::Write_VC_Links_Optimized("",this->_statement_sequence, ofile); 
+		else
+			this->AaSeriesBlockStatement::Write_VC_Links_Optimized_Base("", ofile); 
+	}
       else
 	this->_statement_sequence->Write_VC_Links("",ofile);
     }
 }
+
 
 void AaModule::Write_VC_Control_Path(bool opt_flag, ostream& ofile)
 {
