@@ -4093,8 +4093,11 @@ package OperatorPackage is
   procedure ApIntAdd_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntSub_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntAnd_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
+  procedure ApIntNand_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntOr_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
+  procedure ApIntNor_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntXor_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
+  procedure ApIntXnor_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntMul_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntSHL_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntLSHR_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
@@ -4168,6 +4171,14 @@ package body OperatorPackage is
   end ApIntAnd_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
+  procedure ApIntNand_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
+  begin
+    assert (l'length = r'length) and (l'length = result'length)						     
+      report "Length Mismatch inApIntNand_proc" severity error;
+    result := not ( l and r );
+  end ApIntNand_proc; 				
+  ---------------------------------------------------------------------
+  -----------------------------------------------------------------------------
   procedure ApIntOr_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
   begin
     assert (l'length = r'length) and (l'length = result'length)						     
@@ -4176,12 +4187,28 @@ package body OperatorPackage is
   end ApIntOr_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
+  procedure ApIntNor_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
+  begin
+    assert (l'length = r'length) and (l'length = result'length)						     
+      report "Length Mismatch inApIntNor_proc" severity error;
+    result := not (l or r);
+  end ApIntNor_proc; 				
+  ---------------------------------------------------------------------
+  -----------------------------------------------------------------------------
   procedure ApIntXor_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
   begin
     assert (l'length = r'length) and (l'length = result'length)						     
       report "Length Mismatch inApIntXor_proc" severity error;
     result := l xor r;
   end ApIntXor_proc; 				
+  ---------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  procedure ApIntXnor_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
+  begin
+    assert (l'length = r'length) and (l'length = result'length)						     
+      report "Length Mismatch inApIntXnor_proc" severity error;
+    result := not (l xor r);
+  end ApIntXnor_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApIntMul_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
@@ -4343,10 +4370,16 @@ package body OperatorPackage is
       ApIntSub_proc(x, y, result_var);
     elsif id = "ApIntAnd" then					
       ApIntAnd_proc(x, y, result_var);
+    elsif id = "ApIntNand" then					
+      ApIntNand_proc(x, y, result_var);
     elsif id = "ApIntOr" then					
       ApIntOr_proc(x, y, result_var);
+    elsif id = "ApIntNor" then					
+      ApIntNor_proc(x, y, result_var);
     elsif id = "ApIntXor" then					
       ApIntXor_proc(x, y, result_var);
+    elsif id = "ApIntXnor" then					
+      ApIntXnor_proc(x, y, result_var);
     elsif id = "ApIntMul" then					
       ApIntMul_proc(x, y, result_var);
     elsif id = "ApIntSHL" then					
@@ -20215,11 +20248,11 @@ begin  -- Behave
      mux_data := MuxOneHot(idata,sample_req); 
      mux_data_prereg <= mux_data;
      if(clk'event and clk = '1') then
+	if(reset = '1') then 
           mux_data_reg <= (others => '0');
-     else
-         if(ilb_write_req) then
+        elsif(ilb_write_req) then
             mux_data_reg <= mux_data;
-	 end if;
+	end if;
      end if;
   end process;
 

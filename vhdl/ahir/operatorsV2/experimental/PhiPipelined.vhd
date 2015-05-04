@@ -66,11 +66,11 @@ begin  -- Behave
      mux_data := MuxOneHot(idata,sample_req); 
      mux_data_prereg <= mux_data;
      if(clk'event and clk = '1') then
+	if(reset = '1') then 
           mux_data_reg <= (others => '0');
-     else
-         if(ilb_write_req) then
+        elsif(ilb_write_req) then
             mux_data_reg <= mux_data;
-	 end if;
+	end if;
      end if;
   end process;
 
