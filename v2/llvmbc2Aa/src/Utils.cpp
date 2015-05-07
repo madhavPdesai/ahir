@@ -1105,6 +1105,10 @@ bool Aa::get_loop_pipelining_info(llvm::BasicBlock& BB,int& pipelining_depth, in
 		{
 			llvm::CallInst& C = static_cast<CallInst&>(*iiter);
 			llvm::Function* f  = C.getCalledFunction();
+
+			if(f == NULL)
+				return(false);
+
 			if(f->isDeclaration())
 			{
 				StringRef name = f->getName();
