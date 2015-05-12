@@ -56,6 +56,7 @@ hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
 	hierSystemInstance* subsys = NULL;
 	bool signal_flag = false;
 	string lib_id = "work";
+	int depth = 1;
 
 }:
 	(SYSTEM 
@@ -72,12 +73,13 @@ hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
 	IN 
 	( 
 		(PIPE | (SIGNAL {signal_flag = true;}))
-		sidi: SIMPLE_IDENTIFIER  uidi: UINTEGER 
+		sidi: SIMPLE_IDENTIFIER  uidi: UINTEGER   (DEPTH didi: UINTEGER {depth = atoi(didi->getText().c_str());})?
 			{
-				sys->Add_In_Pipe(sidi->getText(), atoi(uidi->getText().c_str()));
+				sys->Add_In_Pipe(sidi->getText(), atoi(uidi->getText().c_str()), depth);
 				if(signal_flag)
 					sys->Add_Signal(sidi->getText());
 				signal_flag = false;
+				depth = 1;
 			} 
 
 	)*
@@ -85,12 +87,14 @@ hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
 	OUT
 	( 
 		(PIPE | (SIGNAL {signal_flag = true;}))
+				(DEPTH dido: UINTEGER {depth = atoi(dido->getText().c_str());})?
 		 sido: SIMPLE_IDENTIFIER  uido: UINTEGER 
 			{
-				sys->Add_Out_Pipe(sido->getText(), atoi(uido->getText().c_str()));
+				sys->Add_Out_Pipe(sido->getText(), atoi(uido->getText().c_str()), depth);
 				if(signal_flag)
 					sys->Add_Signal(sido->getText());
 				signal_flag = false;
+				depth = 1;
 			} 
  		     
 	)*
@@ -102,8 +106,9 @@ hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
 		(PIPE |  (SIGNAL {signal_flag = true;}))
 		  sidint: SIMPLE_IDENTIFIER  
 			uidint: UINTEGER 
+				(DEPTH didint: UINTEGER {depth = atoi(didint->getText().c_str());})?
 				{
-					sys->Add_Internal_Pipe(sidint->getText(), atoi(uidint->getText().c_str()));
+					sys->Add_Internal_Pipe(sidint->getText(), atoi(uidint->getText().c_str()), depth);
 					if(signal_flag)
 						sys->Add_Signal(sidint->getText());
 					signal_flag = false;

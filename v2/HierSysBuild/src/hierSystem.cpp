@@ -119,11 +119,12 @@ void hierSystem::Print(ostream& ofile)
 void hierSystem::Print_Vhdl_Port_Declarations(ostream& ofile)
 {
 	ofile << " port( -- {" << endl ;
-	for(map<string, int>::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end();
+	for(map<string, pair<int,int> >::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end();
 		iter != fiter; iter++)
 	{
 		string pipe_name = (*iter).first;
-		int pipe_width   = (*iter).second;
+		int pipe_width   = (*iter).second.first;
+		int pipe_depth   = (*iter).second.second;
 
 		if(!this->Is_Signal(pipe_name))
 		{
@@ -136,11 +137,12 @@ void hierSystem::Print_Vhdl_Port_Declarations(ostream& ofile)
 			ofile << pipe_name << " : in std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
 		}
 	}
-	for(map<string, int>::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end();
+	for(map<string, pair<int,int> >::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end();
 		iter != fiter; iter++)
 	{
 		string pipe_name = (*iter).first;
-		int pipe_width   = (*iter).second;
+		int pipe_width   = (*iter).second.first;
+		int pipe_depth   = (*iter).second.second;
 
 		if(!this->Is_Signal(pipe_name))
 		{
@@ -191,11 +193,12 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile)
 	ofile << "--} " << endl << "end entity " << this->Get_Id() << ";" << endl;
 
 	ofile << "architecture struct of " << this->Get_Id() << " is " << endl;
-	for(map<string, int>::iterator iter = _internal_pipes.begin(), fiter = _internal_pipes.end();
+	for(map<string, pair<int,int> >::iterator iter = _internal_pipes.begin(), fiter = _internal_pipes.end();
 		iter != fiter; iter++)
 	{
 		string pipe_name = (*iter).first;
-		int pipe_width   = (*iter).second;
+		int pipe_width   = (*iter).second.first;
+		int pipe_depth   = (*iter).second.second;
 
 		if(!this->Is_Signal(pipe_name))
 		{
@@ -234,10 +237,10 @@ void hierSystem::Print_Vhdl_Instance_In_Testbench(string inst_name, ostream& ofi
 {
 	ofile << inst_name << ": " << this->Get_Id() << endl;
 	ofile << "port map ( --{ " << endl;
-	for(map<string,int>::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end(); iter != fiter; iter++)
+	for(map<string,pair<int,int> >::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end(); iter != fiter; iter++)
 	{
 		string pipe_id = (*iter).first;
-		int pipe_width = (*iter).second;
+		int pipe_width = (*iter).second.first;
 
 		if(!this->Is_Signal(pipe_id))
 		{
@@ -250,10 +253,10 @@ void hierSystem::Print_Vhdl_Instance_In_Testbench(string inst_name, ostream& ofi
 			ofile << pipe_id << " => " << pipe_id << "," << endl;
 		}
 	}
-	for(map<string,int>::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end(); iter != fiter; iter++)
+	for(map<string,pair<int,int> >::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end(); iter != fiter; iter++)
 	{
 		string pipe_id = (*iter).first;
-		int pipe_width = (*iter).second;
+		int pipe_width = (*iter).second.first;
 
 
 		if(!this->Is_Signal(pipe_id))
@@ -379,11 +382,11 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 	ofile << "architecture VhpiLink of " << this->Get_Id() << "_Test_Bench is -- {" << endl;
 	this->Print_Vhdl_Component_Declaration(ofile);
 	// signals
-	for(map<string, int>::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end();
+	for(map<string, pair<int,int> >::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end();
 			iter != fiter; iter++)
 	{
 		string pipe_name = (*iter).first;
-		int pipe_width   = (*iter).second;
+		int pipe_width   = (*iter).second.first;
 
 		ofile << "signal " << pipe_name << "_pipe_read_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
 		ofile << "signal " << pipe_name << "_pipe_read_req  : std_logic_vector(0  downto 0);" << endl;
@@ -395,11 +398,11 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		}
 
 	}
-	for(map<string, int>::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end();
+	for(map<string, pair<int,int> >::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end();
 			iter != fiter; iter++)
 	{
 		string pipe_name = (*iter).first;
-		int pipe_width   = (*iter).second;
+		int pipe_width   = (*iter).second.first;
 
 		ofile << "signal " << pipe_name << "_pipe_write_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
 		ofile << "signal " << pipe_name << "_pipe_write_req  : std_logic_vector(0  downto 0);" << endl;
@@ -428,11 +431,11 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 	ofile << "--}" << endl << "end process;" << endl << endl;
 
 	// input pipe related code.
-	for(map<string, int>::iterator pipe_iter = _in_pipes.begin(), fpiter = _in_pipes.end();
+	for(map<string, pair<int,int> >::iterator pipe_iter = _in_pipes.begin(), fpiter = _in_pipes.end();
 			pipe_iter != fpiter; pipe_iter++)
 	{
 		string pipe_id = (*pipe_iter).first;
-		int pipe_width = (*pipe_iter).second;
+		int pipe_width = (*pipe_iter).second.first;
 		int num_reads = 1;
 		int num_writes = 0;
 
@@ -443,11 +446,11 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 	}
 
 	// output pipe related code.
-	for(map<string, int>::iterator pipe_iter = _in_pipes.begin(), fpiter = _in_pipes.end();
+	for(map<string, pair<int,int> >::iterator pipe_iter = _out_pipes.begin(), fpiter = _out_pipes.end();
 			pipe_iter != fpiter; pipe_iter++)
 	{
 		string pipe_id = (*pipe_iter).first;
-		int pipe_width = (*pipe_iter).second;
+		int pipe_width = (*pipe_iter).second.first;
 		int num_reads = 0;
 		int num_writes = 1;
 

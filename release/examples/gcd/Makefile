@@ -1,5 +1,5 @@
 # build software version of testbench (to check the "desired behaviour")
-AHIR_RELEASE=/home/madhav/ahirgit/ahir/release/
+AHIR_RELEASE=/home/madhav/AHIR/gitHub/ahir/release/
 SOCKETLIB_INCLUDE=$(AHIR_RELEASE)/CtestBench/include
 SOCKETLIB_LIB=$(AHIR_RELEASE)/CtestBench/lib
 PIPEHANDLER_INCLUDE=$(AHIR_RELEASE)/pipeHandler/include

@@ -8,7 +8,6 @@
 #ifndef SW
 #include "vhdlCStubs.h"
 #endif
-#include "divider.h"
 #include "gcd.h"
 
 to_string(char* str, uint16_t val)

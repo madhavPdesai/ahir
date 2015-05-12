@@ -92,9 +92,9 @@ class hierSystem: public hierRoot
 	bool _error;
         string _library;
 	hierSystem* _parent;
-	map<string, int> _in_pipes;
-	map<string, int> _out_pipes;
-	map<string, int> _internal_pipes;
+	map<string, pair<int,int> > _in_pipes;
+	map<string, pair<int,int> > _out_pipes;
+	map<string, pair<int,int> > _internal_pipes;
 
 	map<string, hierSystemInstance*>  _pipe_to_subsystem_connection_map;
 	map<hierSystemInstance*, vector<string> > _subsystem_pipe_connection_map;
@@ -122,9 +122,9 @@ public:
 		return(_signals.find(pname) != _signals.end());
 	}
 
-	int Get_Pipe_Width(map<string, int>& pmap, string pipe_id)
+	int Get_Pipe_Width(map<string, pair<int,int> >& pmap, string pipe_id)
 	{
-		return((pmap.find(pipe_id) != pmap.end()) ? pmap[pipe_id] : 0);
+		return((pmap.find(pipe_id) != pmap.end()) ? pmap[pipe_id].first : 0);
 	}
 
 	int Get_Input_Pipe_Width(string pipe_id) {
@@ -159,26 +159,27 @@ public:
 	}
 
 
-        void Print_Pipe_Map(map<string, int>& pmap, ostream& ofile)
+        void Print_Pipe_Map(map<string, pair<int,int> >& pmap, ostream& ofile)
 	{
-		for(map<string,int>::iterator iter = pmap.begin(), fiter = pmap.end(); iter != fiter; iter++)
+		for(map<string,pair<int,int> >::iterator iter = pmap.begin(), fiter = pmap.end(); iter != fiter; iter++)
 		{
 			ofile << (this->Is_Signal((*iter).first) ? "  $signal " : "  $pipe ");
-			ofile << " " << (*iter).first << " " << (*iter).second << " ";
+			ofile << " " << (*iter).first << " " << (*iter).second.first << " $depth " <<
+					(*iter).second.second;
 			ofile << endl;
 		}
 	}
 
-	void Add_Pipe_To_Map(map<string, int>& pipe_map, string pid, int pipe_width, string pipe_type)
+	void Add_Pipe_To_Map(map<string, pair<int,int> >& pipe_map, string pid, int pipe_width, int pipe_depth,  string pipe_type)
 	{
 		if(pipe_map.find(pid) != pipe_map.end())
 		{
-			int width = pipe_map[pid];
+			int width = pipe_map[pid].first;
 
 			if(width != pipe_width)
 			{
-				cerr << "Error : redeclaration of " << pipe_type  << " "
-					<< pid << " will overwrite existing declaration" << endl;
+				cerr << "Error : incompatible redeclaration of " << pipe_type  << " "
+					<< pid << " will be ignored. " << endl;
 				_error = true;
 			}
 			else
@@ -190,15 +191,15 @@ public:
 		}
 		else
 		{
-			pipe_map[pid] = pipe_width;
+			pipe_map[pid] = pair<int,int>(pipe_width, pipe_depth);
 		}
 	 }
 
 
 			
-	void Add_In_Pipe(string pid, int pipe_width)
+	void Add_In_Pipe(string pid, int pipe_width, int depth)
 	{
-		this->Add_Pipe_To_Map(_in_pipes, pid, pipe_width, "in-pipe");
+		this->Add_Pipe_To_Map(_in_pipes, pid, pipe_width, depth, "in-pipe");
 
 		if(this->Get_Output_Pipe_Width(pid) > 0)
 		{
@@ -212,9 +213,9 @@ public:
 		}
 
 	}
-	void Add_Out_Pipe(string pid, int pipe_width)
+	void Add_Out_Pipe(string pid, int pipe_width, int depth)
 	{
-		Add_Pipe_To_Map(_out_pipes, pid, pipe_width, "out-pipe");
+		Add_Pipe_To_Map(_out_pipes, pid, pipe_width, depth, "out-pipe");
 		if(this->Get_Input_Pipe_Width( pid) > 0)
 		{
 			cerr << "Error: pipe " << pid << " in system " << this->_id << " is both input and output pipe." << endl;
@@ -226,9 +227,9 @@ public:
 			_error = true;
 		}
 	}
-	void Add_Internal_Pipe(string pid, int pipe_width)
+	void Add_Internal_Pipe(string pid, int pipe_width, int depth)
 	{
-		Add_Pipe_To_Map(_internal_pipes, pid, pipe_width, "internal-pipe");
+		Add_Pipe_To_Map(_internal_pipes, pid, pipe_width, depth,  "internal-pipe");
 		if(this->Get_Input_Pipe_Width(pid) > 0)
 		{
 			cerr << "Error: pipe " << pid << " in system " << this->_id << " is both input and internal pipe." << endl;
