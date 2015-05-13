@@ -1120,6 +1120,7 @@ void AaProgram::Write_C_Model()
 	source_file << "PTHREAD_DECL(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
     }
 
+    header_file << "void " << AaProgram::_c_vhdl_module_prefix << "start_daemons();" << endl;
     source_file << "void " << AaProgram::_c_vhdl_module_prefix << "start_daemons() {" << endl;
     source_file << AaProgram::_c_vhdl_module_prefix << "__init_aa_globals__(); " << endl;
     for(int I = 0, fI = top_daemons.size(); I < fI; I++)
@@ -1129,6 +1130,7 @@ void AaProgram::Write_C_Model()
     }
     source_file << "}" << endl;
 
+    header_file << "void " << AaProgram::_c_vhdl_module_prefix << "stop_daemons();" << endl;
     source_file << "void " << AaProgram::_c_vhdl_module_prefix << "stop_daemons() {" << endl;
     for(int I = 0, fI = top_daemons.size(); I < fI; I++)
     {

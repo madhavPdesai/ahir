@@ -712,10 +712,15 @@ string AaSimpleObjectReference::C_Reference_String()
 			string this_obj_str = this->Get_Object_Ref_String();
 			string obj_str  = ((AaSimpleObjectReference*) obj)->Get_Object_Ref_String();
 
-			if(this->Get_Scope() == ((AaSimpleObjectReference*)obj)->Get_Scope())
-				return(obj_str);
-			else
+			AaScope* this_scope = this->Get_Scope();
+			AaScope* root_scope = ((AaSimpleObjectReference*)obj)->Get_Scope();
+			
+			// if this-scope is the parent of root scope then this
+			// is an export.
+			if((root_scope != NULL) && (root_scope->Get_Scope() == this_scope))
 				return(this_obj_str + "__" + obj_str);
+			else
+				return(obj_str);
 		}
 		else
 			return(this->Get_Object_Ref_String());
