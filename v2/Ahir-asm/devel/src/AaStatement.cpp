@@ -3073,6 +3073,12 @@ void AaMergeStatement::PrintC(ofstream& ofile)
 	{ 
 		ofile  << this->_wait_on_statements[i]->C_Reference_String() << ": ";
 		ofile  << this->_wait_on_statements[i]->C_Reference_String() << "_flag = 1; " << endl;
+		for(unsigned int j = 0; j < this->_wait_on_statements.size(); j++)
+		{
+			if(j != i)
+				ofile  << this->_wait_on_statements[j]->C_Reference_String() << "_flag = 0; " << endl;
+		
+		}
 		ofile  << "goto " << run_block_name << ";" << endl;
 	}
 	ofile << endl;
