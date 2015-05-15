@@ -1,0 +1,43 @@
+$storage  default_mem_pool : $array[1] $of $uint<8> // memory space index = 0  base address = 0  word size = 8
+// can point into 
+$module [mem_load__] 
+$in (address : $uint<32 > ) 
+$out (data : $uint<8 > ) 
+$is 
+{
+  data := 
+  default_mem_pool[ ((address * 1 ) + 0) ]
+}
+$module [mem_store__] 
+$in (address : $uint<32 > data : $uint<8 > ) 
+$out ()
+$is 
+{
+  default_mem_pool[ ((address * 1 ) + 0) ] :=  data 
+}
+$pipe  B : $uint<32>  $depth 1 
+// can point into 
+$pipe  TMP : $uint<32>  $depth 1 
+// can point into 
+$module [global_storage_initializer_]
+$in ()
+$out ()
+$is
+{
+  $null
+}
+$module [stage_2_daemon]
+$in ()
+$out ()
+$is
+{
+  $branchblock [lOoP]
+  {
+    $merge $entry loopback 
+    $endmerge
+    x := TMP
+    B := x
+    $place[loopback]
+  }
+}
+// Memory space 0: default_mem_pool 

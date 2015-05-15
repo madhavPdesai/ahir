@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
   	header_file.open(header_file_name.c_str());
 
 	source_file << "#include <" << base_header_file_name << ">" << endl;
-	source_file << "void " << c_prefix << "_" << top_sys->Get_Id() << "_start_daemons() {" << endl;
+	source_file << "void " << c_prefix << "_start_daemons() {" << endl;
 	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
 	{
 		hierSystem* sys = sys_vec[I];
@@ -149,13 +149,13 @@ int main(int argc, char* argv[])
 			string lib = sys->Get_Library();
 			string id  = sys->Get_Id();
 
-			string init_fn_name = lib + "_" + id + "_start_daemons";
+			string init_fn_name = lib + "_start_daemons";
 			header_file << "void " << init_fn_name << "();" << endl;
 			source_file << init_fn_name << "();" << endl;
 		}	
 	}
 	source_file << "}" << endl;
-	source_file << "void " << c_prefix << "_" << top_sys->Get_Id() << "_stop_daemons() {" << endl;
+	source_file << "void " << c_prefix << "_stop_daemons() {" << endl;
 	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
 	{
 		hierSystem* sys = sys_vec[I];
@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
 			}
 			string lib = sys->Get_Library();
 			string id  = sys->Get_Id();
-			string stop_fn_name = lib + "_" + id + "_stop_daemons";
+			string stop_fn_name = lib + "_stop_daemons";
 			header_file << "void " << stop_fn_name << "();" << endl;
 			source_file << stop_fn_name << "();" << endl;
 		}	

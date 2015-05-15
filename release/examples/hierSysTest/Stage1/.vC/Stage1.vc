@@ -1,0 +1,663 @@
+// Virtual circuit produced from Aa description by Aa2VC 
+// $pipe  A : $uint<32>  $depth 1 
+// can point into 
+// in scope  top-level
+$pipe [A] 32 $depth 1 
+// $pipe  TMP : $uint<32>  $depth 1 
+// can point into 
+// in scope  top-level
+$pipe [TMP] 32 $depth 1 
+// load store constants for object default_mem_pool
+$constant $W[default_mem_pool_base_address] : $int<1> := _b0
+$memoryspace [memory_space_1] 
+{
+  $capacity 1
+  $datawidth 8
+  $addrwidth 1
+  $maxaccesswidth 8
+  // $storage  default_mem_pool : $array[1] $of $uint<8> // memory space index = 1  base address = 0  word size = 8
+  // can point into  mempool
+  // in scope  top-level
+  $object [default_mem_pool] : $array[1] $of $int<8>
+}
+$module [global_storage_initializer_] 
+{
+  // pipe-declarations for block %global_storage_initializer_
+  //  file ./.Aa//linked.opt.aa, line 7
+  $CP 
+  {
+    // begin control-path 
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %global_storage_initializer_
+    //  file ./.Aa//linked.opt.aa, line 7
+  }
+  // end data-path
+}
+$module [mem_load__] 
+{
+  $in address:$int<32>
+  // can point into  mempool
+  $out data:$int<8>
+  // can point into  mempool
+  // pipe-declarations for block %mem_load__
+  //  file ./.Aa//linked.opt.aa, line 14
+  $CP 
+  {
+    // begin control-path 
+    ::[assign_stmt_21] 
+    {
+      // 	data := default_mem_pool[((address * 1 ) + 0 )]
+      //  file ./.Aa//linked.opt.aa, line 19
+      // Source expression
+      // default_mem_pool[((address * 1 ) + 0 )]
+      $T[array_obj_ref_20_base_address_calculated] 
+      $T[array_obj_ref_20_sample_start_] 
+      $T[array_obj_ref_20_sample_completed_] 
+      $T[array_obj_ref_20_update_start_] 
+      $T[array_obj_ref_20_update_completed_] 
+      $T[array_obj_ref_20_word_address_calculated] 
+      $T[array_obj_ref_20_root_address_calculated] 
+      $T[array_obj_ref_20_offset_calculated] 
+      $T[array_obj_ref_20_index_resized_0] 
+      $T[array_obj_ref_20_index_scaled_0] 
+      // ((address * 1 ) + 0 )
+      $T[ADD_u32_u32_19_sample_start_] 
+      $T[ADD_u32_u32_19_sample_completed_] 
+      $T[ADD_u32_u32_19_update_start_] 
+      $T[ADD_u32_u32_19_update_completed_] 
+      // (address * 1 )
+      $T[MUL_u32_u32_17_sample_start_] 
+      $T[MUL_u32_u32_17_sample_completed_] 
+      $T[MUL_u32_u32_17_update_start_] 
+      $T[MUL_u32_u32_17_update_completed_] 
+      // address
+      $T[R_address_15_sample_start_] 
+      $T[R_address_15_sample_completed_] 
+      $T[R_address_15_update_start_] 
+      $T[R_address_15_update_completed_] 
+      // reference to interface object
+      R_address_15_sample_start_ <-& ($entry)
+      R_address_15_sample_completed_ <-& (R_address_15_sample_start_)
+      R_address_15_update_start_ <-& (R_address_15_sample_completed_)
+      R_address_15_update_completed_ <-& (R_address_15_update_start_)
+      MUL_u32_u32_17_sample_start_ <-& (R_address_15_update_completed_)
+      ;;[MUL_u32_u32_17_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[MUL_u32_u32_17_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      MUL_u32_u32_17_sample_start_ &-> (MUL_u32_u32_17_Sample)
+      MUL_u32_u32_17_sample_completed_ <-& (MUL_u32_u32_17_Sample)
+      MUL_u32_u32_17_sample_completed_ &-> ($null)
+      MUL_u32_u32_17_update_start_ &-> (MUL_u32_u32_17_Update)
+      MUL_u32_u32_17_update_completed_ <-& (MUL_u32_u32_17_Update)
+      ADD_u32_u32_19_sample_start_ <-& (MUL_u32_u32_17_update_completed_)
+      ;;[ADD_u32_u32_19_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[ADD_u32_u32_19_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      ADD_u32_u32_19_sample_start_ &-> (ADD_u32_u32_19_Sample)
+      ADD_u32_u32_19_sample_completed_ <-& (ADD_u32_u32_19_Sample)
+      ADD_u32_u32_19_sample_completed_ &-> ($null)
+      ADD_u32_u32_19_update_start_ &-> (ADD_u32_u32_19_Update)
+      ADD_u32_u32_19_update_completed_ <-& (ADD_u32_u32_19_Update)
+      ;;[array_obj_ref_20_index_resize_0] 
+      {
+        $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
+      }
+      ADD_u32_u32_19_update_completed_ &-> (array_obj_ref_20_index_resize_0)
+      array_obj_ref_20_index_resized_0 <-& (array_obj_ref_20_index_resize_0)
+      ;;[array_obj_ref_20_index_scale_0] 
+      {
+        $T [scale_rename_req] $T [scale_rename_ack] // rename 
+      }
+      array_obj_ref_20_index_resized_0 &-> (array_obj_ref_20_index_scale_0)
+      array_obj_ref_20_index_scaled_0 <-& (array_obj_ref_20_index_scale_0)
+      ;;[array_obj_ref_20_final_index_sum_regn] 
+      {
+        $T [req] $T [ack] // rename
+      }
+      array_obj_ref_20_index_scaled_0 &-> (array_obj_ref_20_final_index_sum_regn)
+      array_obj_ref_20_offset_calculated <-& (array_obj_ref_20_final_index_sum_regn)
+      ;;[array_obj_ref_20_base_plus_offset] 
+      {
+        $T [sum_rename_req] $T [sum_rename_ack] // one gets through 
+      }
+      array_obj_ref_20_offset_calculated &-> (array_obj_ref_20_base_plus_offset)
+      array_obj_ref_20_root_address_calculated <-& (array_obj_ref_20_base_plus_offset)
+      ;;[array_obj_ref_20_word_addrgen] 
+      {
+        $T [root_register_req] $T [root_register_ack]
+      }
+      array_obj_ref_20_root_address_calculated &-> (array_obj_ref_20_word_addrgen)
+      array_obj_ref_20_word_address_calculated <-& (array_obj_ref_20_word_addrgen)
+      ;;[array_obj_ref_20_Sample] 
+      {
+        ||[word_access_start] 
+        {
+          ;;[word_0] 
+          {
+            $T [rr] $T [ra] 
+          }
+        }
+      }
+      ;;[array_obj_ref_20_Update] 
+      {
+        ||[word_access_complete] 
+        {
+          ;;[word_0] 
+          {
+            $T [cr] $T [ca] 
+          }
+        }
+        ;;[array_obj_ref_20_Merge] 
+        {
+          $T [merge_req] $T [merge_ack]
+        }
+      }
+      array_obj_ref_20_sample_start_ <-& (array_obj_ref_20_word_address_calculated)
+      array_obj_ref_20_sample_start_ &-> (array_obj_ref_20_Sample)
+      array_obj_ref_20_sample_completed_ <-& (array_obj_ref_20_Sample)
+      array_obj_ref_20_sample_completed_ &-> ($null)
+      array_obj_ref_20_update_start_ &-> (array_obj_ref_20_Update)
+      array_obj_ref_20_update_completed_ <-& (array_obj_ref_20_Update)
+      // both source and target are implicit: use interlock 
+      $T[array_obj_ref_20_sample_start_] 
+      $T[array_obj_ref_20_sample_completed_] 
+      $T[array_obj_ref_20_update_start_] 
+      $T[array_obj_ref_20_update_completed_] 
+      // Target expression
+      // (as target) data
+      // data
+      // write to interface object
+      // load-store dependencies..
+    }
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %mem_load__
+    //  file ./.Aa//linked.opt.aa, line 14
+    // default_mem_pool[((address * 1 ) + 0 )]
+    // 1 
+    $constant $W[konst_16_wire_constant] : $int<32> := _b00000000000000000000000000000001// 1
+    // 0 
+    $constant $W[konst_18_wire_constant] : $int<32> := _b00000000000000000000000000000000// 0
+    $constant $W[array_obj_ref_20_resized_base_address] : $int<1> := _b0// 0
+    $constant $W[array_obj_ref_20_offset_scale_factor_0] : $int<1> := _b1// 1
+    $constant $W[array_obj_ref_20_word_offset_0] : $int<1> := _b0// 0
+    // 	data := default_mem_pool[((address * 1 ) + 0 )]
+    //  file ./.Aa//linked.opt.aa, line 19
+    // default_mem_pool[((address * 1 ) + 0 )]
+    // (address * 1 )
+    $intermediate $W[MUL_u32_u32_17_wire] : $int<32>
+    // ((address * 1 ) + 0 )
+    $intermediate $W[ADD_u32_u32_19_wire] : $int<32>
+    $intermediate $W[ADD_u32_u32_19_resized] : $int<1>
+    $intermediate $W[ADD_u32_u32_19_scaled] : $int<1>
+    $intermediate $W[array_obj_ref_20_final_offset] : $int<1>
+    $intermediate $W[array_obj_ref_20_root_address] : $int<1>
+    $W[array_obj_ref_20_word_address_0] : $pointer<memory_space_1>
+    $W[array_obj_ref_20_data_0] : $int<8>
+    // data
+    // 	data := default_mem_pool[((address * 1 ) + 0 )]
+    //  file ./.Aa//linked.opt.aa, line 19
+    // default_mem_pool[((address * 1 ) + 0 )]
+    // (address * 1 )
+    *[MUL_u32_u32_17_inst] (address konst_16_wire_constant) (MUL_u32_u32_17_wire) 
+    $delay MUL_u32_u32_17_inst 1
+    // ((address * 1 ) + 0 )
+    +[ADD_u32_u32_19_inst] (MUL_u32_u32_17_wire konst_18_wire_constant) (ADD_u32_u32_19_wire) 
+    $delay ADD_u32_u32_19_inst 1
+    &/ [array_obj_ref_20_index_0_resize] (ADD_u32_u32_19_wire) (ADD_u32_u32_19_resized) 
+    &/ [array_obj_ref_20_index_0_rename] (ADD_u32_u32_19_resized) (ADD_u32_u32_19_scaled) 
+    &/ [array_obj_ref_20_index_offset] (ADD_u32_u32_19_scaled) (array_obj_ref_20_final_offset) 
+    &/ [array_obj_ref_20_root_address_inst] (array_obj_ref_20_final_offset) (array_obj_ref_20_root_address) 
+    &/ [array_obj_ref_20_addr_0] (array_obj_ref_20_root_address) (array_obj_ref_20_word_address_0) 
+    $load [array_obj_ref_20_load_0] $from memory_space_1 (array_obj_ref_20_word_address_0) (array_obj_ref_20_data_0) 
+    $delay array_obj_ref_20_load_0 2
+    &/ [array_obj_ref_20_gather_scatter] (array_obj_ref_20_data_0) (data) 
+  }
+  // end data-path
+  // 	data := default_mem_pool[((address * 1 ) + 0 )]
+  //  file ./.Aa//linked.opt.aa, line 19
+  // default_mem_pool[((address * 1 ) + 0 )]
+  // ((address * 1 ) + 0 )
+  // (address * 1 )
+  MUL_u32_u32_17_inst <=> (assign_stmt_21/MUL_u32_u32_17_Sample/rr assign_stmt_21/MUL_u32_u32_17_Update/cr) (assign_stmt_21/MUL_u32_u32_17_Sample/ra assign_stmt_21/MUL_u32_u32_17_Update/ca)
+  ADD_u32_u32_19_inst <=> (assign_stmt_21/ADD_u32_u32_19_Sample/rr assign_stmt_21/ADD_u32_u32_19_Update/cr) (assign_stmt_21/ADD_u32_u32_19_Sample/ra assign_stmt_21/ADD_u32_u32_19_Update/ca)
+  array_obj_ref_20_index_0_resize <=> (assign_stmt_21/array_obj_ref_20_index_resize_0/index_resize_req) (assign_stmt_21/array_obj_ref_20_index_resize_0/index_resize_ack)
+  array_obj_ref_20_index_0_rename <=> (assign_stmt_21/array_obj_ref_20_index_scale_0/scale_rename_req) (assign_stmt_21/array_obj_ref_20_index_scale_0/scale_rename_ack)
+  array_obj_ref_20_index_offset <=> (assign_stmt_21/array_obj_ref_20_final_index_sum_regn/req) (assign_stmt_21/array_obj_ref_20_final_index_sum_regn/ack)
+  array_obj_ref_20_root_address_inst <=> (assign_stmt_21/array_obj_ref_20_base_plus_offset/sum_rename_req) (assign_stmt_21/array_obj_ref_20_base_plus_offset/sum_rename_ack)
+  array_obj_ref_20_addr_0 <=> (assign_stmt_21/array_obj_ref_20_word_addrgen/root_register_req) (assign_stmt_21/array_obj_ref_20_word_addrgen/root_register_ack)
+  array_obj_ref_20_gather_scatter <=> (assign_stmt_21/array_obj_ref_20_Update/array_obj_ref_20_Merge/merge_req) (assign_stmt_21/array_obj_ref_20_Update/array_obj_ref_20_Merge/merge_ack)
+  array_obj_ref_20_load_0 <=> (assign_stmt_21/array_obj_ref_20_Sample/word_access_start/word_0/rr assign_stmt_21/array_obj_ref_20_Update/word_access_complete/word_0/cr) (assign_stmt_21/array_obj_ref_20_Sample/word_access_start/word_0/ra assign_stmt_21/array_obj_ref_20_Update/word_access_complete/word_0/ca)
+}
+$module [mem_store__] 
+{
+  $in address:$int<32>
+  // can point into  mempool
+  data:$int<8>
+  // can point into  mempool
+  // pipe-declarations for block %mem_store__
+  //  file ./.Aa//linked.opt.aa, line 21
+  $CP 
+  {
+    // begin control-path 
+    ::[assign_stmt_33] 
+    {
+      // 	default_mem_pool[((address * 1 ) + 0 )] := data
+      //  file ./.Aa//linked.opt.aa, line 26
+      // Source expression
+      // data
+      $T[R_data_32_sample_start_] 
+      $T[R_data_32_sample_completed_] 
+      $T[R_data_32_update_start_] 
+      $T[R_data_32_update_completed_] 
+      // reference to interface object
+      R_data_32_sample_start_ <-& ($entry)
+      R_data_32_sample_completed_ <-& (R_data_32_sample_start_)
+      R_data_32_update_start_ <-& (R_data_32_sample_completed_)
+      R_data_32_update_completed_ <-& (R_data_32_update_start_)
+      // both source and target are implicit: use interlock 
+      $T[array_obj_ref_31_sample_start_] 
+      $T[array_obj_ref_31_sample_completed_] 
+      $T[array_obj_ref_31_update_start_] 
+      $T[array_obj_ref_31_update_completed_] 
+      // Target expression
+      // default_mem_pool[((address * 1 ) + 0 )]
+      $T[array_obj_ref_31_sample_start_] 
+      $T[array_obj_ref_31_sample_completed_] 
+      $T[array_obj_ref_31_update_start_] 
+      $T[array_obj_ref_31_update_completed_] 
+      $T[array_obj_ref_31_word_address_calculated] 
+      $T[array_obj_ref_31_root_address_calculated] 
+      $T[array_obj_ref_31_offset_calculated] 
+      $T[array_obj_ref_31_index_resized_0] 
+      $T[array_obj_ref_31_index_scaled_0] 
+      // ((address * 1 ) + 0 )
+      $T[ADD_u32_u32_30_sample_start_] 
+      $T[ADD_u32_u32_30_sample_completed_] 
+      $T[ADD_u32_u32_30_update_start_] 
+      $T[ADD_u32_u32_30_update_completed_] 
+      // (address * 1 )
+      $T[MUL_u32_u32_28_sample_start_] 
+      $T[MUL_u32_u32_28_sample_completed_] 
+      $T[MUL_u32_u32_28_update_start_] 
+      $T[MUL_u32_u32_28_update_completed_] 
+      // address
+      $T[R_address_26_sample_start_] 
+      $T[R_address_26_sample_completed_] 
+      $T[R_address_26_update_start_] 
+      $T[R_address_26_update_completed_] 
+      // reference to interface object
+      R_address_26_sample_start_ <-& ($entry)
+      R_address_26_sample_completed_ <-& (R_address_26_sample_start_)
+      R_address_26_update_start_ <-& (R_address_26_sample_completed_)
+      R_address_26_update_completed_ <-& (R_address_26_update_start_)
+      MUL_u32_u32_28_sample_start_ <-& (R_address_26_update_completed_)
+      ;;[MUL_u32_u32_28_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[MUL_u32_u32_28_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      MUL_u32_u32_28_sample_start_ &-> (MUL_u32_u32_28_Sample)
+      MUL_u32_u32_28_sample_completed_ <-& (MUL_u32_u32_28_Sample)
+      MUL_u32_u32_28_sample_completed_ &-> ($null)
+      MUL_u32_u32_28_update_start_ &-> (MUL_u32_u32_28_Update)
+      MUL_u32_u32_28_update_completed_ <-& (MUL_u32_u32_28_Update)
+      ADD_u32_u32_30_sample_start_ <-& (MUL_u32_u32_28_update_completed_)
+      ;;[ADD_u32_u32_30_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[ADD_u32_u32_30_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      ADD_u32_u32_30_sample_start_ &-> (ADD_u32_u32_30_Sample)
+      ADD_u32_u32_30_sample_completed_ <-& (ADD_u32_u32_30_Sample)
+      ADD_u32_u32_30_sample_completed_ &-> ($null)
+      ADD_u32_u32_30_update_start_ &-> (ADD_u32_u32_30_Update)
+      ADD_u32_u32_30_update_completed_ <-& (ADD_u32_u32_30_Update)
+      ;;[array_obj_ref_31_index_resize_0] 
+      {
+        $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
+      }
+      ADD_u32_u32_30_update_completed_ &-> (array_obj_ref_31_index_resize_0)
+      array_obj_ref_31_index_resized_0 <-& (array_obj_ref_31_index_resize_0)
+      ;;[array_obj_ref_31_index_scale_0] 
+      {
+        $T [scale_rename_req] $T [scale_rename_ack] // rename 
+      }
+      array_obj_ref_31_index_resized_0 &-> (array_obj_ref_31_index_scale_0)
+      array_obj_ref_31_index_scaled_0 <-& (array_obj_ref_31_index_scale_0)
+      ;;[array_obj_ref_31_final_index_sum_regn] 
+      {
+        $T [req] $T [ack] // rename
+      }
+      array_obj_ref_31_index_scaled_0 &-> (array_obj_ref_31_final_index_sum_regn)
+      array_obj_ref_31_offset_calculated <-& (array_obj_ref_31_final_index_sum_regn)
+      ;;[array_obj_ref_31_base_plus_offset] 
+      {
+        $T [sum_rename_req] $T [sum_rename_ack] // one gets through 
+      }
+      array_obj_ref_31_offset_calculated &-> (array_obj_ref_31_base_plus_offset)
+      array_obj_ref_31_root_address_calculated <-& (array_obj_ref_31_base_plus_offset)
+      ;;[array_obj_ref_31_word_addrgen] 
+      {
+        $T [root_register_req] $T [root_register_ack]
+      }
+      array_obj_ref_31_root_address_calculated &-> (array_obj_ref_31_word_addrgen)
+      array_obj_ref_31_word_address_calculated <-& (array_obj_ref_31_word_addrgen)
+      ;;[array_obj_ref_31_Sample] 
+      {
+        ;;[array_obj_ref_31_Split] 
+        {
+          $T [split_req] $T [split_ack]
+        }
+        ||[word_access_start] 
+        {
+          ;;[word_0] 
+          {
+            $T [rr] $T [ra] 
+          }
+        }
+      }
+      ;;[array_obj_ref_31_Update] 
+      {
+        ||[word_access_complete] 
+        {
+          ;;[word_0] 
+          {
+            $T [cr] $T [ca] 
+          }
+        }
+      }
+      array_obj_ref_31_sample_start_ <-& (array_obj_ref_31_word_address_calculated)
+      array_obj_ref_31_sample_start_ &-> (array_obj_ref_31_Sample)
+      array_obj_ref_31_sample_completed_ <-& (array_obj_ref_31_Sample)
+      array_obj_ref_31_sample_completed_ &-> ($null)
+      array_obj_ref_31_update_start_ &-> (array_obj_ref_31_Update)
+      array_obj_ref_31_update_completed_ <-& (array_obj_ref_31_Update)
+      array_obj_ref_31_sample_start_ <-& (R_data_32_update_completed_)
+      // load-store dependencies..
+    }
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %mem_store__
+    //  file ./.Aa//linked.opt.aa, line 21
+    // default_mem_pool[((address * 1 ) + 0 )]
+    // 1 
+    $constant $W[konst_27_wire_constant] : $int<32> := _b00000000000000000000000000000001// 1
+    // 0 
+    $constant $W[konst_29_wire_constant] : $int<32> := _b00000000000000000000000000000000// 0
+    $constant $W[array_obj_ref_31_resized_base_address] : $int<1> := _b0// 0
+    $constant $W[array_obj_ref_31_offset_scale_factor_0] : $int<1> := _b1// 1
+    $constant $W[array_obj_ref_31_word_offset_0] : $int<1> := _b0// 0
+    // 	default_mem_pool[((address * 1 ) + 0 )] := data
+    //  file ./.Aa//linked.opt.aa, line 26
+    // default_mem_pool[((address * 1 ) + 0 )]
+    // (address * 1 )
+    $intermediate $W[MUL_u32_u32_28_wire] : $int<32>
+    // ((address * 1 ) + 0 )
+    $intermediate $W[ADD_u32_u32_30_wire] : $int<32>
+    $intermediate $W[ADD_u32_u32_30_resized] : $int<1>
+    $intermediate $W[ADD_u32_u32_30_scaled] : $int<1>
+    $intermediate $W[array_obj_ref_31_final_offset] : $int<1>
+    $intermediate $W[array_obj_ref_31_root_address] : $int<1>
+    $W[array_obj_ref_31_word_address_0] : $pointer<memory_space_1>
+    $W[array_obj_ref_31_data_0] : $int<8>
+    // 	default_mem_pool[((address * 1 ) + 0 )] := data
+    //  file ./.Aa//linked.opt.aa, line 26
+    // default_mem_pool[((address * 1 ) + 0 )]
+    // (address * 1 )
+    *[MUL_u32_u32_28_inst] (address konst_27_wire_constant) (MUL_u32_u32_28_wire) 
+    $delay MUL_u32_u32_28_inst 1
+    // ((address * 1 ) + 0 )
+    +[ADD_u32_u32_30_inst] (MUL_u32_u32_28_wire konst_29_wire_constant) (ADD_u32_u32_30_wire) 
+    $delay ADD_u32_u32_30_inst 1
+    &/ [array_obj_ref_31_index_0_resize] (ADD_u32_u32_30_wire) (ADD_u32_u32_30_resized) 
+    &/ [array_obj_ref_31_index_0_rename] (ADD_u32_u32_30_resized) (ADD_u32_u32_30_scaled) 
+    &/ [array_obj_ref_31_index_offset] (ADD_u32_u32_30_scaled) (array_obj_ref_31_final_offset) 
+    &/ [array_obj_ref_31_root_address_inst] (array_obj_ref_31_final_offset) (array_obj_ref_31_root_address) 
+    &/ [array_obj_ref_31_addr_0] (array_obj_ref_31_root_address) (array_obj_ref_31_word_address_0) 
+    $store [array_obj_ref_31_store_0] $to memory_space_1 (array_obj_ref_31_word_address_0 array_obj_ref_31_data_0) 
+    $delay array_obj_ref_31_store_0 2
+    &/ [array_obj_ref_31_gather_scatter] (data) (array_obj_ref_31_data_0) 
+  }
+  // end data-path
+  // 	default_mem_pool[((address * 1 ) + 0 )] := data
+  //  file ./.Aa//linked.opt.aa, line 26
+  // ((address * 1 ) + 0 )
+  // (address * 1 )
+  MUL_u32_u32_28_inst <=> (assign_stmt_33/MUL_u32_u32_28_Sample/rr assign_stmt_33/MUL_u32_u32_28_Update/cr) (assign_stmt_33/MUL_u32_u32_28_Sample/ra assign_stmt_33/MUL_u32_u32_28_Update/ca)
+  ADD_u32_u32_30_inst <=> (assign_stmt_33/ADD_u32_u32_30_Sample/rr assign_stmt_33/ADD_u32_u32_30_Update/cr) (assign_stmt_33/ADD_u32_u32_30_Sample/ra assign_stmt_33/ADD_u32_u32_30_Update/ca)
+  array_obj_ref_31_index_0_resize <=> (assign_stmt_33/array_obj_ref_31_index_resize_0/index_resize_req) (assign_stmt_33/array_obj_ref_31_index_resize_0/index_resize_ack)
+  array_obj_ref_31_index_0_rename <=> (assign_stmt_33/array_obj_ref_31_index_scale_0/scale_rename_req) (assign_stmt_33/array_obj_ref_31_index_scale_0/scale_rename_ack)
+  array_obj_ref_31_index_offset <=> (assign_stmt_33/array_obj_ref_31_final_index_sum_regn/req) (assign_stmt_33/array_obj_ref_31_final_index_sum_regn/ack)
+  array_obj_ref_31_root_address_inst <=> (assign_stmt_33/array_obj_ref_31_base_plus_offset/sum_rename_req) (assign_stmt_33/array_obj_ref_31_base_plus_offset/sum_rename_ack)
+  array_obj_ref_31_addr_0 <=> (assign_stmt_33/array_obj_ref_31_word_addrgen/root_register_req) (assign_stmt_33/array_obj_ref_31_word_addrgen/root_register_ack)
+  array_obj_ref_31_gather_scatter <=> (assign_stmt_33/array_obj_ref_31_Sample/array_obj_ref_31_Split/split_req) (assign_stmt_33/array_obj_ref_31_Sample/array_obj_ref_31_Split/split_ack)
+  array_obj_ref_31_store_0 <=> (assign_stmt_33/array_obj_ref_31_Sample/word_access_start/word_0/rr assign_stmt_33/array_obj_ref_31_Update/word_access_complete/word_0/cr) (assign_stmt_33/array_obj_ref_31_Sample/word_access_start/word_0/ra assign_stmt_33/array_obj_ref_31_Update/word_access_complete/word_0/ca)
+}
+$module [stage_1_daemon] 
+{
+  // pipe-declarations for block %stage_1_daemon
+  //  file ./.Aa//linked.opt.aa, line 28
+  // pipe-declarations for block %stage_1_daemon%lOoP
+  //  file ./.Aa//linked.opt.aa, line 33
+  // pipe-declarations for block %stage_1_daemon%lOoP%
+  //  file ./.Aa//linked.opt.aa, line 35
+  $CP 
+  {
+    // begin control-path 
+    <>[branch_block_stmt_36] // Branch Block  file ./.Aa//linked.opt.aa, line 33
+    {
+      $P [branch_block_stmt_36__entry__]
+      branch_block_stmt_36__entry__ <-| ($entry)
+      $P [branch_block_stmt_36__exit__]
+      branch_block_stmt_36__exit__ |-> ($exit)
+      $P [merge_stmt_37__entry__] 
+      $P [merge_stmt_37__exit__] 
+      $P [assign_stmt_40__entry__] 
+      $P [assign_stmt_40__exit__] 
+      $P [assign_stmt_43__entry__] 
+      $P [assign_stmt_43__exit__] 
+      $P [loopback]
+      ::[assign_stmt_40] 
+      {
+        // 		x := A
+        //  file ./.Aa//linked.opt.aa, line 37
+        // Source expression
+        // A
+        $T[RPIPE_A_39_sample_start_] 
+        $T[RPIPE_A_39_sample_completed_] 
+        $T[RPIPE_A_39_update_start_] 
+        $T[RPIPE_A_39_update_completed_] 
+        ;;[RPIPE_A_39_Sample] 
+        {
+          // pipe read sample
+          $T [rr] $T [ra] 
+        }
+        ;;[RPIPE_A_39_Update] 
+        {
+          // pipe read update
+          $T [cr] $T [ca] 
+        }
+        RPIPE_A_39_sample_start_ &-> (RPIPE_A_39_Sample)
+        RPIPE_A_39_sample_completed_ <-& (RPIPE_A_39_Sample)
+        RPIPE_A_39_sample_completed_ &-> ($null)
+        RPIPE_A_39_update_start_ &-> (RPIPE_A_39_Update)
+        RPIPE_A_39_update_completed_ <-& (RPIPE_A_39_Update)
+        // both source and target are implicit: use interlock 
+        $T[RPIPE_A_39_sample_start_] 
+        $T[RPIPE_A_39_sample_completed_] 
+        $T[RPIPE_A_39_update_start_] 
+        $T[RPIPE_A_39_update_completed_] 
+        // Target expression
+        // (as target) x
+        // x
+        // implicit reference
+        // barrier: 		x := A
+        // load-store dependencies..
+        // pipe read/write dependencies for pipe A
+      }
+      assign_stmt_40__entry__ |-> (assign_stmt_40)
+      assign_stmt_40__exit__ <-| (assign_stmt_40)
+      ::[assign_stmt_43] 
+      {
+        // 		TMP := x
+        //  file ./.Aa//linked.opt.aa, line 38
+        // Source expression
+        // x
+        $T[R_x_42_sample_start_] 
+        $T[R_x_42_sample_completed_] 
+        $T[R_x_42_update_start_] 
+        $T[R_x_42_update_completed_] 
+        // implicit reference
+        R_x_42_sample_start_ <-& ($entry)
+        R_x_42_sample_completed_ <-& (R_x_42_sample_start_)
+        R_x_42_update_start_ <-& (R_x_42_sample_completed_)
+        R_x_42_update_completed_ <-& (R_x_42_update_start_)
+        // both source and target are implicit: use interlock 
+        $T[WPIPE_TMP_41_sample_start_] 
+        $T[WPIPE_TMP_41_sample_completed_] 
+        $T[WPIPE_TMP_41_update_start_] 
+        $T[WPIPE_TMP_41_update_completed_] 
+        // Target expression
+        // (as target) TMP
+        $T[WPIPE_TMP_41_sample_start_] 
+        $T[WPIPE_TMP_41_sample_completed_] 
+        $T[WPIPE_TMP_41_update_start_] 
+        $T[WPIPE_TMP_41_update_completed_] 
+        ;;[WPIPE_TMP_41_Sample] 
+        {
+          // pipe write sample-start TMP
+          $T [req] $T [ack] 
+        }
+        ;;[WPIPE_TMP_41_Update] 
+        {
+          // pipe write update (complete) TMP
+          $T [req] $T [ack] 
+        }
+        WPIPE_TMP_41_sample_start_ &-> (WPIPE_TMP_41_Sample)
+        WPIPE_TMP_41_sample_completed_ <-& (WPIPE_TMP_41_Sample)
+        WPIPE_TMP_41_sample_completed_ &-> ($null)
+        WPIPE_TMP_41_update_start_ &-> (WPIPE_TMP_41_Update)
+        WPIPE_TMP_41_update_completed_ <-& (WPIPE_TMP_41_Update)
+        WPIPE_TMP_41_sample_start_ <-& (R_x_42_update_completed_)
+        // barrier: 		TMP := x
+        // load-store dependencies..
+        // pipe read/write dependencies for pipe TMP
+      }
+      assign_stmt_43__entry__ |-> (assign_stmt_43)
+      assign_stmt_43__exit__ <-| (assign_stmt_43)
+      // control-path for merge  
+      //  file ./.Aa//linked.opt.aa, line 35
+      ;;[merge_stmt_37_dead_link] 
+      {
+        $T [dead_transition] $dead 
+      }
+      merge_stmt_37__entry__ |-> (merge_stmt_37_dead_link)
+      merge_stmt_37__exit__ <-| (merge_stmt_37_dead_link)
+      //---------------------   merge statement  file ./.Aa//linked.opt.aa, line 35  --------------------------
+      ||[merge_stmt_37__entry___PhiReq] 
+      {
+        // no phi statements in merge..
+      }
+      merge_stmt_37__entry__ |-> (merge_stmt_37__entry___PhiReq)
+      ||[loopback_PhiReq] 
+      {
+        // no phi statements in merge..
+      }
+      loopback |-> (loopback_PhiReq)
+      $P [merge_stmt_37_PhiReqMerge] 
+      merge_stmt_37_PhiReqMerge <-| ( merge_stmt_37__entry___PhiReq  loopback_PhiReq )
+      ||[merge_stmt_37_PhiAck] 
+      {
+        $T [dummy] 
+      }
+      merge_stmt_37_PhiReqMerge |-> (merge_stmt_37_PhiAck)
+      merge_stmt_37__exit__  <-| (merge_stmt_37_PhiAck)
+      //---------------------  end of merge statement  file ./.Aa//linked.opt.aa, line 35  --------------------------
+      merge_stmt_37__entry__ <-| (branch_block_stmt_36__entry__)
+      assign_stmt_40__entry__ <-| (merge_stmt_37__exit__)
+      assign_stmt_43__entry__ <-| (assign_stmt_40__exit__)
+      loopback <-| (assign_stmt_43__exit__)
+    }
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %stage_1_daemon%lOoP%
+    //  file ./.Aa//linked.opt.aa, line 35
+    // constant-object-declarations for block %stage_1_daemon%lOoP
+    //  file ./.Aa//linked.opt.aa, line 33
+    // constant-object-declarations for block %stage_1_daemon
+    //  file ./.Aa//linked.opt.aa, line 28
+    // constant-declarations for block %stage_1_daemon%lOoP
+    //  file ./.Aa//linked.opt.aa, line 33
+    // constant-declarations for block %stage_1_daemon%lOoP%
+    //  file ./.Aa//linked.opt.aa, line 35
+    // block %stage_1_daemon%lOoP
+    //  file ./.Aa//linked.opt.aa, line 33
+    // 		x := A
+    //  file ./.Aa//linked.opt.aa, line 37
+    // x
+    $W[x_40] : $int<32>
+    // 		TMP := x
+    //  file ./.Aa//linked.opt.aa, line 38
+    // TMP
+    // datapath-instances for block %stage_1_daemon%lOoP
+    //  file ./.Aa//linked.opt.aa, line 33
+    // 		x := A
+    //  file ./.Aa//linked.opt.aa, line 37
+    // A
+    $ioport $in [RPIPE_A_39_inst] (A) (x_40) 
+    // 		TMP := x
+    //  file ./.Aa//linked.opt.aa, line 38
+    // TMP
+    $ioport $out [WPIPE_TMP_41_inst]  (x_40) (TMP) 
+    $buffering $in WPIPE_TMP_41_inst x_40 1
+  }
+  // end data-path
+  // CP-DP links for merge  
+  //  file ./.Aa//linked.opt.aa, line 35
+  // 		x := A
+  //  file ./.Aa//linked.opt.aa, line 37
+  // A
+  RPIPE_A_39_inst <=> (branch_block_stmt_36/assign_stmt_40/RPIPE_A_39_Sample/rr branch_block_stmt_36/assign_stmt_40/RPIPE_A_39_Update/cr) (branch_block_stmt_36/assign_stmt_40/RPIPE_A_39_Sample/ra branch_block_stmt_36/assign_stmt_40/RPIPE_A_39_Update/ca)
+  // 		TMP := x
+  //  file ./.Aa//linked.opt.aa, line 38
+  // TMP
+  WPIPE_TMP_41_inst <=> (branch_block_stmt_36/assign_stmt_43/WPIPE_TMP_41_Sample/req branch_block_stmt_36/assign_stmt_43/WPIPE_TMP_41_Update/req) (branch_block_stmt_36/assign_stmt_43/WPIPE_TMP_41_Sample/ack branch_block_stmt_36/assign_stmt_43/WPIPE_TMP_41_Update/ack)
+}

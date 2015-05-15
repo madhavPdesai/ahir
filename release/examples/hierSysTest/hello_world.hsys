@@ -1,0 +1,27 @@
+$system Stage1  $library S1
+	$in 
+		$pipe A 32
+	$out 
+		$pipe TMP 32
+{
+}
+
+$system Stage2  $library S2
+
+	$in 
+		$pipe TMP 32
+	$out 
+		$pipe B 32
+{
+}
+
+$system Top 
+	$in 
+		$pipe a 32 
+        $out 
+		$pipe b 32
+{
+        $pipe connector 32
+        $instance i0  S1:Stage1   A => a  TMP => connector 
+        $instance i1  S2:Stage2  TMP => connector B => b 
+}

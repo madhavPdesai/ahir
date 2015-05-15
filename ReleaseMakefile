@@ -31,6 +31,7 @@ Release:
 	cp $(VC)/bin/vhdlFormat $(RELEASE)/bin/
 	cp $(LLVM2AA)/bin/llvm2aa $(RELEASE)/bin/
 	cp $(HIERSYSBUILD)/bin/hierSys2Vhdl $(RELEASE)/bin/
+	cp $(HIERSYSBUILD)/bin/hierSys2C $(RELEASE)/bin/
 	# copy the IOLIB
 	cp $(IOLIB)/*.h $(RELEASE)/iolib/include/
 	cp $(IOLIB)/libio.a $(RELEASE)/iolib/lib/
