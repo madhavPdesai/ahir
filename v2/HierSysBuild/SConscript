@@ -8,4 +8,5 @@ env.Append(CPPPATH = './src/:./include:' + ANTLR_PATH)
 
 env.Library('lib/libHierSys', Glob('src/*.cpp'), CCFLAGS='-g ')
 env.Program('bin/hierSys2Vhdl', 'util/hierSys2Vhdl.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['HierSys', 'antlr' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ' + ANTLR_LIB_PATH))
+env.Program('bin/hierSys2C', 'util/hierSys2C.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['HierSys', 'antlr' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ' + ANTLR_LIB_PATH))
 

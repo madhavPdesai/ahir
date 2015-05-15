@@ -38,6 +38,8 @@ class hierRoot
 	string Get_Id() {return(_id);}
 	void Set_Error(bool v) {_error = true;}
 	bool Get_Error() {return(_error);}
+
+	void Report_Error(string err_msg) { cerr << "Error: " << err_msg << endl; _error = true; }
 	
 };
 
@@ -54,11 +56,7 @@ class hierSystemInstance: public hierRoot
 	map<string, string> _reverse_port_map;
 
 
-	hierSystemInstance(hierSystem* parent, hierSystem* base_sys, string id):hierRoot(id) 
-	{	
-		_parent = parent;
-		_base_system = base_sys; 
-	}
+	hierSystemInstance(hierSystem* parent, hierSystem* base_sys, string id);
 
 
 	hierSystem* Get_Parent() {return(_parent);}
@@ -101,12 +99,17 @@ class hierSystem: public hierRoot
 	map<string,  hierSystemInstance* > _child_map;
 
 	set<string> _signals;
+	int _instance_count;
 
 public:
 	hierSystem(string id) :hierRoot(id)
 	{
 		_library = "work";
+		_instance_count = 0;
 	}
+
+	int Get_Instance_Count() {return(_instance_count);}
+	void Increment_Instance_Count() {_instance_count++;}
 
         bool Is_Leaf() {return(_child_map.size() == 0);}
 	void Set_Library(string s) {cerr << "Info: setting library for " << _id << " to " << s << endl; _library = s;}
@@ -295,6 +298,8 @@ public:
 	void Print_Vhdl_Entity_Architecture(ostream& ofile);
 	void Print_Vhdl_Test_Bench(string sim_link_lib, string sim_link_prefix, ostream& ofile); // in progress.
 	void Print_Vhdl_Instance_In_Testbench(string inst_name, ostream& ofile);
+	void Print_Vhdl_Pipe_Instance(string pipe_name, int pipe_width, int pipe_depth, ostream& ofile);
+
 };
 
 #endif
