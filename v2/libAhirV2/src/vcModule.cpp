@@ -1364,7 +1364,7 @@ void vcModule::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bo
 {
 	assert(_pipe_map.find(pipe_id) == _pipe_map.end());
 	assert(width > 0);
-	assert(depth > 0);
+	assert(depth >= 0);
 
 	vcPipe* np =  new vcPipe(this, pipe_id, width, depth, lifo_mode);
 	_pipe_map[pipe_id] = np;

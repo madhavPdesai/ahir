@@ -1,12 +1,12 @@
 // Virtual circuit produced from Aa description by Aa2VC 
-// $pipe  B : $uint<32>  $depth 1 
+// $pipe  B : $uint<32>  $depth 0 
 // can point into 
 // in scope  top-level
-$pipe [B] 32 $depth 1 
-// $pipe  TMP : $uint<32>  $depth 1 
+$pipe [B] 32 $depth 0 
+// $pipe  TMP : $uint<32>  $depth 0 
 // can point into 
 // in scope  top-level
-$pipe [TMP] 32 $depth 1 
+$pipe [TMP] 32 $depth 0 
 // load store constants for object default_mem_pool
 $constant $W[default_mem_pool_base_address] : $int<1> := _b0
 $memoryspace [memory_space_1] 

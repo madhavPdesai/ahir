@@ -278,7 +278,7 @@ class AaPipeObject: public AaObject
   AaPipeObject(AaScope* scope_tpr,string oname, AaType* otype);
   ~AaPipeObject();
 
-  void Set_Depth(int d) {_depth = d; }
+  void Set_Depth(int d);
   int Get_Depth() {return(_depth); }
 
   void Set_Lifo_Mode(bool v) { _lifo_mode = v; }

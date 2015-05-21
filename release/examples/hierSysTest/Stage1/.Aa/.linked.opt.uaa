@@ -1,7 +1,7 @@
-$pipe  A : $uint<32>  $depth 1 
+$pipe  A : $uint<32>  $depth 0 
 // can point into 
 
-$pipe  TMP : $uint<32>  $depth 1 
+$pipe  TMP : $uint<32>  $depth 0 
 // can point into 
 
 $storage  default_mem_pool : $array[1] $of $uint<8> // memory space index = 1  base address = 0  word size = 8

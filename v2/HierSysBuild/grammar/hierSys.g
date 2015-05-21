@@ -73,7 +73,8 @@ hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
 	IN 
 	( 
 		(PIPE | (SIGNAL {signal_flag = true;}))
-		sidi: SIMPLE_IDENTIFIER  uidi: UINTEGER   (DEPTH didi: UINTEGER {depth = atoi(didi->getText().c_str());})?
+		sidi: SIMPLE_IDENTIFIER  uidi: UINTEGER   
+				(DEPTH didi: UINTEGER {depth = atoi(didi->getText().c_str());})?
 			{
 				sys->Add_In_Pipe(sidi->getText(), atoi(uidi->getText().c_str()), depth);
 				if(signal_flag)
@@ -87,8 +88,8 @@ hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
 	OUT
 	( 
 		(PIPE | (SIGNAL {signal_flag = true;}))
-				(DEPTH dido: UINTEGER {depth = atoi(dido->getText().c_str());})?
 		 sido: SIMPLE_IDENTIFIER  uido: UINTEGER 
+				(DEPTH dido: UINTEGER {depth = atoi(dido->getText().c_str());})?
 			{
 				sys->Add_Out_Pipe(sido->getText(), atoi(uido->getText().c_str()), depth);
 				if(signal_flag)
@@ -198,6 +199,7 @@ PIPE: "$pipe";
 SIGNAL: "$signal";
 INSTANCE: "$instance";
 LIBRARY: "$library";
+DEPTH: "$depth";
 
 
 // language keywords (all start with $)

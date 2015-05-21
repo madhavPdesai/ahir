@@ -1431,8 +1431,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
                 	cerr << "Warning: ignoring initial value for pipe " << oname << endl;
 
             	AaObject* obj = new AaPipeObject(scope,oname,otype);
-            	if(pipe_depth > 1)
-                	((AaPipeObject*)obj)->Set_Depth(pipe_depth);
+                ((AaPipeObject*)obj)->Set_Depth(pipe_depth);
             	obj->Set_Line_Number(st->getLine());
 	    	((AaPipeObject*)obj)->Set_Lifo_Mode(lifo_flag);
 	    	((AaPipeObject*)obj)->Set_In_Mode(in_mode);

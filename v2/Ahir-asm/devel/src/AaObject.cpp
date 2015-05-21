@@ -352,6 +352,21 @@ AaPipeObject::AaPipeObject(AaScope* parent_tpr, string oname, AaType* otype):AaO
 	_synch  = false;
 };
 
+void AaPipeObject::Set_Depth(int d)
+{
+	if(d == 0)
+	{
+		AaRoot::Warning("pipe depth set to 0", this);
+	}
+	else if(d < 0)
+	{
+		AaRoot::Error("pipe depth is < 0", this);
+	}
+
+	if(d >= 0)
+		_depth = d;
+}
+
 AaPipeObject::~AaPipeObject() {};
 void AaPipeObject::Print(ostream& ofile)
 {
