@@ -460,9 +460,9 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		string pipe_name = (*iter).first;
 		int pipe_width   = (*iter).second.first;
 
-		ofile << "signal " << pipe_name << "_pipe_read_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		ofile << "signal " << pipe_name << "_pipe_read_req  : std_logic_vector(0  downto 0);" << endl;
-		ofile << "signal " << pipe_name << "_pipe_read_ack  : std_logic_vector(0  downto 0);" << endl;
+		ofile << "signal " << pipe_name << "_pipe_write_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		ofile << "signal " << pipe_name << "_pipe_write_req  : std_logic_vector(0  downto 0);" << endl;
+		ofile << "signal " << pipe_name << "_pipe_write_ack  : std_logic_vector(0  downto 0);" << endl;
 
 		if(this->Is_Signal(pipe_name))
 		{
@@ -476,16 +476,17 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		string pipe_name = (*iter).first;
 		int pipe_width   = (*iter).second.first;
 
-		ofile << "signal " << pipe_name << "_pipe_write_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		ofile << "signal " << pipe_name << "_pipe_write_req  : std_logic_vector(0  downto 0);" << endl;
-		ofile << "signal " <<  pipe_name << "_pipe_write_ack  : std_logic_vector(0  downto 0);" << endl;
+		ofile << "signal " << pipe_name << "_pipe_read_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		ofile << "signal " << pipe_name << "_pipe_read_req  : std_logic_vector(0  downto 0);" << endl;
+		ofile << "signal " <<  pipe_name << "_pipe_read_ack  : std_logic_vector(0  downto 0);" << endl;
 
 		if(this->Is_Signal(pipe_name))
 		{
 			ofile << "signal " << pipe_name << ": std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
 		}
 	}
-	ofile << "signal clk, reset: std_logic; " << endl; 
+	ofile << "signal clk : std_logic := '0'; " << endl; 
+	ofile << "signal reset: std_logic := '1'; " << endl; 
 	ofile << "-- }\n begin --{" << endl;
 	ofile << "-- clock/reset generation " << endl;
 	ofile << "clk <= not clk after 5 ns;" << endl;

@@ -17,11 +17,11 @@ $system Stage2  $library S2
 
 $system Top 
 	$in 
-		$pipe a 32 
+		$pipe A 32 
         $out 
-		$pipe b 32
+		$pipe B 32
 {
-        $pipe connector 32
-        $instance i0  S1:Stage1   A => a  TMP => connector 
-        $instance i1  S2:Stage2  TMP => connector B => b 
+        $pipe TMP 32
+        $instance i0  S1:Stage1   A => A  TMP => TMP 
+        $instance i1  S2:Stage2  TMP => TMP B => B 
 }
