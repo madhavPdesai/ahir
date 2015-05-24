@@ -34,21 +34,32 @@ Release:
 	cp $(HIERSYSBUILD)/bin/hierSys2C $(RELEASE)/bin/
 	# copy the IOLIB
 	cp $(IOLIB)/*.h $(RELEASE)/iolib/include/
+	cp $(IOLIB)/*.h $(RELEASE)/include/
 	cp $(IOLIB)/libio.a $(RELEASE)/iolib/lib/
+	cp $(IOLIB)/libio.a $(RELEASE)/lib/
 	cp $(IOLIB)/libio.so $(RELEASE)/iolib/lib/
+	cp $(IOLIB)/libio.so $(RELEASE)/lib/
 	# copy the pipeHandler
 	cp $(PIPEHANDLER)/include/*.h $(RELEASE)/pipeHandler/include/
+	cp $(PIPEHANDLER)/include/*.h $(RELEASE)/include/
 	cp $(PIPEHANDLER)/lib/* $(RELEASE)/pipeHandler/lib/
+	cp $(PIPEHANDLER)/lib/* $(RELEASE)/lib/
 	cp $(PIPEHANDLER)/pipeHandlerTest/* $(RELEASE)/pipeHandler/examples/
 	# copy the BitVectors
 	cp $(BITVECTORS)/include/*.h $(RELEASE)/BitVectors/include/
+	cp $(BITVECTORS)/include/*.h $(RELEASE)/include/
 	cp $(BITVECTORS)/lib/* $(RELEASE)/BitVectors/lib/
+	cp $(BITVECTORS)/lib/* $(RELEASE)/lib/
 	# copy the pthreadUtils.
 	cp $(PTHREADUTILS)/include/*.h $(RELEASE)/pthreadUtils/include/
+	cp $(PTHREADUTILS)/include/*.h $(RELEASE)/include/
 	cp $(GNUPTHUTILS)/include/*.h $(RELEASE)/GnuPthUtils/include/
 	# copy the testbench
 	cp $(CTESTBENCH)/include/*.h $(RELEASE)/CtestBench/include/
+	cp $(CTESTBENCH)/include/SocketLib.h $(RELEASE)/include/
+	cp $(CTESTBENCH)/include/Vhpi.h $(RELEASE)/include/
 	cp $(CTESTBENCH)/lib/* $(RELEASE)/CtestBench/lib/
+	cp $(CTESTBENCH)/lib/* $(RELEASE)/lib/
 	# copy the VHDL files
 	cp $(VHDL)/release/*.vhdl $(RELEASE)/vhdl/
 	cp $(VHDL)/unisims/*.vhd* $(RELEASE)/vhdl/
@@ -68,6 +79,9 @@ Release:
 	cp $(SCRIPTS)/ghdlSanitize.sh $(RELEASE)/bin/
 
 Clean:
+	rm -f $(RELEASE)/bin/*
+	rm -f $(RELEASE)/include/*
+	rm -f $(RELEASE)/lib/*
 	#license
 	rm -f $(RELEASE)/LICENSE 
 	rm -f $(RELEASE)/CONTRIBUTORS 
