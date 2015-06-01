@@ -28,9 +28,10 @@ void Usage_hierSys2Vhdl()
 {
   cerr << "brief description: reads hierarchical system description and produces VHDL, " << endl;
   cerr << "Usage: " << endl;
-  cerr << "hierSys2Vhdl [-s <ghdl/modelsim>]  <file-name> (<file-name>)* " << endl;
+  cerr << "hierSys2Vhdl [-s <ghdl/modelsim>] [-o <vhdl-output-directory>]  <file-name> (<file-name>)* " << endl;
   cerr << "Options: " << endl;
   cerr << "   -s ghdl or -s modelsim:  specifies the simulator for which the test-bench should be generated." << endl;
+  cerr << "   -o <vhdl-dir>:  specifies the directory into which the VHDL is to be printed." << endl;
 }
 
 
@@ -78,6 +79,7 @@ int main(int argc, char* argv[])
   string sim_link_library = "GhdlLink";
   string sim_link_prefix = "Vhpi_";
   
+  string odir = "./";
 
   signal(SIGSEGV, Handle_Segfault);
 
@@ -87,7 +89,7 @@ int main(int argc, char* argv[])
       	exit(1);
     }
 
-  while ((opt = getopt_long(argc, argv, "s:", long_options, &option_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, "s:o:", long_options, &option_index)) != -1) {
 	switch(opt) {
 		case 's': 
 			opt_string = optarg;
@@ -95,6 +97,9 @@ int main(int argc, char* argv[])
 				sim_link_prefix = "Modelsim_FLI_";
 				sim_link_library = "ModelsimLink";
 			}
+			break;
+		case 'o':
+			odir = optarg;
 			break;
 		default: cerr << "Error: unknown option " << opt << endl; ret_val = 1; break;
 	}
@@ -127,7 +132,7 @@ int main(int argc, char* argv[])
 
   if(ret_val == 0) {
   	hierSystem* top_sys = sys_vec.back();
-  	string vhdl_file_name = top_sys->Get_Id() + ".unformatted_vhdl";
+  	string vhdl_file_name = odir + "/" + top_sys->Get_Id() + ".unformatted_vhdl";
   	ofstream vhdl_file;
   	vhdl_file.open(vhdl_file_name.c_str());
 

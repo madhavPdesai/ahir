@@ -268,6 +268,7 @@ void Write_VC_Binary_Operator(AaOperation op,
     }
   else if(op == __CONCAT) op_name = "&&";
   else if(op == __BITSEL) op_name = "[]";
+  else if(op == __UNORDERED) op_name = "!</=/>";
   else
     assert(0);
 

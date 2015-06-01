@@ -1483,7 +1483,7 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
 		else if(vc_op_id == vcLexerKeywords[__CONCAT_OP]        ) { ret_string = "ApConcat"   ;} 
 		else if(vc_op_id == vcLexerKeywords[__FtoS_ASSIGN_OP]        ) { ret_string = "ApFloatToApIntSigned";}
 		else if(vc_op_id == vcLexerKeywords[__FtoU_ASSIGN_OP]        ) { ret_string = "ApFloatToApIntUnsigned";}
-
+		else if(vc_op_id == vcLexerKeywords[__UNORDERED_OP]     ) { ret_string = "ApFloatUno"  ;}
 		else { vcSystem::Error("unsupported float <-> int operation " + vc_op_id);}
 	}
 	if((in_type->Is("vcIntType") || in_type->Is("vcPointerType")) && out_type->Kind() == "vcFloatType")

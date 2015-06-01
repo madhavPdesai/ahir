@@ -662,6 +662,28 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 				assert(0);
 			}
 			break;
+		case __UNORDERED:
+			if(!src1_type->Is_Float_Type())
+			{
+				AaRoot::Error("Aa2C: unordered operation valid only for floats.", NULL);
+				return;
+			}
+			if(src1_type->Size() == 32)
+			{
+				ofile << "bit_vector_set_bit(&(" << tgt << "),0, fp32_unordered(" << src1 << "," << src2 << "));" 
+					<< endl;
+			}
+			else if(src1_type->Size() == 64)
+			{
+				ofile << "bit_vector_set_bit(&(" << tgt << "),0, fp64_unordered(" << src1 << "," << src2 << "));" 
+					<< endl;
+			}
+			else
+			{
+				AaRoot::Error("Aa2C: unordered operation valid only for 32-bit and 64-bit floats.", NULL);
+				return;
+			}
+			break;
 		default:
 			assert(0);
 	}

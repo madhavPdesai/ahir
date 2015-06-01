@@ -29,7 +29,8 @@ enum AaOperation
     __CONCAT,
     __BITSEL,
     __NOP,
-    __BITMAP
+    __BITMAP,
+    __UNORDERED
   };
 
 

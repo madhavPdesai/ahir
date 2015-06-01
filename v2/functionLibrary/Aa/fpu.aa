@@ -1,4 +1,3 @@
-
 $constant ADDOP: $uint<8> := 0
 $constant SUBOP: $uint<8> := 1
 $constant MULOP: $uint<8> := 2

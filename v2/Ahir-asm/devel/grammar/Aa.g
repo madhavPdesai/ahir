@@ -1302,7 +1302,8 @@ aA_Binary_Op returns [AaOperation op] :
         ( id_greater:GREATER { op = __GREATER;}) | 
         ( id_greaterequal:GREATEREQUAL { op = __GREATEREQUAL;}) | 
         ( id_bitsel:BITSEL { op = __BITSEL;}) | 
-        ( id_concat:CONCAT { op = __CONCAT;})  
+        ( id_concat:CONCAT { op = __CONCAT;})  |
+	( id_unordered: UNORDERED {op == __UNORDERED;})  
     ;
 
 
@@ -1947,6 +1948,7 @@ RPAREN           : ')' ; // argument-list
 PERCENT          : '%' ; 
 CONCAT           : "&&" ; // concatenation
 BITSEL           : "[]" ; // bit-select
+UNORDERED        : "><" ; // FP unordered operation.
 
 
 // arithmetic operators

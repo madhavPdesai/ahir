@@ -764,6 +764,7 @@ vc_BinaryOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   (neq_id:NEQ_OP  {op_id = neq_id->getText();}) |
   (bitsel_id:BITSEL_OP  {op_id = bitsel_id->getText();}) |
   (concat_id:CONCAT_OP  {op_id = concat_id->getText();}) |
+  (unordered_id:UNORDERED_OP  {op_id = unordered_id->getText();}) |
   (or_id:OR_OP  {op_id = or_id->getText();}) |
   (and_id:AND_OP  {op_id = and_id->getText();}) |
   (xor_id:XOR_OP  {op_id = xor_id->getText();}) |

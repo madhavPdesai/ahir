@@ -63,7 +63,7 @@ bool Is_Shift_Operation(AaOperation op)
 bool Is_Compare_Operation(AaOperation op)
 {
   return(op == __LESS || op == __GREATER || op == __LESSEQUAL || op == __GREATEREQUAL 
-	 || op == __EQUAL || op == __NOTEQUAL);
+	 || op == __EQUAL || op == __NOTEQUAL || op == __UNORDERED);
 }
 bool Is_Bitsel_Operation(AaOperation op)
 {
@@ -148,6 +148,9 @@ string C_Name(AaOperation op)
     case __CONCAT:
       ret_string = "__CONCATENATE";
       break;
+    case __UNORDERED:
+      ret_string = "__UNORDERED";
+      break;
     default:
       cerr << "Error: unrecognized operation" << endl;
     }
@@ -227,6 +230,9 @@ string Aa_Name(AaOperation op)
       break;
     case __CONCAT:
       ret_string = "&&";
+      break;
+    case __UNORDERED:
+      ret_string = "><";
       break;
     default:
       cerr << "Error: unrecognized operation" << endl;
