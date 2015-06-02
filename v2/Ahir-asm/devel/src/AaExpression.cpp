@@ -93,19 +93,40 @@ string AaExpression::Get_VC_Guard_String()
 	return(ret_string);
 }
 
+//
+// is used_expr and *eptr match, then *eptr is replaced by
+// a simple object reference to "replacement".
+//
 void AaExpression::Replace_Field_Expression(AaExpression** eptr, AaExpression* used_expr, AaAssignmentStatement* replacement)
 {
 	AaExpression* fexpr = *eptr;
 
 	if(fexpr != NULL)
 	{
-		if((fexpr == used_expr) || (fexpr->Is_Implicit_Variable_Reference() &&  
-					(fexpr->Get_Root_Object() == used_expr->Get_Root_Object())) )
+
+		// what if fexpr refers to 
+		if((fexpr == used_expr) || (fexpr->Is("AaSimpleObjectReference") &&
+						used_expr->Is("AaSimpleObjectReference") &&
+							(fexpr->Get_Root_Object() == used_expr->Get_Root_Object())) )
 		{
-			assert(replacement->Is_Statement());
-			AaExpression* new_expr = new AaSimpleObjectReference(this->Get_Scope(),replacement);
-			*eptr  = new_expr;
-			this->AaExpression::Replace_Uses_By(fexpr, new_expr);
+			
+			AaSimpleObjectReference* s_fexpr = ((AaSimpleObjectReference*)fexpr);
+			AaRoot* s_fexpr_obj = s_fexpr->Get_Object();
+			AaSimpleObjectReference* s_used_expr = ((AaSimpleObjectReference*)used_expr);
+			AaRoot* s_used_expr_obj = s_used_expr->Get_Object();
+
+
+			bool f_ok = (s_fexpr->Is_Implicit_Variable_Reference() || s_fexpr_obj->Is_Interface_Object());
+			bool used_ok = (s_used_expr->Is_Implicit_Variable_Reference() || s_used_expr_obj->Is_Interface_Object());
+			if((f_ok && used_ok) && 
+				(s_fexpr->Get_Root_Object() == s_used_expr->Get_Root_Object()) &&
+					(s_fexpr->Get_Object_Ref_String() == s_used_expr->Get_Object_Ref_String()))
+			{
+				assert(replacement->Is_Statement());
+				AaExpression* new_expr = new AaSimpleObjectReference(this->Get_Scope(),replacement);
+				*eptr  = new_expr;
+				this->AaExpression::Replace_Uses_By(fexpr, new_expr);
+			}
 		}
 		
 	}
