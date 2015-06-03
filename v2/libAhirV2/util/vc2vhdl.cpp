@@ -69,6 +69,7 @@ void Usage_Vc2VHDL()
   cerr <<  " alternate form:  --verbose" << endl;
   cerr <<  " -W <VHDL-work-library> : the generated VHDL will be kept in library VHDL-work-library." << endl;
   cerr <<  "     The default work library is work." << endl;
+  cerr <<  " -U :  input/output pipes will be printed with depth 0. " << endl;
   cerr <<  " -I <n>:  deprecated " << endl;
   cerr <<  " alternate form:  --loop_pipeline_buffering_limit" << endl;
   cerr << endl;
@@ -118,6 +119,7 @@ int main(int argc, char* argv[])
       {"library",   required_argument, 0, 'L'},
       {"work_library",   required_argument, 0, 'W'},
       {"verbose",  no_argument, 0, 'v'},
+      {"suppress_io_pipes",  no_argument, 0, 'U'},
       {0, 0, 0, 0}
     };
 
@@ -148,6 +150,8 @@ int main(int argc, char* argv[])
   int bypass_stride;
 
   vcSystem::_opt_flag = false;
+  vcSystem::_suppress_io_pipes = false;
+
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
@@ -210,6 +214,10 @@ int main(int argc, char* argv[])
 	case 'v':
 	  vcSystem::_verbose_flag = true;
 	  cerr << "Info: -v option selected: lots of info will be printed (to stderr, and also dot-files of control-paths if -O option is selected)." << endl;
+	  break;
+	case 'U':
+	  vcSystem::_suppress_io_pipes = true;
+	  cerr << "Info: -U option selected: suppress i/o pipes (set their depth = 0)." << endl;
 	  break;
 	case 'W':
 	  vcSystem::_vhdl_work_library = string(optarg);

@@ -12,6 +12,8 @@ VariantDir('objGnuPth','src',duplicate=0)
 env.SharedLibrary('lib/libPipeHandlerGnuPth', ['objGnuPth/pipeHandler.c','objGnuPth/Pipes.c'], CCFLAGS='-O2 -DNDEBUG -DUSE_GNUPTH')
 
 
+VariantDir('objDebug','src',duplicate=0)
+env.SharedLibrary('lib/libPipeHandlerDebug', ['objDebug/pipeHandler.c','objDebug/Pipes.c'], CCFLAGS='-g -DNDEBUG')
 
 
 

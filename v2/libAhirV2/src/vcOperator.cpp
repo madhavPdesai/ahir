@@ -957,8 +957,15 @@ vcSlice::vcSlice(string id, vcWire* din, vcWire* dout, int high_index, int low_i
   this->_dout = dout;
   _dout->Connect_Driver(this);
 
-  assert(high_index < din->Get_Size() && low_index >= 0 && (high_index >= low_index));
-  assert(dout->Get_Size() == ((high_index - low_index)+1));
+  bool indices_ok = 
+	((high_index < din->Get_Size() && low_index >= 0 && (high_index >= low_index)) 
+		&&
+  	(dout->Get_Size() == ((high_index - low_index)+1)));
+
+  if(!indices_ok)
+  {
+	vcSystem::Error("slice " + id + " is malformed.\n");
+  }
 
   this->_high_index = high_index;
   this->_low_index = low_index;

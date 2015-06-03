@@ -9,6 +9,7 @@
 #include <vcSystem.hpp>
 
 // optionflags 
+bool vcSystem::_suppress_io_pipes = false;
 bool vcSystem::_verbose_flag = false;
 bool vcSystem::_opt_flag = false;
 bool vcSystem::_vhpi_tb_flag = false;
@@ -635,7 +636,7 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 
       if(num_reads > 0 && num_writes ==  0)
       {
-	if(p->Get_Port())
+	if(p->Get_Port() || p->Get_Signal())
 	{
 		ofile << pipe_id << "_pipe_write_ack(0) <= '1';" << endl;
 		ofile << "TruncateOrPad(" << pipe_id << "_pipe_write_data," << pipe_id << ");" << endl;	
@@ -643,7 +644,7 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
       }
       else if(num_writes > 0 && num_reads == 0)
       {
-	if(p->Get_Port())
+	if(p->Get_Port() || p->Get_Signal())
 	{
 		ofile << pipe_id << "_pipe_read_ack(0) <= '1';" << endl;
 		ofile << "TruncateOrPad(" << pipe_id << ", " << pipe_id << "_pipe_read_data);" << endl;	
@@ -761,7 +762,7 @@ string vcSystem::Print_VHDL_System_Instance_Pipe_Port_Map(string comma, ostream&
 			// input pipe
 			ofile << comma << endl;
 			comma = ",";
-			if(!p->Get_Port())
+			if(!(p->Get_Port() || p->Get_Signal()))
 			{
 				ofile << pipe_id << "_pipe_write_data " 
 					<< " => "
@@ -789,7 +790,7 @@ string vcSystem::Print_VHDL_System_Instance_Pipe_Port_Map(string comma, ostream&
 			// output
 			ofile << comma << endl;
 			comma = ",";
-			if(!p->Get_Port())
+			if(!(p->Get_Port() || p->Get_Signal()))
 			{
 			ofile << pipe_id << "_pipe_read_data "
 				<< " => "
@@ -890,7 +891,7 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 	{
 	  // input pipe
 	  ofile << semi_colon << endl;
-	  if(p->Get_Port() && p->Get_In_Flag())
+	  if((p->Get_Port() && p->Get_In_Flag()) || p->Get_Signal())
 	  {
 		  ofile << pipe_id << ": in std_logic_vector(" << pipe_width-1 << " downto 0)";
           }
@@ -908,7 +909,7 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 	{
 	  // output
 	  ofile << semi_colon << endl;
-	  if(p->Get_Port() && p->Get_Out_Flag())
+	  if((p->Get_Port() && p->Get_Out_Flag()) || p->Get_Signal())
 	  {
 		  ofile << pipe_id << ": out std_logic_vector(" << pipe_width-1 << " downto 0)";
           }

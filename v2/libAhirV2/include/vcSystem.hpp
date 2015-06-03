@@ -35,6 +35,7 @@ class vcSystem: public vcRoot
   static bool _error_flag;
 
  public:
+  static bool _suppress_io_pipes;
   static bool _verbose_flag;
   static bool _opt_flag;
   static bool _min_area_flag;
