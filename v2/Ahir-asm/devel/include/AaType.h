@@ -33,7 +33,7 @@ class AaType: public AaRoot
   //
   // dimension string, for array types.
   //
-  virtual string C_Dimension_String() {}
+  virtual string C_Dimension_String() {return ("");}
   //
   // Print C declaration.  Blank unless specified by derived class.
   //

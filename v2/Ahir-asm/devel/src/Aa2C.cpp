@@ -422,15 +422,27 @@ void Print_C_Unary_Operation(string src, AaType* src_type, string tgt, AaType* t
 		}
 	}
 }
+
+// type of operation.
 void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaType* src2_type, 
 		string tgt, AaType* tgt_type, AaOperation op, ofstream& ofile)
 {
-	uint8_t bv_flag = tgt_type->Is_Integer_Type();
-	uint8_t signed_flag = !tgt_type->Is_Uinteger_Type();
+	bool src1_is_int = src1_type->Is_Integer_Type();
+	bool src1_is_signed = (src1_is_int & !src1_type->Is_Uinteger_Type());
+	uint8_t src1_is_float  = src1_type->Is_Float_Type();
+
+	bool src2_is_int = src2_type->Is_Integer_Type();
+	bool src2_is_signed = (src2_is_int & !src1_type->Is_Uinteger_Type());
+	bool src2_is_float  = src2_type->Is_Float_Type();
+
+	bool tgt_is_int = tgt_type->Is_Integer_Type();
+	bool tgt_is_signed = (tgt_is_int & !src1_type->Is_Uinteger_Type());
+	bool tgt_is_float  = tgt_type->Is_Float_Type();
+
 	switch(op)
 	{
 		case __OR:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_or(&(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;
 			}
@@ -440,7 +452,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __AND:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_and(&(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;
 			}
@@ -450,7 +462,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __XOR:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_xor(&(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;
 			}
@@ -460,7 +472,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __NOR:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_nor(&(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;
 			}
@@ -470,7 +482,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __NAND:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_nand(&(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;
 			}
@@ -480,7 +492,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __XNOR:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_xnor(&(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;
 			}
@@ -490,7 +502,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case  __SHL:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_shift_left(&(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;
 			}
@@ -500,7 +512,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __SHR:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_shift_right(0, &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
@@ -510,7 +522,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case    __ASHR:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_shift_right(1, &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
@@ -520,7 +532,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __ROR:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_rotate_right( &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
@@ -531,7 +543,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __ROL:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_rotate_left( &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
@@ -541,7 +553,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 				assert(0);
 			}
 		case __PLUS:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_plus( &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
@@ -551,7 +563,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __MINUS:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_minus( &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
@@ -561,7 +573,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __MUL:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_mul( &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
@@ -571,7 +583,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __DIV:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_div( &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
@@ -581,67 +593,73 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __EQUAL:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_equal(" << (!src1_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
 			else
 			{
-				ofile << tgt << " = (" << src1 << " == " << src2 << ");" << endl;
+				string op_string = "(" + src1 + " == " + src2 + ")";
+				ofile << "bit_vector_assign_uint64(0" <<  ", &(" << tgt << "), " << op_string << ");" << endl;
 			}
 			break;
 		case __NOTEQUAL:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_not_equal(" << (!src1_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << src1 << "), &(" << src2 << "), &" << tgt << ");" << endl;	
 			}
 			else
 			{
-				ofile << tgt << " = (" << src1 << " != " << src2 << ");" << endl;
+				string op_string = "(" + src1 + " != " + src2 + ")";
+				ofile << "bit_vector_assign_uint64(0" <<  ", &(" << tgt << "), " << op_string << ");" << endl;
 			}
 			break;
 		case __LESS:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_less(" << (!src1_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
 			else
 			{
-				ofile << tgt << " = (" << src1 << " < " << src2 << ");" << endl;
+				string op_string = "(" + src1 + " < " + src2 + ")";
+				ofile << "bit_vector_assign_uint64(0" <<  ", &(" << tgt << "), " << op_string << ");" << endl;
 			}
 			break;
 		case __LESSEQUAL:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_less_equal(" << (!src1_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
 			else
 			{
-				ofile << tgt << " = (" << src1 << " <= " << src2 << ");" << endl;
+				string op_string = "(" + src1 + " <= " + src2 + ")";
+				ofile << "bit_vector_assign_uint64(0" <<  ", &(" << tgt << "), " << op_string << ");" << endl;
 			}
 			break;
 		case __GREATER:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_greater(" << (!src1_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
 			else
 			{
-				ofile << tgt << " = (" << src1 << " > " << src2 << ");" << endl;
+				string op_string = "(" + src1 + " > " + src2 + ")";
+				ofile << "bit_vector_assign_uint64(0" <<  ", &(" << tgt << "), " << op_string << ");" << endl;
 			}
 			break;
 		case __GREATEREQUAL:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_greater_equal(" << (!src1_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
 			else
 			{
-				ofile << tgt << " = (" << src1 << " > " << src2 << ");" << endl;
+				string op_string = "(" + src1 + " >= " + src2 + ")";
+				ofile << "bit_vector_assign_uint64(0" <<  ", &(" << tgt << "), " << op_string << ");" << endl;
 			}
 			break;
 		case __CONCAT:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_concatenate( &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}
@@ -652,7 +670,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			break;
 		case __BITSEL:
-			if(bv_flag)
+			if(src1_is_int)
 			{
 				ofile << "bit_vector_bitsel( &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << endl;	
 			}

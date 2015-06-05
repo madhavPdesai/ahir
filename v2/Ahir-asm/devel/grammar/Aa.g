@@ -1303,7 +1303,7 @@ aA_Binary_Op returns [AaOperation op] :
         ( id_greaterequal:GREATEREQUAL { op = __GREATEREQUAL;}) | 
         ( id_bitsel:BITSEL { op = __BITSEL;}) | 
         ( id_concat:CONCAT { op = __CONCAT;})  |
-	( id_unordered: UNORDERED {op == __UNORDERED;})  
+	( id_unordered: UNORDERED {op = __UNORDERED;})  
     ;
 
 

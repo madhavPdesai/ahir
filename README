@@ -58,3 +58,11 @@ The organization
 			make -f ReleaseMakefile Clean
 
 	
+
+To build:
+
+	type
+		./build.sh
+
+	This should prepare a release.  If it complains about missing
+	directories, just create them, friend..

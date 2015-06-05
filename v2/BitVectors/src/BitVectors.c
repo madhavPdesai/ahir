@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <BitVectors.h>
+#include <string.h>
 
 #define __nbytes(x) ((x % 8 == 0) ? x/8 : (x/8) + 1)
 // ---------------  local functions --------------------------------------
@@ -743,3 +744,37 @@ void bit_vector_greater_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s,
 }
 
 
+uint8_t isNormalFp32(float a)
+{
+	float tA = a;
+	uint32_t ua = 	 *((uint32_t*) &tA);
+	uint32_t sign_ua = (ua & (1 << 31));
+	uint32_t exp_ua  = (ua & (0xff << 23));
+
+	uint8_t is_normal = ((exp_ua != 0) && (~exp_ua != 0));
+	return(is_normal);	
+}
+
+uint8_t isNormalFp64(float a)
+{
+	float tA = a;
+	uint64_t u64_1 = 1;
+	uint64_t u64_0x7ff = 0x7ff;
+
+	uint64_t ua = 	 *((uint64_t*) &tA);
+	uint64_t sign_ua = (ua & (u64_1 << 63));
+	uint64_t exp_ua  = (ua & (u64_0x7ff << 51));
+
+	uint8_t is_normal = ((exp_ua != 0) && (~exp_ua != 0));
+	return(is_normal);	
+}
+uint8_t fp32_unordered(float a, float b)
+{
+	return(!isNormalFp32(a) || !isNormalFp32(b));
+
+}
+uint8_t fp64_unordered(float a, float b)
+{
+	return(!isNormalFp64(a) || !isNormalFp64(b));
+}
+	

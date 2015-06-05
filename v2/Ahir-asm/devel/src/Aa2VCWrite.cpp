@@ -268,7 +268,7 @@ void Write_VC_Binary_Operator(AaOperation op,
     }
   else if(op == __CONCAT) op_name = "&&";
   else if(op == __BITSEL) op_name = "[]";
-  else if(op == __UNORDERED) op_name = "!</=/>";
+  else if(op == __UNORDERED) op_name = "><";
   else
     assert(0);
 
@@ -718,6 +718,7 @@ string Get_Op_Ascii_Name(AaOperation op, AaType* src_type, AaType* dest_type)
 	else if(op == __CONCAT) ret_val = "CONCAT";
 	else if(op == __BITSEL) ret_val = "BITSEL";
 	else if(op == __BITMAP) ret_val = "BITMAP";
+	else if(op == __UNORDERED) ret_val = "UNORDERED";
 	else
 		assert(0);
 

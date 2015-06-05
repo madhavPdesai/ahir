@@ -117,4 +117,8 @@ void bit_vector_less_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bi
 void bit_vector_greater(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_greater_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t);
 
+// unordered?
+uint8_t fp32_unordered(float a, float b);
+uint8_t fp64_unordered(float a, float b);
+
 #endif
