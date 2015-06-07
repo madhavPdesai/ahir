@@ -205,7 +205,7 @@ float     bit_vector_to_float(uint8_t signed_flag, bit_vector* t)
     }
 }
 
-double    bit_vector_to_double(uint8_t signed_flag, bit_vector* t)
+double   bit_vector_to_double(uint8_t signed_flag, bit_vector* t)
 {
   double rv = 0;
   if(signed_flag)
@@ -221,8 +221,25 @@ double    bit_vector_to_double(uint8_t signed_flag, bit_vector* t)
 }
 
 
-// ----------                assignments -----------------------------
-void bit_vector_assign_bit_vector(uint8_t signed_flag, bit_vector* src, bit_vector* dest)
+// useful assignments..
+void bit_vector_assign_uint64(uint8_t signed_flag, bit_vector* dest, uint64_t src)
+{
+	uint64_cast_to_bit_vector(signed_flag, dest, &src);
+}
+
+
+void bit_vector_assign_float(uint8_t signed_flag, bit_vector* dest, float src)
+{
+	float_cast_to_bit_vector(signed_flag, dest, &src);
+}
+
+void bit_vector_assign_double(uint8_t signed_flag, bit_vector* dest, double src)
+{
+	double_cast_to_bit_vector(signed_flag, dest, &src);
+}
+
+// ----------   casts, bit-casts ---------------------------------------------------------
+void bit_vector_cast_to_bit_vector(uint8_t signed_flag, bit_vector* dest, bit_vector* src)
 {
 	uint32_t min_width = __min(src->width,dest->width);
 	uint32_t J;
@@ -247,39 +264,91 @@ void bit_vector_assign_bit_vector(uint8_t signed_flag, bit_vector* src, bit_vect
 	  }
 }
 
-void bit_vector_assign_uint64(uint8_t signed_flag, bit_vector* s, uint64_t u)
+void bit_vector_bitcast_to_bit_vector(bit_vector* dest, bit_vector* src)
 {
-	pack_uint64_into_bit_vector(signed_flag, u, s);
+	bit_vector_cast_to_bit_vector(0, dest, src);
 }
-// type conversion as in C
-void bit_vector_assign_float(uint8_t signed_flag, bit_vector* s, float f)
+
+
+void bit_vector_cast_to_uint64(uint8_t signed_flag, uint64_t* dest, bit_vector* src)
+{
+	*dest = bit_vector_to_uint64(signed_flag, src);
+}
+
+void bit_vector_bitcast_to_uint64( uint64_t* dest, bit_vector* src)
+{
+	*dest = bit_vector_to_uint64(0, src);
+}
+
+void uint64_cast_to_bit_vector(uint8_t signed_flag, bit_vector* dest, uint64_t* src)
+{
+	pack_uint64_into_bit_vector(signed_flag, *src, dest);
+}
+
+void uint64_bitcast_to_bit_vector(bit_vector* dest, uint64_t* src)
+{
+	uint64_cast_to_bit_vector(0, dest,src);
+}
+
+void bit_vector_cast_to_float(uint8_t signed_flag, float* dest, bit_vector* src)
+{
+	*dest = bit_vector_to_float(signed_flag, src);
+}
+
+void bit_vector_bitcast_to_float( float* dest, bit_vector* src)
+{
+	*dest = bit_vector_to_float(0, src);
+}
+
+void float_cast_to_bit_vector(uint8_t signed_flag,  bit_vector* dest, float* src)
 {
   if(signed_flag)
     {
-      int64_t v = f;
-      pack_uint64_into_bit_vector(signed_flag, v, s);
+      int64_t v = *src;
+      pack_uint64_into_bit_vector(signed_flag, v, dest);
     }
   else
     {
-      uint64_t v = f;
-      pack_uint64_into_bit_vector(signed_flag, v, s);
+      uint64_t v = *src;
+      pack_uint64_into_bit_vector(signed_flag, v, dest);
     }
 }
-void bit_vector_assign_double(uint8_t signed_flag, bit_vector* s, double d)
+
+void float_bitcast_to_bit_vector( bit_vector* dest, float* src)
+{
+	float_cast_to_bit_vector(0, dest, src);
+}
+
+void bit_vector_cast_to_double(uint8_t signed_flag, double* dest, bit_vector* src)
+{
+	*dest = bit_vector_to_double(signed_flag, src);
+}
+
+void bit_vector_bitcast_to_double( double* dest, bit_vector* src)
+{
+	*dest = bit_vector_to_double(0, src);
+}
+
+void double_cast_to_bit_vector(uint8_t signed_flag, bit_vector* dest, double *src)
 {
  if(signed_flag)
     {
-      int64_t v = d;
-      pack_uint64_into_bit_vector(signed_flag, v, s);
+      int64_t v = *src;
+      pack_uint64_into_bit_vector(signed_flag, v, dest);
     }
   else
     {
-      uint64_t v = d;
-      pack_uint64_into_bit_vector(signed_flag, v,s );
+      uint64_t v = *src;
+      pack_uint64_into_bit_vector(signed_flag, v, dest );
     }
 }
 
+void double_bitcast_to_bit_vector(bit_vector* dest, double *src)
+{
+	double_cast_to_bit_vector(0, dest, src);
+}
 
+///   set clear.
 
 void bit_vector_clear(bit_vector* s)
 {

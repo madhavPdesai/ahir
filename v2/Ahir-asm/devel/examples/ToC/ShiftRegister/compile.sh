@@ -1,4 +1,4 @@
-../../../bin/Aa2C ShiftRegister.aa
+../../../bin/Aa2C -T stage_0 -T stage_1 -T stage_2 -T stage_3 ShiftRegister.aa
 indent aa_c_model.c
 indent aa_c_model.h
 gcc -g -c -I../../../../../BitVectors/include -I../../../../../pipeHandler/include -I../../../../../pthreadUtils/include -I./ aa_c_model.c

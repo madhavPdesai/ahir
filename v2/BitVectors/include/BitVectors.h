@@ -53,14 +53,35 @@ float     bit_vector_to_float(uint8_t signed_flag, bit_vector* t);
 double    bit_vector_to_double(uint8_t signed_flag, bit_vector* t);
 
 
-// ------            assignments  -------------------------------------
-void bit_vector_assign_bit_vector(uint8_t signed_flag, bit_vector* src, bit_vector* dest);
-void bit_vector_assign_uint64(uint8_t signed_flag, bit_vector* s, uint64_t u);
+// very useful.. keep it around.
+void bit_vector_assign_uint64(uint8_t signed_flag, bit_vector* dest, uint64_t src);
+void bit_vector_assign_float(uint8_t signed_flag, bit_vector* dest, float src);
+void bit_vector_assign_double(uint8_t signed_flag, bit_vector* dest, double src);
 
-// type conversion as in C
-void bit_vector_assign_float(uint8_t signed_flag, bit_vector* s, float f);
-void bit_vector_assign_double(uint8_t signed_flag, bit_vector* s, double d);
 
+// ------          standard  casts, bitcasts  ------------------------------------- //
+void bit_vector_cast_to_bit_vector(uint8_t signed_flag, bit_vector* dest, bit_vector* src);
+void bit_vector_bitcast_to_bit_vector(bit_vector* dest, bit_vector* src);
+
+
+void bit_vector_cast_to_uint64(uint8_t signed_flag, uint64_t* dest, bit_vector* src);
+void bit_vector_bitcast_to_uint64( uint64_t* dest, bit_vector* src);
+void uint64_cast_to_bit_vector(uint8_t signed_flag, bit_vector* dest, uint64_t* src);
+void uint64_bitcast_to_bit_vector( bit_vector* dest, uint64_t* src);
+
+
+void bit_vector_cast_to_float(uint8_t signed_flag, float* dest, bit_vector* src);
+void bit_vector_bitcast_to_float(float* dest, bit_vector* src);
+void float_cast_to_bit_vector(uint8_t signed_flag, bit_vector* dest, float* f);
+void float_bitcast_to_bit_vector(bit_vector* s, float* f);
+
+void bit_vector_cast_to_double(uint8_t signed_flag, double* dest, bit_vector* src);
+void bit_vector_bitcast_to_double(double* dest, bit_vector* src);
+void double_cast_to_bit_vector(uint8_t signed_flag, bit_vector* dest, double* f);
+void double_bitcast_to_bit_vector(bit_vector* s, double* f);
+
+
+// clear and set.
 void bit_vector_clear(bit_vector* s); // clear all bits.
 void bit_vector_set(bit_vector* s);   // set all bits to 1.
 

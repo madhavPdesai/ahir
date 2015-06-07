@@ -75,7 +75,7 @@ _stage_1_ ()
     __declare_bit_vector (RPIPE_inpipe_17, 16);
     __declare_bit_vector (type_cast_18, 20);
     bit_vector_assign_uint64 (0, &RPIPE_inpipe_17, read_uint16 ("inpipe"));
-    bit_vector_assign_bit_vector (0, &(RPIPE_inpipe_17), &(type_cast_18));
+    bit_vector_cast_to_bit_vector (0, &(type_cast_18), &(RPIPE_inpipe_17));
     write_uint8_n ("midpipe", type_cast_18.val.byte_array,
 		   type_cast_18.val.array_size);
     goto loopback_14;
@@ -111,7 +111,7 @@ _stage_2_ ()
     __declare_bit_vector (type_cast_28, 16);
     read_uint8_n ("midpipe", RPIPE_midpipe_27.val.byte_array,
 		  RPIPE_midpipe_27.val.array_size);
-    bit_vector_assign_bit_vector (0, &(RPIPE_midpipe_27), &(type_cast_28));
+    bit_vector_cast_to_bit_vector (0, &(type_cast_28), &(RPIPE_midpipe_27));
     {
       uint16_t __tmp;
       __tmp = bit_vector_to_uint64 (0, &type_cast_28);
@@ -143,6 +143,7 @@ _stage_3_ ()
     {
 // do-while:   file ShiftRegister.aa, line 53
       __declare_bit_vector (konst_41, 1);
+      bit_vector_clear (&konst_41);
       konst_41.val.byte_array[0] = 1;
       uint8_t do_while_entry_flag;
       do_while_entry_flag = 1;
@@ -162,6 +163,7 @@ _stage_3_ ()
 	  __declare_bit_vector (RPIPE_outpipe_38, 16);
 	  bit_vector_assign_uint64 (0, &RPIPE_outpipe_38,
 				    read_uint16 ("outpipe"));
+	  uint16_t __RPIPE_outpipe_38;
 	  Print (bit_vector_to_uint64 (0, &RPIPE_outpipe_38));
 	  do_while_entry_flag = 0;
 	  do_while_loopback_flag = 1;
@@ -172,13 +174,29 @@ _stage_3_ ()
 // output side transfers...
 }
 
+DEFINE_THREAD (stage_0);
+PTHREAD_DECL (stage_0);
+DEFINE_THREAD (stage_1);
+PTHREAD_DECL (stage_1);
+DEFINE_THREAD (stage_2);
+PTHREAD_DECL (stage_2);
+DEFINE_THREAD (stage_3);
+PTHREAD_DECL (stage_3);
 void
 start_daemons ()
 {
   __init_aa_globals__ ();
+  PTHREAD_CREATE (stage_0);
+  PTHREAD_CREATE (stage_1);
+  PTHREAD_CREATE (stage_2);
+  PTHREAD_CREATE (stage_3);
 }
 
 void
 stop_daemons ()
 {
+  PTHREAD_CANCEL (stage_0);
+  PTHREAD_CANCEL (stage_1);
+  PTHREAD_CANCEL (stage_2);
+  PTHREAD_CANCEL (stage_3);
 }

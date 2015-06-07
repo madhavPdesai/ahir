@@ -1850,10 +1850,14 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 		return;
 	}
 
-	if(this->Get_Guard_Expression())
+	// input argument expressions.
+	for(unsigned int i=0; i < this->_input_args.size(); i++)
 	{
-		this->Get_Guard_Expression()->PrintC_Declaration(ofile);
-		this->Get_Guard_Expression()->PrintC(ofile);
+		if(this->_input_args[i]->Get_Type()->Is_Integer_Type())
+		{
+			ofile << this->_input_args[i]->Get_Type()->Native_C_Name() << " __" 
+				<< this->_input_args[i]->C_Reference_String() << ";" << endl;	
+		}
 	}
 
 	// print the declarations for output variable recipients of
@@ -1867,14 +1871,6 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 		}
 	}
 
-	if(this->Get_Guard_Expression())
-	{
-		ofile << "if (" ;
-		if(this->Get_Guard_Complement())
-			ofile << "!";
-		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), ofile);
-		ofile << ") {" << endl;
-	}
 
 	// now one has to implement the whole shebang.		
 	bool first_one = true;
@@ -1915,11 +1911,6 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 		}
 	}
 
-	// pass results to output expressions.
-	for(unsigned int i=0; i < this->_output_args.size(); i++)
-		this->_output_args[i]->PrintC(ofile);
-	if(this->Get_Guard_Expression())
-		ofile << "}" << endl;
 }
 
 void AaCallStatement::PrintC(ofstream& ofile)
@@ -1948,11 +1939,6 @@ void AaCallStatement::PrintC(ofstream& ofile)
 	}
 
 
-	if(this->Get_Called_Module()->Get_Foreign_Flag())
-	{
-		this->PrintC_Call_To_Foreign_Module(ofile);
-		return;
-	}
 
 	if(this->Get_Guard_Expression())
 	{
@@ -1966,30 +1952,39 @@ void AaCallStatement::PrintC(ofstream& ofile)
 		this->_input_args[i]->PrintC(ofile);
 	}
 
-	bool first_one = true;
-	ofile << ((AaModule*)this->Get_Called_Module())->Get_C_Inner_Wrap_Function_Name()
-		<< "(";
-	for(unsigned int i=0; i < this->_input_args.size(); i++)
+	if(this->Get_Called_Module()->Get_Foreign_Flag())
 	{
-		if(!first_one)
-			ofile << ", ";
-		ofile << " &(" << this->_input_args[i]->C_Reference_String() << ")";
-		first_one = false;
+		this->PrintC_Call_To_Foreign_Module(ofile);
 	}
+	else
+	{
+		bool first_one = true;
+		ofile << ((AaModule*)this->Get_Called_Module())->Get_C_Inner_Wrap_Function_Name()
+			<< "(";
+		for(unsigned int i=0; i < this->_input_args.size(); i++)
+		{
+			if(!first_one)
+				ofile << ", ";
+			ofile << " &(" << this->_input_args[i]->C_Reference_String() << ")";
+			first_one = false;
+		}
 
-	for(unsigned int i=0; i < this->_output_args.size(); i++)
-	{
-		if(!first_one)
-			ofile << ", ";
-		ofile << "&(";
-		ofile << this->_output_args[i]->C_Reference_String() << ")";
-		first_one = false;
+		for(unsigned int i=0; i < this->_output_args.size(); i++)
+		{
+			if(!first_one)
+				ofile << ", ";
+			ofile << "&(";
+			ofile << this->_output_args[i]->C_Reference_String() << ")";
+			first_one = false;
+		}
+		ofile <<  ");  " << endl;
+
 	}
-	ofile <<  ");  " << endl;
 
 	// pass results to output expressions.
 	for(unsigned int i=0; i < this->_output_args.size(); i++)
 		this->_output_args[i]->PrintC(ofile);
+
 	if(this->Get_Guard_Expression())
 		ofile << "}" << endl;
 }

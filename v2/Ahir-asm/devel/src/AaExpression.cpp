@@ -3631,7 +3631,8 @@ void AaTypeCastExpression::PrintC_Declaration(ofstream& ofile)
 void AaTypeCastExpression::PrintC(ofstream& ofile)
 {
 	this->_rest->PrintC(ofile);
-	Print_C_Type_Cast_Operation(this->_rest->C_Reference_String(),
+	Print_C_Type_Cast_Operation(this->_bit_cast,
+				this->_rest->C_Reference_String(),
 				this->_rest->Get_Type(), 
 				this->C_Reference_String(),
 				this->Get_Type(),

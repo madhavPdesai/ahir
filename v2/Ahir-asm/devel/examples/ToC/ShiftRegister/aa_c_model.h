@@ -9,3 +9,5 @@ void stage_2 ();
 void _stage_2_ ();
 void stage_3 ();
 void _stage_3_ ();
+void start_daemons ();
+void stop_daemons ();

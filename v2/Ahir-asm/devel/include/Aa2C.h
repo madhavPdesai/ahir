@@ -24,10 +24,11 @@ string C_Value_Expression(string cref, AaType* t);
 void Print_C_Value_Expression(string cref, AaType* t, ofstream& ofile);
 			
 void Print_C_Uint64_To_BitVector_Assignment(string src, string dest, AaType* t, ofstream& ofile); 
+void Print_BitVector_To_C_Uint64_Assignment(string src, string dest, AaType* t, ofstream& ofile);
 
 void Print_C_Pipe_Read(string tgt, AaType* tgt_type, AaPipeObject* p, ofstream& ofile);
 void Print_C_Pipe_Write(string src, AaType* src_type, AaPipeObject* p, ofstream& ofile);
-void Print_C_Type_Cast_Operation(string src, AaType* src_type, string tgt, AaType* tgt_type, ofstream& ofile);
+void Print_C_Type_Cast_Operation(bool bit_cast, string src, AaType* src_type, string tgt, AaType* tgt_type, ofstream& ofile);
 void Print_C_Unary_Operation(string src, AaType* src_type, string tgt, AaType* tgt_type, AaOperation op, ofstream& ofile);
 void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaType* src2_type, 
 			string tgt, AaType* tgt_type, AaOperation Op, ofstream& ofile);

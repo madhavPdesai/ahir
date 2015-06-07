@@ -204,7 +204,7 @@ void Print_C_Assignment(string tgt, string src, AaType* t, ofstream& ofile)
 {
 	if(t->Is_Integer_Type())
 	{
-		ofile << "bit_vector_assign_bit_vector(" << (!t->Is_Uinteger_Type() ? 1 : 0) << ", &(" << src << "), &(" << tgt << "));" << endl;
+		ofile << "bit_vector_cast_to_bit_vector(" << (!t->Is_Uinteger_Type() ? 1 : 0) << ", &(" << tgt << "), &(" << src << "));" << endl;
 	}
 	else if(t->Is_Scalar_Type())
 	{
@@ -244,6 +244,12 @@ void Print_C_Uint64_To_BitVector_Assignment(string src, string dest, AaType* t, 
 {
 	ofile << "bit_vector_assign_uint64(" << (!t->Is_Uinteger_Type() ? 1 : 0) << ", &"
 		<< dest << ", "  << src << ");" << endl;
+}
+
+void Print_BitVector_To_C_Uint64_Assignment(string src, string dest, AaType* t, ofstream& ofile) 
+{
+	ofile << dest << " =  bit_vector_to_uint64(" << (!t->Is_Uinteger_Type() ? 1 : 0) << ", &"
+		<< src << ");" << endl;
 }
 
 void Print_C_Pipe_Read(string tgt, AaType* tgt_type, AaPipeObject* p, ofstream& ofile)
@@ -313,34 +319,64 @@ void Print_C_Pipe_Write(string src, AaType* src_type, AaPipeObject* p, ofstream&
 }
 
 // These type casts are a ^%()@
-void Print_C_Type_Cast_Operation(string src, AaType* src_type, string tgt, AaType* tgt_type, ofstream& ofile)
+void Print_C_Type_Cast_Operation(bool bit_cast, string src, AaType* src_type, string tgt, AaType* tgt_type, ofstream& ofile)
 {
 	uint8_t src_signed = src_type->Is_Integer_Type() && !src_type->Is_Uinteger_Type();
 	uint8_t tgt_signed = tgt_type->Is_Integer_Type() && !tgt_type->Is_Uinteger_Type();
 
+
+	uint8_t src_is_bv = src_type->Is_Integer_Type();
+	uint8_t tgt_is_bv = tgt_type->Is_Integer_Type();
+	
+	
+	// signed conversion if
+	//   not bitcast and 
+	//   src-is-signed and target is float/signed.
+	//   tgt-is-signed and
+	bool signed_conversion = (!bit_cast && 
+					((tgt_type->Is_Float_Type() && src_signed) || tgt_signed));
 	if(src_type->Is_Integer_Type())
 	{
+		
 		if(tgt_type->Is_Integer_Type())
 		{
 			// if both are integer, then use bit_vector_op.
-			uint8_t sign_flag =( (src_signed && tgt_signed) ? 1 : 0);
-			ofile << "bit_vector_assign_bit_vector(" << (sign_flag ? 1 : 0) << ", &(" << src << "), &(" << tgt << "));" << endl;
+			// normal cast operation extends signs.
+			uint8_t sign_flag = (!bit_cast && tgt_signed);
+			ofile << "bit_vector_cast_to_bit_vector(" << (sign_flag ? 1 : 0) 
+						<< ", &(" << tgt << "), &(" << src << "));" << endl;
 		}
 		else
 		{
+			// target type is not an integer
 			if(tgt_type->Is_Float_Type())
 			{
+				string tgt_type_string = "";
 				if(tgt_type->Is_A_Native_C_Type())
 				{
 					if(tgt_type->Size() == 32)
 					{
-						ofile << tgt  << " = bit_vector_to_float(" << (src_type->Is_Integer_Type() ? 1 : 0) << ", &(" << src << "));" << endl; 
+						tgt_type_string = "float";
+					}
+					else if(tgt_type->Size() == 64)
+					{
+						tgt_type_string = "double";
+					}
+					else
+					{
+						AaRoot::Error("Aa2C: unsupported float target type in conversion." , tgt_type);
+						assert(0);
 					}
 				}
-				else
+
+				if(src_is_bv)
 				{
-					AaRoot::Error("Aa2C: unsupported float target type in conversion." , tgt_type);
-					assert(0);
+
+					uint8_t sign_flag = (!bit_cast && src_signed);
+					ofile << "bit_vector_cast_to_" << tgt_type_string
+						<< "(" << (sign_flag ? 1 : 0)  << ", " 
+						<< " &(" << tgt << "), "
+						<< " &(" << src << "));" << endl;
 				}
 			}
 			else if(tgt_type->Is_Pointer_Type())
@@ -360,15 +396,21 @@ void Print_C_Type_Cast_Operation(string src, AaType* src_type, string tgt, AaTyp
 		{
 			if(src_type->Is_Float_Type())
 			{
+				string src_type_string = "";
 				if(src_type->Is_A_Native_C_Type())
 				{
+					uint8_t sign_flag = tgt_signed;
 					// float to bit-vector.
 					if(src_type->Size() == 32)
-						ofile << "bit_vector_assign_float(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0)
-							<< ", &(" << tgt << "), (" << src << "));" << endl;
+						src_type_string == "float";
 					else
-						ofile << "bit_vector_assign_double(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0)
-							<< ", &(" << tgt << "), (" << src << "));" << endl;
+						src_type_string == "double";
+					ofile << src_type_string << "_cast_to_bit_vector("
+						<< (sign_flag ? 1 : 0)
+						<< (!tgt_type->Is_Uinteger_Type() ? 1 : 0)
+						<< ", &(" << tgt << "), "
+						<< "&("  << src << "));" << endl;
+
 				}
 				else
 				{
@@ -399,7 +441,7 @@ void Print_C_Unary_Operation(string src, AaType* src_type, string tgt, AaType* t
 				ofile << "bit_vector_not( &(" << src << "), &(" << tgt << "));" << endl;
 				break;
 			case __NOP:
-				ofile << "bit_vector_assign_bit_vector( " << (!src_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << src << "), &(" << tgt << "));" << endl;
+				ofile << "bit_vector_cast_to_bit_vector( " << (!src_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << tgt << "), &(" << src << "));" << endl;
 				break;
 			default:
 				AaRoot::Error("Aa2C: unsupported unary operation", NULL);
@@ -717,14 +759,16 @@ void Print_C_Ternary_Operation(string test,
 	ofile << "if(" << C_Value_Expression( test, test_type) << ")";
 	ofile << "{" << endl;
 	if(tgt_type->Is_Integer_Type())
-		ofile << "bit_vector_assign_bit_vector(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << if_expr << "), &(" << tgt << "));" << endl;
+		ofile << "bit_vector_cast_to_bit_vector(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << tgt 
+			<< "), &(" << if_expr << "));" << endl;
 	else
 		ofile << tgt << " = " << if_expr << ";" << endl;
 	ofile << "}" << endl;
 	ofile << "else" << endl;
 	ofile << "{" << endl;
 	if(tgt_type->Is_Integer_Type())
-		ofile << "bit_vector_assign_bit_vector(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << else_expr << "), &(" << tgt << "));" << endl;
+		ofile << "bit_vector_cast_to_bit_vector(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << tgt << "), &(" 
+			<< else_expr << "));" << endl;
 	else
 		ofile << tgt << " = " << else_expr<< ";" << endl;
 	ofile << "}" << endl;
