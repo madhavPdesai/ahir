@@ -997,9 +997,10 @@ void Float::Bit_Cast_Into(Unsigned& other)
 	bfv = *((UWord*)tmp);
 	other.Reset_And_Clear(w);
 
-	for(int idx = 0; idx < __WORD_SIZE__; idx++)
+	uint64_t u64_1 = 1;
+	for(uint64_t idx = 0; idx < __WORD_SIZE__; idx++)
 	{
-		other.Set_Bit(idx, (bfv & (1 << idx)));
+		other.Set_Bit(idx, (bfv & (u64_1 << idx)));
 	}
 }
 

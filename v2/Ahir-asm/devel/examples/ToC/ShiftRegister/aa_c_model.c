@@ -75,7 +75,7 @@ _stage_1_ ()
     __declare_bit_vector (RPIPE_inpipe_17, 16);
     __declare_bit_vector (type_cast_18, 20);
     bit_vector_assign_uint64 (0, &RPIPE_inpipe_17, read_uint16 ("inpipe"));
-    bit_vector_cast_to_bit_vector (0, &(type_cast_18), &(RPIPE_inpipe_17));
+    bit_vector_bitcast_to_bit_vector (&(type_cast_18), &(RPIPE_inpipe_17));
     write_uint8_n ("midpipe", type_cast_18.val.byte_array,
 		   type_cast_18.val.array_size);
     goto loopback_14;
@@ -111,7 +111,7 @@ _stage_2_ ()
     __declare_bit_vector (type_cast_28, 16);
     read_uint8_n ("midpipe", RPIPE_midpipe_27.val.byte_array,
 		  RPIPE_midpipe_27.val.array_size);
-    bit_vector_cast_to_bit_vector (0, &(type_cast_28), &(RPIPE_midpipe_27));
+    bit_vector_bitcast_to_bit_vector (&(type_cast_28), &(RPIPE_midpipe_27));
     {
       uint16_t __tmp;
       __tmp = bit_vector_to_uint64 (0, &type_cast_28);

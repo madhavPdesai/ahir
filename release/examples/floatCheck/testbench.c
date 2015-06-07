@@ -71,6 +71,7 @@ int main(int argc, char* argv[])
 		Y = drand48() * scale_factor;
 		scale_factor = 1.1 * scale_factor;
 
+
 #ifdef TOINT
 
 		int32_t iY = fp2int(Y);
@@ -242,6 +243,16 @@ int main(int argc, char* argv[])
 
 #endif
 
+
+#ifdef DOUBLEBUG
+		double T = fpincrd(X);
+		if(T != (X + 1.0))
+		{
+			fprintf(stdout,"Error: (%f + 1.0) = %f, expected %f.\n",X, T, X+1.0);
+			err_flag = 1;
+		}
+
+#endif
 	}
 
 	if(err_flag)

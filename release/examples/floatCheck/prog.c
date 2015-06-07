@@ -63,3 +63,15 @@ uint8_t fpcmpeq(float x, float y)
 }
 
 
+double fpmuld (double x, double y)
+{
+	return(x*y);
+}
+
+//
+// check constants in double-precision..
+//
+double fpincrd (double x)
+{
+	return(x + 1.0);
+}
