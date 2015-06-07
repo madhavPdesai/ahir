@@ -297,7 +297,8 @@ void bit_vector_cast_to_float(uint8_t signed_flag, float* dest, bit_vector* src)
 
 void bit_vector_bitcast_to_float( float* dest, bit_vector* src)
 {
-	*dest = bit_vector_to_float(0, src);
+	uint32_t v = bit_vector_to_uint64(0,src);
+	*dest = *((float*) &v);
 }
 
 void float_cast_to_bit_vector(uint8_t signed_flag,  bit_vector* dest, float* src)
@@ -316,6 +317,8 @@ void float_cast_to_bit_vector(uint8_t signed_flag,  bit_vector* dest, float* src
 
 void float_bitcast_to_bit_vector( bit_vector* dest, float* src)
 {
+	uint64_t v = (uint64_t)  (*((uint32_t*) src));
+        pack_uint64_into_bit_vector(0, v, dest );
 	float_cast_to_bit_vector(0, dest, src);
 }
 
@@ -326,7 +329,8 @@ void bit_vector_cast_to_double(uint8_t signed_flag, double* dest, bit_vector* sr
 
 void bit_vector_bitcast_to_double( double* dest, bit_vector* src)
 {
-	*dest = bit_vector_to_double(0, src);
+	uint64_t v = bit_vector_to_uint64(0,src);
+	*dest = *((double*) &v);
 }
 
 void double_cast_to_bit_vector(uint8_t signed_flag, bit_vector* dest, double *src)
@@ -345,7 +349,8 @@ void double_cast_to_bit_vector(uint8_t signed_flag, bit_vector* dest, double *sr
 
 void double_bitcast_to_bit_vector(bit_vector* dest, double *src)
 {
-	double_cast_to_bit_vector(0, dest, src);
+	uint64_t v =  *((uint64_t*) src);
+        pack_uint64_into_bit_vector(0, v, dest );
 }
 
 ///   set clear.

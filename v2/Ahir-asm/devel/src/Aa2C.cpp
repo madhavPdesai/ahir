@@ -342,9 +342,17 @@ void Print_C_Type_Cast_Operation(bool bit_cast, string src, AaType* src_type, st
 		{
 			// if both are integer, then use bit_vector_op.
 			// normal cast operation extends signs.
-			uint8_t sign_flag = (!bit_cast && tgt_signed);
-			ofile << "bit_vector_cast_to_bit_vector(" << (sign_flag ? 1 : 0) 
+			uint8_t sign_flag = tgt_signed;
+			if(bit_cast)
+			{
+				ofile << "bit_vector_bitcast_to_bit_vector("
+						<< " &(" << tgt << "), &(" << src << "));" << endl;
+			}
+			else
+			{
+				ofile << "bit_vector_cast_to_bit_vector(" << (sign_flag ? 1 : 0) 
 						<< ", &(" << tgt << "), &(" << src << "));" << endl;
+			}
 		}
 		else
 		{
@@ -373,9 +381,16 @@ void Print_C_Type_Cast_Operation(bool bit_cast, string src, AaType* src_type, st
 				{
 
 					uint8_t sign_flag = (!bit_cast && src_signed);
-					ofile << "bit_vector_cast_to_" << tgt_type_string
-						<< "(" << (sign_flag ? 1 : 0)  << ", " 
-						<< " &(" << tgt << "), "
+					if(bit_cast)
+					{
+						ofile << "bit_vector_bitcast_to_" << tgt_type_string << "(";
+					}
+					else
+					{
+						ofile << "bit_vector_cast_to_" << tgt_type_string
+							<< "(" << (sign_flag ? 1 : 0)  << ", " ;
+					}
+					ofile << " &(" << tgt << "), "
 						<< " &(" << src << "));" << endl;
 				}
 			}
@@ -394,21 +409,29 @@ void Print_C_Type_Cast_Operation(bool bit_cast, string src, AaType* src_type, st
 	{ // src is not integer/uinteger.
 		if(tgt_type->Is_Integer_Type() )
 		{
+			uint8_t sign_flag = tgt_signed;
 			if(src_type->Is_Float_Type())
 			{
 				string src_type_string = "";
 				if(src_type->Is_A_Native_C_Type())
 				{
 					uint8_t sign_flag = tgt_signed;
+
 					// float to bit-vector.
 					if(src_type->Size() == 32)
-						src_type_string == "float";
+						src_type_string = "float";
 					else
-						src_type_string == "double";
-					ofile << src_type_string << "_cast_to_bit_vector("
-						<< (sign_flag ? 1 : 0)
-						<< (!tgt_type->Is_Uinteger_Type() ? 1 : 0)
-						<< ", &(" << tgt << "), "
+						src_type_string = "double";
+
+					if(bit_cast)
+						ofile << src_type_string << "_bitcast_to_bit_vector(" ;
+					else 
+					{
+						ofile << src_type_string 
+							<< "_cast_to_bit_vector(" << (sign_flag ? 1 : 0) << ", ";
+					}
+
+					ofile	<< " &(" << tgt << "), "
 						<< "&("  << src << "));" << endl;
 
 				}
