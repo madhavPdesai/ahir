@@ -3,6 +3,20 @@
 #include <assert.h>
 #include <hierSystem.h>
 
+	
+void hierSystem::List_In_Pipe_Names(vector<string>& pvec)
+{
+	listPipeMap(_in_pipes,pvec);
+}
+void hierSystem::List_Out_Pipe_Names(vector<string>& pvec)
+{
+	listPipeMap(_out_pipes,pvec);
+}
+void hierSystem::List_Internal_Pipe_Names(vector<string>& pvec)
+{
+	listPipeMap(_internal_pipes,pvec);
+}
+
 hierSystemInstance::hierSystemInstance(hierSystem* parent, hierSystem* base_sys, string id):hierRoot(id) 
 {	
 	_parent = parent;
@@ -11,14 +25,16 @@ hierSystemInstance::hierSystemInstance(hierSystem* parent, hierSystem* base_sys,
 		parent->Increment_Instance_Count();
 }
 
-void hierSystemInstance::Add_Port_Mapping(string formal, string actual)
+bool hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 {
+	bool err = false;
 	if(_base_system->Has_Port(formal))
 	{
 		if(_port_map.find(formal) != _port_map.end())
 		{
 			cerr << "Error: formal port " << formal << " multiply mapped in instance " << _id << endl;
 			this->Set_Error(true);
+			err = true;
 		}
 		_port_map[formal] = actual;
 
@@ -26,13 +42,47 @@ void hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 		{
 			cerr << "Error: actual port " << actual << " multiply mapped in instance " << _id << endl;
 			this->Set_Error(true);
+			err = true;
 		}	
 		_reverse_port_map[actual] = formal;
+
+
 	}
+	else
+		err = true;
+	return(err);
+}
+	
+// unmapped ports will be mapped to default
+// pipes in parent if they exist.
+bool hierSystemInstance::Map_Unmapped_Ports_To_Defaults()
+{
+	bool err = false;
+	vector<string> ports;
+
+	_base_system->List_In_Pipe_Names(ports);
+	_base_system->List_Out_Pipe_Names(ports);
+
+	for(int I = 0, fI = ports.size(); I < fI; I++)
+	{
+		string f = ports[I];
+		if(_port_map.find(f) == _port_map.end())
+		{
+			this->Report_Warning("mapping unmapped formal in instance " + this->Get_Id() + " to default: " + f);
+			bool lerr = this->Add_Port_Mapping(f,f);
+			if(lerr)
+				this->Report_Warning( "in mapping unmapped formal in instance " + this->Get_Id() + " to default (not found): " + f);
+		
+			err = err || lerr;
+		}	
+	}
+	return(err);
 }
 
 void hierSystemInstance::Print(ostream& ofile)
 {
+	
+
 	ofile << "$instance " << this->Get_Id() << " " <<  this->_base_system->Get_Library() << " : "
 		<< this->_base_system->Get_Id() << " " << endl;
 	for(map<string,string>::iterator iter = _port_map.begin(), fiter = _port_map.end(); iter != fiter; iter++)
@@ -595,4 +645,43 @@ bool hierSystem::Check_For_Errors()
 	}
 }
 
+void listPipeMap(map<string, pair<int,int> >& pmap, vector<string>& pvec)
+{
+	for(map<string, pair<int,int> >::iterator iter = pmap.begin(), fiter = pmap.end();
+		iter != fiter; 
+		iter++)
+	{
+		pvec.push_back((*iter).first);
+	}
+}
+
+bool getPipeInfoFromGlobals(string pname, map<string, pair<int,int> >& pmap, 
+	set<string>& signals, int& width, int& depth, bool& is_signal)
+{
+	if(pmap.find(pname) == pmap.end())
+		return(true);
+
+	width = pmap[pname].first;
+	depth = pmap[pname].second;
+
+	is_signal = (signals.find(pname) != signals.end());
+	return(false);
+}
+	
+
+void addPipeToGlobalMaps(string oname, map<string, pair<int,int> >& pipe_map, 
+				set<string>& signals, int pipe_width, int pipe_depth, bool is_signal)
+{
+		std::cerr << "Info: adding pipe " << oname << " width = " << pipe_width << ", depth = " 
+			<< pipe_depth << " to global map " << endl;
+
+		pipe_map[oname].first  = pipe_width;
+		pipe_map[oname].second = pipe_depth;
+
+		if(is_signal)
+		{
+			std::cerr << "Info: marking pipe " << oname << " as a signl in global set." << endl;
+			signals.insert(oname);
+		}
+}
 

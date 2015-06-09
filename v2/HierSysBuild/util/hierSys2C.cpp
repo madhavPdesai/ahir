@@ -11,6 +11,10 @@ extern char *optarg;
 int opt;
 int option_index = 0;
 
+  
+// global variables
+map<string, pair<int,int> > __pmap;
+set<string> __signals;
 
 struct option long_options[] = {
     {"relaxed-component-visibility", 0, 0, 0},
@@ -56,7 +60,7 @@ int  Parse(string filename, vector<hierSystem*>& sys_vec)
   
   try
     {
-      parser->sys_Description(sys_vec);
+      parser->sys_Description(sys_vec, __pmap, __signals);
     }
   catch(ANTLR_USE_NAMESPACE(antlr)RecognitionException& re)
     {

@@ -39,6 +39,8 @@ class hierRoot
 	void Set_Error(bool v) {_error = true;}
 	bool Get_Error() {return(_error);}
 
+	void Report_Info(string err_msg) { cerr << "Info: " << err_msg << endl;}
+	void Report_Warning(string err_msg) { cerr << "Warning: " << err_msg << endl;}
 	void Report_Error(string err_msg) { cerr << "Error: " << err_msg << endl; _error = true; }
 	
 };
@@ -61,7 +63,8 @@ class hierSystemInstance: public hierRoot
 
 	hierSystem* Get_Parent() {return(_parent);}
 	hierSystem* Get_Base_System() {return(_base_system);}
-	void Add_Port_Mapping(string formal, string actual);
+	bool Add_Port_Mapping(string formal, string actual);
+	bool Map_Unmapped_Ports_To_Defaults();
 
 	string Get_Actual(string formal)
 	{
@@ -114,6 +117,13 @@ public:
         bool Is_Leaf() {return(_child_map.size() == 0);}
 	void Set_Library(string s) {cerr << "Info: setting library for " << _id << " to " << s << endl; _library = s;}
 	string Get_Library() {return(_library);}
+
+	int Get_Number_Of_In_Pipes() {return(_in_pipes.size());}
+	void List_In_Pipe_Names(vector<string>& pvec);
+	void List_Out_Pipe_Names(vector<string>& pvec);
+	void List_Internal_Pipe_Names(vector<string>& pvec);
+	
+	
 
 	void Add_Signal(string pname)
 	{
@@ -302,4 +312,11 @@ public:
 
 };
 
+void listPipeMap(map<string, pair<int,int> >& pmap, vector<string>& pvec);
+
+bool getPipeInfoFromGlobals(string pname, map<string, pair<int,int> >& pmap, set<string>& signals, 
+			int& width, int& depth, bool& is_signal);
+
+void addPipeToGlobalMaps(string oname, map<string, pair<int,int> >& pipe_map, 
+				set<string>& signals, int pipe_width, int pipe_depth, bool is_signal);
 #endif

@@ -15,6 +15,10 @@ header "post_include_hpp" {
 #include <hierSystem.h>
 #include <antlr/RecognitionException.hpp>
 	ANTLR_USING_NAMESPACE(antlr)
+#include <map>
+#include <set>
+
+
 }
 
 options {
@@ -39,25 +43,29 @@ options {
 //---------------------------------------------------------------------------------------------------------------
 // hier_System :  "hier_system" SIMPLE_IDENTIFIER in-pipe-decls out-pipe-decls internal-pipe decls subsystem decls
 //---------------------------------------------------------------------------------------------------------------
-sys_Description [vector<hierSystem*>& sys_vec]
+sys_Description [vector<hierSystem*>& sys_vec, map<string,pair<int,int> >&  global_pipe_map, set<string>& global_pipe_signals]
 {
+
 	hierSystem* sys = NULL;
 }
 :
-      (sys = hier_System [sys_vec] {sys_vec.push_back(sys); })+
+      (hier_system_Pipe_Declaration[global_pipe_map,global_pipe_signals] )*
+      (sys = hier_System [sys_vec, global_pipe_map,global_pipe_signals] {sys_vec.push_back(sys); })*
 ;
 
 //---------------------------------------------------------------------------------------------------------------
 // hier_System :  "hier_system" SIMPLE_IDENTIFIER in-pipe-decls out-pipe-decls internal-pipe decls subsystem decls
 //---------------------------------------------------------------------------------------------------------------
-hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
+hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global_pipe_map, set<string>& global_pipe_signals]  
+		returns [hierSystem* sys]
+
 { 
 	sys =  NULL;
 	hierSystemInstance* subsys = NULL;
 	bool signal_flag = false;
 	string lib_id = "work";
 	int depth = 1;
-
+	int pipe_width = 0;
 }:
 	(SYSTEM 
 		sysid:SIMPLE_IDENTIFIER  
@@ -73,14 +81,28 @@ hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
 	IN 
 	( 
 		(PIPE | (SIGNAL {signal_flag = true;}))
-		sidi: SIMPLE_IDENTIFIER  uidi: UINTEGER   
+		sidi: SIMPLE_IDENTIFIER  (uidi: UINTEGER {pipe_width = atoi(uidi->getText().c_str());})?
 				(DEPTH didi: UINTEGER {depth = atoi(didi->getText().c_str());})?
 			{
-				sys->Add_In_Pipe(sidi->getText(), atoi(uidi->getText().c_str()), depth);
+				string pipe_name = sidi->getText();
+				if((pipe_width == 0) || (depth == 0))
+				{
+					bool err = getPipeInfoFromGlobals(pipe_name, global_pipe_map,
+									     global_pipe_signals, pipe_width, depth, signal_flag);
+					if(err)
+					{
+						sys->Report_Error("underspecified pipe " + pipe_name + " not found in globals.");		
+					}
+			
+				}
+
+				sys->Add_In_Pipe(pipe_name, pipe_width, depth);
 				if(signal_flag)
 					sys->Add_Signal(sidi->getText());
 				signal_flag = false;
 				depth = 1;
+				pipe_width = 0;
+
 			} 
 
 	)*
@@ -88,14 +110,26 @@ hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
 	OUT
 	( 
 		(PIPE | (SIGNAL {signal_flag = true;}))
-		 sido: SIMPLE_IDENTIFIER  uido: UINTEGER 
+		 sido: SIMPLE_IDENTIFIER  (uido:UINTEGER  {pipe_width = atoi(uido->getText().c_str());})?
 				(DEPTH dido: UINTEGER {depth = atoi(dido->getText().c_str());})?
 			{
-				sys->Add_Out_Pipe(sido->getText(), atoi(uido->getText().c_str()), depth);
+				string pipe_name = sido->getText();
+				if((pipe_width == 0) || (depth == 0))
+				{
+					bool err = getPipeInfoFromGlobals(pipe_name, global_pipe_map,
+									     global_pipe_signals, pipe_width, depth, signal_flag);
+					if(err)
+					{
+						sys->Report_Error("underspecified pipe " + pipe_name + " not found in globals.");		
+					}
+			
+				}
+				sys->Add_Out_Pipe(pipe_name, pipe_width, depth);
 				if(signal_flag)
 					sys->Add_Signal(sido->getText());
 				signal_flag = false;
 				depth = 1;
+				pipe_width = 0;
 			} 
  		     
 	)*
@@ -106,19 +140,34 @@ hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
 	( 
 		(PIPE |  (SIGNAL {signal_flag = true;}))
 		  sidint: SIMPLE_IDENTIFIER  
-			uidint: UINTEGER 
+			(uidint: UINTEGER {pipe_width = atoi(uidint->getText().c_str());})?
 				(DEPTH didint: UINTEGER {depth = atoi(didint->getText().c_str());})?
 				{
-					sys->Add_Internal_Pipe(sidint->getText(), atoi(uidint->getText().c_str()), depth);
+					string pipe_name = sidint->getText();
+					if((pipe_width == 0) || (depth == 0))
+					{
+						bool err = getPipeInfoFromGlobals(pipe_name, global_pipe_map,
+									     	global_pipe_signals, pipe_width, depth, signal_flag);
+						if(err)
+						{
+							sys->Report_Error("underspecified pipe " + 
+									pipe_name + " not found in globals.");		
+						}
+				
+					}
+					sys->Add_Internal_Pipe(pipe_name, pipe_width, depth);
 					if(signal_flag)
 						sys->Add_Signal(sidint->getText());
 					signal_flag = false;
+					depth = 1;
+					pipe_width = 0;
 				} 
 	
 	)*
 
 
 	(
+
 		subsys = hier_System_Instance[sys, sys_vector] 
 		{
 			if(subsys != NULL)
@@ -173,7 +222,43 @@ hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector] returns [
 				
 				}
 			)*
+			{
+				if(sys_inst)
+					sys_inst->Map_Unmapped_Ports_To_Defaults();
+			}
 ;
+
+hier_system_Pipe_Declaration[map<string, pair<int,int> >& pipe_map, set<string>& signals] 
+{
+            vector<string> oname_list;
+            int pipe_depth = 1;
+	    int pipe_width = 0;
+
+	    bool lifo_flag = false;
+	    bool in_mode = false;
+	    bool out_mode = false;
+	    bool is_port = false;
+	    bool is_signal = false;
+	    bool is_synch  = false;
+ }
+        :       (lid:LIFO { std::cerr << "Warning: lifo flag ignored.. line number " << lid->getLine() << endl; })? 
+		PIPE 
+		(psid:SIMPLE_IDENTIFIER {oname_list.push_back(psid->getText());})+
+		COLON UINT LESS_THAN wid:UINTEGER GREATER_THAN  
+			{pipe_width = atoi(wid->getText().c_str());} 
+        	(DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
+		(SIGNAL {is_signal = true;})?
+        {
+	    for(int I = 0, fI = oname_list.size(); I < fI; I++)
+	    {
+		string oname = oname_list[I];
+			
+		addPipeToGlobalMaps(oname, pipe_map, signals,  pipe_width, pipe_depth, is_signal);
+
+	   }
+
+	}
+        ;
 
 // lexer rules
 class hierSysLexer extends Lexer;
@@ -191,11 +276,18 @@ LPAREN : '(';
 RPAREN : ')';
 IMPLIES: "=>";
 COLON: ":";
+LESS_THAN: "<";
+GREATER_THAN: ">";
+UINT: "$uint";
+PORT: "$port";
+SYNCH: "$synch";
+
 
 SYSTEM: "$system";
 IN: "$in";
 OUT: "$out";
 PIPE: "$pipe";
+LIFO: "$lifo";
 SIGNAL: "$signal";
 INSTANCE: "$instance";
 LIBRARY: "$library";

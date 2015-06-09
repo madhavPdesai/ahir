@@ -1,6 +1,7 @@
+$pipe A :$uint<16>
 $system Left  $library LLIB
 	$in 
-		$pipe A 16
+		$pipe A 
 		$signal  Asig 16
 	$out 
 		$pipe TMP 16

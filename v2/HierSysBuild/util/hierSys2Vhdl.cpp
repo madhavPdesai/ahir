@@ -18,6 +18,11 @@ struct option long_options[] = {
     {0, 0, 0, 0}
 };
 
+  
+// globals
+map<string, pair<int,int> > __pmap;
+set<string> __signals;
+
 void Handle_Segfault(int signal)
 {
   cerr << "Error: in hierSys2Vhdl: segmentation fault! giving up!!" << endl;
@@ -56,7 +61,7 @@ int  Parse(string filename, vector<hierSystem*>& sys_vec)
   
   try
     {
-      parser->sys_Description(sys_vec);
+      parser->sys_Description(sys_vec, __pmap, __signals);
     }
   catch(ANTLR_USE_NAMESPACE(antlr)RecognitionException& re)
     {
