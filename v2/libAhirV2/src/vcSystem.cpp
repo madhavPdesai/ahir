@@ -16,6 +16,7 @@ bool vcSystem::_vhpi_tb_flag = false;
 bool vcSystem::_min_area_flag = false;
 bool vcSystem::_min_clock_period_flag = false;
 bool vcSystem::_enable_logging = false;
+bool vcSystem::_generate_hsys_file = false;
 
 // bypass stride.
 // the maximum chain of joins with bypass
@@ -1195,4 +1196,47 @@ void vcSystem::Print_Reduced_Control_Paths_As_Dot_Files()
 			(*moditer).second->Print_Reduced_CP_As_Dot_File();
 		}
 	}
+}
+
+void vcSystem::Print_Hsys_File(string file_name)
+{
+	ofstream ofile;
+	ofile.open(file_name.c_str());
+
+	vector<vcPipe*> in_pipes;
+	vector<vcPipe*> out_pipes;
+  	for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
+      		pipe_iter != _pipe_map.end();
+      		pipe_iter++)
+    	{
+      		vcPipe* p = (*pipe_iter).second;
+      		int num_reads = p->Get_Pipe_Read_Count();
+      		int num_writes = p->Get_Pipe_Write_Count();
+		if((num_reads > 0) && (num_writes == 0))
+			in_pipes.push_back(p);
+		if((num_reads == 0) && (num_writes > 0))
+			out_pipes.push_back(p);
+	}
+
+	ofile << "$system " << vcSystem::_top_entity_name << " $library " << vcSystem::_vhdl_work_library << endl;
+	ofile << "   $in " << endl;
+	for(int I = 0, fI = in_pipes.size(); I < fI; I++)
+	{
+		vcPipe* p = in_pipes[I];
+		bool is_signal = (p->Get_Signal() || p->Get_Port());
+		ofile << (is_signal ? "    $signal" : "    $pipe") << "  ";
+		ofile << p->Get_Id() << endl;
+	}      
+
+	ofile << "   $out " << endl;
+	for(int J = 0, fJ = out_pipes.size(); J < fJ; J++)
+	{
+		vcPipe* p = out_pipes[J];
+		bool is_signal = (p->Get_Signal() || p->Get_Port());
+		ofile << (is_signal ? "    $signal" : "    $pipe") <<  "  ";
+		ofile << p->Get_Id() << endl;
+	}      
+	ofile << "{ " << endl;
+	ofile << "} " << endl;
+	ofile.close();
 }

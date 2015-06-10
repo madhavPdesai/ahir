@@ -55,6 +55,8 @@ class vcSystem: public vcRoot
   static string _top_entity_name;
 
   static int _bypass_stride;
+  static bool _generate_hsys_file;
+  void Print_Hsys_File(string file_name);
 
   vcSystem(string id);
   virtual void Print(ostream& ofile);

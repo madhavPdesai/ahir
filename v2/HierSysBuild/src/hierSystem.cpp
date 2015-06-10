@@ -25,27 +25,74 @@ hierSystemInstance::hierSystemInstance(hierSystem* parent, hierSystem* base_sys,
 		parent->Increment_Instance_Count();
 }
 
+bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
+						map<string, pair<int,int> >& global_pipe_map,
+						set<string>& global_signals)
+{
+	// check if actual exists?  If not check if it exists in the
+	// visible pipes
+	hierSystem* parent = this->_parent;
+	
+	if(parent->Get_Pipe_Width(actual) <= 0)
+	{
+		int w, d;
+		bool is_sig;
+		bool err = getPipeInfoFromGlobals(actual, global_pipe_map, global_signals,
+						w, d, is_sig);	
+		if(err)
+		{
+			this->Report_Error("Instance " + this->Get_Id() + " in " + parent->Get_Id() + 
+							".. did not find actual " + actual);
+			return(true);
+		} 
+		else
+		{
+			parent->Add_Internal_Pipe(actual, w, d);
+			if(is_sig)
+				parent->Add_Signal(actual);
+		}
+	}	
+	this->Add_Port_Mapping(formal, actual);
+	return(false);
+}
+
 bool hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 {
 	bool err = false;
+	hierSystem* parent = _parent;
+
+	bool formal_is_input = (_base_system->Get_Input_Pipe_Width(formal) > 0);
+	bool formal_is_output = (_base_system->Get_Output_Pipe_Width(formal) > 0);
+	bool actual_is_input = (parent->Get_Input_Pipe_Width(actual) > 0);
+	bool actual_is_output = (parent->Get_Output_Pipe_Width(actual) > 0);
+
+	bool conn_error = ((formal_is_input && actual_is_output) || 
+				(formal_is_output && actual_is_input));
+	if(conn_error)
+	{
+		hierRoot::Report_Error("connection mismatch: instance " + this->Get_Id() + " in " 
+						+ parent->Get_Id() + " for " + formal  + " => " + actual);
+		return(true);
+	}
+
+	if(formal_is_input)
+		parent->Set_Driving_Pipe(actual);
+	if(formal_is_output)
+		parent->Set_Driven_Pipe(actual);
+	
 	if(_base_system->Has_Port(formal))
 	{
 		if(_port_map.find(formal) != _port_map.end())
 		{
-			cerr << "Error: formal port " << formal << " multiply mapped in instance " << _id << endl;
-			this->Set_Error(true);
-			err = true;
+			this->Report_Error("formal port " + formal + " multiply mapped in instance " + _id);
 		}
 		_port_map[formal] = actual;
 
 		if(_reverse_port_map.find(actual) != _reverse_port_map.end())
 		{
-			cerr << "Error: actual port " << actual << " multiply mapped in instance " << _id << endl;
-			this->Set_Error(true);
-			err = true;
+			this->Report_Error(" actual port " + actual + " multiply mapped in instance " + _id);
 		}	
 		_reverse_port_map[actual] = formal;
-
 
 	}
 	else
@@ -592,6 +639,9 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 bool hierSystem::Check_For_Errors()
 {
 	bool ret_val = false;
+	if(this->Is_Leaf())
+		return(ret_val);
+
 	// check if all instances are connected ok..
 	for(map<string, hierSystemInstance*>::iterator iter = _child_map.begin(), fiter = _child_map.end();
 			iter != fiter; iter++)
@@ -607,7 +657,7 @@ bool hierSystem::Check_For_Errors()
 
 			if(formal_width != actual_width)
 			{
-				cerr << "Error: mismatched width between formal " << formal << " and actual " << actual << endl;
+				this->Report_Error("Error: mismatched width between formal " + formal + " and actual " + actual);
 				ret_val = true;
 			}
 
@@ -616,8 +666,8 @@ bool hierSystem::Check_For_Errors()
 				// internal or an input pipe.
 				if(this->Get_Output_Pipe_Width(formal) > 0)
 				{
-					cerr << "Error: formal out-pipe " <<  formal 
-						<< " mapped to actual in-pipe in instance " << hi->Get_Id() << endl;
+					this->Report_Error("Error: formal out-pipe " +  formal 
+						+ " mapped to actual in-pipe in instance " + hi->Get_Id());
 					ret_val = true;
 				}
 				else 
@@ -643,6 +693,53 @@ bool hierSystem::Check_For_Errors()
 		}	
 
 	}
+
+
+	// check that all internal pipes are mapped as both drivers
+	// and driven.
+	vector<string> internal_pipes;
+	this->List_Internal_Pipe_Names(internal_pipes);
+	for(int I = 0, fI = internal_pipes.size(); I < fI; I++)
+	{
+		string pname = internal_pipes[I];
+		if(!this->Is_Driving_Pipe(pname))
+		{
+			hierRoot::Report_Error("in " + this->Get_Id() + ", internal pipe " + pname + " does not drive anything.");
+			ret_val = true;
+		}
+		if(!this->Is_Driven_Pipe(pname))
+		{
+			hierRoot::Report_Error("in " + this->Get_Id() + ", internal pipe " + pname + " is not driven.");
+			ret_val = true;
+		}
+	}
+
+	vector<string> in_pipes;
+	this->List_In_Pipe_Names(internal_pipes);
+	for(int I = 0, fI = in_pipes.size(); I < fI; I++)
+	{
+		string pname = in_pipes[I];
+		if(!this->Is_Driving_Pipe(pname))
+		{
+			hierRoot::Report_Error("in " + this->Get_Id() + ", in pipe " + pname + " does not drive anything.");
+			ret_val = true;
+		}
+		
+	}
+
+	vector<string> out_pipes;
+	this->List_Out_Pipe_Names(out_pipes);
+	for(int I = 0, fI = out_pipes.size(); I < fI; I++)
+	{
+		string pname = out_pipes[I];
+		if(!this->Is_Driven_Pipe(pname))
+		{
+			this->Report_Error("in " + this->Get_Id() + ", out pipe " + pname + " is not driven by anything.");
+			ret_val = true;
+		}
+		
+	}
+	return(ret_val);
 }
 
 void listPipeMap(map<string, pair<int,int> >& pmap, vector<string>& pvec)

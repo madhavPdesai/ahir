@@ -120,6 +120,7 @@ int main(int argc, char* argv[])
       {"work_library",   required_argument, 0, 'W'},
       {"verbose",  no_argument, 0, 'v'},
       {"suppress_io_pipes",  no_argument, 0, 'U'},
+      {"generate_hsys_file",  no_argument, 0, 'H'},
       {0, 0, 0, 0}
     };
 
@@ -151,11 +152,12 @@ int main(int argc, char* argv[])
 
   vcSystem::_opt_flag = false;
   vcSystem::_suppress_io_pipes = false;
+  vcSystem::_generate_hsys_file = false;
 
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:T:f:OCs:he:waqDL:vI:S:W:",
+		      "t:T:f:OCs:he:waqDL:vI:S:W:H",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -172,6 +174,10 @@ int main(int argc, char* argv[])
 	      file_list.push_back(fname);
 	    }
 	  break;
+	case 'H':
+		vcSystem::_generate_hsys_file = true;
+		cerr << "Info: hierarchical system file (.hsys) printing turned on." << endl;
+		break;
 	case 't':
 	  mod_name = string(optarg);	
 	  top_modules.insert(mod_name);
@@ -386,6 +392,11 @@ int main(int argc, char* argv[])
 		test_system.Print_Reduced_Control_Paths_As_Dot_Files();
 	}
 
+	if(vcSystem::_generate_hsys_file)
+	{
+  		string hsys_file_name = sys_name + ".hsys";
+		test_system.Print_Hsys_File(hsys_file_name);
+	}
     }
 
   return(0);

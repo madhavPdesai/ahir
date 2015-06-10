@@ -168,12 +168,14 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 
 	(
 
-		subsys = hier_System_Instance[sys, sys_vector] 
+		subsys = hier_System_Instance[sys, sys_vector, global_pipe_map, global_pipe_signals] 
 		{
 			if(subsys != NULL)
 				sys->Add_Child(subsys);
 			else
-				sys->Set_Error(true);
+			{
+				sys->Report_Error("null subsystem instance ");
+			}
 		}
 	)*
 
@@ -181,7 +183,8 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 ;
 
 
-hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector] returns [hierSystemInstance* sys_inst]
+hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<string, pair<int,int> >& global_pipe_map,
+			set<string>& global_signals] returns [hierSystemInstance* sys_inst]
 {
 	sys_inst = NULL;
 	string lib_id = "work";
@@ -209,16 +212,18 @@ hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector] returns [
 					sys_inst = new hierSystemInstance(sys, base_sys, inst_name->getText());
 				else
 				{
-					cerr << "Error: could not find base system " << mod_name->getText() <<
-						" in library " << lib_id << endl;
-				        sys->Set_Error(true);
+					sys->Report_Error("Error: could not find base system " + 
+								mod_name->getText() + " in library " + lib_id);
 				}
 			}
 			( 
 				formal_port: SIMPLE_IDENTIFIER IMPLIES actual_pipe: SIMPLE_IDENTIFIER 
 				{
 					if(sys_inst)
-						sys_inst->Add_Port_Mapping(formal_port->getText(), actual_pipe->getText());
+						sys_inst->Add_Port_Mapping(formal_port->getText(), 
+										actual_pipe->getText(),
+										global_pipe_map,
+										global_signals);
 				
 				}
 			)*

@@ -41,7 +41,7 @@ class hierRoot
 
 	void Report_Info(string err_msg) { cerr << "Info: " << err_msg << endl;}
 	void Report_Warning(string err_msg) { cerr << "Warning: " << err_msg << endl;}
-	void Report_Error(string err_msg) { cerr << "Error: " << err_msg << endl; _error = true; }
+	void Report_Error(string err_msg) { cerr << "Error: " << err_msg << endl; this->Set_Error(true); }
 	
 };
 
@@ -63,7 +63,13 @@ class hierSystemInstance: public hierRoot
 
 	hierSystem* Get_Parent() {return(_parent);}
 	hierSystem* Get_Base_System() {return(_base_system);}
-	bool Add_Port_Mapping(string formal, string actual);
+	bool Add_Port_Mapping(string formal, 
+				string actual, 
+				map<string, pair<int,int> >& pmap, 
+				set<string>& signals);
+	bool Add_Port_Mapping(string formal, 
+				string actual);
+
 	bool Map_Unmapped_Ports_To_Defaults();
 
 	string Get_Actual(string formal)
@@ -90,7 +96,6 @@ class hierSystemInstance: public hierRoot
 
 class hierSystem: public hierRoot
 {
-	bool _error;
         string _library;
 	hierSystem* _parent;
 	map<string, pair<int,int> > _in_pipes;
@@ -104,12 +109,24 @@ class hierSystem: public hierRoot
 	set<string> _signals;
 	int _instance_count;
 
+	// pipes that are driven
+	set<string> _driven_pipes;
+	set<string> _driving_pipes;
+
 public:
+
 	hierSystem(string id) :hierRoot(id)
 	{
 		_library = "work";
 		_instance_count = 0;
 	}
+
+	void Set_Driven_Pipe(string pname) { _driven_pipes.insert(pname);}
+	void Set_Driving_Pipe(string pname) { _driving_pipes.insert(pname);}
+
+	bool Is_Driven_Pipe(string pname) {return(_driven_pipes.find(pname) != _driven_pipes.end());}
+	bool Is_Driving_Pipe(string pname) {return(_driving_pipes.find(pname) != _driving_pipes.end());}
+
 
 	int Get_Instance_Count() {return(_instance_count);}
 	void Increment_Instance_Count() {_instance_count++;}
@@ -191,14 +208,13 @@ public:
 
 			if(width != pipe_width)
 			{
-				cerr << "Error : incompatible redeclaration of " << pipe_type  << " "
-					<< pid << " will be ignored. " << endl;
-				_error = true;
+				hierRoot::Report_Error("incompatible redeclaration of " + pipe_type + 
+										" " + pid + " will be ignored. ");
 			}
 			else
 			{
-				cerr << "Warning : redeclaration of " << pipe_type << " " 
-					<< pid << " will ignore second declaration" << endl;
+				hierRoot::Report_Warning("Warning : redeclaration of " + pipe_type + " " 
+								+ pid + " will ignore second declaration");
 			}
 
 		}
@@ -212,17 +228,16 @@ public:
 			
 	void Add_In_Pipe(string pid, int pipe_width, int depth)
 	{
+
 		this->Add_Pipe_To_Map(_in_pipes, pid, pipe_width, depth, "in-pipe");
 
 		if(this->Get_Output_Pipe_Width(pid) > 0)
 		{
-			cerr << "Error: pipe " << pid << " in system " << this->_id << " is both input and output pipe." << endl;
-			_error = true;
+			this->Report_Error("pipe " + pid + " in system " + this->_id + " is both input and output pipe.");
 		}
 		if(this->Get_Internal_Pipe_Width(pid) > 0)
 		{
-			cerr << "Error: pipe " << pid << " in system " << this->_id << " is both input and internal pipe." << endl;
-			_error = true;
+			this->Report_Error("pipe " + pid + " in system " + this->_id + " is both input and internal pipe.");
 		}
 
 	}
@@ -231,13 +246,11 @@ public:
 		Add_Pipe_To_Map(_out_pipes, pid, pipe_width, depth, "out-pipe");
 		if(this->Get_Input_Pipe_Width( pid) > 0)
 		{
-			cerr << "Error: pipe " << pid << " in system " << this->_id << " is both input and output pipe." << endl;
-			_error = true;
+			this->Report_Error("pipe " + pid + " in system " + this->_id + " is both input and output pipe.");
 		}
 		if(this->Get_Internal_Pipe_Width( pid) > 0)
 		{
-			cerr << "Error: pipe " << pid << " in system " << this->_id << " is both output and internal pipe." << endl;
-			_error = true;
+			this->Report_Error("pipe " + pid + " in system " + this->_id + " is both internal and output pipe.");
 		}
 	}
 	void Add_Internal_Pipe(string pid, int pipe_width, int depth)
@@ -245,13 +258,11 @@ public:
 		Add_Pipe_To_Map(_internal_pipes, pid, pipe_width, depth,  "internal-pipe");
 		if(this->Get_Input_Pipe_Width(pid) > 0)
 		{
-			cerr << "Error: pipe " << pid << " in system " << this->_id << " is both input and internal pipe." << endl;
-			_error = true;
+			this->Report_Error("pipe " + pid + " in system " + this->_id + " is both internal and input pipe.");
 		}
 		if(this->Get_Output_Pipe_Width(pid) > 0)
 		{
-			cerr << "Error: pipe " << pid << " in system " << this->_id << " is both output and internal pipe." << endl;
-			_error = true;
+			this->Report_Error("pipe " + pid + " in system " + this->_id + " is both internal and output pipe.");
 		}
 	}
 
@@ -265,9 +276,8 @@ public:
 		{
 			if(_pipe_to_subsystem_connection_map.find(pipe_id) != _pipe_to_subsystem_connection_map.end())
 			{
-				cerr << "Error: pipe " << pipe_id << " is connected to multiple subsystems in "
-					<< this->_id;
-				_error = true;
+				this->Report_Error(" pipe " + pipe_id + " in system " + 
+						this->_id + " is connected to multiple system instances");
 			}	
 			else
 			{
@@ -278,8 +288,8 @@ public:
 		}
 		else
 		{
-			cerr << "Error: illegal connection of pipe " << pipe_id << " to child " << child->Get_Id() << " in " 
-				<< this->_id << endl;
+			this->Report_Error("illegal connection of pipe " + pipe_id + " to child " + 
+					child->Get_Id() + " in " + this->_id);
 		}
 	}
 	
@@ -290,8 +300,7 @@ public:
 		string child_id = child->Get_Id();
 		if(_child_map.find(child_id) != _child_map.end())
 		{
-			cerr << "Error: added multiple instances of child " << child_id << " to system " << _id << endl;
-			_error = true;
+			this->Report_Error("added multiple instances of child " + child_id + " to system " + _id);
 		}
 		_child_map[child_id] = child;
 	}

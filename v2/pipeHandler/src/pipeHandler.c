@@ -86,6 +86,7 @@ PipeRec* find_pipe(char* pipe_name)
   return(r);
 }
 
+// return 0 on success, 1 on error.
 uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo_mode)
 {
   PipeRec* p;
@@ -95,6 +96,11 @@ uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo
 	if(p->pipe_width != pipe_width)
         {
 	      fprintf(stderr,"\nError: pipeHandler: redefinition of pipe %s with conflicting widths (%d or %d?)\n", pipe_name, p->pipe_width, pipe_width);
+		return(1);
+        }
+	if(p->pipe_depth != pipe_depth)
+        {
+	      fprintf(stderr,"\nError: pipeHandler: redefinition of pipe %s with conflicting depths (%d or %d?)\n", pipe_name, p->pipe_depth, pipe_depth);
 		return(1);
         }
 	if(p->lifo_mode != lifo_mode)
