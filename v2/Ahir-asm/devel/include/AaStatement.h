@@ -141,7 +141,7 @@ class AaStatement: public AaScope
   virtual void Write_VC_Constant_Declarations(ostream& ofile) {};
 
   
-  virtual void PrintC(ofstream& ofile) { assert(0); }
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile) { assert(0); }
   virtual void PrintC_Implicit_Declarations(ofstream& ofile) { }
 
   virtual string Get_Line_Directive()
@@ -244,6 +244,12 @@ class AaStatement: public AaScope
   void Print_Slacks(set<AaRoot*>& visited_elements,
 	map<AaRoot*, vector< pair<AaRoot*, int> > > adjacency_map,
 	map<AaRoot*, int> longest_paths_from_root_map);
+
+   virtual string Get_C_Macro_Name();
+   virtual string Get_Export_Declare_Macro();
+   virtual string Get_Export_Apply_Macro();
+   virtual string Get_C_Preamble_Macro_Name();
+   virtual string Get_C_Postamble_Macro_Name();
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -256,10 +262,10 @@ class AaStatementSequence: public AaScope
   AaStatementSequence(AaScope* scope, vector<AaStatement*>& statement_sequence);
   ~AaStatementSequence();
 
-  virtual void PrintC(ofstream& ofile)
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile)
   {
 	for(int i = 0, imax = _statement_sequence.size(); i < imax; i++)
-		_statement_sequence[i]->PrintC(ofile);
+		_statement_sequence[i]->PrintC(srcfile, headerfile);
   }
   virtual void PrintC_Implicit_Declarations(ofstream& ofile)
   {
@@ -395,9 +401,10 @@ class AaNullStatement: public AaStatement
   virtual string Kind() {return("AaNullStatement");}
   virtual void Map_Source_References() {} // do nothing
 
-  virtual void PrintC(ofstream& ofile)
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile)
   {
-    ofile <<  ";" << endl;
+    srcfile << "/* null */ ";
+    srcfile <<  ";" << endl;
   }
   virtual string Get_C_Name()
   {
@@ -456,7 +463,7 @@ class AaAssignmentStatement: public AaStatement
 
   void Replace_Source_Expression(AaExpression* old_arg, AaSimpleObjectReference* new_arg);
 
-  virtual void PrintC(ofstream& ofile);
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
   virtual void PrintC_Implicit_Declarations(ofstream& ofile);
 
 
@@ -553,7 +560,7 @@ class AaCallStatement: public AaStatement
   }
 
   void PrintC_Call_To_Foreign_Module(ofstream& ofile);
-  virtual void PrintC(ofstream& ofile);
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
   virtual void PrintC_Implicit_Declarations(ofstream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile);
@@ -656,7 +663,7 @@ class AaBlockStatement: public AaStatement
 	this->_objects[i]->PrintC_Declaration(ofile);
       }
   }
-  virtual void PrintC(ofstream& ofile);
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
 
   virtual void Print_Statement_Sequence(ostream& ofile)
   {
@@ -886,7 +893,7 @@ class AaJoinForkStatement: public AaParallelBlockStatement
   virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   virtual string Get_VC_Name() {return("join_fork_stmt_" + Int64ToStr(this->Get_Index()));}
-  virtual void PrintC(ofstream& ofile);
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
 
   virtual void PrintC_Implicit_Declarations(ofstream& ofile) 
   { 
@@ -922,9 +929,10 @@ class AaPlaceStatement: public AaStatement
 
   virtual bool Is_Control_Flow_Statement() {return(true);}
 
-  virtual void PrintC(ofstream& ofile)
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile)
   {
-	ofile << "goto " << this->C_Reference_String() << ";" << endl;
+	srcfile << "/* " << this->To_String() << "*/  ";
+	srcfile << "goto " << this->C_Reference_String() << ";" << endl;
   }
 
   virtual void Err_Check()
@@ -1013,7 +1021,7 @@ class AaMergeStatement: public AaSeriesBlockStatement
   }
 
 
-  virtual void PrintC(ofstream& ofile) ;
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
   virtual void PrintC_Implicit_Declarations(ofstream& ofile) 
   { 
 	if(this->_statement_sequence)
@@ -1069,7 +1077,7 @@ class AaPhiStatement: public AaStatement
   {
     return("_phi_line_" +   IntToStr(this->Get_Line_Number()));
   }
-  virtual void PrintC(ofstream& ofile);  
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile);  
   virtual void PrintC_Implicit_Declarations(ofstream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile);
@@ -1147,7 +1155,7 @@ class AaSwitchStatement: public AaStatement
   virtual void Map_Source_References();
 
   virtual bool Can_Block(bool pipeline_flag);
-  virtual void PrintC(ofstream& ofile);
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile);  
   virtual void PrintC_Implicit_Declarations(ofstream& ofile) 
   { 
 	for(int i = 0, imax = _choice_pairs.size(); i < imax; i++)
@@ -1211,7 +1219,7 @@ class AaIfStatement: public AaStatement
   AaIfStatement(AaBranchBlockStatement* scope);
   ~AaIfStatement();
   virtual void Print(ostream& ofile);
-  virtual void PrintC(ofstream& ofile);
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
   virtual void PrintC_Implicit_Declarations(ofstream& ofile) 
   { 
 	  if(_if_sequence)
@@ -1334,7 +1342,7 @@ class AaDoWhileStatement: public AaStatement
   virtual void Coalesce_Storage();
 
 
-  void PrintC(ofstream& ofile); // todo.
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile); 
 
   virtual bool Is_Control_Flow_Statement() {return(true);}
 

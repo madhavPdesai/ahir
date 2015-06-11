@@ -156,6 +156,10 @@ public:
 	{
 		return((pmap.find(pipe_id) != pmap.end()) ? pmap[pipe_id].first : 0);
 	}
+	int Get_Pipe_Depth(map<string, pair<int,int> >& pmap, string pipe_id)
+	{
+		return((pmap.find(pipe_id) != pmap.end()) ? pmap[pipe_id].second : 0);
+	}
 
 	int Get_Input_Pipe_Width(string pipe_id) {
 		return(this->Get_Pipe_Width(_in_pipes, pipe_id));
@@ -165,6 +169,16 @@ public:
 	}
 	int Get_Internal_Pipe_Width(string pipe_id) {
 		return(this->Get_Pipe_Width(_internal_pipes, pipe_id));
+	}
+
+	int Get_Input_Pipe_Depth(string pipe_id) {
+		return(this->Get_Pipe_Depth(_in_pipes, pipe_id));
+	}
+	int Get_Output_Pipe_Depth(string pipe_id) {
+		return(this->Get_Pipe_Depth(_out_pipes, pipe_id));
+	}
+	int Get_Internal_Pipe_Depth(string pipe_id) {
+		return(this->Get_Pipe_Depth(_internal_pipes, pipe_id));
 	}
 
 	int Get_Pipe_Width(string pipe_id)
@@ -178,6 +192,20 @@ public:
 			return(ret_w);
 
 		ret_w = this->Get_Internal_Pipe_Width(pipe_id);
+			
+		return(ret_w);
+	}
+	int Get_Pipe_Depth(string pipe_id)
+	{
+		int ret_w = this->Get_Input_Pipe_Depth(pipe_id);
+		if(ret_w > 0)
+			return(ret_w);
+		ret_w = this->Get_Output_Pipe_Depth(pipe_id);
+
+		if(ret_w > 0)
+			return(ret_w);
+
+		ret_w = this->Get_Internal_Pipe_Depth(pipe_id);
 			
 		return(ret_w);
 	}

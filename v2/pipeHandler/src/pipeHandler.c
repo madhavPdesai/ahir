@@ -86,6 +86,48 @@ PipeRec* find_pipe(char* pipe_name)
   return(r);
 }
 
+void set_pipe_is_written_into(char* pipe_name)
+{
+  PipeRec* p;
+  p = find_pipe(pipe_name); // this also uses the lock.
+  if(p)
+    p->is_written_into = 1;
+}
+
+void set_pipe_is_read_from(char* pipe_name)
+{
+  PipeRec* p;
+  p = find_pipe(pipe_name); // this also uses the lock.
+  if(p)
+    p->is_read_from = 1;
+}
+
+// iterate through all pipes are report the
+// number of dangling pipes.
+int check_for_dangling_pipes()
+{
+  ___LOCK___
+  PipeRec* p;
+  int ret_val = 0;
+  for(p = pipes; p != NULL; p = p->next)
+  {
+     int err = 0;
+     if(!p->is_written_into)
+     {
+        err = 1;
+        fprintf(stderr, "pipe %s is not written into.\n", p->pipe_name);
+     }
+     if(!p->is_read_from)
+     {
+	err = 1;
+        fprintf(stderr, "pipe %s is not read from.\n", p->pipe_name);
+     }
+     ret_val += err;
+  }
+  ___UNLOCK___  
+  return(ret_val);
+}
+
 // return 0 on success, 1 on error.
 uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo_mode)
 {

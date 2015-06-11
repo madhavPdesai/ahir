@@ -267,7 +267,7 @@ void AaModule::Write_C_Header(ofstream& ofile)
   ofile << ");" << endl;
 }
 
-void AaModule::Write_C_Source(ofstream& ofile)
+void AaModule::Write_C_Source(ofstream& srcfile, ofstream& headerfile)
 {
   if(this->Get_Foreign_Flag())
     return;
@@ -277,35 +277,35 @@ void AaModule::Write_C_Source(ofstream& ofile)
   bool all_types_native = this->Can_Have_Native_C_Interface();
   if(all_types_native)
     {
-      ofile << "void " 
+      srcfile << "void " 
 	    << this->Get_C_Outer_Wrap_Function_Name() 
 	    << "(";
       bool first_one = true;
       for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
 	{
 	  if(!first_one)
-	    ofile << ", ";
+	    srcfile << ", ";
 	  first_one = false;
       
 	  //
 	  // all arguments are passed as pointers..
 	  //
-	  ofile << this->_input_args[i]->Get_Type()->Native_C_Name();
-	  ofile << " " << this->_input_args[i]->Get_C_Name() << " ";
+	  srcfile << this->_input_args[i]->Get_Type()->Native_C_Name();
+	  srcfile << " " << this->_input_args[i]->Get_C_Name() << " ";
 	}
       for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
 	{
 	  if(!first_one)
-	    ofile << ", ";
+	    srcfile << ", ";
 	  first_one = false;
-	  ofile << this->_output_args[i]->Get_Type()->Native_C_Name();
-	  ofile << "* ";
-	  ofile << " " << this->_output_args[i]->Get_C_Name() << " ";
+	  srcfile << this->_output_args[i]->Get_Type()->Native_C_Name();
+	  srcfile << "* ";
+	  srcfile << " " << this->_output_args[i]->Get_C_Name() << " ";
 	}
-      ofile << ")" << endl;
+      srcfile << ")" << endl;
 
-      ofile << "{" << endl;
-
+      srcfile << "{" << endl;
+      headerfile << "\n#define " << this->Get_C_Outer_Arg_Decl_Macro_Name() << " ";
 	// set up and call inner function.
       for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
 	{
@@ -315,12 +315,12 @@ void AaModule::Write_C_Source(ofstream& ofile)
 
 	  if(t->Is_Integer_Type())
 	    {
-	      ofile << "__declare_bit_vector(" << n_name << ", " << t->Size() << ");" << endl;
-	      ofile << "bit_vector_assign_uint64(0, &" << n_name << ", " << o_name << ");" << endl;
+	      headerfile << "__declare_bit_vector(" << n_name << ", " << t->Size() << ");\\" << endl;
+	      headerfile << "bit_vector_assign_uint64(0, &" << n_name << ", " << o_name << ");\\" << endl;
 	    }
 	  else
 	    {
-	      ofile << t->Native_C_Name() << " " << n_name << " = " << o_name << ";" << endl;
+	      headerfile << t->Native_C_Name() << " " << n_name << " = " << o_name << ";\\" << endl;
 	    }
 	}
 
@@ -333,17 +333,19 @@ void AaModule::Write_C_Source(ofstream& ofile)
 
 	  if(t->Is_Integer_Type())
 	    {
-	      ofile << "__declare_bit_vector(" << n_name << ", " << t->Size() << ");" << endl;
+	      headerfile << "__declare_bit_vector(" << n_name << ", " << t->Size() << ");\\" << endl;
 	    }
 	  else
 	    {
-	      ofile << t->Native_C_Name() << " " << n_name << ";" << endl;
+	      srcfile << t->Native_C_Name() << " " << n_name << ";\\" << endl;
 	    }
 	}
+	headerfile << ";" << endl;
+	srcfile <<  this->Get_C_Outer_Arg_Decl_Macro_Name() << ";" << endl;
 
 
       // call inner function.
-      ofile << this->Get_C_Inner_Wrap_Function_Name() 
+      srcfile << this->Get_C_Inner_Wrap_Function_Name() 
 	    << "(";
       first_one = true;;
       for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
@@ -353,12 +355,11 @@ void AaModule::Write_C_Source(ofstream& ofile)
 	  string n_name = "__" + o_name;
 	  if(!first_one)
 	    {
-	      ofile << ", ";
+	      srcfile << ", ";
 	    }
-	  ofile << " &" << n_name;
+	  srcfile << " &" << n_name;
 	  first_one = false;
 	}
-
       for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
 	{
 	  AaType* t = this->_output_args[i]->Get_Type();
@@ -366,15 +367,16 @@ void AaModule::Write_C_Source(ofstream& ofile)
 	  string n_name = "__" + o_name;
 	  if(!first_one)
 	    {
-	      ofile << ", ";
+	      srcfile << ", ";
 	    }
-	  ofile << " &" << n_name;
+	  srcfile << " &" << n_name;
 	  first_one = false;
 	}
       
-      ofile << ");" << endl;
+      srcfile << ");" << endl;
 
       // get the outputs in order.
+      headerfile << "\n#define " << this->Get_C_Outer_Output_Xfer_To_Outer_Macro_Name() << " ";
       for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
 	{
 	  AaType* t = this->_output_args[i]->Get_Type();
@@ -383,78 +385,85 @@ void AaModule::Write_C_Source(ofstream& ofile)
 
 	  if(t->Is_Integer_Type())
 	    {
-	      ofile << " *" << o_name << " =  bit_vector_to_uint64(" 
+	      headerfile << " *" << o_name << " =  bit_vector_to_uint64(" 
 		    << (!t->Is_Uinteger_Type() ? 1 : 0)
-		    << ", &" << n_name << ");" << endl;
+		    << ", &" << n_name << ");\\" << endl;
 	    }
 	  else
 	    {
-	      ofile << " *" << o_name << " = " << n_name << ";" << endl;
+	      headerfile << " *" << o_name << " = " << n_name << ";\\" << endl;
 	    }
 	}
+	headerfile << ";" <<endl;
+	srcfile << this->Get_C_Outer_Output_Xfer_To_Outer_Macro_Name() << ";" << endl;
 
-
-      ofile << "}" << endl;
-      ofile << endl << endl;
+      srcfile << "}" << endl;
+      srcfile << endl << endl;
     }
 
 
   // inner wrap function.
-  ofile << "void " 
+  srcfile << "void " 
 	<< this->Get_C_Inner_Wrap_Function_Name() 
 	<< "(";
   bool first_one = true;
   for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
     {
       if(!first_one)
-	ofile << ", ";
+	srcfile << ", ";
       first_one = false;
-      ofile << this->_input_args[i]->Get_Type()->C_Name();
-      ofile << "* __p" << this->_input_args[i]->Get_Name();
+      srcfile << this->_input_args[i]->Get_Type()->C_Name();
+      srcfile << "* __p" << this->_input_args[i]->Get_Name();
     }
   for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
     {
       if(!first_one)
-	ofile << ", ";
+	srcfile << ", ";
       first_one = false;
-      ofile << this->_output_args[i]->Get_Type()->C_Name();
-      ofile << "* ";
-      ofile << " __p" << this->_output_args[i]->Get_Name();
+      srcfile << this->_output_args[i]->Get_Type()->C_Name();
+      srcfile << "* ";
+      srcfile << " __p" << this->_output_args[i]->Get_Name();
     }
-  ofile << ")" << endl;
-  ofile << "{" << endl;
+  srcfile << ")" << endl;
+  srcfile << "{" << endl;
   //
   // pointer-interface <-> declare i/o objects
   // print input side conversions.
   //
+   
+  headerfile << "\n#define " << this->Get_C_Inner_Input_Args_Prepare_Macro() << " ";
   for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
     {
 	string o_name =  this->_input_args[i]->Get_C_Name();
 	string n_name = "__p" + o_name;
-	Print_C_Declaration(o_name, this->_input_args[i]->Get_Type(), ofile);
-	Print_C_Assignment(o_name, "(*" + n_name + ")", this->_input_args[i]->Get_Type(), ofile);
+	Print_C_Declaration(o_name, this->_input_args[i]->Get_Type(), headerfile);
+	Print_C_Assignment(o_name, "(*" + n_name + ")", this->_input_args[i]->Get_Type(), headerfile);
     }
   for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
     {
 	string o_name =  this->_output_args[i]->Get_C_Name();
 	string n_name = "__p" + o_name;
-	Print_C_Declaration(o_name, this->_output_args[i]->Get_Type(), ofile);
+	Print_C_Declaration(o_name, this->_output_args[i]->Get_Type(), headerfile);
     }
 
-  this->Write_C_Object_Declarations(ofile);
-  this->_statement_sequence->PrintC_Implicit_Declarations(ofile);
-  this->_statement_sequence->PrintC(ofile);
+  this->Write_C_Object_Declarations(headerfile);
+  this->_statement_sequence->PrintC_Implicit_Declarations(headerfile);
+  srcfile <<  this->Get_C_Inner_Input_Args_Prepare_Macro() << "; " << endl;
+
+  this->_statement_sequence->PrintC(srcfile, headerfile);
 
   // TODO pointer interface <-> output side conversions
-   ofile << "// output side transfers..." << endl;
+  headerfile << "\n#define " << this->Get_C_Inner_Output_Args_Prepare_Macro() << " ";
   for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
     {
 	string o_name =  this->_output_args[i]->Get_C_Name();
 	string n_name = "__p" + o_name;
-	Print_C_Assignment("(*" + n_name + ")", o_name,  this->_output_args[i]->Get_Type(), ofile);
+	Print_C_Assignment("(*" + n_name + ")", o_name,  this->_output_args[i]->Get_Type(), headerfile);
     }
+  headerfile << ";" <<endl;
+  srcfile << this->Get_C_Inner_Output_Args_Prepare_Macro() << "; " << endl;
 
-  ofile << "}" << endl;
+  srcfile << "}" << endl;
 }
 
 void AaModule::Propagate_Constants()
@@ -981,3 +990,27 @@ bool AaModule::Can_Block(bool pipeline_flag)
 {
 	return(this->AaSeriesBlockStatement::Can_Block(pipeline_flag));
 }
+      
+string AaModule::Get_C_Outer_Arg_Decl_Macro_Name() 
+{
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Label() + 
+			"_outer_arg_decl_macro__");
+}
+string AaModule::Get_C_Outer_Output_Xfer_To_Outer_Macro_Name() 
+{
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Label() + 
+			"_outer_op_xfer_macro__");
+}
+  
+string AaModule::Get_C_Inner_Input_Args_Prepare_Macro()
+{
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Label() + 
+			"_inner_inarg_prep_macro__");
+}
+
+string AaModule::Get_C_Inner_Output_Args_Prepare_Macro() 
+{
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Label() + 
+			"_inner_outarg_prep_macro__");
+}
+

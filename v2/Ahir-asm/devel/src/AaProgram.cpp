@@ -1104,7 +1104,7 @@ void AaProgram::Write_C_Model()
 	{
       		// Each module is printed in two parts:
       		(*miter).second->Write_C_Header(header_file);
-      		(*miter).second->Write_C_Source(source_file);
+      		(*miter).second->Write_C_Source(source_file, header_file);
 
 		string mname = m->Get_Label();
 		if(AaProgram::_top_level_daemons.find(mname) != AaProgram::_top_level_daemons.end())

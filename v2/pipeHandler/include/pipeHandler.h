@@ -17,6 +17,10 @@ struct PipeRec_
 
   int lifo_mode;
   int is_port;
+
+  // to check for dangling pipes
+  int is_written_into;
+  int is_read_from;
 #ifdef USE_GNUPTH
   pth_mutex_t pm;
 #else
@@ -118,6 +122,15 @@ void init_pipe_handler_with_log(char* log_file);
 void close_pipe_handler();
 // returns 0 on success, 1 if something went wrong..
 uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo_mode);
+// set pipe status.. this tells the pipe-handler that the pipe
+// will be written into or read from 
+void set_pipe_is_written_into(char* pipe_name);
+void set_pipe_is_read_from(char* pipe_name);
+// in a well constructed system, all pipes must
+// be written into as well as read from..  
+// if not, it is a dangling pipe.
+// return the number of dangling pipes.
+int  check_for_dangling_pipes();
 // return 0 on success, 1 if something went wrong.
 uint32_t register_port(char* id, int pipe_width, int is_input);
 // returns the number of words successfully read from the pipe into burst_payload.

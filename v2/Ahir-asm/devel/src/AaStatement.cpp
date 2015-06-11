@@ -1025,30 +1025,32 @@ AaSimpleObjectReference* AaAssignmentStatement::Get_Implicit_Target(string tgt_n
 	return(ret);
 }
 
-void AaAssignmentStatement::PrintC(ofstream& ofile)
+void AaAssignmentStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 {
-	ofile << "// " << this->To_String();
-	ofile << "// " << this->Get_Source_Info() << endl;
+	srcfile << "// " << this->To_String(); //includes newline
+	headerfile << "\n#define " << this->Get_C_Macro_Name() << " ";
+	srcfile << this->Get_C_Macro_Name() << "; " << endl;
+
 	if(this->Get_Guard_Expression())
 	{
-		this->Get_Guard_Expression()->PrintC_Declaration(ofile);
-		this->Get_Guard_Expression()->PrintC(ofile);
+		this->Get_Guard_Expression()->PrintC_Declaration(headerfile);
+		this->Get_Guard_Expression()->PrintC(headerfile);
 	}
 
-	this->_source->PrintC_Declaration(ofile);
+	this->_source->PrintC_Declaration(headerfile);
 	
 
 	if(this->Get_Guard_Expression())
 	{
-		ofile << "if (" ;
+		headerfile << "if (" ;
 		if(this->Get_Guard_Complement())
-			ofile << "!";
-		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), ofile);
-		ofile << ") {" << endl;
+			headerfile << "!";
+		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), headerfile);
+		headerfile << ") {\\" << endl;
 
 	}
 
-	this->_source->PrintC(ofile);
+	this->_source->PrintC(headerfile);
 
 
         bool skip_target = false;
@@ -1062,7 +1064,7 @@ void AaAssignmentStatement::PrintC(ofstream& ofile)
 		{
 			Print_C_Pipe_Write(this->_source->C_Reference_String(),
 						this->_source->Get_Type(),
-						(AaPipeObject*) sexpr->Get_Object(), ofile);
+						(AaPipeObject*) sexpr->Get_Object(), headerfile);
 						
 			skip_target = true;
 		}
@@ -1072,24 +1074,26 @@ void AaAssignmentStatement::PrintC(ofstream& ofile)
 	{
 		if(this->_target->Get_Root_Object() != ((AaRoot*) this))
 		{
-			this->_target->PrintC_Declaration(ofile);
+			this->_target->PrintC_Declaration(headerfile);
 		}
 
 		// target side stuff.
 		Print_C_Assignment(this->_target->C_Reference_String(),
 				   this->_source->C_Reference_String(),
 				   this->_target->Get_Type(),
-				   ofile);
+				   headerfile);
 	}
+
+
 	if(this->Get_Guard_Expression())
-		ofile << "}" << endl;
+		headerfile << "}" << endl;
+
 }
 
 void AaAssignmentStatement::PrintC_Implicit_Declarations(ofstream& ofile)
 {
 	if(this->_target->Get_Root_Object() == ((AaRoot*) this))
 	{
-		// ofile << "// implicit declarations for assignment: " << this->Get_Source_Info() << endl;
 		this->_target->PrintC_Declaration(ofile);
 	}
 }
@@ -1856,7 +1860,7 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 		if(this->_input_args[i]->Get_Type()->Is_Integer_Type())
 		{
 			ofile << this->_input_args[i]->Get_Type()->Native_C_Name() << " __" 
-				<< this->_input_args[i]->C_Reference_String() << ";" << endl;	
+				<< this->_input_args[i]->C_Reference_String() << ";\\" << endl;	
 		}
 	}
 
@@ -1867,7 +1871,7 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 		if(this->_output_args[i]->Get_Type()->Is_Integer_Type())
 		{
 			ofile << this->_output_args[i]->Get_Type()->Native_C_Name() << " __" 
-				<< this->_output_args[i]->C_Reference_String() << ";" << endl;	
+				<< this->_output_args[i]->C_Reference_String() << ";\\" << endl;	
 		}
 	}
 
@@ -1898,7 +1902,7 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 		ofile << this->_output_args[i]->C_Reference_String();
 		first_one = false;
 	}
-	ofile <<  ");  " << endl;
+	ofile <<  ");\\" << endl;
 
 	// type conversions at the outputs.
 	for(unsigned int i=0; i < this->_output_args.size(); i++)
@@ -1913,28 +1917,28 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 
 }
 
-void AaCallStatement::PrintC(ofstream& ofile)
+void AaCallStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 {
+	srcfile << "// " << this->To_String(); //includes newline
+	headerfile << "\n#define " << this->Get_C_Macro_Name() << " ";
+	srcfile <<  this->Get_C_Macro_Name() << "; " << endl;
 
-	
-	ofile << "// " << this->To_String();
-	ofile << "// " << this->Get_Source_Info() << endl;
 	if(this->Get_Guard_Expression())
 	{
-		this->Get_Guard_Expression()->PrintC_Declaration(ofile);
-		this->Get_Guard_Expression()->PrintC(ofile);
+		this->Get_Guard_Expression()->PrintC_Declaration(headerfile);
+		this->Get_Guard_Expression()->PrintC(headerfile);
 	}
 
 	for(unsigned int i=0; i < this->_input_args.size(); i++)
 	{
-		this->_input_args[i]->PrintC_Declaration(ofile);
+		this->_input_args[i]->PrintC_Declaration(headerfile);
 	}
 
 	for(unsigned int i=0; i < this->_output_args.size(); i++)
 	{
 		if(this->_output_args[i]->Get_Root_Object() != ((AaRoot*) this))
 		{
-			this->_output_args[i]->PrintC_Declaration(ofile);
+			this->_output_args[i]->PrintC_Declaration(headerfile);
 		}
 	}
 
@@ -1942,51 +1946,52 @@ void AaCallStatement::PrintC(ofstream& ofile)
 
 	if(this->Get_Guard_Expression())
 	{
-		ofile << "if (" ;
-		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), ofile);
-		ofile << ") {" << endl;
+		headerfile << "if (" ;
+		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), headerfile);
+		headerfile << ") {\\" << endl;
 	}
 
 	for(unsigned int i=0; i < this->_input_args.size(); i++)
 	{
-		this->_input_args[i]->PrintC(ofile);
+		this->_input_args[i]->PrintC(headerfile);
 	}
 
 	if(this->Get_Called_Module()->Get_Foreign_Flag())
 	{
-		this->PrintC_Call_To_Foreign_Module(ofile);
+		this->PrintC_Call_To_Foreign_Module(headerfile);
 	}
 	else
 	{
 		bool first_one = true;
-		ofile << ((AaModule*)this->Get_Called_Module())->Get_C_Inner_Wrap_Function_Name()
+		headerfile << ((AaModule*)this->Get_Called_Module())->Get_C_Inner_Wrap_Function_Name()
 			<< "(";
 		for(unsigned int i=0; i < this->_input_args.size(); i++)
 		{
 			if(!first_one)
-				ofile << ", ";
-			ofile << " &(" << this->_input_args[i]->C_Reference_String() << ")";
+				headerfile << ", ";
+			headerfile << " &(" << this->_input_args[i]->C_Reference_String() << ")";
 			first_one = false;
 		}
 
 		for(unsigned int i=0; i < this->_output_args.size(); i++)
 		{
 			if(!first_one)
-				ofile << ", ";
-			ofile << "&(";
-			ofile << this->_output_args[i]->C_Reference_String() << ")";
+				headerfile << ", ";
+			headerfile << "&(";
+			headerfile << this->_output_args[i]->C_Reference_String() << ")";
 			first_one = false;
 		}
-		ofile <<  ");  " << endl;
+		headerfile <<  ");\\" << endl;
 
 	}
 
 	// pass results to output expressions.
 	for(unsigned int i=0; i < this->_output_args.size(); i++)
-		this->_output_args[i]->PrintC(ofile);
+		this->_output_args[i]->PrintC(headerfile);
 
 	if(this->Get_Guard_Expression())
-		ofile << "}" << endl;
+		headerfile << "}\\" << endl;
+	headerfile << ";" << endl;
 }
 
 void AaCallStatement::PrintC_Implicit_Declarations(ofstream& ofile)
@@ -1995,7 +2000,6 @@ void AaCallStatement::PrintC_Implicit_Declarations(ofstream& ofile)
 	{
 		if(this->_output_args[i]->Get_Root_Object() == ((AaRoot*) this))
 		{
-			ofile << "// implicit declaration for call: " << this->_output_args[i]->Get_Source_Info() << endl;
 			this->_output_args[i]->PrintC_Declaration(ofile);
 		}
 	}
@@ -2257,7 +2261,7 @@ void AaBlockStatement::Print(ostream& ofile)
 	}
 }
 
-void AaBlockStatement::PrintC(ofstream& ofile)
+void AaBlockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 {
 	map<string, AaType*> export_type_map;
 	map<string, string> renamed_export_map;
@@ -2305,22 +2309,28 @@ void AaBlockStatement::PrintC(ofstream& ofile)
 		}
 	}
 	// declare the objects which need to be exported.
+	headerfile << "\n#define " << this->Get_Export_Declare_Macro() << " ";
 	for(map<string,AaType*>::iterator iter = export_type_map.begin(), fiter = export_type_map.end();
 			iter != fiter; iter++)
 	{
-		Print_C_Declaration((*iter).first, (*iter).second, ofile);
+		Print_C_Declaration((*iter).first, (*iter).second, headerfile);
 	}
-
-	ofile << "{" << endl;
-	this->Write_C_Object_Declarations(ofile);
-
+	this->Write_C_Object_Declarations(headerfile);
 	if(this->_statement_sequence != NULL)
 	{
-		this->_statement_sequence->PrintC_Implicit_Declarations(ofile);
-		this->_statement_sequence->PrintC(ofile);
+		this->_statement_sequence->PrintC_Implicit_Declarations(headerfile);
+	}
+	headerfile << endl;
+
+	srcfile  << this->Get_Export_Declare_Macro() << "; " << endl;
+	srcfile << "{" << endl;
+	if(this->_statement_sequence != NULL)
+	{
+		this->_statement_sequence->PrintC(srcfile, headerfile);
 	}
 
 	// ship exports out of the block
+	headerfile << "\n#define " << this->Get_Export_Apply_Macro() << " ";
 	for(map<string,string>::iterator iter = renamed_export_map.begin(), fiter = renamed_export_map.end();
 			iter != fiter; iter++)
 	{
@@ -2331,10 +2341,12 @@ void AaBlockStatement::PrintC(ofstream& ofile)
 		if(titer != export_type_map.end())
 		{	
 			exp_type = (*titer).second;
-			Print_C_Assignment(exported_name, internal_name, exp_type, ofile);
+			Print_C_Assignment(exported_name, internal_name, exp_type, headerfile);
 		}
 	}
-	ofile << "}" << endl;
+	headerfile << endl;
+	srcfile << this->Get_Export_Apply_Macro() << ";" << endl;
+	srcfile << "}" << endl;
 }
 
 void AaBlockStatement::Map_Source_References()
@@ -2898,12 +2910,12 @@ void AaJoinForkStatement::Print(ostream& ofile)
 	ofile << "$endjoin " << endl;
 }
 
-void AaJoinForkStatement::PrintC(ofstream& ofile)
+void AaJoinForkStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 {
-	ofile << "// join-fork statement : " << this->Get_Source_Info() << endl;
+	srcfile << "// join-fork statement : " << this->Get_Source_Info() << endl;
 	if(this->_statement_sequence != NULL)
 	{
-		this->_statement_sequence->PrintC(ofile);
+		this->_statement_sequence->PrintC(srcfile, headerfile);
 	}
 }
 
@@ -3043,49 +3055,57 @@ void AaMergeStatement::Print(ostream& ofile)
 // finally goto run_block.. and print the
 // statements.
 //
-void AaMergeStatement::PrintC(ofstream& ofile)
+void AaMergeStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 {
 
-	ofile << "// merge: " << this->Get_Source_Info() << endl;
+	srcfile << "// merge " << this->Get_Source_Info() << endl;
+	headerfile << "\n#define " << this->Get_C_Preamble_Macro_Name() << " ";
+
 	string run_block_name = this->Get_VC_Name() + "_run";
 	string entry_flag_name = this->Get_VC_Name() + "_entry_flag";
-	ofile << "uint8_t " << entry_flag_name << ";" << endl;
+	headerfile << "uint8_t " << entry_flag_name << ";\\" << endl;
 
 	if(this->Get_In_Do_While())
 	{
-		ofile << entry_flag_name << " = do_while_entry_flag;" << endl;
+		headerfile << entry_flag_name << " = do_while_entry_flag;\\" << endl;
 	}
 	else
 	{
-		ofile << entry_flag_name << " = 1;" << endl;
+		headerfile << entry_flag_name << " = 1;\\" << endl;
 	}
 
 	for(unsigned int i=0; i < this->_wait_on_statements.size(); i++)
-		ofile << "uint8_t " << this->_wait_on_statements[i]->C_Reference_String() << "_flag = 0; " << endl;
-	ofile  << "goto " << run_block_name << ";" << endl;
+		headerfile << "uint8_t " << this->_wait_on_statements[i]->C_Reference_String() << "_flag = 0;\\" << endl;
+	headerfile  << "goto " << run_block_name << ";\\" << endl;
 
 	for(unsigned int i=0; i < this->_wait_on_statements.size(); i++)
 	{ 
-		ofile  << this->_wait_on_statements[i]->C_Reference_String() << ": ";
-		ofile  << this->_wait_on_statements[i]->C_Reference_String() << "_flag = 1; " << endl;
+		headerfile  << this->_wait_on_statements[i]->C_Reference_String() << ": ";
+		headerfile  << this->_wait_on_statements[i]->C_Reference_String() << "_flag = 1;\\" << endl;
 		for(unsigned int j = 0; j < this->_wait_on_statements.size(); j++)
 		{
 			if(j != i)
-				ofile  << this->_wait_on_statements[j]->C_Reference_String() << "_flag = 0; " << endl;
+				headerfile  << this->_wait_on_statements[j]->C_Reference_String() << "_flag = 0;\\" << endl;
 		
 		}
-		ofile  << "goto " << run_block_name << ";" << endl;
+		headerfile  << "goto " << run_block_name << ";\\" << endl;
 	}
-	ofile << endl;
+	headerfile   << run_block_name << ": ;\\" << endl;
 
-	ofile   << run_block_name << ": ;" << endl;
+	srcfile << this->Get_C_Preamble_Macro_Name() << "; " << endl;
+
 	if(this->_statement_sequence != NULL)
 	{
-		this->_statement_sequence->PrintC(ofile);
+		this->_statement_sequence->PrintC(srcfile, headerfile);
 	}
+
+
+	headerfile << "\n#define " << this->Get_C_Postamble_Macro_Name() << " ";
+
 	for(unsigned int i=0; i < this->_wait_on_statements.size(); i++)
-		ofile  << this->_wait_on_statements[i]->C_Reference_String() << "_flag = 0; " << endl;
-	ofile << entry_flag_name << " = 0;" << endl;
+		headerfile  << this->_wait_on_statements[i]->C_Reference_String() << "_flag = 0;\\" << endl;
+	headerfile << entry_flag_name << " = 0;" << endl;
+	srcfile << this->Get_C_Postamble_Macro_Name() << "; " << endl;
 }
 
 void AaMergeStatement::Map_Source_References()
@@ -3484,20 +3504,21 @@ void AaPhiStatement::Set_Pipeline_Parent(AaStatement* dws)
 	}
 }
 
-void AaPhiStatement::PrintC(ofstream& ofile)
+void AaPhiStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 {
+	srcfile << "// " << this->To_String(); //includes newline
+	headerfile << "\n#define " << this->Get_C_Macro_Name() << " ";
+	srcfile <<  this->Get_C_Macro_Name() << "; " << endl;
 
-        ofile << "// " << this->To_String();
-        ofile << "// " << this->Get_Source_Info() << endl;
 	AaExpression* default_src = NULL;
 	for(unsigned int i=0; i < this->_source_pairs.size(); i++)
 	{
-		this->_source_pairs[i].second->PrintC_Declaration(ofile);
+		this->_source_pairs[i].second->PrintC_Declaration(headerfile);
 	}
 
 	if(this->_target->Get_Root_Object() != ((AaRoot*) this))
 	{
-		this->_target->PrintC_Declaration(ofile);
+		this->_target->PrintC_Declaration(headerfile);
 	}
 
 	string tgt_name;
@@ -3530,14 +3551,14 @@ void AaPhiStatement::PrintC(ofstream& ofile)
 
 			if(at_least_one)
 			{
-				ofile << " else ";
+				headerfile << " else ";
 			}
 
-			ofile << "if(" << check_string << ") {" << endl;
-			this->_source_pairs[i].second->PrintC(ofile);
+			headerfile << "if(" << check_string << ") {\\" << endl;
+			this->_source_pairs[i].second->PrintC(headerfile);
 			Print_C_Assignment(tgt_name, this->_source_pairs[i].second->C_Reference_String(),
-					this->_source_pairs[i].second->Get_Type(), ofile);
-			ofile << "}" << endl;
+					this->_source_pairs[i].second->Get_Type(), headerfile);
+			headerfile << "}\\" << endl;
 			at_least_one = true;
 		}
 
@@ -3547,24 +3568,25 @@ void AaPhiStatement::PrintC(ofstream& ofile)
 	{
 		if(at_least_one)
 		{
-			ofile << "else {" << endl;
+			headerfile << "else {\\" << endl;
 			Print_C_Assignment(tgt_name,  default_src->C_Reference_String(),
-					default_src->Get_Type(), ofile);
-			ofile << "}" << endl;
+					default_src->Get_Type(), headerfile);
+			headerfile << "}\\" << endl;
 		}
 		else
 			Print_C_Assignment(tgt_name,  default_src->C_Reference_String(),
-					default_src->Get_Type(), ofile);
+					default_src->Get_Type(), headerfile);
 	}
 
 	// pipe write if necessary..
- 	this->_target->PrintC(ofile);
+ 	this->_target->PrintC(headerfile);
+	headerfile << ";" << endl;
 }
+
 void AaPhiStatement::PrintC_Implicit_Declarations(ofstream& ofile)
 {
 	if(this->_target->Get_Root_Object() == ((AaRoot*) this))
 	{
-		ofile << "// implicit declarations for phi statement: " << this->Get_Source_Info() << endl;
 		this->_target->PrintC_Declaration(ofile);
 	}
 }
@@ -3785,43 +3807,41 @@ void AaSwitchStatement::Print(ostream& ofile)
   ofile << "$endswitch " << endl;
 }
 
-
-void AaSwitchStatement::PrintC(ofstream& ofile)
+void AaSwitchStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 {
   // 
   //
-  ofile << "// switch statement " << endl;
-  ofile << "// " << this->Get_Source_Info() << endl;
-  this->_select_expression->PrintC_Declaration(ofile);
-  this->_select_expression->PrintC(ofile);
+  srcfile << "// switch statement : " <<  this->Get_Source_Info() <<  endl;
+  this->_select_expression->PrintC_Declaration(srcfile);
+  this->_select_expression->PrintC(srcfile);
   for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
   {
-	this->_choice_pairs[i].first->PrintC_Declaration(ofile);
-	this->_choice_pairs[i].first->PrintC(ofile);
+	this->_choice_pairs[i].first->PrintC_Declaration(srcfile);
+	this->_choice_pairs[i].first->PrintC(srcfile);
   }
-  ofile << "switch (";
-  Print_C_Value_Expression(this->_select_expression->C_Reference_String(), this->_select_expression->Get_Type(), ofile);
-  ofile << ")";
-  ofile << " { " << endl;
+  srcfile << "switch (";
+  Print_C_Value_Expression(this->_select_expression->C_Reference_String(), this->_select_expression->Get_Type(), srcfile);
+  srcfile << ")";
+  srcfile << " { " << endl;
   for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
     {
-      ofile << " case ";
-      ofile << this->_choice_pairs[i].first->Get_Expression_Value()->To_C_String();
-      ofile << " : " << endl;
-      this->_choice_pairs[i].second->PrintC(ofile);
-      ofile << "break;" << endl;
+      srcfile << " case ";
+      srcfile << this->_choice_pairs[i].first->Get_Expression_Value()->To_C_String();
+      srcfile << " : " << endl;
+      this->_choice_pairs[i].second->PrintC(srcfile, headerfile);
+      srcfile << "break;" << endl;
     }
-  ofile << " default : " << endl;
+  srcfile << " default : " << endl;
   if(this->_default_sequence)
     {
-      this->_default_sequence->PrintC(ofile);
-      ofile << "break;" << endl;
+      this->_default_sequence->PrintC(srcfile, headerfile);
+      srcfile << "break;" << endl;
     }
   else
     {
-      ofile << "break;" << endl;
+      srcfile << "break;" << endl;
     }
-  ofile << "}" << endl;
+  srcfile << "}" << endl;
 }
 
 
@@ -4263,34 +4283,33 @@ bool AaIfStatement::Can_Block(bool pipeline_flag)
 }
 
 
-void AaIfStatement::PrintC(ofstream& ofile)
+void AaIfStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 {
-	ofile << "// if statement " << endl;
-	ofile << "// " << this->Get_Source_Info() << endl;
-	this->_test_expression->PrintC_Declaration(ofile);
-	this->_test_expression->PrintC(ofile);
-	ofile << "if (";
-	Print_C_Value_Expression(this->_test_expression->C_Reference_String(), this->_test_expression->Get_Type(), ofile);
-	ofile << ") { " << endl;
+        srcfile << "// if statement : " <<  this->Get_Source_Info() <<  endl;
+	this->_test_expression->PrintC_Declaration(srcfile);
+	this->_test_expression->PrintC(srcfile);
+	srcfile << "if (";
+	Print_C_Value_Expression(this->_test_expression->C_Reference_String(), this->_test_expression->Get_Type(), srcfile);
+	srcfile << ") { " << endl;
 	if(this->_if_sequence)
 	{
-		this->_if_sequence->PrintC(ofile);
+		this->_if_sequence->PrintC(srcfile, headerfile);
 	}
 	else
 	{
-		ofile <<  " ;" << endl;
+		srcfile <<  " ;" << endl;
 	}
-	ofile << "} " << endl; 
-	ofile << "else {" << endl;
+	srcfile << "} " << endl; 
+	srcfile << "else {" << endl;
 	if(this->_else_sequence)
 	{
-		this->_else_sequence->PrintC(ofile);
+		this->_else_sequence->PrintC(srcfile, headerfile);
 	}
 	else
 	{
-		ofile <<  " ;" << endl;
+		srcfile <<  " ;" << endl;
 	}
-	ofile << "}" << endl;
+	srcfile << "}" << endl;
 }
 
 
@@ -4617,30 +4636,30 @@ void AaDoWhileStatement::Print(ostream& ofile)
   ofile << endl;
 }
 
-void AaDoWhileStatement::PrintC(ofstream& ofile)
+void AaDoWhileStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 {
 	
-    ofile << "{" << endl;
-    ofile << "// do-while:  " << this->Get_Source_Info() << endl;
+    srcfile << "{" << endl;
+    srcfile << "// do-while:  " << this->Get_Source_Info() << endl;
     assert(this->_test_expression);
 
-    this->_test_expression->PrintC_Declaration(ofile);
-    this->_test_expression->PrintC(ofile);
-    ofile << "uint8_t do_while_entry_flag;" << endl;
-    ofile << "do_while_entry_flag = 1;" << endl;
-    ofile << "uint8_t do_while_loopback_flag;" << endl;
-    ofile << "do_while_loopback_flag = 0;" << endl;
-    ofile << "do {" << endl;
-  	this->_merge_statement->PrintC(ofile);
-  	this->_loop_body_sequence->PrintC(ofile);
-    ofile << "do_while_entry_flag = 0;" << endl;
-    ofile << "do_while_loopback_flag = 1;" << endl;
-    ofile << "} " << endl;
-    ofile << "while ( ";
+    this->_test_expression->PrintC_Declaration(srcfile);
+    this->_test_expression->PrintC(srcfile);
+    srcfile << "uint8_t do_while_entry_flag;" << endl;
+    srcfile << "do_while_entry_flag = 1;" << endl;
+    srcfile << "uint8_t do_while_loopback_flag;" << endl;
+    srcfile << "do_while_loopback_flag = 0;" << endl;
+    srcfile << "do {" << endl;
+  	this->_merge_statement->PrintC(srcfile, headerfile);
+  	this->_loop_body_sequence->PrintC(srcfile, headerfile);
+    srcfile << "do_while_entry_flag = 0;" << endl;
+    srcfile << "do_while_loopback_flag = 1;" << endl;
+    srcfile << "} " << endl;
+    srcfile << "while ( ";
     Print_C_Value_Expression(this->_test_expression->C_Reference_String(), 
-				this->_test_expression->Get_Type(), ofile);
-    ofile << ");" << endl;
-    ofile << "}" << endl;
+				this->_test_expression->Get_Type(), srcfile);
+    srcfile << ");" << endl;
+    srcfile << "}" << endl;
 }
 
 
@@ -5107,3 +5126,36 @@ bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector
 	
 	return(false);
 }
+	
+
+string AaStatement::Get_C_Macro_Name()
+{
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
+				+ this->Get_VC_Name() + "_c_macro_");
+}
+
+string AaStatement::Get_Export_Declare_Macro()
+{
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
+				+ this->Get_VC_Name() + "_c_export_decl_macro_");
+}
+
+string AaStatement::Get_Export_Apply_Macro()
+{
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
+				+ this->Get_VC_Name() + "_c_export_apply_macro_");
+}
+	
+string AaStatement::Get_C_Preamble_Macro_Name() 
+{
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
+				+ this->Get_VC_Name() + "_c_preamble_macro_");
+}
+
+
+string AaStatement::Get_C_Postamble_Macro_Name()
+{
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
+				+ this->Get_VC_Name() + "_c_postamble_macro_");
+}
+

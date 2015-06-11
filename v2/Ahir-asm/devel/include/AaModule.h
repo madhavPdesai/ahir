@@ -180,7 +180,7 @@ class AaModule: public AaSeriesBlockStatement
   // Aa2C support.
   //
   void Write_C_Header(ofstream& ofile);
-  void Write_C_Source(ofstream& ofile);
+  void Write_C_Source(ofstream& srcfile, ofstream& headerfile);
   bool Can_Have_Native_C_Interface();
 
   void Write_VC_Model(ostream& ofile);
@@ -233,6 +233,11 @@ class AaModule: public AaSeriesBlockStatement
 
   virtual void Set_Statement_Sequence(AaStatementSequence* statement_sequence);
   virtual void Write_VC_Control_Path_Optimized_Base(ostream& ofile);
+
+   string Get_C_Outer_Arg_Decl_Macro_Name();
+   string Get_C_Outer_Output_Xfer_To_Outer_Macro_Name() ;
+   string Get_C_Inner_Input_Args_Prepare_Macro();
+   string Get_C_Inner_Output_Args_Prepare_Macro() ;
 };
 
 #endif
