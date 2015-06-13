@@ -154,6 +154,11 @@ class AaProgram
   AaProgram();
   ~AaProgram();
 
+  static string Report_Log_File_Name()
+  {
+	return(AaProgram::_c_vhdl_module_prefix + "__report_log_file__");
+  }
+
   static void Make_Extmem_Object();
   static AaStorageObject* Get_Extmem_Object()
     {

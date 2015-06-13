@@ -3247,7 +3247,7 @@ void AaAddressOfExpression::PrintC(ofstream& ofile)
 	this->_reference_to_object->PrintC(ofile);
 	this->PrintC_Declaration(ofile);
 	ofile << this->C_Reference_String() << " = ";
-	ofile << "&(" << this->_reference_to_object->C_Reference_String() << ");" << endl;
+	ofile << "&(" << this->_reference_to_object->C_Reference_String() << ");";
 }
 
 

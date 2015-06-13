@@ -2,11 +2,12 @@
 #include <AaValue.h>
 #include <AaObject.h>
 #include <AaExpression.h>
+#include <AaProgram.h>
 #include <Aa2C.h>
 
 
-#define __endl__  "" 
-void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, bool port_mode, bool in_mode, bool lifo_mode, ofstream& ofile)
+#define __endl__  "\\\n" 
+void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, bool signal_mode, bool lifo_mode, ofstream& ofile)
 {
 	int wsize;
 	int tsize = pipe_type->Size();
@@ -17,14 +18,14 @@ void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, 
 
 	int nwords = ((tsize % wsize) ? (tsize/wsize)+1 : tsize/wsize);
 
-	if(port_mode)
+	if(signal_mode)
 	{
 		if(nwords != 1)
 		{
-			AaRoot::Error("Aa2C: port-mode pipes can be either 8/16/32/64 bits-wide or must have width at most 8", NULL);
+			AaRoot::Error("Aa2C: signal-mode pipes can be either 8/16/32/64 bits-wide or must have width at most 8", NULL);
 			return;
 		}
-		ofile << "register_port(\"" << pipe_name << "\", " <<  wsize << ", " <<   (in_mode ? 1 : 0) << ");" << __endl__;
+		ofile << "register_signal(\"" << pipe_name << "\", " <<  wsize  << ");" << __endl__;
 	}
 	else
 	{
@@ -801,7 +802,6 @@ void Print_C_Ternary_Operation(string test,
 void Print_C_Slice_Operation(string src, AaType* src_type, int _low_index, string tgt,
 		AaType* tgt_type, ofstream& ofile)
 {
-	ofile << __endl__ << "// print C  slice expression from " << src << " to " << tgt << __endl__;
 	if(src_type->Is_Integer_Type())
 	{
 		if(tgt_type->Is_Integer_Type())
@@ -821,4 +821,25 @@ void Print_C_Slice_Operation(string src, AaType* src_type, int _low_index, strin
 	}
 }
 
+void Print_C_Report_String(string tag, string qs, ofstream& ofile)
+{
+	string log_file_name = AaProgram::Report_Log_File_Name();
+	ofile << "if(" << log_file_name << " != NULL) ";
+	ofile << "fprintf(" << log_file_name << ",\"" << tag << ">\\t%s\\n\"," << "\"" <<  qs << "\");";
+}
 
+void Print_C_Report_String_Expr_Pair(string tag, string qs, string expr, AaType* etype, ofstream& ofile)
+{
+	string log_file_name = AaProgram::Report_Log_File_Name();
+	ofile << "if(" << log_file_name << " != NULL) {";
+	ofile << "fprintf(" << log_file_name << ",\"" << tag << ">\\t\\t%s\\t\\t\"," << "\"" << qs << "\");";
+	if(etype->Is_Integer_Type())
+	{
+		ofile << "fprintf(" << log_file_name << ", \"%llx\\n\",bit_vector_to_uint64(0,&(" << expr  << ")));";
+	}
+	else if(etype->Is_Float_Type())
+	{
+		ofile << "fprintf(" << log_file_name << ", \"%le\\n\"," << expr  << ");";
+	}
+	ofile << "}"; 
+}

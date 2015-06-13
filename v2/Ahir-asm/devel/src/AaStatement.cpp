@@ -805,11 +805,73 @@ void AaNullStatement::Write_VC_Control_Path(ostream& ofile)
 {
   ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
+}
+//---------------------------------------------------------------------
+// AaReportStatement: public AaNullStatement
+//---------------------------------------------------------------------
+AaReportStatement::AaReportStatement(AaScope* parent, 
+			string tag,
+			string synopsys, 
+			vector< pair<string,AaExpression* > >& descr_pairs): 
+		AaNullStatement(parent)
+{
+	_tag = tag;
+	_synopsys = synopsys;
+	for(int I = 0, fI = descr_pairs.size(); I < fI; I++)
+	{
+		_descr_pairs.push_back(pair<string,AaExpression*>(descr_pairs[I].first, descr_pairs[I].second));
+	}
+}
+ 
+void AaReportStatement::Map_Source_References()
+{
+	if(this->Get_Guard_Expression())
+	{
+		this->Get_Guard_Expression()->Map_Source_References(this->_source_objects);
+		if(!this->_guard_expression->Is_Implicit_Variable_Reference())
+		{
+			AaRoot::Error("guard variable must be implicit (SSA)", this);
+		}
+	}
+	for(int I = 0, fI = _descr_pairs.size(); I < fI; I++)
+	{
+		_descr_pairs[I].second->Map_Source_References(this->_source_objects);
+	}
+}
 
-    
-  // write a blank series block...
-  ofile << ";;[" << this->Get_VC_Name() << "] {"  << endl;
-  ofile << "}";
+void AaReportStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
+{
+	srcfile << "// " << this->To_String();
+	headerfile << "\n#define " << this->Get_C_Macro_Name() << " " ;
+	srcfile << this->Get_C_Macro_Name() << "; " << endl ;
+	if(this->Get_Guard_Expression())
+	{
+		this->Get_Guard_Expression()->PrintC_Declaration(headerfile);
+		this->Get_Guard_Expression()->PrintC(headerfile);
+	}
+	if(this->Get_Guard_Expression())
+	{
+		headerfile << "if (" ;
+		if(this->Get_Guard_Complement())
+			headerfile << "!";
+		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), headerfile);
+		headerfile << ") {\\" << endl;
+	}
+	headerfile << "get_file_print_lock(" << AaProgram::Report_Log_File_Name() <<");";
+	Print_C_Report_String(this->_tag, this->_synopsys, headerfile);
+	
+	for(int I = 0, fI = _descr_pairs.size(); I < fI; I++)
+	{
+		_descr_pairs[I].second->PrintC_Declaration(headerfile);
+		_descr_pairs[I].second->PrintC(headerfile);
+		Print_C_Report_String_Expr_Pair(this->_tag, _descr_pairs[I].first,
+							_descr_pairs[I].second->C_Reference_String(),
+							_descr_pairs[I].second->Get_Type(), headerfile);
+	}
+	headerfile << "release_file_print_lock(" << AaProgram::Report_Log_File_Name() <<");";
+	if(this->Get_Guard_Expression())
+		headerfile << "}";
+	headerfile << ";" << endl;
 }
 
 //---------------------------------------------------------------------
@@ -1087,6 +1149,8 @@ void AaAssignmentStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 
 	if(this->Get_Guard_Expression())
 		headerfile << "}" << endl;
+
+	headerfile << ";" << endl;
 
 }
 
@@ -2328,6 +2392,7 @@ void AaBlockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	{
 		this->_statement_sequence->PrintC(srcfile, headerfile);
 	}
+	headerfile << ";" << endl;
 
 	// ship exports out of the block
 	headerfile << "\n#define " << this->Get_Export_Apply_Macro() << " ";
@@ -2344,7 +2409,7 @@ void AaBlockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 			Print_C_Assignment(exported_name, internal_name, exp_type, headerfile);
 		}
 	}
-	headerfile << endl;
+	headerfile << ";" << endl;
 	srcfile << this->Get_Export_Apply_Macro() << ";" << endl;
 	srcfile << "}" << endl;
 }
@@ -3098,7 +3163,7 @@ void AaMergeStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	{
 		this->_statement_sequence->PrintC(srcfile, headerfile);
 	}
-
+	headerfile << ";" <<  endl;
 
 	headerfile << "\n#define " << this->Get_C_Postamble_Macro_Name() << " ";
 
@@ -3569,13 +3634,19 @@ void AaPhiStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 		if(at_least_one)
 		{
 			headerfile << "else {\\" << endl;
+			default_src->PrintC_Declaration(headerfile);
+			default_src->PrintC(headerfile);
 			Print_C_Assignment(tgt_name,  default_src->C_Reference_String(),
 					default_src->Get_Type(), headerfile);
 			headerfile << "}\\" << endl;
 		}
 		else
+		{
+			default_src->PrintC_Declaration(headerfile);
+			default_src->PrintC(headerfile);
 			Print_C_Assignment(tgt_name,  default_src->C_Reference_String(),
 					default_src->Get_Type(), headerfile);
+		}
 	}
 
 	// pipe write if necessary..

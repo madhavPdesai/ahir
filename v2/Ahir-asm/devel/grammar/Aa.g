@@ -264,7 +264,8 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 	(GUARD LPAREN (NOT {not_flag = true;})? gid:SIMPLE_IDENTIFIER RPAREN {guard_flag = true; gs = gid->getText();} ) ? 
 		// NOTE: the split statement can create a group of statements..
 		//       Thus, we put the created statement(s) in a list.
-	   ( aA_Assignment_Statement[scope,llist] |  aA_Call_Statement[scope,llist] | aA_Split_Statement[scope,llist]) 
+	   (aA_Assignment_Statement[scope,llist] |  aA_Call_Statement[scope,llist] | aA_Split_Statement[scope,llist]
+			| aA_Report_Statement[scope,llist]) 
 	   (MARK mid: SIMPLE_IDENTIFIER 
 		{
 			mark_flag = true;
@@ -324,6 +325,35 @@ aA_Null_Statement[AaScope* scope] returns[AaStatement* new_stmt]
             new_stmt = new AaNullStatement(scope);
         }
     ;
+
+
+//-----------------------------------------------------------------------------------------------
+// aA_Report_Statement : $report LPAREN synopsys-string (descr-string descr-expr)* RPAREN
+//-----------------------------------------------------------------------------------------------
+aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
+{
+   string tag;
+   string synopsys;
+   string descr;
+   AaExpression* expr = NULL;
+   vector<pair<string,AaExpression*> > dpairs;
+   AaReportStatement* new_stmt = NULL;
+}:
+	REPORT LPAREN 
+                tagid : SIMPLE_IDENTIFIER{tag = tagid->getText();}
+		qsid: SIMPLE_IDENTIFIER {synopsys = qsid->getText();}
+		(did: SIMPLE_IDENTIFIER expr=aA_Expression[scope] 
+			{ 
+				descr = did->getText(); 
+				dpairs.push_back(pair<string,AaExpression*> (descr, expr));
+			}
+		)*
+	    RPAREN
+	{
+		new_stmt = new AaReportStatement(scope, tag, synopsys, dpairs);
+		slist.push_back(new_stmt);
+	}
+;
 
 //-----------------------------------------------------------------------------------------------
 // aA_Assignment: ASSIGN aA_Object_Reference  aA_Expression
@@ -1983,6 +2013,10 @@ REDUCE : "$reduce";
 
 // split
 SPLIT : "$split";
+
+
+// report-statement
+REPORT   : "$report";
 
 
 

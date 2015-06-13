@@ -453,7 +453,7 @@ void AaPipeObject::PrintC_Pipe_Registration(ofstream& ofile)
 	string pname = this->C_Reference_String();
 
 	// register the pipe.
-	Print_C_Pipe_Registration(pname, t, _depth, _port, _in_mode,  _lifo_mode, ofile);
+	Print_C_Pipe_Registration(pname, t, _depth, (_port | _signal),  _lifo_mode, ofile);
 }
 
 //---------------------------------------------------------------------

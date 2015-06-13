@@ -14,7 +14,7 @@ class AaPipeObject;
 
 
 		
-void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, bool port_mode, bool in_mode, bool lifo_mode,ofstream& ofile);
+void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, bool signal_mode, bool lifo_mode,ofstream& ofile);
 void Print_C_Declaration(string obj_name, AaType* obj_type,  ofstream& ofile);
 void Print_C_Global_Declaration(string obj_name, AaType* obj_type, ofstream& ofile);
 void Print_C_Global_Initialization(string obj_name, AaType* obj_type,  ofstream& ofile);
@@ -39,6 +39,10 @@ void Print_C_Ternary_Operation(string test,
 			string tgt, AaType* tgt_type, ofstream& ofile);
 void Print_C_Slice_Operation(string src, AaType* src_type, int _low_index, string tgt,
 				AaType* tgt_type, ofstream& ofile);
+
+
+void Print_C_Report_String(string tag, string qs, ofstream& ofile);
+void Print_C_Report_String_Expr_Pair(string tag, string qs, string expr, AaType* etype, ofstream& ofile);
 
 
 #endif

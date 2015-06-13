@@ -882,7 +882,8 @@ void AaModule::Set_Statement_Sequence(AaStatementSequence* statement_sequence)
 		AaStatement* s = statement_sequence->Get_Statement(idx);
 		if(this->Is_Pipelined())
 		{
-			if(!(s->Is("AaAssignmentStatement") || s->Is("AaCallStatement") || s->Is("AaNullStatement")))
+			if(!(s->Is("AaAssignmentStatement") || s->Is("AaCallStatement") 
+					|| s->Is("AaReportStatement") || s->Is("AaNullStatement")))
 			{
 				AaRoot::Error("pipelined module can contain only call/assignment/null statements.", s);
 				err_flag = true;

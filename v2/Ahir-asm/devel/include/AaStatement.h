@@ -239,7 +239,7 @@ class AaStatement: public AaScope
   {
 	assert(0);
   }
-  void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+  virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 	{ assert(0);}
   void Print_Slacks(set<AaRoot*>& visited_elements,
 	map<AaRoot*, vector< pair<AaRoot*, int> > > adjacency_map,
@@ -415,8 +415,35 @@ class AaNullStatement: public AaStatement
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
+  void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+  {
+	// do nothing..
+  }
 };
 
+class AaReportStatement: public AaNullStatement
+{
+	public:
+        string _tag;
+	string _synopsys;
+	vector<pair<string, AaExpression*> > _descr_pairs;
+
+	AaReportStatement(AaScope* parent, string tag, string synopsys, vector<pair<string,AaExpression*> >& descr_pairs);
+        virtual void Print(ostream& ofile)
+	{
+		ofile << "$report (" << _tag << " " << _synopsys << " ";
+		for(int I = 0, fI = _descr_pairs.size(); I < fI; I++)
+		{
+			ofile << this->Tab() << " " << _descr_pairs[I].first << " ";
+			_descr_pairs[I].second->Print(ofile);
+			ofile << " ";
+		}
+		ofile << ")" << endl;
+	}
+  	virtual void Map_Source_References();
+  	virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
+        virtual string Kind() {return("AaReportStatement");}
+};
 
 // assignment statement
 class AaAssignmentStatement: public AaStatement

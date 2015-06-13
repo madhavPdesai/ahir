@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
 {
 	init_pipe_handler_with_log();
 
-	start_daemons();
+	start_daemons(stderr);
 
 	uint8_t done = read_uint8("done_pipe");
 

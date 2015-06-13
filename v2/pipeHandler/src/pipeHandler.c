@@ -25,6 +25,18 @@
 static FILE* log_file = NULL;
 static PipeRec* pipes = NULL;
 
+MUTEX_DECL(__file_print_mutex__);
+void get_file_print_lock(FILE* fp)
+{
+	fflush((fp != NULL) ? fp : stderr);
+	MUTEX_LOCK(__file_print_mutex__);
+}
+void release_file_print_lock(FILE* fp)
+{
+	fflush((fp != NULL) ? fp : stderr);
+	MUTEX_UNLOCK(__file_print_mutex__);
+}
+
 MUTEX_DECL(handler_mutex);
 #define ___LOCK___  MUTEX_LOCK(handler_mutex);
 #define ___UNLOCK___  MUTEX_UNLOCK(handler_mutex);
@@ -187,6 +199,11 @@ uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo
 
 uint32_t register_port(char* id, int pipe_width, int is_input)
 {
+	register_signal(id, pipe_width);
+}
+
+uint32_t register_signal(char* id, int pipe_width)
+{
   PipeRec* p;
   p = find_pipe(id); // this also uses the lock.
   if(p != NULL)
@@ -196,7 +213,7 @@ uint32_t register_port(char* id, int pipe_width, int is_input)
 	      fprintf(stderr,"\nError: pipeHandler: redefinition of pipe %s with conflicting widths (%d or %d?)\n", id, p->pipe_width, pipe_width);
 		return(1);
         }
-	if(!p->is_port)
+	if(!p->is_signal)
 	{
 	      fprintf(stderr,"\nError: pipeHandler: redefinition of pipe %s with conflicting Port-status )\n", id);
 		return(1);
@@ -212,7 +229,7 @@ uint32_t register_port(char* id, int pipe_width, int is_input)
   new_p->write_pointer = 0;
   new_p->read_pointer = 0;
   new_p->buffer.ptr8 = (uint8_t*) malloc(((pipe_width)/8)*sizeof(uint8_t));
-  new_p->is_port = 1;
+  new_p->is_signal = 1;
 
   ___LOCK___
   new_p->next = pipes;
@@ -256,7 +273,7 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
   }
 
   MUTEX_LOCK(p->pm);
-  if(p->is_port)
+  if(p->is_signal)
 	ret_val = 1;
   else
   {

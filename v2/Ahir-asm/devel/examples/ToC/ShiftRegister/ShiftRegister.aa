@@ -25,7 +25,9 @@ $is
   $branchblock[main]
   {
     $merge $entry loopback $endmerge
-    midpipe := ($bitcast ($uint<20>) inpipe)
+    tval := ($bitcast ($uint<20>) inpipe)
+    midpipe := tval
+    $report (stage_1 sent midpipe tval) 
     $place [loopback]
   }
 }
@@ -37,7 +39,9 @@ $is
   $branchblock[main]
   {
     $merge $entry loopback $endmerge
-    outpipe := ($bitcast ($uint<16>) midpipe)
+    tval := ($bitcast ($uint<16>) midpipe)
+    outpipe := tval
+    $report (stage_2 sent output tval)
     $place [loopback]
   }
 }

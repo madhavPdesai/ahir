@@ -24,6 +24,8 @@ $is
 	    q := (a + b)
             r := (q + b)
         } (r => r)
+	$report (sum_mod interim_report r r a a b b)
+
         TM := ($bitcast ($uint<32>) (r && b))
         M  := ($bitcast ($uint<20>) TM)
         c := M
