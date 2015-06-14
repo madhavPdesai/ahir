@@ -70,6 +70,7 @@ void Usage_Vc2VHDL()
   cerr <<  " -W <VHDL-work-library> : the generated VHDL will be kept in library VHDL-work-library." << endl;
   cerr <<  "     The default work library is work." << endl;
   cerr <<  " -U :  input/output pipes will be printed with depth 0. " << endl;
+  cerr <<  " -H :  system interface in .hsys format will be printed. " << endl;
   cerr <<  " -I <n>:  deprecated " << endl;
   cerr <<  " alternate form:  --loop_pipeline_buffering_limit" << endl;
   cerr << endl;

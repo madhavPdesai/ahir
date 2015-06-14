@@ -312,6 +312,19 @@ int check_if_tests_passed(uint64_t def_size)
 	return(ret_val);
 }
 
+
+int misc_tests()
+{
+	bit_vector konst;
+	init_bit_vector(&konst, 4);
+	bit_vector_clear(&konst);
+	konst.val.byte_array[0] = 4;
+	uint64_t kval = bit_vector_to_uint64(0, &konst);
+	if(kval != 4)
+		return(1);
+	return(0);
+}
+
 //
 // usage
 //    <program>  <lowest-word-length> <highest-word-length>
@@ -321,8 +334,15 @@ int main(int argc, char* argv[])
 
 	srand(119);
 
-
 	int fail_count = 0;
+	int mret = misc_tests();
+	if(mret)
+	{
+		fprintf(stderr,"Error: misc tests failed.\n");
+		return(1);
+	}
+		
+
 	uint64_t def_size;
 
 	int L = 1;

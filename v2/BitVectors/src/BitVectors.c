@@ -546,11 +546,14 @@ uint8_t bit_vector_get_bit(bit_vector* f, uint32_t bp)
 	return(ret_val);
 }
 
-void bit_vector_bitsel(bit_vector* f,bit_vector* s,bit_vector* result)
+void bit_vector_bitsel(bit_vector* f, bit_vector* s, bit_vector* result)
 {
+	bit_vector_clear(result);
+
 	uint64_t sv;
 	sv = bit_vector_to_uint64(0,s);
-	bit_vector_assign_uint64(0,result, bit_vector_get_bit(f,sv));
+
+	bit_vector_set_bit(result, 0, bit_vector_get_bit(f,sv));
 }
 
 // the next two are a bit inefficient..

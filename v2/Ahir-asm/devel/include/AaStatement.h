@@ -431,6 +431,17 @@ class AaReportStatement: public AaNullStatement
 	AaReportStatement(AaScope* parent, string tag, string synopsys, vector<pair<string,AaExpression*> >& descr_pairs);
         virtual void Print(ostream& ofile)
 	{
+		if(this->Get_Guard_Expression())
+		{
+			ofile << "$guard (";
+			if(this->Get_Guard_Complement())
+			{
+				ofile << "~";
+			}
+			this->Get_Guard_Expression()->Print(ofile);
+			ofile << ") ";
+		}
+
 		ofile << "$report (" << _tag << " " << _synopsys << " ";
 		for(int I = 0, fI = _descr_pairs.size(); I < fI; I++)
 		{
