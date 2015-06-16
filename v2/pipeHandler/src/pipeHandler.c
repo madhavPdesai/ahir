@@ -28,12 +28,10 @@ static PipeRec* pipes = NULL;
 MUTEX_DECL(__file_print_mutex__);
 void get_file_print_lock(FILE* fp)
 {
-	fflush((fp != NULL) ? fp : stderr);
 	MUTEX_LOCK(__file_print_mutex__);
 }
 void release_file_print_lock(FILE* fp)
 {
-	fflush((fp != NULL) ? fp : stderr);
 	MUTEX_UNLOCK(__file_print_mutex__);
 }
 
@@ -172,7 +170,7 @@ uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo
   new_p->number_of_entries = 0;
   new_p->write_pointer = 0;
   new_p->read_pointer = 0;
-  new_p->buffer.ptr8 = (uint8_t*) malloc(((pipe_depth*pipe_width)/8)*sizeof(uint8_t));
+  new_p->buffer.ptr8 = (uint8_t*) calloc(1, ((pipe_depth*pipe_width)/8)*sizeof(uint8_t));
   new_p->lifo_mode = lifo_mode;
 
 #ifdef USE_GNUPTH
@@ -228,7 +226,7 @@ uint32_t register_signal(char* id, int pipe_width)
   new_p->number_of_entries = 0;
   new_p->write_pointer = 0;
   new_p->read_pointer = 0;
-  new_p->buffer.ptr8 = (uint8_t*) malloc(((pipe_width)/8)*sizeof(uint8_t));
+  new_p->buffer.ptr8 = (uint8_t*) calloc(1, ((pipe_width)/8)*sizeof(uint8_t));
   new_p->is_signal = 1;
 
   ___LOCK___

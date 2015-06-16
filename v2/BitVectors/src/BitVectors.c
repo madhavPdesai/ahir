@@ -59,14 +59,16 @@ void  pack_uint64_into_bit_vector(uint8_t signed_flag, uint64_t word, bit_vector
 		else
 			__set_byte(bv,i,(nb | def_byte));
 	}
+	bit_vector_clear_unused_bits(bv);
 }
 
 
 uint64_t truncate_uint64(uint64_t val, uint32_t bit_width)
 {
-	uint64_t trunc_mask = ~0;
+	uint64_t Z = 0;
+	uint64_t trunc_mask = ~Z;
 	if(bit_width < 64)
-		trunc_mask = ((((uint64_t) 0x1) << bit_width)-1);
+		trunc_mask = (~ (trunc_mask << bit_width));
 
 	uint64_t ret_val = val & trunc_mask;
 	return(ret_val);
@@ -174,7 +176,45 @@ uint8_t   __sign_bit(bit_vector* x)
 	else
 		return(0);
 }
+
+// ----------------   test functions.  --------------------
+// return 1 if all bits are cleared.
+uint8_t bit_vector_is_zero(bit_vector* t)
+{
+	uint8_t ret_val = 1;
+	uint32_t asize = __array_size(t);
+	uint8_t  cW = 0;
+	int i;
+	for(i = 0; i < asize; i++)
+	{
+		cW += 8;
+		uint8_t valid_bit_count = ((cW <= t->width)  ? 8 :  (cW % t->width));
+		uint8_t bmask =  (0xff >> (8 - valid_bit_count));
+		uint8_t b = (bmask & __get_byte(t,i));
+		if(b != 0)
+		{
+			ret_val = 0;
+			break;
+		}	
+	}
+	return(ret_val);
+}
+
 // ----------------   initialization, conversions to C types.  --------------------
+void      bit_vector_clear_unused_bits(bit_vector* t)
+{
+	uint32_t aSize = __array_size(t);
+	uint32_t W8 = 8*aSize;
+	if(W8 == t->width)
+		return;
+
+	uint8_t invalid_bits_in_top_byte = (W8 % t->width);
+	uint8_t bmask = (0xff >> invalid_bits_in_top_byte);
+	uint8_t tbyte = (bmask & __get_byte(t, aSize-1));
+	__set_byte(t, aSize-1, tbyte);
+	
+}
+
 uint64_t  bit_vector_to_uint64(uint8_t signed_flag, bit_vector* t)
 {
 	uint64_t rv = 0;
@@ -379,6 +419,7 @@ void bit_vector_or(bit_vector* r, bit_vector* s, bit_vector* t)
 	uint32_t asize = __array_size(r);
 	for(i = 0; i < asize; i++)
 		__set_byte(t,i, (__get_byte(r,i) | __get_byte(s,i)));
+	bit_vector_clear_unused_bits(t);
 }
 
 void bit_vector_nor(bit_vector* r, bit_vector* s, bit_vector* t)
@@ -388,6 +429,7 @@ void bit_vector_nor(bit_vector* r, bit_vector* s, bit_vector* t)
 	uint32_t asize = __array_size(r);
 	for(i = 0; i < asize; i++)
 		__set_byte(t,i, (~(__get_byte(r,i) | __get_byte(s,i))));
+	bit_vector_clear_unused_bits(t);
 }
 void bit_vector_and(bit_vector* r, bit_vector* s, bit_vector* t)
 {
@@ -396,6 +438,7 @@ void bit_vector_and(bit_vector* r, bit_vector* s, bit_vector* t)
 	uint32_t asize = __array_size(r);
 	for(i = 0; i < asize; i++)
 		__set_byte(t,i, (__get_byte(r,i) & __get_byte(s,i)));
+	bit_vector_clear_unused_bits(t);
 }
 void bit_vector_nand(bit_vector* r, bit_vector* s, bit_vector* t)
 {
@@ -404,6 +447,7 @@ void bit_vector_nand(bit_vector* r, bit_vector* s, bit_vector* t)
 	uint32_t asize = __array_size(r);
 	for(i = 0; i < asize; i++)
 		__set_byte(t,i, (~(__get_byte(r,i) & __get_byte(s,i))));
+	bit_vector_clear_unused_bits(t);
 }
 void bit_vector_xor(bit_vector* r, bit_vector* s, bit_vector* t)
 {
@@ -412,6 +456,7 @@ void bit_vector_xor(bit_vector* r, bit_vector* s, bit_vector* t)
 	uint32_t asize = __array_size(r);
 	for(i = 0; i < asize; i++)
 		__set_byte(t,i, (__get_byte(r,i) ^ __get_byte(s,i)));
+	bit_vector_clear_unused_bits(t);
 }
 void bit_vector_xnor(bit_vector* r, bit_vector* s, bit_vector* t)
 {
@@ -420,6 +465,7 @@ void bit_vector_xnor(bit_vector* r, bit_vector* s, bit_vector* t)
 	uint32_t asize = __array_size(r);
 	for(i = 0; i < asize; i++)
 		__set_byte(t,i, (~(__get_byte(r,i) ^ __get_byte(s,i))));
+	bit_vector_clear_unused_bits(t);
 }
 
 void  bit_vector_not(bit_vector* src, bit_vector* dest)
@@ -431,6 +477,7 @@ void  bit_vector_not(bit_vector* src, bit_vector* dest)
 	{
 		__set_byte(dest,J,~(__get_byte(src,J)));
 	}
+	bit_vector_clear_unused_bits(dest);
 }
 
 
@@ -450,6 +497,7 @@ void bit_vector_increment(bit_vector* s)
 			curr_carry = 0;
 		__set_byte(s,i,result);
 	}
+	bit_vector_clear_unused_bits(s);
 }
 
 void bit_vector_plus(bit_vector* r, bit_vector* s, bit_vector* t)
@@ -472,6 +520,7 @@ void bit_vector_plus(bit_vector* r, bit_vector* s, bit_vector* t)
 
 		__set_byte(t,i,(result & 0xff));
 	}
+	bit_vector_clear_unused_bits(t);
 }
 
 void bit_vector_minus(bit_vector* r, bit_vector* s, bit_vector* t)
@@ -481,6 +530,7 @@ void bit_vector_minus(bit_vector* r, bit_vector* s, bit_vector* t)
 	bit_vector_not(s,t);
 	bit_vector_plus(r,t,t);
 	bit_vector_increment(t);
+	bit_vector_clear_unused_bits(t);
 }
 
 // support this only for widths up to 64.
@@ -560,6 +610,7 @@ void bit_vector_bitsel(bit_vector* f, bit_vector* s, bit_vector* result)
 void bit_vector_concatenate(bit_vector* f, bit_vector* s, bit_vector* result)
 {
 	assert(result->width == (f->width + s->width));
+	bit_vector_clear(result);
 	int I = 0;
 	int J;
 	for(J = 0; J < s->width; J++)
@@ -578,6 +629,7 @@ void bit_vector_slice(bit_vector* src, bit_vector* dest, uint32_t low_index)
 	// src should have enough width..  
 	// src->width-1 >= low_index + dest->width  - 1.
 	assert(src->width >= low_index + dest->width);
+	bit_vector_clear(dest);
 
 	int J;
 	uint32_t high_index =  low_index + dest->width - 1;
@@ -591,6 +643,7 @@ void bit_vector_slice(bit_vector* src, bit_vector* dest, uint32_t low_index)
 void bit_vector_insert(bit_vector* src, bit_vector* dest, uint32_t low_index)
 {
 	assert(dest->width >= low_index + src->width);
+	bit_vector_clear(dest);
 
 	int J;
 	for(J = 0; J < src->width; J++)
@@ -603,7 +656,7 @@ void bit_vector_insert(bit_vector* src, bit_vector* dest, uint32_t low_index)
 void bit_vector_shift_right(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
 	// clear it.
-	bit_vector_assign_uint64(0,t,0);
+	bit_vector_clear(t);
 
 
 	uint8_t sign_val = 0;
@@ -629,7 +682,7 @@ void bit_vector_shift_right(uint8_t signed_flag, bit_vector* r, bit_vector* s, b
 }
 void bit_vector_shift_left(bit_vector* r, bit_vector* s, bit_vector* t)
 {
-	bit_vector_assign_uint64(0,t,0);
+	bit_vector_clear(t);
 	uint32_t shift_amount = bit_vector_to_uint64(0,s);
 
 	if(shift_amount < t->width)
@@ -644,6 +697,7 @@ void bit_vector_shift_left(bit_vector* r, bit_vector* s, bit_vector* t)
 void bit_vector_rotate_left(bit_vector* r, bit_vector* s, bit_vector* t)
 {
 	assert(r->width == t->width);
+	bit_vector_clear(t);
 	uint32_t rotate_amount = bit_vector_to_uint64(0,s);
 	uint32_t word_size = r->width;
 
@@ -656,6 +710,7 @@ void bit_vector_rotate_left(bit_vector* r, bit_vector* s, bit_vector* t)
 void bit_vector_rotate_right(bit_vector* r, bit_vector* s, bit_vector* t)
 {
 	assert(r->width == t->width);
+	bit_vector_clear(t);
 	uint32_t rotate_amount = bit_vector_to_uint64(0,s);
 	uint32_t word_size = r->width;
 
@@ -776,48 +831,55 @@ uint8_t bit_vector_compare(uint8_t signed_flag, bit_vector* r, bit_vector* s)
 
 void bit_vector_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
-	uint64_t tval = 0;
+	bit_vector_clear(t);
 	if(bit_vector_compare(signed_flag,r,s) == IS_EQUAL)
-		tval = 1;
-	bit_vector_assign_uint64(0,t,tval);
+	{
+		bit_vector_set_bit(t,0,1);
+	}
+	
 		
 }
 void bit_vector_not_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
-	uint64_t tval = 1;
-	if(bit_vector_compare(signed_flag,r,s) == IS_EQUAL)
-		tval = 0;
-	bit_vector_assign_uint64(0,t,tval);
+	bit_vector_clear(t);
+	if(!bit_vector_compare(signed_flag,r,s) == IS_EQUAL)
+	{
+		bit_vector_set_bit(t,0,1);
+	}
 }
 void bit_vector_less(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
-	uint64_t tval = 0;
+	bit_vector_clear(t);
 	if(bit_vector_compare(signed_flag,r,s) == IS_LESS)
-		tval = 1;
-	bit_vector_assign_uint64(0,t,tval);
+	{
+		bit_vector_set_bit(t,0,1);
+	}
 }
 void bit_vector_less_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
-	uint64_t tval = 0;
+	bit_vector_clear(t);
 	uint8_t cmp_result = bit_vector_compare(signed_flag,r,s);
 	if((cmp_result == IS_LESS) || (cmp_result == IS_EQUAL))
-		tval = 1;
-	bit_vector_assign_uint64(0,t,tval);
+	{
+		bit_vector_set_bit(t,0,1);
+	}
 }
 void bit_vector_greater(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
-	uint64_t tval = 0;
+	bit_vector_clear(t);
 	if(bit_vector_compare(signed_flag,r,s) == IS_GREATER)
-		tval = 1;
-	bit_vector_assign_uint64(0,t,tval);
+	{
+		bit_vector_set_bit(t,0,1);
+	}
 }
 void bit_vector_greater_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
-	uint64_t tval = 0;
+	bit_vector_clear(t);
 	uint8_t cmp_result = bit_vector_compare(signed_flag,r,s);
 	if((cmp_result == IS_GREATER) || (cmp_result == IS_EQUAL))
-		tval = 1;
-	bit_vector_assign_uint64(0,t,tval);
+	{
+		bit_vector_set_bit(t,0,1);
+	}
 }
 
 

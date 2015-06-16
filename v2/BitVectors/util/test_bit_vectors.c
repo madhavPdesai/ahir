@@ -10,6 +10,7 @@ void check_error(bit_vector* c, uint64_t A, uint64_t B, char* op_string,  uint64
 		fprintf(stderr,"Error: A=%llx, B=%llx, %s = %llx, expected = %llx\n", A,B, op_string, cval, expected_val);
 		*ret_val = 1;
 	}
+
 }
 
 // checks set bit, get_bit
@@ -154,12 +155,14 @@ int check_shifts(uint64_t bit_width)
 	{
 		ret_val = 1;
 		fprintf(stderr,"Error: shift-right-arithmetic for bit-width %llu, lower half mismatch\n", bit_width);
+		fprintf(stderr,"\t expected\n\t%s,\n\t found\n\t%s\n", to_string(&all_ones), to_string(&tmp));
 	}
 	bit_vector_slice(&rsa_ab,&tmp,bit_width);
 	if(bit_vector_compare(0,&tmp,&all_ones) != 0)	
 	{
 		ret_val = 1;
 		fprintf(stderr,"Error: shift-right-arithmetic for bit-width %llu, upper half mismatch\n", bit_width);
+		fprintf(stderr,"\t expected\n\t%s,\n\t found\n\t%s\n", to_string(&all_ones), to_string(&tmp));
 	}
 
 
@@ -172,12 +175,14 @@ int check_shifts(uint64_t bit_width)
 	{
 		ret_val = 1;
 		fprintf(stderr,"Error: shift-right-logical for bit-width %llu, lower half mismatch\n", bit_width);
+		fprintf(stderr,"\t expected\n\t%s,\n\t found\n\t%s\n", to_string(&all_ones), to_string(&tmp));
 	}
 	bit_vector_slice(&rsl_ab,&tmp,bit_width);
 	if(bit_vector_compare(0,&tmp,&all_zeros) != 0)	
 	{
 		ret_val = 1;
 		fprintf(stderr,"Error: shift-right-logical for bit-width %llu, upper half mismatch\n", bit_width);
+		fprintf(stderr,"\t expected\n\t%s,\n\t found\n\t%s\n", to_string(&all_zeros), to_string(&tmp));
 	}
 
 
@@ -189,12 +194,14 @@ int check_shifts(uint64_t bit_width)
 	{
 		ret_val = 1;
 		fprintf(stderr,"Error: shift-left for bit-width %llu, lower half mismatch\n", bit_width);
+		fprintf(stderr,"\t expected\n\t%s,\n\t found\n\t%s\n", to_string(&all_zeros), to_string(&tmp));
 	}
 	bit_vector_slice(&rsl_ab,&tmp,bit_width);
 	if(bit_vector_compare(0,&tmp,&all_zeros) != 0)	
 	{
 		ret_val = 1;
 		fprintf(stderr,"Error: shift-left for bit-width %llu, upper half mismatch\n", bit_width);
+		fprintf(stderr,"\t expected\n\t%s,\n\t found\n\t%s\n", to_string(&all_zeros), to_string(&tmp));
 	}
 
 	return(ret_val);
@@ -322,7 +329,9 @@ int misc_tests()
 	uint64_t kval = bit_vector_to_uint64(0, &konst);
 	if(kval != 4)
 		return(1);
-	return(0);
+
+	uint8_t ret_val = check_shifts(64);
+	return(ret_val);
 }
 
 //

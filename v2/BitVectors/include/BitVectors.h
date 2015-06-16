@@ -41,13 +41,17 @@ void print_bit_vector(bit_vector* t, FILE* ofile);
 void printf_bit_vector(bit_vector* t);
 char* to_string(bit_vector* t);
 
+// ---------------         test functions   ------------------------
 
+// return true if all bits are cleared.
+uint8_t bit_vector_is_zero(bit_vector* t);
 
 
 // ---------------         initialization, int conversions ------------------------
 //  note: we will provide conversions only to uint64.  Conversions to
 //        other types can be taken care of by C.
 //
+void      bit_vector_clear_unused_bits(bit_vector* t);
 uint64_t  bit_vector_to_uint64(uint8_t signed_flag, bit_vector* t);
 float     bit_vector_to_float(uint8_t signed_flag, bit_vector* t);
 double    bit_vector_to_double(uint8_t signed_flag, bit_vector* t);

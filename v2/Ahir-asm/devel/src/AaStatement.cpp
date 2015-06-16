@@ -4715,21 +4715,21 @@ void AaDoWhileStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
     assert(this->_test_expression);
 
     this->_test_expression->PrintC_Declaration(srcfile);
-    this->_test_expression->PrintC(srcfile);
     srcfile << "uint8_t do_while_entry_flag;" << endl;
     srcfile << "do_while_entry_flag = 1;" << endl;
     srcfile << "uint8_t do_while_loopback_flag;" << endl;
     srcfile << "do_while_loopback_flag = 0;" << endl;
-    srcfile << "do {" << endl;
+    srcfile << "while(1) {" << endl;
   	this->_merge_statement->PrintC(srcfile, headerfile);
   	this->_loop_body_sequence->PrintC(srcfile, headerfile);
     srcfile << "do_while_entry_flag = 0;" << endl;
     srcfile << "do_while_loopback_flag = 1;" << endl;
-    srcfile << "} " << endl;
-    srcfile << "while ( ";
+    this->_test_expression->PrintC(srcfile);
+    srcfile << "if (!";
     Print_C_Value_Expression(this->_test_expression->C_Reference_String(), 
 				this->_test_expression->Get_Type(), srcfile);
-    srcfile << ");" << endl;
+    srcfile << ") break;" << endl;
+    srcfile << "} " << endl;
     srcfile << "}" << endl;
 }
 
