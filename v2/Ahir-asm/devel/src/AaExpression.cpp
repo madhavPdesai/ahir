@@ -4338,77 +4338,106 @@ void AaBinaryExpression::PrintC(ofstream& ofile)
 
 void AaBinaryExpression::Update_Type()
 {
-  AaType* t1 = this->Get_First()->Get_Type();
-  AaType* t2 = this->Get_Second()->Get_Type();
+	AaType* t1 = this->Get_First()->Get_Type();
+	AaType* t2 = this->Get_Second()->Get_Type();
 
-  if(Is_Concat_Operation(this->_operation) && (this->Get_Type() == NULL))
-    {
-      // check the types of both sources.
-      // they must both be uintegers and
-      // the type of this expression must
-      // be a uinteger whose width is the
-      // sume of those of the sources.
+	if(Is_Concat_Operation(this->_operation))
+	{
+		// check the types of both sources.
+		// they must both be uintegers and
+		// the type of this expression must
+		// be a uinteger whose width is the
+		// sume of those of the sources.
 
-      if(t1 != NULL && t2 != NULL)
-	{
-	  if(t1->Is("AaUintType") && t2->Is("AaUintType"))
-	    {
-	      AaType* nt = AaProgram::Make_Uinteger_Type(((AaUintType*)t1)->Get_Width()+((AaUintType*)t2)->Get_Width());
-	      this->AaExpression::Set_Type(nt);
-	    }
-	  else
-	    {
-	      AaRoot::Error("source arguments of concatenate expression must have uint types",this);
-	    }
+		if(t1 != NULL && t2 != NULL)
+		{
+			int t1_width = 0;  int t2_width = 0;
+			if(t1->Is("AaUintType") && t2->Is("AaUintType"))
+			{
+				t1_width = ((AaUintType*)t1)->Get_Width();
+				t2_width = ((AaUintType*)t2)->Get_Width();
+			}
+			else
+			{
+				AaRoot::Error("source arguments of concatenate expression must have uint types",this);
+			}
+			if(this->Get_Type() == NULL)
+			{
+				if((t1_width > 0) && (t2_width > 0))
+				{
+					AaType* nt = AaProgram::
+						Make_Uinteger_Type(t1_width + t2_width);
+					this->AaExpression::Set_Type(nt);
+				}
+			}
+			else
+			{
+				if((t1_width > 0) && (t2_width > 0))
+				{
+					AaType* this_type = this->Get_Type();
+					if(this_type->Is("AaUintType"))
+					{
+						int this_width = ((AaUintType*)this_type)->Get_Width();
+						if(this_width != (t1_width + t2_width))
+						{
+							AaRoot::Error("concatenation width not sum of constituent widths", this);
+						}
+					}
+					else
+					{
+						AaRoot::Error("concatenate expression must have uint type",this);
+					}
+				}
+			}
+		}
 	}
-    }
-  else if(Is_Bitsel_Operation(this->_operation) || Is_Shift_Operation(this->_operation))
-    {
-      if((this->_second->Get_Type() == NULL) && (this->_first->Get_Type() != NULL))
+	else if(Is_Bitsel_Operation(this->_operation) || Is_Shift_Operation(this->_operation))
 	{
-	  // both arguments of a shift-operator must have the same
-	  // width!
-	  this->_second->Set_Type(this->_first->Get_Type());
+		if((this->_second->Get_Type() == NULL) && (this->_first->Get_Type() != NULL))
+		{
+			// both arguments of a shift-operator must have the same
+			// width!
+			this->_second->Set_Type(this->_first->Get_Type());
+		}
 	}
-    }
-  else if((t1 != NULL) && (t2 != NULL) && t1->Is("AaFloatType") && t2->Is("AaFloatType"))
-  {
-	// float add/sub operations will have higher delay!
-	if((this->_operation == __PLUS)  || (this->_operation == __MINUS)
-			|| (this->_operation == __MUL) || (this->_operation == __DIV))
-		this->Set_Delay(24);
-	else
-		this->Set_Delay(2);
-  }
+	else if((t1 != NULL) && (t2 != NULL) && t1->Is("AaFloatType") && t2->Is("AaFloatType"))
+	{
+		// float add/sub operations will have higher delay!
+		if((this->_operation == __PLUS)  || (this->_operation == __MINUS)
+				|| (this->_operation == __MUL) || (this->_operation == __DIV))
+			this->Set_Delay(24);
+		else
+			this->Set_Delay(2);
+	}
 }
 
 bool AaBinaryExpression::Is_Trivial()
 {
-  if(this->_operation == __OR || this->_operation == __AND ||
-     this->_operation == __NOR || this->_operation == __NAND ||
-     this->_operation == __XOR || this->_operation == __XNOR || 
-     this->_operation == __CONCAT || this->_operation == __BITSEL)
-  // some operations are obviously trivial.
-    return(true);
-  else
-  {
-	  // shifts with constant-shift-amount are trivial.
-	if(((this->_operation == __SHL) || (this->_operation == __SHR)) && 
-			((this->_second != NULL) && this->_second->Is_Constant()))
-		return(true);
-  	else if(((this->_operation == __ROL) || (this->_operation == __ROR)) && 
-			((this->_second != NULL) && this->_second->Is_Constant()))
+	if(this->_operation == __OR || this->_operation == __AND ||
+			this->_operation == __NOR || this->_operation == __NAND ||
+			this->_operation == __XOR || this->_operation == __XNOR || 
+			this->_operation == __CONCAT || this->_operation == __BITSEL)
+		// some operations are obviously trivial.
 		return(true);
 	else
-    		return(false);
-  }
+	{
+		// shifts with constant-shift-amount are trivial.
+		if(((this->_operation == __SHL) || (this->_operation == __SHR)) && 
+				((this->_second != NULL) && this->_second->Is_Constant()))
+			return(true);
+		else if(((this->_operation == __ROL) || (this->_operation == __ROR)) && 
+				((this->_second != NULL) && this->_second->Is_Constant()))
+			return(true);
+		else
+			return(false);
+	}
 }
 
 void AaBinaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
-	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 		if(flow_through)
 		{
 			_first->Collect_Root_Sources(root_set);
@@ -4435,36 +4464,36 @@ void AaBinaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 void AaBinaryExpression::Write_VC_Control_Path(ostream& ofile)
 {
 
-  if(!this->Is_Constant())
-    {
+	if(!this->Is_Constant())
+	{
 
-	    ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->To_String() << endl;
 
-	    ofile << ";;[" << this->Get_VC_Name() << "] { // binary expression " << endl;
+		ofile << ";;[" << this->Get_VC_Name() << "] { // binary expression " << endl;
 
-	    ofile << "||[" << this->Get_VC_Name() << "_inputs] { " << endl;
-	    this->_first->Write_VC_Control_Path(ofile);
-	    this->_second->Write_VC_Control_Path(ofile);
-	    ofile << "}" << endl;
+		ofile << "||[" << this->Get_VC_Name() << "_inputs] { " << endl;
+		this->_first->Write_VC_Control_Path(ofile);
+		this->_second->Write_VC_Control_Path(ofile);
+		ofile << "}" << endl;
 
-      	    bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
-	    if(not flow_through) 
-	    	ofile << "||[SplitProtocol] { " << endl;
-	    else
-	    {
-		ofile << "// flow-through" << endl;
-	    	ofile << ";;[SplitProtocol] { " << endl;
-            }
-	    ofile << ";;[Sample] { " << endl;
-	    ofile << "$T [rr] $T [ra]" << endl;
-	    ofile << "}" << endl;
-	    ofile << ";;[Update] { " << endl;
-	    ofile << "$T [cr] $T [ca]" << endl;
-	    ofile << "}" << endl;
-	    ofile << "}" << endl;
+		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(not flow_through) 
+			ofile << "||[SplitProtocol] { " << endl;
+		else
+		{
+			ofile << "// flow-through" << endl;
+			ofile << ";;[SplitProtocol] { " << endl;
+		}
+		ofile << ";;[Sample] { " << endl;
+		ofile << "$T [rr] $T [ra]" << endl;
+		ofile << "}" << endl;
+		ofile << ";;[Update] { " << endl;
+		ofile << "$T [cr] $T [ca]" << endl;
+		ofile << "}" << endl;
+		ofile << "}" << endl;
 
-	    ofile << "}" << endl;
-    }
+		ofile << "}" << endl;
+	}
 }
 
 void AaBinaryExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
@@ -4521,7 +4550,7 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 		this->_second->Write_VC_Datapath_Instances(NULL,ofile);
 
 		ofile << "// " << this->To_String() << endl;
-      		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 
 
 		string dpe_name = this->Get_VC_Datapath_Instance_Name();
@@ -4654,7 +4683,7 @@ AaTernaryExpression::~AaTernaryExpression() {};
 string AaTernaryExpression::Get_VC_Name()
 {
 	string ret_val;
-        string idx = Int64ToStr(this->Get_Index());
+	string idx = Int64ToStr(this->Get_Index());
 
 	ret_val = "MUX";
 	ret_val += "_" + idx;
@@ -4664,12 +4693,12 @@ string AaTernaryExpression::Get_VC_Name()
 void AaTernaryExpression::Print(ostream& ofile)
 {
 	ofile << "( $mux ";
-  this->Get_Test()->Print(ofile);
-  ofile << " ";
-  this->Get_If_True()->Print(ofile);
-  ofile << "  ";
-  this->Get_If_False()->Print(ofile);
-  ofile << " ) ";
+	this->Get_Test()->Print(ofile);
+	ofile << " ";
+	this->Get_If_True()->Print(ofile);
+	ofile << "  ";
+	this->Get_If_False()->Print(ofile);
+	ofile << " ) ";
 }
 
 void AaTernaryExpression::PrintC_Declaration(ofstream& ofile)
@@ -4688,49 +4717,49 @@ void AaTernaryExpression::PrintC(ofstream& ofile)
 	this->_if_false->PrintC(ofile);
 
 	Print_C_Ternary_Operation(this->_test->C_Reference_String(),
-				  this->_test->Get_Type(),
-				  this->_if_true->C_Reference_String(), 
-				  this->_if_true->Get_Type(),
-				  this->_if_false->C_Reference_String(), 
-				  this->_if_false->Get_Type(),
-				  this->C_Reference_String(), 
-				  this->Get_Type(),
-				  ofile);
+			this->_test->Get_Type(),
+			this->_if_true->C_Reference_String(), 
+			this->_if_true->Get_Type(),
+			this->_if_false->C_Reference_String(), 
+			this->_if_false->Get_Type(),
+			this->C_Reference_String(), 
+			this->Get_Type(),
+			ofile);
 }
 
 void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)
 {
 
-  ofile << "// " << this->To_String() << endl;
+	ofile << "// " << this->To_String() << endl;
 
 
-  // if _test is constant, print dummy.
-  if(!this->Is_Constant())
-    {
+	// if _test is constant, print dummy.
+	if(!this->Is_Constant())
+	{
 
-	    // TODO: ternary will be triggered from three points. fork region.
-	    ofile << ";;[" << this->Get_VC_Name() << "] { // ternary expression: " << endl;
-	    ofile << "||[" << this->Get_VC_Name() << "_inputs] { " << endl;
-	    this->_test->Write_VC_Control_Path(ofile);
-	    if(this->_if_true)
-		    this->_if_true->Write_VC_Control_Path(ofile);
+		// TODO: ternary will be triggered from three points. fork region.
+		ofile << ";;[" << this->Get_VC_Name() << "] { // ternary expression: " << endl;
+		ofile << "||[" << this->Get_VC_Name() << "_inputs] { " << endl;
+		this->_test->Write_VC_Control_Path(ofile);
+		if(this->_if_true)
+			this->_if_true->Write_VC_Control_Path(ofile);
 
-	    if(this->_if_false)
-		    this->_if_false->Write_VC_Control_Path(ofile);
-	    ofile << "}" << endl;
+		if(this->_if_false)
+			this->_if_false->Write_VC_Control_Path(ofile);
+		ofile << "}" << endl;
 
-	    ofile << "|| [Mux] { " << endl;
+		ofile << "|| [Mux] { " << endl;
 
-	    ofile << ";; [Sample] {" << endl;
-	    ofile << "$T [req] $T [ack] // select req/ack" << endl;
-	    ofile << "}" << endl;
-	    ofile << ";; [Update] {" << endl;
-	    ofile << "$T [req] $T [ack] // select req/ack" << endl;
-	    ofile << "}" << endl;
-	    ofile << "}" << endl;
+		ofile << ";; [Sample] {" << endl;
+		ofile << "$T [req] $T [ack] // select req/ack" << endl;
+		ofile << "}" << endl;
+		ofile << ";; [Update] {" << endl;
+		ofile << "$T [req] $T [ack] // select req/ack" << endl;
+		ofile << "}" << endl;
+		ofile << "}" << endl;
 
-	    ofile << "}" << endl;
-    }
+		ofile << "}" << endl;
+	}
 }
 
 
@@ -4816,64 +4845,64 @@ void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostr
 
 		ofile << "// " << this->To_String() << endl;
 
-      string dpe_name = this->Get_VC_Datapath_Instance_Name();
-      string src_1_name = _test->Get_VC_Driver_Name();
-      string src_2_name = _if_true->Get_VC_Driver_Name();
-      string src_3_name = _if_false->Get_VC_Driver_Name();
-      string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
+		string dpe_name = this->Get_VC_Datapath_Instance_Name();
+		string src_1_name = _test->Get_VC_Driver_Name();
+		string src_2_name = _if_true->Get_VC_Driver_Name();
+		string src_3_name = _if_false->Get_VC_Driver_Name();
+		string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
-      Write_VC_Select_Operator(dpe_name,
-			       src_1_name,
-			       this->_test->Get_Type(),
+		Write_VC_Select_Operator(dpe_name,
+				src_1_name,
+				this->_test->Get_Type(),
 				src_2_name,
-			       this->_if_true->Get_Type(),
+				this->_if_true->Get_Type(),
 				src_3_name,
-			       this->_if_false->Get_Type(),
+				this->_if_false->Get_Type(),
 				tgt_name,
-			       (target != NULL ? target->Get_Type() : this->Get_Type()),
-				  this->Get_VC_Guard_String(),
+				(target != NULL ? target->Get_Type() : this->Get_Type()),
+				this->Get_VC_Guard_String(),
 				flow_through,
-			       ofile);
-	// extreme pipelining.
-      if(this->Is_Part_Of_Extreme_Pipeline())
-      {
-	      ofile << "$buffering  $in " << dpe_name << " "
-		      << src_1_name << " 2" << endl;
-	      ofile << "$buffering  $in " << dpe_name << " "
-		      << src_2_name << " 2" << endl;
-	      ofile << "$buffering  $in " << dpe_name << " "
-		      << src_3_name << " 2" << endl;
-	      ofile << "$buffering  $out " << dpe_name << " "
-		      << tgt_name << " 2" << endl;
-      }
-			       
-    }
+				ofile);
+		// extreme pipelining.
+		if(this->Is_Part_Of_Extreme_Pipeline())
+		{
+			ofile << "$buffering  $in " << dpe_name << " "
+				<< src_1_name << " 2" << endl;
+			ofile << "$buffering  $in " << dpe_name << " "
+				<< src_2_name << " 2" << endl;
+			ofile << "$buffering  $in " << dpe_name << " "
+				<< src_3_name << " 2" << endl;
+			ofile << "$buffering  $out " << dpe_name << " "
+				<< tgt_name << " 2" << endl;
+		}
+
+	}
 }
 void AaTernaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
-  if(!this->Is_Constant())
-    {
+	if(!this->Is_Constant())
+	{
 
-      this->_test->Write_VC_Links(hier_id + "/" + this->Get_VC_Name() + "/" +
-				  this->Get_VC_Name() + "_inputs", ofile);
-      this->_if_true->Write_VC_Links(hier_id + "/" + this->Get_VC_Name() + "/"
-				     + this->Get_VC_Name() + "_inputs", ofile); 
-      this->_if_false->Write_VC_Links(hier_id + "/" + this->Get_VC_Name() + "/"
-				      + this->Get_VC_Name() + "_inputs", ofile); 
+		this->_test->Write_VC_Links(hier_id + "/" + this->Get_VC_Name() + "/" +
+				this->Get_VC_Name() + "_inputs", ofile);
+		this->_if_true->Write_VC_Links(hier_id + "/" + this->Get_VC_Name() + "/"
+				+ this->Get_VC_Name() + "_inputs", ofile); 
+		this->_if_false->Write_VC_Links(hier_id + "/" + this->Get_VC_Name() + "/"
+				+ this->Get_VC_Name() + "_inputs", ofile); 
 
-      ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->To_String() << endl;
 
-      vector<string> reqs,acks;
-      reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Sample/req");
-      reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Update/req");
-      acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Sample/ack");
-      acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Update/ack");
+		vector<string> reqs,acks;
+		reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Sample/req");
+		reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Update/req");
+		acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Sample/ack");
+		acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Update/ack");
 
-      Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),
-		    reqs,
-		    acks,
-		    ofile);
-    }
+		Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),
+				reqs,
+				acks,
+				ofile);
+	}
 }
 
 
@@ -4900,7 +4929,7 @@ void AaTernaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
-	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 		if(flow_through)
 		{
 			_test->Collect_Root_Sources(root_set);
@@ -4914,8 +4943,8 @@ void AaTernaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 
 /////////////////////////////////////////////////  Utilities //////////////////////////////////////////////
 AaExpression* Make_Reduce_Expression_Base(AaScope* scope, int line_no, 
-						int sindex, int findex, 
-						AaOperation op,  vector<AaExpression*>& expr_vector)
+		int sindex, int findex, 
+		AaOperation op,  vector<AaExpression*>& expr_vector)
 {
 	AaExpression* ret_expr = NULL;
 	int SZ = (findex-sindex)+1;
@@ -4946,7 +4975,7 @@ AaExpression* Make_Reduce_Expression(AaScope* scope, int line_no, AaOperation op
 
 
 AaExpression* Make_Priority_Mux_Expression(AaScope* scope, int line_no, int sindex, vector<pair<AaExpression*,AaExpression*> >& expr_vector,
-						AaExpression* default_expr)
+		AaExpression* default_expr)
 {
 	AaExpression* ret_expr = NULL;
 	if(sindex == expr_vector.size())
@@ -4960,16 +4989,16 @@ AaExpression* Make_Priority_Mux_Expression(AaScope* scope, int line_no, int sind
 	}
 
 	if(ret_expr != NULL)
-	   ret_expr->Set_Line_Number(line_no);
+		ret_expr->Set_Line_Number(line_no);
 
 	return(ret_expr);
 }
 
 AaExpression* Make_Exclusive_Mux_Expression(AaScope* scope, int line_no, int sindex, int findex,
-				vector<pair<AaExpression*,AaExpression*> >& expr_vector)
+		vector<pair<AaExpression*,AaExpression*> >& expr_vector)
 {
 	vector<AaExpression*> and_expr_vector;
-	
+
 	for(int I = 0, fI = expr_vector.size(); I < fI; I++)
 	{
 
