@@ -821,18 +821,18 @@ void Print_C_Slice_Operation(string src, AaType* src_type, int _low_index, strin
 	}
 }
 
-void Print_C_Report_String(string tag, string qs, ofstream& ofile)
+void Print_C_Report_String(string seq_id, string tag, string qs, ofstream& ofile)
 {
 	string log_file_name = AaProgram::Report_Log_File_Name();
 	ofile << "if(" << log_file_name << " != NULL) ";
-	ofile << "fprintf(" << log_file_name << ",\"" << tag << ">\\t%s\\n\"," << "\"" <<  qs << "\");";
+	ofile << "fprintf(" << log_file_name << ",\"[%u]" <<  tag << ">\\t%s\\n\"," << seq_id << "," << "\"" <<  qs << "\");";
 }
 
-void Print_C_Report_String_Expr_Pair(string tag, string qs, string expr, AaType* etype, ofstream& ofile)
+void Print_C_Report_String_Expr_Pair(string seq_id, string tag, string qs, string expr, AaType* etype, ofstream& ofile)
 {
 	string log_file_name = AaProgram::Report_Log_File_Name();
 	ofile << "if(" << log_file_name << " != NULL) {";
-	ofile << "fprintf(" << log_file_name << ",\"" << tag << ">\\t\\t%s\\t\\t\"," << "\"" << qs << "\");";
+	ofile << "fprintf(" << log_file_name << ",\"[%u]" << tag << ">\\t\\t%s\\t\\t\"," << seq_id << "," << "\"" << qs << "\");";
 	if(etype->Is_Integer_Type())
 	{
 		ofile << "fprintf(" << log_file_name << ", \"%llx\\n\",bit_vector_to_uint64(0,&(" << expr  << ")));";

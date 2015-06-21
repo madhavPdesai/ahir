@@ -26,9 +26,12 @@ static FILE* log_file = NULL;
 static PipeRec* pipes = NULL;
 
 MUTEX_DECL(__file_print_mutex__);
-void get_file_print_lock(FILE* fp)
+uint32_t get_file_print_lock(FILE* fp)
 {
+	static uint32_t __print_counter__ = 0;
 	MUTEX_LOCK(__file_print_mutex__);
+	__print_counter__++;
+	return(__print_counter__);
 }
 void release_file_print_lock(FILE* fp)
 {

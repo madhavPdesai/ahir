@@ -857,14 +857,15 @@ void AaReportStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), headerfile);
 		headerfile << ") {\\" << endl;
 	}
-	headerfile << "get_file_print_lock(" << AaProgram::Report_Log_File_Name() <<");";
-	Print_C_Report_String(this->_tag, this->_synopsys, headerfile);
+	string plock_counter = this->Get_C_Macro_Name() + "__print_counter";
+	headerfile << "uint32_t " << plock_counter << "= get_file_print_lock(" << AaProgram::Report_Log_File_Name() <<");";
+	Print_C_Report_String(plock_counter, this->_tag, this->_synopsys, headerfile);
 	
 	for(int I = 0, fI = _descr_pairs.size(); I < fI; I++)
 	{
 		_descr_pairs[I].second->PrintC_Declaration(headerfile);
 		_descr_pairs[I].second->PrintC(headerfile);
-		Print_C_Report_String_Expr_Pair(this->_tag, _descr_pairs[I].first,
+		Print_C_Report_String_Expr_Pair(plock_counter, this->_tag, _descr_pairs[I].first,
 							_descr_pairs[I].second->C_Reference_String(),
 							_descr_pairs[I].second->Get_Type(), headerfile);
 	}
@@ -2011,6 +2012,8 @@ void AaCallStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	if(this->Get_Guard_Expression())
 	{
 		headerfile << "if (" ;
+		if(this->Get_Guard_Complement()) 
+			headerfile << "!";
 		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), headerfile);
 		headerfile << ") {\\" << endl;
 	}

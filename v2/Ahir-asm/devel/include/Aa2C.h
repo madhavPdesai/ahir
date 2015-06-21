@@ -41,8 +41,8 @@ void Print_C_Slice_Operation(string src, AaType* src_type, int _low_index, strin
 				AaType* tgt_type, ofstream& ofile);
 
 
-void Print_C_Report_String(string tag, string qs, ofstream& ofile);
-void Print_C_Report_String_Expr_Pair(string tag, string qs, string expr, AaType* etype, ofstream& ofile);
+void Print_C_Report_String(string seq_id, string tag, string qs, ofstream& ofile);
+void Print_C_Report_String_Expr_Pair(string seq_id, string tag, string qs, string expr, AaType* etype, ofstream& ofile);
 
 
 #endif

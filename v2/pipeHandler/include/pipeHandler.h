@@ -147,8 +147,10 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 // useful to lock/unlock printing across several
 // threads. 
 //
-// flush fp and acquire the lock.
-void get_file_print_lock(FILE* fp);
+// flush fp and acquire the lock... return
+// a sequence id.. useful for serialization
+// of a concurrent trace.
+uint32_t get_file_print_lock(FILE* fp);
 // flush fp and release the lock.
 void release_file_print_lock(FILE* fp);
 #endif

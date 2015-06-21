@@ -90,6 +90,7 @@ void init_bit_vector(bit_vector* t, uint32_t width)
 {
 	allocate_sized_u8_array(&(t->val), __nbytes(width));;
 	t->width = width;
+	bit_vector_clear(t);
 }
 
 
