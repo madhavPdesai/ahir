@@ -246,10 +246,22 @@ class AaStatement: public AaScope
 	map<AaRoot*, int> longest_paths_from_root_map);
 
    virtual string Get_C_Macro_Name();
+   virtual string Get_C_Mutex_Name();
    virtual string Get_Export_Declare_Macro();
    virtual string Get_Export_Apply_Macro();
    virtual string Get_C_Preamble_Macro_Name();
    virtual string Get_C_Postamble_Macro_Name();
+
+   //
+   // defined only for assignment and call statements.
+   //
+   virtual void Set_Is_Volatile(bool v) {assert(0);}
+   virtual bool Get_Is_Volatile()       {assert(0);}
+   //
+   // if combinational, then find the root source expressions on
+   // which the outputs of this statement depend.
+   //
+   virtual void Collect_Root_Sources(set<AaExpression*>& root_sources) {};
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -463,6 +475,7 @@ class AaAssignmentStatement: public AaStatement
   AaExpression* _source;
 
   int _buffering;
+  bool _is_volatile;
  public:
   AaExpression* Get_Target() {return(this->_target);}
   AaExpression* Get_Source() {return(this->_source);}
@@ -473,6 +486,11 @@ class AaAssignmentStatement: public AaStatement
   ~AaAssignmentStatement();
 
   virtual bool Is_Assignment_Statement() { return(true);}
+
+  virtual void Set_Is_Volatile(bool v);
+  virtual bool Get_Is_Volatile()       { return(_is_volatile); }
+  virtual void Collect_Root_Sources(set<AaExpression*>& root_src_exprs);
+
   virtual void Set_Pipeline_Parent(AaStatement* dws);
 
   int Get_Buffering() {return(_buffering);}
@@ -553,6 +571,7 @@ class AaCallStatement: public AaStatement
   AaModule* _called_module;
   vector<AaExpression*> _input_args;
   vector<AaObjectReference*> _output_args;
+  bool _is_volatile;
  public:
   unsigned int Get_Number_Of_Input_Args() {return(this->_input_args.size());}
   unsigned int Get_Number_Of_Output_Args() {return(this->_output_args.size());}
@@ -562,6 +581,11 @@ class AaCallStatement: public AaStatement
   virtual void Set_Pipeline_Parent(AaStatement* dws);
 
   virtual bool Is_Call_Statement() {return(true);}
+
+  virtual void Set_Is_Volatile(bool v);
+  virtual bool Get_Is_Volatile()       { return(_is_volatile); }
+  virtual void Collect_Root_Sources(set<AaExpression*>& root_src_exprs);
+
   void Replace_Input_Argument(AaExpression* old_arg, AaSimpleObjectReference* new_arg);
 
   AaCallStatement(AaScope* scope_tpr,
@@ -637,6 +661,9 @@ class AaCallStatement: public AaStatement
   {
     return(this->AaRoot::Get_VC_Reenable_Update_Transition_Name(visited_elements));
   }
+
+  void Write_VC_WAR_Dependencies(bool pipeline_flag, set<AaRoot*>& visited_elements,
+				 ostream& ofile);
 };
 
 

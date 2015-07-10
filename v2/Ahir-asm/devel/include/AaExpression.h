@@ -164,9 +164,7 @@ class AaExpression: public AaRoot
 		this->Write_VC_Control_Path(ofile);
 	}
 
-	void Write_VC_WAR_Dependencies(bool pipeline_flag, set<AaRoot*>& visited_elements,
-			AaExpression* source_expr,
-			ostream& ofile);
+	void Write_VC_WAR_Dependencies(bool pipeline_flag, set<AaRoot*>& visited_elements, ostream& ofile);
 	virtual bool Is_Load() {return(false);}
 	virtual bool Is_Store() {return(false);}
 	virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile) {}
@@ -795,6 +793,10 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
 	virtual bool Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements);
+
+	// added so that we can track from simple object references
+	// backward through combinational statements.
+	virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
 };
 
 

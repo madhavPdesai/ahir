@@ -289,7 +289,7 @@ void vcCPElementGroup::Add_Element(vcCPElement* cpe)
 
 void vcCPElementGroup::Print(ostream& ofile)
 {
-  ofile << "-- CP-element group " << _group_index;
+  ofile << "-- CP-element group " << _group_index << ": ";
   if(_is_merge)
     ofile << " merge ";
   if(_is_branch)
@@ -317,30 +317,32 @@ void vcCPElementGroup::Print(ostream& ofile)
   else
     ofile << " no-bypass ";
   ofile << endl;
-  ofile << "-- predecessors ";
+  ofile << "-- CP-element group " << _group_index << ": predecessors " << endl;
   for(set<vcCPElementGroup*>::iterator iter = _predecessors.begin(), fiter = _predecessors.end();
       iter != fiter;
       iter++)
     {
-
-      ofile << (*iter)->Get_Group_Index() << " ";
+      ofile << "-- CP-element group " << _group_index << ": \t";
+      ofile <<  (*iter)->Get_Group_Index() << " ";
+      ofile << endl;
     }
   ofile << endl;
 
   if(_marked_predecessors.size() > 0)
   {
-     ofile << "-- marked predecessors ";
+     ofile << "-- CP-element group " << _group_index << ": marked-predecessors " << endl;
      for(set<vcCPElementGroup*>::iterator iter = _marked_predecessors.begin(), fiter = _marked_predecessors.end();
          iter != fiter;
          iter++)
        {
-   
+      	 ofile << "-- CP-element group " << _group_index << ": \t";
          ofile << (*iter)->Get_Group_Index() << " ";
+	 ofile << endl;
        }
      ofile << endl;
   }
 
-  ofile << "-- successors ";
+  ofile << "-- CP-element group " << _group_index << ": successors " << endl;
   for(set<vcCPElementGroup*>::iterator iter = _successors.begin(), fiter = _successors.end();
       iter != fiter;
       iter++)
@@ -351,13 +353,15 @@ void vcCPElementGroup::Print(ostream& ofile)
 	  cerr << "Error: group " << this->Get_Root_Index() << " has dangling successor " <<
 	    (*iter)->Get_Root_Index() << endl;
 	}
+      ofile << "-- CP-element group " << _group_index << ": \t";
       ofile << (*iter)->Get_Group_Index() << " ";
+      ofile << endl;
     }
   ofile << endl;
 
   if(_marked_successors.size() > 0)
   {
-    ofile << "-- marked successors ";
+      ofile << "-- CP-element group " << _group_index << ": marked-successors " << endl;
     for(set<vcCPElementGroup*>::iterator iter = _marked_successors.begin(), fiter = _marked_successors.end();
         iter != fiter;
         iter++)
@@ -368,18 +372,22 @@ void vcCPElementGroup::Print(ostream& ofile)
 	    cerr << "Error: group " << this->Get_Root_Index() << " has dangling marked successor " <<
 	      (*iter)->Get_Root_Index() << endl;
 	  }
+        ofile << "-- CP-element group " << _group_index << ": \t";
         ofile << (*iter)->Get_Group_Index() << " ";
+	ofile << endl;
       }
     ofile << endl;
   }
 
 
-  ofile << "-- members (" << _elements.size() << ") {" << endl;
+  ofile << "-- CP-element group " << _group_index << ": ";
+  ofile << " members (" << _elements.size() << ") {" << endl;
   for(set<vcCPElement*>::iterator iter = _elements.begin(), fiter = _elements.end();
       iter != fiter;
       iter++)
     {
-      ofile << "-- \t" << (*iter)->Get_Hierarchical_Id() << endl;
+      ofile << "-- CP-element group " << _group_index << ": \t ";
+      ofile << (*iter)->Get_Hierarchical_Id() << endl;
     }
   ofile << "-- }" << endl;
 }

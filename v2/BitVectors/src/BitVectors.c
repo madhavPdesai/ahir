@@ -360,7 +360,6 @@ void float_bitcast_to_bit_vector( bit_vector* dest, float* src)
 {
 	uint64_t v = (uint64_t)  (*((uint32_t*) src));
         pack_uint64_into_bit_vector(0, v, dest );
-	float_cast_to_bit_vector(0, dest, src);
 }
 
 void bit_vector_cast_to_double(uint8_t signed_flag, double* dest, bit_vector* src)

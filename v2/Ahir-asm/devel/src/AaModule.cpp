@@ -430,7 +430,8 @@ void AaModule::Write_C_Source(ofstream& srcfile, ofstream& headerfile)
   // pointer-interface <-> declare i/o objects
   // print input side conversions.
   //
-   
+  srcfile << "MUTEX_DECL(" << this->Get_C_Mutex_Name()  << ");" << endl; 
+  srcfile << "MUTEX_LOCK(" << this->Get_C_Mutex_Name()  << ");" << endl; 
   headerfile << "\n#define " << this->Get_C_Inner_Input_Args_Prepare_Macro() << " ";
   for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
     {
@@ -463,6 +464,7 @@ void AaModule::Write_C_Source(ofstream& srcfile, ofstream& headerfile)
   headerfile << ";" <<endl;
   srcfile << this->Get_C_Inner_Output_Args_Prepare_Macro() << "; " << endl;
 
+  srcfile << "MUTEX_UNLOCK(" << this->Get_C_Mutex_Name()  << ");" << endl; 
   srcfile << "}" << endl;
 }
 

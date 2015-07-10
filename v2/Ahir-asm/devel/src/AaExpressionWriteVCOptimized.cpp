@@ -53,11 +53,10 @@ void AaExpression::Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,
 // that reads from b must be reenabled only after
 // the write to b is finished.
 //
-// Here "this" is "b", "source_expr" is (d+e).
+// Here "this" is "b"
 //
 void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag, 
 		set<AaRoot*>& visited_elements,
-		AaExpression* source_expr,
 		ostream& ofile)
 {
 	if(!this->Is_Implicit_Variable_Reference())
@@ -65,6 +64,9 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 	AaStatement* pstmt = this->Get_Associated_Statement();
 	assert(pstmt != NULL); // this is always a target..  so statement completion should retrigger read.
+
+	bool is_volatile = pstmt->Get_Is_Volatile();
+	bool err_flag = false;
 
 	// the transition that triggers the write.
 	string write_trigger_transition_name;
@@ -127,17 +129,29 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 					__MJ(expr->Get_VC_Reenable_Sample_Transition_Name(visited_elements),  
 							__UCT(pstmt), false); // No bypass
 				}
+
+				if(is_volatile)
+				{
+					string expr_string = expr->To_String();
+					string stmt_string = pstmt->To_String();
+					AaRoot::Error("Volatile statement should not have  WAR dependencies..", pstmt);
+					cerr << "(write) expression " << expr_string << ", reads statement " << stmt_string << endl;	
+				}
 			}
 		}
 	}
+
 }
 
+//
+// from guard expression sexpr to this.
+//
 void AaExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile)
 {
 	AaRoot* root = sexpr->Get_Root_Object();
 	if(visited_elements.find(root) != visited_elements.end())
 	{
-		__J(__SST(this), __UCT(root));
+		__J(__SST(this), __UCT(sexpr));
 		// Note: with new SplitGuardInterface
 		// this dependency is no longer necessary.
 		//__J(__UST(this), __UCT(root));
@@ -521,7 +535,6 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 
 		pipe_map[this->_object->Get_VC_Name()].push_back(this);
 	}
-
 }
 
 // AaArrayObjectReference

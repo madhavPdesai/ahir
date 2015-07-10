@@ -670,6 +670,55 @@ bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObjec
 
 }
 
+void AaSimpleObjectReference::Collect_Root_Sources(set<AaExpression*>& root_set)
+{
+	if(this->Is_Constant())
+		return;
+
+	// if it is an implicit reference
+	if(this->Get_Is_Target())
+	{
+		if(this->Is_Implicit_Variable_Reference())
+		{
+			AaRoot* root_obj = this->Get_Root_Object();
+			if(root_obj->Is_Statement())
+			{
+				AaStatement* r = (AaStatement*) root_obj;
+				if(r->Get_Is_Volatile())
+				{
+					r->Collect_Root_Sources(root_set);
+				}
+				else
+					root_set.insert(this);
+			}	
+			else 
+				root_set.insert(this);
+		}
+		else
+			root_set.insert(this);
+	}
+	else if(this->Is_Implicit_Variable_Reference())
+	{
+		AaRoot* root_obj = this->Get_Root_Object();
+		if(root_obj->Is_Statement())
+		{
+			AaStatement* r = (AaStatement*) root_obj;
+			if(r->Get_Is_Volatile())
+			{
+				r->Collect_Root_Sources(root_set);
+			}
+			else
+				root_set.insert(this);
+		}	
+		else
+			root_set.insert(this);
+	}
+	else
+	{
+		root_set.insert(this);
+	}
+}
+
 void AaSimpleObjectReference::Set_Type(AaType* t)
 {
 	if(this->_object && this->_object->Is_Storage_Object() && !this->Used_Only_In_Address_Of_Expression())

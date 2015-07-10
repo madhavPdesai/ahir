@@ -882,6 +882,7 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
   AaStatement(parent_tpr) 
 {
   assert(tgt); assert(src);
+  _is_volatile = false;
 
   tgt->Set_Associated_Statement(this);
   tgt->Set_Is_Intermediate(false);
@@ -906,6 +907,13 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 
 AaAssignmentStatement::~AaAssignmentStatement() {};
 
+
+void AaAssignmentStatement::Set_Is_Volatile(bool v)
+{
+	_is_volatile = v;
+	if(this->_source)
+		this->_source->Set_Is_Intermediate(v);
+}
 
 void AaAssignmentStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
@@ -977,6 +985,7 @@ void AaAssignmentStatement::Print(ostream& ofile)
 
 
 
+
   if(!flag && this->Get_Target()->Is_Foreign_Store() && this->Get_Source()->Is_Foreign_Load())
     {
       AaPointerDereferenceExpression *ptgt = (AaPointerDereferenceExpression*)(this->Get_Target());
@@ -1015,6 +1024,9 @@ void AaAssignmentStatement::Print(ostream& ofile)
     {
       ofile << this->Tab();
       ofile << guard_string;
+      if(this->Get_Is_Volatile())
+	ofile << "$volatile ";
+
       this->Get_Target()->Print(ofile);
       ofile << " := ";
       this->Get_Source()->Print(ofile);
@@ -1033,12 +1045,10 @@ void AaAssignmentStatement::Print(ostream& ofile)
 	      }
 	      ofile << ")  ";
       }
-
     }
 
   int bufval = this->Get_Buffering();
-  if(bufval > 1)
-	  ofile << " $buffering " << bufval;
+  ofile << " $buffering " << bufval;
 
   if(AaProgram::_verbose_flag)
 	  ofile << endl << Debug_Info();
@@ -1069,6 +1079,16 @@ void AaAssignmentStatement::Map_Source_References()
 		{
 			AaRoot::Error("guard variable must be implicit (SSA)", this);
 		}
+	}
+}
+
+
+void AaAssignmentStatement::Collect_Root_Sources(set<AaExpression*>& root_sources)
+{
+	if(this->Get_Is_Volatile())
+	{
+		if(this->_source != NULL)
+			this->_source->Collect_Root_Sources(root_sources);
 	}
 }
 
@@ -1524,6 +1544,7 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 				 vector<AaObjectReference*>& outargs,
 				 int lineno): AaStatement(parent_tpr)
 {
+  _is_volatile = false;
 
   this->_function_name = func_name;
   this->Set_Line_Number(lineno);
@@ -1573,6 +1594,15 @@ void AaCallStatement::Replace_Input_Argument(AaExpression* old_arg, AaSimpleObje
   }
 }
 
+void AaCallStatement::Set_Is_Volatile(bool v)
+{
+	_is_volatile = v;
+
+	for(unsigned int i = 0; i < _input_args.size(); i++)
+	{
+		_input_args[i]->Set_Is_Intermediate(v);
+	}
+}
 void AaCallStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
 	_pipeline_parent = dws;
@@ -5142,6 +5172,17 @@ void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, in
 	visited_elements.insert(this);
 }
 
+void AaCallStatement::Collect_Root_Sources(set<AaExpression*>& root_sources)
+{
+	if(this->Get_Is_Volatile())
+	{
+        	for(int idx = 0, fidx = _input_args.size(); idx < fidx; idx++)
+		{
+			_input_args[idx]->Collect_Root_Sources(root_sources);
+		}
+	}
+}
+
 
 AaSimpleObjectReference* AaCallStatement::Get_Implicit_Target(string tgt_name)
 {
@@ -5206,6 +5247,12 @@ string AaStatement::Get_C_Macro_Name()
 {
 	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
 				+ this->Get_VC_Name() + "_c_macro_");
+}
+
+string AaStatement::Get_C_Mutex_Name()
+{
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
+				+ this->Get_VC_Name() + "_c_mutex_");
 }
 
 string AaStatement::Get_Export_Declare_Macro()

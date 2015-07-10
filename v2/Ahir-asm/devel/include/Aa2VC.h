@@ -26,6 +26,11 @@
       __F(__UST(this), __UCT(this));\
 	}
 
+#define __FlowThroughConnectSplitProtocolPattern  {\
+	__J(__SCT(this), __SST(this));\
+	__J(__UST(this), __SCT(this));\
+	__J(__UCT(this), __UST(this));}
+
 #define __ConnectSplitProtocolPattern  {\
       string _sample_regn = this->Get_VC_Name() + "_Sample";\
       string _update_regn = this->Get_VC_Name() + "_Update";\
