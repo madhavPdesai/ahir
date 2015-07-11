@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:T:f:OCs:he:waqDL:vI:S:W:H",
+		      "t:T:f:OCs:he:waqDL:vI:S:W:HU",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)

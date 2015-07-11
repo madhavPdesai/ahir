@@ -59,7 +59,7 @@ vhdlsim:
 	ghdl -m --work=work -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi Top_test_bench 
 
 clean: 
-	rm -rf Stage1/vhdl/* Stage1/aa2c/* Stage2/vhdl/* Stage2/aa2c/* objhw/ objsw/ ./bin/* *.*vhdl
+	rm -rf Stage1/vhdl/* Stage1/aa2c/* Stage2/vhdl/* Stage2/aa2c/* objhw/ objsw/ ./bin/* *.*vhdl *.o *.cf *.log top_test_bench *.ghw
 
 
 PHONY: all clean	
