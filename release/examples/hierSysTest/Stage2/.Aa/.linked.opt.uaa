@@ -1,7 +1,7 @@
-$pipe  B : $uint<32>  $depth 0 
+$pipe  B : $uint<32>  $depth 1 
 // can point into 
 
-$pipe  TMP : $uint<32>  $depth 0 
+$pipe  TMP : $uint<32>  $depth 1 
 // can point into 
 
 $storage  default_mem_pool : $array[1] $of $uint<8> // memory space index = 1  base address = 0  word size = 8
@@ -19,14 +19,14 @@ $module [mem_load__]
 	 $out ( data : $uint<8>  )
 $is
 {
-	data := default_mem_pool[((address * 1 ) + 0 )]
+	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
 }
 $module [mem_store__]
 	 $in ( address : $uint<32>   data : $uint<8>  )
 	 $out ()
 $is
 {
-	default_mem_pool[((address * 1 ) + 0 )] := data
+	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
 }
 $module [stage_2_daemon]
 	 $in ()
@@ -37,8 +37,8 @@ $is
 	{
 		$merge $entry loopback 
 		$endmerge
-		x := TMP
-		B := x
+		x := TMP $buffering 1
+		B := x $buffering 1
 		$place[loopback]
 	}
 }

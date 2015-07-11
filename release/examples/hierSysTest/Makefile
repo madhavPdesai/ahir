@@ -22,10 +22,10 @@ stages:  ./Stage1/stage1.aa ./Stage2/stage2.aa
 
 # generate the integrated vhdl and C
 toplevel: hello_world.hsys
-	hierSys2Vhdl -s ghdl hello_world.hsys
+	hierSys2Vhdl -s ghdl Stage1/pipes.aa Stage2/pipes.aa Stage1/vhdl/Stage1.hsys Stage2/vhdl/Stage2.hsys hello_world.hsys
 	vhdlFormat < Top_test_bench.unformatted_vhdl > Top_test_bench.vhdl
 	vhdlFormat < Top.unformatted_vhdl > Top.vhdl
-	hierSys2C  hello_world.hsys -o aa2c
+	hierSys2C  -o aa2c Stage1/pipes.aa Stage2/pipes.aa Stage1/vhdl/Stage1.hsys Stage2/vhdl/Stage2.hsys hello_world.hsys
 
 # now build the C code.
 cmodel:

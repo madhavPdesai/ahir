@@ -1,12 +1,12 @@
 // Virtual circuit produced from Aa description by Aa2VC 
-// $pipe  B : $uint<32>  $depth 0 
+// $pipe  B : $uint<32>  $depth 1 
 // can point into 
 // in scope  top-level
-$pipe [B] 32 $depth 0 
-// $pipe  TMP : $uint<32>  $depth 0 
+$pipe [B] 32 $depth 1 
+// $pipe  TMP : $uint<32>  $depth 1 
 // can point into 
 // in scope  top-level
-$pipe [TMP] 32 $depth 0 
+$pipe [TMP] 32 $depth 1 
 // load store constants for object default_mem_pool
 $constant $W[default_mem_pool_base_address] : $int<1> := _b0
 $memoryspace [memory_space_1] 
@@ -50,7 +50,7 @@ $module [mem_load__]
     // begin control-path 
     ::[assign_stmt_21] 
     {
-      // 	data := default_mem_pool[((address * 1 ) + 0 )]
+      // 	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
       //  file ./.Aa//linked.opt.aa, line 19
       // Source expression
       // default_mem_pool[((address * 1 ) + 0 )]
@@ -176,11 +176,6 @@ $module [mem_load__]
       array_obj_ref_20_sample_completed_ &-> ($null)
       array_obj_ref_20_update_start_ &-> (array_obj_ref_20_Update)
       array_obj_ref_20_update_completed_ <-& (array_obj_ref_20_Update)
-      // both source and target are implicit: use interlock 
-      $T[array_obj_ref_20_sample_start_] 
-      $T[array_obj_ref_20_sample_completed_] 
-      $T[array_obj_ref_20_update_start_] 
-      $T[array_obj_ref_20_update_completed_] 
       // Target expression
       // (as target) data
       // data
@@ -202,7 +197,7 @@ $module [mem_load__]
     $constant $W[array_obj_ref_20_resized_base_address] : $int<1> := _b0// 0
     $constant $W[array_obj_ref_20_offset_scale_factor_0] : $int<1> := _b1// 1
     $constant $W[array_obj_ref_20_word_offset_0] : $int<1> := _b0// 0
-    // 	data := default_mem_pool[((address * 1 ) + 0 )]
+    // 	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
     //  file ./.Aa//linked.opt.aa, line 19
     // default_mem_pool[((address * 1 ) + 0 )]
     // (address * 1 )
@@ -216,7 +211,7 @@ $module [mem_load__]
     $W[array_obj_ref_20_word_address_0] : $pointer<memory_space_1>
     $W[array_obj_ref_20_data_0] : $int<8>
     // data
-    // 	data := default_mem_pool[((address * 1 ) + 0 )]
+    // 	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
     //  file ./.Aa//linked.opt.aa, line 19
     // default_mem_pool[((address * 1 ) + 0 )]
     // (address * 1 )
@@ -235,7 +230,7 @@ $module [mem_load__]
     &/ [array_obj_ref_20_gather_scatter] (array_obj_ref_20_data_0) (data) 
   }
   // end data-path
-  // 	data := default_mem_pool[((address * 1 ) + 0 )]
+  // 	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
   //  file ./.Aa//linked.opt.aa, line 19
   // default_mem_pool[((address * 1 ) + 0 )]
   // ((address * 1 ) + 0 )
@@ -263,7 +258,7 @@ $module [mem_store__]
     // begin control-path 
     ::[assign_stmt_33] 
     {
-      // 	default_mem_pool[((address * 1 ) + 0 )] := data
+      // 	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
       //  file ./.Aa//linked.opt.aa, line 26
       // Source expression
       // data
@@ -276,11 +271,6 @@ $module [mem_store__]
       R_data_32_sample_completed_ <-& (R_data_32_sample_start_)
       R_data_32_update_start_ <-& (R_data_32_sample_completed_)
       R_data_32_update_completed_ <-& (R_data_32_update_start_)
-      // both source and target are implicit: use interlock 
-      $T[array_obj_ref_31_sample_start_] 
-      $T[array_obj_ref_31_sample_completed_] 
-      $T[array_obj_ref_31_update_start_] 
-      $T[array_obj_ref_31_update_completed_] 
       // Target expression
       // default_mem_pool[((address * 1 ) + 0 )]
       $T[array_obj_ref_31_sample_start_] 
@@ -422,7 +412,7 @@ $module [mem_store__]
     $constant $W[array_obj_ref_31_resized_base_address] : $int<1> := _b0// 0
     $constant $W[array_obj_ref_31_offset_scale_factor_0] : $int<1> := _b1// 1
     $constant $W[array_obj_ref_31_word_offset_0] : $int<1> := _b0// 0
-    // 	default_mem_pool[((address * 1 ) + 0 )] := data
+    // 	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
     //  file ./.Aa//linked.opt.aa, line 26
     // default_mem_pool[((address * 1 ) + 0 )]
     // (address * 1 )
@@ -435,7 +425,7 @@ $module [mem_store__]
     $intermediate $W[array_obj_ref_31_root_address] : $int<1>
     $W[array_obj_ref_31_word_address_0] : $pointer<memory_space_1>
     $W[array_obj_ref_31_data_0] : $int<8>
-    // 	default_mem_pool[((address * 1 ) + 0 )] := data
+    // 	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
     //  file ./.Aa//linked.opt.aa, line 26
     // default_mem_pool[((address * 1 ) + 0 )]
     // (address * 1 )
@@ -454,7 +444,7 @@ $module [mem_store__]
     &/ [array_obj_ref_31_gather_scatter] (data) (array_obj_ref_31_data_0) 
   }
   // end data-path
-  // 	default_mem_pool[((address * 1 ) + 0 )] := data
+  // 	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
   //  file ./.Aa//linked.opt.aa, line 26
   // ((address * 1 ) + 0 )
   // (address * 1 )
@@ -494,7 +484,7 @@ $module [stage_2_daemon]
       $P [loopback]
       ::[assign_stmt_40] 
       {
-        // 		x := TMP
+        // 		x := TMP $buffering 1
         //  file ./.Aa//linked.opt.aa, line 37
         // Source expression
         // TMP
@@ -517,16 +507,11 @@ $module [stage_2_daemon]
         RPIPE_TMP_39_sample_completed_ &-> ($null)
         RPIPE_TMP_39_update_start_ &-> (RPIPE_TMP_39_Update)
         RPIPE_TMP_39_update_completed_ <-& (RPIPE_TMP_39_Update)
-        // both source and target are implicit: use interlock 
-        $T[RPIPE_TMP_39_sample_start_] 
-        $T[RPIPE_TMP_39_sample_completed_] 
-        $T[RPIPE_TMP_39_update_start_] 
-        $T[RPIPE_TMP_39_update_completed_] 
         // Target expression
         // (as target) x
         // x
         // implicit reference
-        // barrier: 		x := TMP
+        // barrier: 		x := TMP $buffering 1
         // load-store dependencies..
         // pipe read/write dependencies for pipe TMP
       }
@@ -534,7 +519,7 @@ $module [stage_2_daemon]
       assign_stmt_40__exit__ <-| (assign_stmt_40)
       ::[assign_stmt_43] 
       {
-        // 		B := x
+        // 		B := x $buffering 1
         //  file ./.Aa//linked.opt.aa, line 38
         // Source expression
         // x
@@ -547,11 +532,6 @@ $module [stage_2_daemon]
         R_x_42_sample_completed_ <-& (R_x_42_sample_start_)
         R_x_42_update_start_ <-& (R_x_42_sample_completed_)
         R_x_42_update_completed_ <-& (R_x_42_update_start_)
-        // both source and target are implicit: use interlock 
-        $T[WPIPE_B_41_sample_start_] 
-        $T[WPIPE_B_41_sample_completed_] 
-        $T[WPIPE_B_41_update_start_] 
-        $T[WPIPE_B_41_update_completed_] 
         // Target expression
         // (as target) B
         $T[WPIPE_B_41_sample_start_] 
@@ -574,7 +554,7 @@ $module [stage_2_daemon]
         WPIPE_B_41_update_start_ &-> (WPIPE_B_41_Update)
         WPIPE_B_41_update_completed_ <-& (WPIPE_B_41_Update)
         WPIPE_B_41_sample_start_ <-& (R_x_42_update_completed_)
-        // barrier: 		B := x
+        // barrier: 		B := x $buffering 1
         // load-store dependencies..
         // pipe read/write dependencies for pipe B
       }
@@ -630,20 +610,20 @@ $module [stage_2_daemon]
     //  file ./.Aa//linked.opt.aa, line 35
     // block %stage_2_daemon%lOoP
     //  file ./.Aa//linked.opt.aa, line 33
-    // 		x := TMP
+    // 		x := TMP $buffering 1
     //  file ./.Aa//linked.opt.aa, line 37
     // x
     $W[x_40] : $int<32>
-    // 		B := x
+    // 		B := x $buffering 1
     //  file ./.Aa//linked.opt.aa, line 38
     // B
     // datapath-instances for block %stage_2_daemon%lOoP
     //  file ./.Aa//linked.opt.aa, line 33
-    // 		x := TMP
+    // 		x := TMP $buffering 1
     //  file ./.Aa//linked.opt.aa, line 37
     // TMP
     $ioport $in [RPIPE_TMP_39_inst] (TMP) (x_40) 
-    // 		B := x
+    // 		B := x $buffering 1
     //  file ./.Aa//linked.opt.aa, line 38
     // B
     $ioport $out [WPIPE_B_41_inst]  (x_40) (B) 
@@ -652,11 +632,11 @@ $module [stage_2_daemon]
   // end data-path
   // CP-DP links for merge  
   //  file ./.Aa//linked.opt.aa, line 35
-  // 		x := TMP
+  // 		x := TMP $buffering 1
   //  file ./.Aa//linked.opt.aa, line 37
   // TMP
   RPIPE_TMP_39_inst <=> (branch_block_stmt_36/assign_stmt_40/RPIPE_TMP_39_Sample/rr branch_block_stmt_36/assign_stmt_40/RPIPE_TMP_39_Update/cr) (branch_block_stmt_36/assign_stmt_40/RPIPE_TMP_39_Sample/ra branch_block_stmt_36/assign_stmt_40/RPIPE_TMP_39_Update/ca)
-  // 		B := x
+  // 		B := x $buffering 1
   //  file ./.Aa//linked.opt.aa, line 38
   // B
   WPIPE_B_41_inst <=> (branch_block_stmt_36/assign_stmt_43/WPIPE_B_41_Sample/req branch_block_stmt_36/assign_stmt_43/WPIPE_B_41_Update/req) (branch_block_stmt_36/assign_stmt_43/WPIPE_B_41_Sample/ack branch_block_stmt_36/assign_stmt_43/WPIPE_B_41_Update/ack)

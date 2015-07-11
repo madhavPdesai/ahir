@@ -228,8 +228,13 @@ hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<strin
 				}
 			)*
 			{
+				//
+				// BUG: add internal pipe to parent if needed..
+				//      pass global maps to this function..
+				//
 				if(sys_inst)
-					sys_inst->Map_Unmapped_Ports_To_Defaults();
+					sys_inst->Map_Unmapped_Ports_To_Defaults(global_pipe_map,
+										 global_signals);
 			}
 ;
 

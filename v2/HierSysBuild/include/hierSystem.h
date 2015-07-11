@@ -70,7 +70,7 @@ class hierSystemInstance: public hierRoot
 	bool Add_Port_Mapping(string formal, 
 				string actual);
 
-	bool Map_Unmapped_Ports_To_Defaults();
+	bool Map_Unmapped_Ports_To_Defaults( map<string, pair<int,int> >& pmap, set<string>& signals);
 
 	string Get_Actual(string formal)
 	{

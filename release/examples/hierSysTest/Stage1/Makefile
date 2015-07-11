@@ -4,12 +4,12 @@ AA2C_C_FILE=$(AA2CPREFIX)aa_c_model.c
 
 all: cmodel vhdlmodel
 
-cmodel: stage1.aa
-	Aa2C -I dummy_mempool  -o aa2c -P $(AA2CPREFIX) $(TOPMODULES) stage1.aa
+cmodel: stage1.aa pipes.aa
+	Aa2C -I dummy_mempool  -o aa2c -P $(AA2CPREFIX) $(TOPMODULES) pipes.aa stage1.aa
 	indent aa2c/$(AA2C_C_FILE)
           
-vhdlmodel: stage1.aa
-	buildProcessorHDL.py -a Stage1 -W S1 -E to_vhdl $(TOPMODULES) -A stage1.aa
+vhdlmodel: stage1.aa pipes.aa
+	buildFromSources.py -a Stage1 -W S1 -E to_vhdl $(TOPMODULES) -A pipes.aa -A stage1.aa
 
 
 clean:

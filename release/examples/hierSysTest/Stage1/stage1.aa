@@ -1,5 +1,3 @@
-$pipe  A: $uint<32>  $depth 0
-$pipe TMP: $uint<32> $depth 0
 $module [stage_1_daemon] $in () $out () $is
 {
 	$branchblock[lOoP] {

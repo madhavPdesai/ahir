@@ -47,6 +47,8 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
 		} 
 		else
 		{
+			this->Report_Warning(string("Added internal ") + 
+					(is_sig ? "signal " : "pipe " )  + actual + " to " + parent->Get_Id());
 			parent->Add_Internal_Pipe(actual, w, d);
 			if(is_sig)
 				parent->Add_Signal(actual);
@@ -102,7 +104,7 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 	
 // unmapped ports will be mapped to default
 // pipes in parent if they exist.
-bool hierSystemInstance::Map_Unmapped_Ports_To_Defaults()
+bool hierSystemInstance::Map_Unmapped_Ports_To_Defaults( map<string, pair<int,int> >& pmap, set<string>& signals)
 {
 	bool err = false;
 	vector<string> ports;
@@ -116,7 +118,7 @@ bool hierSystemInstance::Map_Unmapped_Ports_To_Defaults()
 		if(_port_map.find(f) == _port_map.end())
 		{
 			this->Report_Warning("mapping unmapped formal in instance " + this->Get_Id() + " to default: " + f);
-			bool lerr = this->Add_Port_Mapping(f,f);
+			bool lerr = this->Add_Port_Mapping(f,f,pmap, signals);
 			if(lerr)
 				this->Report_Warning( "in mapping unmapped formal in instance " + this->Get_Id() + " to default (not found): " + f);
 		

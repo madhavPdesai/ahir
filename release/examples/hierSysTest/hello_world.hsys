@@ -1,27 +1,9 @@
-$system Stage1  $library S1
-	$in 
-		$pipe A 32 $depth 0
-	$out 
-		$pipe TMP 32 $depth 0
-{
-}
-
-$system Stage2  $library S2
-
-	$in 
-		$pipe TMP 32 $depth 0
-	$out 
-		$pipe B 32 $depth 0
-{
-}
-
 $system Top 
 	$in 
-		$pipe A 32  $depth 0
+		$pipe A
         $out 
-		$pipe B 32 $depth 0
+		$pipe B
 {
-        $pipe TMP 32 $depth 1
-        $instance i0  S1:Stage1   A => A  TMP => TMP 
-        $instance i1  S2:Stage2  TMP => TMP B => B 
+        $instance i0  S1:Stage1 
+        $instance i1  S2:Stage2 
 }
