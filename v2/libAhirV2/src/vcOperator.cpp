@@ -15,49 +15,31 @@ vcEquivalence::vcEquivalence(string id,
   vcOperator(id)
 {
   _flow_through = true;
-
-  int in_width = 0;
-  for(int idx = 0; idx < inwires.size(); idx++)
-    {
-      in_width += inwires[idx]->Get_Size();
-      _inwires.push_back(inwires[idx]);
-      inwires[idx]->Connect_Receiver(this);
-    }
-
-  int out_width = 0;
-  for(int idx = 0; idx < outwires.size(); idx++)
-    {
-      out_width += outwires[idx]->Get_Size();
-      _outwires.push_back(outwires[idx]);
-      outwires[idx]->Connect_Driver(this);
-    }
-
-  if(in_width != out_width)
+  this->Set_Input_Wires(inwires);
+  this->Set_Output_Wires(outwires);
+  if(_in_width != _out_width)
     {
       vcSystem::Warning("in equivalence operator " + id + ", total input width is not equal to total output width.. output will truncate the input..");
     }
-
-  _in_width = in_width;
-  _out_width = out_width;
 }
 
 void vcEquivalence::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__EQUIVALENCE_OP] << " " << this->Get_Label() << " ";
   ofile << vcLexerKeywords[__LPAREN];
-  for(int idx = 0; idx < _inwires.size(); idx++)
+  for(int idx = 0; idx < _input_wires.size(); idx++)
     {
       if(idx > 0)
 	ofile << " ";
-      ofile << _inwires[idx]->Get_Id();
+      ofile << _input_wires[idx]->Get_Id();
     }
   ofile << vcLexerKeywords[__RPAREN];
   ofile << " " 	<< vcLexerKeywords[__LPAREN];
-  for(int idx = 0; idx < _outwires.size(); idx++)
+  for(int idx = 0; idx < _output_wires.size(); idx++)
     {
       if(idx > 0)
 	ofile << " ";
-      ofile << _outwires[idx]->Get_Id();
+      ofile << _output_wires[idx]->Get_Id();
     }
   ofile << vcLexerKeywords[__RPAREN] << " ";
 
@@ -66,19 +48,6 @@ void vcEquivalence::Print(ostream& ofile)
   ofile << endl;
 
   this->Print_Delay(ofile);
-}
-
-
-void   vcOperator::Add_Reqs(vector<vcTransition*>& reqs)
-{
-  assert(reqs.size() == 1);
-  this->_reqs = reqs;
-}
-
-void vcOperator::Add_Acks(vector<vcTransition*>& acks)
-{
-  assert(acks.size() == 1);
-  this->_acks = acks;
 }
 
 
@@ -133,20 +102,13 @@ void vcOperator::Print_VHDL_Logger(ostream& ofile)
 	ofile << ");" << endl;
 }
 
-void   vcSplitOperator::Add_Reqs(vector<vcTransition*>& reqs)
-{
-  assert(reqs.size() == 2);
-  this->_reqs = reqs;
-}
-
-void vcSplitOperator::Add_Acks(vector<vcTransition*>& acks)
-{
-  assert(acks.size() == 2);
-  this->_acks = acks;
-}
-
 void vcSplitOperator::Print_VHDL_Logger(ostream& ofile)
 {
+	if(this->_reqs.size() < 2)
+		return;
+	if(this->_acks.size() < 2)
+		return;
+
 	string req0_id = this->_reqs[0]->Get_CP_To_DP_Symbol();
 	string req1_id = this->_reqs[1]->Get_CP_To_DP_Symbol();
 	string ack0_id = this->_acks[0]->Get_DP_To_CP_Symbol();
@@ -202,52 +164,58 @@ void vcSplitOperator::Print_VHDL_Logger(ostream& ofile)
 	ofile << ");" << endl;
 }
 
-vcLoadStore::vcLoadStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcSplitOperator(id)
+vcLoadStore::vcLoadStore(string id, vcMemorySpace* ms):vcSplitOperator(id)
 {
   _memory_space = ms;
-  _address = addr;
-  _data = data;
-
-  
   assert(ms != NULL);
 
-  if(ms->Get_Address_Width() != addr->Get_Type()->Size())
+  
+}
+
+
+void vcLoadStore::Check_Memory_Space_Consistency(int addr_width, int data_width)
+{
+  if(_memory_space->Get_Address_Width() != addr_width)
     {
       string err_msg = string("load/store operator address-wire width must\n") +
 	"be the same as the memory space address width\n" +
-	"for load/store with id " + id + 
-	" (memory space " + ms->Get_Id() + ")"; 
+	"for load/store with id " + this->Get_Id() + 
+	" (memory space " + _memory_space->Get_Id() + ")"; 
 
       vcSystem::Error(err_msg);
 
     }
-  if(ms->Get_Word_Size() != data->Get_Type()->Size())
+  if(_memory_space->Get_Word_Size() != data_width)
     {
       string err_msg = string("load/store operator data-wire width must\n") +
 	"be the same as the memory space data width\n" +
-	"for load/store with id " + id + 
-	" (memory space " + ms->Get_Id() + ")";
+	"for load/store with id " + this->Get_Id() + 
+	" (memory space " + _memory_space->Get_Id() + ")";
       vcSystem::Error(err_msg);
     }
-  
 }
 
 
-vcLoad::vcLoad(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoadStore(id,ms,addr,data) 
+
+vcLoad::vcLoad(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoadStore(id,ms) 
 {
-  addr->Connect_Receiver(this);
-  data->Connect_Driver(this);
+  vector<vcWire*> iwires; iwires.push_back(addr);
+  vector<vcWire*> owires; owires.push_back(data);
+  this->Set_Input_Wires(iwires);
+  this->Set_Output_Wires(owires);
+  this->Check_Memory_Space_Consistency(addr->Get_Type()->Size(), data->Get_Type()->Size());
 }
+
 void vcLoad::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__LOAD] 	<< " "
 	<< this->Get_Label() << " " << vcLexerKeywords[__FROM] << " "
 	<< this->_memory_space->Get_Hierarchical_Id() << " "
 	<< vcLexerKeywords[__LPAREN] << " "
-	<< this->_address->Get_Id() << " "
+	<< this->Get_Address()->Get_Id() << " "
 	<< vcLexerKeywords[__RPAREN] << " "
 	<< vcLexerKeywords[__LPAREN] << " "
-	<< this->_data->Get_Id() <<  " "
+	<< this->Get_Data()->Get_Id() <<  " "
 	<< vcLexerKeywords[__RPAREN] << " ";
   this->Print_Guard(ofile);
   ofile << endl;
@@ -256,25 +224,28 @@ void vcLoad::Print(ostream& ofile)
   
 void vcLoad::Append_Inwire_Buffering(vector<int>& inwire_buffering)
 {
-	inwire_buffering.push_back(this->Get_Input_Buffering(_address));
+	inwire_buffering.push_back(this->Get_Input_Buffering(this->Get_Input_Wire(0)));
 }
 
 void vcLoad::Append_Outwire_Buffering(vector<int>& outwire_buffering)
 {
-	outwire_buffering.push_back(this->Get_Output_Buffering(_data));
+	outwire_buffering.push_back(this->Get_Output_Buffering(this->Get_Output_Wire(0)));
 }
 
-vcStore::vcStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoadStore(id,ms,addr,data) 
+vcStore::vcStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoadStore(id,ms) 
 {
-  addr->Connect_Receiver(this);
-  data->Connect_Receiver(this);
+  vector<vcWire*> iwires;
+  iwires.push_back(addr); 
+  iwires.push_back(data);
+  this->Set_Input_Wires(iwires);
+  this->Check_Memory_Space_Consistency(addr->Get_Type()->Size(), data->Get_Type()->Size());
 }
 
 // max of both inputs.
 void vcStore::Append_Inwire_Buffering(vector<int>& inwire_buffering)
 {
-	int ba = this->Get_Input_Buffering(_address);
-	int bd = this->Get_Input_Buffering(_data);
+	int ba = this->Get_Input_Buffering(this->Get_Address());
+	int bd = this->Get_Input_Buffering(this->Get_Data());
 	inwire_buffering.push_back((ba > bd) ? ba : bd);
 }
 
@@ -284,8 +255,8 @@ void vcStore::Print(ostream& ofile)
 	<< this->Get_Label() << " " << vcLexerKeywords[__TO] << " "
 	<< this->_memory_space->Get_Hierarchical_Id() << " "
 	<< vcLexerKeywords[__LPAREN] << " "
-	<< this->_address->Get_Id() << " "
-	<< this->_data->Get_Id() << " "
+	<< this->Get_Address()->Get_Id() << " "
+	<< this->Get_Data()->Get_Id() << " "
 	<< vcLexerKeywords[__RPAREN] << " ";
   this->Print_Guard(ofile);
   ofile << endl;
@@ -295,45 +266,30 @@ void vcStore::Print(ostream& ofile)
 vcPhi::vcPhi(string id, vector<vcWire*>& inwires, vcWire* outwire):vcDatapathElement(id)
 {
   assert(inwires.size() > 0 && outwire != NULL);
+  vector<vcWire*> owires; owires.push_back(outwire);
+
 
   // all wires must have the same type
   vcType* t = outwire->Get_Type();
   for(int idx = 0; idx < inwires.size(); idx++)
     assert(t == inwires[idx]->Get_Type());
 
-  this->_inwires = inwires;
-  for(int idx =0; idx < _inwires.size(); idx++)
-    _inwires[idx]->Connect_Receiver(this);
-
-  this->_outwire = outwire;
-  _outwire->Connect_Driver(this);
-
-}
-
-void vcPhi::Add_Reqs(vector<vcTransition*>& reqs)
-{
-  assert(reqs.size() > 0);
-  this->_reqs = reqs;
-}
-
-void vcPhi::Add_Acks(vector<vcTransition*>& acks)
-{
-  assert(acks.size() == 1);
-  this->_acks = acks;
+  this->Set_Input_Wires(inwires);
+  this->Set_Output_Wires(owires);
 }
 
 void vcPhi::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__PHI] << " " << this->Get_Label() << " ";
   ofile << vcLexerKeywords[__LPAREN];
-  for(int idx = 0; idx < this->_inwires.size(); idx++)
+  for(int idx = 0; idx < this->_input_wires.size(); idx++)
     {
-      ofile << this->_inwires[idx]->Get_Id() << " ";
+      ofile << this->_input_wires[idx]->Get_Id() << " ";
     }
   ofile << vcLexerKeywords[__RPAREN] 
 	<< " ";
   ofile << vcLexerKeywords[__LPAREN];
-  ofile << this->_outwire->Get_Id();
+  ofile << this->Get_Outwire()->Get_Id();
   ofile << vcLexerKeywords[__RPAREN] ;
   ofile << endl;
   this->Print_Delay(ofile);
@@ -341,31 +297,31 @@ void vcPhi::Print(ostream& ofile)
 
 void vcPhi::Print_VHDL(ostream& ofile)
 {
-      int odata_width = this->Get_Outwire()->Get_Type()->Size();
-      int num_reqs = this->Get_Inwires().size();
-      int idata_width = num_reqs*odata_width;
+      int odata_width = this->Get_Output_Width();
+      int idata_width = this->Get_Input_Width();
 
-      if((this->Get_Number_Of_Reqs() < num_reqs) ||
+      if((this->Get_Number_Of_Reqs() != this->Get_Number_Of_Input_Wires()) ||
 	 (this->Get_Number_Of_Acks() != 1))
 	{
 	  vcSystem::Error("phi operator " + this->Get_Id() + " has inadequate/incorrect req-ack links");
 	  return;
 	}
 
+      int num_reqs = this->Get_Number_Of_Reqs();
       ofile << this->Get_VHDL_Id() << ": Block -- phi operator {" << endl;
       ofile << "signal idata: std_logic_vector(" << idata_width-1 << " downto 0);" << endl;
       ofile << "signal req: BooleanArray(" << num_reqs-1 << " downto 0);" << endl;
       ofile << "--}\n begin -- {" << endl;
       ofile << "idata <= ";
-      for(int idx = 0; idx < this->Get_Inwires().size(); idx++)
+      for(int idx = 0, fidx = this->Get_Number_Of_Input_Wires(); idx < fidx;  idx++)
 	{
 	  if(idx > 0)
 	    ofile << " & ";
-	  ofile << this->Get_Inwires()[idx]->Get_VHDL_Signal_Id();
+	  ofile << this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
 	}
       ofile << ";" << endl;
 
-      if(this->Get_Number_Of_Reqs() == 1)
+      if(num_reqs == 1)
       {
         ofile << "req(0) <= ";
 	ofile << this->Get_Req(0)->Get_CP_To_DP_Symbol();
@@ -373,7 +329,7 @@ void vcPhi::Print_VHDL(ostream& ofile)
       else
       {
         ofile << "req <= ";
-      	for(int idx = 0; idx < this->Get_Number_Of_Reqs(); idx++)
+      	for(int idx = 0; idx < num_reqs; idx++)
 	{
 	  if(idx > 0)
 	    ofile << " & ";
@@ -384,7 +340,7 @@ void vcPhi::Print_VHDL(ostream& ofile)
       
       ofile << "phi: PhiBase -- {" << endl
 	    << "generic map( -- { " << endl 
-	    << "num_reqs => " << this->Get_Number_Of_Reqs() << "," << endl
+	    << "num_reqs => " << num_reqs << "," << endl
 	    << "data_width => " << odata_width << ") -- }"  << endl
 	    << "port map( -- { "<< endl 
 	    << "req => req, " << endl
@@ -407,19 +363,15 @@ void vcPhiPipelined::Print(ostream& ofile)
   this->vcPhi::Print(ofile);
 }
 
-void vcPhiPipelined::Add_Acks(vector<vcTransition*>& acks)
-{
-  assert(acks.size() == 2);
-  this->_acks = acks;
-}
 void vcPhiPipelined::Print_VHDL(ostream& ofile)
 {
-      int odata_width = this->Get_Outwire()->Get_Type()->Size();
-      int num_reqs = this->Get_Inwires().size();
-      int idata_width = num_reqs*odata_width;
+      int num_inputs = this->Get_Inwires().size();
+      int odata_width = this->Get_Output_Width();
+      int idata_width = this->Get_Input_Width();
       int buffering = 0;
 
-      if((this->Get_Number_Of_Reqs() != (num_reqs+1)) ||
+	// num-inputs sample reqs, 1 update-req
+      if((this->Get_Number_Of_Reqs() != (num_inputs+1)) ||
 	 (this->Get_Number_Of_Acks() != 2))
 	{
 	  vcSystem::Error("pipelined-phi operator " + this->Get_Id() + " has inadequate/incorrect req-ack links");
@@ -431,7 +383,7 @@ void vcPhiPipelined::Print_VHDL(ostream& ofile)
 
       ofile << this->Get_VHDL_Id() << ": Block -- pipelined-phi operator {" << endl;
       ofile << "signal idata: std_logic_vector(" << idata_width-1 << " downto 0);" << endl;
-      ofile << "signal sample_req: BooleanArray(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal sample_req: BooleanArray(" << num_inputs-1 << " downto 0);" << endl;
       ofile << "signal sample_ack, update_req, update_ack: Boolean;" << endl;
       ofile << "--}\n begin -- {" << endl;
       ofile << "idata <= ";
@@ -447,20 +399,20 @@ void vcPhiPipelined::Print_VHDL(ostream& ofile)
       ofile << ";" << endl;
 
       ofile << "sample_req <= ";
-      for(int idx = 0; idx < this->Get_Number_Of_Reqs()-1; idx++)
+      for(int idx = 0; idx < num_inputs; idx++)
       {
 	      if(idx > 0)
 		      ofile << " & ";
 	      ofile << this->Get_Req(idx)->Get_CP_To_DP_Symbol();
       }
       ofile << ";" << endl;
-      ofile << "update_req <= " <<  this->Get_Req(this->Get_Number_Of_Reqs()-1)->Get_CP_To_DP_Symbol() << ";" << endl;
+      ofile << "update_req <= " <<  this->Get_Req(num_inputs)->Get_CP_To_DP_Symbol() << ";" << endl;
 
       ofile << "phi: PhiPipelined -- {" << endl
 	    << "generic map( -- { " << endl 
 	    << "name => \"" << this->Get_VHDL_Id() << "\"," << endl
 	    << "buffering => " << buffering << "," << endl
-	    << "num_reqs => " << this->Get_Number_Of_Reqs()-1 << "," << endl
+	    << "num_reqs => " << num_inputs << "," << endl
 	    << "data_width => " << odata_width << ") -- }"  << endl
 	    << "port map( -- { "<< endl 
 	    << "sample_req => sample_req, " << endl
@@ -477,15 +429,8 @@ void vcPhiPipelined::Print_VHDL(ostream& ofile)
 vcCall::vcCall(string id, vcModule* m, vector<vcWire*>& in_wires, vector<vcWire*> out_wires, bool inline_flag):vcSplitOperator(id)
 {
 	_called_module = m;
-
-
-	_in_wires = in_wires;
-	for(int idx =0; idx < _in_wires.size(); idx++)
-		_in_wires[idx]->Connect_Receiver(this);
-
-	_out_wires = out_wires;
-	for(int idx =0; idx < _out_wires.size(); idx++)
-		_out_wires[idx]->Connect_Driver(this);
+	this->Set_Input_Wires(in_wires);
+	this->Set_Output_Wires(out_wires);
 
 	_inline_flag = inline_flag;
 }
@@ -504,9 +449,9 @@ int vcCall::Get_Delay()
 void vcCall::Append_Inwire_Buffering(vector<int>& inwire_buffering)
 {
 	int max_buf = 0;
-	for(int idx = 0; idx < _in_wires.size(); idx++)
+	for(int idx = 0, fidx = this->Get_Number_Of_Input_Wires();  idx < fidx; idx++)
 	{
-		int U = this->Get_Input_Buffering(_in_wires[idx]);
+		int U = this->Get_Input_Buffering(this->Get_Input_Wire(idx));
 		max_buf = ((U > max_buf) ? U : max_buf);
 	}
 	inwire_buffering.push_back(max_buf);
@@ -517,9 +462,9 @@ void vcCall::Append_Inwire_Buffering(vector<int>& inwire_buffering)
 void vcCall::Append_Outwire_Buffering(vector<int>& outwire_buffering)
 {
 	int max_buf = 0;
-	for(int idx = 0; idx < _out_wires.size(); idx++)
+	for(int idx = 0, fidx = this->Get_Number_Of_Output_Wires(); idx < fidx; idx++)
 	{
-		int U = this->Get_Output_Buffering(_out_wires[idx]);
+		int U = this->Get_Output_Buffering(this->Get_Output_Wire(idx));
 		max_buf = ((U > max_buf) ? U : max_buf);
 	}
 	outwire_buffering.push_back(max_buf);
@@ -535,15 +480,16 @@ void vcCall::Print(ostream& ofile)
 
 	// input arguments.
 	ofile << vcLexerKeywords[__LPAREN] << " ";
-	for(int idx = 0; idx < _in_wires.size(); idx++)
-		ofile << _in_wires[idx]->Get_Id() << " ";
+	for(int idx = 0, fidx = this->Get_Number_Of_Input_Wires(); idx < fidx; idx++)
+		ofile << this->Get_Input_Wire(idx)->Get_Id() << " ";
+
 	ofile << vcLexerKeywords[__RPAREN] << " ";
 
 
 	// output arguments.
 	ofile << vcLexerKeywords[__LPAREN] << " ";
-	for(int idx = 0; idx < _out_wires.size(); idx++)
-		ofile << _out_wires[idx]->Get_Id() << " ";
+	for(int idx = 0, fidx = this->Get_Number_Of_Output_Wires(); idx < fidx; idx++)
+		ofile << this->Get_Output_Wire(idx)->Get_Id() << " ";
 	ofile << vcLexerKeywords[__RPAREN] << " ";
 	this->Print_Guard(ofile);
 	this->Print_Flow_Through(ofile);
@@ -551,10 +497,38 @@ void vcCall::Print(ostream& ofile)
 	this->Print_Delay(ofile);
 }
 
-vcIOport::vcIOport(string id, vcPipe* pipe, vcWire* w): vcOperator(id)
+void vcCall::Print_Flow_Through_VHDL(ostream& ofile)
+{
+	ofile << "call_inst_" << this->Get_Root_Index() << ": ";
+	ofile << this->_called_module->Get_VHDL_Id() << " port map(";
+	bool first_one = true;
+	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Input_Arguments(); idx < fidx; idx++)
+	{
+		if(!first_one)
+		{
+			ofile << ", ";
+			first_one = false;
+		}
+		ofile << this->_called_module->Get_Input_Argument(idx) << " => "
+			<< this->Get_Input_Wire(idx)->Get_VHDL_Id();
+	}
+	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Output_Arguments(); idx < fidx; idx++)
+	{
+		if(!first_one)
+		{
+			ofile << ", ";
+			first_one = false;
+		}
+		ofile << this->_called_module->Get_Output_Argument(idx) << " => "
+			<< this->Get_Output_Wire(idx)->Get_VHDL_Id();
+	}
+	ofile << "); " << endl;
+}
+
+
+vcIOport::vcIOport(string id, vcPipe* pipe): vcOperator(id)
 {
 	_pipe = pipe;
-	_data = w;
 }
 
 string vcIOport::Get_Pipe_Id()
@@ -562,76 +536,49 @@ string vcIOport::Get_Pipe_Id()
 	return(this->_pipe->Get_Id());
 }
 
-vcInport::vcInport(string id, vcPipe* pipe, vcWire* w):vcIOport(id,pipe,w) 
+vcInport::vcInport(string id, vcPipe* pipe, vcWire* w):vcIOport(id,pipe) 
 {
-	w->Connect_Driver(this);
-}
-
-void   vcInport::Add_Reqs(vector<vcTransition*>& reqs)
-{
-	assert(reqs.size() == 2);
-	this->_reqs = reqs;
-}
-
-void vcInport::Add_Acks(vector<vcTransition*>& acks)
-{
-	assert(acks.size() == 2);
-	this->_acks = acks;
-}
-
-void vcInport::Append_Outwire_Buffering(vector<int>& outwire_buffering)
-{
-	outwire_buffering.push_back(this->Get_Output_Buffering(_data));
+	vector<vcWire*> owires; owires.push_back(w);
+	this->Set_Output_Wires(owires);
 }
 
 void vcInport::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__IOPORT] << " " <<  vcLexerKeywords[__IN] << " " << this->Get_Label() << "  " 
 	<< vcLexerKeywords[__LPAREN] << this->Get_Pipe_Id() << vcLexerKeywords[__RPAREN] << " "
-	<< vcLexerKeywords[__LPAREN] << this->_data->Get_Id() << vcLexerKeywords[__RPAREN] << " ";
+	<< vcLexerKeywords[__LPAREN] << this->Get_Data()->Get_Id() << vcLexerKeywords[__RPAREN] << " ";
   this->Print_Guard(ofile);
   ofile << endl;
   this->Print_Delay(ofile);
 }
 
-vcOutport::vcOutport(string id, vcPipe* pipe, vcWire* w):vcIOport(id,pipe,w) 
+vcOutport::vcOutport(string id, vcPipe* pipe, vcWire* w):vcIOport(id,pipe) 
 {
-  w->Connect_Receiver(this);
+	vector<vcWire*> iwires; iwires.push_back(w);
+	this->Set_Input_Wires(iwires);
 }
+
 void vcOutport::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__IOPORT] << " " <<  vcLexerKeywords[__OUT] << " " << this->Get_Label() << "  " 
-	<< vcLexerKeywords[__LPAREN] << this->_data->Get_Id() << vcLexerKeywords[__RPAREN] << " " 
+	<< vcLexerKeywords[__LPAREN] << this->Get_Data()->Get_Id() << vcLexerKeywords[__RPAREN] << " " 
 	<< vcLexerKeywords[__LPAREN] << this->Get_Pipe_Id() << vcLexerKeywords[__RPAREN] << " ";
   this->Print_Guard(ofile);
   ofile << endl;
   this->Print_Delay(ofile);
 }
 
-void   vcOutport::Add_Reqs(vector<vcTransition*>& reqs)
-{
-  assert(reqs.size() == 2);
-  this->_reqs = reqs;
-}
-
-void vcOutport::Add_Acks(vector<vcTransition*>& acks)
-{
-  assert(acks.size() == 2);
-  this->_acks = acks;
-}
-
 vcUnarySplitOperator::vcUnarySplitOperator(string id, string op_id, vcWire* x, vcWire* z):vcSplitOperator(id)
 {
   
   assert(x != NULL && z != NULL);
+  vector<vcWire*> iwires; iwires.push_back(x);
+  this->Set_Input_Wires(iwires); 
+
+  vector<vcWire*> owires; owires.push_back(z);
+  this->Set_Output_Wires(owires);
   
   this->_op_id = op_id;
-
-  this->_x = x;
-  x->Connect_Receiver(this);
-
-  this->_z = z;
-  z->Connect_Driver(this);
 }
 
 bool vcUnarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
@@ -643,23 +590,35 @@ bool vcUnarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 
 void vcUnarySplitOperator::Append_Inwire_Buffering(vector<int>& inwire_buffering)
 {
-	inwire_buffering.push_back(this->Get_Input_Buffering(_x));
+	inwire_buffering.push_back(this->Get_Input_Buffering(this->Get_X()));
 }
 
 void vcUnarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_buffering)
 {
-	outwire_buffering.push_back(this->Get_Output_Buffering(_z));
+	outwire_buffering.push_back(this->Get_Output_Buffering(this->Get_Z()));
+}
+
+void vcUnarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
+{
+	ofile << "-- unary operator " << this->Get_VHDL_Id() << endl;
+	ofile << "process(" << this->Get_X()->Get_VHDL_Id() << ") -- {" << endl;
+	ofile << "variable tmp_var : " << this->Get_Output_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
+	ofile << "begin -- { " << endl;
+	string vhdl_op_id  = Get_VHDL_Op_Id(this->_op_id, this->Get_Input_Type(), this->Get_Output_Type(), false);
+	ofile << vhdl_op_id << "_proc(" << this->Get_X()->Get_VHDL_Id() << ", tmp_var);" << endl;
+	ofile << this->Get_Z()->Get_VHDL_Id() << " <= tmp_var; -- }" << endl;
+	ofile << "end process;" << endl; 
 }
 
 void vcUnarySplitOperator::Print(ostream& ofile)
 {
   ofile << this->_op_id << " " << this->Get_Label() << " "
 	<< vcLexerKeywords[__LPAREN] 
-	<< this->_x->Get_Id() << " "
+	<< this->Get_X()->Get_Id() << " "
 	<< vcLexerKeywords[__RPAREN] 
 	<< " "
 	<< vcLexerKeywords[__LPAREN] 
-	<< this->_z->Get_Id()
+	<< this->Get_Z()->Get_Id()
 	<< vcLexerKeywords[__RPAREN] 
 	<<  " ";
   this->Print_Guard(ofile);
@@ -689,14 +648,11 @@ vcBinarySplitOperator::vcBinarySplitOperator(string id, string op_id, vcWire* x,
 	}
     }
   
-  this->_x = x;
-  x->Connect_Receiver(this);
+  vector<vcWire*> iwires; iwires.push_back(x); iwires.push_back(y);
+  this->Set_Input_Wires(iwires); 
 
-  this->_y = y;
-  y->Connect_Receiver(this);
-
-  this->_z = z;
-  z->Connect_Driver(this);
+  vector<vcWire*> owires; owires.push_back(z);
+  this->Set_Output_Wires(owires);
 }
 
 bool vcBinarySplitOperator::Is_Pipelined_Operator()
@@ -764,6 +720,9 @@ bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
   if(!Check_If_Equivalent(ow1,ow2))
     return(false);
 
+  vcWire* _x = this->Get_X();
+  vcWire* _y = this->Get_Y();
+
   if(_y->Is("vcConstantWire") && Is_Shift_Op(this->_op_id))
     return(false);
   
@@ -801,26 +760,42 @@ bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 // which is the maximum specified across all input wires.
 void vcBinarySplitOperator::Append_Inwire_Buffering(vector<int>& inwire_buffering)
 {
-	int bx = this->Get_Input_Buffering(_x);
-	int by = this->Get_Input_Buffering(_y);
+	int bx = this->Get_Input_Buffering(this->Get_X());
+	int by = this->Get_Input_Buffering(this->Get_Y());
 	inwire_buffering.push_back((bx > by) ? bx : by);
 }
 
 void vcBinarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_buffering)
 {
-	outwire_buffering.push_back(this->Get_Output_Buffering(_z));
+	outwire_buffering.push_back(this->Get_Output_Buffering(this->Get_Z()));
+}
+
+void vcBinarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
+{
+	ofile << "-- binary operator " << this->Get_VHDL_Id() << endl;
+	ofile << "process(";
+	ofile << this->Get_X()->Get_VHDL_Id();
+	if(!this->Get_Y()->Is_Constant())
+		ofile << ", " << this->Get_Y()->Get_VHDL_Id() << ") -- {" << endl;
+	ofile << "variable tmp_var : " << this->Get_Output_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
+	ofile << "begin -- { " << endl;
+	string vhdl_op_id  = Get_VHDL_Op_Id(this->_op_id, this->Get_Input_Type(), this->Get_Output_Type(), false);
+	ofile << vhdl_op_id << "_proc(" << this->Get_X()->Get_VHDL_Id() << ", "
+					<< this->Get_Y()->Get_VHDL_Id() << ", tmp_var);" << endl;
+	ofile << this->Get_Z()->Get_VHDL_Id()  << " <= tmp_var; -- }" << endl;
+	ofile << "end process;" << endl; 
 }
 
 void vcBinarySplitOperator::Print(ostream& ofile)
 {
   ofile << this->_op_id << " " << this->Get_Label() << " "
 	<< vcLexerKeywords[__LPAREN] 
-	<< this->_x->Get_Id() << " "
-	<< this->_y->Get_Id() << " "
+	<< this->Get_X()->Get_Id() << " "
+	<< this->Get_Y()->Get_Id() << " "
 	<< vcLexerKeywords[__RPAREN] 
 	<< " "
 	<< vcLexerKeywords[__LPAREN] 
-	<< this->_z->Get_Id()
+	<< this->Get_Z()->Get_Id()
 	<< vcLexerKeywords[__RPAREN] 
 	<<  " ";
   this->Print_Guard(ofile);
@@ -831,30 +806,24 @@ void vcBinarySplitOperator::Print(ostream& ofile)
 
 vcSelect::vcSelect(string id, vcWire* sel, vcWire* x, vcWire* y, vcWire* z):vcSplitOperator(id)
 {
-  this->_x = x;
-  _x->Connect_Receiver(this);
+  vector<vcWire*> iwires; iwires.push_back(sel); iwires.push_back(x); iwires.push_back(y);
+  this->Set_Input_Wires(iwires);
 
-  this->_y = y;
-  _y->Connect_Receiver(this);
-
-  this->_sel = sel;
-  _sel->Connect_Receiver(this);
-
-  this->_z = z;
-  _z->Connect_Driver(this);
+  vector<vcWire*> owires; owires.push_back(z);
+  this->Set_Output_Wires(owires);
 }
 
 void vcSelect::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__SELECT_OP] << " " << this->Get_Label() << " "
         << vcLexerKeywords[__LPAREN]
-        << this->_sel->Get_Id() << " "
-        << this->_x->Get_Id() << " "
-        << this->_y->Get_Id() << " "
+        << this->Get_Sel()->Get_Id() << " "
+        << this->Get_X()->Get_Id() << " "
+        << this->Get_Y()->Get_Id() << " "
         << vcLexerKeywords[__RPAREN]
         << " "
         << vcLexerKeywords[__LPAREN]
-        << this->_z->Get_Id()
+        << this->Get_Z()->Get_Id()
         << vcLexerKeywords[__RPAREN]
         <<  " ";
   this->Print_Guard(ofile);
@@ -863,6 +832,13 @@ void vcSelect::Print(ostream& ofile)
   this->Print_Delay(ofile);
 }
 
+void vcSelect::Print_Flow_Through_VHDL(ostream& ofile)
+{
+	ofile << "-- flow-through select operator " << this->Get_VHDL_Id() << endl;
+	ofile << this->Get_Z()->Get_VHDL_Id() << " <= ";
+	ofile << this->Get_X()->Get_VHDL_Id() << " when " << this->Get_Sel()->Get_VHDL_Id() 
+		<< " /= (others => '0') else " << this->Get_Y()->Get_VHDL_Id() << ";" << endl;
+}
 
 void vcSelect::Print_VHDL(ostream& ofile)
 {
@@ -911,10 +887,10 @@ void vcSelect::Print_VHDL(ostream& ofile)
       }
 
       vector<int> buf_sizes;
-      buf_sizes.push_back(this->Get_Input_Buffering(this->_x));
-      buf_sizes.push_back(this->Get_Input_Buffering(this->_y));
-      buf_sizes.push_back(this->Get_Input_Buffering(this->_sel));
-      buf_sizes.push_back(this->Get_Output_Buffering(this->_z));
+      buf_sizes.push_back(this->Get_Input_Buffering(this->Get_Sel()));
+      buf_sizes.push_back(this->Get_Input_Buffering(this->Get_X()));
+      buf_sizes.push_back(this->Get_Input_Buffering(this->Get_Y()));
+      buf_sizes.push_back(this->Get_Output_Buffering(this->Get_Z()));
       int buf_size = max(buf_sizes);
 
       if(!flow_through && (this->_guard_wire != NULL))
@@ -929,17 +905,17 @@ void vcSelect::Print_VHDL(ostream& ofile)
 
       
       ofile << this->Get_VHDL_Id() << ": SelectSplitProtocol generic map(name => " << name 
-		<< ", data_width => " << this->_z->Get_Size()  << "," 
+		<< ", data_width => " << this->Get_Z()->Get_Size()  << "," 
 		<< " buffering => " << buf_size << ", "
 		<< "flow_through => " << (flow_through ? "true" : "false") 
 		<< ") -- {" << endl;
       ofile << " port map( x => " 
-	    << this->_x->Get_VHDL_Signal_Id() 
+	    << this->Get_X()->Get_VHDL_Signal_Id() 
 	    << ", y => " 
-	    << this->_y->Get_VHDL_Signal_Id() 
+	    << this->Get_Y()->Get_VHDL_Signal_Id() 
 	    << ", sel => " 
-	    << this->_sel->Get_VHDL_Signal_Id() 
-	    << ", z => " << this->_z->Get_VHDL_Signal_Id() 
+	    << this->Get_Sel()->Get_VHDL_Signal_Id() 
+	    << ", z => " << this->Get_Z()->Get_VHDL_Signal_Id() 
 	    << ", sample_req => sample_req(0)"
 	    << ", sample_ack => sample_ack(0)"
 	    << ", update_req => update_req(0)"
@@ -949,14 +925,137 @@ void vcSelect::Print_VHDL(ostream& ofile)
       ofile << "-- }" << endl << "end block;" << endl;
 }
 
-vcSlice::vcSlice(string id, vcWire* din, vcWire* dout, int high_index, int low_index):vcSplitOperator(id)
+vcInterlockBuffer::vcInterlockBuffer(string id, vcWire* din, vcWire* dout):vcSplitOperator(id)
 {
-  this->_din = din;
-  _din->Connect_Receiver(this);
+	assert(din && dout);
+	vector<vcWire*> iwires; iwires.push_back(din);
+	this->Set_Input_Wires(iwires);
 
-  this->_dout = dout;
-  _dout->Connect_Driver(this);
+	vector<vcWire*> owires; owires.push_back(dout);
+	this->Set_Output_Wires(owires);
+}
 
+void vcInterlockBuffer::Print_Flow_Through_VHDL(ostream& ofile)
+{
+	ofile << "-- interlock " << this->Get_VHDL_Id() << endl;
+	ofile << "process(" << this->Get_Din()->Get_VHDL_Id() << ") -- {" << endl;
+	ofile << "variable tmp_var : " << this->Get_Dout()->Get_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
+	ofile << "begin -- { " << endl;
+
+	int in_size = this->Get_Din()->Get_Size();
+	int out_size = this->Get_Dout()->Get_Size();
+
+	int min_w = ((in_size < out_size) ? in_size : out_size);
+
+	ofile << "tmp_var := (others => '0'); " << endl;
+	ofile << "tmp_var( " << min_w-1 << " downto 0) := " << this->Get_Din()->Get_VHDL_Id()
+			<< "(" << min_w -1 << " downto 0);" << endl;
+	ofile << this->Get_Dout()->Get_VHDL_Id() << " <= tmp_var; -- }" << endl;
+	ofile << "end process;" << endl; 
+}
+
+void vcInterlockBuffer::Print_VHDL(ostream& ofile)
+{
+	string inst_name = this->Get_VHDL_Id();
+	string block_name = inst_name + "_block"; 
+	string name = '"' + inst_name + '"';
+
+	ofile << block_name << ": block -- {" << endl;
+	ofile << " signal wreq, wack, rreq, rack: BooleanArray(0 downto 0); " << endl;
+	if(this->_guard_wire != NULL)
+	{
+		ofile << " signal wreq_ug, wack_ug, rreq_ug, rack_ug: BooleanArray(0 downto 0); " << endl;
+		ofile << " signal guard_vector : std_logic_vector(0 downto 0); " << endl;
+
+		string buf_const;
+		string gflags;
+		vector<vcDatapathElement*> ops;
+		vector<vcWire*> gwires;	
+
+		ops.push_back(this);
+		gwires.push_back(this->_guard_wire);
+		Generate_Guard_Constants(buf_const, gflags, ops, gwires);
+
+		ofile << buf_const << endl;
+		ofile << gflags << endl;
+	}
+	ofile << " -- } " << endl;
+	ofile << "begin -- {" << endl;
+
+	if(this->_guard_wire != NULL)
+	{
+		ofile << " wreq_ug(0) <= "   << this->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+		ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= wack_ug(0);" << endl;
+		ofile << " rreq_ug(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
+		ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= rack_ug(0);" << endl;
+		ofile << " guard_vector(0) <= " << this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
+	}
+	else
+	{
+		ofile << " wreq(0) <= "   << this->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+		ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= wack(0);" << endl;
+		ofile << " rreq(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
+		ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= rack(0);" << endl;
+	}
+
+	int ip_buf = this->Get_Input_Buffering(this->Get_Din());
+	int op_buf = this->Get_Output_Buffering(this->Get_Dout());
+	int buf_size = ((ip_buf < op_buf) ? op_buf : ip_buf);
+
+	if(this->_guard_wire != NULL)
+	{
+		string guards = "guard_vector";
+		vector<vcWire*> gwires;
+		gwires.push_back(this->_guard_wire);
+		Print_VHDL_Guard_Instance("gI", 1, "guardBuffering", "guardFlags", "guard_vector",
+				"wreq_ug", "wack_ug", "wreq", "wack",
+				"rreq_ug", "rack_ug", "rreq", "rack", ofile);
+	}
+
+	int in_data_width = this->Get_Din()->Get_Size();
+	int out_data_width = this->Get_Dout()->Get_Size();
+        bool flow_through = this->Get_Flow_Through();
+
+	ofile << this->Get_VHDL_Id() << " : InterlockBuffer ";
+	ofile << "generic map ( -- { " << endl;
+	ofile << " name => " << name << "," << endl;
+	ofile << " buffer_size => " << buf_size << "," << endl;
+ 	ofile << " flow_through => " <<  (flow_through ? " true " : " false ") << "," << endl;
+	ofile << " in_data_width => " << in_data_width << "," << endl;
+	ofile << " out_data_width => " << out_data_width <<  endl;
+	ofile << " -- }" << endl << ")";
+	ofile << "port map ( -- { " << endl;
+	ofile << " write_req => wreq(0), "   << endl;
+	ofile << " write_ack => wack(0), "   << endl;
+	ofile << " write_data => "  << this->Get_Din()->Get_VHDL_Signal_Id() << "," << endl;
+	ofile << " read_req => rreq(0),  "   << endl;
+	ofile << " read_ack => rack(0), "   << endl;
+	ofile << " read_data => "  << this->Get_Dout()->Get_VHDL_Signal_Id() << "," << endl;
+	ofile << " clk => clk, reset => reset" << endl;
+	ofile << " -- }" << endl << ");" << endl;
+	ofile << "end block; -- } " << endl;
+}
+
+void vcInterlockBuffer::Print(ostream& ofile)
+{
+	ofile << vcLexerKeywords[__HASH] << " ";
+	ofile << vcLexerKeywords[__ASSIGN_OP] << " " << this->Get_Label() << " "
+		<< vcLexerKeywords[__LPAREN] 
+		<< this->Get_Din()->Get_Id() << " "
+		<< vcLexerKeywords[__RPAREN] 
+		<< " "
+		<< vcLexerKeywords[__LPAREN] 
+		<< this->Get_Dout()->Get_Id()
+		<< vcLexerKeywords[__RPAREN] 
+		<< " ";
+	this->Print_Guard(ofile);
+	this->Print_Flow_Through(ofile);
+	ofile << endl;
+	this->Print_Delay(ofile);
+}
+
+vcSlice::vcSlice(string id, vcWire* din, vcWire* dout, int high_index, int low_index):vcInterlockBuffer(id,din, dout)
+{
   bool indices_ok = 
 	((high_index < din->Get_Size() && low_index >= 0 && (high_index >= low_index)) 
 		&&
@@ -976,19 +1075,26 @@ void vcSlice::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__SLICE_OP] << " " << this->Get_Label() << " "
 	<< vcLexerKeywords[__LPAREN] 
-	<< this->_din->Get_Id() << " "
+	<< this->Get_Din()->Get_Id() << " "
 	<< this->_high_index << " "
 	<< this->_low_index << " "
 	<< vcLexerKeywords[__RPAREN] 
 	<< " "
 	<< vcLexerKeywords[__LPAREN] 
-	<< this->_dout->Get_Id()
+	<< this->Get_Dout()->Get_Id()
 	<< vcLexerKeywords[__RPAREN] 
 	<< " ";
   this->Print_Guard(ofile);
 	this->Print_Flow_Through(ofile);
   ofile << endl;
   this->Print_Delay(ofile);
+}
+
+void vcSlice::Print_Flow_Through_VHDL(ostream& ofile)
+{
+	ofile << "-- flow-through slice operator " << this->Get_VHDL_Id() << endl;
+	ofile << this->Get_Dout()->Get_VHDL_Id() << " <= ";
+	ofile << this->Get_Din()->Get_VHDL_Id() << "(" << this->_high_index << " downto " << this->_low_index << ");" << endl;
 }
 
 void vcSlice::Print_VHDL(ostream& ofile)
@@ -1037,8 +1143,8 @@ void vcSlice::Print_VHDL(ostream& ofile)
         	ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= update_ack(0);" << endl;
       }
 
-      int ip_buf = this->Get_Input_Buffering(this->_din);
-      int op_buf = this->Get_Output_Buffering(this->_dout);
+      int ip_buf = this->Get_Input_Buffering(this->Get_Din());
+      int op_buf = this->Get_Output_Buffering(this->Get_Dout());
       int buf_size = ((ip_buf < op_buf) ? op_buf : ip_buf);
 
       if(!flow_through && (this->_guard_wire != NULL))
@@ -1052,16 +1158,16 @@ void vcSlice::Print_VHDL(ostream& ofile)
       }
 
       ofile << this->Get_VHDL_Id() << ": SliceSplitProtocol generic map(name => " << name
-	      << ", in_data_width => " << this->_din->Get_Size() 
+	      << ", in_data_width => " << this->Get_Din()->Get_Size() 
 	      << ", high_index => " << this->_high_index 
 	      << ", low_index => " << this->_low_index  << "," 
 	      << " buffering => " << buf_size << ","
 	      << " flow_through => " << (flow_through ? "true" : "false") 
 	      << ") -- {" << endl;
       ofile << " port map( din => " 
-	      << this->_din->Get_VHDL_Signal_Id() 
+	      << this->Get_Din()->Get_VHDL_Signal_Id() 
 	      << ", dout => " 
-	      << this->_dout->Get_VHDL_Signal_Id() 
+	      << this->Get_Dout()->Get_VHDL_Signal_Id() 
 	      << ", sample_req => sample_req(0) " 
 	      << ", sample_ack => sample_ack(0) "
 	      << ", update_req => update_req(0) " 
@@ -1072,14 +1178,8 @@ void vcSlice::Print_VHDL(ostream& ofile)
 
 
   	
-vcPermutation::vcPermutation(string id, vcWire* din, vcWire* dout, vector<pair<int,int> >& bmapv):vcSplitOperator(id)
+vcPermutation::vcPermutation(string id, vcWire* din, vcWire* dout, vector<pair<int,int> >& bmapv):vcInterlockBuffer(id,din,dout)
 {
-  this->_din = din;
-  _din->Connect_Receiver(this);
-
-  this->_dout = dout;
-  _dout->Connect_Driver(this);
-
   for(int idx = 0, fidx = bmapv.size(); idx < fidx; idx++)
   {
 	int hi = bmapv[idx].first;
@@ -1094,14 +1194,14 @@ void vcPermutation::Print(ostream& ofile)
 {
 	ofile << vcLexerKeywords[__PERMUTE_OP] << " " << this->Get_Label() << " "
 		<< vcLexerKeywords[__LPAREN] 
-		<< this->_din->Get_Id() << " ";
+		<< this->Get_Din()->Get_Id() << " ";
 	for(int idx = 0, fidx = _permutation.size(); idx < fidx; idx++)
 	{
 		ofile <<  _permutation[idx].first << " " << _permutation[idx].second << " ";
 	}
 	ofile << vcLexerKeywords[__RPAREN]  << " ";
 	ofile << vcLexerKeywords[__LPAREN] 
-		<< this->_dout->Get_Id()
+		<< this->Get_Dout()->Get_Id()
 		<< " "
 		<< vcLexerKeywords[__RPAREN] 
 		<< " ";
@@ -1111,6 +1211,37 @@ void vcPermutation::Print(ostream& ofile)
 	this->Print_Delay(ofile);
 }
 
+void vcPermutation::Print_Flow_Through_VHDL(ostream& ofile)
+{
+      string src_net = this->Get_Din()->Get_VHDL_Id();
+      string dest_net = this->Get_Dout()->Get_VHDL_Id();
+
+      ofile << " -- permutation " << this->Get_VHDL_Id() << endl;
+      set<int> mapped_dests;
+      set<int> mapped_srcs;
+      for(int idx = 0, fidx = this->_permutation.size(); idx < fidx; idx++)
+	{
+		int s = this->_permutation[idx].first;
+		int d  = this->_permutation[idx].second;
+
+		mapped_dests.insert(d);
+		mapped_srcs.insert(s);
+
+		ofile << dest_net << "(" << d << ") <= " << src_net << "(" << s << "); " << endl;
+	}
+      ofile << " -- unmapped target bits.. " << endl;
+      for(int idx = 0, fidx = this->Get_Din()->Get_Size(); idx < fidx; idx++)
+	{
+		if(mapped_dests.find(idx) == mapped_dests.end())
+		{
+			if(mapped_srcs.find(idx) == mapped_srcs.end())
+				ofile <<  dest_net << "(" << idx << ") <= " << src_net << "(" << idx << "); " << endl;
+			else
+				vcSystem::Error("inconsistent permutation specification of operator " + 
+							this->Get_VHDL_Id());
+		}
+	}
+}
 
 void vcPermutation::Print_VHDL(ostream& ofile)
 {
@@ -1142,7 +1273,7 @@ void vcPermutation::Print_VHDL(ostream& ofile)
 		ofile << gflags << endl;
 	}
 	// print intermediate wire..
-	ofile << " signal permuted_sig: std_logic_vector(" << this->_din->Get_Size()-1
+	ofile << " signal permuted_sig: std_logic_vector(" << this->Get_Din()->Get_Size()-1
 		<< " downto 0);" << endl;
 	ofile << " -- } " << endl;
       ofile << "begin -- { " << endl;
@@ -1164,8 +1295,8 @@ void vcPermutation::Print_VHDL(ostream& ofile)
         	ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= update_ack(0);" << endl;
       }
 
-      int ip_buf = this->Get_Input_Buffering(this->_din);
-      int op_buf = this->Get_Output_Buffering(this->_dout);
+      int ip_buf = this->Get_Input_Buffering(this->Get_Din());
+      int op_buf = this->Get_Output_Buffering(this->Get_Dout());
       int buf_size = ((ip_buf < op_buf) ? op_buf : ip_buf);
 
       if(!flow_through && (this->_guard_wire != NULL))
@@ -1181,7 +1312,7 @@ void vcPermutation::Print_VHDL(ostream& ofile)
       ofile << " -- permutation " << endl;
       set<int> mapped_dests;
       set<int> mapped_srcs;
-      string src_net = this->_din->Get_VHDL_Id();
+      string src_net = this->Get_Din()->Get_VHDL_Id();
       for(int idx = 0, fidx = this->_permutation.size(); idx < fidx; idx++)
 	{
 		int s = this->_permutation[idx].first;
@@ -1193,7 +1324,7 @@ void vcPermutation::Print_VHDL(ostream& ofile)
 		ofile << " permuted_sig(" << d << ") <= " << src_net << "(" << s << "); " << endl;
 	}
       ofile << " -- unmapped target bits.. " << endl;
-      for(int idx = 0, fidx = this->_din->Get_Size(); idx < fidx; idx++)
+      for(int idx = 0, fidx = this->Get_Din()->Get_Size(); idx < fidx; idx++)
 	{
 		if(mapped_dests.find(idx) == mapped_dests.end())
 		{
@@ -1206,14 +1337,14 @@ void vcPermutation::Print_VHDL(ostream& ofile)
 	}
      
       ofile <<  "ilb: InterlockBuffer generic map(name => " << name
-	      	<< ", in_data_width => " << this->_din->Get_Size() 
-	      	<< ", out_data_width => " << this->_dout->Get_Size() 
+	      	<< ", in_data_width => " << this->Get_Din()->Get_Size() 
+	      	<< ", out_data_width => " << this->Get_Dout()->Get_Size() 
 	      	<< ", buffer_size => " << buf_size 
 	      	<< ", flow_through => " << (flow_through ? "true" : "false") 
 	      << ") -- {" << endl;
       ofile << " port map( write_data => permuted_sig" 
 	      << ", read_data => " 
-	      << this->_dout->Get_VHDL_Signal_Id() 
+	      << this->Get_Dout()->Get_VHDL_Signal_Id() 
 	      << ", write_req => sample_req(0) " 
 	      << ", write_ack => sample_ack(0) "
 	      << ", read_req => update_req(0) " 
@@ -1227,23 +1358,22 @@ void vcPermutation::Print_VHDL(ostream& ofile)
 vcRegister::vcRegister(string id, vcWire* din, vcWire* dout):vcOperator(id)
 {
 	assert(din && dout);
+	vector<vcWire*> iwires; iwires.push_back(din);
+	this->Set_Input_Wires(iwires);
 
-	_din = din;
-	din->Connect_Receiver(this);
-
-	_dout = dout;
-	dout->Connect_Driver(this);
+	vector<vcWire*> owires; owires.push_back(dout);
+	this->Set_Output_Wires(owires);
 }
 
 void vcRegister::Print(ostream& ofile)
 {
 	ofile << vcLexerKeywords[__ASSIGN_OP] << " " << this->Get_Label() << " "
 		<< vcLexerKeywords[__LPAREN] 
-		<< this->_din->Get_Id() << " "
+		<< this->Get_Din()->Get_Id() << " "
 		<< vcLexerKeywords[__RPAREN] 
 		<< " "
 		<< vcLexerKeywords[__LPAREN] 
-		<< this->_dout->Get_Id()
+		<< this->Get_Dout()->Get_Id()
 		<< vcLexerKeywords[__RPAREN] 
 		<< " ";
 	this->Print_Guard(ofile);
@@ -1285,11 +1415,11 @@ void vcRegister::Print_VHDL(ostream& ofile)
 	}
 
 	ofile << this->Get_VHDL_Id() << ": RegisterBase --{" << endl
-		<< "generic map(in_data_width => " << this->_din->Get_Size()  << "," 
-		<< "out_data_width => " << this->_dout->Get_Size() << ") "
+		<< "generic map(in_data_width => " << this->Get_Din()->Get_Size()  << "," 
+		<< "out_data_width => " << this->Get_Dout()->Get_Size() << ") "
 		<< endl;
-	ofile << " port map( din => " << this->_din->Get_VHDL_Signal_Id() << "," 
-		<< " dout => " << this->_dout->Get_VHDL_Signal_Id() << ","
+	ofile << " port map( din => " << this->Get_Din()->Get_VHDL_Signal_Id() << "," 
+		<< " dout => " << this->Get_Dout()->Get_VHDL_Signal_Id() << ","
 		<< " req => req, " 
 		<< " ack => ack, " << " clk => clk, reset => reset); -- }" << endl;
 	ofile << "-- }" << endl << "end block;" << endl;
@@ -1297,34 +1427,18 @@ void vcRegister::Print_VHDL(ostream& ofile)
 
 vcBranch::vcBranch(string id, vector<vcWire*>& wires): vcDatapathElement(id) 
 {
-	for(int idx = 0; idx < wires.size(); idx++)
-	{
-		_inwires.push_back(wires[idx]);
-		wires[idx]->Connect_Receiver(this);
-	}
-}
-
-void vcBranch::Add_Reqs(vector<vcTransition*>& reqs)
-{
-	assert(reqs.size() == 1);
-	this->_reqs = reqs;
-}
-
-void vcBranch::Add_Acks(vector<vcTransition*>& acks)
-{
-	assert(acks.size() == 2);
-	this->_acks = acks;
+	this->Set_Input_Wires(wires);
 }
 
 void vcBranch::Print(ostream& ofile)
 {
 	ofile << vcLexerKeywords[__BRANCH_OP] << " " << this->Get_Label() << " " 
 		<< vcLexerKeywords[__LPAREN];
-	for(int idx =0; idx < _inwires.size(); idx++)
+	for(int idx =0, fidx = this->Get_Number_Of_Input_Wires(); idx < fidx;  idx++)
 	{
 		if(idx > 0)
 			ofile << " ";
-		ofile << _inwires[idx]->Get_Id();
+		ofile << this->Get_Input_Wire(idx)->Get_Id();
 	}
 	ofile << vcLexerKeywords[__RPAREN] << endl;
 	this->Print_Delay(ofile);
@@ -1423,9 +1537,8 @@ bool Is_Unary_Op(string vc_op_id)
 			(vc_op_id == vcLexerKeywords[__FtoF_ASSIGN_OP]));
 }
 
-string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
+string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type, bool add_quotes)
 {
-
 	string ret_string;
 
 	if((in_type->Kind() == "vcIntType" || in_type->Kind() == "vcPointerType") &&
@@ -1504,8 +1617,13 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
 		else { vcSystem::Error("unsupported int -> float operation " + vc_op_id);}
 	}
 
-	string q_ret_string = '"' + ret_string + '"';
-	return(q_ret_string);
+	if(add_quotes)
+	{
+		string q_ret_string = '"' + ret_string + '"';
+		return(q_ret_string);
+	}
+	else
+		return(ret_string);
 }
 
 bool Is_Pipelined_Float_Op(string vc_op_id, vcType* in_type, vcType* out_type, int& exponent_width, int& fraction_width)
@@ -1578,116 +1696,5 @@ bool Check_If_Equivalent(vector<vcWire*>& iw1, vector<vcWire*>& iw2)
 	return(ret_val);
 }
 
-void vcInterlockBuffer::Add_Reqs(vector<vcTransition*>& reqs)
-{
-	assert (reqs.size() == 2);
-	_reqs = reqs;
-}
-
-void vcInterlockBuffer::Add_Acks(vector<vcTransition*>& acks)
-{
-	assert (acks.size() == 2);
-	_acks = acks;
-}
-
-void vcInterlockBuffer::Print_VHDL(ostream& ofile)
-{
-	string inst_name = this->Get_VHDL_Id();
-	string block_name = inst_name + "_block"; 
-	string name = '"' + inst_name + '"';
-
-	ofile << block_name << ": block -- {" << endl;
-	ofile << " signal wreq, wack, rreq, rack: BooleanArray(0 downto 0); " << endl;
-	if(this->_guard_wire != NULL)
-	{
-		ofile << " signal wreq_ug, wack_ug, rreq_ug, rack_ug: BooleanArray(0 downto 0); " << endl;
-		ofile << " signal guard_vector : std_logic_vector(0 downto 0); " << endl;
-
-		string buf_const;
-		string gflags;
-		vector<vcDatapathElement*> ops;
-		vector<vcWire*> gwires;	
-
-		ops.push_back(this);
-		gwires.push_back(this->_guard_wire);
-		Generate_Guard_Constants(buf_const, gflags, ops, gwires);
-
-		ofile << buf_const << endl;
-		ofile << gflags << endl;
-	}
-	ofile << " -- } " << endl;
-	ofile << "begin -- {" << endl;
-
-	if(this->_guard_wire != NULL)
-	{
-		ofile << " wreq_ug(0) <= "   << this->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
-		ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= wack_ug(0);" << endl;
-		ofile << " rreq_ug(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
-		ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= rack_ug(0);" << endl;
-		ofile << " guard_vector(0) <= " << this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
-	}
-	else
-	{
-		ofile << " wreq(0) <= "   << this->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
-		ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= wack(0);" << endl;
-		ofile << " rreq(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
-		ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= rack(0);" << endl;
-	}
-
-	int ip_buf = this->Get_Input_Buffering(this->_din);
-	int op_buf = this->Get_Output_Buffering(this->_dout);
-	int buf_size = ((ip_buf < op_buf) ? op_buf : ip_buf);
-
-	if(this->_guard_wire != NULL)
-	{
-		string guards = "guard_vector";
-		vector<vcWire*> gwires;
-		gwires.push_back(this->_guard_wire);
-		Print_VHDL_Guard_Instance("gI", 1, "guardBuffering", "guardFlags", "guard_vector",
-				"wreq_ug", "wack_ug", "wreq", "wack",
-				"rreq_ug", "rack_ug", "rreq", "rack", ofile);
-	}
-
-	int in_data_width = this->_din->Get_Size();
-	int out_data_width = this->_dout->Get_Size();
-        bool flow_through = this->Get_Flow_Through();
-
-	ofile << this->Get_VHDL_Id() << " : InterlockBuffer ";
-	ofile << "generic map ( -- { " << endl;
-	ofile << " name => " << name << "," << endl;
-	ofile << " buffer_size => " << buf_size << "," << endl;
- 	ofile << " flow_through => " <<  (flow_through ? " true " : " false ") << "," << endl;
-	ofile << " in_data_width => " << in_data_width << "," << endl;
-	ofile << " out_data_width => " << out_data_width <<  endl;
-	ofile << " -- }" << endl << ")";
-	ofile << "port map ( -- { " << endl;
-	ofile << " write_req => wreq(0), "   << endl;
-	ofile << " write_ack => wack(0), "   << endl;
-	ofile << " write_data => "  << this->_din->Get_VHDL_Signal_Id() << "," << endl;
-	ofile << " read_req => rreq(0),  "   << endl;
-	ofile << " read_ack => rack(0), "   << endl;
-	ofile << " read_data => "  << this->_dout->Get_VHDL_Signal_Id() << "," << endl;
-	ofile << " clk => clk, reset => reset" << endl;
-	ofile << " -- }" << endl << ");" << endl;
-	ofile << "end block; -- } " << endl;
-}
-
-void vcInterlockBuffer::Print(ostream& ofile)
-{
-	ofile << vcLexerKeywords[__HASH] << " ";
-	ofile << vcLexerKeywords[__ASSIGN_OP] << " " << this->Get_Label() << " "
-		<< vcLexerKeywords[__LPAREN] 
-		<< this->_din->Get_Id() << " "
-		<< vcLexerKeywords[__RPAREN] 
-		<< " "
-		<< vcLexerKeywords[__LPAREN] 
-		<< this->_dout->Get_Id()
-		<< vcLexerKeywords[__RPAREN] 
-		<< " ";
-	this->Print_Guard(ofile);
-	this->Print_Flow_Through(ofile);
-	ofile << endl;
-	this->Print_Delay(ofile);
-}
 
 

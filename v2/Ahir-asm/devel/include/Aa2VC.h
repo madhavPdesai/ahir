@@ -96,6 +96,7 @@ void Write_VC_Interlock_Buffer( string inst_name,
 			string src_name, 
 			string target_name,
 			string guard_string,
+			bool flow_through,
 			ostream& ofile);
 void Write_VC_Binary_Operator(AaOperation op, 
 			      string inst_name, 
@@ -113,7 +114,8 @@ void Write_VC_Call_Operator(string inst_name,
 			    string module_name, 
 			    vector<pair<string,AaType*> >& inargs,
 			    vector<pair<string,AaType*> >& outargs,
-			     string guard_string,
+			    string guard_string,
+			    bool flow_through,
 			    ostream& ofile);
 
 void Write_VC_Phi_Operator(string inst_name,

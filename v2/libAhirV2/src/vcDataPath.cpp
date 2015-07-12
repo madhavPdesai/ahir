@@ -1033,168 +1033,186 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
       iter++)
     {
       vcSelect* s = (*iter).second;
-      if(vcSystem::_enable_logging)
-		s->vcSplitOperator::Print_VHDL_Logger(ofile);
+      if(!s->Get_Flow_Through())
+      {
+	      if(vcSystem::_enable_logging)
+		      s->vcSplitOperator::Print_VHDL_Logger(ofile);
 
-      s->Print_VHDL(ofile);
+	      s->Print_VHDL(ofile);
+      }
+      else
+	      s->Print_Flow_Through_VHDL(ofile);
       idx++;
-   }
+    }
 }
 
 
 void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
 { 
-  int idx = 0;
+	int idx = 0;
 
-  for(map<string, vcSlice*>::iterator iter = _slice_map.begin();
-      iter != _slice_map.end();
-      iter++)
-    {
-      vcSlice* s = (*iter).second;
-      if(vcSystem::_enable_logging)
-		s->vcSplitOperator::Print_VHDL_Logger(ofile);
+	for(map<string, vcSlice*>::iterator iter = _slice_map.begin();
+			iter != _slice_map.end();
+			iter++)
+	{
+		vcSlice* s = (*iter).second;
+		if(!s->Get_Flow_Through())
+		{
+			if(vcSystem::_enable_logging)
+				s->vcSplitOperator::Print_VHDL_Logger(ofile);
 
-      s->Print_VHDL(ofile);
-      idx++;
-    }
+			s->Print_VHDL(ofile);
+		}
+		else
+			s->Print_Flow_Through_VHDL(ofile);
+		idx++;
+	}
 }
 
 void vcDataPath::Print_VHDL_Permutation_Instances(ostream& ofile)
 { 
-  int idx = 0;
+	int idx = 0;
 
-  for(map<string, vcPermutation*>::iterator iter = _permutation_map.begin();
-      iter != _permutation_map.end();
-      iter++)
-    {
-      vcPermutation* s = (*iter).second;
-      if(vcSystem::_enable_logging)
-		s->vcSplitOperator::Print_VHDL_Logger(ofile);
+	for(map<string, vcPermutation*>::iterator iter = _permutation_map.begin();
+			iter != _permutation_map.end();
+			iter++)
+	{
+		vcPermutation* s = (*iter).second;
+		if(!s->Get_Flow_Through())
+		{
+			if(vcSystem::_enable_logging)
+				s->vcSplitOperator::Print_VHDL_Logger(ofile);
 
-      s->Print_VHDL(ofile);
-      idx++;
-    }
+			s->Print_VHDL(ofile);
+		}
+		else
+			s->Print_Flow_Through_VHDL(ofile);
+		idx++;
+	}
 }
 
 void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
 { 
 
-  int idx = 0;
-  for(map<string, vcRegister*>::iterator iter = _register_map.begin();
-      iter != _register_map.end();
-      iter++)
-    {
-      vcRegister* s = (*iter).second;
-      if(vcSystem::_enable_logging)
-	s->vcOperator::Print_VHDL_Logger(ofile);
-      s->Print_VHDL(ofile);
-      idx++;
-  }
+	int idx = 0;
+	for(map<string, vcRegister*>::iterator iter = _register_map.begin();
+			iter != _register_map.end();
+			iter++)
+	{
+		vcRegister* s = (*iter).second;
+		if(vcSystem::_enable_logging)
+			s->vcOperator::Print_VHDL_Logger(ofile);
+		s->Print_VHDL(ofile);
+		idx++;
+	}
 }
 
 void vcDataPath::Print_VHDL_Interlock_Buffer_Instances(ostream& ofile)
 {
-  for(map<string, vcInterlockBuffer*>::iterator iter = _interlock_buffer_map.begin();
-      iter != _interlock_buffer_map.end();
-      iter++)
-    {
-      vcInterlockBuffer* p = (*iter).second;
-      if(vcSystem::_enable_logging)
-      {
-	p->vcDatapathElement::Print_VHDL_Logger(ofile);
-      }
+	for(map<string, vcInterlockBuffer*>::iterator iter = _interlock_buffer_map.begin();
+			iter != _interlock_buffer_map.end();
+			iter++)
+	{
+		vcInterlockBuffer* p = (*iter).second;
+		if(!p->Get_Flow_Through())
+		{
+			if(vcSystem::_enable_logging)
+			{
+				p->vcDatapathElement::Print_VHDL_Logger(ofile);
+			}
+		}
+		else
+			p->Print_Flow_Through_VHDL(ofile);
 
-      p->Print_VHDL(ofile);
-    }
+
+		p->Print_VHDL(ofile);
+	}
 }
 
 
 void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
 { 
 
-  for(map<string, vcEquivalence*>::iterator iter = _equivalence_map.begin();
-      iter != _equivalence_map.end();
-      iter++)
-    {
-      vcEquivalence* s = (*iter).second;
-      if(vcSystem::_enable_logging)
-		s->vcOperator::Print_VHDL_Logger(ofile);
-      ofile << s->Get_VHDL_Id() << ": Block -- { " << endl;
-      ofile << "signal in_aggregated_sig: std_logic_vector("
-	    << s->_in_width-1 << " downto 0);" << endl;
-      ofile << "signal out_aggregated_sig: std_logic_vector("
-	    << s->_out_width-1 << " downto 0);" << endl;
-      if(s->_out_width > s->_in_width)
-      {
-	ofile << "constant in_pad : std_logic_vector(" << 
-		(s->_out_width-s->_in_width)-1 << " downto 0) := (others => '0');" << endl;
-      }
-      ofile <<  "--}" << endl;
-      ofile << "begin -- {" << endl;
-      ofile << s->Get_Ack(0)->Get_DP_To_CP_Symbol()  
-	    << " <= "
-	    << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
-	    << ";" << endl;
-      ofile << " in_aggregated_sig <= ";
-      for(int idx = 0; idx < s->_inwires.size(); idx++)
+	for(map<string, vcEquivalence*>::iterator iter = _equivalence_map.begin();
+			iter != _equivalence_map.end();
+			iter++)
 	{
-	  if(idx > 0)
-	    ofile << " & ";
-	  ofile << s->_inwires[idx]->Get_VHDL_Signal_Id();
+		vcEquivalence* s = (*iter).second;
+		if(vcSystem::_enable_logging)
+			s->vcOperator::Print_VHDL_Logger(ofile);
+		ofile << s->Get_VHDL_Id() << ": Block -- { " << endl;
+		ofile << "signal in_aggregated_sig: std_logic_vector("
+			<< s->_in_width-1 << " downto 0);" << endl;
+		ofile << "signal out_aggregated_sig: std_logic_vector("
+			<< s->_out_width-1 << " downto 0);" << endl;
+		if(s->_out_width > s->_in_width)
+		{
+			ofile << "constant in_pad : std_logic_vector(" << 
+				(s->_out_width-s->_in_width)-1 << " downto 0) := (others => '0');" << endl;
+		}
+		ofile <<  "--}" << endl;
+		ofile << "begin -- {" << endl;
+		ofile << s->Get_Ack(0)->Get_DP_To_CP_Symbol()  
+			<< " <= "
+			<< s->Get_Req(0)->Get_CP_To_DP_Symbol() 
+			<< ";" << endl;
+		ofile << " in_aggregated_sig <= ";
+		for(int idx = 0, fidx = s->Get_Number_Of_Input_Wires(); idx < fidx;  idx++)
+		{
+			if(idx > 0)
+				ofile << " & ";
+			ofile << s->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
+		}
+		ofile << ";" << endl;
+
+		if(s->Get_Output_Width() > s->Get_Input_Width())
+		{
+			ofile << "out_aggregated_sig <= in_pad & in_aggregated_sig; " << endl;
+		}
+		else if(s->Get_Output_Width() < s->Get_Input_Width())
+		{
+			ofile << "out_aggregated_sig <= in_aggregated_sig(" << s->Get_Output_Width()-1 << " downto 0);" << endl;
+		}
+		else
+			ofile << "out_aggregated_sig <= in_aggregated_sig;" << endl;
+
+
+		int top_index = s->Get_Output_Width()-1;
+		for(int idx = 0, fidx = s->Get_Number_Of_Output_Wires(); idx < fidx;  idx++)
+		{
+			ofile << s->Get_Output_Wire(idx)->Get_VHDL_Signal_Id() 
+				<< " <= out_aggregated_sig("
+				<< top_index
+				<< " downto "
+				<< (top_index - s->Get_Output_Wire(idx)->Get_Size())+1
+				<< ");" << endl;
+			top_index -= s->Get_Output_Wire(idx)->Get_Size();
+		}
+		ofile << "--}" << endl;
+		ofile << "end Block;" << endl;
 	}
-      ofile << ";" << endl;
-
-      if(s->_out_width > s->_in_width)
-      {
-	ofile << "out_aggregated_sig <= in_pad & in_aggregated_sig; " << endl;
-      }
-      else if(s->_out_width < s->_in_width)
-      {
-	ofile << "out_aggregated_sig <= in_aggregated_sig(" << s->_out_width-1 << " downto 0);" << endl;
-      }
-      else
-	ofile << "out_aggregated_sig <= in_aggregated_sig;" << endl;
-
-
-      int top_index = s->_out_width-1;
-      for(int idx = 0; idx < s->_outwires.size(); idx++)
-	{
-	  ofile << s->_outwires[idx]->Get_VHDL_Signal_Id() 
-		<< " <= out_aggregated_sig("
-		<< top_index
-		<< " downto "
-		<< (top_index - s->_outwires[idx]->Get_Size())+1
-		<< ");" << endl;
-	  top_index -= s->_outwires[idx]->Get_Size();
-	}
-      ofile << "--}" << endl;
-      ofile << "end Block;" << endl;
-    }
 }
 
 void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 { 
-  for(map<string, vcBranch*>::iterator iter = _branch_map.begin();
-      iter != _branch_map.end();
-      iter++)
-    {
-      vcBranch* s = (*iter).second;
-      if(vcSystem::_enable_logging)
-		s->vcDatapathElement::Print_VHDL_Logger(ofile);
-
-      int in_width = 0;
-      for(int idx = 0; idx < s->_inwires.size(); idx++)
-	in_width += s->_inwires[idx]->Get_Size();
-
-      ofile << s->Get_VHDL_Id() << ": Block -- { -- branch-block" << endl;
-      ofile << "signal condition_sig : std_logic_vector(" << in_width-1 << " downto 0);" << endl;
-      ofile << "begin " << endl;
-      ofile << "condition_sig <= ";
-      for(int idx = 0; idx < s->_inwires.size(); idx++)
+	for(map<string, vcBranch*>::iterator iter = _branch_map.begin();
+			iter != _branch_map.end();
+			iter++)
 	{
-	  if(idx > 0)
-	    ofile << " & ";
-	  ofile << s->_inwires[idx]->Get_VHDL_Signal_Id();
+		vcBranch* s = (*iter).second;
+		if(vcSystem::_enable_logging)
+			s->vcDatapathElement::Print_VHDL_Logger(ofile);
+
+		int in_width = s->Get_Input_Width();
+		ofile << s->Get_VHDL_Id() << ": Block -- { -- branch-block" << endl;
+		ofile << "signal condition_sig : std_logic_vector(" << in_width-1 << " downto 0);" << endl;
+		ofile << "begin " << endl;
+		ofile << "condition_sig <= ";
+		for(int idx = 0, fidx = s->Get_Number_Of_Input_Wires(); idx < fidx; idx++)
+		{
+			if(idx > 0)
+				ofile << " & ";
+			ofile << s->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
 	}
       ofile << ";" << endl;
       ofile << "branch_instance: BranchBase -- {" << endl;
@@ -1227,6 +1245,10 @@ void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 // Break it up into three functions depending on the case?
 // We just need to add input-buffering to it for now..
 // Not worth touching at this point.
+//
+//
+// added a bypass to handle the flow-through case separately.
+//
 void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 {
   string group_name;
@@ -1238,6 +1260,20 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       bool is_unary_operator = false;
       // number of requesters.
       int num_reqs = _compatible_split_operator_groups[idx].size();
+      vcSplitOperator* lead_op = ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())));
+
+      // used in the unshared case.
+      bool flow_through = lead_op->Get_Flow_Through();
+      
+      //
+      // if it is a flow-through operator, just print 
+      // it as a concurrent statement.
+      // 
+      if(flow_through && (num_reqs == 1))
+      {
+	lead_op->Print_Flow_Through_VHDL(ofile);
+	return;
+      }
 
       // to collect inwires, outwires and reqs/acks.
       vector<vcWire*> inwires;
@@ -1258,13 +1294,12 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 
       // to get the operation id, we need the vc operator as well as the input and output 
       // types. (e.g. + (float float) (float) or + (int int) (int) ?
-      vcSplitOperator* lead_op = ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())));
       vcType* input_type =   lead_op->Get_Input_Type();
       vcType* output_type =   lead_op->Get_Output_Type();
       string vc_op_id = lead_op->Get_Op_Id();
       string vhdl_op_id = Get_VHDL_Op_Id(vc_op_id,
 					 input_type,
-					 output_type);
+					 output_type, true);
 
       string s__id = StripBracketingQuotes(vhdl_op_id);
       group_name = s__id + "_group_" + IntToStr(idx) ;
@@ -1421,8 +1456,6 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       if(num_ips == 2)
 	input_type_2 = inwires[1]->Get_Type();
 
-	// used in the unshared case.
-      bool flow_through = lead_op->Get_Flow_Through();
 	
       // the guards and the regulators..
       if((num_reqs > 1) || is_pipelined_op)

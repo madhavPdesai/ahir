@@ -289,6 +289,7 @@ void AaAssignmentStatement::Write_VC_Links_Optimized(string hier_id, ostream& of
 {
 	if(!this->Is_Constant())
 	{
+
 		ofile << "// " << this->To_String() << endl;
 		ofile << "// " << this->Get_Source_Info() << endl;
 
@@ -301,17 +302,20 @@ void AaAssignmentStatement::Write_VC_Links_Optimized(string hier_id, ostream& of
 
 		if(source_is_implicit && target_is_implicit)
 		{
-			vector<string> reqs;
-			vector<string> acks;
-			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/req");
-			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/ack");
-			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/req");
-			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/ack");
-
-			Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
-					reqs, acks, ofile);
-			reqs.clear();
-			acks.clear();
+			if(!this->Get_Is_Volatile())
+			{
+				vector<string> reqs;
+				vector<string> acks;
+				reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/req");
+				acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/ack");
+				reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/req");
+				acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/ack");
+	
+				Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
+						reqs, acks, ofile);
+				reqs.clear();
+				acks.clear();
+			}
 		}
 	}
 }
@@ -508,6 +512,9 @@ void AaCallStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 
 	for(int idx = 0; idx < _output_args.size(); idx++)
 		_output_args[idx]->Write_VC_Links_As_Target_Optimized(hier_id,ofile);
+
+	if(this->Get_Is_Volatile())
+		return;
 
 	vector<string> reqs;
 	vector<string> acks;

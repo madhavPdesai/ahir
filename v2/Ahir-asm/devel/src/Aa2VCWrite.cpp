@@ -185,12 +185,15 @@ void Write_VC_Interlock_Buffer( string inst_name,
 			string src_name, 
 			string target_name,
                         string guard_string,
+			bool flow_through, 
 			ostream& ofile)
 {
+  string sflow_through = (flow_through ? " $flowthrough" : "");
   ofile << "# := [" << inst_name << "] " 
 	<< "(" << src_name << ") "
-	<< "(" << target_name << ") " << guard_string << endl;
+	<< "(" << target_name << ") " << guard_string << " " << sflow_through <<  endl;
 }
+
 void Write_VC_Binary_Operator(AaOperation op, 
 			      string inst_name, 
 			      string src1, 
@@ -283,8 +286,10 @@ void Write_VC_Call_Operator(string inst_name,
 			    vector<pair<string,AaType*> >& inargs,
 			    vector<pair<string,AaType*> >& outargs,
 			     string guard_string,
+			    bool flow_through,
 			    ostream& ofile)
 {
+  string sflow_through = (flow_through ? " $flowthrough" : "");
   ofile << "$call [" << inst_name << "] $module " << module_name 
 	<< "(";
   for(int idx = 0; idx < inargs.size(); idx++)
@@ -300,7 +305,7 @@ void Write_VC_Call_Operator(string inst_name,
 	ofile <<  " ";
       ofile << outargs[idx].first;
     }
-  ofile << ") " << guard_string <<  endl;
+  ofile << ") " << guard_string << " " << sflow_through << endl;
 }
 
 void Write_VC_Phi_Operator(string inst_name,

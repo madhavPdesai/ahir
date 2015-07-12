@@ -2516,6 +2516,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 			        src_name,
 				tgt_name,
 				this->Get_VC_Guard_String(),
+				false, // flow-through
 			        ofile);
 
       //  extreme pipelining.
@@ -3576,6 +3577,7 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
 				src_name,
 				tgt_name,
 			        this->Get_VC_Guard_String(),
+				false,
 			        ofile);
 	// extreme pipelining.
 	if(this->Is_Part_Of_Extreme_Pipeline())
@@ -3825,6 +3827,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 				  src_name,
 				  tgt_name,
 				  this->Get_VC_Guard_String(),
+				  false,
 				  ofile);
 
 	  }
@@ -3861,6 +3864,9 @@ void AaTypeCastExpression::Write_VC_Links(string hier_id, ostream& ofile)
 
 		this->_rest->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
 
+	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
+			return;
 
 		ofile << "// " << this->To_String() << endl;
 
@@ -4187,6 +4193,9 @@ void AaUnaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
 		this->_rest->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
 
 		ofile << "// " << this->To_String() << endl;
+	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
+			return;
 
 		vector<string> reqs,acks;
 
@@ -4651,6 +4660,9 @@ void AaBinaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
 		this->_second->Write_VC_Links(input_hier_id, ofile);
 
 		ofile << "// " << this->To_String() << endl;
+	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
+			return;
 
 		vector<string> reqs,acks;
 		string sample_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
@@ -4940,6 +4952,9 @@ void AaTernaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
 				+ this->Get_VC_Name() + "_inputs", ofile); 
 
 		ofile << "// " << this->To_String() << endl;
+	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
+			return;
 
 		vector<string> reqs,acks;
 		reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Sample/req");

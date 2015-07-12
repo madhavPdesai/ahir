@@ -1292,8 +1292,12 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				      src_name,
 				      tgt_name,
 		 		      this->Get_VC_Guard_String(),
+				      this->Get_Is_Volatile(), // flow-through-flag
 				      ofile);
 
+
+	      if(this->Get_Is_Volatile())
+		return;
 
   	      AaStatement* dws = this->Get_Pipeline_Parent();
 	      bool extreme_pipelining_flag = ((dws != NULL)  && (dws->Get_Pipeline_Full_Rate_Flag()));
@@ -1356,14 +1360,17 @@ void AaAssignmentStatement::Write_VC_Links(string hier_id,ostream& ofile)
 	{
 	  if(this->_source->Is_Implicit_Variable_Reference())
 	    {
-	      reqs.push_back(hier_id + "/Sample/req");
-	      reqs.push_back(hier_id + "/Update/req");
-	      acks.push_back(hier_id + "/Sample/ack");
-	      acks.push_back(hier_id + "/Update/ack");
-	      Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
-			    reqs, acks, ofile);
-	      reqs.clear();
-	      acks.clear();
+		if(!this->Get_Is_Volatile())
+		{
+	      		reqs.push_back(hier_id + "/Sample/req");
+	      		reqs.push_back(hier_id + "/Update/req");
+	      		acks.push_back(hier_id + "/Sample/ack");
+	      		acks.push_back(hier_id + "/Update/ack");
+	      		Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
+			    		reqs, acks, ofile);
+	      		reqs.clear();
+	      		acks.clear();
+		}
 	    }
 	  else
 	    {
@@ -2178,7 +2185,7 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
 
-	int delay = ((AaModule*)_called_module)->Get_Longest_Path();
+	int delay = (this->Get_Is_Volatile() ? 0 : ((AaModule*)_called_module)->Get_Longest_Path());
 
 	vector<pair<string,AaType*> > inargs, outargs;
 
@@ -2202,9 +2209,13 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			inargs,
 			outargs,
 			this->Get_VC_Guard_String(),
+			this->Get_Is_Volatile(),  // flow-through
 			ofile);
-
 	ofile << "$delay " << dpe_name <<  " " << delay << endl;
+
+	// no need for additional buffering if volatile..
+	if(this->Get_Is_Volatile())
+		return;
 
 	// extreme pipelining.
 	AaStatement* dws = this->Get_Pipeline_Parent();
@@ -2246,6 +2257,9 @@ void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
 		string oh = Augment_Hier_Id(hier_id,"out_args");
 		_output_args[idx]->Write_VC_Links_As_Target(oh, ofile);
 	}
+
+	if(this->Get_Is_Volatile())
+		return;
 
 	string sample_region = hier_id + "/SplitProtocol/Sample";
 	string update_region = hier_id + "/SplitProtocol/Update";

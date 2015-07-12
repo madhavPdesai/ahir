@@ -626,6 +626,17 @@ void vcControlPath::Construct_Reduced_Group_Graph()
 	this->Reduce_CPElement_Group_Graph();
 }
 
+//
+// TODO: change the algorithm.
+//   1. Identify nuclei
+//         output-transitions
+//         input-transitions
+//         places
+//         entry transitions.
+//   2. From each, nucleus, DFS search forward
+//      and keep absorbing elements using the
+//      Can-Absorb test.
+//    
 void vcControlPath::Reduce_CPElement_Group_Graph()
 {
 	cerr << "Info: reducing Control-path " << endl;

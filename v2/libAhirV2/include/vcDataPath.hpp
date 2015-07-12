@@ -182,6 +182,7 @@ public:
   virtual string Get_VHDL_Signal_Id() { return(this->Get_VHDL_Id());}
 
   int Get_Size();
+  virtual bool Is_Constant() {return(false);}
 };
 
 class vcIntermediateWire: public vcWire
@@ -208,6 +209,7 @@ public:
 
   void Print_VHDL_Constant_Declaration(ostream& ofile);
   virtual string Kind() {return("vcConstantWire");}
+  virtual bool Is_Constant() {return(true);}
 };
 
 class vcInputWire: public vcWire
@@ -248,6 +250,13 @@ protected:
 
   int  _delay;
   bool _flow_through;
+
+  vector<vcWire*>  _input_wires;
+  vector<vcWire*>  _output_wires;
+
+  int _in_width;
+  int _out_width;
+
  public:
 
   vcDatapathElement(string id):vcRoot(id) 
@@ -256,18 +265,65 @@ protected:
 		_guard_complement = false; 
 		_flow_through = false;
 		_delay = 1;
+		_in_width = 0;
+		_out_width = 0;
 	}
+
+  vcDatapathElement(string id, vector<vcWire*>& iwires, vector<vcWire*>& owires):vcRoot(id) 
+  	{
+		_guard_wire = NULL; 
+		_guard_complement = false; 
+		_flow_through = false;
+		_delay = 1;
+		_in_width = 0;
+		_out_width = 0;
+		this->Set_Input_Wires(iwires);
+		this->Set_Output_Wires(owires);
+	}
+
+
+  void Set_Input_Wires(vector<vcWire*>& iwires)
+  {
+	  for(int idx = 0; idx < iwires.size(); idx++)
+	  {
+		  vcWire* w = iwires[idx];
+		  _input_wires.push_back(w);
+		  _in_width += w->Get_Size();
+      		  w->Connect_Receiver(this);
+	  }
+  }
+
+  void Set_Output_Wires(vector<vcWire*>& owires)
+  {
+
+	  for(int idx = 0; idx < owires.size(); idx++)
+	  {
+		  vcWire* w = owires[idx];
+		  _output_wires.push_back(w);
+		  _out_width += w->Get_Size();
+      		  w->Connect_Driver(this);
+	  }
+  }
+
+  int Get_Input_Width() {return(_in_width);}
+  int Get_Output_Width() { return(_out_width);}
 
   void Set_Delay(int d) {_delay = d;}
   virtual int Get_Delay() {return(_delay);}
 
   virtual void Print_Delay(ostream& ofile)
   {
-	if(_delay > 1)
-		ofile << vcLexerKeywords[__DELAY] << " " << this->Get_Id() <<  " " << _delay << endl;
+	  if(_delay > 1)
+		  ofile << vcLexerKeywords[__DELAY] << " " << this->Get_Id() <<  " " << _delay << endl;
   }
-  virtual void Add_Reqs(vector<vcTransition*>& reqs) {assert(0);}
-  virtual void Add_Acks(vector<vcTransition*>& acks) {assert(0);}
+  virtual void Add_Reqs(vector<vcTransition*>& reqs) 
+  {
+	  _reqs  = reqs;
+  }
+  virtual void Add_Acks(vector<vcTransition*>& acks) 
+  {
+	  _acks = acks;
+  }
 
   virtual void Set_Flow_Through(bool v) {_flow_through = v;}
   bool Get_Flow_Through() {return(_flow_through);}
@@ -278,6 +334,26 @@ protected:
   vcTransition* Get_Req(int idx) {if(idx >= 0 && idx<_reqs.size()) return(this->_reqs[idx]); else return(NULL);}
   vcTransition* Get_Ack(int idx) {if(idx >= 0 && idx<_acks.size()) return(this->_acks[idx]); else return(NULL);}
 
+  virtual int Get_Number_Of_Input_Wires() {return(_input_wires.size());}
+  virtual int Get_Number_Of_Output_Wires() {return(_output_wires.size());}
+
+  virtual vcWire* Get_Input_Wire(int idx)
+  {
+	  if((idx >= 0) && (idx < _input_wires.size()))
+		  return(_input_wires[idx]);
+	  else
+		  return(NULL);
+  }
+  virtual vcWire* Get_Output_Wire(int idx)
+  {
+	  if((idx >= 0) && (idx < _output_wires.size()))
+		  return(_output_wires[idx]);
+	  else
+		  return(NULL);
+  }
+
+
+
   virtual bool Is_Pipelined_Operator() {return(false);}
 
   bool Is_Part_Of_Pipelined_Loop(int& depth, int& buffering);
@@ -285,39 +361,51 @@ protected:
 
   int Get_Req_Index(vcTransition* t)
   {
-    int ret_index = -1;
-    for(int idx = 0; idx < _reqs.size(); idx++)
-      {
-	if(_reqs[idx] == t)
+	  int ret_index = -1;
+	  for(int idx = 0; idx < _reqs.size(); idx++)
 	  {
-	    ret_index = idx;
-	    break;
+		  if(_reqs[idx] == t)
+		  {
+			  ret_index = idx;
+			  break;
+		  }
 	  }
-      }
-    return(ret_index);
+	  return(ret_index);
   }
 
   int Get_Ack_Index(vcTransition* t)
   {
-    int ret_index = -1;
-    for(int idx = 0; idx < _acks.size(); idx++)
-      {
-	if(_acks[idx] == t)
+	  int ret_index = -1;
+	  for(int idx = 0; idx < _acks.size(); idx++)
 	  {
-	    ret_index = idx;
-	    break;
+		  if(_acks[idx] == t)
+		  {
+			  ret_index = idx;
+			  break;
+		  }
 	  }
-      }
-    return(ret_index);
+	  return(ret_index);
   }
 
   virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
   virtual string Kind() {return("vcDatapathElement");}
   virtual string Get_Operator_Type() {return(this->Kind());}
 
-  virtual void Append_Inwires(vector<vcWire*>& inwires) {assert(0);}
-  virtual void Append_Outwires(vector<vcWire*>& owires) {assert(0);}
 
+  virtual void Append_Inwires(vector<vcWire*>& inwires) 
+  {
+    for(int idx = 0; idx < _input_wires.size(); idx++)
+      inwires.push_back(_input_wires[idx]);
+  }
+ 
+  virtual void Append_Outwires(vector<vcWire*>& outwires) 
+  {
+    for(int idx = 0; idx < _output_wires.size(); idx++)
+      outwires.push_back(_output_wires[idx]);
+  }
+
+  virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering) {}
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering) {}
 
   // if this operator refers to something inside the
   // datapath, then it is local to the datapath.

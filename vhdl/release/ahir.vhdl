@@ -4087,6 +4087,8 @@ use ahir.Utilities.all;
 	
 package OperatorPackage is
 
+  procedure ApConcat_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
+  procedure ApBitsel_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntNot_proc(l: in std_logic_vector; result : out std_logic_vector);
   procedure ApIntToApIntSigned_proc(l: in std_logic_vector; result : out std_logic_vector);
   procedure ApIntToApIntUnsigned_proc(l: in std_logic_vector; result : out std_logic_vector);
@@ -4126,6 +4128,18 @@ end package OperatorPackage;
 
 package body OperatorPackage is
 
+  -----------------------------------------------------------------------------
+  procedure ApConcat_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is
+  begin
+      result := l & r;
+  end procedure;
+  -----------------------------------------------------------------------------
+  procedure ApBitsel_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is
+    variable temp_int: integer;
+  begin
+      temp_int := To_Integer(To_Unsigned(Ceil_Log2(r'length)+1,r));
+      result(result'low) := l(temp_int + l'low);
+  end procedure;
   -----------------------------------------------------------------------------
   procedure ApIntNot_proc (l : in std_logic_vector; result : out std_logic_vector) is					
   begin
@@ -4357,13 +4371,11 @@ package body OperatorPackage is
   -----------------------------------------------------------------------------
   procedure TwoInputOperation(constant id : in string; x, y : in std_logic_vector; result : out std_logic_vector) is	
     variable result_var : std_logic_vector(result'high downto result'low);	
-    variable temp_int: integer;
   begin
     if id = "ApConcat" then
-      result_var := x & y;
+      ApConcat_proc(x,y,result_var);
     elsif id = "ApBitsel" then
-      temp_int := To_Integer(To_Unsigned(Ceil_Log2(x'length)+1,y));
-      result_var(result_var'low) := x(temp_int);
+      ApBitsel_proc(x,y,result_var);
     elsif id = "ApIntAdd" then					
       ApIntAdd_proc(x,y, result_var);
     elsif id = "ApIntSub" then					

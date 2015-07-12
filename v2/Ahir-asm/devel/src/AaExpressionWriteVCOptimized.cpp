@@ -1354,10 +1354,14 @@ void AaTypeCastExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofi
 {
 	if(!this->Is_Constant())
 	{
-
 		this->_rest->Write_VC_Links_Optimized(hier_id, ofile);
 
+	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
+			return;
+
 		ofile << "// " << this->To_String() << endl;
+
 
 		vector<string> reqs,acks;
 		string sample_regn = this->Get_VC_Name() + "_Sample";
@@ -1464,7 +1468,12 @@ void AaUnaryExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 
 		this->_rest->Write_VC_Links_Optimized(hier_id, ofile);
 
+      		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
+			return;
+
 		ofile << "// " << this->To_String() << endl;
+
 
 		string sample_regn = this->Get_VC_Name() + "_Sample";
 		string update_regn = this->Get_VC_Name() + "_Update";
@@ -1578,6 +1587,9 @@ void AaBinaryExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofile
 		this->_second->Write_VC_Links_Optimized(hier_id, ofile);
 
 
+		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
+			return;
 
 		string sample_regn = this->Get_VC_Name() + "_Sample";
 		string update_regn = this->Get_VC_Name() + "_Update";
@@ -1778,6 +1790,9 @@ void AaTernaryExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofil
 		this->_if_false->Write_VC_Links_Optimized(hier_id,ofile);
 
 		ofile << "// " << this->To_String() << endl;
+		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
+			return;
 
 		string sample_regn = this->Get_VC_Start_Region_Name();
 		string update_regn = this->Get_VC_Complete_Region_Name();
