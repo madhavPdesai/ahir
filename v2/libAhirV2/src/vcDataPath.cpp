@@ -303,7 +303,7 @@ bool vcDatapathElement::Is_Part_Of_Pipelined_Loop(int& depth, int& buffering)
 	
 	if(t != NULL)
 	{
-		vcCPPipelinedForkBlock* p  = t->Get_Pipeline_Parent();
+		vcCPBlock* p  = t->Get_Pipeline_Parent();
 		if(p != NULL)
 		{
 			vcCPElement* pp = p->Get_Parent();
@@ -1120,12 +1120,12 @@ void vcDataPath::Print_VHDL_Interlock_Buffer_Instances(ostream& ofile)
 			{
 				p->vcDatapathElement::Print_VHDL_Logger(ofile);
 			}
+			p->Print_VHDL(ofile);
 		}
 		else
 			p->Print_Flow_Through_VHDL(ofile);
 
 
-		p->Print_VHDL(ofile);
 	}
 }
 

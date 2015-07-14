@@ -324,6 +324,7 @@ protected:
 
   void Print(ofstream& ofile);
   void Print(string& ostring);
+  virtual string To_String() {string ret_string; this->Print(ret_string); return(ret_string);}
 
   virtual string Kind()
   {

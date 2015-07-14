@@ -10,269 +10,269 @@ int64_t vcControlPath::_free_index = 0;
 
 vcCompatibilityLabel::vcCompatibilityLabel(vcControlPath* cp, string id): vcCPElement(cp,id)
 {
-  this->_labeled_in_arc.first = NULL;
+	this->_labeled_in_arc.first = NULL;
 }
 
 void vcCompatibilityLabel::Add_In_Arc(vcCompatibilityLabel* u, pair<vcTransition*, int>& arc)
 {
-  assert(this->_labeled_in_arc.first == NULL);
+	assert(this->_labeled_in_arc.first == NULL);
 
-  this->_labeled_in_arc.first = u;
-  this->_labeled_in_arc.second = arc;
+	this->_labeled_in_arc.first = u;
+	this->_labeled_in_arc.second = arc;
 }
 
 void vcCompatibilityLabel::Add_In_Arc(vcCompatibilityLabel* u)
 {
-  this->_unlabeled_in_arcs.insert(u);
+	this->_unlabeled_in_arcs.insert(u);
 }
 
 vcCompatibilityLabel* vcCompatibilityLabel::Reduce(vcControlPath* cp)
 {
-  vcCompatibilityLabel* ret_label = this;
-  bool change_flag = true;;
+	vcCompatibilityLabel* ret_label = this;
+	bool change_flag = true;;
 
-  while(change_flag)
-    {
-      
-      change_flag = false;
-      if(this->_unlabeled_in_arcs.size() > 0)
-	assert(this->_labeled_in_arc.first == NULL);
-      if(this->_labeled_in_arc.first != NULL)
-	assert(this->_unlabeled_in_arcs.size() ==  0);
-      
-      if(this->_unlabeled_in_arcs.size() == 0)
+	while(change_flag)
+	{
+
+		change_flag = false;
+		if(this->_unlabeled_in_arcs.size() > 0)
+			assert(this->_labeled_in_arc.first == NULL);
+		if(this->_labeled_in_arc.first != NULL)
+			assert(this->_unlabeled_in_arcs.size() ==  0);
+
+		if(this->_unlabeled_in_arcs.size() == 0)
+			return(ret_label);
+
+		if(this->_unlabeled_in_arcs.size() == 1)
+		{
+			{// just one labeled in arc.
+				ret_label = (*(this->_unlabeled_in_arcs.begin()));
+			}
+			return(ret_label);
+		}
+
+		// more than one incoming unlabeled edge
+
+		vector<vcCompatibilityLabel* > erase_vec;
+		vector<vcCompatibilityLabel* > insert_vec;
+
+
+		// First, eliminate unlabeled paths of length 2.
+		for(set<vcCompatibilityLabel*>::iterator iter = this->_unlabeled_in_arcs.begin();
+				iter != this->_unlabeled_in_arcs.end();
+				iter++)
+		{
+			vcCompatibilityLabel* u = *(iter);
+			if(u->_unlabeled_in_arcs.size() > 0)
+			{
+				erase_vec.push_back(u);
+				for(set<vcCompatibilityLabel*>::iterator miter = u->_unlabeled_in_arcs.begin();
+						miter != u->_unlabeled_in_arcs.end();
+						miter++)
+				{
+					insert_vec.push_back((*miter));
+				}
+			}
+		}
+		// remove all elements in erase set from unlabeled_in_arcs
+		for(int idx = 0; idx < erase_vec.size(); idx++)
+			this->_unlabeled_in_arcs.erase(erase_vec[idx]);
+
+		// add all elements in insert set to unlabeled_in_arcs
+		for(int idx = 0; idx < insert_vec.size(); idx++)
+			this->_unlabeled_in_arcs.insert(insert_vec[idx]);
+
+
+		set<vcCompatibilityLabel*> insert_set;
+
+		// OK, now you have multiple incoming unlabeled arcs..
+		// try to reduce.
+		map<vcCompatibilityLabel*, map<vcTransition*,int> > reduce_map;
+		for(set<vcCompatibilityLabel*>::iterator iter = this->_unlabeled_in_arcs.begin();
+				iter != this->_unlabeled_in_arcs.end();
+				iter++)
+		{
+			vcCompatibilityLabel* u = (*iter);
+			assert(u->_unlabeled_in_arcs.size() == 0);
+
+			vcCompatibilityLabel* v = u->_labeled_in_arc.first;
+			if(v != NULL)
+			{
+
+				vcTransition* t = u->_labeled_in_arc.second.first;
+
+				if(reduce_map[v].find(t) == reduce_map[v].end())
+					(reduce_map[v])[t] = 1;
+				else
+					((reduce_map[v])[t])++;
+
+				if((reduce_map[v])[t] == t->Get_Number_Of_Successors())
+				{
+					insert_set.insert(v);
+				}
+			}
+		}
+
+		// based on the insert set, compute the reduce set.
+		set<vcCompatibilityLabel*> erase_set;
+		for(set<vcCompatibilityLabel*>::iterator iter = this->_unlabeled_in_arcs.begin();
+				iter != this->_unlabeled_in_arcs.end();
+				iter++)
+		{
+			vcCompatibilityLabel* u = (*iter);
+			assert(u->_unlabeled_in_arcs.size() == 0);
+
+			vcCompatibilityLabel* v = u->_labeled_in_arc.first;
+			if(v != NULL)
+			{
+				if(insert_set.find(v) != insert_set.end())
+				{
+					erase_set.insert(u);
+				}
+			}
+		}
+
+		// now remove elements from the erase set and
+		// add elements from the insert set
+		for(set<vcCompatibilityLabel*>::iterator iter = erase_set.begin();
+				iter != erase_set.end();
+				iter++)
+		{
+			this->_unlabeled_in_arcs.erase((*iter));
+			change_flag = true;
+		}
+
+		for(set<vcCompatibilityLabel*>::iterator iter = insert_set.begin();
+				iter != insert_set.end();
+				iter++)
+		{
+			this->_unlabeled_in_arcs.insert((*iter));
+			change_flag = true;
+		}
+
+		// thats it.  you have done one pass of the  reduction.. one last step remains..
+		// after the previous reduction, you may be left with a unique
+		// unlabeled in arc... In this case, break out of the
+		// loop..
+		if(this->_unlabeled_in_arcs.size() == 1)
+		{
+			ret_label = *(this->_unlabeled_in_arcs.begin());
+			break;
+		}
+	}
+
+	// one final reduction needs to be done..
+	// it is possible that the return label already
+	// exists in the set of computed labels..
+	//  if(ret_label->Is_Join())
+	//    ret_label = cp->Find_Or_Map_Join_Label(ret_label->Get_Join_String(),ret_label);
+
 	return(ret_label);
-      
-      if(this->_unlabeled_in_arcs.size() == 1)
-	{
-	  {// just one labeled in arc.
-	    ret_label = (*(this->_unlabeled_in_arcs.begin()));
-	  }
-	  return(ret_label);
-	}
-      
-      // more than one incoming unlabeled edge
-      
-      vector<vcCompatibilityLabel* > erase_vec;
-      vector<vcCompatibilityLabel* > insert_vec;
-      
-      
-      // First, eliminate unlabeled paths of length 2.
-      for(set<vcCompatibilityLabel*>::iterator iter = this->_unlabeled_in_arcs.begin();
-	  iter != this->_unlabeled_in_arcs.end();
-	  iter++)
-	{
-	  vcCompatibilityLabel* u = *(iter);
-	  if(u->_unlabeled_in_arcs.size() > 0)
-	    {
-	      erase_vec.push_back(u);
-	      for(set<vcCompatibilityLabel*>::iterator miter = u->_unlabeled_in_arcs.begin();
-		  miter != u->_unlabeled_in_arcs.end();
-		  miter++)
-		{
-		  insert_vec.push_back((*miter));
-		}
-	    }
-	}
-      // remove all elements in erase set from unlabeled_in_arcs
-      for(int idx = 0; idx < erase_vec.size(); idx++)
-	this->_unlabeled_in_arcs.erase(erase_vec[idx]);
-      
-      // add all elements in insert set to unlabeled_in_arcs
-      for(int idx = 0; idx < insert_vec.size(); idx++)
-	this->_unlabeled_in_arcs.insert(insert_vec[idx]);
-      
-      
-      set<vcCompatibilityLabel*> insert_set;
-      
-      // OK, now you have multiple incoming unlabeled arcs..
-      // try to reduce.
-      map<vcCompatibilityLabel*, map<vcTransition*,int> > reduce_map;
-      for(set<vcCompatibilityLabel*>::iterator iter = this->_unlabeled_in_arcs.begin();
-	  iter != this->_unlabeled_in_arcs.end();
-	  iter++)
-	{
-	  vcCompatibilityLabel* u = (*iter);
-	  assert(u->_unlabeled_in_arcs.size() == 0);
-	  
-	  vcCompatibilityLabel* v = u->_labeled_in_arc.first;
-	  if(v != NULL)
-	    {
-	      
-	      vcTransition* t = u->_labeled_in_arc.second.first;
-	      
-	      if(reduce_map[v].find(t) == reduce_map[v].end())
-		(reduce_map[v])[t] = 1;
-	      else
-		((reduce_map[v])[t])++;
-	      
-	      if((reduce_map[v])[t] == t->Get_Number_Of_Successors())
-		{
-		  insert_set.insert(v);
-		}
-	    }
-	}
-      
-      // based on the insert set, compute the reduce set.
-      set<vcCompatibilityLabel*> erase_set;
-      for(set<vcCompatibilityLabel*>::iterator iter = this->_unlabeled_in_arcs.begin();
-	  iter != this->_unlabeled_in_arcs.end();
-	  iter++)
-	{
-	  vcCompatibilityLabel* u = (*iter);
-	  assert(u->_unlabeled_in_arcs.size() == 0);
-	  
-	  vcCompatibilityLabel* v = u->_labeled_in_arc.first;
-	  if(v != NULL)
-	    {
-	      if(insert_set.find(v) != insert_set.end())
-		{
-		  erase_set.insert(u);
-		}
-	    }
-	}
-      
-      // now remove elements from the erase set and
-      // add elements from the insert set
-      for(set<vcCompatibilityLabel*>::iterator iter = erase_set.begin();
-	  iter != erase_set.end();
-	  iter++)
-	{
-	  this->_unlabeled_in_arcs.erase((*iter));
-	  change_flag = true;
-	}
-      
-      for(set<vcCompatibilityLabel*>::iterator iter = insert_set.begin();
-	  iter != insert_set.end();
-	  iter++)
-	{
-	  this->_unlabeled_in_arcs.insert((*iter));
-	  change_flag = true;
-	}
-      
-      // thats it.  you have done one pass of the  reduction.. one last step remains..
-      // after the previous reduction, you may be left with a unique
-      // unlabeled in arc... In this case, break out of the
-      // loop..
-      if(this->_unlabeled_in_arcs.size() == 1)
-	{
-	  ret_label = *(this->_unlabeled_in_arcs.begin());
-	  break;
-	}
-    }
-
-  // one final reduction needs to be done..
-  // it is possible that the return label already
-  // exists in the set of computed labels..
-  //  if(ret_label->Is_Join())
-  //    ret_label = cp->Find_Or_Map_Join_Label(ret_label->Get_Join_String(),ret_label);
-
-  return(ret_label);
 }
 
 bool vcCompatibilityLabel::Is_Compatible(vcCompatibilityLabel* other)
 {
-  if(this == other)
-    return true;
-  else if(((vcControlPath*)(this->_parent))->Are_Compatible(this,other))
-    return true;
-  else
-    return false;
+	if(this == other)
+		return true;
+	else if(((vcControlPath*)(this->_parent))->Are_Compatible(this,other))
+		return true;
+	else
+		return false;
 }
 
 
 bool operator==(vector<vcCompatibilityLabel*>& u, vector<vcCompatibilityLabel*>& v)
 {
-  bool ret_flag = true;
-  for(int idx = 0; idx < u.size(); idx++)
-    {
-      for(int jdx = 0; idx < v.size(); jdx++)
+	bool ret_flag = true;
+	for(int idx = 0; idx < u.size(); idx++)
 	{
-	  if(!(u[idx]->Is_Compatible(v[idx])))
-	    {
-	      ret_flag = false;
-	      break;
-	    }
+		for(int jdx = 0; idx < v.size(); jdx++)
+		{
+			if(!(u[idx]->Is_Compatible(v[idx])))
+			{
+				ret_flag = false;
+				break;
+			}
+		}
 	}
-    }
-  return(ret_flag);
+	return(ret_flag);
 }
 
 bool operator==(set<vcCompatibilityLabel*>& u, set<vcCompatibilityLabel*>& v)
 {
-  bool ret_flag = true;
-  for(set<vcCompatibilityLabel*>::iterator uiter = u.begin();
-      uiter != u.end();
-      uiter++)
-    {
-      for(set<vcCompatibilityLabel*>::iterator viter = v.begin();
-	  viter != v.end();
-	  viter++)
+	bool ret_flag = true;
+	for(set<vcCompatibilityLabel*>::iterator uiter = u.begin();
+			uiter != u.end();
+			uiter++)
 	{
-	  if(!(*uiter)->Is_Compatible((*viter)))
-	    {
-	      ret_flag = false;
-	      break;
-	    }
+		for(set<vcCompatibilityLabel*>::iterator viter = v.begin();
+				viter != v.end();
+				viter++)
+		{
+			if(!(*uiter)->Is_Compatible((*viter)))
+			{
+				ret_flag = false;
+				break;
+			}
+		}
 	}
-    }
-  return(ret_flag);
+	return(ret_flag);
 }
 
 void vcCompatibilityLabel::Print(ostream& ofile)
 {
-  ofile << "label " << this->Get_Id() << " : " << endl;
-  if(this->_labeled_in_arc.first != NULL)
-    {
-      ofile << "\t labeled predecessor (" << this->_labeled_in_arc.first->Get_Id() << ", " 
-	    << this->_labeled_in_arc.second.first->Get_Hierarchical_Id() << ", " 
-	    << this->_labeled_in_arc.second.second << ")" << endl;
-    }
-  else if(this->_unlabeled_in_arcs.size() > 0)
-    {
-      ofile << "\t unlabeled predecessor(s) " << endl;
-      for(set<vcCompatibilityLabel*>::iterator iter = this->_unlabeled_in_arcs.begin();
-	  iter != this->_unlabeled_in_arcs.end();
-	  iter++)
+	ofile << "label " << this->Get_Id() << " : " << endl;
+	if(this->_labeled_in_arc.first != NULL)
 	{
-	  ofile << "\t\t" << (*iter)->Get_Id() << endl;
+		ofile << "\t labeled predecessor (" << this->_labeled_in_arc.first->Get_Id() << ", " 
+			<< this->_labeled_in_arc.second.first->Get_Hierarchical_Id() << ", " 
+			<< this->_labeled_in_arc.second.second << ")" << endl;
 	}
-      ofile << endl;
-    }
-  else
-    ofile << endl;
+	else if(this->_unlabeled_in_arcs.size() > 0)
+	{
+		ofile << "\t unlabeled predecessor(s) " << endl;
+		for(set<vcCompatibilityLabel*>::iterator iter = this->_unlabeled_in_arcs.begin();
+				iter != this->_unlabeled_in_arcs.end();
+				iter++)
+		{
+			ofile << "\t\t" << (*iter)->Get_Id() << endl;
+		}
+		ofile << endl;
+	}
+	else
+		ofile << endl;
 }
 
 vcCPElement::vcCPElement(vcCPElement* parent, string id):vcRoot(id)
 {
-  this->_index = vcControlPath::_free_index;
-  vcControlPath::_free_index++;
+	this->_index = vcControlPath::_free_index;
+	vcControlPath::_free_index++;
 
-  this->_compatibility_label = NULL;
-  this->_parent = parent;
+	this->_compatibility_label = NULL;
+	this->_parent = parent;
 
-  _associated_cp_function = NULL;
-  _associated_cp_region   = NULL;
+	_associated_cp_function = NULL;
+	_associated_cp_region   = NULL;
 
-  _is_bound_as_input_to_cp_function = false;
-  _is_bound_as_output_from_cp_function = false;
-  _is_bound_as_input_to_region = false;
-  _is_bound_as_output_from_region = false;
+	_is_bound_as_input_to_cp_function = false;
+	_is_bound_as_output_from_cp_function = false;
+	_is_bound_as_input_to_region = false;
+	_is_bound_as_output_from_region = false;
 
-  _has_null_successor = false;
-  _has_null_predecessor = false;
+	_has_null_successor = false;
+	_has_null_predecessor = false;
 
-  _is_left_open = false;
-  this->Set_Pipeline_Parent();
+	_is_left_open = false;
+	this->Set_Pipeline_Parent();
 }
 
 void vcCPElement::Set_Associated_CP_Function(vcCPElement* c)
 {
 	if(_associated_cp_function == NULL) 
-	   _associated_cp_function = c; 
+		_associated_cp_function = c; 
 	else 
-        {
-	   vcSystem::Error("CP Element " + this->Get_Id() + " is associated with two CP functions..");
+	{
+		vcSystem::Error("CP Element " + this->Get_Id() + " is associated with two CP functions..");
 	}
 }
 
@@ -326,7 +326,7 @@ string vcCPElement::Get_Exit_Symbol(vcControlPath* cp)
 
 		if(this->Is_Place() || this->Is_Transition())
 			eu = this;
- 		else if(this->Is_Block())
+		else if(this->Is_Block())
 			eu = this->Get_Exit_Element();
 
 		vcCPElementGroup* grp = cp->Get_Group(eu);
@@ -343,132 +343,132 @@ string vcCPElement::Get_Exit_Symbol(vcControlPath* cp)
 }
 void vcCPElement::Add_Successor(vcCPElement* cpe) 
 {
-  // scan the list and add only if the
-  // successor is not already present.
-  bool add_flag = true;
-  for(int idx = 0, fidx = _successors.size(); idx < fidx; idx++)
-    {
-      if(cpe == this->_successors[idx])
+	// scan the list and add only if the
+	// successor is not already present.
+	bool add_flag = true;
+	for(int idx = 0, fidx = _successors.size(); idx < fidx; idx++)
 	{
-	  add_flag = false;
-	  break;
+		if(cpe == this->_successors[idx])
+		{
+			add_flag = false;
+			break;
+		}
 	}
-    }
 
-  if(add_flag)
-  	this->_successors.push_back(cpe);
+	if(add_flag)
+		this->_successors.push_back(cpe);
 }
 
 void vcCPElement::Remove_Successor(vcCPElement* cpe) 
 {
-  bool rem_flag = false;
-  for(vector<vcCPElement*>::iterator iter = _successors.begin(), fiter = _successors.end();
-	iter != fiter; iter++)
-    {
-      if(cpe == *iter)
+	bool rem_flag = false;
+	for(vector<vcCPElement*>::iterator iter = _successors.begin(), fiter = _successors.end();
+			iter != fiter; iter++)
 	{
-	  rem_flag = true;
-  	  this->_successors.erase(iter);
-	  break;
+		if(cpe == *iter)
+		{
+			rem_flag = true;
+			this->_successors.erase(iter);
+			break;
+		}
 	}
-    }
-	
+
 }
 
 void vcCPElement::Add_Predecessor(vcCPElement* cpe) 
 { 
-  bool add_flag = true;
-  for(int idx = 0, fidx = _predecessors.size(); idx < fidx; idx++)
-    {
-      if(cpe == this->_predecessors[idx])
+	bool add_flag = true;
+	for(int idx = 0, fidx = _predecessors.size(); idx < fidx; idx++)
 	{
-	  add_flag = false;
-	  break;
+		if(cpe == this->_predecessors[idx])
+		{
+			add_flag = false;
+			break;
+		}
 	}
-    }
-  if(add_flag);
-    this->_predecessors.push_back(cpe);
+	if(add_flag);
+	this->_predecessors.push_back(cpe);
 }
 
 void vcCPElement::Remove_Predecessor(vcCPElement* cpe) 
 {
-  bool rem_flag = false;
-  for(vector<vcCPElement*>::iterator iter = _predecessors.begin(), fiter = _predecessors.end();
-	iter != fiter; iter++)
-    {
-      if(cpe == *iter)
+	bool rem_flag = false;
+	for(vector<vcCPElement*>::iterator iter = _predecessors.begin(), fiter = _predecessors.end();
+			iter != fiter; iter++)
 	{
-	  rem_flag = true;
-  	  this->_predecessors.erase(iter);
-	  break;
+		if(cpe == *iter)
+		{
+			rem_flag = true;
+			this->_predecessors.erase(iter);
+			break;
+		}
 	}
-    }
 }
 
 void vcCPElement::Add_Marked_Successor(vcCPElement* cpe) 
 {
-  // scan the list and add only if the
-  // successor is not already present.
-  bool add_flag = true;
-  for(int idx = 0, fidx = _marked_successors.size(); idx < fidx; idx++)
-    {
-      if(cpe == this->_marked_successors[idx])
+	// scan the list and add only if the
+	// successor is not already present.
+	bool add_flag = true;
+	for(int idx = 0, fidx = _marked_successors.size(); idx < fidx; idx++)
 	{
-	  add_flag = false;
-	  break;
+		if(cpe == this->_marked_successors[idx])
+		{
+			add_flag = false;
+			break;
+		}
 	}
-    }
 
-  if(add_flag)
-  	this->_marked_successors.push_back(cpe);
+	if(add_flag)
+		this->_marked_successors.push_back(cpe);
 }
 
 void vcCPElement::Remove_Marked_Successor(vcCPElement* cpe) 
 {
-  bool rem_flag = false;
-  for(vector<vcCPElement*>::iterator iter = _marked_successors.begin(), fiter = _marked_successors.end();
-	iter != fiter; iter++)
-    {
-      if(cpe == *iter)
+	bool rem_flag = false;
+	for(vector<vcCPElement*>::iterator iter = _marked_successors.begin(), fiter = _marked_successors.end();
+			iter != fiter; iter++)
 	{
-	  rem_flag = true;
-  	  this->_marked_successors.erase(iter);
-	  this->_marked_successor_delays.erase(cpe);
-	  break;
+		if(cpe == *iter)
+		{
+			rem_flag = true;
+			this->_marked_successors.erase(iter);
+			this->_marked_successor_delays.erase(cpe);
+			break;
+		}
 	}
-    }
-	
+
 }
 
 void vcCPElement::Add_Marked_Predecessor(vcCPElement* cpe) 
 { 
-  bool add_flag = true;
-  for(int idx = 0, fidx = _marked_predecessors.size(); idx < fidx; idx++)
-    {
-      if(cpe == this->_marked_predecessors[idx])
+	bool add_flag = true;
+	for(int idx = 0, fidx = _marked_predecessors.size(); idx < fidx; idx++)
 	{
-	  add_flag = false;
-	  break;
+		if(cpe == this->_marked_predecessors[idx])
+		{
+			add_flag = false;
+			break;
+		}
 	}
-    }
-  if(add_flag);
-    this->_marked_predecessors.push_back(cpe);
+	if(add_flag);
+	this->_marked_predecessors.push_back(cpe);
 }
 
 void vcCPElement::Remove_Marked_Predecessor(vcCPElement* cpe) 
 {
-  bool rem_flag = false;
-  for(vector<vcCPElement*>::iterator iter = _marked_predecessors.begin(), fiter = _marked_predecessors.end();
-	iter != fiter; iter++)
-    {
-      if(cpe == *iter)
+	bool rem_flag = false;
+	for(vector<vcCPElement*>::iterator iter = _marked_predecessors.begin(), fiter = _marked_predecessors.end();
+			iter != fiter; iter++)
 	{
-	  rem_flag = true;
-  	  this->_marked_predecessors.erase(iter);
-	  this->_marked_predecessor_delays.erase(cpe);
-	  break;
+		if(cpe == *iter)
+		{
+			rem_flag = true;
+			this->_marked_predecessors.erase(iter);
+			this->_marked_predecessor_delays.erase(cpe);
+			break;
+		}
 	}
-    }
 }
 
 void vcCPElement::Set_Marked_Successor_Delay(vcCPElement* cpe, int m)
@@ -498,80 +498,80 @@ int  vcCPElement::Get_Marked_Predecessor_Delay(vcCPElement* cpe)
 
 void vcCPElement::Get_Hierarchical_Ref(vector<string>& ref_vec)
 {
-  if(this->_parent != NULL)
-    this->_parent->Get_Hierarchical_Ref(ref_vec);
-  ref_vec.push_back(this->Get_Id());
+	if(this->_parent != NULL)
+		this->_parent->Get_Hierarchical_Ref(ref_vec);
+	ref_vec.push_back(this->Get_Id());
 }
 string vcCPElement::Get_Hierarchical_Id()
 {
-  string ret_string;
-  vector<string> ref_vec;
-  this->Get_Hierarchical_Ref(ref_vec);
-  for(int idx = 0; idx < ref_vec.size(); idx++)
-    {
-      ret_string += ref_vec[idx];
-      if((idx+1) < ref_vec.size())
-	ret_string += vcLexerKeywords[__SLASH];
-    }
-  return(ret_string);
+	string ret_string;
+	vector<string> ref_vec;
+	this->Get_Hierarchical_Ref(ref_vec);
+	for(int idx = 0; idx < ref_vec.size(); idx++)
+	{
+		ret_string += ref_vec[idx];
+		if((idx+1) < ref_vec.size())
+			ret_string += vcLexerKeywords[__SLASH];
+	}
+	return(ret_string);
 }
 
 void vcCPElement::Print_Successors(ostream& ofile)
 {
-  ofile << this->Get_Hierarchical_Id() << endl
-	<< "\t (label =  " << this->Get_Compatibility_Label()->Get_Id() 
-	<< ")" << endl << "\t -> { " << endl;
+	ofile << this->Get_Hierarchical_Id() << endl
+		<< "\t (label =  " << this->Get_Compatibility_Label()->Get_Id() 
+		<< ")" << endl << "\t -> { " << endl;
 
-  for(int idx =0; idx < this->_successors.size(); idx++)
-    {
-      ofile << "\t\t" << this->_successors[idx]->Get_Hierarchical_Id() << endl;
-    }
-  ofile << "}" << endl;
+	for(int idx =0; idx < this->_successors.size(); idx++)
+	{
+		ofile << "\t\t" << this->_successors[idx]->Get_Hierarchical_Id() << endl;
+	}
+	ofile << "}" << endl;
 }
 
 void vcCPElement::Print_Marked_Successors(ostream& ofile)
 {
-  ofile << this->Get_Hierarchical_Id() << endl
-	<< "\t (label =  " << this->Get_Compatibility_Label()->Get_Id() 
-	<< ")" << endl << "\t -> { " << endl;
+	ofile << this->Get_Hierarchical_Id() << endl
+		<< "\t (label =  " << this->Get_Compatibility_Label()->Get_Id() 
+		<< ")" << endl << "\t -> { " << endl;
 
-  for(int idx =0; idx < this->_marked_successors.size(); idx++)
-    {
-      ofile << "\t\t" << this->_marked_successors[idx]->Get_Hierarchical_Id() << endl;
-    }
-  ofile << "}" << endl;
+	for(int idx =0; idx < this->_marked_successors.size(); idx++)
+	{
+		ofile << "\t\t" << this->_marked_successors[idx]->Get_Hierarchical_Id() << endl;
+	}
+	ofile << "}" << endl;
 }
 
 vcTransition::vcTransition(vcCPElement* parent, string id):vcCPElement(parent, id)
 {
-  _is_input = false;
-  _is_output = false;
-  _is_dead = false;
-  _is_tied_high = false;
-  _is_left_open = false;
-  _is_entry_transition = false;
-  _is_linked_to_non_local_dpe = false;
-  _is_delay_element = false;
+	_is_input = false;
+	_is_output = false;
+	_is_dead = false;
+	_is_tied_high = false;
+	_is_left_open = false;
+	_is_entry_transition = false;
+	_is_linked_to_non_local_dpe = false;
+	_is_delay_element = false;
 }
 
 void vcTransition::Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype)
 {
-  if(dpe == NULL)
-    return;
-  
-  if(ltype == _IN_TRANSITION)
-    _is_input = true;
-  else if(ltype == _OUT_TRANSITION)
-    _is_output = true;
-  else
-    assert(0);
-  
-  if(!dpe->Is_Local_To_Datapath())
-    {
-      _is_linked_to_non_local_dpe = true;
-    }
+	if(dpe == NULL)
+		return;
 
-  this->_dp_link.push_back(pair<vcDatapathElement*,vcTransitionType>(dpe,ltype));
+	if(ltype == _IN_TRANSITION)
+		_is_input = true;
+	else if(ltype == _OUT_TRANSITION)
+		_is_output = true;
+	else
+		assert(0);
+
+	if(!dpe->Is_Local_To_Datapath())
+	{
+		_is_linked_to_non_local_dpe = true;
+	}
+
+	this->_dp_link.push_back(pair<vcDatapathElement*,vcTransitionType>(dpe,ltype));
 }
 
 
@@ -579,7 +579,7 @@ void vcTransition::Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype)
 
 void vcTransition::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__TRANSITION] << " " << this->Get_Label() << endl;
+	ofile << vcLexerKeywords[__TRANSITION] << " " << this->Get_Label() << endl;
 }
 
 #define MAX(x,y) (x > y ? x : y)
@@ -592,222 +592,222 @@ void vcTransition::Print(ostream& ofile)
 //
 void vcTransition::Print_VHDL(ostream& ofile)
 {
-  bool block_was_used = false;
-  string marked_join_marking;
+	bool block_was_used = false;
+	string marked_join_marking;
 
-  if(this->Get_Is_Dead())
-  {
-	// it will never ever fire... tie it to false.
-      ofile << "-- Dead. tied low." << endl;
-      ofile << this->Get_Exit_Symbol() << " <= false;" << endl;
-      return;
-  }
-  if(this->Get_Is_Tied_High())
-  {
-	// it will never ever fire... tied to true.
-      ofile << "-- Tied high." << endl;
-      ofile << this->Get_Exit_Symbol() << " <= true;" << endl;
+	if(this->Get_Is_Dead())
+	{
+		// it will never ever fire... tie it to false.
+		ofile << "-- Dead. tied low." << endl;
+		ofile << this->Get_Exit_Symbol() << " <= false;" << endl;
+		return;
+	}
+	if(this->Get_Is_Tied_High())
+	{
+		// it will never ever fire... tied to true.
+		ofile << "-- Tied high." << endl;
+		ofile << this->Get_Exit_Symbol() << " <= true;" << endl;
 
-	// TODO.. if it is an output transition, it needs to be 
-	// marked.
+		// TODO.. if it is an output transition, it needs to be 
+		// marked.
 
-      return;
-  }
-  if(this->Get_Is_Left_Open())
-  {
-	// it is only driven, not used.
-      ofile << "-- left open:  " << this->Get_Exit_Symbol()  << endl;
-      return;
-  }
-  if(this->Get_Is_Delay_Element())
-  {
-	assert(this->Get_Number_Of_Predecessors() == 1);
-	assert(this->Get_Number_Of_Marked_Predecessors() == 0);
+		return;
+	}
+	if(this->Get_Is_Left_Open())
+	{
+		// it is only driven, not used.
+		ofile << "-- left open:  " << this->Get_Exit_Symbol()  << endl;
+		return;
+	}
+	if(this->Get_Is_Delay_Element())
+	{
+		assert(this->Get_Number_Of_Predecessors() == 1);
+		assert(this->Get_Number_Of_Marked_Predecessors() == 0);
 
-        ofile << "-- Delay element." << endl;
-	vcCPElement* pred = this->Get_Predecessor(0);
-	ofile << this->Get_Exit_Symbol() << "_delay: control_delay_element "
-		<< " generic map(delay_value => 1) " 
-		<< " port map(req => " << pred->Get_Exit_Symbol() 
-		<< ", ack => " << this->Get_Exit_Symbol()
-		<< ", clk => clk, reset =>reset);" << endl;
-	return;
-  }
-
-  
-  // explicit predecessors.. (other than "implicit" ones).
-  vector<vcCPElement*> explicit_preds;
-  this->Get_Explicit_Predecessors(explicit_preds);
-
-  // if the transition is mapped as an output of a CP function,
-  // then there should be no explicit preds.
-  if(this->Get_Is_Bound_As_Output_From_CP_Function())
-  {
-	assert(explicit_preds.size() == 0);
-	return;
-  }
-
-  // if the transition is bound as an input to its region,
-  // then dont print anything.
-  if(this->Get_Is_Bound_As_Input_To_Region())
-  {
-      ofile << "-- transition " << this->Get_Exit_Symbol() << " is mapped as an input to its region." << endl;
-      return;
-  }
-
-  // every transition has at least one predecessor (entry of control-path has no
-  // explicit predecessor, but does have an implicit one.
-  //  
-  //  TBD: even if there is only one predecessor, if the parent
-  //  is a pipelined loop body, then we treat the transition as a
-  //  join.
-  //
-  bool parent_is_pipelined_loop_body = this->Get_Parent()->Is_Pipelined();
-  int max_iterations_in_flight = 1;
-  if(parent_is_pipelined_loop_body) 
-  {
-	max_iterations_in_flight = ((vcCPPipelinedForkBlock*) (this->Get_Parent()))->Get_Max_Iterations_In_Flight();
-  }
+		ofile << "-- Delay element." << endl;
+		vcCPElement* pred = this->Get_Predecessor(0);
+		ofile << this->Get_Exit_Symbol() << "_delay: control_delay_element "
+			<< " generic map(delay_value => 1) " 
+			<< " port map(req => " << pred->Get_Exit_Symbol() 
+			<< ", ack => " << this->Get_Exit_Symbol()
+			<< ", clk => clk, reset =>reset);" << endl;
+		return;
+	}
 
 
-  // 
-  bool has_null_predecessor = this->Get_Has_Null_Predecessor();
+	// explicit predecessors.. (other than "implicit" ones).
+	vector<vcCPElement*> explicit_preds;
+	this->Get_Explicit_Predecessors(explicit_preds);
 
-  // It is a true join if
-  //   it has more than one explicit predecessor.
-  //   OR
-  //   the parent is pipelined and it either has more
-  //   than one explicit predecessor or it has at least
-  //   one explicit predecessor and at least one marked
-  //   predecessor.
-  bool is_true_join = (parent_is_pipelined_loop_body ? 
+	// if the transition is mapped as an output of a CP function,
+	// then there should be no explicit preds.
+	if(this->Get_Is_Bound_As_Output_From_CP_Function())
+	{
+		assert(explicit_preds.size() == 0);
+		return;
+	}
+
+	// if the transition is bound as an input to its region,
+	// then dont print anything.
+	if(this->Get_Is_Bound_As_Input_To_Region())
+	{
+		ofile << "-- transition " << this->Get_Exit_Symbol() << " is mapped as an input to its region." << endl;
+		return;
+	}
+
+	// every transition has at least one predecessor (entry of control-path has no
+	// explicit predecessor, but does have an implicit one.
+	//  
+	//  TBD: even if there is only one predecessor, if the parent
+	//  is a pipelined loop body, then we treat the transition as a
+	//  join... Why?  No need unless there is a marked predecessor.
+	//
+	vcCPBlock* pp = this->Get_Pipeline_Parent();
+	int max_iterations_in_flight = 1;
+	if(pp != NULL)
+	{
+		max_iterations_in_flight = pp->Get_Max_Iterations_In_Flight();
+	}
+
+
+	// 
+	bool has_null_predecessor = this->Get_Has_Null_Predecessor();
+
+	// It is a true join if
+	//   it has more than one explicit predecessor.
+	//   OR
+	//   the parent is pipelined and it either has more
+	//   than one explicit predecessor or it has at least
+	//   one explicit predecessor and at least one marked
+	//   predecessor.
+	bool is_true_join = ((pp != NULL)  ? 
 			((explicit_preds.size() > 1) || 
-				((has_null_predecessor || (explicit_preds.size() > 0)) && (_marked_predecessors.size() > 0))) :
+			 ((has_null_predecessor || (explicit_preds.size() > 0)) && (_marked_predecessors.size() > 0))) :
 			(explicit_preds.size() > 1));
 
-  if(this->Get_Is_Input())
-  {
-	// input transition? it is supposed to be enabled.. just fire it.
-	ofile << "-- input transition " << endl;
-	this->Print_DP_To_CP_VHDL_Link(ofile);
-  }
-  else if(is_true_join)
-    {
-	    if(explicit_preds.size() > 0)
-	    {
-		    bool marked_join_flag = false;
-		    block_was_used = true;
+	if(this->Get_Is_Input())
+	{
+		// input transition? it is supposed to be enabled.. just fire it.
+		ofile << "-- input transition " << endl;
+		this->Print_DP_To_CP_VHDL_Link(ofile);
+	}
+	else if(is_true_join)
+	{
+		if(explicit_preds.size() > 0)
+		{
+			bool marked_join_flag = false;
+			block_was_used = true;
 
-		    ofile << this->Get_VHDL_Id() << "_block : Block -- non-trivial join transition " << this->Get_Hierarchical_Id() << " {" <<  endl;
+			ofile << this->Get_VHDL_Id() << "_block : Block -- non-trivial join transition " << this->Get_Hierarchical_Id() << " {" <<  endl;
 
-		    ofile << "signal " <<  this->Get_VHDL_Id() << "_predecessors: BooleanArray(" 
-			    << explicit_preds.size()-1 << " downto 0);" << endl;
-		    if(this->Get_Number_Of_Marked_Predecessors() > 0)
-		    {
-			    marked_join_flag = true;
-			    ofile << "signal " <<  this->Get_VHDL_Id() << "_marked_predecessors: BooleanArray(" 
-				    << this->Get_Number_Of_Marked_Predecessors()-1 << " downto 0);" << endl;
+			ofile << "signal " <<  this->Get_VHDL_Id() << "_predecessors: BooleanArray(" 
+				<< explicit_preds.size()-1 << " downto 0);" << endl;
+			if(this->Get_Number_Of_Marked_Predecessors() > 0)
+			{
+				marked_join_flag = true;
+				ofile << "signal " <<  this->Get_VHDL_Id() << "_marked_predecessors: BooleanArray(" 
+					<< this->Get_Number_Of_Marked_Predecessors()-1 << " downto 0);" << endl;
 
-			    string marking_string = this->Generate_Marked_Join_Bypass_String();
-			    ofile << marking_string << endl;
-		    }
-		    ofile << "-- }" << endl << "begin -- {" << endl;
+				string marking_string = this->Generate_Marked_Join_Bypass_String();
+				ofile << marking_string << endl;
+			}
+			ofile << "-- }" << endl << "begin -- {" << endl;
 
-		    for(int idx = 0; idx < explicit_preds.size(); idx++)
-		    {
-			    vcCPElement* pred = explicit_preds[idx];
-			    ofile << this->Get_VHDL_Id() << "_predecessors(" << idx << ") <= "
-				    << pred->Get_Exit_Symbol() << ";" << endl;
-		    }
+			for(int idx = 0; idx < explicit_preds.size(); idx++)
+			{
+				vcCPElement* pred = explicit_preds[idx];
+				ofile << this->Get_VHDL_Id() << "_predecessors(" << idx << ") <= "
+					<< pred->Get_Exit_Symbol() << ";" << endl;
+			}
 
-		    if(marked_join_flag)
-		    {
-			    for(int idx = 0; idx < this->Get_Number_Of_Marked_Predecessors(); idx++)
-			    {
-				    vcCPElement* pred = this->Get_Marked_Predecessors()[idx];
-				    ofile << this->Get_VHDL_Id() << "_marked_predecessors(" << idx << ") <= "
-					    << pred->Get_Exit_Symbol() << ";" << endl;
-			    }
-		    }
+			if(marked_join_flag)
+			{
+				for(int idx = 0; idx < this->Get_Number_Of_Marked_Predecessors(); idx++)
+				{
+					vcCPElement* pred = this->Get_Marked_Predecessors()[idx];
+					ofile << this->Get_VHDL_Id() << "_marked_predecessors(" << idx << ") <= "
+						<< pred->Get_Exit_Symbol() << ";" << endl;
+				}
+			}
 
-		    string comp_id = "join";
-		    if(marked_join_flag)
-			    comp_id = "marked_join";
-		    ofile << this->Get_VHDL_Id() << "_join:" << comp_id << " -- {" << endl
-			    << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl;
-		    if(marked_join_flag)	
-			    ofile << "marked_predecessor_bypass => markedPredBypass," << endl;
-		    ofile	<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
-			    << "port map( -- {"
-			    << "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl;
-		    if(marked_join_flag)
-			    ofile << "marked_preds => " << this->Get_VHDL_Id() <<  "_marked_predecessors," << endl;
-		    ofile << "symbol_out => " << this->Get_Exit_Symbol() << "," << endl
-			    << "clk => clk," << endl
-			    << "reset => reset); -- }}" << endl;
-	    }
-	    else
-	    {
-		    assert(this->Get_Number_Of_Marked_Predecessors() > 0);
+			string comp_id = "join";
+			if(marked_join_flag)
+				comp_id = "marked_join";
+			ofile << this->Get_VHDL_Id() << "_join:" << comp_id << " -- {" << endl
+				<< "generic map(place_capacity => " << max_iterations_in_flight << "," << endl;
+			if(marked_join_flag)	
+				ofile << "marked_predecessor_bypass => markedPredBypass," << endl;
+			ofile	<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
+				<< "port map( -- {"
+				<< "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl;
+			if(marked_join_flag)
+				ofile << "marked_preds => " << this->Get_VHDL_Id() <<  "_marked_predecessors," << endl;
+			ofile << "symbol_out => " << this->Get_Exit_Symbol() << "," << endl
+				<< "clk => clk," << endl
+				<< "reset => reset); -- }}" << endl;
+		}
+		else
+		{
+			assert(this->Get_Number_Of_Marked_Predecessors() > 0);
 
-		    string join_name = this->Get_VHDL_Id() + "_join";
-		    vector<string> preds; 
-		    vector<int> pred_markings;
-		    vector<int> pred_capacities;
-		    vector<int> pred_delays;
-		    string joined_symbol = this->Get_Exit_Symbol();
-			    
-		    for(int idx = 0; idx < this->Get_Number_Of_Marked_Predecessors(); idx++)
-		    {
-			    vcCPElement* pred = this->Get_Marked_Predecessors()[idx];
-			    preds.push_back(pred->Get_Exit_Symbol());
-			    pred_markings.push_back(1);
-			    pred_capacities.push_back(1);
-			    pred_delays.push_back(this->Get_Marked_Predecessor_Delay(pred));
-		    }
+			string join_name = this->Get_VHDL_Id() + "_join";
+			vector<string> preds; 
+			vector<int> pred_markings;
+			vector<int> pred_capacities;
+			vector<int> pred_delays;
+			string joined_symbol = this->Get_Exit_Symbol();
 
-		    Print_VHDL_Join(join_name,
-				    preds,
-				    pred_markings,
-				    pred_capacities,
-				    pred_delays,
-				    joined_symbol,
-				    ofile);
-	    }
-    }
-  else if(explicit_preds.size() == 1)
-	  // at least one real predecessor..
-  {
-	  vcCPElement* pred = this->Get_Predecessors()[0];
-	  ofile <<  this->Get_Exit_Symbol() << " <= " << pred->Get_Exit_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
-  }
-  else
-	  // no explicit preds.. but may have implicit preds..
-  {
-	  if(this->Get_Is_Entry_Transition())
-	  {
-		  ofile <<  this->Get_Exit_Symbol() << "  <= " << this->Get_Parent()->Get_Start_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
-	  }
-	  else 
-	  {
-		  int pred_count = this->Get_Number_Of_Predecessors();
-		  if(pred_count == 0)
-		  {
-			  vcSystem::Warning("transition " + this->Get_Hierarchical_Id() + " has no predecessor: tied to false");
-			  ofile << "-- transition " << this->Get_Hierarchical_Id() << " has no predecessor: tied to false." << endl;
-			  ofile << this->Get_Exit_Symbol() << " <= false;" << endl;	  
-		  }
-	  }
-  }
+			for(int idx = 0; idx < this->Get_Number_Of_Marked_Predecessors(); idx++)
+			{
+				vcCPElement* pred = this->Get_Marked_Predecessors()[idx];
+				preds.push_back(pred->Get_Exit_Symbol());
+				pred_markings.push_back(1);
+				pred_capacities.push_back(1);
+				pred_delays.push_back(this->Get_Marked_Predecessor_Delay(pred));
+			}
 
-  if(this->Get_Is_Output())
-  {
-	  ofile << "-- output transition " << endl;
-	  this->Print_CP_To_DP_VHDL_Link(ofile);
-  }
+			Print_VHDL_Join(join_name,
+					preds,
+					pred_markings,
+					pred_capacities,
+					pred_delays,
+					joined_symbol,
+					ofile);
+		}
+	}
+	else if(explicit_preds.size() == 1)
+		// at least one real predecessor..
+	{
+		vcCPElement* pred = this->Get_Predecessors()[0];
+		ofile <<  this->Get_Exit_Symbol() << " <= " << pred->Get_Exit_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
+	}
+	else
+		// no explicit preds.. but may have implicit preds..
+	{
+		if(this->Get_Is_Entry_Transition())
+		{
+			ofile <<  this->Get_Exit_Symbol() << "  <= " << this->Get_Parent()->Get_Start_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
+		}
+		else 
+		{
+			int pred_count = this->Get_Number_Of_Predecessors();
+			if(pred_count == 0)
+			{
+				vcSystem::Warning("transition " + this->Get_Hierarchical_Id() + " has no predecessor: tied to false");
+				ofile << "-- transition " << this->Get_Hierarchical_Id() << " has no predecessor: tied to false." << endl;
+				ofile << this->Get_Exit_Symbol() << " <= false;" << endl;	  
+			}
+		}
+	}
 
-  if(block_was_used) // block was used...
-	  ofile << "-- }" << endl << "end Block; -- non-trivial join transition " << this->Get_Hierarchical_Id() << endl;
+	if(this->Get_Is_Output())
+	{
+		ofile << "-- output transition " << endl;
+		this->Print_CP_To_DP_VHDL_Link(ofile);
+	}
+
+	if(block_was_used) // block was used...
+		ofile << "-- }" << endl << "end Block; -- non-trivial join transition " << this->Get_Hierarchical_Id() << endl;
 
 }
 
@@ -1229,30 +1229,30 @@ void vcCPBlock::Update_Predecessor_Successor_Links()
 
 void vcCPBlock::Update_Binding_Predecessor_Successor_Links()
 {
-  // for the bindings.
-  for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin();
-	biter != _output_bindings.end();
-	biter++)
-  {
-	vcPlace* pl = (*biter).first;
-        vcTransition* tr = (*biter).second;
-	
-	tr->Add_Successor(pl);
-	pl->Add_Predecessor(tr);
-  }
+	// for the bindings.
+	for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin();
+			biter != _output_bindings.end();
+			biter++)
+	{
+		vcPlace* pl = (*biter).first;
+		vcTransition* tr = (*biter).second;
 
-  for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin();
-	biter != _input_bindings.end();
-	biter++)
-  {
-	vcPlace* pl = (*biter).first;
-        vcTransition* tr = (*biter).second;
-	
-	tr->Add_Predecessor(pl);
-	pl->Add_Successor(tr);
-  }
+		tr->Add_Successor(pl);
+		pl->Add_Predecessor(tr);
+	}
+
+	for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin();
+			biter != _input_bindings.end();
+			biter++)
+	{
+		vcPlace* pl = (*biter).first;
+		vcTransition* tr = (*biter).second;
+
+		tr->Add_Predecessor(pl);
+		pl->Add_Successor(tr);
+	}
 }
-  
+
 void vcCPBlock::Bind(string place_name, string region_name, string transition_name, bool input_binding)
 {
 	vcCPElement* pl = this->Find_CPElement(place_name);
@@ -1751,102 +1751,102 @@ void vcPhiSequencer::Update_Predecessor_Successor_Links()
 	// predecessor successor relations.
 	// selects -> done, selects -> reqs
 	for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
-  {
-     vcTransition* s = _selects[idx];
-     s->Add_Successor(_ack);
-     _done->Add_Predecessor(s);
+	{
+		vcTransition* s = _selects[idx];
+		s->Add_Successor(_ack);
+		_done->Add_Predecessor(s);
 
-     vcTransition* r = _reqs[idx];
-     s->Add_Successor(r);
-     r->Add_Predecessor(s);
-  }
+		vcTransition* r = _reqs[idx];
+		s->Add_Successor(r);
+		r->Add_Predecessor(s);
+	}
 
-  // enables -> reqs,
-  for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
-  {
-     vcTransition* s = _enables[idx];
-     s->Add_Successor(_ack);
-     _ack->Add_Predecessor(s);
+	// enables -> reqs,
+	for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
+	{
+		vcTransition* s = _enables[idx];
+		s->Add_Successor(_ack);
+		_ack->Add_Predecessor(s);
 
-     for(int jdx = 0, fjdx = _reqs.size(); jdx < fjdx; jdx++)
-     {
-        vcTransition* r = _reqs[jdx];
-	s->Add_Successor(r);
-        r->Add_Predecessor(s);
-     }
-  }
+		for(int jdx = 0, fjdx = _reqs.size(); jdx < fjdx; jdx++)
+		{
+			vcTransition* r = _reqs[jdx];
+			s->Add_Successor(r);
+			r->Add_Predecessor(s);
+		}
+	}
 
-  // reqs -> acks links are omitted.
-  
-  // ack -> done
-  _ack->Add_Successor(_done);
-  _done->Add_Predecessor(_ack);
+	// reqs -> acks links are omitted.
+
+	// ack -> done
+	_ack->Add_Successor(_done);
+	_done->Add_Predecessor(_ack);
 }
 
 
 vcTransitionMerge::vcTransitionMerge(vcCPElement* prnt, string id): vcCPElement(prnt,id)
 {
-  
+
 }
 
 void vcTransitionMerge::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__TRANSITIONMERGE] << " " << this->Get_Label() <<  " ";
-  ofile << "(";
-  for(int idx = 0, fidx = _in_transitions.size(); idx < fidx; idx++)
-    {
-      ofile << _in_transitions[idx]->Get_Id() << " ";
-    }
-  ofile << ") (";
+	ofile << vcLexerKeywords[__TRANSITIONMERGE] << " " << this->Get_Label() <<  " ";
+	ofile << "(";
+	for(int idx = 0, fidx = _in_transitions.size(); idx < fidx; idx++)
+	{
+		ofile << _in_transitions[idx]->Get_Id() << " ";
+	}
+	ofile << ") (";
 
-  ofile << _out_transition->Get_Id() << " )" << endl;
+	ofile << _out_transition->Get_Id() << " )" << endl;
 }
 
 void vcTransitionMerge::Print_VHDL(vcControlPath* cp, ostream& ofile)
 {
-  ofile << this->Get_VHDL_Id() << "_block : block -- { " << endl;
-  ofile << "signal preds : BooleanArray(0 to " << _in_transitions.size()-1 << ");" << endl;
-  ofile << "begin -- { " << endl;
-  for(int idx = 0, fidx = _in_transitions.size(); idx < fidx; idx++)
-    {
-      string sig_id = _in_transitions[idx]->Get_Exit_Symbol(cp);
-      ofile << "preds(" << idx << ")  <= " << sig_id << ";" << endl;
-    }
+	ofile << this->Get_VHDL_Id() << "_block : block -- { " << endl;
+	ofile << "signal preds : BooleanArray(0 to " << _in_transitions.size()-1 << ");" << endl;
+	ofile << "begin -- { " << endl;
+	for(int idx = 0, fidx = _in_transitions.size(); idx < fidx; idx++)
+	{
+		string sig_id = _in_transitions[idx]->Get_Exit_Symbol(cp);
+		ofile << "preds(" << idx << ")  <= " << sig_id << ";" << endl;
+	}
 
-  ofile << this->Get_VHDL_Id() << " : transition_merge -- { " << endl;;
-  ofile << "port map (preds => preds, symbol_out => " << _out_transition->Get_Exit_Symbol(cp) << ");" << endl;
-  ofile << " -- } } } " << endl;
-  ofile << "end block;" << endl;
+	ofile << this->Get_VHDL_Id() << " : transition_merge -- { " << endl;;
+	ofile << "port map (preds => preds, symbol_out => " << _out_transition->Get_Exit_Symbol(cp) << ");" << endl;
+	ofile << " -- } } } " << endl;
+	ofile << "end block;" << endl;
 }
 
 void vcTransitionMerge::Print_Dot_Entry(vcControlPath* cp, ostream& ofile)
 {
-  string tnode_id = this->Get_VHDL_Id();
-  ofile << tnode_id << " [shape = rectangle]; " << endl;
-  for(int idx = 0, fidx = _in_transitions.size(); idx < fidx; idx++)
-    {
-      string sig_id = cp->Get_Group(_in_transitions[idx])->Get_Dot_Id();
-      ofile << sig_id << " -> " << tnode_id << ";" << endl;
-    }
+	string tnode_id = this->Get_VHDL_Id();
+	ofile << tnode_id << " [shape = rectangle]; " << endl;
+	for(int idx = 0, fidx = _in_transitions.size(); idx < fidx; idx++)
+	{
+		string sig_id = cp->Get_Group(_in_transitions[idx])->Get_Dot_Id();
+		ofile << sig_id << " -> " << tnode_id << ";" << endl;
+	}
 
-  string oid = cp->Get_Group(_out_transition)->Get_Dot_Id();
-  ofile << tnode_id << " -> " << oid << ";" << endl;
+	string oid = cp->Get_Group(_out_transition)->Get_Dot_Id();
+	ofile << tnode_id << " -> " << oid << ";" << endl;
 }
 
 void vcTransitionMerge::Update_Predecessor_Successor_Links()
 {
-  // This is dangerous, because the paths are used in
-  // eliminating redundancies.  These should not
-  // be considered true predecessor->successor relations.
-  /*
-  for(int idx = 0, fidx = _in_transitions.size(); idx < fidx; idx++)
-    {
-      vcTransition* i = _in_transitions[idx];
+	// This is dangerous, because the paths are used in
+	// eliminating redundancies.  These should not
+	// be considered true predecessor->successor relations.
+	/*
+	   for(int idx = 0, fidx = _in_transitions.size(); idx < fidx; idx++)
+	   {
+	   vcTransition* i = _in_transitions[idx];
 
-      i->Add_Successor(_out_transition);
-      _out_transition->Add_Predecessor(i);
-    }
-  */
+	   i->Add_Successor(_out_transition);
+	   _out_transition->Add_Predecessor(i);
+	   }
+	 */
 }
 
 
@@ -1868,173 +1868,173 @@ vcCPPipelinedLoopBody* vcCPSimpleLoopBlock::Get_Loop_Body()
 
 void vcCPSimpleLoopBlock::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__LOOPBLOCK]  << " [" << this->Get_Id() << "] ";
-  ofile  << vcLexerKeywords[__DEPTH]  << this->Get_Pipeline_Depth() <<  " ";
-  ofile  << vcLexerKeywords[__BUFFERING]  << this->Get_Pipeline_Buffering() <<  " { " << endl;
+	ofile << vcLexerKeywords[__LOOPBLOCK]  << " [" << this->Get_Id() << "] ";
+	ofile  << vcLexerKeywords[__DEPTH]  << this->Get_Pipeline_Depth() <<  " ";
+	ofile  << vcLexerKeywords[__BUFFERING]  << this->Get_Pipeline_Buffering() <<  " { " << endl;
 
-  // print all the normal elements.. This includes the loop-body.
-  this->Print_Elements(ofile);
-  // now print the merge and branch points.
-  for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _merge_map.begin();
-      iter != _merge_map.end();
-      iter++)
-    {
-      ofile << (*iter).first->Get_Id() << " " << vcLexerKeywords[__MERGE] << " (";
-      for(int idx = 0; idx < (*iter).second.size(); idx++)
+	// print all the normal elements.. This includes the loop-body.
+	this->Print_Elements(ofile);
+	// now print the merge and branch points.
+	for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _merge_map.begin();
+			iter != _merge_map.end();
+			iter++)
 	{
-	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
+		ofile << (*iter).first->Get_Id() << " " << vcLexerKeywords[__MERGE] << " (";
+		for(int idx = 0; idx < (*iter).second.size(); idx++)
+		{
+			ofile << " " << (*iter).second[idx]->Get_Id() << " ";
+		}
+		ofile << ")" << endl;
 	}
-      ofile << ")" << endl;
-    }
-   
-  for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _branch_map.begin();
-      iter != _branch_map.end();
-      iter++)
-    {
-      ofile << (*iter).first->Get_Id() << " " << 
-	vcLexerKeywords[__BRANCH] << " (";
-      for(int idx = 0; idx < (*iter).second.size(); idx++)
+
+	for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _branch_map.begin();
+			iter != _branch_map.end();
+			iter++)
 	{
-	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
+		ofile << (*iter).first->Get_Id() << " " << 
+			vcLexerKeywords[__BRANCH] << " (";
+		for(int idx = 0; idx < (*iter).second.size(); idx++)
+		{
+			ofile << " " << (*iter).second[idx]->Get_Id() << " ";
+		}
+		ofile << ")" << endl;
 	}
-      ofile << ")" << endl;
-    }
 
-  // Now the special elements.
+	// Now the special elements.
 
-  // input bindings.
-  for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin();
-	biter != _input_bindings.end();
-	biter++)
-  {
-	vcPlace* pl = (*biter).first;
-        vcTransition* tr = (*biter).second;
+	// input bindings.
+	for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin();
+			biter != _input_bindings.end();
+			biter++)
+	{
+		vcPlace* pl = (*biter).first;
+		vcTransition* tr = (*biter).second;
 
-	ofile << vcLexerKeywords[__BIND] << " " << pl->Get_Id() << " " 
-	      << vcLexerKeywords[__IMPLIES] << " " 
-	      << tr->Get_Parent()->Get_Id() << vcLexerKeywords[__COLON] 
-	      << tr->Get_Id() << endl;	
-  }
+		ofile << vcLexerKeywords[__BIND] << " " << pl->Get_Id() << " " 
+			<< vcLexerKeywords[__IMPLIES] << " " 
+			<< tr->Get_Parent()->Get_Id() << vcLexerKeywords[__COLON] 
+			<< tr->Get_Id() << endl;	
+	}
 
 
-  // output bindings.
-  for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin();
-	biter != _output_bindings.end();
-	biter++)
-  {
-	vcPlace* pl = (*biter).first;
-        vcTransition* tr = (*biter).second;
+	// output bindings.
+	for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin();
+			biter != _output_bindings.end();
+			biter++)
+	{
+		vcPlace* pl = (*biter).first;
+		vcTransition* tr = (*biter).second;
 
-	ofile << vcLexerKeywords[__BIND] << " " << pl->Get_Id() << " " 
-	      << vcLexerKeywords[__ULE_OP] << " " 
-	      << tr->Get_Parent()->Get_Id() << vcLexerKeywords[__COLON] 
-	      << tr->Get_Id() << endl;	
-  }
+		ofile << vcLexerKeywords[__BIND] << " " << pl->Get_Id() << " " 
+			<< vcLexerKeywords[__ULE_OP] << " " 
+			<< tr->Get_Parent()->Get_Id() << vcLexerKeywords[__COLON] 
+			<< tr->Get_Id() << endl;	
+	}
 
-  // terminator.
-  ofile << vcLexerKeywords[__TERMINATE] << " " << vcLexerKeywords[__LPAREN] << " (";
-  ofile << _terminator->_loop_exit->Get_Id() << " " << _terminator->_loop_taken->Get_Id() << " " << _terminator->_loop_body->Get_Id() << ") (";
-  ofile << _terminator->_exit_from_loop->Get_Id() << ")" << endl;
+	// terminator.
+	ofile << vcLexerKeywords[__TERMINATE] << " " << vcLexerKeywords[__LPAREN] << " (";
+	ofile << _terminator->_loop_exit->Get_Id() << " " << _terminator->_loop_taken->Get_Id() << " " << _terminator->_loop_body->Get_Id() << ") (";
+	ofile << _terminator->_exit_from_loop->Get_Id() << ")" << endl;
 
-  ofile << "\n// end loop-block " << this->Get_Id() << endl << "}" << endl;
+	ofile << "\n// end loop-block " << this->Get_Id() << endl << "}" << endl;
 }
 
 // This is the same routine as that for the vcCPBlock, 
 // modified to take care of the simple loop structure.
 void vcCPSimpleLoopBlock::Print_VHDL(ostream& ofile)
 {
-  string id = this->Get_Hierarchical_Id();
+	string id = this->Get_Hierarchical_Id();
 
-  // declare all exit flags.
-  ofile << this->Get_VHDL_Id() << ": Block -- " << id << " {" << endl;
-  this->Print_VHDL_Signal_Declarations(ofile);
+	// declare all exit flags.
+	ofile << this->Get_VHDL_Id() << ": Block -- " << id << " {" << endl;
+	this->Print_VHDL_Signal_Declarations(ofile);
 
-  ofile << "-- }" << endl << "begin -- {" << endl;
-  this->Print_VHDL_Start_Symbol_Assignment(ofile);
+	ofile << "-- }" << endl << "begin -- {" << endl;
+	this->Print_VHDL_Start_Symbol_Assignment(ofile);
 
-  this->_entry->Print_VHDL(ofile);
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    {
-      this->_elements[idx]->Print_VHDL(ofile);
-    }
-  this->_exit->Print_VHDL(ofile);
-  this->Print_VHDL_Exit_Symbol_Assignment(ofile);
+	this->_entry->Print_VHDL(ofile);
+	for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+		this->_elements[idx]->Print_VHDL(ofile);
+	}
+	this->_exit->Print_VHDL(ofile);
+	this->Print_VHDL_Exit_Symbol_Assignment(ofile);
 
-  this->Print_VHDL_Terminator(NULL,ofile);
-  ofile << "-- }" << endl << "end Block; -- " << id << endl;
+	this->Print_VHDL_Terminator(NULL,ofile);
+	ofile << "-- }" << endl << "end Block; -- " << id << endl;
 }
 
 
 void vcCPSimpleLoopBlock::Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back, string exit_from_loop)
 {
-  string tid = this->Get_Id() + "_terminator";
-  _terminator = new vcLoopTerminator(this,tid);
+	string tid = this->Get_Id() + "_terminator";
+	_terminator = new vcLoopTerminator(this,tid);
 
-  _terminator->_loop_exit = this->Find_CPElement(loop_exit);
-  assert(_terminator->_loop_exit != NULL);	
-  assert(_terminator->_loop_exit->Is("vcCPSeriesBlock"));
-  _terminator->_loop_exit->Set_Is_Bound_As_Input_To_CP_Function(true);
-  _terminator->_loop_exit->Set_Associated_CP_Function(_terminator);
+	_terminator->_loop_exit = this->Find_CPElement(loop_exit);
+	assert(_terminator->_loop_exit != NULL);	
+	assert(_terminator->_loop_exit->Is("vcCPSeriesBlock"));
+	_terminator->_loop_exit->Set_Is_Bound_As_Input_To_CP_Function(true);
+	_terminator->_loop_exit->Set_Associated_CP_Function(_terminator);
 
-  _terminator->_loop_taken = this->Find_CPElement(loop_taken);
-  assert(_terminator->_loop_taken != NULL);	
-  assert(_terminator->_loop_taken->Is("vcCPSeriesBlock"));
-  _terminator->_loop_taken->Set_Is_Bound_As_Input_To_CP_Function(true);
-  _terminator->_loop_taken->Set_Associated_CP_Function(_terminator);
+	_terminator->_loop_taken = this->Find_CPElement(loop_taken);
+	assert(_terminator->_loop_taken != NULL);	
+	assert(_terminator->_loop_taken->Is("vcCPSeriesBlock"));
+	_terminator->_loop_taken->Set_Is_Bound_As_Input_To_CP_Function(true);
+	_terminator->_loop_taken->Set_Associated_CP_Function(_terminator);
 
-  _terminator->_loop_body = this->Find_CPElement(loop_body);
-  assert(_terminator->_loop_body != NULL);	
-  assert(_terminator->_loop_body->Is("vcPlace"));
-  _terminator->_loop_body->Set_Is_Bound_As_Input_To_CP_Function(true);
-  _terminator->_loop_body->Set_Associated_CP_Function(_terminator);
+	_terminator->_loop_body = this->Find_CPElement(loop_body);
+	assert(_terminator->_loop_body != NULL);	
+	assert(_terminator->_loop_body->Is("vcPlace"));
+	_terminator->_loop_body->Set_Is_Bound_As_Input_To_CP_Function(true);
+	_terminator->_loop_body->Set_Associated_CP_Function(_terminator);
 
-  _terminator->_loop_back = this->Find_CPElement(loop_back);
-  assert(_terminator->_loop_back != NULL);	
-  assert(_terminator->_loop_back->Is("vcPlace"));
-  _terminator->_loop_back->Set_Is_Bound_As_Output_From_CP_Function(true);
-  _terminator->_loop_back->Set_Associated_CP_Function(_terminator);
- 
-  _terminator->_exit_from_loop = this->Find_CPElement(exit_from_loop);
-  assert(_terminator->_exit_from_loop != NULL);	
-  assert(_terminator->_exit_from_loop->Is("vcPlace"));
-  _terminator->_exit_from_loop->Set_Is_Bound_As_Output_From_CP_Function(true);
-  _terminator->_exit_from_loop->Set_Associated_CP_Function(_terminator);
+	_terminator->_loop_back = this->Find_CPElement(loop_back);
+	assert(_terminator->_loop_back != NULL);	
+	assert(_terminator->_loop_back->Is("vcPlace"));
+	_terminator->_loop_back->Set_Is_Bound_As_Output_From_CP_Function(true);
+	_terminator->_loop_back->Set_Associated_CP_Function(_terminator);
+
+	_terminator->_exit_from_loop = this->Find_CPElement(exit_from_loop);
+	assert(_terminator->_exit_from_loop != NULL);	
+	assert(_terminator->_exit_from_loop->Is("vcPlace"));
+	_terminator->_exit_from_loop->Set_Is_Bound_As_Output_From_CP_Function(true);
+	_terminator->_exit_from_loop->Set_Associated_CP_Function(_terminator);
 
 }
 
 
 bool vcCPSimpleLoopBlock::Check_Structure()
 {
-  // normal branch block related stuff.
-  this->vcCPBranchBlock::Check_Structure();
+	// normal branch block related stuff.
+	this->vcCPBranchBlock::Check_Structure();
 }
 
 void vcCPSimpleLoopBlock::Update_Predecessor_Successor_Links()
 {
-  // normal branch block related stuff.
-  this->vcCPBranchBlock::Update_Predecessor_Successor_Links();
+	// normal branch block related stuff.
+	this->vcCPBranchBlock::Update_Predecessor_Successor_Links();
 
-  // for the terminator.
-  _terminator->_loop_exit->Add_Successor(_terminator->_loop_back);
-  _terminator->_loop_back->Add_Predecessor(_terminator->_loop_exit);
+	// for the terminator.
+	_terminator->_loop_exit->Add_Successor(_terminator->_loop_back);
+	_terminator->_loop_back->Add_Predecessor(_terminator->_loop_exit);
 
-  _terminator->_loop_exit->Add_Successor(_terminator->_exit_from_loop);
-  _terminator->_exit_from_loop->Add_Predecessor(_terminator->_loop_exit);
-  
-  _terminator->_loop_taken->Add_Successor(_terminator->_loop_back);
-  _terminator->_loop_back->Add_Predecessor(_terminator->_loop_taken);
+	_terminator->_loop_exit->Add_Successor(_terminator->_exit_from_loop);
+	_terminator->_exit_from_loop->Add_Predecessor(_terminator->_loop_exit);
 
-  _terminator->_loop_taken->Add_Successor(_terminator->_exit_from_loop);
-  _terminator->_exit_from_loop->Add_Predecessor(_terminator->_loop_taken);
+	_terminator->_loop_taken->Add_Successor(_terminator->_loop_back);
+	_terminator->_loop_back->Add_Predecessor(_terminator->_loop_taken);
 
-  _terminator->_loop_body->Add_Successor(_terminator->_loop_back);
-  _terminator->_loop_back->Add_Predecessor(_terminator->_loop_body);
+	_terminator->_loop_taken->Add_Successor(_terminator->_exit_from_loop);
+	_terminator->_exit_from_loop->Add_Predecessor(_terminator->_loop_taken);
 
-  _terminator->_loop_body->Add_Successor(_terminator->_exit_from_loop);
-  _terminator->_exit_from_loop->Add_Predecessor(_terminator->_loop_body);
+	_terminator->_loop_body->Add_Successor(_terminator->_loop_back);
+	_terminator->_loop_back->Add_Predecessor(_terminator->_loop_body);
+
+	_terminator->_loop_body->Add_Successor(_terminator->_exit_from_loop);
+	_terminator->_exit_from_loop->Add_Predecessor(_terminator->_loop_body);
 
 
-  this->Update_Binding_Predecessor_Successor_Links();
+	this->Update_Binding_Predecessor_Successor_Links();
 
 }
 
@@ -2047,22 +2047,22 @@ vcCPForkBlock::vcCPForkBlock(vcCPBlock* p, string id):vcCPParallelBlock(p, id)
 
 void vcCPForkBlock::Add_Fork_Point(vcTransition* fp, vcCPElement* fre)
 {
-  if((this->_fork_map.find(fp) == this->_fork_map.end())
-     ||
-     (this->_fork_map[fp].find(fre) == this->_fork_map[fp].end()))
-    {
-      this->_fork_map[((vcTransition*)fp)].insert(fre);
-      this->_forked_elements.insert(fre);
-      
-      fp->Add_Successor(fre);
-      
-      if(fre->Is_Transition())
+	if((this->_fork_map.find(fp) == this->_fork_map.end())
+			||
+			(this->_fork_map[fp].find(fre) == this->_fork_map[fp].end()))
 	{
-	  this->Add_Join_Point((vcTransition*)fre, fp);
+		this->_fork_map[((vcTransition*)fp)].insert(fre);
+		this->_forked_elements.insert(fre);
+
+		fp->Add_Successor(fre);
+
+		if(fre->Is_Transition())
+		{
+			this->Add_Join_Point((vcTransition*)fre, fp);
+		}
+		else
+			fre->Add_Predecessor(fp);
 	}
-      else
-	fre->Add_Predecessor(fp);
-    }
 }
 
 void vcCPForkBlock::Remove_Fork_Point(vcTransition* fp, vcCPElement* fre)
@@ -2080,46 +2080,46 @@ void vcCPForkBlock::Remove_Fork_Point(vcTransition* fp, vcCPElement* fre)
 
 void vcCPForkBlock::Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_vec)
 {
-  vcCPElement* fp = NULL;
-  if(fork_name != "$null")
-    {
-	    fp = this->Find_CPElement(fork_name);
-	    if(fp == NULL)
-	    {
-		    vcSystem::Error("did not find fork point " + fork_name);
-		    return;
-	    }
-	    else if(!fp->Is("vcTransition"))
-	    {
-		    vcSystem::Error("fork point " + fork_name + " is not a transition");
-		    return;
-	    }
+	vcCPElement* fp = NULL;
+	if(fork_name != "$null")
+	{
+		fp = this->Find_CPElement(fork_name);
+		if(fp == NULL)
+		{
+			vcSystem::Error("did not find fork point " + fork_name);
+			return;
+		}
+		else if(!fp->Is("vcTransition"))
+		{
+			vcSystem::Error("fork point " + fork_name + " is not a transition");
+			return;
+		}
 
-    }
-  for(int idx = 0; idx < fork_cpe_vec.size(); idx++)
-  {
-	  if(fork_cpe_vec[idx] == "$null")
-	  {
-		if(fp != NULL)
-		  fp->Set_Has_Null_Successor(true);
-	  }
-	  else
-	  {
-		  vcCPElement* fre = this->Find_CPElement(fork_cpe_vec[idx]);
-		  if(fre == NULL)
-		  {
-			  vcSystem::Error("did not find forked region " + fork_cpe_vec[idx]);
-			  return;
-		  }
-		  else 
-		  {
+	}
+	for(int idx = 0; idx < fork_cpe_vec.size(); idx++)
+	{
+		if(fork_cpe_vec[idx] == "$null")
+		{
 			if(fp != NULL)
-			  this->Add_Fork_Point((vcTransition*)fp, fre);
-			else
-				fre->Set_Has_Null_Predecessor(true);
-		  }
-	  }
-  }
+				fp->Set_Has_Null_Successor(true);
+		}
+		else
+		{
+			vcCPElement* fre = this->Find_CPElement(fork_cpe_vec[idx]);
+			if(fre == NULL)
+			{
+				vcSystem::Error("did not find forked region " + fork_cpe_vec[idx]);
+				return;
+			}
+			else 
+			{
+				if(fp != NULL)
+					this->Add_Fork_Point((vcTransition*)fp, fre);
+				else
+					fre->Set_Has_Null_Predecessor(true);
+			}
+		}
+	}
 }
 
 void vcCPForkBlock::Add_Join_Point(vcTransition* jp, vcCPElement* jre)
@@ -2162,7 +2162,7 @@ void vcCPForkBlock::Add_Join_Point(string& join_name, vector<string>& join_cpe_v
 		null_join = true;
 
 	vcCPElement* jp = this->Find_CPElement(join_name);
-	
+
 	if(!null_join && (jp == NULL))
 	{
 		vcSystem::Error("did not find join point " + join_name);
@@ -2203,57 +2203,57 @@ void vcCPForkBlock::Add_Join_Point(string& join_name, vector<string>& join_cpe_v
 
 void vcCPForkBlock::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__FORKBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
-  this->Print_Elements(ofile);
+	ofile << vcLexerKeywords[__FORKBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
+	this->Print_Elements(ofile);
 
 
-  for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _fork_map.begin();
-      iter != _fork_map.end();
-      iter++)
-    {
-      ofile << (*iter).first->Get_Id() << " " << 
-	vcLexerKeywords[__FORK] << " (" ;
-      for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
-	  siter != sfiter;
-	  siter++)
+	for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _fork_map.begin();
+			iter != _fork_map.end();
+			iter++)
 	{
-	  ofile << " " << (*siter)->Get_Id() << " ";
+		ofile << (*iter).first->Get_Id() << " " << 
+			vcLexerKeywords[__FORK] << " (" ;
+		for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
+				siter != sfiter;
+				siter++)
+		{
+			ofile << " " << (*siter)->Get_Id() << " ";
+		}
+		ofile << ")" << endl;
 	}
-      ofile << ")" << endl;
-    }
 
 
-  for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _join_map.begin();
-      iter != _join_map.end();
-      iter++)
-    {
-      ofile <<  (*iter).first->Get_Id() << " " << 
-	vcLexerKeywords[__JOIN] << " (" ;
-      for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
-	  siter != sfiter;
-	  siter++)
+	for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _join_map.begin();
+			iter != _join_map.end();
+			iter++)
 	{
-	  ofile << " " << (*siter)->Get_Id() << " ";
+		ofile <<  (*iter).first->Get_Id() << " " << 
+			vcLexerKeywords[__JOIN] << " (" ;
+		for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
+				siter != sfiter;
+				siter++)
+		{
+			ofile << " " << (*siter)->Get_Id() << " ";
+		}
+		ofile << ")" << endl;
 	}
-      ofile << ")" << endl;
-    }
-  ofile << "\n// end fork-block " << this->Get_Id() << endl << "}" << endl;
+	ofile << "\n// end fork-block " << this->Get_Id() << endl << "}" << endl;
 }
 
 void vcCPForkBlock::DFS_Forward_Edge_Action(bool reverse_flag,
-				deque<vcCPElement*>& dfs_queue,
-				set<vcCPElement*>& on_queue_set,
-				vcCPElement* u, vcCPElement* v)
+		deque<vcCPElement*>& dfs_queue,
+		set<vcCPElement*>& on_queue_set,
+		vcCPElement* u, vcCPElement* v)
 {
 	if(reverse_flag == false)
 	{
 		// for each predecessor w of v, if w is on the queue
 		// then mark (w,v) as an arc to be removed. 
-        	vector<vcCPElement*>& adj =  v->Get_Predecessors();
-      		for(int idx = 0; idx < adj.size(); idx++)
+		vector<vcCPElement*>& adj =  v->Get_Predecessors();
+		for(int idx = 0; idx < adj.size(); idx++)
 		{
-	  		vcCPElement* w = adj[idx];
-	  		if((w != u) && (on_queue_set.find(w) != on_queue_set.end()))
+			vcCPElement* w = adj[idx];
+			if((w != u) && (on_queue_set.find(w) != on_queue_set.end()))
 			{
 				this->_redundant_pairs.push_back(pair<vcCPElement*,vcCPElement*>(w,v));	
 			}
@@ -2309,8 +2309,8 @@ void vcCPForkBlock::All_Pairs_Longest_Paths(map<vcCPElement*,map<vcCPElement*,in
 		else
 		{
 			for(int vidx = 0, fvidx = u->Get_Number_Of_Predecessors(); 
-				vidx < fvidx; 
-				vidx++)
+					vidx < fvidx; 
+					vidx++)
 			{
 				vcCPElement* v = u->Get_Predecessor(vidx);
 				g.Add_Edge(v,u);
@@ -2333,8 +2333,8 @@ void vcCPForkBlock::All_Pairs_Longest_Paths(map<vcCPElement*,map<vcCPElement*,in
 		if(v == NULL)
 			continue;
 		for(int vidx = 0, fvidx = v->Get_Number_Of_Predecessors(); 
-			vidx < fvidx; 
-			vidx++)
+				vidx < fvidx; 
+				vidx++)
 		{
 			vcCPElement* u = v->Get_Predecessor(vidx);
 
@@ -2373,18 +2373,18 @@ void vcCPForkBlock::Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int>
 				{
 					//if(!((vcTransition*)v)->Get_Is_Delay_Element())
 					//{
-						this->Remove_Join_Point((vcTransition*)v,u);
-						vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
-								+ u->Get_Label());
+					this->Remove_Join_Point((vcTransition*)v,u);
+					vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
+							+ u->Get_Label());
 					//}
 				}
 				if(u->Is_Transition())
 				{
 					//if(!((vcTransition*)u)->Get_Is_Delay_Element())
 					//{
-						this->Remove_Fork_Point((vcTransition*)u,v);
-						vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
-								+ v->Get_Label());
+					this->Remove_Fork_Point((vcTransition*)u,v);
+					vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
+							+ v->Get_Label());
 					//}
 				}
 			}
@@ -2406,9 +2406,9 @@ void vcCPForkBlock::Eliminate_Redundant_Dependencies()
 		{
 			//if(!((vcTransition*)u)->Get_Is_Delay_Element())
 			//{
-				this->Remove_Fork_Point((vcTransition*)u,v);
-				vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
-						+ v->Get_Label());
+			this->Remove_Fork_Point((vcTransition*)u,v);
+			vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
+					+ v->Get_Label());
 			//}
 		}
 
@@ -2416,9 +2416,9 @@ void vcCPForkBlock::Eliminate_Redundant_Dependencies()
 		{
 			//if(!((vcTransition*)v)->Get_Is_Delay_Element())
 			//{
-				this->Remove_Join_Point((vcTransition*)v,u);
-				vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
-						+ u->Get_Label());
+			this->Remove_Join_Point((vcTransition*)v,u);
+			vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
+					+ u->Get_Label());
 			//}
 		}
 	}
@@ -2441,14 +2441,14 @@ void vcCPForkBlock::Remove_Isolated_Transitions()
 		{
 			vcTransition* t = (vcTransition*) cpe;
 			if(!t->Get_Is_Input() && !t->Get_Is_Output() && 
-				!t->Get_Is_Linked_To_Non_Local_Dpe() && 
-				!cpe->Get_Is_Bound_As_Input_To_CP_Function() && 
-				!cpe->Get_Is_Bound_As_Output_From_CP_Function() && 
-				!cpe->Get_Is_Bound_As_Output_From_Region() && 
-				(t->Get_Number_Of_Predecessors() == 0) && 
-				(t->Get_Number_Of_Successors() == 0) && 
-				(t->Get_Number_Of_Marked_Predecessors() == 0) && 
-				(t->Get_Number_Of_Marked_Successors() == 0))
+					!t->Get_Is_Linked_To_Non_Local_Dpe() && 
+					!cpe->Get_Is_Bound_As_Input_To_CP_Function() && 
+					!cpe->Get_Is_Bound_As_Output_From_CP_Function() && 
+					!cpe->Get_Is_Bound_As_Output_From_Region() && 
+					(t->Get_Number_Of_Predecessors() == 0) && 
+					(t->Get_Number_Of_Successors() == 0) && 
+					(t->Get_Number_Of_Marked_Predecessors() == 0) && 
+					(t->Get_Number_Of_Marked_Successors() == 0))
 			{
 				vcSystem::Info("Info: transition " + t->Get_Label() + " is isolated, removed.");
 			}
@@ -2456,7 +2456,7 @@ void vcCPForkBlock::Remove_Isolated_Transitions()
 				kept_elements.push_back(t);
 		}
 		else
-				kept_elements.push_back(cpe);
+			kept_elements.push_back(cpe);
 	}
 
 	_elements.clear();
@@ -2534,321 +2534,321 @@ bool vcCPForkBlock::Check_Structure()
 			{
 				if(cpe->Get_Number_Of_Successors() > 1)
 				{
-		  vcSystem::Error("non-transition cannot be a fork: " + cpe->Get_Hierarchical_Id());
-		}
-	      if(cpe->Get_Number_Of_Predecessors() > 1)
-		{
-		  vcSystem::Error("non-transition cannot be a join: " + cpe->Get_Hierarchical_Id());
-		}
+					vcSystem::Error("non-transition cannot be a fork: " + cpe->Get_Hierarchical_Id());
+				}
+				if(cpe->Get_Number_Of_Predecessors() > 1)
+				{
+					vcSystem::Error("non-transition cannot be a join: " + cpe->Get_Hierarchical_Id());
+				}
 
-	    }
+			}
+		}
 	}
-    }
 
 
-  this->Eliminate_Redundant_Dependencies();
-  return(ret_flag);
+	this->Eliminate_Redundant_Dependencies();
+	return(ret_flag);
 }
 
 // assumption..  that the graph is acyclic, with a single source and a single sink.
 void vcCPForkBlock::Precedence_Order(bool reverse_flag, vcCPElement* start_element, vector<vcCPElement*>& precedence_order)
 {
-  int idx = 0;
+	int idx = 0;
 
-  if(!reverse_flag)
-    assert(start_element->Get_Predecessors().size() == 0);
-  else
-    assert(start_element->Get_Successors().size() == 0);
+	if(!reverse_flag)
+		assert(start_element->Get_Predecessors().size() == 0);
+	else
+		assert(start_element->Get_Successors().size() == 0);
 
-  set<vcCPElement*> scanned_set;
-  scanned_set.insert(start_element);
+	set<vcCPElement*> scanned_set;
+	scanned_set.insert(start_element);
 
-  set<vcCPElement*> ordered_set;
-  // the first candidate.
-  while(scanned_set.size() > 0)
-    {
-      vcCPElement* top =  *(scanned_set.begin());
-      scanned_set.erase(top);
-
-      precedence_order.push_back(top);
-      ordered_set.insert(top);
-
-      // scan all neighbours of top_element.
-      vector<vcCPElement*>& adj = (reverse_flag ? top->Get_Predecessors() : top->Get_Successors());
-      for(int idx = 0; idx < adj.size(); idx++)
+	set<vcCPElement*> ordered_set;
+	// the first candidate.
+	while(scanned_set.size() > 0)
 	{
-	  bool add_flag = true;
-	  vcCPElement* w = adj[idx];
+		vcCPElement* top =  *(scanned_set.begin());
+		scanned_set.erase(top);
 
-	  // all predecessors of w marked?
-	  vector<vcCPElement*>& adjw = (reverse_flag ? w->Get_Successors() : w->Get_Predecessors());
-	  for(int idx2 = 0; idx2 < adjw.size(); idx2++)
-	    {
-	      vcCPElement* u = adjw[idx2];
-	      if(ordered_set.find(u) == ordered_set.end())
+		precedence_order.push_back(top);
+		ordered_set.insert(top);
+
+		// scan all neighbours of top_element.
+		vector<vcCPElement*>& adj = (reverse_flag ? top->Get_Predecessors() : top->Get_Successors());
+		for(int idx = 0; idx < adj.size(); idx++)
 		{
-		  add_flag = false;
-		  break;
+			bool add_flag = true;
+			vcCPElement* w = adj[idx];
+
+			// all predecessors of w marked?
+			vector<vcCPElement*>& adjw = (reverse_flag ? w->Get_Successors() : w->Get_Predecessors());
+			for(int idx2 = 0; idx2 < adjw.size(); idx2++)
+			{
+				vcCPElement* u = adjw[idx2];
+				if(ordered_set.find(u) == ordered_set.end())
+				{
+					add_flag = false;
+					break;
+				}
+			}
+
+			if(add_flag) 
+			{
+				scanned_set.insert(w);
+			}
 		}
-	    }
-	      
-	  if(add_flag) 
-	    {
-	      scanned_set.insert(w);
-	    }
 	}
-    }
 }
 
 void vcCPForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath*  cp)
 {
-  // inherited label is passed down from _entry.
-  // create additional labels whenever there is 
-  // a fork.  Whenever there is a join, do 
-  // a reduce.
-  this->Set_Compatibility_Label(in_label);
+	// inherited label is passed down from _entry.
+	// create additional labels whenever there is 
+	// a fork.  Whenever there is a join, do 
+	// a reduce.
+	this->Set_Compatibility_Label(in_label);
 
-  vector<vcCPElement*> reachable_elements;
-  int num_visited = 0;
-  
-  this->Precedence_Order(false, this->_entry,reachable_elements);
+	vector<vcCPElement*> reachable_elements;
+	int num_visited = 0;
 
-  map<vcCPElement*,vcCompatibilityLabel*> nl_map;
-  nl_map[this->_entry] = in_label;
+	this->Precedence_Order(false, this->_entry,reachable_elements);
+
+	map<vcCPElement*,vcCompatibilityLabel*> nl_map;
+	nl_map[this->_entry] = in_label;
 
 
-  for(int tidx = 0; tidx < reachable_elements.size(); tidx++)
-    {
-      vcCPElement* cpe = reachable_elements[tidx];
-
-      vcCompatibilityLabel* nl = NULL;
-      if(nl_map.find(cpe) != nl_map.end())
+	for(int tidx = 0; tidx < reachable_elements.size(); tidx++)
 	{
-	  nl = nl_map[cpe];
-	}
+		vcCPElement* cpe = reachable_elements[tidx];
 
-      assert(nl != NULL);
-      vcCompatibilityLabel* reduced_label = nl->Reduce(cp);	  
-
-      if(reduced_label != nl)
-	{
-	  cp->Delete_Compatibility_Label(nl);
-	  nl = NULL;
-	}
-      
-      if(!cpe->Is_Transition())
-	{
-	  cpe->Compute_Compatibility_Labels(reduced_label,cp);
-	  nl_map[cpe] = reduced_label;
-
-	  // there should be exactly one successor!
-	  assert(cpe->Get_Successors().size() == 1);
-	  for(int idx = 0, fidx = cpe->Get_Successors().size(); idx < fidx; idx++)
-	    {
-	      vcCPElement* ncpe = cpe->Get_Successor(idx);
-	      string cpelabel_id = ncpe->Get_Hierarchical_Id();
-	      vcCompatibilityLabel* nnl = NULL;
-	      if(nl_map.find(ncpe) == nl_map.end())
+		vcCompatibilityLabel* nl = NULL;
+		if(nl_map.find(cpe) != nl_map.end())
 		{
-		  nnl = cp->Make_Compatibility_Label(cpelabel_id);
-		  nl_map[ncpe] = nnl;
+			nl = nl_map[cpe];
 		}
-	      else
-		nnl = nl_map[ncpe];
-	      nnl->Add_In_Arc(reduced_label);
-	    }
+
+		assert(nl != NULL);
+		vcCompatibilityLabel* reduced_label = nl->Reduce(cp);	  
+
+		if(reduced_label != nl)
+		{
+			cp->Delete_Compatibility_Label(nl);
+			nl = NULL;
+		}
+
+		if(!cpe->Is_Transition())
+		{
+			cpe->Compute_Compatibility_Labels(reduced_label,cp);
+			nl_map[cpe] = reduced_label;
+
+			// there should be exactly one successor!
+			assert(cpe->Get_Successors().size() == 1);
+			for(int idx = 0, fidx = cpe->Get_Successors().size(); idx < fidx; idx++)
+			{
+				vcCPElement* ncpe = cpe->Get_Successor(idx);
+				string cpelabel_id = ncpe->Get_Hierarchical_Id();
+				vcCompatibilityLabel* nnl = NULL;
+				if(nl_map.find(ncpe) == nl_map.end())
+				{
+					nnl = cp->Make_Compatibility_Label(cpelabel_id);
+					nl_map[ncpe] = nnl;
+				}
+				else
+					nnl = nl_map[ncpe];
+				nnl->Add_In_Arc(reduced_label);
+			}
+		}
+		else
+		{
+			vcTransition* t = (vcTransition*) cpe;
+
+			t->Set_Compatibility_Label(reduced_label);
+			nl_map[t] = reduced_label;
+
+			bool no_fork = (t->Get_Successors().size() == 1);
+			for(int idx = 0, fidx = t->Get_Successors().size(); idx < fidx; idx++)
+			{
+				vcCPElement* ncpe = t->Get_Successor(idx);
+
+
+				// for each, create a new label
+				string fid = reduced_label->Get_Id() + "/" 
+					+ t->Get_Hierarchical_Id() + "[" +IntToStr(idx) + "]";
+
+				string cpelabel_id = ncpe->Get_Hierarchical_Id();
+				vcCompatibilityLabel* nnl = NULL;
+				if(nl_map.find(ncpe) == nl_map.end())
+				{
+					nnl = cp->Make_Compatibility_Label(cpelabel_id);
+					nl_map[ncpe] = nnl;
+				}
+				else
+					nnl = nl_map[ncpe];
+
+				if(no_fork)
+				{
+					nnl->Add_In_Arc(t->Get_Compatibility_Label());
+				}
+				else
+				{
+					vcCompatibilityLabel* flabel =  cp->Make_Compatibility_Label(fid);
+					pair<vcTransition*, int> npair(t,idx);
+					flabel->Add_In_Arc(t->Get_Compatibility_Label(), npair);
+					nnl->Add_In_Arc(flabel);
+				}
+			}
+		}
 	}
-      else
-	{
-	  vcTransition* t = (vcTransition*) cpe;
-
-	  t->Set_Compatibility_Label(reduced_label);
-	  nl_map[t] = reduced_label;
-
-	  bool no_fork = (t->Get_Successors().size() == 1);
-	  for(int idx = 0, fidx = t->Get_Successors().size(); idx < fidx; idx++)
-	    {
-	      vcCPElement* ncpe = t->Get_Successor(idx);
-
-
-	      // for each, create a new label
-	      string fid = reduced_label->Get_Id() + "/" 
-		+ t->Get_Hierarchical_Id() + "[" +IntToStr(idx) + "]";
-
-	      string cpelabel_id = ncpe->Get_Hierarchical_Id();
-	      vcCompatibilityLabel* nnl = NULL;
-	      if(nl_map.find(ncpe) == nl_map.end())
-		{
-		  nnl = cp->Make_Compatibility_Label(cpelabel_id);
-		  nl_map[ncpe] = nnl;
-		}
-	      else
-		nnl = nl_map[ncpe];
-
-	      if(no_fork)
-		{
-		  nnl->Add_In_Arc(t->Get_Compatibility_Label());
-		}
-	      else
-		{
-		  vcCompatibilityLabel* flabel =  cp->Make_Compatibility_Label(fid);
-		  pair<vcTransition*, int> npair(t,idx);
-		  flabel->Add_In_Arc(t->Get_Compatibility_Label(), npair);
-		  nnl->Add_In_Arc(flabel);
-		}
-	    }
-	}
-    }
 }
 
 void vcCPForkBlock::Update_Predecessor_Successor_Links()
 {
-  this->vcCPBlock::Update_Predecessor_Successor_Links();
+	this->vcCPBlock::Update_Predecessor_Successor_Links();
 
-  this->Remove_Isolated_Transitions();
-  // those that were not covered by explicit fork/join declarations
-  vector<vcCPElement*> unforked_elements;
-  vector<vcCPElement*> unjoined_elements;
-  for(int idx = 0; idx < _elements.size(); idx++)
-    {
-      vcCPElement* ele = _elements[idx];
-      
-      bool has_implicit_predecessor = false;
-      if(ele->Is_Transition() && (((vcTransition*)ele)->Get_Is_Bound_As_Input_To_Region() || 
-				   ((vcTransition*)ele)->Get_Is_Input() || 
-				   ((vcTransition*)ele)->Get_Is_Bound_As_Output_From_CP_Function()) )
-	has_implicit_predecessor = true;
-
-      if(ele->Get_Has_Null_Predecessor())
-	has_implicit_predecessor = true;
-
-      if(!has_implicit_predecessor)
+	this->Remove_Isolated_Transitions();
+	// those that were not covered by explicit fork/join declarations
+	vector<vcCPElement*> unforked_elements;
+	vector<vcCPElement*> unjoined_elements;
+	for(int idx = 0; idx < _elements.size(); idx++)
 	{
-	  if(ele->Get_Predecessors().size() == 0)
-	    unforked_elements.push_back(ele);
-	}
+		vcCPElement* ele = _elements[idx];
 
-      
-      // all elements if not joined to something inside the block, are joined to exit.
-      bool has_implicit_successor = false;
-      if(ele->Is_Transition() && ( ((vcTransition*)ele)->Get_Is_Bound_As_Input_To_CP_Function() ||
+		bool has_implicit_predecessor = false;
+		if(ele->Is_Transition() && (((vcTransition*)ele)->Get_Is_Bound_As_Input_To_Region() || 
+					((vcTransition*)ele)->Get_Is_Input() || 
+					((vcTransition*)ele)->Get_Is_Bound_As_Output_From_CP_Function()) )
+			has_implicit_predecessor = true;
+
+		if(ele->Get_Has_Null_Predecessor())
+			has_implicit_predecessor = true;
+
+		if(!has_implicit_predecessor)
+		{
+			if(ele->Get_Predecessors().size() == 0)
+				unforked_elements.push_back(ele);
+		}
+
+
+		// all elements if not joined to something inside the block, are joined to exit.
+		bool has_implicit_successor = false;
+		if(ele->Is_Transition() && ( ((vcTransition*)ele)->Get_Is_Bound_As_Input_To_CP_Function() ||
 					((vcTransition*)ele)->Get_Is_Bound_As_Output_From_Region() ) )
-	has_implicit_successor = true;
+			has_implicit_successor = true;
 
-      if(ele->Get_Has_Null_Successor())
-	has_implicit_successor = true;
+		if(ele->Get_Has_Null_Successor())
+			has_implicit_successor = true;
 
-      if(!has_implicit_successor)
-      {
-      	if(ele->Get_Successors().size() == 0)
-		 unjoined_elements.push_back(ele);	
-      }
-    }
-
-
-  // finally, those CPElements in the block which
-  // are not forked from an explicitly specified fork
-  // are assumed to be forked from $entry.
-  if(unforked_elements.size() > 0)
-    {
-      for(int idx = 0; idx < unforked_elements.size(); idx++)
-	{
-	  this->Add_Fork_Point(this->_entry,unforked_elements[idx]);
+		if(!has_implicit_successor)
+		{
+			if(ele->Get_Successors().size() == 0)
+				unjoined_elements.push_back(ele);	
+		}
 	}
-    }
 
-  // finally, those CPElements in the block which
-  // are not joined at an explicitly specified join
-  // are assumed to join at $exit.
-  if(unjoined_elements.size() > 0)
-    {
-      for(int idx = 0; idx < unjoined_elements.size(); idx++)
+
+	// finally, those CPElements in the block which
+	// are not forked from an explicitly specified fork
+	// are assumed to be forked from $entry.
+	if(unforked_elements.size() > 0)
 	{
-	  this->Add_Join_Point(this->_exit, unjoined_elements[idx]);
+		for(int idx = 0; idx < unforked_elements.size(); idx++)
+		{
+			this->Add_Fork_Point(this->_entry,unforked_elements[idx]);
+		}
 	}
-    }
 
-  if(this->_exit->Get_Predecessors().size() == 0 || this->_entry->Get_Successors().size() == 0)
-    {
-      // will take care of both sides..
-      this->Add_Fork_Point(this->_entry, this->_exit);
-    }
+	// finally, those CPElements in the block which
+	// are not joined at an explicitly specified join
+	// are assumed to join at $exit.
+	if(unjoined_elements.size() > 0)
+	{
+		for(int idx = 0; idx < unjoined_elements.size(); idx++)
+		{
+			this->Add_Join_Point(this->_exit, unjoined_elements[idx]);
+		}
+	}
+
+	if(this->_exit->Get_Predecessors().size() == 0 || this->_entry->Get_Successors().size() == 0)
+	{
+		// will take care of both sides..
+		this->Add_Fork_Point(this->_entry, this->_exit);
+	}
 
 }
 
 
 vcCPPipelinedForkBlock::vcCPPipelinedForkBlock(vcCPBlock* parent, string id): vcCPForkBlock(parent, id)
 {
-     _max_iterations_in_flight = 1;
+	_max_iterations_in_flight = 1;
 }
 
 
 void vcCPPipelinedForkBlock::Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec, vector<int>& join_markings)
 {
 
-  // length of the two should be the same..
-  assert(join_cpe_vec.size() == join_markings.size());
+	// length of the two should be the same..
+	assert(join_cpe_vec.size() == join_markings.size());
 
-  bool null_join = false;
+	bool null_join = false;
 
-  // null marked joins are ignored.
-  if(join_name == "$null")
-	return;
+	// null marked joins are ignored.
+	if(join_name == "$null")
+		return;
 
-  vcCPElement* jp = this->Find_CPElement(join_name);
-  if(jp == NULL)
-    vcSystem::Error("did not find fork point " + join_name);
-  else if(!jp->Is("vcTransition"))
-    vcSystem::Error("fork point " + join_name + " is not a transition");
-  else
-    {
-      for(int idx = 0; idx < join_cpe_vec.size(); idx++)
+	vcCPElement* jp = this->Find_CPElement(join_name);
+	if(jp == NULL)
+		vcSystem::Error("did not find fork point " + join_name);
+	else if(!jp->Is("vcTransition"))
+		vcSystem::Error("fork point " + join_name + " is not a transition");
+	else
 	{
-	  vcCPElement* jre = this->Find_CPElement(join_cpe_vec[idx]);
-	  if(jre == NULL)
-	    {
-	      vcSystem::Error("did not find joined region " + join_cpe_vec[idx]);
-	      return;
-	    }
-	  else
-	    this->Add_Marked_Join_Point((vcTransition*)jp,join_markings[idx], jre);
+		for(int idx = 0; idx < join_cpe_vec.size(); idx++)
+		{
+			vcCPElement* jre = this->Find_CPElement(join_cpe_vec[idx]);
+			if(jre == NULL)
+			{
+				vcSystem::Error("did not find joined region " + join_cpe_vec[idx]);
+				return;
+			}
+			else
+				this->Add_Marked_Join_Point((vcTransition*)jp,join_markings[idx], jre);
+		}
 	}
-    }
 }
 
 void vcCPPipelinedForkBlock::Add_Marked_Join_Point(vcTransition* jp, int join_marking,  vcCPElement* jre)
 {
 
-  if((this->_marked_join_map.find(jp) == this->_marked_join_map.end())
-     ||
-     (this->_marked_join_map[jp].find(jre) == this->_marked_join_map[jp].end()))
-    {
-      this->_marked_join_map[((vcTransition*)jp)].insert(jre);
- 
-      jp->Add_Marked_Predecessor(jre); jp->Set_Marked_Predecessor_Delay(jre, join_marking);
-      jre->Add_Marked_Successor(jp); jre->Set_Marked_Successor_Delay(jp, join_marking);
-    }
+	if((this->_marked_join_map.find(jp) == this->_marked_join_map.end())
+			||
+			(this->_marked_join_map[jp].find(jre) == this->_marked_join_map[jp].end()))
+	{
+		this->_marked_join_map[((vcTransition*)jp)].insert(jre);
+
+		jp->Add_Marked_Predecessor(jre); jp->Set_Marked_Predecessor_Delay(jre, join_marking);
+		jre->Add_Marked_Successor(jp); jre->Set_Marked_Successor_Delay(jp, join_marking);
+	}
 }
 
 void vcCPPipelinedForkBlock::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__PIPELINEDFORKBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
-  this->Print_Elements(ofile);
-  this->Print_Forks_And_Joins(ofile);
-  ofile << "}" << endl;
-  this->Print_Exports(ofile);
+	ofile << vcLexerKeywords[__PIPELINEDFORKBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
+	this->Print_Elements(ofile);
+	this->Print_Forks_And_Joins(ofile);
+	ofile << "}" << endl;
+	this->Print_Exports(ofile);
 }
 
 void vcCPPipelinedForkBlock::Print_VHDL_Export_Cleanup(ostream& ofile)
 {
-  vcCPElement* prnt = this->Get_Parent();
-  if(prnt != NULL)
-	  prnt->Print_VHDL_Bindings(NULL,ofile);
+	vcCPElement* prnt = this->Get_Parent();
+	if(prnt != NULL)
+		prnt->Print_VHDL_Bindings(NULL,ofile);
 }
 
 void vcCPPipelinedForkBlock::Print_VHDL(ostream& ofile)
 {
-  this->vcCPBlock::Print_VHDL(ofile);
+	this->vcCPBlock::Print_VHDL(ofile);
 }
 
 
@@ -2856,29 +2856,29 @@ void vcCPPipelinedForkBlock::Print_VHDL(ostream& ofile)
 // are potentially active in parallel (this is a bit conservative)
 void vcCPPipelinedForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* cp)
 {
-  this->Set_Compatibility_Label(in_label);
-  this->_entry->Set_Compatibility_Label(in_label);
+	this->Set_Compatibility_Label(in_label);
+	this->_entry->Set_Compatibility_Label(in_label);
 
-  if(this->_elements.size() > 1)
-    {
-      for(int idx = 0; idx < this->_elements.size(); idx++)
+	if(this->_elements.size() > 1)
 	{
-	  string hid = this->Get_Hierarchical_Id();
-	  if(hid == "")
-	    hid = this->Get_Id();
+		for(int idx = 0; idx < this->_elements.size(); idx++)
+		{
+			string hid = this->Get_Hierarchical_Id();
+			if(hid == "")
+				hid = this->Get_Id();
 
-	  string id = cp->Get_Id() + "/" +  hid + "[" + IntToStr(idx) + "]";
-	  vcCompatibilityLabel* nl = cp->Make_Compatibility_Label(id);
+			string id = cp->Get_Id() + "/" +  hid + "[" + IntToStr(idx) + "]";
+			vcCompatibilityLabel* nl = cp->Make_Compatibility_Label(id);
 
-	  pair<vcTransition*,int> p(this->_entry,idx);
-	  nl->Add_In_Arc(in_label,p);
-	  this->_elements[idx]->Compute_Compatibility_Labels(nl,cp);
+			pair<vcTransition*,int> p(this->_entry,idx);
+			nl->Add_In_Arc(in_label,p);
+			this->_elements[idx]->Compute_Compatibility_Labels(nl,cp);
+		}
 	}
-    }
-  else if(this->_elements.size() == 1)
-    this->_elements[0]->Compute_Compatibility_Labels(in_label,cp);
+	else if(this->_elements.size() == 1)
+		this->_elements[0]->Compute_Compatibility_Labels(in_label,cp);
 
-  this->_exit->Set_Compatibility_Label(in_label);
+	this->_exit->Set_Compatibility_Label(in_label);
 }
 
 
@@ -2895,18 +2895,18 @@ void vcCPPipelinedForkBlock::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map
 		set<vcCPElement*> evict_set;
 
 		for(int idx = 0, fidx = u->Get_Number_Of_Marked_Predecessors();
-			idx  < fidx;
-			idx++)
+				idx  < fidx;
+				idx++)
 		{
 			vcCPElement* v = u->Get_Marked_Predecessor(idx);
 			int mv = u->Get_Marked_Predecessor_Delay(v);
-			
+
 			bool insert_v = true;
 			vector<vcCPElement*> del_vec;
 			for(set<vcCPElement*>::iterator niter = survivors.begin(),
 					fniter = survivors.end();
-				niter != fniter;
-				niter++)
+					niter != fniter;
+					niter++)
 			{
 				bool evict_w = false;
 				vcCPElement* w = *niter;
@@ -2945,13 +2945,13 @@ void vcCPPipelinedForkBlock::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map
 		}
 
 		for(set<vcCPElement*>::iterator eiter = evict_set.begin(), feiter = evict_set.end();				eiter != feiter;
-			eiter++)
+				eiter++)
 		{
 			vcCPElement* v = *eiter;
 			u->Remove_Marked_Predecessor(v);
 			v->Remove_Marked_Successor(u);
 			vcSystem::Info("removed redundant marked link: " + u->Get_Label() + " o<-& "
-							+ v->Get_Label());
+					+ v->Get_Label());
 		}
 	}
 }
@@ -2964,118 +2964,118 @@ void vcCPPipelinedForkBlock::Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElem
 
 void vcCPPipelinedForkBlock::Add_Exported_Input(string internal_id)
 {
-  this->Add_Export(internal_id, true);
+	this->Add_Export(internal_id, true);
 }
 
 
 void vcCPPipelinedForkBlock::Add_Exported_Output(string internal_id)
 {
-  this->Add_Export(internal_id, false);
+	this->Add_Export(internal_id, false);
 }
 
 
 void vcCPPipelinedForkBlock::Add_Export(string internal_id, bool input_flag)
 {
-  vcCPElement* jp = this->Find_CPElement(internal_id);
-  if(jp == NULL)
-  {
-	vcSystem::Error("did not find export transition " + jp->Get_Id());
-	return;
-  }
-  
-  if(!jp->Is_Transition())
-  {
-	vcSystem::Error("export control-element must be a transition: " + jp->Get_Id());
-	return;
-  }
+	vcCPElement* jp = this->Find_CPElement(internal_id);
+	if(jp == NULL)
+	{
+		vcSystem::Error("did not find export transition " + jp->Get_Id());
+		return;
+	}
 
-  if(input_flag)
-    _exported_inputs.insert((vcTransition*)jp);
-  else
-    _exported_outputs.insert((vcTransition*)jp);
+	if(!jp->Is_Transition())
+	{
+		vcSystem::Error("export control-element must be a transition: " + jp->Get_Id());
+		return;
+	}
+
+	if(input_flag)
+		_exported_inputs.insert((vcTransition*)jp);
+	else
+		_exported_outputs.insert((vcTransition*)jp);
 
 }
 
 void vcCPPipelinedForkBlock::Eliminate_Redundant_Dependencies()
 {
 
-  this->vcCPForkBlock::Eliminate_Redundant_Dependencies();
+	this->vcCPForkBlock::Eliminate_Redundant_Dependencies();
 }
 
 void vcCPPipelinedForkBlock::Print_Forks_And_Joins(ostream& ofile)
 {
-  for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _fork_map.begin();
-      iter != _fork_map.end();
-      iter++)
-    {
-      ofile << (*iter).first->Get_Id() << " " << 
-	vcLexerKeywords[__FORK] << " (" ;
-      for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
-	  siter != sfiter;
-	  siter++)
+	for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _fork_map.begin();
+			iter != _fork_map.end();
+			iter++)
 	{
-	  ofile << " " << (*siter)->Get_Id() << " ";
+		ofile << (*iter).first->Get_Id() << " " << 
+			vcLexerKeywords[__FORK] << " (" ;
+		for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
+				siter != sfiter;
+				siter++)
+		{
+			ofile << " " << (*siter)->Get_Id() << " ";
+		}
+		ofile << ")" << endl;
 	}
-      ofile << ")" << endl;
-    }
 
 
-  for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _join_map.begin();
-      iter != _join_map.end();
-      iter++)
-    {
-      ofile <<  (*iter).first->Get_Id() << " " << 
-	vcLexerKeywords[__JOIN] << " (" ;
-      for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
-	  siter != sfiter;
-	  siter++)
+	for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _join_map.begin();
+			iter != _join_map.end();
+			iter++)
 	{
-	  ofile << " " << (*siter)->Get_Id() << " ";
+		ofile <<  (*iter).first->Get_Id() << " " << 
+			vcLexerKeywords[__JOIN] << " (" ;
+		for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
+				siter != sfiter;
+				siter++)
+		{
+			ofile << " " << (*siter)->Get_Id() << " ";
+		}
+		ofile << ")" << endl;
 	}
-      ofile << ")" << endl;
-    }
 
-  for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _marked_join_map.begin();
-      iter != _marked_join_map.end();
-      iter++)
-    {
-      vcTransition* u = (*iter).first;
-      ofile <<  (*iter).first->Get_Id() << " " << 
-	vcLexerKeywords[__MARKEDJOIN] << " (" ;
-      for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
-	  siter != sfiter;
-	  siter++)
+	for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _marked_join_map.begin();
+			iter != _marked_join_map.end();
+			iter++)
 	{
-	  ofile << " " << (*siter)->Get_Id() << " ";
-	  // print the join delays.
-	  ofile << (*iter).first->Get_Marked_Predecessor_Delay(*siter) << " ";
+		vcTransition* u = (*iter).first;
+		ofile <<  (*iter).first->Get_Id() << " " << 
+			vcLexerKeywords[__MARKEDJOIN] << " (" ;
+		for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
+				siter != sfiter;
+				siter++)
+		{
+			ofile << " " << (*siter)->Get_Id() << " ";
+			// print the join delays.
+			ofile << (*iter).first->Get_Marked_Predecessor_Delay(*siter) << " ";
+		}
+		ofile << ")" << endl;
 	}
-      ofile << ")" << endl;
-    }
 
 }
 
 void vcCPPipelinedForkBlock::Print_Exports(ostream& ofile)
 {
-  // print mandatory exports.
-  ofile << vcLexerKeywords[__LPAREN] << " ";
-  for(set<vcTransition*>::iterator eiter = _exported_inputs.begin();
-      eiter != _exported_inputs.end();
-      eiter++)
-    {
-      ofile << (*eiter)->Get_Id() << " ";
-    }
-  ofile << vcLexerKeywords[__RPAREN] << endl;
+	// print mandatory exports.
+	ofile << vcLexerKeywords[__LPAREN] << " ";
+	for(set<vcTransition*>::iterator eiter = _exported_inputs.begin();
+			eiter != _exported_inputs.end();
+			eiter++)
+	{
+		ofile << (*eiter)->Get_Id() << " ";
+	}
+	ofile << vcLexerKeywords[__RPAREN] << endl;
 
 
-  ofile << vcLexerKeywords[__LPAREN] << " ";
-  for(set<vcTransition*>::iterator eiter = _exported_outputs.begin();
-      eiter != _exported_outputs.end();
-      eiter++)
-    {
-      ofile << (*eiter)->Get_Id() << " ";
-    }
-  ofile << vcLexerKeywords[__RPAREN] << endl;
+	ofile << vcLexerKeywords[__LPAREN] << " ";
+	for(set<vcTransition*>::iterator eiter = _exported_outputs.begin();
+			eiter != _exported_outputs.end();
+			eiter++)
+	{
+		ofile << (*eiter)->Get_Id() << " ";
+	}
+	ofile << vcLexerKeywords[__RPAREN] << endl;
 }
 
 ////////////////////  pipelined loop-body.
@@ -3089,68 +3089,68 @@ vcCPPipelinedLoopBody::vcCPPipelinedLoopBody(vcCPBlock* parent, string id):vcCPP
 
 void vcCPPipelinedLoopBody::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__PIPELINE]  << " [" << this->Get_Id() << "] {" << endl;
-  this->Print_Elements(ofile);
-  this->Print_Forks_And_Joins(ofile);
+	ofile << vcLexerKeywords[__PIPELINE]  << " [" << this->Get_Id() << "] {" << endl;
+	this->Print_Elements(ofile);
+	this->Print_Forks_And_Joins(ofile);
 
-  for(int idx = 0, fidx = _phi_sequencers.size(); idx < fidx; idx++)
-	_phi_sequencers[idx]->Print(ofile);
+	for(int idx = 0, fidx = _phi_sequencers.size(); idx < fidx; idx++)
+		_phi_sequencers[idx]->Print(ofile);
 
-  for(int idx = 0, fidx = _transition_merges.size(); idx < fidx; idx++)
-	_transition_merges[idx]->Print(ofile);
+	for(int idx = 0, fidx = _transition_merges.size(); idx < fidx; idx++)
+		_transition_merges[idx]->Print(ofile);
 
-  ofile << "}" << endl;
+	ofile << "}" << endl;
 
-  assert(_exported_inputs.size() > 0);
-  assert(_exported_outputs.size() > 0);
+	assert(_exported_inputs.size() > 0);
+	assert(_exported_outputs.size() > 0);
 
-  this->Print_Exports(ofile);
-  ofile << "\n// end pipelined-loop-body " << this->Get_Id() << endl << "}";
+	this->Print_Exports(ofile);
+	ofile << "\n// end pipelined-loop-body " << this->Get_Id() << endl << "}";
 }
 
 
 void vcCPPipelinedLoopBody::Print_VHDL(ostream& ofile)
 {
 
-  // the same stuff as in vcCPBlock::Print_VHDL with a bit of
-  // specialization..
-  string id = this->Get_Hierarchical_Id();
+	// the same stuff as in vcCPBlock::Print_VHDL with a bit of
+	// specialization..
+	string id = this->Get_Hierarchical_Id();
 
-  // declare all exit flags.
-  ofile << this->Get_VHDL_Id() << ": Block -- " << id << " {" << endl;
-  this->Print_VHDL_Signal_Declarations(ofile);
+	// declare all exit flags.
+	ofile << this->Get_VHDL_Id() << ": Block -- " << id << " {" << endl;
+	this->Print_VHDL_Signal_Declarations(ofile);
 
-  ofile << "-- }" << endl << "begin -- {" << endl;
+	ofile << "-- }" << endl << "begin -- {" << endl;
 
-  // print control transfers from and to places in parent.
-  vcCPElement* prnt = this->Get_Parent();
-  assert(prnt->Is("vcCPSimpleLoopBlock"));
-  prnt->Print_VHDL_Bindings(NULL,ofile);
-  
-  this->_entry->Print_VHDL(ofile);
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    {
-      this->_elements[idx]->Print_VHDL(ofile);
-    }
+	// print control transfers from and to places in parent.
+	vcCPElement* prnt = this->Get_Parent();
+	assert(prnt->Is("vcCPSimpleLoopBlock"));
+	prnt->Print_VHDL_Bindings(NULL,ofile);
 
-  // print phi-sequencers 
-  for(int idx = 0, fidx = _phi_sequencers.size(); idx < fidx; idx++)
-	_phi_sequencers[idx]->Print_VHDL(NULL,ofile);
+	this->_entry->Print_VHDL(ofile);
+	for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+		this->_elements[idx]->Print_VHDL(ofile);
+	}
 
-  // print sequencers and transition merges.
-  for(int idx = 0, fidx = _transition_merges.size(); idx < fidx; idx++)
-	_transition_merges[idx]->Print_VHDL(NULL,ofile);
+	// print phi-sequencers 
+	for(int idx = 0, fidx = _phi_sequencers.size(); idx < fidx; idx++)
+		_phi_sequencers[idx]->Print_VHDL(NULL,ofile);
 
-  this->_exit->Print_VHDL(ofile);
-  this->Print_VHDL_Exit_Symbol_Assignment(ofile);
+	// print sequencers and transition merges.
+	for(int idx = 0, fidx = _transition_merges.size(); idx < fidx; idx++)
+		_transition_merges[idx]->Print_VHDL(NULL,ofile);
+
+	this->_exit->Print_VHDL(ofile);
+	this->Print_VHDL_Exit_Symbol_Assignment(ofile);
 
 
 
-  ofile << "-- }" << endl << "end Block; -- " << id << endl;
+	ofile << "-- }" << endl << "end Block; -- " << id << endl;
 }
 
 void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id, vector<string>& selects, vector<string>& enables, string& ack,
-					       vector<string>& reqs, string& done)
+		vector<string>& reqs, string& done)
 {
 
 	if(selects.size() != reqs.size())
@@ -3161,7 +3161,7 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id, vector<string>& se
 
 
 	vcPhiSequencer* new_phi_seq = new vcPhiSequencer(this, phi_id);
-        new_phi_seq->Set_Place_Capacity(this->Get_Max_Iterations_In_Flight());
+	new_phi_seq->Set_Place_Capacity(this->Get_Max_Iterations_In_Flight());
 
 	// add selects.
 	for(int idx = 0, fidx = selects.size(); idx < fidx; idx++)
@@ -3174,8 +3174,8 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id, vector<string>& se
 			return;
 		}
 		new_phi_seq->Add_Select((vcTransition*) ste);
-	        ((vcTransition*) ste)->Set_Is_Bound_As_Input_To_CP_Function(true);
-                ste->Set_Associated_CP_Function(new_phi_seq);
+		((vcTransition*) ste)->Set_Is_Bound_As_Input_To_CP_Function(true);
+		ste->Set_Associated_CP_Function(new_phi_seq);
 
 		vcCPElement* rte = this->Find_CPElement(reqs[idx]);
 		if((rte == NULL) || (!rte->Is_Transition()))
@@ -3186,8 +3186,8 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id, vector<string>& se
 		}
 		new_phi_seq->Add_Req((vcTransition*) rte);
 		((vcTransition*) rte)->Set_Is_Bound_As_Output_From_CP_Function(true);
-                rte->Set_Associated_CP_Function(new_phi_seq);
-		
+		rte->Set_Associated_CP_Function(new_phi_seq);
+
 	}
 
 	// add enables.
@@ -3201,8 +3201,8 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id, vector<string>& se
 			return;
 		}
 		new_phi_seq->Add_Enable((vcTransition*) rte);
-	        ((vcTransition*) rte)->Set_Is_Bound_As_Input_To_CP_Function(true);
-                rte->Set_Associated_CP_Function(new_phi_seq);
+		((vcTransition*) rte)->Set_Is_Bound_As_Input_To_CP_Function(true);
+		rte->Set_Associated_CP_Function(new_phi_seq);
 	}
 
 	// set ack.
@@ -3215,7 +3215,7 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id, vector<string>& se
 	}
 	new_phi_seq->Set_Ack((vcTransition*) ate);
 	((vcTransition*) ate)->Set_Is_Bound_As_Input_To_CP_Function(true);
-        ate->Set_Associated_CP_Function(new_phi_seq);
+	ate->Set_Associated_CP_Function(new_phi_seq);
 
 	// set done.
 	vcCPElement* dte = this->Find_CPElement(done);
@@ -3227,7 +3227,7 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id, vector<string>& se
 	}
 	new_phi_seq->Set_Done((vcTransition*) dte);
 	((vcTransition*) dte)->Set_Is_Bound_As_Output_From_CP_Function(true);
-        dte->Set_Associated_CP_Function(new_phi_seq);
+	dte->Set_Associated_CP_Function(new_phi_seq);
 
 	_phi_sequencers.push_back(new_phi_seq);
 }
@@ -3235,7 +3235,7 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id, vector<string>& se
 
 void vcCPPipelinedLoopBody::Add_Transition_Merge(string& tm_id, vector<string>& in_transitions, string& out_transition)
 {
-	
+
 	vcTransitionMerge* new_tm = new vcTransitionMerge(this, tm_id);
 	for(int idx = 0, fidx = in_transitions.size(); idx < fidx; idx++)
 	{
@@ -3248,9 +3248,9 @@ void vcCPPipelinedLoopBody::Add_Transition_Merge(string& tm_id, vector<string>& 
 		}
 		new_tm->Add_In_Transition((vcTransition*) rte);
 		((vcTransition*) rte)->Set_Is_Bound_As_Input_To_CP_Function(true);
-                rte->Set_Associated_CP_Function(new_tm);
+		rte->Set_Associated_CP_Function(new_tm);
 	}
-		
+
 	vcCPElement* ote = this->Find_CPElement(out_transition);
 	if((ote == NULL) || (!ote->Is_Transition()))
 	{
@@ -3260,27 +3260,27 @@ void vcCPPipelinedLoopBody::Add_Transition_Merge(string& tm_id, vector<string>& 
 	}
 	new_tm->Set_Out_Transition((vcTransition*) ote);
 	((vcTransition*) ote)->Set_Is_Bound_As_Output_From_CP_Function(true);
-        ote->Set_Associated_CP_Function(new_tm);
+	ote->Set_Associated_CP_Function(new_tm);
 
 	_transition_merges.push_back(new_tm);
 }
 
 void vcCPPipelinedLoopBody::Update_Predecessor_Successor_Links()
 {
-  // the predecessor-successor relations are similar to
-  // those in the fork-block case, except for the addition of
-  // the phi-sequencers and transition-merges, which alter
-  // it somewhat.
-  this->vcCPPipelinedForkBlock::Update_Predecessor_Successor_Links();
+	// the predecessor-successor relations are similar to
+	// those in the fork-block case, except for the addition of
+	// the phi-sequencers and transition-merges, which alter
+	// it somewhat.
+	this->vcCPPipelinedForkBlock::Update_Predecessor_Successor_Links();
 
-  // the phi-sequencers..
-  for(int idx = 0, fidx = _phi_sequencers.size(); idx < fidx; idx++)
-    _phi_sequencers[idx]->Update_Predecessor_Successor_Links();
+	// the phi-sequencers..
+	for(int idx = 0, fidx = _phi_sequencers.size(); idx < fidx; idx++)
+		_phi_sequencers[idx]->Update_Predecessor_Successor_Links();
 
 
-  // the transition-merges.
-  for(int idx = 0, fidx = _transition_merges.size(); idx < fidx; idx++)
-    _transition_merges[idx]->Update_Predecessor_Successor_Links();
+	// the transition-merges.
+	for(int idx = 0, fidx = _transition_merges.size(); idx < fidx; idx++)
+		_transition_merges[idx]->Update_Predecessor_Successor_Links();
 
 }
 
@@ -3302,35 +3302,35 @@ vcControlPath::vcControlPath(string id):vcCPSeriesBlock(NULL, id)
 // some thought here.. named transitions must be unique.
 vcTransition* vcControlPath::Find_Transition(vector<string>& hier_id)
 {
-  vcCPElement* cpe = this;
-  for(int idx = 0; idx < hier_id.size(); idx++)
-    {
-      cpe = cpe->Find_CPElement(hier_id[idx]);
-      if(cpe == NULL)
-	break;
-    }
-  
-  if(cpe != NULL && cpe->Is("vcTransition"))
-    return((vcTransition*)cpe);
-  else
-    return(NULL);
+	vcCPElement* cpe = this;
+	for(int idx = 0; idx < hier_id.size(); idx++)
+	{
+		cpe = cpe->Find_CPElement(hier_id[idx]);
+		if(cpe == NULL)
+			break;
+	}
+
+	if(cpe != NULL && cpe->Is("vcTransition"))
+		return((vcTransition*)cpe);
+	else
+		return(NULL);
 }
 
 vcPlace* vcControlPath::Find_Place(vector<string>& hier_id)
 {
 
-  vcCPElement* cpe = this;
-  for(int idx = 0; idx < hier_id.size(); idx++)
-    {
-      cpe = cpe->Find_CPElement(hier_id[idx]);
-      if(cpe == NULL)
-	break;
-    }
-  
-  if(cpe != NULL && cpe->Is("vcPlace"))
-    return((vcPlace*)cpe);
-  else
-    return(NULL);
+	vcCPElement* cpe = this;
+	for(int idx = 0; idx < hier_id.size(); idx++)
+	{
+		cpe = cpe->Find_CPElement(hier_id[idx]);
+		if(cpe == NULL)
+			break;
+	}
+
+	if(cpe != NULL && cpe->Is("vcPlace"))
+		return((vcPlace*)cpe);
+	else
+		return(NULL);
 }
 
 void vcControlPath::Update_Predecessor_Successor_Links()
@@ -3339,7 +3339,7 @@ void vcControlPath::Update_Predecessor_Successor_Links()
 	{
 		// ignore places, and attach pipelined-fork region
 		// between this->_entry and this->_exit.
-      		for(int idx = 0; idx < this->_elements.size(); idx++)
+		for(int idx = 0; idx < this->_elements.size(); idx++)
 		{
 			vcCPElement* cpe = this->_elements[idx];
 			if(cpe->Is("vcCPPipelinedForkBlock"))
@@ -3366,278 +3366,278 @@ void vcControlPath::Update_Predecessor_Successor_Links()
 
 void vcControlPath::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__CONTROLPATH] << " {" << endl;
-  this->Print_Elements(ofile);
-  this->Print_Attributes(ofile);
-  ofile << "\n// end controlpath" << endl << "}" << endl;
+	ofile << vcLexerKeywords[__CONTROLPATH] << " {" << endl;
+	this->Print_Elements(ofile);
+	this->Print_Attributes(ofile);
+	ofile << "\n// end controlpath" << endl << "}" << endl;
 }
 
 
 void vcControlPath::Mark_As_Compatible(set<vcCompatibilityLabel*>& uset, set<vcCompatibilityLabel*>& vset)
 {
-  for(set<vcCompatibilityLabel*>::iterator iter = uset.begin(), fiter = uset.end();
-      iter != fiter;
-      iter++)
-    {
-      for(set<vcCompatibilityLabel*>::iterator iter2 = vset.begin(), fiter2 = vset.end();
-	  iter2 != fiter2;
-	  iter2++)
+	for(set<vcCompatibilityLabel*>::iterator iter = uset.begin(), fiter = uset.end();
+			iter != fiter;
+			iter++)
 	{
-	  _compatible_label_map[(*iter)].insert(*iter2);
+		for(set<vcCompatibilityLabel*>::iterator iter2 = vset.begin(), fiter2 = vset.end();
+				iter2 != fiter2;
+				iter2++)
+		{
+			_compatible_label_map[(*iter)].insert(*iter2);
+		}
 	}
-    }
 }
 
 
 
 void vcControlPath::Update_Compatibility_Map()
 {
-  vector<vcCompatibilityLabel*> labels;
-  // for each label u
-  //    look at the successor set succ(u).
-  //        If w,x are two successors of u with unlabeled inarcs
-  //        then  w,x are compatible.
-  // 
-  for(set<vcCompatibilityLabel*>::iterator iter = this->_compatibility_label_set.begin();
-      iter != this->_compatibility_label_set.end();
-      iter++)
-    {
-      labels.push_back(*iter);
-
-      map<vcTransition*, set<vcCompatibilityLabel*> > fork_map;
-      // for each label u
-      vcCompatibilityLabel* u = (*iter);
-      for(int idx = 0, fidx = u->Get_Number_Of_Successors(); idx < fidx; idx++)
+	vector<vcCompatibilityLabel*> labels;
+	// for each label u
+	//    look at the successor set succ(u).
+	//        If w,x are two successors of u with unlabeled inarcs
+	//        then  w,x are compatible.
+	// 
+	for(set<vcCompatibilityLabel*>::iterator iter = this->_compatibility_label_set.begin();
+			iter != this->_compatibility_label_set.end();
+			iter++)
 	{
-	  // look at all successors
-	  vcCompatibilityLabel* w = (vcCompatibilityLabel*)(u->Get_Successor(idx));
-	  
-	  if(w->_labeled_in_arc.second.first != NULL)
-	    {
-	      // w and all its descendents are kept in fork_map
-	      // entry for the fork.
-	      fork_map[w->_labeled_in_arc.second.first].insert(w);
-	      fork_map[w->_labeled_in_arc.second.first].insert(_label_descendent_map[w].begin(),
-							       _label_descendent_map[w].end());
-	    }
-	}
-      
-      for(map<vcTransition*,set<vcCompatibilityLabel*> >::iterator citer = fork_map.begin(),
-	    cfiter = fork_map.end();
-	  citer != cfiter;
-	  citer++)
-	{
-	  map<vcTransition*,set<vcCompatibilityLabel*> >::iterator niter = citer;
-	  niter++;
+		labels.push_back(*iter);
 
-	  for(; niter != cfiter; niter++)
-	    {
-	      this->Mark_As_Compatible((*citer).second, (*niter).second);
-	    }
-	}
-    }
-
-  // unlabeled arc condition.  For each pair u,v, see if u has an ancestor w
-  // through an unlabeled arc such that path from w->u starts with an
-  // unlabeled edge and w is a nearest common ancestor of u and v.
-  int uindex, vindex;
-  for(uindex = 0; uindex < labels.size(); uindex++)
-    {
-      vcCompatibilityLabel* u = labels[uindex];
-      for(vindex = uindex+1; vindex < labels.size(); vindex++)
-	{
-	  vcCompatibilityLabel* v = labels[vindex];
-	  if(!this->Are_Compatible(u,v))
-	    {
-	      set<vcCompatibilityLabel*> visited_set;
-	      if(Look_Back_For_Compatibility(u,v,visited_set))
+		map<vcTransition*, set<vcCompatibilityLabel*> > fork_map;
+		// for each label u
+		vcCompatibilityLabel* u = (*iter);
+		for(int idx = 0, fidx = u->Get_Number_Of_Successors(); idx < fidx; idx++)
 		{
-		  _compatible_label_map[u].insert(v);
-		  if(vcSystem::_verbose_flag)
-		    {
-		      string info_str = u->Get_Id() + ",  " + v->Get_Id() + 
-			" found to be compatible through lookback search";
-		      vcSystem::Info(info_str);
-		    }
+			// look at all successors
+			vcCompatibilityLabel* w = (vcCompatibilityLabel*)(u->Get_Successor(idx));
+
+			if(w->_labeled_in_arc.second.first != NULL)
+			{
+				// w and all its descendents are kept in fork_map
+				// entry for the fork.
+				fork_map[w->_labeled_in_arc.second.first].insert(w);
+				fork_map[w->_labeled_in_arc.second.first].insert(_label_descendent_map[w].begin(),
+						_label_descendent_map[w].end());
+			}
 		}
-	      visited_set.clear();
-	    }
+
+		for(map<vcTransition*,set<vcCompatibilityLabel*> >::iterator citer = fork_map.begin(),
+				cfiter = fork_map.end();
+				citer != cfiter;
+				citer++)
+		{
+			map<vcTransition*,set<vcCompatibilityLabel*> >::iterator niter = citer;
+			niter++;
+
+			for(; niter != cfiter; niter++)
+			{
+				this->Mark_As_Compatible((*citer).second, (*niter).second);
+			}
+		}
 	}
-    }
+
+	// unlabeled arc condition.  For each pair u,v, see if u has an ancestor w
+	// through an unlabeled arc such that path from w->u starts with an
+	// unlabeled edge and w is a nearest common ancestor of u and v.
+	int uindex, vindex;
+	for(uindex = 0; uindex < labels.size(); uindex++)
+	{
+		vcCompatibilityLabel* u = labels[uindex];
+		for(vindex = uindex+1; vindex < labels.size(); vindex++)
+		{
+			vcCompatibilityLabel* v = labels[vindex];
+			if(!this->Are_Compatible(u,v))
+			{
+				set<vcCompatibilityLabel*> visited_set;
+				if(Look_Back_For_Compatibility(u,v,visited_set))
+				{
+					_compatible_label_map[u].insert(v);
+					if(vcSystem::_verbose_flag)
+					{
+						string info_str = u->Get_Id() + ",  " + v->Get_Id() + 
+							" found to be compatible through lookback search";
+						vcSystem::Info(info_str);
+					}
+				}
+				visited_set.clear();
+			}
+		}
+	}
 }
 
 
 bool vcControlPath::Look_Back_For_Compatibility(vcCompatibilityLabel* from_here, 
-						vcCompatibilityLabel* check_against,
-						set<vcCompatibilityLabel*>& visited_set)
+		vcCompatibilityLabel* check_against,
+		set<vcCompatibilityLabel*>& visited_set)
 {
-  bool ret_flag = false;
-  for(set<vcCompatibilityLabel*>::iterator iter = from_here->_unlabeled_in_arcs.begin(), fiter = from_here->_unlabeled_in_arcs.end();
-      iter != fiter;
-      iter++)
-    {
-
-      vcCompatibilityLabel* upred = (*iter);
-      if(visited_set.find(upred) == visited_set.end())
+	bool ret_flag = false;
+	for(set<vcCompatibilityLabel*>::iterator iter = from_here->_unlabeled_in_arcs.begin(), fiter = from_here->_unlabeled_in_arcs.end();
+			iter != fiter;
+			iter++)
 	{
-	  if(this->_label_descendent_map[upred].find(check_against) == this->_label_descendent_map[upred].end())
-	    {
-	      visited_set.insert(upred);
-	      if(Look_Back_For_Compatibility(upred,check_against,visited_set))
-		return(true);
-	    }
-	  else
-	    return(true);
-	}
-    }
 
-  vcCompatibilityLabel* lpred = from_here->_labeled_in_arc.first;
-  if(lpred != NULL)
-    {
-      if(this->_label_descendent_map[lpred].find(check_against) == this->_label_descendent_map[lpred].end())
+		vcCompatibilityLabel* upred = (*iter);
+		if(visited_set.find(upred) == visited_set.end())
+		{
+			if(this->_label_descendent_map[upred].find(check_against) == this->_label_descendent_map[upred].end())
+			{
+				visited_set.insert(upred);
+				if(Look_Back_For_Compatibility(upred,check_against,visited_set))
+					return(true);
+			}
+			else
+				return(true);
+		}
+	}
+
+	vcCompatibilityLabel* lpred = from_here->_labeled_in_arc.first;
+	if(lpred != NULL)
 	{
-	  if(Look_Back_For_Compatibility(lpred,check_against,visited_set))
-	    return(true);
+		if(this->_label_descendent_map[lpred].find(check_against) == this->_label_descendent_map[lpred].end())
+		{
+			if(Look_Back_For_Compatibility(lpred,check_against,visited_set))
+				return(true);
+		}
 	}
-    }
 
-  return(false);
+	return(false);
 }
 
 void vcControlPath::Print_Compatibility_Map(ostream& ofile)
 {
-  ofile << "Label Compatibility Map: { " << endl;
-  for(map<vcCompatibilityLabel*,set<vcCompatibilityLabel*> >::iterator iter = _compatible_label_map.begin(),
-	fiter = _compatible_label_map.end();
-      iter != fiter;
-      iter++)
-    {
-      for(set<vcCompatibilityLabel*>::iterator siter = (*iter).second.begin(),
-	    sfiter = (*iter).second.end();
-	  siter != sfiter;
-	  siter++)
+	ofile << "Label Compatibility Map: { " << endl;
+	for(map<vcCompatibilityLabel*,set<vcCompatibilityLabel*> >::iterator iter = _compatible_label_map.begin(),
+			fiter = _compatible_label_map.end();
+			iter != fiter;
+			iter++)
 	{
-	  ofile << (*iter).first->Get_Id() << " === " << (*siter)->Get_Id() << endl;
+		for(set<vcCompatibilityLabel*>::iterator siter = (*iter).second.begin(),
+				sfiter = (*iter).second.end();
+				siter != sfiter;
+				siter++)
+		{
+			ofile << (*iter).first->Get_Id() << " === " << (*siter)->Get_Id() << endl;
+		}
 	}
-    }
 
-  for(map<vcCompatibilityLabel*,set<vcCompatibilityLabel*> >::iterator iter = _label_descendent_map.begin(),
-	fiter = _label_descendent_map.end();
-      iter != fiter;
-      iter++)
-    {
-      for(set<vcCompatibilityLabel*>::iterator siter = (*iter).second.begin(),
-	    sfiter = (*iter).second.end();
-	  siter != sfiter;
-	  siter++)
+	for(map<vcCompatibilityLabel*,set<vcCompatibilityLabel*> >::iterator iter = _label_descendent_map.begin(),
+			fiter = _label_descendent_map.end();
+			iter != fiter;
+			iter++)
 	{
-	  ofile << (*iter).first->Get_Id() << " >== " << (*siter)->Get_Id() << endl;
+		for(set<vcCompatibilityLabel*>::iterator siter = (*iter).second.begin(),
+				sfiter = (*iter).second.end();
+				siter != sfiter;
+				siter++)
+		{
+			ofile << (*iter).first->Get_Id() << " >== " << (*siter)->Get_Id() << endl;
+		}
 	}
-    }
-  ofile << "}" << endl;
+	ofile << "}" << endl;
 
 }
 
 void vcControlPath::Compute_Compatibility_Labels()
 {
-  vcCompatibilityLabel* nl = this->Make_Compatibility_Label(this->Get_Id());
-  this->vcCPSeriesBlock::Compute_Compatibility_Labels(nl,this);
+	vcCompatibilityLabel* nl = this->Make_Compatibility_Label(this->Get_Id());
+	this->vcCPSeriesBlock::Compute_Compatibility_Labels(nl,this);
 
-  this->Connect_Compatibility_Labels();
-  this->Update_Compatibility_Map();
+	this->Connect_Compatibility_Labels();
+	this->Update_Compatibility_Map();
 }
 
 void vcControlPath::Connect_Compatibility_Labels()
 {
 
-  // set up connectivity
-  for(set<vcCompatibilityLabel*>::iterator iter = this->_compatibility_label_set.begin();
-      iter != this->_compatibility_label_set.end();
-      iter++)
-    {
-      if((*iter)->_labeled_in_arc.first != NULL)
+	// set up connectivity
+	for(set<vcCompatibilityLabel*>::iterator iter = this->_compatibility_label_set.begin();
+			iter != this->_compatibility_label_set.end();
+			iter++)
 	{
-	  (*iter)->_labeled_in_arc.first->Add_Successor((*iter));
-	  (*iter)->Add_Predecessor((*iter)->_labeled_in_arc.first);
+		if((*iter)->_labeled_in_arc.first != NULL)
+		{
+			(*iter)->_labeled_in_arc.first->Add_Successor((*iter));
+			(*iter)->Add_Predecessor((*iter)->_labeled_in_arc.first);
+		}
+		else 
+		{
+			for(set<vcCompatibilityLabel*>::iterator siter = (*iter)->_unlabeled_in_arcs.begin();
+					siter != (*iter)->_unlabeled_in_arcs.end();
+					siter++)
+			{
+				(*iter)->Add_Predecessor((*siter));
+				(*siter)->Add_Successor((*iter));
+			}
+		}
 	}
-      else 
+
+	// check that there is exactly one vertex of out-degree 1.
+	vcCompatibilityLabel* source = NULL;
+	for(set<vcCompatibilityLabel*>::iterator iter = this->_compatibility_label_set.begin();
+			iter != this->_compatibility_label_set.end();
+			iter++)
 	{
-	  for(set<vcCompatibilityLabel*>::iterator siter = (*iter)->_unlabeled_in_arcs.begin();
-	      siter != (*iter)->_unlabeled_in_arcs.end();
-	      siter++)
-	    {
-	      (*iter)->Add_Predecessor((*siter));
-	      (*siter)->Add_Successor((*iter));
-	    }
+		if((*iter)->Get_Number_Of_Predecessors() == 0)
+		{
+			if(source != NULL)
+				vcSystem::Error("Multiple source labels in compatibility graph \n");
+			assert(source == NULL && "more than one source in compatibility label graph?");
+			source = (*iter);
+		}
 	}
-    }
 
-  // check that there is exactly one vertex of out-degree 1.
-  vcCompatibilityLabel* source = NULL;
-  for(set<vcCompatibilityLabel*>::iterator iter = this->_compatibility_label_set.begin();
-      iter != this->_compatibility_label_set.end();
-      iter++)
-    {
-      if((*iter)->Get_Number_Of_Predecessors() == 0)
+	// now check that all labels are reachable from the source
+	// and that there is no cycle.
+	bool cycle_flag = false;
+	int num_visited = 0;
+	vector<vcCPElement*> dfs_ordered_elements;
+	set<vcCPElement*> v_set;
+	this->vcCPBlock::DFS_Order(false, (vcCPElement*) source, cycle_flag, num_visited,dfs_ordered_elements,v_set);
+	if(cycle_flag)
 	{
-	  if(source != NULL)
-	    vcSystem::Error("Multiple source labels in compatibility graph \n");
-	  assert(source == NULL && "more than one source in compatibility label graph?");
-	  source = (*iter);
+		vcSystem::Error("Cycle in compatibility label graph\n");
 	}
-    }
-
-  // now check that all labels are reachable from the source
-  // and that there is no cycle.
-  bool cycle_flag = false;
-  int num_visited = 0;
-  vector<vcCPElement*> dfs_ordered_elements;
-  set<vcCPElement*> v_set;
-  this->vcCPBlock::DFS_Order(false, (vcCPElement*) source, cycle_flag, num_visited,dfs_ordered_elements,v_set);
-  if(cycle_flag)
-    {
-      vcSystem::Error("Cycle in compatibility label graph\n");
-    }
-  if(num_visited != this->_compatibility_label_set.size())
-    {
-      vcSystem::Error("Some compatibility labels are not reachable from the source label\n");
-    }
-
-  // now build the descendant maps.
-  // transitive closure..
-  v_set.clear();
-  this->vcCPBlock::BFS_Order(false, (vcCPElement*) source,num_visited, this->_bfs_ordered_labels,v_set);
-  for(int hidx = this->_bfs_ordered_labels.size(); hidx > 0; hidx--)
-    {
-      int idx = hidx-1;
-
-      vcCompatibilityLabel* u = (vcCompatibilityLabel*) (this->_bfs_ordered_labels[idx]);
-      set<vcCompatibilityLabel*>& adj_set = this->_label_descendent_map[u];
-      adj_set.insert(u);
-
-      for(int adjidx = 0; adjidx < u->Get_Number_Of_Successors(); adjidx++)
+	if(num_visited != this->_compatibility_label_set.size())
 	{
-	  adj_set.insert(this->_label_descendent_map[((vcCompatibilityLabel*)(u->Get_Successor(adjidx)))].begin(),
-			 this->_label_descendent_map[((vcCompatibilityLabel*) (u->Get_Successor(adjidx)))].end());
+		vcSystem::Error("Some compatibility labels are not reachable from the source label\n");
 	}
-    }
+
+	// now build the descendant maps.
+	// transitive closure..
+	v_set.clear();
+	this->vcCPBlock::BFS_Order(false, (vcCPElement*) source,num_visited, this->_bfs_ordered_labels,v_set);
+	for(int hidx = this->_bfs_ordered_labels.size(); hidx > 0; hidx--)
+	{
+		int idx = hidx-1;
+
+		vcCompatibilityLabel* u = (vcCompatibilityLabel*) (this->_bfs_ordered_labels[idx]);
+		set<vcCompatibilityLabel*>& adj_set = this->_label_descendent_map[u];
+		adj_set.insert(u);
+
+		for(int adjidx = 0; adjidx < u->Get_Number_Of_Successors(); adjidx++)
+		{
+			adj_set.insert(this->_label_descendent_map[((vcCompatibilityLabel*)(u->Get_Successor(adjidx)))].begin(),
+					this->_label_descendent_map[((vcCompatibilityLabel*) (u->Get_Successor(adjidx)))].end());
+		}
+	}
 
 }
 
 bool vcControlPath::Are_Compatible(vcCompatibilityLabel* u, vcCompatibilityLabel* v)
 {
-  if(u == v)
-    return(true);
-  else if(this->_label_descendent_map[u].find(v) != this->_label_descendent_map[u].end())
-    return(true);
-  else if(this->_label_descendent_map[v].find(u) != this->_label_descendent_map[v].end())
-    return(true);
-  else if(this->_compatible_label_map[u].find(v) != this->_compatible_label_map[u].end())
-    return(true);
-  else if(this->_compatible_label_map[v].find(u) != this->_compatible_label_map[v].end())
-    return(true);
-  else
-    return(false);
+	if(u == v)
+		return(true);
+	else if(this->_label_descendent_map[u].find(v) != this->_label_descendent_map[u].end())
+		return(true);
+	else if(this->_label_descendent_map[v].find(u) != this->_label_descendent_map[v].end())
+		return(true);
+	else if(this->_compatible_label_map[u].find(v) != this->_compatible_label_map[u].end())
+		return(true);
+	else if(this->_compatible_label_map[v].find(u) != this->_compatible_label_map[v].end())
+		return(true);
+	else
+		return(false);
 }
 
 bool vcControlPath::Are_Compatible(vector<vcCompatibilityLabel*>& l1, vector<vcCompatibilityLabel*>& l2)
@@ -3661,12 +3661,12 @@ bool vcControlPath::Are_Compatible(vector<vcCompatibilityLabel*>& l1, vector<vcC
 
 bool vcControlPath::Lesser(vcCompatibilityLabel* u, vcCompatibilityLabel* v)
 {
-  return(this->_label_descendent_map[u].find(v) != this->_label_descendent_map[u].end());
+	return(this->_label_descendent_map[u].find(v) != this->_label_descendent_map[u].end());
 }
 
 bool vcControlPath::Greater(vcCompatibilityLabel* v, vcCompatibilityLabel* u)
 {
-  return(this->_label_descendent_map[u].find(v) != this->_label_descendent_map[u].end());
+	return(this->_label_descendent_map[u].find(v) != this->_label_descendent_map[u].end());
 }
 
 
@@ -3674,142 +3674,142 @@ vcCompatibilityLabel* vcControlPath::Make_Compatibility_Label(string id)
 {
 
 #ifndef DEBUG
-  id = "cL" + Int64ToStr(vcControlPath::_free_index);
+	id = "cL" + Int64ToStr(vcControlPath::_free_index);
 #endif 
 
-  vcCompatibilityLabel* nl = new vcCompatibilityLabel(this,id);
-  this->_compatibility_label_set.insert(nl);
-  return(nl);
+	vcCompatibilityLabel* nl = new vcCompatibilityLabel(this,id);
+	this->_compatibility_label_set.insert(nl);
+	return(nl);
 }
 
- void vcControlPath::Delete_Compatibility_Label(vcCompatibilityLabel* nl)
- {
-   if(_compatibility_label_set.find(nl) != _compatibility_label_set.end())
-     {
-       _compatibility_label_set.erase(nl);
-       delete nl;
-     }
- }
-
- bool vcControlPath::Check_Structure()
- {
-   this->Update_Predecessor_Successor_Links();
-
-   if(!this->_is_pipelined)
-   	this->vcCPSeriesBlock::Check_Structure();
-	
-   this->Construct_Reduced_Group_Graph();
- }
-
- void vcControlPath::Print_Compatibility_Labels(ostream& ofile)
- {
-   ofile << "Label Summary " << endl;
-  for(set<vcCompatibilityLabel*>::iterator iter = _compatibility_label_set.begin();
-      iter != _compatibility_label_set.end();
-      iter++)
-    {
-      ofile << "\t";
-      (*iter)->Print(ofile);
-      ofile << endl;
-    }
-  
-  ofile << "Label Transitive Closure " << endl;
-  for(map<vcCompatibilityLabel*, set<vcCompatibilityLabel*> >::iterator iter = this->_label_descendent_map.begin();
-      iter != this->_label_descendent_map.end();
-      iter++)
-    {
-      ofile <<  (*iter).first->Get_Id() << " ==> {" << endl;
-      for(set<vcCompatibilityLabel*>::iterator siter = (*iter).second.begin();
-	  siter != (*iter).second.end();
-	  siter++)
+void vcControlPath::Delete_Compatibility_Label(vcCompatibilityLabel* nl)
+{
+	if(_compatibility_label_set.find(nl) != _compatibility_label_set.end())
 	{
-	  ofile << "\t";
-	  ofile << (*siter)->Get_Id() << endl;
+		_compatibility_label_set.erase(nl);
+		delete nl;
 	}
-      ofile << "}" << endl;
-    }
+}
+
+bool vcControlPath::Check_Structure()
+{
+	this->Update_Predecessor_Successor_Links();
+
+	if(!this->_is_pipelined)
+		this->vcCPSeriesBlock::Check_Structure();
+
+	this->Construct_Reduced_Group_Graph();
+}
+
+void vcControlPath::Print_Compatibility_Labels(ostream& ofile)
+{
+	ofile << "Label Summary " << endl;
+	for(set<vcCompatibilityLabel*>::iterator iter = _compatibility_label_set.begin();
+			iter != _compatibility_label_set.end();
+			iter++)
+	{
+		ofile << "\t";
+		(*iter)->Print(ofile);
+		ofile << endl;
+	}
+
+	ofile << "Label Transitive Closure " << endl;
+	for(map<vcCompatibilityLabel*, set<vcCompatibilityLabel*> >::iterator iter = this->_label_descendent_map.begin();
+			iter != this->_label_descendent_map.end();
+			iter++)
+	{
+		ofile <<  (*iter).first->Get_Id() << " ==> {" << endl;
+		for(set<vcCompatibilityLabel*>::iterator siter = (*iter).second.begin();
+				siter != (*iter).second.end();
+				siter++)
+		{
+			ofile << "\t";
+			ofile << (*siter)->Get_Id() << endl;
+		}
+		ofile << "}" << endl;
+	}
 }
 
 bool vcCompatibilityLabel_Compare::operator() (vcCompatibilityLabel* u, vcCompatibilityLabel* v) const
 {
-  return(u->Get_Id() < v->Get_Id());
+	return(u->Get_Id() < v->Get_Id());
 }
 
 void vcControlPath::Print_VHDL_Start_Symbol_Assignment(ostream& ofile)
 {
-  // nothing to do..
+	// nothing to do..
 }
 
 void vcControlPath::Print_VHDL_Exit_Symbol_Assignment(ostream& ofile)
 {
-  ofile << this->Get_Exit_Symbol() <<  " <= " << this->_exit->Get_Exit_Symbol()   << ";" << endl;
+	ofile << this->Get_Exit_Symbol() <<  " <= " << this->_exit->Get_Exit_Symbol()   << ";" << endl;
 }
 
 void vcControlPath::Print_VHDL_Export_Cleanup(ostream& ofile)
 {
 	// input bindings.
-  ofile << "--  hookup: inputs to control-path " << endl;
-  for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin(), fbiter = _input_bindings.end();
-	biter != fbiter;
-	biter++)
-  {
-	vcPlace* pl = (*biter).first;
+	ofile << "--  hookup: inputs to control-path " << endl;
+	for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin(), fbiter = _input_bindings.end();
+			biter != fbiter;
+			biter++)
+	{
+		vcPlace* pl = (*biter).first;
 
-	string pl_id = pl->Get_Exit_Symbol(NULL);
-        string raw_id = To_VHDL(pl->Get_Id());
+		string pl_id = pl->Get_Exit_Symbol(NULL);
+		string raw_id = To_VHDL(pl->Get_Id());
 
-	ofile << pl_id << " <= " << raw_id  << ";" << endl;
-  }
+		ofile << pl_id << " <= " << raw_id  << ";" << endl;
+	}
 
-  ofile << "-- hookup: output from control-path " << endl;
-  for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin(), fbiter = _output_bindings.end();
-	biter != fbiter;
-	biter++)
-  {
-	vcPlace* pl = (*biter).first;
+	ofile << "-- hookup: output from control-path " << endl;
+	for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin(), fbiter = _output_bindings.end();
+			biter != fbiter;
+			biter++)
+	{
+		vcPlace* pl = (*biter).first;
 
-	string pl_id = pl->Get_Exit_Symbol(NULL);
-        string raw_id = To_VHDL(pl->Get_Id());
+		string pl_id = pl->Get_Exit_Symbol(NULL);
+		string raw_id = To_VHDL(pl->Get_Id());
 
-	ofile << raw_id << " <= " << pl_id  << ";" << endl;
-  }
+		ofile << raw_id << " <= " << pl_id  << ";" << endl;
+	}
 }
 
 void vcControlPathPipelined::Compute_Compatibility_Labels()
 {
-  vcCompatibilityLabel* in_label = this->Make_Compatibility_Label(this->Get_Id());
+	vcCompatibilityLabel* in_label = this->Make_Compatibility_Label(this->Get_Id());
 
-  this->Set_Compatibility_Label(in_label);
-  this->_entry->Set_Compatibility_Label(in_label);
+	this->Set_Compatibility_Label(in_label);
+	this->_entry->Set_Compatibility_Label(in_label);
 
-  if(this->_elements.size() > 1)
-    {
-      for(int idx = 0; idx < this->_elements.size(); idx++)
+	if(this->_elements.size() > 1)
 	{
-	  string hid = this->Get_Hierarchical_Id();
-	  if(hid == "")
-	    hid = this->Get_Id();
+		for(int idx = 0; idx < this->_elements.size(); idx++)
+		{
+			string hid = this->Get_Hierarchical_Id();
+			if(hid == "")
+				hid = this->Get_Id();
 
-	  string id = this->Get_Id() + "/" +  hid + "[" + IntToStr(idx) + "]";
-	  vcCompatibilityLabel* nl = this->Make_Compatibility_Label(id);
+			string id = this->Get_Id() + "/" +  hid + "[" + IntToStr(idx) + "]";
+			vcCompatibilityLabel* nl = this->Make_Compatibility_Label(id);
 
-	  pair<vcTransition*,int> p(this->_entry,idx);
-	  nl->Add_In_Arc(in_label,p);
-	  this->_elements[idx]->Compute_Compatibility_Labels(nl,this);
+			pair<vcTransition*,int> p(this->_entry,idx);
+			nl->Add_In_Arc(in_label,p);
+			this->_elements[idx]->Compute_Compatibility_Labels(nl,this);
+		}
 	}
-    }
-  else if(this->_elements.size() == 1)
-    this->_elements[0]->Compute_Compatibility_Labels(in_label,this);
+	else if(this->_elements.size() == 1)
+		this->_elements[0]->Compute_Compatibility_Labels(in_label,this);
 
-  this->_exit->Set_Compatibility_Label(in_label);
+	this->_exit->Set_Compatibility_Label(in_label);
 
-  this->Connect_Compatibility_Labels();
-  this->Update_Compatibility_Map();
+	this->Connect_Compatibility_Labels();
+	this->Update_Compatibility_Map();
 }
 
 
- bool vcControlPathPipelined::Check_Structure()
- {
-   this->vcCPSeriesBlock::Update_Predecessor_Successor_Links();
-   this->vcCPSeriesBlock::Check_Structure();
- }
+bool vcControlPathPipelined::Check_Structure()
+{
+	this->vcCPSeriesBlock::Update_Predecessor_Successor_Links();
+	this->vcCPSeriesBlock::Check_Structure();
+}

@@ -836,8 +836,8 @@ void vcSelect::Print_Flow_Through_VHDL(ostream& ofile)
 {
 	ofile << "-- flow-through select operator " << this->Get_VHDL_Id() << endl;
 	ofile << this->Get_Z()->Get_VHDL_Id() << " <= ";
-	ofile << this->Get_X()->Get_VHDL_Id() << " when " << this->Get_Sel()->Get_VHDL_Id() 
-		<< " /= (others => '0') else " << this->Get_Y()->Get_VHDL_Id() << ";" << endl;
+	ofile << this->Get_X()->Get_VHDL_Id() << " when (" << this->Get_Sel()->Get_VHDL_Id() 
+		<< "(0) /=  '0') else " << this->Get_Y()->Get_VHDL_Id() << ";" << endl;
 }
 
 void vcSelect::Print_VHDL(ostream& ofile)

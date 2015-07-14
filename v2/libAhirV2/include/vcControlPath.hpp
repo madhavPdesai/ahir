@@ -6,6 +6,7 @@ class vcControlPath;
 class vcCompatibilityLabel;
 class vcCPPipelinedLoopBody;
 class vcCPPipelinedForkBlock;
+class vcCPBlock;
 class vcCPElement: public vcRoot
 {
 
@@ -38,7 +39,7 @@ protected:
 
   bool _is_left_open;
 
-  vcCPPipelinedForkBlock* _pipeline_parent;
+  vcCPBlock* _pipeline_parent;
 public:
 
   vcCPElement(vcCPElement* parent, string id);
@@ -229,16 +230,16 @@ public:
 	vcCPElement* p = this->Get_Parent();
 	while(p != NULL)
 	{
-		if(p->Is("vcCPPipelinedLoopBody") || p->Is("vcCPPipelinedForkBlock"))
+		if(p->Is("vcCPPipelinedLoopBody") || p->Is("vcCPPipelinedForkBlock") || p->Is("vcCPSimpleLoopBlock"))
 		{
-			this->_pipeline_parent = (vcCPPipelinedForkBlock*) p;
+			this->_pipeline_parent = (vcCPBlock*) p;
 			break;
 		}
 		p = p->Get_Parent();
 	}
   }
 
-  vcCPPipelinedForkBlock* Get_Pipeline_Parent() {return(_pipeline_parent);}
+  vcCPBlock* Get_Pipeline_Parent() {return(_pipeline_parent);}
 
   virtual void Print_VHDL_Bindings(vcControlPath* cp, ostream& ofile) {assert(0);}
   virtual bool Is_Pipelined() {return(false);}
@@ -412,6 +413,7 @@ public:
 
   virtual bool Is_Block() { return (true); }
 
+  virtual int Get_Max_Iterations_In_Flight() {return (1);} ;
   int Get_Number_Of_Elements() {return(this->_elements.size());}
 
   virtual string Kind() {return("vcCPBlock");}
@@ -669,6 +671,8 @@ public:
   void Set_Pipeline_Full_Rate_Flag(bool d) {_pipeline_full_rate_flag = d;}
   int  Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
 
+  virtual int Get_Max_Iterations_In_Flight() {return(_pipeline_depth);}
+
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);
   
@@ -792,7 +796,7 @@ public:
   void Add_Export(string internal_id, bool input_flag);
 
   void Set_Max_Iterations_In_Flight(int N) {_max_iterations_in_flight = N;}
-  int Get_Max_Iterations_In_Flight() {return(_max_iterations_in_flight);}
+  virtual int Get_Max_Iterations_In_Flight() {return(_max_iterations_in_flight);}
 
   virtual bool Relaxed_Entry_Reachability_Checking() {return(true);}
   virtual bool Relaxed_Exit_Reachability_Checking() {return(true);}
@@ -849,6 +853,8 @@ class vcCPElementGroup: public vcRoot
   set<vcCPElement*> _elements;
 
   set<vcCPElementGroup*> _successors;
+  vector<vcCPElementGroup*> _successor_vector;
+
   set<vcCPElementGroup*> _predecessors;
   set<vcCPElementGroup*> _marked_predecessors;
   set<vcCPElementGroup*> _marked_successors;
@@ -885,7 +891,7 @@ class vcCPElementGroup: public vcRoot
   // if this field is not null, then all
   // elements in the group must belong to
   // the same pipelined loop body.
-  vcCPPipelinedForkBlock* _pipeline_parent;
+  vcCPBlock* _pipeline_parent;
 
   vcCPElement* _associated_cp_function;
   vcCPElement* _associated_cp_region;
@@ -933,6 +939,8 @@ public:
     _successors.insert(g);
   }
 
+  void Generate_Successor_Vector();
+
   void Add_Predecessor(vcCPElementGroup* g)
   {
     _predecessors.insert(g);
@@ -978,6 +986,7 @@ public:
   bool Get_Is_Bound_As_Output_From_Region() {return(this->_is_bound_as_output_from_region);}
 
   bool Can_Absorb(vcCPElementGroup* g);
+  bool Can_Potentially_Absorb(vcCPElementGroup* g);
 
   void Print(ostream& ofile);
   void Print_VHDL(ostream& ofile);
@@ -1059,6 +1068,10 @@ public:
   virtual bool Is_Control_Path() { return (true); }
 
   void Construct_Reduced_Group_Graph();
+  void Identify_Nucleii(set<vcCPElementGroup*>& nucleii);
+  void Reduce_From_Nucleus(vcCPElementGroup* nucleus, set<vcCPElementGroup*>& absorbed_elements,
+						set<vcCPElementGroup*>& unabsorbed_elements);
+
   void Reduce_CPElement_Group_Graph();
   void Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole);
 
