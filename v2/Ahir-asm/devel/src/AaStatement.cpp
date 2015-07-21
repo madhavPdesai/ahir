@@ -1032,7 +1032,8 @@ void AaAssignmentStatement::Print(ostream& ofile)
       this->Get_Source()->Print(ofile);
   
       int bufval = this->Get_Buffering();
-      ofile << " $buffering " << bufval;
+      if(bufval > 1)
+      	ofile << " $buffering " << bufval;
 
       if(this->_mark != "")
 	      ofile << " $mark " << _mark << " ";
