@@ -1254,7 +1254,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
   string group_name;
   string no_arb_string; 
 
-  for(int idx = 0; idx < this->_compatible_split_operator_groups.size(); idx++)
+  for(int idx = 0, fidx = this->_compatible_split_operator_groups.size(); idx < fidx; idx++)
     { // for each operator group.
       
       bool is_unary_operator = false;
@@ -1272,7 +1272,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       if(flow_through && (num_reqs == 1))
       {
 	lead_op->Print_Flow_Through_VHDL(ofile);
-	return;
+	continue;
       }
 
       // to collect inwires, outwires and reqs/acks.

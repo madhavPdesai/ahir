@@ -256,7 +256,10 @@ class AaStatement: public AaScope
    // defined only for assignment and call statements.
    //
    virtual void Set_Is_Volatile(bool v) {assert(0);}
-   virtual bool Get_Is_Volatile()       {assert(0);}
+
+   // only assignment/calls can be volatile.
+   virtual bool Get_Is_Volatile()       {return(false);}
+
    //
    // if combinational, then find the root source expressions on
    // which the outputs of this statement depend.

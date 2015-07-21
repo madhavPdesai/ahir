@@ -173,10 +173,10 @@ int main(int argc, char* argv[])
 		sys->List_Out_Pipe_Names(out_pipes);
 		sys->List_Internal_Pipe_Names(internal_pipes);
 
-		int I, fI;
-		for(I = 0, fI = in_pipes.size(); I < fI; I++)
+		int J, fJ;
+		for(J = 0, fJ = in_pipes.size(); J < fJ; J++)
 		{
-			string pname = in_pipes[I];
+			string pname = in_pipes[J];
 			string q_pname = "\"" + pname + "\"";
 			int W = sys->Get_Input_Pipe_Width(pname);
 			int D = sys->Get_Input_Pipe_Depth(pname);
@@ -189,9 +189,9 @@ int main(int argc, char* argv[])
 
 			source_file << " set_pipe_is_read_from(" << q_pname << ");" << endl;
 		}
-		for(I = 0, fI = out_pipes.size(); I < fI; I++)
+		for(J = 0, fJ = out_pipes.size(); J < fJ; I++)
 		{
-			string pname = out_pipes[I];
+			string pname = out_pipes[J];
 			string q_pname = "\"" + pname + "\"";
 			int W = sys->Get_Output_Pipe_Width(pname);
 			int D = sys->Get_Output_Pipe_Depth(pname);
@@ -203,9 +203,9 @@ int main(int argc, char* argv[])
 				source_file << " register_pipe(" << q_pname << ", "  << eD << ", " << eW << ", 0);" << endl;
 			source_file << " set_pipe_is_written_into(" << q_pname << ");" << endl;
 		}
-		for(I = 0, fI = internal_pipes.size(); I < fI; I++)
+		for(J = 0, fJ = internal_pipes.size(); J < fJ; J++)
 		{
-			string pname = internal_pipes[I];
+			string pname = internal_pipes[J];
 			string q_pname = "\"" + pname + "\"";
 			int W = sys->Get_Internal_Pipe_Width(pname);
 			int D = sys->Get_Internal_Pipe_Depth(pname);

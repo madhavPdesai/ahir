@@ -56,7 +56,6 @@ void vectorSum()
 	}
 }
 
-
 void _vectorSum_()
 {
 	uint8_t I;

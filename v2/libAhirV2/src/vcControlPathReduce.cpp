@@ -442,7 +442,6 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
   if(this->_has_input_transition)
   {
 	  this->Print_DP_To_CP_VHDL_Link(ofile);
-	  return;
   }
 
   for(int idx = 0, fidx = _output_transitions.size(); idx < fidx; idx++)
@@ -550,12 +549,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 			((_predecessors.size() > 1) || 
 				(_marked_predecessors.size() > 0)) :
 			(_predecessors.size() > 1));
-      if(this->_input_transition != NULL)
- 	{
-	      ofile << this->Get_VHDL_Id() << " <= ";
-	      ofile <<  _input_transition->Get_DP_To_CP_Symbol() << ";" << endl;
-	}
-      else if(is_true_join)
+      if(is_true_join && (this->_input_transition == NULL))
 	{
 		vector<string> preds; 
 		vector<int> pred_markings;
@@ -588,19 +582,16 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 
 		Print_VHDL_Join(join_name, preds, pred_markings, pred_capacities, pred_delays, joined_symbol, ofile);
 	}
-      else if(_predecessors.size() == 1)
+      else if((_predecessors.size() == 1) && (this->_input_transition == NULL))
       {
 	      ofile << this->Get_VHDL_Id() << " <= ";	      
 	      ofile << (*(_predecessors.begin()))->Get_VHDL_Id() << ";" << endl;
       }
-      else
+      else if(this->_input_transition == NULL)
       {
 	      vcSystem::Warning("CP-element group " + this->Get_VHDL_Id() + " has no true predecessors.\n");
       }
     }
-
-
-
 }
 
 void vcCPElementGroup::Print_DP_To_CP_VHDL_Link(ostream& ofile)
