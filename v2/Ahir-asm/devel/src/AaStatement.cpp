@@ -1030,6 +1030,9 @@ void AaAssignmentStatement::Print(ostream& ofile)
       this->Get_Target()->Print(ofile);
       ofile << " := ";
       this->Get_Source()->Print(ofile);
+  
+      int bufval = this->Get_Buffering();
+      ofile << " $buffering " << bufval;
 
       if(this->_mark != "")
 	      ofile << " $mark " << _mark << " ";
@@ -1047,8 +1050,6 @@ void AaAssignmentStatement::Print(ostream& ofile)
       }
     }
 
-  int bufval = this->Get_Buffering();
-  ofile << " $buffering " << bufval;
 
   if(AaProgram::_verbose_flag)
 	  ofile << endl << Debug_Info();
