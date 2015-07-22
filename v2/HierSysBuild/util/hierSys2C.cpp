@@ -189,7 +189,7 @@ int main(int argc, char* argv[])
 
 			source_file << " set_pipe_is_read_from(" << q_pname << ");" << endl;
 		}
-		for(J = 0, fJ = out_pipes.size(); J < fJ; I++)
+		for(J = 0, fJ = out_pipes.size(); J < fJ; J++)
 		{
 			string pname = out_pipes[J];
 			string q_pname = "\"" + pname + "\"";
