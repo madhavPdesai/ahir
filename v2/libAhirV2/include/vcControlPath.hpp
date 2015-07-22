@@ -951,6 +951,7 @@ public:
     _marked_successors.insert(g);
   }
 
+
   void Set_Marked_Successor_Delay(vcCPElementGroup* g, int m)
   {
     _marked_successor_delays[g] = m;
@@ -1062,7 +1063,7 @@ public:
   void Add_Simple_Loop_Block(vcCPSimpleLoopBlock* slb) {_simple_loop_blocks.insert(slb);}
 
   vcCPElementGroup* Make_New_Group();
-  vcCPElementGroup* Delete_Group(vcCPElement* g);
+  void Delete_Group(vcCPElementGroup* g);
   vcCPElementGroup* Get_Group(vcCPElement* cpe);
 
   virtual bool Is_Control_Path() { return (true); }
@@ -1140,6 +1141,7 @@ public:
   virtual bool Check_Structure();
   void Print_VHDL_Export_Cleanup_Optimized(ostream& ofile);
 
+  void Eliminate_Dead_Groups();
 };
 
 

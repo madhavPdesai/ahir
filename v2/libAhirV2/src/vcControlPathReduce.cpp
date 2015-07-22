@@ -645,6 +645,8 @@ void vcControlPath::Reduce_CPElement_Group_Graph()
 {
 	cerr << "Info: reducing Control-path " << endl;
 
+	// eliminate dead groups.
+	this->Eliminate_Dead_Groups();
 
 	// index the groups.
 	int idx = 0;
@@ -804,6 +806,34 @@ vcCPElementGroup* vcControlPath::Get_Group(vcCPElement* cpe)
 	return(rg);
 }
 
+void vcControlPath::Delete_Group(vcCPElementGroup* g)
+{
+	this->_cpelement_groups.erase(g);
+	for(set<vcCPElement*>::iterator iter = g->_elements.begin(), fiter = g->_elements.end(); 
+			iter != fiter; iter++)
+	{
+		vcCPElement* cpe = *iter;
+		_cpelement_to_group_map[cpe] = NULL;
+		vcSystem::Info("removed CP-element " + cpe->Get_Id() + " maybe it was dead?");
+	}
+
+
+	for(set<vcCPElementGroup*>::iterator siter = g->_successors.begin(), fsiter = g->_successors.end();
+			siter != fsiter; siter++)
+	{
+		vcCPElementGroup* succ = *siter;	
+		succ->_predecessors.erase(g);
+		succ->_marked_predecessors.erase(g);
+	}		
+
+	for(set<vcCPElementGroup*>::iterator piter = g->_predecessors.begin(), fpiter = g->_predecessors.end();
+			piter != fpiter; piter++)
+	{
+		vcCPElementGroup* pred = *piter;	
+		pred->_successors.erase(g);
+		pred->_marked_successors.erase(g);
+	}		
+}
 
 void vcControlPath::Add_To_Group(vcCPElement* cpe, vcCPElementGroup* group)
 {
@@ -1257,6 +1287,12 @@ void vcControlPath::Identify_Nucleii(set<vcCPElementGroup*>& nucleii)
 		{
 			nucleii.insert(g);
 		}
+		else if(g->_has_dead_transition ||
+			g->_has_tied_high_transition || 
+			g->_has_left_open_transition)
+		{
+			nucleii.insert(g);
+		}
 	}
 }
 
@@ -1355,11 +1391,11 @@ bool vcCPElementGroup::Can_Potentially_Absorb(vcCPElementGroup* g)
 		ret_val = false;
 	else if(this->_pipeline_parent != g->_pipeline_parent)
 		ret_val = false;
-	else if(this->_has_dead_transition || g->_has_dead_transition)
+	else if(g->_has_dead_transition)
 		ret_val = false;
-	else if(this->_has_tied_high_transition || g->_has_tied_high_transition)
+	else if(g->_has_tied_high_transition)
 		ret_val = false;
-	else if(this->_has_left_open_transition || g->_has_left_open_transition)
+	else if(g->_has_left_open_transition)
 		ret_val = false;
 	// if this is a join, g cannot be a
 	// place
@@ -1380,3 +1416,92 @@ bool vcCPElementGroup::Can_Potentially_Absorb(vcCPElementGroup* g)
 	return(ret_val);
 }
 
+
+
+void vcControlPath::Eliminate_Dead_Groups()
+{
+	int idx = 0;
+	set<vcCPElementGroup*> dead_nucleii;
+
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
+			iter++)
+	{
+		vcCPElementGroup* grp = (*iter);
+		grp->Set_Group_Index(idx);
+		grp->Generate_Successor_Vector();
+
+		if(grp->_has_dead_transition)
+			dead_nucleii.insert(grp);
+		idx++;
+	}
+
+	//
+	// Do a dfs starting from the dead-nucleii.
+	//
+	map<vcCPElementGroup*, int> in_visit_count_map;
+	map<vcCPElementGroup*, int> out_visit_count_map;
+	deque<vcCPElementGroup*> dfs_queue;
+	set<vcCPElementGroup*> on_queue_set;
+	set<vcCPElementGroup*> absorbed_elements;
+
+	for(set<vcCPElementGroup*>::iterator siter = dead_nucleii.begin(), fsiter = dead_nucleii.end();
+			siter != fsiter; siter++)
+	{
+		vcCPElementGroup* nucleus = *siter;
+		dfs_queue.push_front(nucleus);
+		on_queue_set.insert(nucleus);
+		absorbed_elements.insert(nucleus);
+	}
+
+
+	// dfs.
+	while(!dfs_queue.empty())
+	{
+		vcCPElementGroup* top = dfs_queue.front();
+		int out_visit_count = ((out_visit_count_map.find(top) == out_visit_count_map.end()) ?
+						0	: out_visit_count_map[top]);
+
+		if(out_visit_count == top->_successors.size())
+		{
+			dfs_queue.pop_front();
+			on_queue_set.erase(top);
+		}
+		else
+		{
+			vcCPElementGroup* succ = top->_successor_vector[out_visit_count];
+			out_visit_count_map[top] = (out_visit_count+1);
+
+			if(on_queue_set.find(succ) != on_queue_set.end())
+				continue; // cycle.
+
+			if(absorbed_elements.find(succ) != absorbed_elements.end())
+				continue;  // already absorbed ..
+
+			// input transitions are skipped.
+			if(!succ->_has_input_transition)
+			{
+				int in_visit_count = ((in_visit_count_map.find(succ) != in_visit_count_map.end()) ?
+						in_visit_count_map[succ] : 0);
+
+				if(in_visit_count == (succ->_predecessors.size() - 1))
+				{
+					absorbed_elements.insert(succ);
+					on_queue_set.insert(succ);
+					dfs_queue.push_front(succ);
+				}	
+
+				in_visit_count_map[succ] = (in_visit_count + 1);
+			}
+		}
+	}
+
+	// now get rid of dead elements...
+	for(set<vcCPElementGroup*>::iterator diter = absorbed_elements.begin(), fditer = absorbed_elements.end();
+			diter != fditer; diter++)
+	{
+		vcCPElementGroup* grp = *diter;
+		this->Delete_Group(*diter);
+	}
+}
