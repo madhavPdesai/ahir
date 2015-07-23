@@ -1,4 +1,4 @@
-$system Top 
+$system Top  $library TopLib
 	$in 
 		$pipe A
         $out 

@@ -50,7 +50,7 @@ $module [mem_load__]
     // begin control-path 
     ::[assign_stmt_21] 
     {
-      // 	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
+      // 	data := default_mem_pool[((address * 1 ) + 0 )]
       //  file ./.Aa//linked.opt.aa, line 19
       // Source expression
       // default_mem_pool[((address * 1 ) + 0 )]
@@ -197,7 +197,7 @@ $module [mem_load__]
     $constant $W[array_obj_ref_20_resized_base_address] : $int<1> := _b0// 0
     $constant $W[array_obj_ref_20_offset_scale_factor_0] : $int<1> := _b1// 1
     $constant $W[array_obj_ref_20_word_offset_0] : $int<1> := _b0// 0
-    // 	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
+    // 	data := default_mem_pool[((address * 1 ) + 0 )]
     //  file ./.Aa//linked.opt.aa, line 19
     // default_mem_pool[((address * 1 ) + 0 )]
     // (address * 1 )
@@ -211,7 +211,7 @@ $module [mem_load__]
     $W[array_obj_ref_20_word_address_0] : $pointer<memory_space_1>
     $W[array_obj_ref_20_data_0] : $int<8>
     // data
-    // 	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
+    // 	data := default_mem_pool[((address * 1 ) + 0 )]
     //  file ./.Aa//linked.opt.aa, line 19
     // default_mem_pool[((address * 1 ) + 0 )]
     // (address * 1 )
@@ -230,7 +230,7 @@ $module [mem_load__]
     &/ [array_obj_ref_20_gather_scatter] (array_obj_ref_20_data_0) (data) 
   }
   // end data-path
-  // 	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
+  // 	data := default_mem_pool[((address * 1 ) + 0 )]
   //  file ./.Aa//linked.opt.aa, line 19
   // default_mem_pool[((address * 1 ) + 0 )]
   // ((address * 1 ) + 0 )
@@ -258,7 +258,7 @@ $module [mem_store__]
     // begin control-path 
     ::[assign_stmt_33] 
     {
-      // 	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
+      // 	default_mem_pool[((address * 1 ) + 0 )] := data
       //  file ./.Aa//linked.opt.aa, line 26
       // Source expression
       // data
@@ -412,7 +412,7 @@ $module [mem_store__]
     $constant $W[array_obj_ref_31_resized_base_address] : $int<1> := _b0// 0
     $constant $W[array_obj_ref_31_offset_scale_factor_0] : $int<1> := _b1// 1
     $constant $W[array_obj_ref_31_word_offset_0] : $int<1> := _b0// 0
-    // 	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
+    // 	default_mem_pool[((address * 1 ) + 0 )] := data
     //  file ./.Aa//linked.opt.aa, line 26
     // default_mem_pool[((address * 1 ) + 0 )]
     // (address * 1 )
@@ -425,7 +425,7 @@ $module [mem_store__]
     $intermediate $W[array_obj_ref_31_root_address] : $int<1>
     $W[array_obj_ref_31_word_address_0] : $pointer<memory_space_1>
     $W[array_obj_ref_31_data_0] : $int<8>
-    // 	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
+    // 	default_mem_pool[((address * 1 ) + 0 )] := data
     //  file ./.Aa//linked.opt.aa, line 26
     // default_mem_pool[((address * 1 ) + 0 )]
     // (address * 1 )
@@ -444,7 +444,7 @@ $module [mem_store__]
     &/ [array_obj_ref_31_gather_scatter] (data) (array_obj_ref_31_data_0) 
   }
   // end data-path
-  // 	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
+  // 	default_mem_pool[((address * 1 ) + 0 )] := data
   //  file ./.Aa//linked.opt.aa, line 26
   // ((address * 1 ) + 0 )
   // (address * 1 )
@@ -484,7 +484,7 @@ $module [stage_1_daemon]
       $P [loopback]
       ::[assign_stmt_40] 
       {
-        // 		x := A $buffering 1
+        // 		x := A
         //  file ./.Aa//linked.opt.aa, line 37
         // Source expression
         // A
@@ -511,7 +511,7 @@ $module [stage_1_daemon]
         // (as target) x
         // x
         // implicit reference
-        // barrier: 		x := A $buffering 1
+        // barrier: 		x := A
         // load-store dependencies..
         // pipe read/write dependencies for pipe A
       }
@@ -519,7 +519,7 @@ $module [stage_1_daemon]
       assign_stmt_40__exit__ <-| (assign_stmt_40)
       ::[assign_stmt_43] 
       {
-        // 		TMP := x $buffering 1
+        // 		TMP := x
         //  file ./.Aa//linked.opt.aa, line 38
         // Source expression
         // x
@@ -554,7 +554,7 @@ $module [stage_1_daemon]
         WPIPE_TMP_41_update_start_ &-> (WPIPE_TMP_41_Update)
         WPIPE_TMP_41_update_completed_ <-& (WPIPE_TMP_41_Update)
         WPIPE_TMP_41_sample_start_ <-& (R_x_42_update_completed_)
-        // barrier: 		TMP := x $buffering 1
+        // barrier: 		TMP := x
         // load-store dependencies..
         // pipe read/write dependencies for pipe TMP
       }
@@ -610,20 +610,20 @@ $module [stage_1_daemon]
     //  file ./.Aa//linked.opt.aa, line 35
     // block %stage_1_daemon%lOoP
     //  file ./.Aa//linked.opt.aa, line 33
-    // 		x := A $buffering 1
+    // 		x := A
     //  file ./.Aa//linked.opt.aa, line 37
     // x
     $W[x_40] : $int<32>
-    // 		TMP := x $buffering 1
+    // 		TMP := x
     //  file ./.Aa//linked.opt.aa, line 38
     // TMP
     // datapath-instances for block %stage_1_daemon%lOoP
     //  file ./.Aa//linked.opt.aa, line 33
-    // 		x := A $buffering 1
+    // 		x := A
     //  file ./.Aa//linked.opt.aa, line 37
     // A
     $ioport $in [RPIPE_A_39_inst] (A) (x_40) 
-    // 		TMP := x $buffering 1
+    // 		TMP := x
     //  file ./.Aa//linked.opt.aa, line 38
     // TMP
     $ioport $out [WPIPE_TMP_41_inst]  (x_40) (TMP) 
@@ -632,11 +632,11 @@ $module [stage_1_daemon]
   // end data-path
   // CP-DP links for merge  
   //  file ./.Aa//linked.opt.aa, line 35
-  // 		x := A $buffering 1
+  // 		x := A
   //  file ./.Aa//linked.opt.aa, line 37
   // A
   RPIPE_A_39_inst <=> (branch_block_stmt_36/assign_stmt_40/RPIPE_A_39_Sample/rr branch_block_stmt_36/assign_stmt_40/RPIPE_A_39_Update/cr) (branch_block_stmt_36/assign_stmt_40/RPIPE_A_39_Sample/ra branch_block_stmt_36/assign_stmt_40/RPIPE_A_39_Update/ca)
-  // 		TMP := x $buffering 1
+  // 		TMP := x
   //  file ./.Aa//linked.opt.aa, line 38
   // TMP
   WPIPE_TMP_41_inst <=> (branch_block_stmt_36/assign_stmt_43/WPIPE_TMP_41_Sample/req branch_block_stmt_36/assign_stmt_43/WPIPE_TMP_41_Update/req) (branch_block_stmt_36/assign_stmt_43/WPIPE_TMP_41_Sample/ack branch_block_stmt_36/assign_stmt_43/WPIPE_TMP_41_Update/ack)

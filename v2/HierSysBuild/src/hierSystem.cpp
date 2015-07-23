@@ -299,8 +299,6 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile)
         if(this->_child_map.size() == 0)
 		return;
 
-	ofile << "library work;" << endl;
-	ofile << "use work.HierSysComponentPackage.all;" << endl;
 	ofile << "library ahir;" << endl;
 	ofile << "use ahir.BaseComponents.all;" << endl;
 	ofile << "library ieee;" << endl;
@@ -547,6 +545,10 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 	ofile << "use "     << sim_link_library << "." 
 		<<   sim_link_prefix << "Foreign.all;" << endl;
 
+	ofile << "library " << this->Get_Library() << ";"  << endl;
+	ofile << "library " << this->Get_Library() << "_pack;"  << endl;
+	ofile << "use "     << this->Get_Library() << "_pack.HierSysComponentPackage.all;" << endl;
+
 	ofile << "entity " << this->Get_Id() << "_Test_Bench is -- {" << endl;
 	ofile << "-- }\n end entity;" << endl;
 
@@ -586,6 +588,10 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 	}
 	ofile << "signal clk : std_logic := '0'; " << endl; 
 	ofile << "signal reset: std_logic := '1'; " << endl; 
+	ofile << "for " << "dut :  " << this->Get_Id() << " -- { " << endl;
+	ofile << "   use entity " << this->Get_Library() << "." 
+			<< this->Get_Id() << "; -- } " << endl;
+
 	ofile << "-- }\n begin --{" << endl;
 	ofile << "-- clock/reset generation " << endl;
 	ofile << "clk <= not clk after 5 ns;" << endl;

@@ -35,8 +35,8 @@ $is
   {
     $merge $entry loopback 
     $endmerge
-    x := A $buffering 1
-    TMP := x $buffering 1
+    x := A
+    TMP := x
     $place[loopback]
   }
 }

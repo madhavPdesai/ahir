@@ -44,7 +44,7 @@ $out data:$int<8>
 //  file ./.Aa//linked.opt.aa, line 14
 $CP { // begin control-path 
 ::[assign_stmt_21] {
-// 	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
+// 	data := default_mem_pool[((address * 1 ) + 0 )]
 
 //  file ./.Aa//linked.opt.aa, line 19
 // Source expression
@@ -169,7 +169,7 @@ $constant $W[konst_18_wire_constant] : $int<32> := _b000000000000000000000000000
 $constant $W[array_obj_ref_20_resized_base_address] : $int<1> := _b0// 0
 $constant $W[array_obj_ref_20_offset_scale_factor_0] : $int<1> := _b1// 1
 $constant $W[array_obj_ref_20_word_offset_0] : $int<1> := _b0// 0
-// 	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
+// 	data := default_mem_pool[((address * 1 ) + 0 )]
 
 //  file ./.Aa//linked.opt.aa, line 19
 // default_mem_pool[((address * 1 ) + 0 )]
@@ -184,7 +184,7 @@ $intermediate $W[array_obj_ref_20_root_address] : $int<1>
 $W[array_obj_ref_20_word_address_0] : $pointer<memory_space_1>
 $W[array_obj_ref_20_data_0] : $int<8>
 // data
-// 	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
+// 	data := default_mem_pool[((address * 1 ) + 0 )]
 
 //  file ./.Aa//linked.opt.aa, line 19
 // default_mem_pool[((address * 1 ) + 0 )]
@@ -203,7 +203,7 @@ $load [array_obj_ref_20_load_0] $from memory_space_1 (array_obj_ref_20_word_addr
 $delay array_obj_ref_20_load_0 2
 &/ [array_obj_ref_20_gather_scatter] (array_obj_ref_20_data_0) (data) 
 } // end data-path
-// 	data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1
+// 	data := default_mem_pool[((address * 1 ) + 0 )]
 
 //  file ./.Aa//linked.opt.aa, line 19
 // default_mem_pool[((address * 1 ) + 0 )]
@@ -230,7 +230,7 @@ $in address:$int<32>
 //  file ./.Aa//linked.opt.aa, line 21
 $CP { // begin control-path 
 ::[assign_stmt_33] {
-// 	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
+// 	default_mem_pool[((address * 1 ) + 0 )] := data
 
 //  file ./.Aa//linked.opt.aa, line 26
 // Source expression
@@ -362,7 +362,7 @@ $constant $W[konst_29_wire_constant] : $int<32> := _b000000000000000000000000000
 $constant $W[array_obj_ref_31_resized_base_address] : $int<1> := _b0// 0
 $constant $W[array_obj_ref_31_offset_scale_factor_0] : $int<1> := _b1// 1
 $constant $W[array_obj_ref_31_word_offset_0] : $int<1> := _b0// 0
-// 	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
+// 	default_mem_pool[((address * 1 ) + 0 )] := data
 
 //  file ./.Aa//linked.opt.aa, line 26
 // default_mem_pool[((address * 1 ) + 0 )]
@@ -376,7 +376,7 @@ $intermediate $W[array_obj_ref_31_final_offset] : $int<1>
 $intermediate $W[array_obj_ref_31_root_address] : $int<1>
 $W[array_obj_ref_31_word_address_0] : $pointer<memory_space_1>
 $W[array_obj_ref_31_data_0] : $int<8>
-// 	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
+// 	default_mem_pool[((address * 1 ) + 0 )] := data
 
 //  file ./.Aa//linked.opt.aa, line 26
 // default_mem_pool[((address * 1 ) + 0 )]
@@ -395,7 +395,7 @@ $store [array_obj_ref_31_store_0] $to memory_space_1 (array_obj_ref_31_word_addr
 $delay array_obj_ref_31_store_0 2
 &/ [array_obj_ref_31_gather_scatter] (data) (array_obj_ref_31_data_0) 
 } // end data-path
-// 	default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1
+// 	default_mem_pool[((address * 1 ) + 0 )] := data
 
 //  file ./.Aa//linked.opt.aa, line 26
 // ((address * 1 ) + 0 )
@@ -434,7 +434,7 @@ $P [assign_stmt_43__entry__]
 $P [assign_stmt_43__exit__] 
 $P [loopback]
 ::[assign_stmt_40] {
-// 		x := TMP $buffering 1
+// 		x := TMP
 
 //  file ./.Aa//linked.opt.aa, line 37
 // Source expression
@@ -458,7 +458,7 @@ RPIPE_TMP_39_update_completed_ <-& (RPIPE_TMP_39_Update)
 // (as target) x
 // x
 // implicit reference
-// barrier: 		x := TMP $buffering 1
+// barrier: 		x := TMP
 
 // load-store dependencies..
 // pipe read/write dependencies for pipe TMP
@@ -466,7 +466,7 @@ RPIPE_TMP_39_update_completed_ <-& (RPIPE_TMP_39_Update)
 assign_stmt_40__entry__ |-> (assign_stmt_40)
 assign_stmt_40__exit__ <-| (assign_stmt_40)
 ::[assign_stmt_43] {
-// 		B := x $buffering 1
+// 		B := x
 
 //  file ./.Aa//linked.opt.aa, line 38
 // Source expression
@@ -498,7 +498,7 @@ WPIPE_B_41_sample_completed_ &-> ($null)
 WPIPE_B_41_update_start_ &-> (WPIPE_B_41_Update)
 WPIPE_B_41_update_completed_ <-& (WPIPE_B_41_Update)
 WPIPE_B_41_sample_start_ <-& (R_x_42_update_completed_)
-// barrier: 		B := x $buffering 1
+// barrier: 		B := x
 
 // load-store dependencies..
 // pipe read/write dependencies for pipe B
@@ -545,23 +545,23 @@ $DP { // begin data-path
 //  file ./.Aa//linked.opt.aa, line 35
 // block %stage_2_daemon%lOoP
 //  file ./.Aa//linked.opt.aa, line 33
-// 		x := TMP $buffering 1
+// 		x := TMP
 
 //  file ./.Aa//linked.opt.aa, line 37
 // x
 $W[x_40] : $int<32>
-// 		B := x $buffering 1
+// 		B := x
 
 //  file ./.Aa//linked.opt.aa, line 38
 // B
 // datapath-instances for block %stage_2_daemon%lOoP
 //  file ./.Aa//linked.opt.aa, line 33
-// 		x := TMP $buffering 1
+// 		x := TMP
 
 //  file ./.Aa//linked.opt.aa, line 37
 // TMP
 $ioport $in [RPIPE_TMP_39_inst] (TMP) (x_40) 
-// 		B := x $buffering 1
+// 		B := x
 
 //  file ./.Aa//linked.opt.aa, line 38
 // B
@@ -570,12 +570,12 @@ $ioport $out [WPIPE_B_41_inst]  (x_40) (B)
 } // end data-path
 // CP-DP links for merge  
 //  file ./.Aa//linked.opt.aa, line 35
-// 		x := TMP $buffering 1
+// 		x := TMP
 
 //  file ./.Aa//linked.opt.aa, line 37
 // TMP
 RPIPE_TMP_39_inst <=> (branch_block_stmt_36/assign_stmt_40/RPIPE_TMP_39_Sample/rr branch_block_stmt_36/assign_stmt_40/RPIPE_TMP_39_Update/cr) (branch_block_stmt_36/assign_stmt_40/RPIPE_TMP_39_Sample/ra branch_block_stmt_36/assign_stmt_40/RPIPE_TMP_39_Update/ca)
-// 		B := x $buffering 1
+// 		B := x
 
 //  file ./.Aa//linked.opt.aa, line 38
 // B
