@@ -310,7 +310,7 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile)
 		iter != fiter; iter++)
 	{
 		hierSystemInstance* inst = (*iter).second;
-		if(inst->Get_Base_System()->Is_Leaf() && (inst->Get_Base_System()->Get_Library() != "work"))
+		if(inst->Get_Base_System()->Get_Library() != "work")
 		{
 			ofile << "library " << inst->Get_Base_System()->Get_Library() << ";" << endl;
 		}
@@ -350,7 +350,7 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile)
 		iter != fiter; iter++)
 	{
 		hierSystemInstance* inst = (*iter).second;
-		if(inst->Get_Base_System()->Is_Leaf() && (inst->Get_Base_System()->Get_Library() != "work"))
+		if(inst->Get_Base_System()->Get_Library() != "work")
 		{
 			ofile << "for " << inst->Get_Id() << " :  " << inst->Get_Base_System()->Get_Id() << " -- { " << endl;
 			ofile << "   use entity " << inst->Get_Base_System()->Get_Library() << "." 

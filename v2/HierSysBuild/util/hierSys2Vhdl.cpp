@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
 	}
 	vhdl_file.close();
 
-  	string vhdl_testbench_file_name = top_sys->Get_Id() + "_test_bench.unformatted_vhdl";
+  	string vhdl_testbench_file_name = odir + "/" + top_sys->Get_Id() + "_test_bench.unformatted_vhdl";
 	ofstream vhdl_tb_file; 
 	vhdl_tb_file.open(vhdl_testbench_file_name.c_str());
 	vhdl_tb_file << "library ieee;" << endl;
