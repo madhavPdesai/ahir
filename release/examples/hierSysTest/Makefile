@@ -52,8 +52,9 @@ vhdlsim:
 	ghdl -i --work=S1 Stage1/vhdl/Stage1.vhdl
 	ghdl -i --work=S2 Stage2/vhdl/Stage2_global_package.vhdl
 	ghdl -i --work=S2 Stage2/vhdl/Stage2.vhdl
-	ghdl -i --work=work Top.vhdl
-	ghdl -i --work=work Top_test_bench.vhdl
+	ghdl -i --work=TopLib_pack vhdl/TopLib_pack/HierSysComponentPackage.vhdl
+	ghdl -i --work=TopLib vhdl/TopLib/Top.vhdl
+	ghdl -i --work=work vhdl/work/Top_test_bench.vhdl
 	ghdl -m --work=work -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi Top_test_bench 
 
 clean: 

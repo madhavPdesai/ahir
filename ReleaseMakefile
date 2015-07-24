@@ -77,6 +77,7 @@ Release:
 	cp $(CTESTBENCH)/docs/*.pdf $(RELEASE)/docs/pdf/
 	# scripts
 	cp $(SCRIPTS)/ghdlSanitize.sh $(RELEASE)/bin/
+	cp $(SCRIPTS)/formatVhdlFiles.py $(RELEASE)/bin/
 
 Clean:
 	rm -f $(RELEASE)/bin/*
@@ -114,5 +115,6 @@ Clean:
 	rm -f $(RELEASE)/docs/html/*.htm*
 	# scripts
 	rm -f $(RELEASE)/bin/ghdlSanitize.sh
+	rm -f $(RELEASE)/bin/formatVhdlFiles.py 
 
 PHONY: Release Clean
