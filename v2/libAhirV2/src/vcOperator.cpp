@@ -776,7 +776,8 @@ void vcBinarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
 	ofile << "process(";
 	ofile << this->Get_X()->Get_VHDL_Id();
 	if(!this->Get_Y()->Is_Constant())
-		ofile << ", " << this->Get_Y()->Get_VHDL_Id() << ") -- {" << endl;
+		ofile << ", " << this->Get_Y()->Get_VHDL_Id();
+	ofile << ") -- {" << endl;
 	ofile << "variable tmp_var : " << this->Get_Output_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
 	ofile << "begin -- { " << endl;
 	string vhdl_op_id  = Get_VHDL_Op_Id(this->_op_id, this->Get_Input_Type(), this->Get_Output_Type(), false);

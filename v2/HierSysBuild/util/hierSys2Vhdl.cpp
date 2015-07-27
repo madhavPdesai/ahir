@@ -81,6 +81,8 @@ int main(int argc, char* argv[])
 {
 
   int ret_val = 0;
+  int print_whole_hierarchy = 0;
+
   string opt_string;
 
   string sim_link_library = "GhdlLink";
@@ -96,7 +98,7 @@ int main(int argc, char* argv[])
       	exit(1);
     }
 
-  while ((opt = getopt_long(argc, argv, "s:o:", long_options, &option_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, "s:o:a", long_options, &option_index)) != -1) {
 	switch(opt) {
 		case 's': 
 			opt_string = optarg;
@@ -107,6 +109,9 @@ int main(int argc, char* argv[])
 			break;
 		case 'o':
 			odir = optarg;
+			break;
+		case 'a':
+			print_whole_hierarchy = 1;
 			break;
 		default: cerr << "Error: unknown option " << opt << endl; ret_val = 1; break;
 	}
@@ -146,69 +151,50 @@ int main(int argc, char* argv[])
 	if(top_vhdl_lib == "")
 		top_vhdl_lib = "work";
 
-	string pkg_dir = odir + "/" + top_vhdl_lib + "_pack";
-	boost::filesystem::create_directory(pkg_dir);
-
-	// print top-level component package.
-  	string package_vhdl_file_name = pkg_dir + "/HierSysComponentPackage.unformatted_vhdl";
-  	ofstream package_vhdl_file;
-  	package_vhdl_file.open(package_vhdl_file_name.c_str());
-	package_vhdl_file << "library ieee;" << endl;
-	package_vhdl_file << "use ieee.std_logic_1164.all;" << endl;
-	package_vhdl_file << "package HierSysComponentPackage is --{ " << endl;
-	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
-	{
-		hierSystem* sys = sys_vec[I];
-		sys->Print_Vhdl_Component_Declaration(package_vhdl_file);
-	}
-	package_vhdl_file << "--}" << endl <<"end package;" << endl;
-	package_vhdl_file << endl << endl;
-	package_vhdl_file.close();
 	
 	//
 	// print lower level entity/architectures..
 	// (for all non-leaf entities)
 	// 
-	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
+	if(print_whole_hierarchy)
 	{
-		hierSystem* sys = sys_vec[I];
-		if(sys == top_sys)
-			continue;
-		if(sys->Is_Leaf())
-			continue;
+		for(int I = 0, fI = sys_vec.size(); I < fI; I++)
+		{
+			hierSystem* sys = sys_vec[I];
+			if(sys == top_sys)
+				continue;
+			if(sys->Is_Leaf())
+				continue;
 
-		string sys_vhdl_lib = sys->Get_Library();
-		if(sys_vhdl_lib == "")
-			sys_vhdl_lib = "work";
+			string sys_vhdl_lib = sys->Get_Library();
+			if(sys_vhdl_lib == "")
+				sys_vhdl_lib = "work";
 
 
-		string sys_dir =  odir + "/" + sys_vhdl_lib;
-		boost::filesystem::create_directory(sys_dir);
+			string sys_dir =  odir + "/" + sys_vhdl_lib;
+			boost::filesystem::create_directory(sys_dir);
 
-		string sys_vhdl_file_name =  sys_dir + "/" + sys->Get_Id() + ".unformatted_vhdl";
-  		ofstream sys_vhdl_file;
+			string sys_vhdl_file_name =  sys_dir + "/" + sys->Get_Id() + ".unformatted_vhdl";
+			ofstream sys_vhdl_file;
 
-  		sys_vhdl_file.open(sys_vhdl_file_name.c_str());
-		sys_vhdl_file << "library ieee;" << endl;
-		sys_vhdl_file << "use ieee.std_logic_1164.all;" << endl;
-		sys_vhdl_file << "library " << top_vhdl_lib << "_pack;" <<endl;
-		sys_vhdl_file << "use "     << top_vhdl_lib << "_pack.HierSysComponentPackage.all;" << endl;
+			sys_vhdl_file.open(sys_vhdl_file_name.c_str());
+			sys_vhdl_file << "library ieee;" << endl;
+			sys_vhdl_file << "use ieee.std_logic_1164.all;" << endl;
 
-		sys->Print_Vhdl_Entity_Architecture(sys_vhdl_file);
-		sys_vhdl_file.close();
+			sys->Print_Vhdl_Entity_Architecture(sys_vhdl_file);
+			sys_vhdl_file.close();
+		}
 	}
 
 	string top_dir = odir + "/" + top_vhdl_lib;
 	boost::filesystem::create_directory(top_dir);
 
-  	string top_vhdl_file_name = top_dir + "/" +  top_sys->Get_Id() + ".unformatted_vhdl";
-  	ofstream top_vhdl_file;
+	string top_vhdl_file_name = top_dir + "/" +  top_sys->Get_Id() + ".unformatted_vhdl";
+	ofstream top_vhdl_file;
 
-  	top_vhdl_file.open(top_vhdl_file_name.c_str());
+	top_vhdl_file.open(top_vhdl_file_name.c_str());
 	top_vhdl_file << "library ieee;" << endl;
 	top_vhdl_file << "use ieee.std_logic_1164.all;" << endl;
-	top_vhdl_file << "library " << top_vhdl_lib << "_pack;" <<endl;
-	top_vhdl_file << "use "     << top_vhdl_lib << "_pack.HierSysComponentPackage.all;" << endl;
 	top_sys->Print_Vhdl_Entity_Architecture(top_vhdl_file);
 	top_vhdl_file.close();
 
@@ -216,14 +202,12 @@ int main(int argc, char* argv[])
 	string tb_dir = odir + "/work";
 	boost::filesystem::create_directory(tb_dir);
 
-  	string vhdl_tb_file_name = tb_dir + "/" + top_sys->Get_Id() + "_test_bench.unformatted_vhdl";
+	string vhdl_tb_file_name = tb_dir + "/" + top_sys->Get_Id() + "_test_bench.unformatted_vhdl";
 	ofstream vhdl_tb_file; 
 	vhdl_tb_file.open(vhdl_tb_file_name.c_str());
 
 	vhdl_tb_file << "library ieee;" << endl;
 	vhdl_tb_file << "use ieee.std_logic_1164.all;" << endl;
-	vhdl_tb_file << "library " << top_vhdl_lib << "_pack;" <<endl;
-	vhdl_tb_file << "use " << top_vhdl_lib << "_pack.HierSysComponentPackage.all;" << endl;
 
 	top_sys->Print_Vhdl_Test_Bench(sim_link_library, sim_link_prefix, vhdl_tb_file);
 	vhdl_tb_file.close();
