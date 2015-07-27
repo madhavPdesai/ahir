@@ -7,7 +7,7 @@ ANTLR_LIB_PATH=ANTLR_PATH + '/lib/'
 SConscript(['grammar/SConscript'])
 SConscript(['docs/SConscript'])
 
-env.Append(CPPPATH = './src/:./include:./grammar/:../../Value/include:/usr/local/boost_1_46_1/:' + ANTLR_PATH)
+env.Append(CPPPATH = './src/:./include:./grammar/:../../Value/include:/usr/local/boost_1_58_0/:' + ANTLR_PATH)
 
 env.Library('lib/libAa', Glob('src/*.cpp'), CCFLAGS='-g ')
 env.Program('bin/AaOpt', 'util/AaOpt.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr' , 'Value'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/ ' + ANTLR_LIB_PATH))

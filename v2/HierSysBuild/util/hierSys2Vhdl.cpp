@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
 
   if(ret_val == 0) {
 	if(odir != "./")
-		boost::filesystem3::create_directory(odir);
+		boost::filesystem::create_directory(odir);
 
   	hierSystem* top_sys = sys_vec.back();
 	string top_vhdl_lib = top_sys->Get_Library();
@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
 		top_vhdl_lib = "work";
 
 	string pkg_dir = odir + "/" + top_vhdl_lib + "_pack";
-	boost::filesystem3::create_directory(pkg_dir);
+	boost::filesystem::create_directory(pkg_dir);
 
 	// print top-level component package.
   	string package_vhdl_file_name = pkg_dir + "/HierSysComponentPackage.unformatted_vhdl";
@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
 
 
 		string sys_dir =  odir + "/" + sys_vhdl_lib;
-		boost::filesystem3::create_directory(sys_dir);
+		boost::filesystem::create_directory(sys_dir);
 
 		string sys_vhdl_file_name =  sys_dir + "/" + sys->Get_Id() + ".unformatted_vhdl";
   		ofstream sys_vhdl_file;
@@ -199,7 +199,7 @@ int main(int argc, char* argv[])
 	}
 
 	string top_dir = odir + "/" + top_vhdl_lib;
-	boost::filesystem3::create_directory(top_dir);
+	boost::filesystem::create_directory(top_dir);
 
   	string top_vhdl_file_name = top_dir + "/" +  top_sys->Get_Id() + ".unformatted_vhdl";
   	ofstream top_vhdl_file;
@@ -214,7 +214,7 @@ int main(int argc, char* argv[])
 
 
 	string tb_dir = odir + "/work";
-	boost::filesystem3::create_directory(tb_dir);
+	boost::filesystem::create_directory(tb_dir);
 
   	string vhdl_tb_file_name = tb_dir + "/" + top_sys->Get_Id() + "_test_bench.unformatted_vhdl";
 	ofstream vhdl_tb_file; 

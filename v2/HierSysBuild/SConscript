@@ -4,7 +4,7 @@ SConscript(['grammar/SConscript'])
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
 ANTLR_PATH=os.environ['ANTLR_PATH']
 ANTLR_LIB_PATH= ANTLR_PATH + '/lib/'
-env.Append(CPPPATH = './src/:./include:' + ANTLR_PATH)
+env.Append(CPPPATH = './src/:./include:/usr/local/boost_1_58_0/:' + ANTLR_PATH)
 
 env.Library('lib/libHierSys', Glob('src/*.cpp'), CCFLAGS='-g ')
 env.Program('bin/hierSys2Vhdl', 'util/hierSys2Vhdl.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['HierSys', 'antlr', 'boost_filesystem', 'boost_system' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ' + ANTLR_LIB_PATH))
