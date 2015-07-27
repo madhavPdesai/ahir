@@ -23,6 +23,7 @@ stages:  ./Stage1/stage1.aa ./Stage2/stage2.aa
 # generate the integrated vhdl and C
 toplevel: hello_world.hsys
 	hierSys2Vhdl -s ghdl -o vhdl  Stage1/pipes.aa Stage2/pipes.aa Stage1/vhdl/Stage1.hsys Stage2/vhdl/Stage2.hsys hello_world.hsys 
+	formatVhdlFiles.py  vhdl/
 	hierSys2C  -o aa2c Stage1/pipes.aa Stage2/pipes.aa Stage1/vhdl/Stage1.hsys Stage2/vhdl/Stage2.hsys hello_world.hsys
 
 # now build the C code.
@@ -48,17 +49,14 @@ vhdlsim:
 	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl
 	ghdl -i --work=aHiR_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
 	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
-	ghdl -i --work=S1 Stage1/vhdl/Stage1_global_package.vhdl
-	ghdl -i --work=S1 Stage1/vhdl/Stage1.vhdl
-	ghdl -i --work=S2 Stage2/vhdl/Stage2_global_package.vhdl
-	ghdl -i --work=S2 Stage2/vhdl/Stage2.vhdl
-	ghdl -i --work=TopLib_pack vhdl/TopLib_pack/HierSysComponentPackage.vhdl
+	ghdl -i --work=S1 Stage1/vhdl/S1/Stage1.vhdl
+	ghdl -i --work=S2 Stage2/vhdl/S2/Stage2.vhdl
 	ghdl -i --work=TopLib vhdl/TopLib/Top.vhdl
 	ghdl -i --work=work vhdl/work/Top_test_bench.vhdl
 	ghdl -m --work=work -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi Top_test_bench 
 
 clean: 
-	rm -rf Stage1/vhdl/* Stage1/aa2c/* Stage2/vhdl/* Stage2/aa2c/* objhw/ objsw/ ./bin/* *.*vhdl *.o *.cf *.log top_test_bench *.ghw
+	rm -rf Stage1/vhdl/* Stage1/aa2c/* Stage2/vhdl/* Stage2/aa2c/* objhw/ objsw/ ./bin/* vhdl/* *.o *.cf *.log top_test_bench *.ghw
 
 
 PHONY: all clean	

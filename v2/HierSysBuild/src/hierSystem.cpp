@@ -348,6 +348,7 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile)
 		iter != fiter; iter++)
 	{
 		hierSystemInstance* inst = (*iter).second;
+		inst->Get_Base_System()->Print_Vhdl_Component_Declaration(ofile);
 		if(inst->Get_Base_System()->Get_Library() != "work")
 		{
 			ofile << "for " << inst->Get_Id() << " :  " << inst->Get_Base_System()->Get_Id() << " -- { " << endl;
@@ -546,14 +547,11 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		<<   sim_link_prefix << "Foreign.all;" << endl;
 
 	ofile << "library " << this->Get_Library() << ";"  << endl;
-	ofile << "library " << this->Get_Library() << "_pack;"  << endl;
-	ofile << "use "     << this->Get_Library() << "_pack.HierSysComponentPackage.all;" << endl;
 
 	ofile << "entity " << this->Get_Id() << "_Test_Bench is -- {" << endl;
 	ofile << "-- }\n end entity;" << endl;
 
 	ofile << "architecture VhpiLink of " << this->Get_Id() << "_Test_Bench is -- {" << endl;
-	this->Print_Vhdl_Component_Declaration(ofile);
 	// signals
 	for(map<string, pair<int,int> >::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end();
 			iter != fiter; iter++)
@@ -588,6 +586,7 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 	}
 	ofile << "signal clk : std_logic := '0'; " << endl; 
 	ofile << "signal reset: std_logic := '1'; " << endl; 
+	this->Print_Vhdl_Component_Declaration(ofile);
 	ofile << "for " << "dut :  " << this->Get_Id() << " -- { " << endl;
 	ofile << "   use entity " << this->Get_Library() << "." 
 			<< this->Get_Id() << "; -- } " << endl;
