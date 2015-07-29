@@ -253,6 +253,7 @@ class AaExpression: public AaRoot
 	virtual bool Is_Constant() {return(this->_expression_value != NULL);}
 
 	virtual bool Is_Implicit_Variable_Reference() {return(false);}
+	virtual bool Is_Interface_Object_Reference() {return(false);}
 
 	virtual bool Is_Implicit_Object() {return(false);}
 
@@ -715,6 +716,7 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC( ofstream& ofile);
 
+	virtual void Assign_Expression_Value(AaValue* expr_value);
 
 	virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
 
@@ -725,6 +727,7 @@ class AaSimpleObjectReference: public AaObjectReference
 
 
 	virtual bool Is_Implicit_Variable_Reference();
+	virtual bool Is_Interface_Object_Reference();
 
 	virtual AaRoot* Get_Root_Object();
 	virtual bool Is_Implicit_Object();

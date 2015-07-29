@@ -29,6 +29,8 @@ struct PipeRec_
     uint64_t* ptr64;
   } buffer;
 
+  uint8_t is_written_into;
+  uint8_t is_read_from;
 };
 
 typedef struct _PipeJob PipeJob;
@@ -158,4 +160,15 @@ void push16(PipeRec* p, uint16_t x);
 void push32(PipeRec* p, uint32_t x);
 void push64(PipeRec* p, uint64_t x);
 
+void set_pipe_is_written_into(char* pipe_name);
+void set_pipe_is_read_from(char* pipe_name);
+// return number of dangling pipes.
+// (those that are either not written into or not read from or both)
+int  check_for_dangling_pipes();
+// flush fp and acquire the lock... return
+// a sequence id.. useful for serialization
+// of a concurrent trace.
+uint32_t get_file_print_lock(FILE* fp);
+// flush fp and release the lock.
+void release_file_print_lock(FILE* fp);
 #endif

@@ -94,6 +94,7 @@ class AaInterfaceObject: public AaObject
   bool _is_input;
 
   AaStatement* _unique_driver_statement;
+  AaValue* _expr_value;
  public:
   string Get_Mode() {return(this->_mode);}
   bool Get_Is_Input() {return(_is_input);}
@@ -105,6 +106,12 @@ class AaInterfaceObject: public AaObject
   virtual bool Is_Interface_Object() {return(true);}
   // uses AaObject::Print method
 
+  virtual void Write_VC_Model(ostream& ofile);
+  // values on outputs.
+  void Set_Expr_Value(AaValue* v) {_expr_value = v;}
+  AaValue* Get_Expr_Value() {return(_expr_value);}
+
+  
   void Set_Unique_Driver_Statement(AaStatement* stmt)
   {
     if(_unique_driver_statement == NULL)

@@ -225,10 +225,15 @@ public:
 
 class vcOutputWire: public vcWire
 {
+  vcValue* _value;
 public:
   vcOutputWire(string id, vcType* t);
   virtual string Kind() {return("vcOutputWire");}
   virtual string Get_VHDL_Signal_Id() { return(this->Get_VHDL_Id() + "_buffer");}
+  virtual bool Is_Constant() {return(_value != NULL);}
+
+  void Set_Value(vcValue* v) {_value = v;}
+  vcValue* Get_Value() {return(_value);}
 };
 
 

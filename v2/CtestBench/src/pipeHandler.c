@@ -9,6 +9,8 @@
 #include <netdb.h>
 #include <SocketLib.h>
 #include <pipeHandler.h>
+#include <pthread.h>
+#include <pthreadUtils.h>
 
 FILE* log_file;
 PipeRec* pipes = NULL;
@@ -617,6 +619,53 @@ void start_listening(int server_socket_id)
     }
 }
 
+void set_pipe_is_written_into(char* pipe_name)
+{
+  PipeRec* p = find_pipe(pipe_name);
+  if(p != NULL)
+	p->is_written_into = 1;
+}
+
+void set_pipe_is_read_from(char* pipe_name)
+{
+  PipeRec* p = find_pipe(pipe_name);
+  if(p != NULL)
+	p->is_read_from = 1;
+}
+
+// return the number of dangling pipes.
+int  check_for_dangling_pipes()
+{
+  int ret_val = 0;
+  PipeRec* p;
+  for(p = pipes; p != NULL; p = p->next)
+  {
+	if(!p->is_written_into || !p->is_read_from)
+	{
+		fprintf(stderr, "Error: pipe %s is_written_into = %d, is_read_from = %d\n",
+				p->pipe_name, p->is_written_into, p->is_read_from);
+		ret_val++;
+	}
+  }
+  return(ret_val);
+}
+
+// flush fp and acquire the lock... return
+// a sequence id.. useful for serialization
+// of a concurrent trace.
+MUTEX_DECL(__file_print_mutex__);
+uint32_t get_file_print_lock(FILE* fp)
+{
+	static uint32_t __print_counter__ = 0;
+	MUTEX_LOCK(__file_print_mutex__);
+	__print_counter__++;
+	return(__print_counter__);
+}
+// flush fp and release the lock.
+void release_file_print_lock(FILE* fp)
+{
+	MUTEX_UNLOCK(__file_print_mutex__);
+}
 
 void pipeHandler()
 {

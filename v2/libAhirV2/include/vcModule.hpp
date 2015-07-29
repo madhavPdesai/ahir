@@ -4,6 +4,7 @@
 #include <vcRoot.hpp>
 
 class vcType;
+class vcValue;
 class vcMemorySpace;
 class vcDatapathElement;
 class vcTransition;
@@ -177,7 +178,7 @@ class vcModule: public vcRoot
   // builder methods
   void Add_Link(vcDatapathElement* dpe, vector<vcTransition*>& reqs, vector<vcTransition*>& acks);
   void Add_Memory_Space(vcMemorySpace* ms);
-  void Add_Argument(string arg_name, string mode, vcType* t);
+  void Add_Argument(string arg_name, string mode, vcType* t, vcValue* v);
   void Set_Control_Path(vcControlPath* cp) { this->_control_path = cp;}
   void Set_Data_Path(vcDataPath* dp);
   void Set_Inline(bool v) { this->_inline = v;}

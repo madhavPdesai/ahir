@@ -1289,13 +1289,14 @@ vc_Outargs[vcSystem* sys, vcModule* parent]
 vc_Interface_Object_Declaration[vcSystem* sys, vcModule* parent, string mode]
 {
 	vcType* t;
-	vcValue* v;
+	vcValue* v = NULL;
 	string obj_name;
 }
-: id: SIMPLE_IDENTIFIER {obj_name = id->getText();} COLON t = vc_Type[sys]
+: id: SIMPLE_IDENTIFIER {obj_name = id->getText();} COLON t = vc_Type[sys] (ASSIGN_OP v =  vc_Value[t])? 
 { 
-	parent->Add_Argument(obj_name,mode,t);
+	parent->Add_Argument(obj_name,mode,t,v);
 }
+
 ;
 
 //----------------------------------------------------------------------------------------------------------

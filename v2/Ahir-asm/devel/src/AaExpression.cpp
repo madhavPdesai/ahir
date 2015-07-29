@@ -1285,6 +1285,17 @@ bool AaSimpleObjectReference::Is_Implicit_Variable_Reference()
 	return(this->Get_Root_Object() != NULL);
 }
 
+bool AaSimpleObjectReference::Is_Interface_Object_Reference()
+{
+	AaRoot* ro  = this->Get_Root_Object();
+	if(ro != NULL) 
+	{
+		if(ro->Is("AaInterfaceObject"))
+			return(true);
+	}
+	return(false);
+}
+
 AaRoot* AaSimpleObjectReference::Get_Root_Object()
 {
 	assert(this->_object != NULL);
@@ -1332,6 +1343,25 @@ void AaSimpleObjectReference::Evaluate()
 	}
 }
 
+void AaSimpleObjectReference::Assign_Expression_Value(AaValue* expr_value)
+{
+	if(this->_object && !this->_object->Is_Storage_Object())
+	{
+		this->AaExpression::Assign_Expression_Value(expr_value);
+		if(this->Is_Interface_Object_Reference() && (expr_value != NULL))
+		{
+			AaRoot* ro = this->Get_Root_Object();
+			assert(ro->Kind() == "AaInterfaceObject");
+			AaInterfaceObject* ifo = (AaInterfaceObject*) ro;
+			AaValue* nv = Make_Aa_Value(this->Get_Scope(),this->Get_Type());
+			nv->Assign(this->Get_Type(),expr_value);
+
+			// cannot overwrite!
+			assert(ifo->Get_Expr_Value() == NULL);
+			ifo->Set_Expr_Value(nv);
+		}
+	}
+}
 
 void AaSimpleObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {

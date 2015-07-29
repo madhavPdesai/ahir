@@ -3,7 +3,7 @@ import os
 #modelsimpath = ['/cad/modelsim/modeltech/gcc-4.0.2-rhe21/bin']
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
 
-env.Append(CPPPATH = './src/:./include:/cad/modelsim/modeltech/include')
+env.Append(CPPPATH = './src/:./include:../pthreadUtils/include:/cad/modelsim/modeltech/include')
 
 #modelsim = env.Clone()
 #modelsim.PrependENVPath('PATH',modelsimpath)

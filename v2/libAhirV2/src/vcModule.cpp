@@ -1,6 +1,7 @@
 #include <vcIncludes.hpp>
 #include <vcRoot.hpp>
 #include <vcType.hpp>
+#include <vcValue.hpp>
 #include <vcObject.hpp>
 #include <vcMemorySpace.hpp>
 #include <vcControlPath.hpp>
@@ -178,7 +179,7 @@ vcType* vcModule::Get_Argument_Type(string arg_name, string mode /* "in" or "out
   return(ret_type);
 }
 
-void vcModule::Add_Argument(string arg_name, string mode, vcType* t)
+void vcModule::Add_Argument(string arg_name, string mode, vcType* t, vcValue* v)
 {
   if(mode == "in")
     {
@@ -188,7 +189,9 @@ void vcModule::Add_Argument(string arg_name, string mode, vcType* t)
   else
     {
       this->_ordered_output_arguments.push_back(arg_name);
-      this->_output_arguments[arg_name] = new vcOutputWire(arg_name,t);
+      vcOutputWire* w = new vcOutputWire(arg_name,t);
+      this->_output_arguments[arg_name] = w;
+      w->Set_Value(v);
     }
 }
 
@@ -799,8 +802,11 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		int H = 0;
 		for(int idx = 0, fidx = outarg_wires.size(); idx < fidx; idx++)
 		{
-			vcWire* w = outarg_wires[idx];
+			vcOutputWire* w = (vcOutputWire*) outarg_wires[idx];
 			int wsize  = w->Get_Type()->Size();
+                        if(w->Is_Constant())
+				ofile << w->Get_VHDL_Signal_Id() << " <= " << w->Get_Value()->To_VHDL_String() << ";" << endl;
+			
 			ofile << "out_buffer_data_in(" << (H+wsize)-1 << " downto " << H << ") <= " << w->Get_VHDL_Signal_Id() << ";" << endl;
 			ofile << w->Get_VHDL_Id() << " <= out_buffer_data_out(" << (H+wsize)-1 << " downto " << H << ");" << endl;
 			H += wsize;

@@ -1235,106 +1235,108 @@ void AaAssignmentStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
     {
       ofile << "// " << this->To_String() << endl;
       ofile << "// " << this->Get_Source_Info() << endl;
-
-      // declare the target as a constant...
-      Write_VC_Constant_Declaration(this->_target->Get_VC_Constant_Name(),
-				    this->_target->Get_Type()->Get_VC_Name(),
-				    this->_target->Get_Expression_Value()->To_VC_String() + " // " +
-				    this->_target->Get_Expression_Value()->To_C_String(),
-				    ofile);
+      if(!this->_target->Is_Interface_Object_Reference())
+      {
+	      // declare the target as a constant...
+	      Write_VC_Constant_Declaration(this->_target->Get_VC_Constant_Name(),
+			      this->_target->Get_Type()->Get_VC_Name(),
+			      this->_target->Get_Expression_Value()->To_VC_String() + " // " +
+			      this->_target->Get_Expression_Value()->To_C_String(),
+			      ofile);
+      }
     }
   else
-    {
-      this->_source->Write_VC_Constant_Wire_Declarations(ofile);
-      this->_target->Write_VC_Constant_Wire_Declarations(ofile);
-    }
+  {
+	  this->_source->Write_VC_Constant_Wire_Declarations(ofile);
+	  this->_target->Write_VC_Constant_Wire_Declarations(ofile);
+  }
 }
 void AaAssignmentStatement::Write_VC_Wire_Declarations(ostream& ofile)
 {
-  if(!this->Is_Constant())
-    {
-      ofile << "// " << this->To_String() << endl;
-      ofile << "// " << this->Get_Source_Info() << endl;
+	if(!this->Is_Constant())
+	{
+		ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->Get_Source_Info() << endl;
 
 
-      if(this->_target->Is_Implicit_Variable_Reference())
-	// source wire not necessary if the target is
-	// an implicit variable
-	this->_source->Write_VC_Wire_Declarations(true,ofile);
-      else
-	// if target is not implicit variable,
-	// then source wire must be declared..
-	this->_source->Write_VC_Wire_Declarations(false,ofile);
+		if(this->_target->Is_Implicit_Variable_Reference())
+			// source wire not necessary if the target is
+			// an implicit variable
+			this->_source->Write_VC_Wire_Declarations(true,ofile);
+		else
+			// if target is not implicit variable,
+			// then source wire must be declared..
+			this->_source->Write_VC_Wire_Declarations(false,ofile);
 
-      // target wire is explicitly declared only if
-      // target is a statement..
-      this->_target->Write_VC_Wire_Declarations_As_Target(ofile);
-    }
+		// target wire is explicitly declared only if
+		// target is a statement..
+		this->_target->Write_VC_Wire_Declarations_As_Target(ofile);
+	}
 }
 
 void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 {
-  if(!this->Is_Constant())
-    {
-
-      ofile << "// " << this->To_String() << endl;
-      ofile << "// " << this->Get_Source_Info() << endl;
-
-      if(this->_target->Is_Implicit_Variable_Reference())
+	if(!this->Is_Constant())
 	{
-	  if(this->_source->Is_Implicit_Variable_Reference())
-	    {
-              string dpe_name = this->_target->Get_VC_Datapath_Instance_Name();
-	      string src_name = this->_source->Get_VC_Driver_Name();
-	      string tgt_name = this->_target->Get_VC_Receiver_Name();
 
-	      // target and source are both implicit.
-	      // instantiate a register..
-	      Write_VC_Interlock_Buffer(dpe_name,
-				      src_name,
-				      tgt_name,
-		 		      this->Get_VC_Guard_String(),
-				      this->Get_Is_Volatile(), // flow-through-flag
-				      ofile);
+		ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->Get_Source_Info() << endl;
 
-
-	      if(this->Get_Is_Volatile())
-		return;
-
-  	      AaStatement* dws = this->Get_Pipeline_Parent();
-	      bool extreme_pipelining_flag = ((dws != NULL)  && (dws->Get_Pipeline_Full_Rate_Flag()));
-
-	      int bufval = this->Get_Buffering();
-	      if(bufval > 1)
-	      {
-		ofile << "$buffering  $in " << dpe_name << " "
-			<< src_name << " "  << bufval << endl;
-			
-		if(extreme_pipelining_flag)
+		if(this->_target->Is_Implicit_Variable_Reference())
 		{
-			ofile << "$buffering  $out " << dpe_name << " "
-				<< tgt_name << " 2" << endl;
+			if(this->_source->Is_Implicit_Variable_Reference())
+			{
+				string dpe_name = this->_target->Get_VC_Datapath_Instance_Name();
+				string src_name = this->_source->Get_VC_Driver_Name();
+				string tgt_name = this->_target->Get_VC_Receiver_Name();
+
+				// target and source are both implicit.
+				// instantiate a register..
+				Write_VC_Interlock_Buffer(dpe_name,
+						src_name,
+						tgt_name,
+						this->Get_VC_Guard_String(),
+						this->Get_Is_Volatile(), // flow-through-flag
+						ofile);
+
+
+				if(this->Get_Is_Volatile())
+					return;
+
+				AaStatement* dws = this->Get_Pipeline_Parent();
+				bool extreme_pipelining_flag = ((dws != NULL)  && (dws->Get_Pipeline_Full_Rate_Flag()));
+
+				int bufval = this->Get_Buffering();
+				if(bufval > 1)
+				{
+					ofile << "$buffering  $in " << dpe_name << " "
+						<< src_name << " "  << bufval << endl;
+
+					if(extreme_pipelining_flag)
+					{
+						ofile << "$buffering  $out " << dpe_name << " "
+							<< tgt_name << " 2" << endl;
+					}
+				}
+				else if(extreme_pipelining_flag)
+				{
+					ofile << "$buffering  $in " << dpe_name << " "
+						<< src_name << " 2" << endl;
+					ofile << "$buffering  $out " << dpe_name << " "
+						<< tgt_name << " 2" << endl;
+				}
+			}
+			else
+			{
+				// target is implicit, source is not..
+				// instantiate source stuf..
+				this->_source->Write_VC_Datapath_Instances(this->_target,ofile);
+			}
 		}
-	      }
-	      else if(extreme_pipelining_flag)
-	      {
-			ofile << "$buffering  $in " << dpe_name << " "
-				<< src_name << " 2" << endl;
-			ofile << "$buffering  $out " << dpe_name << " "
-				<< tgt_name << " 2" << endl;
-	      }
-	    }
-	  else
-	    {
-	      // target is implicit, source is not..
-	      // instantiate source stuf..
-	      this->_source->Write_VC_Datapath_Instances(this->_target,ofile);
-	    }
-	}
-      else
-	{
-	  // target is not implicit..
-	  // source will have an explicit wire..
+		else
+		{
+			// target is not implicit..
+			// source will have an explicit wire..
 	  this->_source->Write_VC_Datapath_Instances(NULL,ofile);
 	  this->_target->Write_VC_Datapath_Instances_As_Target(ofile, this->_source);
 	}
@@ -2151,9 +2153,11 @@ void AaCallStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 	ofile << "// " << this->Get_Source_Info() << endl;
 
 	for(int idx = 0; idx < _input_args.size(); idx++)
+	{
 		_input_args[idx]->Write_VC_Constant_Wire_Declarations(ofile);
-
+	}
 }
+
 void AaCallStatement::Write_VC_Wire_Declarations(ostream& ofile)
 {
 

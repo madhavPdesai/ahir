@@ -198,6 +198,7 @@ AaInterfaceObject::AaInterfaceObject(AaScope* parent_tpr,
 {
 	this->_mode = mode;
 	this->_unique_driver_statement = NULL;
+	this->_expr_value = NULL;
 	if(mode == "in")
 		_is_input = true;
 	else
@@ -231,6 +232,17 @@ string AaInterfaceObject::Get_Name()
 		return(this->AaObject::Get_Name());
 }
 
+void AaInterfaceObject::Write_VC_Model(ostream& ofile)
+{
+	ofile << this->Get_VC_Name() << ":";  this->Get_Type()->Write_VC_Model(ofile);
+	AaValue* expr_value = this->Get_Expr_Value();
+	if(expr_value != NULL)
+		ofile << " := " << expr_value->To_VC_String() << endl;
+	ofile << endl;
+	ofile << "// can point into ";
+	Print_Storage_Object_Set(this->Get_Addressed_Objects(),ofile);
+	ofile << endl;
+}
 
 //---------------------------------------------------------------------
 // AaStorageObject

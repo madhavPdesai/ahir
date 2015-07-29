@@ -1,8 +1,15 @@
 $pipe in_data  : $uint<32> $depth 2
 $pipe out_data : $uint<32> $depth 2
 
+$module [const_1] $in () $out (O: $uint<1>) $is
+{
+  O := 1
+}
+
 $module [volatile_check_daemon] $in() $out () $is
 {
+
+        $call const_1 () (OO)
 
 	$branchblock[lOoP] {
 		$dopipeline $depth 16 $buffering 2 

@@ -252,7 +252,8 @@ void vcWire::Print(ostream& ofile)
 
 void vcWire::Print_VHDL_Std_Logic_Declaration(ostream& ofile)
 {
-  ofile << "signal " << this->Get_VHDL_Signal_Id() << " : " << this->Get_Type()->Get_VHDL_Type_Name() << ";" << endl;
+  if((this->Kind() != "vcInputWire") && (this->Kind() != "vcOutputWire"))
+  	ofile << "signal " << this->Get_VHDL_Signal_Id() << " : " << this->Get_Type()->Get_VHDL_Type_Name() << ";" << endl;
 }
 
 int vcWire::Get_Size() {return(this->_type->Size());}
