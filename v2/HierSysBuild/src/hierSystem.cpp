@@ -541,6 +541,15 @@ void Write_Pipe_Access_Process(string sim_link_prefix, string pipe_id, int pipe_
 //
 void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_prefix,  ostream& ofile)
 {
+        ofile 	<< "library ahir;\n" 
+		<< "use ahir.memory_subsystem_package.all;\n"
+		<< "use ahir.types.all;\n"
+		<< "use ahir.subprograms.all;\n"
+		<< "use ahir.components.all;\n"
+		<< "use ahir.basecomponents.all;\n"
+		<< "use ahir.operatorpackage.all;\n"
+		<< "use ahir.utilities.all;\n";
+
 	ofile << "library " << sim_link_library << ";"  << endl;
 	ofile << "use "     << sim_link_library << ".Utility_Package.all;"  << endl;
 	ofile << "use "     << sim_link_library << "." 

@@ -553,8 +553,9 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		return;
 
 	assert(this->_control_path);
+	string arch_name = this->Get_VHDL_Id() + "_arch";
 
-	ofile << "architecture Default of " << this->Get_VHDL_Id() << " is -- {" << endl;
+	ofile << "architecture " << arch_name << " of " << this->Get_VHDL_Id() << " is -- {" << endl;
 
 
 	// always true signal
@@ -905,7 +906,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		vcMemorySpace* ms  = (*iter).second;
 		ms->Print_VHDL_Instance(ofile);
 	}
-	ofile << "-- }" << endl << "end Default;" << endl;
+	ofile << "-- }" << endl << "end " << arch_name << ";" << endl;
 }
 
 

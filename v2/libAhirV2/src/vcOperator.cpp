@@ -60,7 +60,7 @@ void vcOperator::Print_VHDL_Logger(ostream& ofile)
 	string guard_id;
 
 	if(this->Get_Guard_Wire() != NULL)
-		guard_id = this->Get_Guard_Wire()->Get_VHDL_Id() + "(0)";
+		guard_id = this->Get_Guard_Wire()->Get_VHDL_Signal_Id() + "(0)";
 	else
 		guard_id = "sl_one";
 		
@@ -119,7 +119,7 @@ void vcSplitOperator::Print_VHDL_Logger(ostream& ofile)
 	string guard_id;
 
 	if(this->Get_Guard_Wire() != NULL)
-		guard_id = this->Get_Guard_Wire()->Get_VHDL_Id() + "(0)";
+		guard_id = this->Get_Guard_Wire()->Get_VHDL_Signal_Id() + "(0)";
 	else
 		guard_id = "sl_one";
 
@@ -510,7 +510,7 @@ void vcCall::Print_Flow_Through_VHDL(ostream& ofile)
 			first_one = false;
 		}
 		ofile << this->_called_module->Get_Input_Argument(idx) << " => "
-			<< this->Get_Input_Wire(idx)->Get_VHDL_Id();
+			<< this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
 	}
 	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Output_Arguments(); idx < fidx; idx++)
 	{
@@ -520,7 +520,7 @@ void vcCall::Print_Flow_Through_VHDL(ostream& ofile)
 			first_one = false;
 		}
 		ofile << this->_called_module->Get_Output_Argument(idx) << " => "
-			<< this->Get_Output_Wire(idx)->Get_VHDL_Id();
+			<< this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
 	}
 	ofile << "); " << endl;
 }
@@ -601,12 +601,12 @@ void vcUnarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_bufferi
 void vcUnarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
 {
 	ofile << "-- unary operator " << this->Get_VHDL_Id() << endl;
-	ofile << "process(" << this->Get_X()->Get_VHDL_Id() << ") -- {" << endl;
+	ofile << "process(" << this->Get_X()->Get_VHDL_Signal_Id() << ") -- {" << endl;
 	ofile << "variable tmp_var : " << this->Get_Output_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
 	ofile << "begin -- { " << endl;
 	string vhdl_op_id  = Get_VHDL_Op_Id(this->_op_id, this->Get_Input_Type(), this->Get_Output_Type(), false);
-	ofile << vhdl_op_id << "_proc(" << this->Get_X()->Get_VHDL_Id() << ", tmp_var);" << endl;
-	ofile << this->Get_Z()->Get_VHDL_Id() << " <= tmp_var; -- }" << endl;
+	ofile << vhdl_op_id << "_proc(" << this->Get_X()->Get_VHDL_Signal_Id() << ", tmp_var);" << endl;
+	ofile << this->Get_Z()->Get_VHDL_Signal_Id() << " <= tmp_var; -- }" << endl;
 	ofile << "end process;" << endl; 
 }
 
@@ -774,16 +774,16 @@ void vcBinarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
 {
 	ofile << "-- binary operator " << this->Get_VHDL_Id() << endl;
 	ofile << "process(";
-	ofile << this->Get_X()->Get_VHDL_Id();
+	ofile << this->Get_X()->Get_VHDL_Signal_Id();
 	if(!this->Get_Y()->Is_Constant())
-		ofile << ", " << this->Get_Y()->Get_VHDL_Id();
+		ofile << ", " << this->Get_Y()->Get_VHDL_Signal_Id();
 	ofile << ") -- {" << endl;
 	ofile << "variable tmp_var : " << this->Get_Output_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
 	ofile << "begin -- { " << endl;
 	string vhdl_op_id  = Get_VHDL_Op_Id(this->_op_id, this->Get_Input_Type(), this->Get_Output_Type(), false);
-	ofile << vhdl_op_id << "_proc(" << this->Get_X()->Get_VHDL_Id() << ", "
-					<< this->Get_Y()->Get_VHDL_Id() << ", tmp_var);" << endl;
-	ofile << this->Get_Z()->Get_VHDL_Id()  << " <= tmp_var; -- }" << endl;
+	ofile << vhdl_op_id << "_proc(" << this->Get_X()->Get_VHDL_Signal_Id() << ", "
+					<< this->Get_Y()->Get_VHDL_Signal_Id() << ", tmp_var);" << endl;
+	ofile << this->Get_Z()->Get_VHDL_Signal_Id()  << " <= tmp_var; -- }" << endl;
 	ofile << "end process;" << endl; 
 }
 
@@ -836,9 +836,9 @@ void vcSelect::Print(ostream& ofile)
 void vcSelect::Print_Flow_Through_VHDL(ostream& ofile)
 {
 	ofile << "-- flow-through select operator " << this->Get_VHDL_Id() << endl;
-	ofile << this->Get_Z()->Get_VHDL_Id() << " <= ";
-	ofile << this->Get_X()->Get_VHDL_Id() << " when (" << this->Get_Sel()->Get_VHDL_Id() 
-		<< "(0) /=  '0') else " << this->Get_Y()->Get_VHDL_Id() << ";" << endl;
+	ofile << this->Get_Z()->Get_VHDL_Signal_Id() << " <= ";
+	ofile << this->Get_X()->Get_VHDL_Signal_Id() << " when (" << this->Get_Sel()->Get_VHDL_Signal_Id() 
+		<< "(0) /=  '0') else " << this->Get_Y()->Get_VHDL_Signal_Id() << ";" << endl;
 }
 
 void vcSelect::Print_VHDL(ostream& ofile)
@@ -939,7 +939,7 @@ vcInterlockBuffer::vcInterlockBuffer(string id, vcWire* din, vcWire* dout):vcSpl
 void vcInterlockBuffer::Print_Flow_Through_VHDL(ostream& ofile)
 {
 	ofile << "-- interlock " << this->Get_VHDL_Id() << endl;
-	ofile << "process(" << this->Get_Din()->Get_VHDL_Id() << ") -- {" << endl;
+	ofile << "process(" << this->Get_Din()->Get_VHDL_Signal_Id() << ") -- {" << endl;
 	ofile << "variable tmp_var : " << this->Get_Dout()->Get_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
 	ofile << "begin -- { " << endl;
 
@@ -949,9 +949,9 @@ void vcInterlockBuffer::Print_Flow_Through_VHDL(ostream& ofile)
 	int min_w = ((in_size < out_size) ? in_size : out_size);
 
 	ofile << "tmp_var := (others => '0'); " << endl;
-	ofile << "tmp_var( " << min_w-1 << " downto 0) := " << this->Get_Din()->Get_VHDL_Id()
+	ofile << "tmp_var( " << min_w-1 << " downto 0) := " << this->Get_Din()->Get_VHDL_Signal_Id()
 			<< "(" << min_w -1 << " downto 0);" << endl;
-	ofile << this->Get_Dout()->Get_VHDL_Id() << " <= tmp_var; -- }" << endl;
+	ofile << this->Get_Dout()->Get_VHDL_Signal_Id() << " <= tmp_var; -- }" << endl;
 	ofile << "end process;" << endl; 
 }
 
@@ -1094,8 +1094,8 @@ void vcSlice::Print(ostream& ofile)
 void vcSlice::Print_Flow_Through_VHDL(ostream& ofile)
 {
 	ofile << "-- flow-through slice operator " << this->Get_VHDL_Id() << endl;
-	ofile << this->Get_Dout()->Get_VHDL_Id() << " <= ";
-	ofile << this->Get_Din()->Get_VHDL_Id() << "(" << this->_high_index << " downto " << this->_low_index << ");" << endl;
+	ofile << this->Get_Dout()->Get_VHDL_Signal_Id() << " <= ";
+	ofile << this->Get_Din()->Get_VHDL_Signal_Id() << "(" << this->_high_index << " downto " << this->_low_index << ");" << endl;
 }
 
 void vcSlice::Print_VHDL(ostream& ofile)
@@ -1214,8 +1214,8 @@ void vcPermutation::Print(ostream& ofile)
 
 void vcPermutation::Print_Flow_Through_VHDL(ostream& ofile)
 {
-      string src_net = this->Get_Din()->Get_VHDL_Id();
-      string dest_net = this->Get_Dout()->Get_VHDL_Id();
+      string src_net = this->Get_Din()->Get_VHDL_Signal_Id();
+      string dest_net = this->Get_Dout()->Get_VHDL_Signal_Id();
 
       ofile << " -- permutation " << this->Get_VHDL_Id() << endl;
       set<int> mapped_dests;
@@ -1313,7 +1313,7 @@ void vcPermutation::Print_VHDL(ostream& ofile)
       ofile << " -- permutation " << endl;
       set<int> mapped_dests;
       set<int> mapped_srcs;
-      string src_net = this->Get_Din()->Get_VHDL_Id();
+      string src_net = this->Get_Din()->Get_VHDL_Signal_Id();
       for(int idx = 0, fidx = this->_permutation.size(); idx < fidx; idx++)
 	{
 		int s = this->_permutation[idx].first;
@@ -1397,14 +1397,14 @@ void vcRegister::Print_VHDL(ostream& ofile)
 	if(this->Get_Guard_Wire() != NULL)
 	{
 		ofile << "req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
-			<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+			<< " when " << this->Get_Guard_Wire()->Get_VHDL_Signal_Id() 
 			<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else false;" << endl; 
 		ofile << " ackDelay: control_delay_element generic map(delay_value => 1) "
 			<< " port map(req => " 
 			<< this->Get_Req(0)->Get_CP_To_DP_Symbol() 
 			<< ", ack => ack_no_guard, clk => clk, reset => reset);" << endl;
 		ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack " 
-			<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+			<< " when " << this->Get_Guard_Wire()->Get_VHDL_Signal_Id() 
 			<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else " 
 			<< " ack_no_guard "  << ";" 
 			<< endl; 

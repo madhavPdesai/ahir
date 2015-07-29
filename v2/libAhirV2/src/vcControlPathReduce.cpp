@@ -1053,9 +1053,16 @@ void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
 		<< " <= " << this->Get_Start_Symbol() << ";" << endl;
 
 	vcCPElementGroup* exit_grp = _cpelement_to_group_map[this->_exit];
-	assert(exit_grp);
 
-	ofile << this->Get_Exit_Symbol() << " <= " << exit_grp->Get_VHDL_Id() << ";" << endl;
+	if(exit_grp != NULL)
+		ofile << this->Get_Exit_Symbol() << " <= " << exit_grp->Get_VHDL_Id() << ";" << endl;
+	else
+	{
+		vcSystem::Warning("exit symbol of control-path " + this->Get_VHDL_Id() + " not reachable, tied to false");
+		ofile << "-- unreachable exit of control-path" << endl;
+		ofile << this->Get_Exit_Symbol() << " <= false;" << endl;
+	}
+		
 
 	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
 			fiter = _cpelement_groups.end();

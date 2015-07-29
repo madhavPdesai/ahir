@@ -447,7 +447,8 @@ void vcSystem::Print_VHDL_Test_Bench(ostream& ofile)
   ofile << "entity " << this->Get_VHDL_Id() << "_Test_Bench is -- {" << endl;
   ofile << "-- }\n end entity;" << endl;
 
-  ofile << "architecture Default of " << this->Get_VHDL_Id() << "_Test_Bench is -- {" << endl;
+  string arch_name = this->Get_VHDL_Id() + "_test_bench_arch";
+  ofile << "architecture " << arch_name <<  " of " << this->Get_VHDL_Id() << "_Test_Bench is -- {" << endl;
   this->Print_VHDL_Component(ofile);
   this->Print_VHDL_Test_Bench_Signals(ofile);
   ofile << "-- }\n begin --{" << endl;
@@ -499,7 +500,7 @@ void vcSystem::Print_VHDL_Test_Bench(ostream& ofile)
 
 
   this->Print_VHDL_Instance(ofile);
-  ofile << "-- }\n end Default;" << endl;
+  ofile << "-- }\n end " << arch_name << ";" << endl;
 }
 
 
@@ -980,7 +981,8 @@ string vcSystem::Get_Pipe_Aggregate_Section(string pipe_id,
 void vcSystem::Print_VHDL_Architecture(ostream& ofile)
 {
 
-  ofile << "architecture Default of " << this->Get_VHDL_Id() << " is -- system-architecture {" << endl;
+  string arch_name = this->Get_VHDL_Id() + "_arch";
+  ofile << "architecture " << arch_name << "  of " << this->Get_VHDL_Id() << " is -- system-architecture {" << endl;
 
   for(map<string,vcMemorySpace*>::iterator iter = _memory_space_map.begin();
       iter != _memory_space_map.end();
@@ -1067,7 +1069,7 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
       ms->Print_VHDL_Instance(ofile);
     }
 
-  ofile << "-- } " << endl << "end Default;" << endl;
+  ofile << "-- } " << endl << "end " << arch_name << ";" << endl;
 }
 
 
