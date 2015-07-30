@@ -631,7 +631,15 @@ void vcControlPath::Construct_Reduced_Group_Graph()
 {
 	this->vcCPBlock::Construct_CPElement_Group_Graph_Vertices(this);
 	this->vcCPBlock::Connect_CPElement_Group_Graph(this);
+	if(this->Check_Group_Graph_Structure())
+	{
+		vcSystem::Error("malformed group graph after construction.");
+	}
 	this->Reduce_CPElement_Group_Graph();
+	if(this->Check_Group_Graph_Structure())
+	{
+		vcSystem::Error("malformed group graph after reduction.");
+	}
 }
 
 //
@@ -862,6 +870,77 @@ void vcControlPath::Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to,
 	}
 }
 
+
+// basic sanity checks.. returns true if error.
+bool vcControlPath::Check_Group_Graph_Structure()
+{
+	bool ret_val = false;
+	int idx = 0;
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
+			iter++)
+	{
+		(*iter)->Set_Group_Index(idx);
+		idx++;
+	}
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
+			iter++)
+	{
+		vcCPElementGroup* g = *iter;
+		for(set<vcCPElementGroup*>::iterator succ_iter = g->_successors.begin(), fsucc_iter = g->_successors.end();
+			succ_iter != fsucc_iter; succ_iter++)
+		{
+			vcCPElementGroup* sg = *succ_iter;
+			if(!sg->Has_Predecessor(g))
+			{
+				vcSystem::Error("malformed group graph: successor mismatch. ");
+				g->Print(cerr);
+				sg->Print(cerr);
+				ret_val = true;
+			}
+		}
+		for(set<vcCPElementGroup*>::iterator pred_iter = g->_predecessors.begin(), fpred_iter = g->_predecessors.end();
+			pred_iter != fpred_iter; pred_iter++)
+		{
+			vcCPElementGroup* pg = *pred_iter;
+			if(!pg->Has_Successor(g))
+			{
+				vcSystem::Error("malformed group graph: predecessor mismatch. ");
+				g->Print(cerr);
+				pg->Print(cerr);
+				ret_val = true;
+			}
+		}
+		for(set<vcCPElementGroup*>::iterator succ_iter = g->_marked_successors.begin(), fsucc_iter = g->_marked_successors.end();
+			succ_iter != fsucc_iter; succ_iter++)
+		{
+			vcCPElementGroup* sg = *succ_iter;
+			if(!sg->Has_Marked_Predecessor(g))
+			{
+				vcSystem::Error("malformed group graph: marked-successor mismatch. ");
+				g->Print(cerr);
+				sg->Print(cerr);
+				ret_val = true;
+			}
+		}
+		for(set<vcCPElementGroup*>::iterator pred_iter = g->_marked_predecessors.begin(), fpred_iter = g->_marked_predecessors.end();
+			pred_iter != fpred_iter; pred_iter++)
+		{
+			vcCPElementGroup* pg = *pred_iter;
+			if(!pg->Has_Marked_Successor(g))
+			{
+				vcSystem::Error("malformed group graph: marked-predecessor mismatch. ");
+				g->Print(cerr);
+				pg->Print(cerr);
+				ret_val = true;
+			}
+		}
+	}
+	return(ret_val);
+}
 
 //
 // Do a DFS starting from the entry group.
@@ -1404,18 +1483,12 @@ bool vcCPElementGroup::Can_Potentially_Absorb(vcCPElementGroup* g)
 		ret_val = false;
 	else if(g->_has_left_open_transition)
 		ret_val = false;
-	// if this is a join, g cannot be a
-	// place
-	else if(this->_is_join)
-		ret_val = !(g->_has_place);
-	// if this is a merge, g cannot
-	// be a transition.
-	else if (this->_is_merge)
+	// places and transitions should never
+	// be combined. this is safe..
+	else if (this->_has_place)
 		ret_val = !(g->_has_transition);
-	else if(g->_is_branch)
-		ret_val = !(this->_has_transition);
-	else if(g->_is_fork)
-		ret_val = !(this->_has_place);
+	else if(this->_has_transition)
+		ret_val = !(g->_has_place);
 	else
 		// otherwise there is no issue..
 		ret_val = true;
@@ -1512,3 +1585,5 @@ void vcControlPath::Eliminate_Dead_Groups()
 		this->Delete_Group(*diter);
 	}
 }
+
+

@@ -929,6 +929,24 @@ public:
     _is_left_open = false;
   }
 
+
+  bool Has_Predecessor(vcCPElementGroup* g)
+  {
+	return(_predecessors.find(g) != _predecessors.end());
+  }
+  bool Has_Successor(vcCPElementGroup* g)
+  {
+	return(_successors.find(g) != _successors.end());
+  }
+  bool Has_Marked_Predecessor(vcCPElementGroup* g)
+  {
+	return(_marked_predecessors.find(g) != _marked_predecessors.end());
+  }
+  bool Has_Marked_Successor(vcCPElementGroup* g)
+  {
+	return(_marked_successors.find(g) != _marked_successors.end());
+  }
+
   void Set_Group_Index(int64_t idx)
   {
     _group_index = idx;
@@ -1142,6 +1160,10 @@ public:
   void Print_VHDL_Export_Cleanup_Optimized(ostream& ofile);
 
   void Eliminate_Dead_Groups();
+
+  // ensure correct connectivity.
+  bool Check_Group_Graph_Structure();
+
 };
 
 

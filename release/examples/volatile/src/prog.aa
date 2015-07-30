@@ -1,9 +1,9 @@
 $pipe in_data  : $uint<32> $depth 2
 $pipe out_data : $uint<32> $depth 2
 
-$module [const_1] $in () $out (O: $uint<1>) $is
+$module [const_1] $in () $out (O: $uint<32>) $is
 {
-  O := 1
+  O := (~(1 << 6))
 }
 
 $module [volatile_check_daemon] $in() $out () $is

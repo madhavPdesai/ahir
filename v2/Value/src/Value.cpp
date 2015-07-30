@@ -416,21 +416,16 @@ void Unsigned::Assign(Unsigned& v)
 
 void Unsigned::Assign(Signed& v)
 {
-
 	for(int idx = 0; idx < this->Array_Size() ; idx++)
 		this->_bit_field[idx] = 0;
 
-	bool sign_bit = v.Get_Bit(v.Width() - 1);
-	if(!sign_bit)
+	// if v is negative, this will be 0.
+	for(int idx = 0; idx < __MIN__(_width,v.Width()); idx++)
 	{
-		// if v is negative, this will be 0.
-		for(int idx = 0; idx < __MIN__(_width,v.Width()); idx++)
-		{
-			this->Set_Bit(idx, v.Get_Bit(idx));
-		}
-		for(int idx = v.Width(); idx < _width; idx++)
-			this->Set_Bit(idx,false);
+		this->Set_Bit(idx, v.Get_Bit(idx));
 	}
+	for(int idx = v.Width(); idx < _width; idx++)
+		this->Set_Bit(idx,false);
 }
 
 bool Unsigned::Get_Bit(int idx)

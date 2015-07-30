@@ -52,6 +52,7 @@ int main()
   cout << a.To_String() <<" a = Concatenate(a,b) " << " width " << a._width <<  endl;
   a.Concatenate(b);
   cout << a.To_String() <<" a = Concatenate(a,b) " << " width " << a._width <<  endl;
+ 
 
   Unsigned one_val(68);
   one_val.Increment();
@@ -59,6 +60,11 @@ int main()
   cout << a.To_String() << " a = a + 1" << endl;
   a.Decrement();
   cout << a.To_String() << " a = a - 1 " << endl;
+  a.Complement();
+  cout << a.To_String() << " a = (~a)  " << endl;
+  a.Complement();
+  cout << a.To_String() << " a = (~a)  " << endl;
+
 
   a.Rotate_Left();
   cout << a.To_String() << " a = ROL(a) " << endl;
