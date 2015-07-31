@@ -1486,7 +1486,7 @@ bool vcCPElementGroup::Can_Potentially_Absorb(vcCPElementGroup* g)
 	// places and transitions should never
 	// be combined. this is safe..
 	else if (this->_has_place)
-		ret_val = !(g->_has_transition);
+		ret_val = !(g->_has_transition); 
 	else if(this->_has_transition)
 		ret_val = !(g->_has_place);
 	else
