@@ -33,8 +33,13 @@
 			 send_packet_and_wait_for_response(buffer,send_len,"localhost",9999);
 
 
+// register pipes will have no effect...  Assumption, at this
+// point, pipes should have been checked out "correctly".
 uint8_t sock_register_pipe(const char* id, int pipe_depth, int pipe_width, int lifo_mode)
 {
+  return(0);
+
+  /*
   uint8_t ret_val;
   char buffer[MAX_BUF_SIZE];
   char* ss;
@@ -49,11 +54,14 @@ uint8_t sock_register_pipe(const char* id, int pipe_depth, int pipe_width, int l
 #endif
   ret_val = get_uint8_t(buffer,&ss);
   return(ret_val);
+  */
   
 }
 
 uint8_t sock_register_port(const char* id, int pipe_width, int is_input)
 {
+  return(0);
+  /*
   uint8_t ret_val;
   char buffer[MAX_BUF_SIZE];
   char* ss;
@@ -65,7 +73,7 @@ uint8_t sock_register_port(const char* id, int pipe_width, int is_input)
 #endif
   ret_val = get_uint8_t(buffer,&ss);
   return(ret_val);
-  
+  */
 }
 
 uint64_t sock_read_uint64(const char *id)
