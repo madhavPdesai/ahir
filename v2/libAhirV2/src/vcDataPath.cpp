@@ -325,6 +325,54 @@ bool vcDatapathElement::Is_Part_Of_Pipelined_Loop(int& depth, int& buffering)
 	return(ret_val);
 }
 
+void vcDatapathElement::Generate_Input_Log_Strings(string& input_names, string& input_concat)
+{
+	bool guard_flag = false;
+	if(this->_guard_wire != NULL)
+	{
+		string gw_name = this->_guard_wire->Get_VHDL_Signal_Id();
+		input_names += gw_name + "(guard" + (this->_guard_complement ? " complement " : "") + ")";
+		input_concat += "Convert_Bool_To_String(" + gw_name + ")";
+		guard_flag = true;
+	}
+
+	if(this->Get_Number_Of_Input_Wires() > 0)
+	{
+		for(int idx = 0, fidx = this->Get_Number_Of_Input_Wires(); idx < fidx; idx++)
+		{
+			string inp_name = this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
+			input_names  +=  inp_name + " ";
+			if(idx > 0)
+				input_concat += " & ";
+			input_concat +=  "(Convert_SLV_To_Hex_String(" + inp_name + ") & \" \")";
+		}
+	}
+	else if(!guard_flag)
+	{
+		input_names = " no-guard, no-inputs ";
+		input_concat = "\" \"";
+	}
+}
+
+void vcDatapathElement::Generate_Output_Log_Strings(string& output_names, string& output_concat)
+{
+	if(this->Get_Number_Of_Output_Wires() > 0)
+	{
+		for(int idx = 0, fidx = this->Get_Number_Of_Output_Wires(); idx < fidx; idx++)
+		{
+			string op_name = this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
+			output_names  +=  op_name + " ";
+			if(idx > 0)
+				output_concat += " & ";
+			output_concat +=  "(Convert_SLV_To_Hex_String(" + op_name + ") & \" \")";
+		}
+	}
+	else
+	{
+		output_names = " no-outputs ";
+		output_concat = "\" \"";
+	}
+}
 void vcDatapathElement::Print_VHDL_Logger(ostream& ofile)
 {
 	string id = this->Get_Id();
@@ -358,54 +406,54 @@ void vcDatapathElement::Print_VHDL_Logger(ostream& ofile)
 
 vcDataPath::vcDataPath(vcModule* m, string id):vcRoot(id)
 {
-  this->_parent = m;
+	this->_parent = m;
 }
 
 void vcDataPath::Get_Label_Interval(vcControlPath* cp, vcDatapathElement* dpe, vector<vcCompatibilityLabel*>& ret_vector)
 {
-  int i, i_f;
-  for(i = 0, i_f = dpe->Get_Number_Of_Reqs(); i < i_f; i++)
-  {
-	vcCPElement* r = dpe->Get_Req(i);
-	assert(r != NULL);
-	     
-	ret_vector.push_back(r->Get_Compatibility_Label());
-  }
-  for(i = 0, i_f = dpe->Get_Number_Of_Acks(); i < i_f; i++)
-  {
-	vcCPElement* a = dpe->Get_Ack(i);
-	assert(a != NULL);
+	int i, i_f;
+	for(i = 0, i_f = dpe->Get_Number_Of_Reqs(); i < i_f; i++)
+	{
+		vcCPElement* r = dpe->Get_Req(i);
+		assert(r != NULL);
 
-	ret_vector.push_back(a->Get_Compatibility_Label());
-  }
+		ret_vector.push_back(r->Get_Compatibility_Label());
+	}
+	for(i = 0, i_f = dpe->Get_Number_Of_Acks(); i < i_f; i++)
+	{
+		vcCPElement* a = dpe->Get_Ack(i);
+		assert(a != NULL);
+
+		ret_vector.push_back(a->Get_Compatibility_Label());
+	}
 }
 
 vcDatapathElement* vcDataPath::Find_DPE(string dpe_name)
 {
-  map<string, vcDatapathElement*>::iterator iter = this->_dpe_map.find(dpe_name);
-  if(iter != this->_dpe_map.end())
-    return((*iter).second);
-  else
-    return(NULL);
+	map<string, vcDatapathElement*>::iterator iter = this->_dpe_map.find(dpe_name);
+	if(iter != this->_dpe_map.end())
+		return((*iter).second);
+	else
+		return(NULL);
 }
 
 vcWire* vcDataPath::Find_Wire(string wname)
 {
-  vcWire* ret_wire = NULL;
-  map<string, vcWire*>::iterator iter = this->_wire_map.find(wname);
-  if(iter != this->_wire_map.end())
-    ret_wire = ((*iter).second);
-  else
-    {
-      if(this->Get_Parent() != NULL)
+	vcWire* ret_wire = NULL;
+	map<string, vcWire*>::iterator iter = this->_wire_map.find(wname);
+	if(iter != this->_wire_map.end())
+		ret_wire = ((*iter).second);
+	else
 	{
-	  ret_wire = this->Get_Parent()->Get_Argument(wname,"in");
-	  if(ret_wire == NULL)
-	    ret_wire = this->Get_Parent()->Get_Argument(wname,"out");
+		if(this->Get_Parent() != NULL)
+		{
+			ret_wire = this->Get_Parent()->Get_Argument(wname,"in");
+			if(ret_wire == NULL)
+				ret_wire = this->Get_Parent()->Get_Argument(wname,"out");
+		}
 	}
-    }
 
-  if(ret_wire == NULL)
+	if(ret_wire == NULL)
     {
       // perhaps it is a constant defined at the Program scope
       ret_wire = (vcWire*) this->Get_Parent()->Get_Parent()->Find_Constant_Wire(wname);
@@ -2314,7 +2362,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 	  assert((*iter)->Is("vcInport"));
 	  vcInport* so = (vcInport*) (*iter);
 	  if(vcSystem::_enable_logging)
-	  	so->vcOperator::Print_VHDL_Logger(ofile);
+	  	so->Print_VHDL_Logger(ofile);
 
 	  if(p == NULL)
 	    p = ((vcInport*) so)->Get_Pipe();
@@ -2490,7 +2538,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	  assert((*iter)->Is("vcOutport"));
 	  vcOutport* so = (vcOutport*) (*iter);
 	  if(vcSystem::_enable_logging)
-	  	so->vcOperator::Print_VHDL_Logger(ofile);
+	  	so->Print_VHDL_Logger(ofile);
 
 	  if(p == NULL)
 	    p = ((vcOutport*) so)->Get_Pipe();

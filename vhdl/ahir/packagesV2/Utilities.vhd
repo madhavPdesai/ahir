@@ -9,6 +9,7 @@ package Utilities is
 
   function Digit_To_Char(val: integer) return character;
   function Convert_To_String(val : integer) return STRING; -- convert val to string.
+  function Convert_Bool_To_String(val : boolean) return STRING; -- convert bool to string.
   function Convert_SLV_To_String(val : std_logic_vector) return STRING; -- convert val to string.
   function Convert_SLV_To_Hex_String(val : std_logic_vector) return STRING; -- convert val to string.  
   function To_Hex_Char (constant val: std_logic_vector)    return character;
@@ -85,6 +86,14 @@ package body Utilities is
 	return result((pos-1) downto 1);
   end Convert_To_String;
   
+  function Convert_Bool_To_String(val : boolean) return STRING is
+	variable ret_var : string (1 to 5); -- convert bool to string.
+  begin
+    if(val) then ret_var := " true";
+    else ret_var := "false"; end if;
+    return(ret_var);
+  end Convert_Bool_To_String;
+   
   function Convert_SLV_To_String(val : std_logic_vector) return STRING is
 	alias lval: std_logic_vector(1 to val'length) is val;
         variable ret_var: string( 1 to lval'length);

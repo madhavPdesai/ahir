@@ -63,43 +63,32 @@ void vcOperator::Print_VHDL_Logger(ostream& ofile)
 		guard_id = this->Get_Guard_Wire()->Get_VHDL_Signal_Id() + "(0)";
 	else
 		guard_id = "sl_one";
-		
-	ofile  << "LogOperator(clk,reset,global_clock_cycle_count,";
-	ofile  << req_id << "," << ack_id << "," << guard_id << "," 
-		<< '"' << this->Get_Id() << " " << this->Get_Logger_Description() <<  '"' 
-		<< "," ;
-	if(this->Get_Number_Of_Input_Wires() > 0)
-	{
-		ofile << "false,"; // ignore input flag is set false.
-		for(int idx = 0, fidx = this->Get_Number_Of_Input_Wires(); idx < fidx; idx++)
-		{
-			if(idx != 0)
-				ofile << " & ";
-			ofile  <<  this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
-		}
-	}
-	else
-	{
-		ofile << "true, slv_zero"; // ignore inputs in logger.
-	}
 
-	ofile << "," << endl;
+	string op_descriptor = "logger::" + this->Get_Id() + " " + this->Get_Logger_Description();
 
-	if(this->Get_Number_Of_Output_Wires() > 0)
-	{
-		ofile << "false,"; // ignore output flag is set false.
-		for(int idx = 0, fidx = this->Get_Number_Of_Output_Wires(); idx < fidx; idx++)
-		{
-			if(idx != 0)
-				ofile << " & ";
-			ofile  <<  this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
-		}
-	}
-	else
-	{
-		ofile << "true, slv_zero"; // ignore outputs in logger.
-	}
-	ofile << ");" << endl;
+	string input_names;
+	string input_concat;
+	this->Generate_Input_Log_Strings(input_names, input_concat);
+
+	string output_names;
+	string output_concat;
+	this->Generate_Output_Log_Strings(output_names, output_concat);
+
+	string print_message = '"' + op_descriptor + " inputs: " + '"' + " & " 
+		+ '"' + input_names + '"' + " & "
+		+ input_concat  + " & " 
+		+ '"' + "outputs: " + output_names + '"' + " & "
+		+ output_concat;
+
+	ofile << "-- logger for operator " << this->Get_Id() << endl;
+	ofile << "process(clk)  " << endl;
+	ofile << "begin -- {" << endl;
+	ofile << "if ((reset = '0') and (clk'event and clk = '1')) then -- { " << endl;
+	ofile << "if " << ack_id << " then -- {" << endl;
+	ofile << " LogRecordPrint(global_clock_cycle_count,  " << print_message << ");" << endl;
+	ofile << "--} " << endl << "end if; " << endl;
+	ofile << "--} " << endl << "end if; " << endl;
+	ofile << "--} " << endl << "end process; " << endl;
 }
 
 void vcSplitOperator::Print_VHDL_Logger(ostream& ofile)
@@ -109,59 +98,40 @@ void vcSplitOperator::Print_VHDL_Logger(ostream& ofile)
 	if(this->_acks.size() < 2)
 		return;
 
-	string req0_id = this->_reqs[0]->Get_CP_To_DP_Symbol();
-	string req1_id = this->_reqs[1]->Get_CP_To_DP_Symbol();
+	string start_op_descriptor = "logger::" + this->Get_Id() + ":started: " ;
+	string finish_op_descriptor = "logger::" + this->Get_Id() + ":finished: ";
+
+	string input_names;
+	string input_concat;
+	this->Generate_Input_Log_Strings(input_names, input_concat);
+
+	string output_names;
+	string output_concat;
+	this->Generate_Output_Log_Strings(output_names, output_concat);
+
+	string start_print_message = '"' + start_op_descriptor + " inputs: " + '"' + " & " 
+		+ '"' + input_names + '"' + " & "
+		+ input_concat;
+
+	string finish_print_message = '"' + finish_op_descriptor + " outputs: " + '"' + " & " 
+		+ '"' +  output_names + '"'  + " & "
+		+ output_concat;
+
 	string ack0_id = this->_acks[0]->Get_DP_To_CP_Symbol();
 	string ack1_id = this->_acks[1]->Get_DP_To_CP_Symbol();
 
-	bool guard_present = (this->Get_Guard_Wire() != NULL);
-
-	string guard_id;
-
-	if(this->Get_Guard_Wire() != NULL)
-		guard_id = this->Get_Guard_Wire()->Get_VHDL_Signal_Id() + "(0)";
-	else
-		guard_id = "sl_one";
-
-		
-	ofile  << "LogSplitOperator(clk,reset,global_clock_cycle_count," ;
-	ofile  << req0_id << "," << ack0_id << ",";
-	ofile  << req1_id << "," << ack1_id << "," << guard_id << "," 
-		<< '"' << this->Get_Id() << '"' 
-		<< "," ;
-
-	if(this->Get_Number_Of_Input_Wires() > 0)
-	{
-		ofile << "false,"; // ignore input flag is set false.
-		for(int idx = 0, fidx = this->Get_Number_Of_Input_Wires(); idx < fidx; idx++)
-		{
-			if(idx != 0)
-				ofile << " & ";
-			ofile  <<  this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
-		}
-	}
-	else
-	{
-		ofile << "true, slv_zero"; // ignore inputs in logger.
-	}
-
-	ofile << "," << endl;
-
-	if(this->Get_Number_Of_Output_Wires() > 0)
-	{
-		ofile << "false,"; // ignore output flag is set false.
-		for(int idx = 0, fidx = this->Get_Number_Of_Output_Wires(); idx < fidx; idx++)
-		{
-			if(idx != 0)
-				ofile << " & ";
-			ofile  <<  this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
-		}
-	}
-	else
-	{
-		ofile << "true, slv_zero"; // ignore outputs in logger.
-	}
-	ofile << ");" << endl;
+	ofile << "-- logger for split-operator " << this->Get_Id() << endl;
+	ofile << "process(clk)  " << endl;
+	ofile << "begin -- {" << endl;
+	ofile << "if ((reset = '0') and (clk'event and clk = '1')) then -- { " << endl;
+	ofile << "if " << ack0_id << " then -- {" << endl;
+	ofile << " LogRecordPrint(global_clock_cycle_count,  " << start_print_message << ");" << endl;
+	ofile << "--} " << endl << "end if; " << endl;
+	ofile << "if " << ack1_id << " then -- {" << endl;
+	ofile << " LogRecordPrint(global_clock_cycle_count,  " << finish_print_message << ");" << endl;
+	ofile << "--} " << endl << "end if; " << endl;
+	ofile << "--} " << endl << "end if; " << endl;
+	ofile << "--} " << endl << "end process; " << endl;
 }
 
 vcLoadStore::vcLoadStore(string id, vcMemorySpace* ms):vcSplitOperator(id)
@@ -526,7 +496,7 @@ void vcCall::Print_Flow_Through_VHDL(ostream& ofile)
 }
 
 
-vcIOport::vcIOport(string id, vcPipe* pipe): vcOperator(id)
+vcIOport::vcIOport(string id, vcPipe* pipe): vcSplitOperator(id)
 {
 	_pipe = pipe;
 }

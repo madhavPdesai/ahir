@@ -9,6 +9,8 @@ use GhdlLink.Vhpi_Foreign.all;
 
 package LogUtilities is
 
+  procedure LogRecordPrint(gcount: in integer; pmesg: in string);
+
   procedure LogPipeWrite (
     signal clk : in std_logic;
     reset : in std_logic;
@@ -98,6 +100,16 @@ package LogUtilities is
 end LogUtilities;
 
 package body LogUtilities is
+
+  procedure LogRecordPrint(gcount: in integer; pmesg: in string) is
+	variable log_string: VhpiString;
+  begin
+	log_string := Pack_String_To_Vhpi_String(Convert_To_String(gcount) & " " & pmesg);
+        assert(false) report Convert_To_String(gcount) & " " & pmesg severity note;
+	Vhpi_Log(log_string);
+  end procedure;
+
+
   procedure LogPipeWrite (
     signal clk : in std_logic;
     reset : in std_logic;

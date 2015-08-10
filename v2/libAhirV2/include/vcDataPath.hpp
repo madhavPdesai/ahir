@@ -488,6 +488,9 @@ protected:
 	return ((R < min_val) ? min_val :R);
   }
 
+  void Generate_Input_Log_Strings(string& input_names, string& input_concat);
+  void Generate_Output_Log_Strings(string& output_names, string& output_concat);
+
   virtual void Print_VHDL_Logger(ostream& ofile);
   friend class vcDataPath;
 
