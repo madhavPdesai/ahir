@@ -490,14 +490,17 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			}
 		}
 
+		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 		this->Write_VC_Synch_Dependency(visited_elements, pipeline_flag, ofile);
 		visited_elements.insert(this);
+
 
 		// if pipeline-flag, then re-enable..
 		if(pipeline_flag)
 		{
 			__SelfReleaseSplitProtocolPattern
 		}
+
 	}
 }
 

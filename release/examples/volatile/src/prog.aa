@@ -1,6 +1,11 @@
 $pipe in_data  : $uint<32> $depth 2
 $pipe out_data : $uint<32> $depth 2
 
+$module [tNot] $in (a: $uint<32>) $out (b: $uint<32>) $is
+{
+	b := (~a)
+}
+
 $module [const_1] $in () $out (O: $uint<32>) $is
 {
   O := (~(1 << 6))
@@ -14,7 +19,9 @@ $module [volatile_check_daemon] $in() $out () $is
 	$branchblock[lOoP] {
 		$dopipeline $depth 16 $buffering 2 
 		$fullrate
-		$merge $entry $loopback $endmerge
+		$merge $entry $loopback 
+			$phi tZ := 0 $on $entry Z $on $loopback
+		$endmerge
 
 		X := in_data
 
@@ -26,6 +33,9 @@ $module [volatile_check_daemon] $in() $out () $is
 		$volatile 
 			Y := ($concat X_L X_H)
 		out_data := Y
+
+		$call tNot (Y) (Z)
+
 		$while 1
 	}
 }
