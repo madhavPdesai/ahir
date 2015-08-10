@@ -277,6 +277,7 @@ public:
   virtual string Kind() {return("vcPhi");}
 
   virtual void Print_VHDL(ostream& ofile);
+  virtual void Print_VHDL_Logger(ostream& ofile);
   friend class vcDataPath;
 };
 
@@ -289,6 +290,7 @@ public:
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcPhiPipeined");}
   virtual void Print_VHDL(ostream& ofile);
+  virtual void Print_VHDL_Logger(ostream& ofile);
   friend class vcDataPath;
 
 };

@@ -331,8 +331,8 @@ void vcDatapathElement::Generate_Input_Log_Strings(string& input_names, string& 
 	if(this->_guard_wire != NULL)
 	{
 		string gw_name = this->_guard_wire->Get_VHDL_Signal_Id();
-		input_names += gw_name + "(guard" + (this->_guard_complement ? " complement " : "") + ")";
-		input_concat += "Convert_Bool_To_String(" + gw_name + ")";
+		input_names += gw_name + " (guard" + (this->_guard_complement ? " complement " : "") + ")  ";
+		input_concat += "Convert_SLV_To_String(" + gw_name + ") & \" \"";
 		guard_flag = true;
 	}
 
@@ -342,7 +342,7 @@ void vcDatapathElement::Generate_Input_Log_Strings(string& input_names, string& 
 		{
 			string inp_name = this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
 			input_names  +=  inp_name + " ";
-			if(idx > 0)
+			if(guard_flag || (idx > 0))
 				input_concat += " & ";
 			input_concat +=  "(Convert_SLV_To_Hex_String(" + inp_name + ") & \" \")";
 		}

@@ -1,5 +1,4 @@
 # build software version of testbench (to check the "desired behaviour")
-AHIR_RELEASE=/home/madhav/ahirgit/ahir/release/
 SOCKETLIB_INCLUDE=$(AHIR_RELEASE)/CtestBench/include
 SOCKETLIB_LIB=$(AHIR_RELEASE)/CtestBench/lib
 PIPEHANDLER_INCLUDE=$(AHIR_RELEASE)/pipeHandler/include
@@ -59,7 +58,7 @@ aa2vc: prog.linked.opt.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -S 4 -O -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc
+	vc2vhdl -D -S 4 -O -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
