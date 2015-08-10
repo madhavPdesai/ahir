@@ -44,22 +44,15 @@ begin
     read_req(0) <= '1';
 
     -- data coming from pipe..
-    process(clk)
-    begin
-	if(clk'event and clk = '1') then
-		if(read_ack(0) = '1') then
-			out_reg <= pipe_data_out;
-		end if;
-	end if;
-    end process;
-    TruncateOrPad(out_reg, out_data);
+    TruncateOrPad(pipe_data_out, out_data);
 
     --
     -- pipe.. to provide interlock so only one writer succeeds at a time.
     --
-    opipe: PipeBase generic map(name => name & " opipe", num_reads => 1,
+    opipe: PipeBase generic map(name => name & " opipe", 
+				    num_reads => 1,
 					num_writes => num_writes, data_width => min_width,
-						lifo_mode => false, depth => 1)
+						lifo_mode => false, signal_mode => true, depth => 1)
 		port map(read_req => read_req, read_ack => read_ack,
 				read_data => pipe_data_out,
 					write_req => write_req, write_ack => write_ack,

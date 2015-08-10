@@ -31,6 +31,7 @@ architecture default_arch of PipeBase is
   signal pipe_data, pipe_data_repeated : std_logic_vector(data_width-1 downto 0);
   signal pipe_req, pipe_ack, pipe_req_repeated, pipe_ack_repeated: std_logic;
   signal signal_data : std_logic_vector(data_width-1 downto 0); 
+  signal written_at_least_once: std_logic;
   
 begin  -- default_arch
 
@@ -60,38 +61,30 @@ begin  -- default_arch
   -- in signal mode, the pipe is just a flag
   SignalMode: if signal_mode generate
 
-	-- write always succeeds.
+     -- write always succeeds.
      pipe_ack <= '1';
      process(clk,reset) 
      begin
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			signal_data <= (others => '0');	
+  			written_at_least_once <= '0';
 		else
 			if(pipe_req = '1') then
 				signal_data <= write_data;
+  				written_at_least_once <= '1';
 			end if;
 		end if;
 	end if;
      end process;
 
-	-- read always succeeds, but output-register is
-	-- updated.
+	-- read always succeeds, provided that it has been written
+	-- into at least once.
      ReaderGen: for R in 0 to num_reads-1 generate
-	read_ack(R) <= '1';	
-	process(clk,reset)
-	begin
-		if(clk'event and clk = '1') then
-			if(reset = '1') then
-				read_data(((R+1)*data_width)-1 downto (R*data_width)) <= (others => '0');
-			else
-				if(read_req(R) = '1') then
-					read_data(((R+1)*data_width)-1 downto (R*data_width)) <= signal_data;
-				end if;
-			end if;
-		end if;
-	end process;
+	read_ack(R) <= written_at_least_once;
+	read_data(((R+1)*data_width)-1 downto (R*data_width)) <= signal_data;
      end generate ReaderGen;
+
   end generate SignalMode;
 
   Shallow: if (not signal_mode) and (depth < 3) and (not lifo_mode) generate

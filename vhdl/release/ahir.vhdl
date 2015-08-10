@@ -12226,6 +12226,7 @@ architecture default_arch of PipeBase is
   signal pipe_data, pipe_data_repeated : std_logic_vector(data_width-1 downto 0);
   signal pipe_req, pipe_ack, pipe_req_repeated, pipe_ack_repeated: std_logic;
   signal signal_data : std_logic_vector(data_width-1 downto 0); 
+  signal written_at_least_once: std_logic;
   
 begin  -- default_arch
 
@@ -12255,38 +12256,30 @@ begin  -- default_arch
   -- in signal mode, the pipe is just a flag
   SignalMode: if signal_mode generate
 
-	-- write always succeeds.
+     -- write always succeeds.
      pipe_ack <= '1';
      process(clk,reset) 
      begin
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			signal_data <= (others => '0');	
+  			written_at_least_once <= '0';
 		else
 			if(pipe_req = '1') then
 				signal_data <= write_data;
+  				written_at_least_once <= '1';
 			end if;
 		end if;
 	end if;
      end process;
 
-	-- read always succeeds, but output-register is
-	-- updated.
+	-- read always succeeds, provided that it has been written
+	-- into at least once.
      ReaderGen: for R in 0 to num_reads-1 generate
-	read_ack(R) <= '1';	
-	process(clk,reset)
-	begin
-		if(clk'event and clk = '1') then
-			if(reset = '1') then
-				read_data(((R+1)*data_width)-1 downto (R*data_width)) <= (others => '0');
-			else
-				if(read_req(R) = '1') then
-					read_data(((R+1)*data_width)-1 downto (R*data_width)) <= signal_data;
-				end if;
-			end if;
-		end if;
-	end process;
+	read_ack(R) <= written_at_least_once;
+	read_data(((R+1)*data_width)-1 downto (R*data_width)) <= signal_data;
      end generate ReaderGen;
+
   end generate SignalMode;
 
   Shallow: if (not signal_mode) and (depth < 3) and (not lifo_mode) generate
@@ -21368,8 +21361,8 @@ architecture Mixed of SystemInPort is
     constant min_width : integer := Minimum(in_data_width, out_data_width);
     signal data_reg, tr_p_in_data: std_logic_vector(min_width-1 downto 0);
     signal tr_data : std_logic_vector(out_data_width-1 downto 0);
+    signal valid_data : std_logic;
 begin
-    read_ack <= (others => '1');
 
     -- stored data will be of minimum width.
     TruncateOrPad(in_data, tr_p_in_data); 
@@ -21378,8 +21371,10 @@ begin
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			data_reg <= (others => '0');
+			valid_data <= '0';
 		else
 			data_reg <= tr_p_in_data;
+			valid_data <= '1';
 		end if;
 	end if;
     end process;
@@ -21390,15 +21385,11 @@ begin
 
     -- padded data is broadcast to all readers.
     ReadGen: for I in 0 to num_reads-1 generate
-      process(clk,reset)
+
+      read_ack(I) <= valid_data;
+      process(tr_data)
       begin
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= (others => '0');
-		elsif read_req(I) = '1' then
-			read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= tr_data;
-		end if;
-	end if;
+	read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= tr_data;
       end process;
     end generate ReadGen;
 end Mixed;
@@ -21449,22 +21440,15 @@ begin
     read_req(0) <= '1';
 
     -- data coming from pipe..
-    process(clk)
-    begin
-	if(clk'event and clk = '1') then
-		if(read_ack(0) = '1') then
-			out_reg <= pipe_data_out;
-		end if;
-	end if;
-    end process;
-    TruncateOrPad(out_reg, out_data);
+    TruncateOrPad(pipe_data_out, out_data);
 
     --
     -- pipe.. to provide interlock so only one writer succeeds at a time.
     --
-    opipe: PipeBase generic map(name => name & " opipe", num_reads => 1,
+    opipe: PipeBase generic map(name => name & " opipe", 
+				    num_reads => 1,
 					num_writes => num_writes, data_width => min_width,
-						lifo_mode => false, depth => 1)
+						lifo_mode => false, signal_mode => true, depth => 1)
 		port map(read_req => read_req, read_ack => read_ack,
 				read_data => pipe_data_out,
 					write_req => write_req, write_ack => write_ack,

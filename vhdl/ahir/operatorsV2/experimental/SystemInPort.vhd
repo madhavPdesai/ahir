@@ -31,8 +31,8 @@ architecture Mixed of SystemInPort is
     constant min_width : integer := Minimum(in_data_width, out_data_width);
     signal data_reg, tr_p_in_data: std_logic_vector(min_width-1 downto 0);
     signal tr_data : std_logic_vector(out_data_width-1 downto 0);
+    signal valid_data : std_logic;
 begin
-    read_ack <= (others => '1');
 
     -- stored data will be of minimum width.
     TruncateOrPad(in_data, tr_p_in_data); 
@@ -41,8 +41,10 @@ begin
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			data_reg <= (others => '0');
+			valid_data <= '0';
 		else
 			data_reg <= tr_p_in_data;
+			valid_data <= '1';
 		end if;
 	end if;
     end process;
@@ -53,15 +55,11 @@ begin
 
     -- padded data is broadcast to all readers.
     ReadGen: for I in 0 to num_reads-1 generate
-      process(clk,reset)
+
+      read_ack(I) <= valid_data;
+      process(tr_data)
       begin
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= (others => '0');
-		elsif read_req(I) = '1' then
-			read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= tr_data;
-		end if;
-	end if;
+	read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= tr_data;
       end process;
     end generate ReadGen;
 end Mixed;

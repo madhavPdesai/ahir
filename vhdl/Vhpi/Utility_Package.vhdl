@@ -179,26 +179,23 @@ package body Utility_Package is
         
   function Convert_SLV_To_Hex_String(val : std_logic_vector) return STRING is
     alias lval: std_logic_vector(val'length downto 1) is val;
-    variable ret_var: string( 1 to Ceiling(lval'length,4));
+    variable padded_lval : std_logic_vector((4*Ceiling(lval'length,4)) downto 1);
+    variable ret_var: string(Ceiling(lval'length,4) downto 1);
     variable hstr  : std_logic_vector(4 downto 1);
     variable I : integer;
   begin
+    padded_lval := (others => '0');
+    padded_lval(val'length downto 1) := lval;
 
     I := 0;
-
-    while I < (lval'length/4) loop
-      hstr := lval(4*(I+1) downto (4*I)+1);
-      ret_var(ret_var'length - I) := To_Hex_Char(hstr);
+    while (I < ret_var'length) loop
+      hstr       := padded_lval(4*(I+1) downto (4*I)+1);
       I := (I + 1);
+      ret_var(I) := To_Hex_Char(hstr);
     end loop;  -- I
-
-    hstr := (others => '0');
-    if(ret_var'length > (lval'length/4)) then
-      hstr((lval'length-((lval'length/4)*4)) downto 1) := lval(lval'length downto (4*(lval'length/4))+1);
-      ret_var(1) := To_Hex_Char(hstr);
-    end if;
 
     return(ret_var);
   end Convert_SLV_To_Hex_String;
+
 end Utility_Package;
 

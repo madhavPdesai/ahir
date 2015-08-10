@@ -88,6 +88,7 @@ package LogUtilities is
         cr: in boolean;
         ca: in boolean;
 	guard_sig: in std_logic;
+	guard_complement: in boolean;
 	operator_id: in string;
 	ignore_input: boolean;
 	din: in std_logic_vector;
@@ -298,45 +299,67 @@ package body LogUtilities is
         cr: in boolean;
         ca: in boolean;
 	guard_sig: in std_logic;
+	guard_complement: in boolean;
 	operator_id: in string;
 	ignore_input: boolean;
 	din: in std_logic_vector;
 	ignore_output: boolean;
 	dout: in std_logic_vector) is
     variable log_string : VhpiString;
+    variable tmp_string : string(1 to 4096);
+    variable saved_guard : std_logic := '1';
   begin
     if(clk'event and clk = '1') then
-      if(guard_sig = '1') then
       	if(sr) then
         	assert false report operator_id & ": req0 " 
-          & " input-data= " & Convert_SLV_To_Hex_String(din)   severity note;
-        log_string := Pack_String_To_Vhpi_String(Convert_To_String(clock_cycle) & ". req0 " & operator_id & " input-data=" &
-			Convert_SLV_To_Hex_String(din));
-	   Vhpi_Log(log_string);
-        end if;
+          			& " input-data= " & Convert_SLV_To_Hex_String(din)   severity note;
+		if(guard_complement or (guard_sig = '0')) then
+        		log_string := Pack_String_To_Vhpi_String(Convert_To_String(clock_cycle) & ". req0 " & operator_id & " input-data=" &
+				Convert_SLV_To_Hex_String(din) & " skipped!");
+		else
+        		log_string := Pack_String_To_Vhpi_String(Convert_To_String(clock_cycle) & ". req0 " & operator_id & " input-data=" &
+				Convert_SLV_To_Hex_String(din));
+		end if;
+	   	Vhpi_Log(log_string);
+		saved_guard := guard_sig;
+	end if;
 
         if(sa) then
-          assert false report operator_id & ": ack0 " & 
-           " input-data = " & Convert_SLV_To_Hex_String(din)  severity note;
-        log_string := Pack_String_To_Vhpi_String(Convert_To_String(clock_cycle) & ". ack0 " & operator_id & " input-data=" &
-			Convert_SLV_To_Hex_String(din));
-          Vhpi_Log(log_string);
+          	assert false report operator_id & ": ack0 " & 
+           		" input-data = " & Convert_SLV_To_Hex_String(din)  severity note;
+		if(guard_complement or (guard_sig = '0')) then
+        		log_string := Pack_String_To_Vhpi_String(Convert_To_String(clock_cycle) & ". ack0 " & operator_id & " input-data=" &
+				Convert_SLV_To_Hex_String(din) & " skipped!");
+		else
+        		log_string := Pack_String_To_Vhpi_String(Convert_To_String(clock_cycle) & ". ack0 " & operator_id & " input-data=" &
+				Convert_SLV_To_Hex_String(din));
+		end if;
+          	Vhpi_Log(log_string);
         end if;
 
       	if(cr) then
         	assert false report operator_id & ": req1 "  severity note;
-        log_string := Pack_String_To_Vhpi_String(Convert_To_String(clock_cycle) & ". req1 " & operator_id);
-	   Vhpi_Log(log_string);
-        end if;
+        		log_string := Pack_String_To_Vhpi_String(Convert_To_String(clock_cycle) & ". req1 " & operator_id);
+	   	Vhpi_Log(log_string);
+	end if;
 
         if(ca) then
-          assert false report operator_id & ": ack1 " &
-           " output-data = " & Convert_SLV_To_Hex_String(dout)  severity note;
-        log_string := Pack_String_To_Vhpi_String(Convert_To_String(clock_cycle) & ". ack1 " & operator_id & " output-data=" &
+           assert false report operator_id & ": ack1 " &
+                " output-data = " & Convert_SLV_To_Hex_String(dout)  severity note;
+	   if(guard_complement or (saved_guard = '0')) then
+           	log_string := Pack_String_To_Vhpi_String(Convert_To_String(clock_cycle) & ". ack1 " & operator_id & " output-data=" &
+			Convert_SLV_To_Hex_String(dout) & " skipped!" );
+	   else
+           	log_string := Pack_String_To_Vhpi_String(Convert_To_String(clock_cycle) & ". ack1 " & operator_id & " output-data=" &
 			Convert_SLV_To_Hex_String(dout));
-          Vhpi_Log(log_string);
+	   end if;
+           Vhpi_Log(log_string);
+	   if(guard_complement) then
+		saved_guard := '1';
+	   else
+	   	saved_guard := '0';
+	   end if;
         end if;
-      end if;
     end if;        
   end procedure;
   

@@ -117,16 +117,20 @@ void vcSplitOperator::Print_VHDL_Logger(ostream& ofile)
 	bool guard_present = (this->Get_Guard_Wire() != NULL);
 
 	string guard_id;
+	bool guard_complement = true;
 
 	if(this->Get_Guard_Wire() != NULL)
+	{
 		guard_id = this->Get_Guard_Wire()->Get_VHDL_Signal_Id() + "(0)";
+		guard_complement = this->Get_Guard_Complement();
+	}
 	else
 		guard_id = "sl_one";
 
 		
 	ofile  << "LogSplitOperator(clk,reset,global_clock_cycle_count," ;
 	ofile  << req0_id << "," << ack0_id << ",";
-	ofile  << req1_id << "," << ack1_id << "," << guard_id << "," 
+	ofile  << req1_id << "," << ack1_id << "," << guard_id << ","  << (guard_complement ? "true" : "false") << ", "
 		<< '"' << this->Get_Id() << '"' 
 		<< "," ;
 
