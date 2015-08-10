@@ -111,8 +111,7 @@ public:
   friend class vcDataPath;
 };
 
-// only a single req/ack pair.. derive from vcOperator
-class vcIOport: public vcOperator
+class vcIOport: public vcSplitOperator
 {
 protected:
   vcPipe* _pipe;
