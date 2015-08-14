@@ -183,6 +183,7 @@ public:
 
   int Get_Size();
   virtual bool Is_Constant() {return(false);}
+  int Get_Number_Of_Receivers() {return(this->_receivers.size());}
 };
 
 class vcIntermediateWire: public vcWire
@@ -491,7 +492,7 @@ protected:
   void Generate_Input_Log_Strings(string& input_names, string& input_concat);
   void Generate_Output_Log_Strings(string& output_names, string& output_concat);
 
-  virtual void Print_VHDL_Logger(ostream& ofile);
+  virtual void Print_VHDL_Logger(string& module_name, ostream& ofile);
   friend class vcDataPath;
 
 };

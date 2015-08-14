@@ -23,6 +23,8 @@ stage_0 ()
 void
 _stage_0_ ()
 {
+  MUTEX_DECL (_stage_0_series_block_stmt_5_c_mutex_);
+  MUTEX_LOCK (_stage_0_series_block_stmt_5_c_mutex_);
   _stage_0_inner_inarg_prep_macro__;
   _stage_0_branch_block_stmt_6_c_export_decl_macro_;
   {
@@ -36,6 +38,7 @@ _stage_0_ ()
     _stage_0_branch_block_stmt_6_c_export_apply_macro_;
   }
   _stage_0_inner_outarg_prep_macro__;
+  MUTEX_UNLOCK (_stage_0_series_block_stmt_5_c_mutex_);
 }
 
 void
@@ -50,6 +53,8 @@ stage_1 ()
 void
 _stage_1_ ()
 {
+  MUTEX_DECL (_stage_1_series_block_stmt_13_c_mutex_);
+  MUTEX_LOCK (_stage_1_series_block_stmt_13_c_mutex_);
   _stage_1_inner_inarg_prep_macro__;
   _stage_1_branch_block_stmt_14_c_export_decl_macro_;
   {
@@ -67,6 +72,7 @@ _stage_1_ ()
     _stage_1_branch_block_stmt_14_c_export_apply_macro_;
   }
   _stage_1_inner_outarg_prep_macro__;
+  MUTEX_UNLOCK (_stage_1_series_block_stmt_13_c_mutex_);
 }
 
 void
@@ -81,6 +87,8 @@ stage_2 ()
 void
 _stage_2_ ()
 {
+  MUTEX_DECL (_stage_2_series_block_stmt_28_c_mutex_);
+  MUTEX_LOCK (_stage_2_series_block_stmt_28_c_mutex_);
   _stage_2_inner_inarg_prep_macro__;
   _stage_2_branch_block_stmt_29_c_export_decl_macro_;
   {
@@ -98,6 +106,7 @@ _stage_2_ ()
     _stage_2_branch_block_stmt_29_c_export_apply_macro_;
   }
   _stage_2_inner_outarg_prep_macro__;
+  MUTEX_UNLOCK (_stage_2_series_block_stmt_28_c_mutex_);
 }
 
 void
@@ -112,6 +121,8 @@ stage_3 ()
 void
 _stage_3_ ()
 {
+  MUTEX_DECL (_stage_3_series_block_stmt_43_c_mutex_);
+  MUTEX_LOCK (_stage_3_series_block_stmt_43_c_mutex_);
   _stage_3_inner_inarg_prep_macro__;
   _stage_3_branch_block_stmt_44_c_export_decl_macro_;
   {
@@ -121,13 +132,11 @@ _stage_3_ ()
     {
 // do-while:   file ShiftRegister.aa, line 57
       __declare_bit_vector (konst_51, 1);
-      bit_vector_clear (&konst_51);
-      konst_51.val.byte_array[0] = 1;
       uint8_t do_while_entry_flag;
       do_while_entry_flag = 1;
       uint8_t do_while_loopback_flag;
       do_while_loopback_flag = 0;
-      do
+      while (1)
 	{
 // merge  file ShiftRegister.aa, line 58
 	  _stage_3_merge_stmt_47_c_preamble_macro_;
@@ -136,12 +145,16 @@ _stage_3_ ()
 	  _stage_3_call_stmt_49_c_macro_;
 	  do_while_entry_flag = 0;
 	  do_while_loopback_flag = 1;
+	  bit_vector_clear (&konst_51);
+	  konst_51.val.byte_array[0] = 1;
+	  if (!bit_vector_to_uint64 (0, &konst_51))
+	    break;
 	}
-      while (bit_vector_to_uint64 (0, &konst_51));
     }
     _stage_3_branch_block_stmt_44_c_export_apply_macro_;
   }
   _stage_3_inner_outarg_prep_macro__;
+  MUTEX_UNLOCK (_stage_3_series_block_stmt_43_c_mutex_);
 }
 
 DEFINE_THREAD (stage_0);

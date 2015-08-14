@@ -373,7 +373,7 @@ void vcDatapathElement::Generate_Output_Log_Strings(string& output_names, string
 		output_concat = "\" \"";
 	}
 }
-void vcDatapathElement::Print_VHDL_Logger(ostream& ofile)
+void vcDatapathElement::Print_VHDL_Logger(string& module_name, ostream& ofile)
 {
 	string id = this->Get_Id();
 	for(int idx = 0, fidx = _reqs.size(); idx < fidx; idx++)
@@ -1056,6 +1056,7 @@ void vcDataPath::Print_VHDL(ostream& ofile)
 
 void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
 { 
+  string parent_name = this->Get_Parent()->Get_Id();
   for(map<string, vcPhi*>::iterator iter = _phi_map.begin();
       iter != _phi_map.end();
       iter++)
@@ -1063,7 +1064,8 @@ void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
       vcPhi* p = (*iter).second;
       if(vcSystem::_enable_logging)
       {
-	p->Print_VHDL_Logger(ofile);
+	
+	p->Print_VHDL_Logger(parent_name, ofile);
       }
 
       p->Print_VHDL(ofile);
@@ -1077,6 +1079,7 @@ void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
 void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
 { 
   int idx = 0;
+  string parent_name = this->Get_Parent()->Get_Id();
   for(map<string, vcSelect*>::iterator iter = _select_map.begin();
       iter != _select_map.end();
       iter++)
@@ -1085,7 +1088,7 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
       if(!s->Get_Flow_Through())
       {
 	      if(vcSystem::_enable_logging)
-		      s->vcSplitOperator::Print_VHDL_Logger(ofile);
+		      s->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
 
 	      s->Print_VHDL(ofile);
       }
@@ -1099,6 +1102,7 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
 void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
 { 
 	int idx = 0;
+	string parent_name = this->Get_Parent()->Get_Id();
 
 	for(map<string, vcSlice*>::iterator iter = _slice_map.begin();
 			iter != _slice_map.end();
@@ -1108,7 +1112,7 @@ void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
 		if(!s->Get_Flow_Through())
 		{
 			if(vcSystem::_enable_logging)
-				s->vcSplitOperator::Print_VHDL_Logger(ofile);
+				s->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
 
 			s->Print_VHDL(ofile);
 		}
@@ -1121,6 +1125,7 @@ void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
 void vcDataPath::Print_VHDL_Permutation_Instances(ostream& ofile)
 { 
 	int idx = 0;
+	string parent_name = this->Get_Parent()->Get_Id();
 
 	for(map<string, vcPermutation*>::iterator iter = _permutation_map.begin();
 			iter != _permutation_map.end();
@@ -1130,7 +1135,7 @@ void vcDataPath::Print_VHDL_Permutation_Instances(ostream& ofile)
 		if(!s->Get_Flow_Through())
 		{
 			if(vcSystem::_enable_logging)
-				s->vcSplitOperator::Print_VHDL_Logger(ofile);
+				s->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
 
 			s->Print_VHDL(ofile);
 		}
@@ -1144,13 +1149,14 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
 { 
 
 	int idx = 0;
+	string parent_name = this->Get_Parent()->Get_Id();
 	for(map<string, vcRegister*>::iterator iter = _register_map.begin();
 			iter != _register_map.end();
 			iter++)
 	{
 		vcRegister* s = (*iter).second;
 		if(vcSystem::_enable_logging)
-			s->vcOperator::Print_VHDL_Logger(ofile);
+			s->vcOperator::Print_VHDL_Logger(parent_name, ofile);
 		s->Print_VHDL(ofile);
 		idx++;
 	}
@@ -1158,6 +1164,7 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
 
 void vcDataPath::Print_VHDL_Interlock_Buffer_Instances(ostream& ofile)
 {
+	string parent_name = this->Get_Parent()->Get_Id();
 	for(map<string, vcInterlockBuffer*>::iterator iter = _interlock_buffer_map.begin();
 			iter != _interlock_buffer_map.end();
 			iter++)
@@ -1167,7 +1174,7 @@ void vcDataPath::Print_VHDL_Interlock_Buffer_Instances(ostream& ofile)
 		{
 			if(vcSystem::_enable_logging)
 			{
-				p->vcSplitOperator::Print_VHDL_Logger(ofile);
+				p->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
 			}
 			p->Print_VHDL(ofile);
 		}
@@ -1181,6 +1188,7 @@ void vcDataPath::Print_VHDL_Interlock_Buffer_Instances(ostream& ofile)
 
 void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
 { 
+	string parent_name = this->Get_Parent()->Get_Id();
 
 	for(map<string, vcEquivalence*>::iterator iter = _equivalence_map.begin();
 			iter != _equivalence_map.end();
@@ -1188,7 +1196,7 @@ void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
 	{
 		vcEquivalence* s = (*iter).second;
 		if(vcSystem::_enable_logging)
-			s->vcOperator::Print_VHDL_Logger(ofile);
+			s->vcOperator::Print_VHDL_Logger(parent_name, ofile);
 		ofile << s->Get_VHDL_Id() << ": Block -- { " << endl;
 		ofile << "signal in_aggregated_sig: std_logic_vector("
 			<< s->_in_width-1 << " downto 0);" << endl;
@@ -1244,13 +1252,14 @@ void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
 
 void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 { 
+	string parent_name = this->Get_Parent()->Get_Id();
 	for(map<string, vcBranch*>::iterator iter = _branch_map.begin();
 			iter != _branch_map.end();
 			iter++)
 	{
 		vcBranch* s = (*iter).second;
 		if(vcSystem::_enable_logging)
-			s->vcDatapathElement::Print_VHDL_Logger(ofile);
+			s->vcDatapathElement::Print_VHDL_Logger(parent_name, ofile);
 
 		int in_width = s->Get_Input_Width();
 		ofile << s->Get_VHDL_Id() << ": Block -- { -- branch-block" << endl;
@@ -1302,6 +1311,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 {
   string group_name;
   string no_arb_string; 
+  string parent_name = this->Get_Parent()->Get_Id();
 
   for(int idx = 0, fidx = this->_compatible_split_operator_groups.size(); idx < fidx; idx++)
     { // for each operator group.
@@ -1384,7 +1394,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 
 	  vcSplitOperator* so = (vcSplitOperator*) (*iter);
 	  if(vcSystem::_enable_logging)
-		so->vcSplitOperator::Print_VHDL_Logger(ofile);
+		so->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
 	  is_unary_operator = Is_Unary_Op(so->Get_Op_Id());
 
 	  dpe_elements.push_back(so);
@@ -1862,6 +1872,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 { 
 
   string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
+  string parent_name = this->Get_Parent()->Get_Id();
   // print LoadReqShared instance and LoadCompleteShared instance.
   for(int idx = 0; idx < this->_compatible_load_groups.size(); idx++)
     { // for each operator group.
@@ -1898,7 +1909,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	  assert((*iter)->Is("vcLoad"));
 	  vcLoad* so = (vcLoad*) (*iter);
 	  if(vcSystem::_enable_logging)
-	  	so->vcSplitOperator::Print_VHDL_Logger(ofile);
+	  	so->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
 
 	  if(ms == NULL)
 	    ms = ((vcLoad*) so)->Get_Memory_Space();
@@ -2097,6 +2108,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 
 void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 { 
+  string parent_name = this->Get_Parent()->Get_Id();
 	string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
 
 	for(int idx = 0; idx < this->_compatible_store_groups.size(); idx++)
@@ -2133,7 +2145,7 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 	  assert((*iter)->Is("vcStore"));
 	  vcStore* so = (vcStore*) (*iter);
 	  if(vcSystem::_enable_logging)
-	  	so->vcSplitOperator::Print_VHDL_Logger(ofile);
+	  	so->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
 
 	  if(ms == NULL)
 	    ms = so->Get_Memory_Space();
@@ -2325,6 +2337,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 {
 
   string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
+  string parent_name = this->Get_Parent()->Get_Id();
 
   for(int idx = 0; idx < this->_compatible_inport_groups.size(); idx++)
     { // for each operator group.
@@ -2362,7 +2375,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 	  assert((*iter)->Is("vcInport"));
 	  vcInport* so = (vcInport*) (*iter);
 	  if(vcSystem::_enable_logging)
-	  	so->Print_VHDL_Logger(ofile);
+	  	so->Print_VHDL_Logger(parent_name, ofile);
 
 	  if(p == NULL)
 	    p = ((vcInport*) so)->Get_Pipe();
@@ -2517,6 +2530,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 { 
 	string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
+  string parent_name = this->Get_Parent()->Get_Id();
 
 	for(int idx = 0; idx < this->_compatible_outport_groups.size(); idx++)
 	{ // for each operator group.
@@ -2552,7 +2566,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	  assert((*iter)->Is("vcOutport"));
 	  vcOutport* so = (vcOutport*) (*iter);
 	  if(vcSystem::_enable_logging)
-	  	so->Print_VHDL_Logger(ofile);
+	  	so->Print_VHDL_Logger(parent_name, ofile);
 
 	  if(p == NULL)
 	    p = ((vcOutport*) so)->Get_Pipe();
@@ -2761,6 +2775,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 { 
 
   string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
+  string parent_name = this->Get_Parent()->Get_Id();
 
   // print LoadReqShared instance and LoadCompleteShared instance.
   for(int idx = 0; idx < this->_compatible_call_groups.size(); idx++)
@@ -2799,7 +2814,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 	  assert((*iter)->Is("vcCall"));
 	  vcCall* so = (vcCall*) (*iter);
 	  if(vcSystem::_enable_logging)
-	  	so->vcSplitOperator::Print_VHDL_Logger(ofile);
+	  	so->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
 
 	  if(called_module == NULL)
 	    called_module = so->Get_Called_Module();

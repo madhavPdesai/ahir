@@ -71,7 +71,7 @@ bit_vector_cast_to_bit_vector(0, &(tval), &(type_cast_18));\
 #define _stage_1_assign_stmt_22_c_macro_ write_uint8_n("midpipe", tval.val.byte_array,tval.val.array_size);\
 ;
 
-#define _stage_1_stmt_24_c_macro_ get_file_print_lock(__report_log_file__);if(__report_log_file__ != NULL) fprintf(__report_log_file__,"stage_1>\t%s\n","sent");if(__report_log_file__ != NULL) {fprintf(__report_log_file__,"stage_1>\t\t%s\t\t","midpipe");fprintf(__report_log_file__, "%llx\n",bit_vector_to_uint64(0,&(tval)));}release_file_print_lock(__report_log_file__);;
+#define _stage_1_stmt_24_c_macro_ uint32_t _stage_1_stmt_24_c_macro___print_counter= get_file_print_lock(__report_log_file__);if(__report_log_file__ != NULL) fprintf(__report_log_file__,"[%u]stage_1>\t%s\n",_stage_1_stmt_24_c_macro___print_counter,"sent");if(__report_log_file__ != NULL) {fprintf(__report_log_file__,"[%u]stage_1>\t\t%s\t\t",_stage_1_stmt_24_c_macro___print_counter,"midpipe");fprintf(__report_log_file__, ":= %llx\n",bit_vector_to_uint64(0,&(tval)));}release_file_print_lock(__report_log_file__);;
 ;
 
 #define _stage_1_branch_block_stmt_14_c_export_apply_macro_ ;
@@ -113,7 +113,7 @@ write_uint16("outpipe", __tmp); \
 }\
 ;
 
-#define _stage_2_stmt_39_c_macro_ get_file_print_lock(__report_log_file__);if(__report_log_file__ != NULL) fprintf(__report_log_file__,"stage_2>\t%s\n","sent");if(__report_log_file__ != NULL) {fprintf(__report_log_file__,"stage_2>\t\t%s\t\t","output");fprintf(__report_log_file__, "%llx\n",bit_vector_to_uint64(0,&(tval)));}release_file_print_lock(__report_log_file__);;
+#define _stage_2_stmt_39_c_macro_ uint32_t _stage_2_stmt_39_c_macro___print_counter= get_file_print_lock(__report_log_file__);if(__report_log_file__ != NULL) fprintf(__report_log_file__,"[%u]stage_2>\t%s\n",_stage_2_stmt_39_c_macro___print_counter,"sent");if(__report_log_file__ != NULL) {fprintf(__report_log_file__,"[%u]stage_2>\t\t%s\t\t",_stage_2_stmt_39_c_macro___print_counter,"output");fprintf(__report_log_file__, ":= %llx\n",bit_vector_to_uint64(0,&(tval)));}release_file_print_lock(__report_log_file__);;
 ;
 
 #define _stage_2_branch_block_stmt_29_c_export_apply_macro_ ;

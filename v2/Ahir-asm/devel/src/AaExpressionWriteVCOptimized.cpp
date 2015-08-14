@@ -126,8 +126,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				{
 					ofile << "// WAR dependency: release  Read: " << expr->To_String() << " with Write: " << pstmt->To_String() << endl;
 					// expr can get a new value only after this has completed.
-					__MJ(expr->Get_VC_Reenable_Sample_Transition_Name(visited_elements),  
-							__UCT(pstmt), false); // No bypass
+					__MJ(__SST(expr), __UCT(pstmt), false); // No bypass
 				}
 
 				if(is_volatile)

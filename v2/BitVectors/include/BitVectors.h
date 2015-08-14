@@ -9,6 +9,11 @@
 typedef struct sized_u8_array_
 {
  	uint8_t* byte_array;
+
+	// if set, the corresponding bit is not 
+	// defined.. (like an X).
+ 	uint8_t* undefined_byte_array;
+
 	uint32_t array_size; 
 } sized_u8_array;
 
@@ -33,6 +38,8 @@ typedef struct _bit_vector_ {
 uint32_t  __array_size(bit_vector* x);
 void      __set_byte(bit_vector* x, uint32_t byte_index, uint8_t v);
 uint8_t   __get_byte(bit_vector* x, uint32_t byte_index);
+void      __set_undefined_byte(bit_vector* x, uint32_t byte_index, uint8_t v);
+uint8_t   __get_undefined_byte(bit_vector* x, uint32_t byte_index);
 uint8_t   __sign_bit(bit_vector* x);
 
 void init_bit_vector(bit_vector* t, uint32_t width);
@@ -40,6 +47,9 @@ void free_bit_vector(bit_vector* t);
 void print_bit_vector(bit_vector* t, FILE* ofile);
 void printf_bit_vector(bit_vector* t);
 char* to_string(bit_vector* t);
+
+uint8_t is_undefined_bit(bit_vector* t, uint32_t index);
+uint8_t has_undefined_bit(bit_vector* t);
 
 // ---------------         test functions   ------------------------
 
@@ -112,7 +122,10 @@ void bit_vector_div(bit_vector* r, bit_vector* s, bit_vector* t);
 // ---------------------- bit manipulation --------------------------------------
 //  most of these are quite inefficiently implemented as of now.
 void bit_vector_set_bit(bit_vector* f, uint32_t bit_index, uint8_t bit_value);
+void bit_vector_set_undefined_bit(bit_vector* f, uint32_t bit_index, uint8_t bit_value);
+
 uint8_t bit_vector_get_bit(bit_vector* f, uint32_t bit_index);
+uint8_t bit_vector_get_undefined_bit(bit_vector* f, uint32_t bit_index);
 
 void  bit_vector_bitsel(bit_vector* f,bit_vector* s,bit_vector* result);
 void  bit_vector_concatenate(bit_vector* f, bit_vector* s,  bit_vector* result);
@@ -133,6 +146,8 @@ void bit_vector_rotate_right(bit_vector* r,  bit_vector* s, bit_vector* t);
 #define IS_EQUAL        0
 #define IS_GREATER      1
 #define IS_LESS         2
+#define IS_UNDEFINED    3  // comparison between undef numbers.
+
 uint8_t uint64_compare(uint8_t signed_flag, uint64_t a, uint64_t b, uint64_t width);
 uint8_t bit_vector_compare(uint8_t signed_flag, bit_vector* r, bit_vector* s);
 void bit_vector_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t);

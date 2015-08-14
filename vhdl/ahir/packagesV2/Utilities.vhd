@@ -140,7 +140,7 @@ package body Utilities is
       when "1101" => ret_val := 'd';
       when "1110" => ret_val := 'e';                     
       when "1111" => ret_val := 'f';                                                               
-      when others => ret_val := 'f';
+      when others => ret_val := '?';
     end case;
 
     return(ret_val);

@@ -171,7 +171,7 @@ int check_shifts(uint64_t bit_width)
 	//  and all 0's in the upper half.
 	bit_vector_shift_right(0, &ab, &e, &rsl_ab); 
 	bit_vector_slice(&rsl_ab,&tmp,0);
-	if(bit_vector_compare(0,&tmp,&all_ones) != 0)	
+	if(bit_vector_compare(0,&tmp,&all_ones) != IS_EQUAL)	
 	{
 		ret_val = 1;
 		fprintf(stderr,"Error: shift-right-logical for bit-width %llu, lower half mismatch\n", bit_width);
@@ -342,6 +342,7 @@ int main(int argc, char* argv[])
 {
 
 	srand(119);
+
 
 	int fail_count = 0;
 	int mret = misc_tests();

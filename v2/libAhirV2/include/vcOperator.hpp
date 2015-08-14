@@ -31,7 +31,7 @@ public:
   }
 
   virtual string Get_Logger_Description() {return ("");}
-  virtual void Print_VHDL_Logger(ostream& ofile);
+  virtual void Print_VHDL_Logger(string& module_name, ostream& ofile);
   friend class vcDataPath;
 };
 
@@ -64,7 +64,7 @@ public:
   virtual vcType* Get_Input_Type() {assert(0);}
   virtual vcType* Get_Output_Type() {assert(0);}
 
-  virtual void Print_VHDL_Logger(ostream& ofile);
+  virtual void Print_VHDL_Logger(string& module_name, ostream& ofile);
 
   virtual void Print_Flow_Through_VHDL(ostream& ofile) {assert(0);}
   friend class vcDataPath;
@@ -277,7 +277,7 @@ public:
   virtual string Kind() {return("vcPhi");}
 
   virtual void Print_VHDL(ostream& ofile);
-  virtual void Print_VHDL_Logger(ostream& ofile);
+  virtual void Print_VHDL_Logger(string& module_name, ostream& ofile);
   friend class vcDataPath;
 };
 
@@ -290,7 +290,7 @@ public:
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcPhiPipeined");}
   virtual void Print_VHDL(ostream& ofile);
-  virtual void Print_VHDL_Logger(ostream& ofile);
+  virtual void Print_VHDL_Logger(string& module_name, ostream& ofile);
   friend class vcDataPath;
 
 };

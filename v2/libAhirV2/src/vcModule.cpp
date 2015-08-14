@@ -743,6 +743,12 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 			for(int idx = 0, fidx = inarg_wires.size(); idx < fidx; idx++)
 			{
 				vcWire* w = inarg_wires[idx];
+			
+				// if wire is not used, then it is ignored.
+				// because it's update is  never enabled..
+				if(w->Get_Number_Of_Receivers() == 0) 
+					continue;
+
 				preds.push_back(w->Get_VHDL_Id() + "_update_enable");
 				pred_capacities.push_back(this->Get_Pipeline_Depth());
 				pred_markings.push_back(0);
