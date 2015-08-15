@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <assert.h>
 #include <stdio.h>
 #include <BitVectors.h>
 // object initialization 

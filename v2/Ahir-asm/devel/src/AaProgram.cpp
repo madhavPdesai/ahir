@@ -1048,6 +1048,8 @@ void AaProgram::Write_C_Model()
   source_file.open(source_file_name.c_str());
 
 
+  header_file << "#include <stdlib.h>" << endl;
+  header_file << "#include <assert.h>" << endl;
   header_file << "#include <stdio.h>" << endl;
   header_file << "#include <BitVectors.h>" << endl;
   // declare all the record types that you have encountered.

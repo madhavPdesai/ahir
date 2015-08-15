@@ -2,19 +2,20 @@ $pipe in_data: $uint<32>
 $pipe out_data: $uint<32>
 
 $storage T: $array [4][4] $of $uint<32>
-$storage I: $uint<32>
 
 $module [Daemon] $in () $out () $is
 {
-        I := 0
 	$branchblock[main] {
 		$dopipeline
 		$depth 8
 		$buffering 1
-		$merge $entry $loopback $endmerge
+		$merge $entry $loopback 
+			$phi I := ($bitcast ($uint<8>) 0) $on $entry NI $on $loopback
+		$endmerge
 			T[I][I] := in_data
-			out_data := (T[I][I] * T[I][I])
-			I := ((I+1) & 3)
-		$while 1
+                        gflag := (I >= 0)
+			$guard (gflag) out_data := (T[I][I] * T[I][I])
+			NI := (I + 1)
+		$while (NI < 4)
 	}
 }

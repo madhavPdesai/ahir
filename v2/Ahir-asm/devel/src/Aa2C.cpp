@@ -7,6 +7,14 @@
 
 
 #define __endl__  "\\\n" 
+
+void Print_C_Assert_If_Bitvector_Undefined(string var_name, ostream& ofile)
+{
+	ofile << "if (has_undefined_bit(&" << var_name << ")) {";
+	ofile << "fprintf(stderr, \"Error: variable " << var_name << " has undefined value at test point.\\n\");";
+	ofile << "assert(0);} " << __endl__;
+}
+
 void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, bool signal_mode, bool lifo_mode, ofstream& ofile)
 {
 	int wsize;
@@ -277,6 +285,7 @@ void Print_C_Pipe_Read(string tgt, AaType* tgt_type, AaPipeObject* p, ofstream& 
 		{
 			int wsize = 8;
 			int nwords = ((tsize % wsize) ? (tsize/wsize)+1 : tsize/wsize);
+			ofile << "bit_vector_clear(&" << tgt << ");" << __endl__ ;
 			ofile  << "read_uint8_n(\"" << p->Get_Name() << "\", " << tgt << ".val.byte_array," << tgt << ".val.array_size);" << __endl__;
 		}
 	}

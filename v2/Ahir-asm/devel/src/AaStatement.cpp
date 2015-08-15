@@ -1120,7 +1120,10 @@ void AaAssignmentStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	{
 		this->Get_Guard_Expression()->PrintC_Declaration(headerfile);
 		this->Get_Guard_Expression()->PrintC(headerfile);
+		if(!this->Get_Guard_Expression()->Is_Constant())
+  			Print_C_Assert_If_Bitvector_Undefined(this->Get_Guard_Expression()->C_Reference_String(),headerfile);
 	}
+
 
 	this->_source->PrintC_Declaration(headerfile);
 	
@@ -1134,6 +1137,7 @@ void AaAssignmentStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 		headerfile << ") {\\" << endl;
 
 	}
+
 
 	this->_source->PrintC(headerfile);
 
@@ -2033,6 +2037,8 @@ void AaCallStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	{
 		this->Get_Guard_Expression()->PrintC_Declaration(headerfile);
 		this->Get_Guard_Expression()->PrintC(headerfile);
+		if(!this->Get_Guard_Expression()->Is_Constant())
+			Print_C_Assert_If_Bitvector_Undefined(this->Get_Guard_Expression()->C_Reference_String(), headerfile);
 	}
 
 	for(unsigned int i=0; i < this->_input_args.size(); i++)
@@ -3938,6 +3944,13 @@ void AaSwitchStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
   srcfile << "// switch statement : " <<  this->Get_Source_Info() <<  endl;
   this->_select_expression->PrintC_Declaration(srcfile);
   this->_select_expression->PrintC(srcfile);
+
+  if(!this->_select_expression->Is_Constant())
+  {
+  	Print_C_Assert_If_Bitvector_Undefined(this->_select_expression->C_Reference_String(), srcfile);
+	srcfile << endl;
+  }
+
   for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
   {
 	this->_choice_pairs[i].first->PrintC_Declaration(srcfile);
@@ -4412,6 +4425,12 @@ void AaIfStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
         srcfile << "// if statement : " <<  this->Get_Source_Info() <<  endl;
 	this->_test_expression->PrintC_Declaration(srcfile);
 	this->_test_expression->PrintC(srcfile);
+  	if(!this->_test_expression->Is_Constant())
+	{
+		Print_C_Assert_If_Bitvector_Undefined(this->_test_expression->C_Reference_String(), srcfile);
+		srcfile << endl;
+	}
+
 	srcfile << "if (";
 	Print_C_Value_Expression(this->_test_expression->C_Reference_String(), this->_test_expression->Get_Type(), srcfile);
 	srcfile << ") { " << endl;
@@ -4778,6 +4797,13 @@ void AaDoWhileStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
     srcfile << "do_while_entry_flag = 0;" << endl;
     srcfile << "do_while_loopback_flag = 1;" << endl;
     this->_test_expression->PrintC(srcfile);
+
+    if(!this->_test_expression->Is_Constant())
+    {
+    	Print_C_Assert_If_Bitvector_Undefined(this->_test_expression->C_Reference_String(), srcfile);
+	srcfile << endl;
+    }
+
     srcfile << "if (!";
     Print_C_Value_Expression(this->_test_expression->C_Reference_String(), 
 				this->_test_expression->Get_Type(), srcfile);

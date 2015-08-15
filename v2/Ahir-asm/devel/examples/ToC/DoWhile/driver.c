@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 	PTHREAD_DECL(Daemon);
 	PTHREAD_CREATE(Daemon);
 
-	for(idx = 0; idx < 8; idx++)
+	for(idx = 0; idx < 4; idx++)
 	{
 		write_uint32("in_data", idx);
 		uint32_t jdx = read_uint32("out_data");

@@ -4804,6 +4804,11 @@ void AaTernaryExpression::PrintC_Declaration(ofstream& ofile)
 void AaTernaryExpression::PrintC(ofstream& ofile)
 {
 	this->_test->PrintC(ofile);
+	if(!this->_test->Is_Constant())
+	{
+		Print_C_Assert_If_Bitvector_Undefined(this->_test->C_Reference_String(), ofile);
+	}
+
 	this->_if_true->PrintC(ofile);
 	this->_if_false->PrintC(ofile);
 

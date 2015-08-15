@@ -480,8 +480,12 @@ void bit_vector_or(bit_vector* r, bit_vector* s, bit_vector* t)
 	uint32_t asize = __array_size(r);
 	for(i = 0; i < asize; i++)
 	{
-		__set_byte(t,i, (__get_byte(r,i) | __get_byte(s,i)));
-		__set_undefined_byte(t,i,__get_undefined_byte(r,i) | __get_undefined_byte(s,i));
+		uint8_t rb = __get_byte(r,i);
+		uint8_t urb = __get_undefined_byte(r,i);
+		uint8_t sb = __get_byte(s,i);
+		uint8_t usb = __get_undefined_byte(s,i);
+		__set_byte(t,i, (rb | sb));
+		__set_undefined_byte(t,i,((urb & usb) | (urb & (~sb)) | (usb & (~rb))));
 	}
 	bit_vector_clear_unused_bits(t);
 }
@@ -493,8 +497,12 @@ void bit_vector_nor(bit_vector* r, bit_vector* s, bit_vector* t)
 	uint32_t asize = __array_size(r);
 	for(i = 0; i < asize; i++)
 	{
-		__set_byte(t,i, (~(__get_byte(r,i) | __get_byte(s,i))));
-		__set_undefined_byte(t,i,__get_undefined_byte(r,i) | __get_undefined_byte(s,i));
+		uint8_t rb = __get_byte(r,i);
+		uint8_t urb = __get_undefined_byte(r,i);
+		uint8_t sb = __get_byte(s,i);
+		uint8_t usb = __get_undefined_byte(s,i);
+		__set_byte(t,i, (~(rb | sb)));
+		__set_undefined_byte(t,i,((urb & usb) | (urb & (~sb)) | (usb & (~rb))));
 	}
 	bit_vector_clear_unused_bits(t);
 }
@@ -505,8 +513,12 @@ void bit_vector_and(bit_vector* r, bit_vector* s, bit_vector* t)
 	uint32_t asize = __array_size(r);
 	for(i = 0; i < asize; i++)
 	{
-		__set_byte(t,i, (__get_byte(r,i) & __get_byte(s,i)));
-		__set_undefined_byte(t,i,__get_undefined_byte(r,i) | __get_undefined_byte(s,i));
+		uint8_t rb = __get_byte(r,i);
+		uint8_t urb = __get_undefined_byte(r,i);
+		uint8_t sb = __get_byte(s,i);
+		uint8_t usb = __get_undefined_byte(s,i);
+		__set_byte(t,i, (rb & sb));
+		__set_undefined_byte(t,i,((urb & usb) | (urb & sb) | (usb & rb)));
 	}
 	bit_vector_clear_unused_bits(t);
 }
@@ -517,8 +529,12 @@ void bit_vector_nand(bit_vector* r, bit_vector* s, bit_vector* t)
 	uint32_t asize = __array_size(r);
 	for(i = 0; i < asize; i++)
 	{
-		__set_byte(t,i, (~(__get_byte(r,i) & __get_byte(s,i))));
-		__set_undefined_byte(t,i,__get_undefined_byte(r,i) | __get_undefined_byte(s,i));
+		uint8_t rb = __get_byte(r,i);
+		uint8_t urb = __get_undefined_byte(r,i);
+		uint8_t sb = __get_byte(s,i);
+		uint8_t usb = __get_undefined_byte(s,i);
+		__set_byte(t,i, ~(rb & sb));
+		__set_undefined_byte(t,i,((urb & usb) | (urb & sb) | (usb & rb)));
 	}
 	bit_vector_clear_unused_bits(t);
 }
