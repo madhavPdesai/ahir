@@ -325,14 +325,15 @@ bool vcDatapathElement::Is_Part_Of_Pipelined_Loop(int& depth, int& buffering)
 	return(ret_val);
 }
 
-void vcDatapathElement::Generate_Input_Log_Strings(string& input_names, string& input_concat)
+void vcDatapathElement::Generate_Input_Log_Strings(string& log_string)
 {
 	bool guard_flag = false;
 	if(this->_guard_wire != NULL)
 	{
 		string gw_name = this->_guard_wire->Get_VHDL_Signal_Id();
-		input_names += gw_name + " (guard" + (this->_guard_complement ? " complement " : "") + ")  ";
-		input_concat += "Convert_SLV_To_String(" + gw_name + ") & \" \"";
+		log_string   += "\" ";
+		log_string   += gw_name + " (guard" + (this->_guard_complement ? " complement " : "") + ")";
+		log_string   += "= \" & Convert_SLV_To_String(" + gw_name + ")";
 		guard_flag = true;
 	}
 
@@ -340,37 +341,36 @@ void vcDatapathElement::Generate_Input_Log_Strings(string& input_names, string& 
 	{
 		for(int idx = 0, fidx = this->Get_Number_Of_Input_Wires(); idx < fidx; idx++)
 		{
-			string inp_name = this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
-			input_names  +=  inp_name + " ";
 			if(guard_flag || (idx > 0))
-				input_concat += " & ";
-			input_concat +=  "(Convert_SLV_To_Hex_String(" + inp_name + ") & \" \")";
+				log_string += " & ";
+
+			string inp_name = this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
+			log_string  += "\" "  +  inp_name + " = \"";
+			log_string +=  "& Convert_SLV_To_Hex_String(" + inp_name + ")";
 		}
 	}
 	else if(!guard_flag)
 	{
-		input_names = " no-guard, no-inputs ";
-		input_concat = "\" \"";
+		log_string += "\" no-guard, no-inputs \"";
 	}
 }
 
-void vcDatapathElement::Generate_Output_Log_Strings(string& output_names, string& output_concat)
+void vcDatapathElement::Generate_Output_Log_Strings(string& log_string)
 {
 	if(this->Get_Number_Of_Output_Wires() > 0)
 	{
 		for(int idx = 0, fidx = this->Get_Number_Of_Output_Wires(); idx < fidx; idx++)
 		{
-			string op_name = this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
-			output_names  +=  op_name + " ";
 			if(idx > 0)
-				output_concat += " & ";
-			output_concat +=  "(Convert_SLV_To_Hex_String(" + op_name + ") & \" \")";
+				log_string += " & ";
+			string op_name = this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
+			log_string  +=  "\" " + op_name + "= \" ";
+			log_string +=  " & Convert_SLV_To_Hex_String(" + op_name + ")";
 		}
 	}
 	else
 	{
-		output_names = " no-outputs ";
-		output_concat = "\" \"";
+		log_string += "\" no-outputs \"";
 	}
 }
 void vcDatapathElement::Print_VHDL_Logger(string& module_name, ostream& ofile)

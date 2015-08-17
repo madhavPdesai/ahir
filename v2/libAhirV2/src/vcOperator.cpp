@@ -66,19 +66,15 @@ void vcOperator::Print_VHDL_Logger(string& module_name, ostream& ofile)
 
 	string op_descriptor = "logger::" + module_name + "::" + this->Get_Id() + " " + this->Get_Logger_Description();
 
-	string input_names;
-	string input_concat;
-	this->Generate_Input_Log_Strings(input_names, input_concat);
+	string input_string;
+	this->Generate_Input_Log_Strings(input_string);
 
-	string output_names;
-	string output_concat;
-	this->Generate_Output_Log_Strings(output_names, output_concat);
+	string output_string;
+	this->Generate_Output_Log_Strings(output_string);
 
 	string print_message = '"' + op_descriptor + " inputs: " + '"' + " & " 
-		+ '"' + input_names + '"' + " & "
-		+ input_concat  + " & " 
-		+ '"' + "outputs: " + output_names + '"' + " & "
-		+ output_concat;
+		+ input_string + " & " 
+		+ '"' + "outputs:\" & " + output_string;
 
 	ofile << "-- logger for operator " << this->Get_Id() << endl;
 	ofile << "process(clk)  " << endl;
@@ -101,21 +97,17 @@ void vcSplitOperator::Print_VHDL_Logger(string& module_name, ostream& ofile)
 	string start_op_descriptor = "logger::" + module_name + "::"  + this->Get_Id() + ":started: " ;
 	string finish_op_descriptor = "logger::" + module_name + "::"  + this->Get_Id() + ":finished: ";
 
-	string input_names;
-	string input_concat;
-	this->Generate_Input_Log_Strings(input_names, input_concat);
+	string input_string;
+	this->Generate_Input_Log_Strings(input_string);
 
-	string output_names;
-	string output_concat;
-	this->Generate_Output_Log_Strings(output_names, output_concat);
+	string output_string;
+	this->Generate_Output_Log_Strings(output_string);
 
 	string start_print_message = '"' + start_op_descriptor + " inputs: " + '"' + " & " 
-		+ '"' + input_names + '"' + " & "
-		+ input_concat;
+		+ input_string;
 
 	string finish_print_message = '"' + finish_op_descriptor + " outputs: " + '"' + " & " 
-		+ '"' +  output_names + '"'  + " & "
-		+ output_concat;
+		+ output_string;
 
 	string ack0_id = this->_acks[0]->Get_DP_To_CP_Symbol();
 	string ack1_id = this->_acks[1]->Get_DP_To_CP_Symbol();
@@ -333,8 +325,8 @@ void vcPhi::Print_VHDL_Logger(string& module_name, ostream& ofile)
 	ofile << "if((reset = '0') and (clk'event and clk = '1')) then --{" << endl;
 	for(int idx = 0, fidx = _input_wires.size(); idx < fidx; idx++)
 	{
-		string mesg_string = "\" logger::" + module_name + "::" +  this->Get_Id() + ":input-" + IntToStr(idx) + " " + _input_wires[idx]->Get_VHDL_Signal_Id();
-		mesg_string += "  \" & Convert_SLV_To_Hex_String(" + _input_wires[idx]->Get_VHDL_Signal_Id() + ")";
+		string mesg_string = "\"logger::" + module_name + "::" +  this->Get_Id() + ":input-" + IntToStr(idx) + " " + _input_wires[idx]->Get_VHDL_Signal_Id();
+		mesg_string += "= \" & Convert_SLV_To_Hex_String(" + _input_wires[idx]->Get_VHDL_Signal_Id() + ")";
 		ofile << "if " << this->Get_Req(idx)->Get_CP_To_DP_Symbol() << " then --{ " << endl;
 		ofile << "LogRecordPrint(global_clock_cycle_count, " << mesg_string << ");" << endl;
 		ofile << "--} " << endl << "end if;" << endl;
@@ -344,8 +336,8 @@ void vcPhi::Print_VHDL_Logger(string& module_name, ostream& ofile)
 	ofile << "LogRecordPrint(global_clock_cycle_count,\" logger::" << module_name << "::" << this->Get_Id() << ":sample-completed\");" << endl;
 	ofile << "--} " << endl << "end if;" << endl;
 
-	string mesg_string = "\" logger::" + module_name +  "::"  + this->Get_Id() + ":output "  + _output_wires[0]->Get_VHDL_Signal_Id();
-	mesg_string += "  \" & Convert_SLV_To_Hex_String(" + _output_wires[0]->Get_VHDL_Signal_Id() + ")";
+	string mesg_string = "\"logger::" + module_name +  "::"  + this->Get_Id() + ":output "  + _output_wires[0]->Get_VHDL_Signal_Id();
+	mesg_string += "= \" & Convert_SLV_To_Hex_String(" + _output_wires[0]->Get_VHDL_Signal_Id() + ")";
 	ofile << "if " << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " then --{" << endl;
 	ofile << "LogRecordPrint(global_clock_cycle_count," << mesg_string << ");" << endl;
 	ofile << "--} " << endl << "end if;" << endl;
@@ -439,8 +431,8 @@ void vcPhiPipelined::Print_VHDL_Logger(string& module_name, ostream& ofile)
 	ofile << "if((reset = '0') and (clk'event and clk = '1')) then --{" << endl;
 	for(int idx = 0, fidx = _input_wires.size(); idx < fidx; idx++)
 	{
-		string mesg_string = "\" logger::" + module_name + "::"  + this->Get_Id() + ":input-" + IntToStr(idx) + " " + _input_wires[idx]->Get_VHDL_Signal_Id();
-		mesg_string += "  \" & Convert_SLV_To_Hex_String(" + _input_wires[idx]->Get_VHDL_Signal_Id() + ")";
+		string mesg_string = "\"logger::" + module_name + "::"  + this->Get_Id() + ":input-" + IntToStr(idx) + " " + _input_wires[idx]->Get_VHDL_Signal_Id();
+		mesg_string += "= \" & Convert_SLV_To_Hex_String(" + _input_wires[idx]->Get_VHDL_Signal_Id() + ")";
 		ofile << "if " << this->Get_Req(idx)->Get_CP_To_DP_Symbol() << " then --{ " << endl;
 		ofile << "LogRecordPrint(global_clock_cycle_count, " << mesg_string << ");" << endl;
 		ofile << "--} " << endl << "end if;" << endl;
@@ -451,8 +443,8 @@ void vcPhiPipelined::Print_VHDL_Logger(string& module_name, ostream& ofile)
 	ofile << "LogRecordPrint(global_clock_cycle_count,\" logger::" << module_name << "::" << this->Get_Id() << ":sample-completed\");" << endl;
 	ofile << "--} " << endl << "end if;" << endl;
 
-	string mesg_string = "\" logger::" + module_name + "::" + this->Get_Id() + ":output "  + _output_wires[0]->Get_VHDL_Signal_Id();
-	mesg_string += "  \" & Convert_SLV_To_Hex_String(" + _output_wires[0]->Get_VHDL_Signal_Id() + ")";
+	string mesg_string = "\"logger::" + module_name + "::" + this->Get_Id() + ":output "  + _output_wires[0]->Get_VHDL_Signal_Id();
+	mesg_string += "= \" & Convert_SLV_To_Hex_String(" + _output_wires[0]->Get_VHDL_Signal_Id() + ")";
 	ofile << "if " << this->Get_Ack(1)->Get_DP_To_CP_Symbol() << " then --{" << endl;
 	ofile << "LogRecordPrint(global_clock_cycle_count," << mesg_string << ");" << endl;
 	ofile << "--} " << endl << "end if;" << endl;
@@ -912,7 +904,8 @@ void vcSelect::Print_VHDL(ostream& ofile)
         	ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= sample_ack_ug(0);" << endl;
         	ofile << " update_req_ug(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
         	ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= update_ack_ug(0);" << endl;
-		ofile << " guard_vector(0) <= " << this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
+		ofile << " guard_vector(0) <= " << (this->_guard_complement ? " not " : " ") << 
+						 this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
       }
       else
       {
@@ -1024,7 +1017,8 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 		ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= wack_ug(0);" << endl;
 		ofile << " rreq_ug(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
 		ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= rack_ug(0);" << endl;
-		ofile << " guard_vector(0) <= " << this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
+		ofile << " guard_vector(0) <= " << (this->_guard_complement ? " not " : " ") << 
+				this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
 	}
 	else
 	{
@@ -1169,7 +1163,8 @@ void vcSlice::Print_VHDL(ostream& ofile)
         	ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= sample_ack_ug(0);" << endl;
         	ofile << " update_req_ug(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
         	ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= update_ack_ug(0);" << endl;
-		ofile << " guard_vector(0) <= " << this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
+		ofile << " guard_vector(0) <= " << (this->_guard_complement ? " not " : " ") << 
+			this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
       }
       else
       {
@@ -1321,7 +1316,8 @@ void vcPermutation::Print_VHDL(ostream& ofile)
         	ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= sample_ack_ug(0);" << endl;
         	ofile << " update_req_ug(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
         	ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= update_ack_ug(0);" << endl;
-		ofile << " guard_vector(0) <= " << this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
+		ofile << " guard_vector(0) <= " << (this->_guard_complement ? " not " : " ") <<
+				 this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
       }
       else
       {
