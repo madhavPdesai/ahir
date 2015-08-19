@@ -2440,47 +2440,6 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 
       ofile << "-- }\n begin -- {" << endl;
 
-      // logging!
-      if(vcSystem::_enable_logging)
-	{
-	  ofile << "-- logging on!" << endl;
-	  ofile << " process(clk) variable saved_guard_at_sample : std_logic := '1';  begin -- {" 
-		<< " if clk'event and clk = '1' then -- {" << endl;
-	  int lindex = out_width-1;
-	  for(int u = 0; u < outwires.size(); u++)
-	    {
-
-	      vcTransition* s_aw = ackL[u];
-	      vcWire* gw = guards[u];
-              bool    gc = guard_complements[u];
-
-	      if(gw != NULL)
-	      {
-		      ofile << " if " << s_aw->Get_DP_To_CP_Symbol() << " then -- {" << endl;
-		      ofile << " saved_guard_at_sample := (" << (gc ? "not " : " ") <<  gw->Get_VHDL_Signal_Id() << "(0));" << endl;
-		      ofile << " --} " << endl;
-		      ofile << "end if;" << endl;
-	      }
-
-	      vcTransition* aw = ackR[u];
-	      vcWire* ow = outwires[u];
-
-	      string cond_string = "(" + aw->Get_DP_To_CP_Symbol() + " and (saved_guard_at_sample = '1'))";
-
-	      ofile << " if " << cond_string << " then -- {" << endl;
-	      ofile << " assert false report \" ReadPipe " 
-		      <<  p->Get_VHDL_Id() 
-		      << " to wire " << ow->Get_VHDL_Signal_Id() << " value=\" " 
-		      << " & "
-		      << " convert_slv_to_hex_string(data_out(" 
-		      << lindex << " downto " << (lindex - (data_width-1)) << ")) "
-		      << " severity note; --}" << endl;
-	      ofile << " end if;" << endl;
-	      lindex -= data_width;
-	    }
-	  ofile << " --} " << endl << "end if;" << endl;
-	  ofile << "-- } " << endl << " end process;" << endl;
-	}
 
       // guard related stuff.
       Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
@@ -2599,46 +2558,6 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       for(int u = 0; u < inwires.size(); u++)
 	{
 	  in_width += inwires[u]->Get_Size();
-	}
-
-      // logging!
-      if(vcSystem::_enable_logging)
-	{
-	  
-	  ofile << "-- logging on!" << endl;
-	  ofile << " process(clk)  variable saved_guard_at_sample : std_logic := '1'; begin -- {" 
-		<< " if clk'event and clk = '1' then -- {" << endl;
-	  for(int u = 0; u < inwires.size(); u++)
-	    {
-
-	      vcTransition* s_aw = sample_ack[u];
-	      vcWire* gw = guards[u];
-              bool    gc = guard_complements[u];
-
-	      if(gw != NULL)
-	      {
-		      ofile << " if " << s_aw->Get_DP_To_CP_Symbol() << " then -- {" << endl;
-		      ofile << " saved_guard_at_sample := (" << (gc ? "not " : " ") <<  gw->Get_VHDL_Signal_Id() << "(0));" << endl;
-		      ofile << " --} " << endl;
-		      ofile << "end if;" << endl;
-	      }
-          
-	      vcTransition* aw = update_ack[u];
-	      vcWire* iw = inwires[u];
-   
-              string cond_string = "(" + aw->Get_DP_To_CP_Symbol() + " and (saved_guard_at_sample = '1'))";
-
-	      ofile << " if " << cond_string << " then -- {" << endl;
-	      ofile << " assert false report \" WritePipe " 
-		    <<  p->Get_VHDL_Id() 
-		    << " from wire " << iw->Get_VHDL_Signal_Id() << " value=\" " 
-		    << " & "
-		    << " convert_slv_to_hex_string(" << iw->Get_VHDL_Signal_Id() << ")"
-		    << " severity note; --}" << endl;
-	      ofile << " end if;" << endl;
-	    }
-	  ofile << " --} " << endl << "end if;" << endl;
-	  ofile << "-- } " << endl << " end process;" << endl;
 	}
 
 

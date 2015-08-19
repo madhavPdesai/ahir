@@ -420,6 +420,19 @@ string vcCPElementGroup::Generate_Marked_Join_Bypass_String()
 	return(ret_string);
 }
 
+void vcCPElementGroup::Print_VHDL_Logger(ostream& ofile)
+{
+	string module_name = this->_cp->Get_Parent_Module()->Get_VHDL_Id();
+	string logger_message = "logger:" + module_name + ":CP:" + this->Get_VHDL_Id() + " fired.";
+	ofile << "-- logger for CP element group " << this->Get_VHDL_Id() << endl;
+	ofile << "process (clk) " << endl;
+	ofile << "begin --{" << endl;
+	ofile << " if (clk'event and (clk = '1') and (reset = '0') and " << this->Get_VHDL_Id() << ") then -- {" << endl;
+	ofile << " LogRecordPrint(global_clock_cycle_count,  \" " << logger_message << "\"); -- } " << endl;
+	ofile << " end if; --} " << endl;
+        ofile << "end process; " << endl;
+}
+
 // take care of marked predecessors!
 void vcCPElementGroup::Print_VHDL(ostream& ofile)
 {
@@ -439,6 +452,9 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	  vcSystem::Error("panic!.. group " + this->Get_VHDL_Id() + ": garbled input status");
   }
 
+  if(vcSystem::_enable_logging)
+	this->Print_VHDL_Logger(ofile);
+ 
   if(this->_has_input_transition)
   {
 	  this->Print_DP_To_CP_VHDL_Link(ofile);

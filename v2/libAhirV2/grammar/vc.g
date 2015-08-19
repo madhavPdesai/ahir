@@ -270,6 +270,7 @@ vc_Controlpath[vcSystem* sys, vcModule* m]
 {
     vcControlPath* cp;
     cp = new vcControlPath(m->Get_Id() + "_CP");
+    cp->Set_Parent_Module(m);
     vcCPElement* cpe;
 }
 : CONTROLPATH  LBRACE 

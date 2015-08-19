@@ -64,7 +64,7 @@ void vcOperator::Print_VHDL_Logger(string& module_name, ostream& ofile)
 	else
 		guard_id = "sl_one";
 
-	string op_descriptor = "logger::" + module_name + "::" + this->Get_Id() + " " + this->Get_Logger_Description();
+	string op_descriptor = "logger:" + module_name + ":DP:" + this->Get_Id() + " " + this->Get_Logger_Description();
 
 	string input_string;
 	this->Generate_Input_Log_Strings(input_string);
@@ -94,8 +94,8 @@ void vcSplitOperator::Print_VHDL_Logger(string& module_name, ostream& ofile)
 	if(this->_acks.size() < 2)
 		return;
 
-	string start_op_descriptor = "logger::" + module_name + "::"  + this->Get_Id() + ":started: " ;
-	string finish_op_descriptor = "logger::" + module_name + "::"  + this->Get_Id() + ":finished: ";
+	string start_op_descriptor = "logger:" + module_name + ":DP:"  + this->Get_Id() + ":started: " ;
+	string finish_op_descriptor = "logger:" + module_name + ":DP:"  + this->Get_Id() + ":finished: ";
 
 	string input_string;
 	this->Generate_Input_Log_Strings(input_string);
@@ -325,7 +325,7 @@ void vcPhi::Print_VHDL_Logger(string& module_name, ostream& ofile)
 	ofile << "if((reset = '0') and (clk'event and clk = '1')) then --{" << endl;
 	for(int idx = 0, fidx = _input_wires.size(); idx < fidx; idx++)
 	{
-		string mesg_string = "\"logger::" + module_name + "::" +  this->Get_Id() + ":input-" + IntToStr(idx) + " " + _input_wires[idx]->Get_VHDL_Signal_Id();
+		string mesg_string = "\"logger:" + module_name + ":DP:" +  this->Get_Id() + ":input-" + IntToStr(idx) + " " + _input_wires[idx]->Get_VHDL_Signal_Id();
 		mesg_string += "= \" & Convert_SLV_To_Hex_String(" + _input_wires[idx]->Get_VHDL_Signal_Id() + ")";
 		ofile << "if " << this->Get_Req(idx)->Get_CP_To_DP_Symbol() << " then --{ " << endl;
 		ofile << "LogRecordPrint(global_clock_cycle_count, " << mesg_string << ");" << endl;
@@ -333,10 +333,10 @@ void vcPhi::Print_VHDL_Logger(string& module_name, ostream& ofile)
 	}
 
 	ofile << "if " << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " then --{" << endl;
-	ofile << "LogRecordPrint(global_clock_cycle_count,\" logger::" << module_name << "::" << this->Get_Id() << ":sample-completed\");" << endl;
+	ofile << "LogRecordPrint(global_clock_cycle_count,\" logger:" << module_name << ":DP:" << this->Get_Id() << ":sample-completed\");" << endl;
 	ofile << "--} " << endl << "end if;" << endl;
 
-	string mesg_string = "\"logger::" + module_name +  "::"  + this->Get_Id() + ":output "  + _output_wires[0]->Get_VHDL_Signal_Id();
+	string mesg_string = "\"logger:" + module_name +  ":DP:"  + this->Get_Id() + ":output "  + _output_wires[0]->Get_VHDL_Signal_Id();
 	mesg_string += "= \" & Convert_SLV_To_Hex_String(" + _output_wires[0]->Get_VHDL_Signal_Id() + ")";
 	ofile << "if " << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " then --{" << endl;
 	ofile << "LogRecordPrint(global_clock_cycle_count," << mesg_string << ");" << endl;
@@ -431,7 +431,7 @@ void vcPhiPipelined::Print_VHDL_Logger(string& module_name, ostream& ofile)
 	ofile << "if((reset = '0') and (clk'event and clk = '1')) then --{" << endl;
 	for(int idx = 0, fidx = _input_wires.size(); idx < fidx; idx++)
 	{
-		string mesg_string = "\"logger::" + module_name + "::"  + this->Get_Id() + ":input-" + IntToStr(idx) + " " + _input_wires[idx]->Get_VHDL_Signal_Id();
+		string mesg_string = "\"logger:" + module_name + ":DP:"  + this->Get_Id() + ":input-" + IntToStr(idx) + " " + _input_wires[idx]->Get_VHDL_Signal_Id();
 		mesg_string += "= \" & Convert_SLV_To_Hex_String(" + _input_wires[idx]->Get_VHDL_Signal_Id() + ")";
 		ofile << "if " << this->Get_Req(idx)->Get_CP_To_DP_Symbol() << " then --{ " << endl;
 		ofile << "LogRecordPrint(global_clock_cycle_count, " << mesg_string << ");" << endl;
@@ -440,10 +440,10 @@ void vcPhiPipelined::Print_VHDL_Logger(string& module_name, ostream& ofile)
 
 
 	ofile << "if " << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " then --{" << endl;
-	ofile << "LogRecordPrint(global_clock_cycle_count,\" logger::" << module_name << "::" << this->Get_Id() << ":sample-completed\");" << endl;
+	ofile << "LogRecordPrint(global_clock_cycle_count,\" logger:" << module_name << ":DP:" << this->Get_Id() << ":sample-completed\");" << endl;
 	ofile << "--} " << endl << "end if;" << endl;
 
-	string mesg_string = "\"logger::" + module_name + "::" + this->Get_Id() + ":output "  + _output_wires[0]->Get_VHDL_Signal_Id();
+	string mesg_string = "\"logger:" + module_name + ":DP:" + this->Get_Id() + ":output "  + _output_wires[0]->Get_VHDL_Signal_Id();
 	mesg_string += "= \" & Convert_SLV_To_Hex_String(" + _output_wires[0]->Get_VHDL_Signal_Id() + ")";
 	ofile << "if " << this->Get_Ack(1)->Get_DP_To_CP_Symbol() << " then --{" << endl;
 	ofile << "LogRecordPrint(global_clock_cycle_count," << mesg_string << ");" << endl;

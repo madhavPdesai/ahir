@@ -5180,10 +5180,13 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 
 	int delay = 0;
 	// check if delay not accounted for.
-	if(src_expression->Is_Implicit_Variable_Reference())
-		delay = 2;
-	else
-		delay = src_expression->Get_Delay();
+	if(!this->Get_Is_Volatile())
+	{
+		if(src_expression->Is_Implicit_Variable_Reference())
+			delay = 2;
+		else
+			delay = src_expression->Get_Delay();
+	}
 
 	// arc from root to tgt_expression.
 	__InsMap(adjacency_map,this,tgt_expression,delay);
@@ -5191,8 +5194,8 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 
 void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
-	
-	int delay = this->_called_module->Get_Delay();
+
+	int delay = (this->Get_Is_Volatile() ? 0 : this->_called_module->Get_Delay());
 	for(int idx = 0, fidx = _input_args.size(); idx < fidx; idx++)
 	{
 		AaExpression* src = _input_args[idx];
@@ -5208,6 +5211,7 @@ void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, in
 		__InsMap(adjacency_map,this,tgt,delay);
 	}
 
+
 	if(this->_guard_expression != NULL)
 	{
 		this->_guard_expression->Update_Adjacency_Map(adjacency_map, visited_elements);
@@ -5222,7 +5226,7 @@ void AaCallStatement::Collect_Root_Sources(set<AaExpression*>& root_sources)
 {
 	if(this->Get_Is_Volatile())
 	{
-        	for(int idx = 0, fidx = _input_args.size(); idx < fidx; idx++)
+		for(int idx = 0, fidx = _input_args.size(); idx < fidx; idx++)
 		{
 			_input_args[idx]->Collect_Root_Sources(root_sources);
 		}
@@ -5233,7 +5237,7 @@ void AaCallStatement::Collect_Root_Sources(set<AaExpression*>& root_sources)
 AaSimpleObjectReference* AaCallStatement::Get_Implicit_Target(string tgt_name)
 {
 	AaSimpleObjectReference* ret = NULL;
-        for(int idx = 0, fidx = _output_args.size(); idx < fidx; idx++)
+	for(int idx = 0, fidx = _output_args.size(); idx < fidx; idx++)
 	{
 		AaObjectReference* oarg = _output_args[idx];
 		if(oarg->Is_Implicit_Variable_Reference())
@@ -5251,7 +5255,7 @@ AaSimpleObjectReference* AaCallStatement::Get_Implicit_Target(string tgt_name)
 
 // return true on error.
 bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector<AaExpression*>& targets, 
-				vector<AaStatement*>& slist, int line_number)
+		vector<AaStatement*>& slist, int line_number)
 {
 	if(sizes.size() != targets.size())
 	{
@@ -5275,7 +5279,7 @@ bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector
 		AaSimpleObjectReference* root_ref = new AaSimpleObjectReference(scope, src);
 		root_ref->Set_Object_Root_Name(src);
 		root_ref->Set_Line_Number(line_number);
-		
+
 		AaType* slice_type = AaProgram::Make_Uinteger_Type(slice_width);
 		AaExpression* src_expr = new AaSliceExpression(scope, slice_type, LOW, root_ref);
 

@@ -1,0 +1,17 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback 
+			$phi accumulated_value := 0 $on $entry next_accumulated_value $on $loopback
+		$endmerge
+		X := in_data
+		$volatile next_accumulated_value := (X ^ accumulated_value)
+		out_data := accumulated_value
+		$while 1
+	}
+}

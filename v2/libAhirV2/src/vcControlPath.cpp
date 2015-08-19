@@ -3295,6 +3295,7 @@ vcControlPath::vcControlPath(string id):vcCPSeriesBlock(NULL, id)
 	_pipeline_depth = 1;
 	_pipeline_buffering = 1;
 	_pipeline_full_rate_flag = false;
+	_parent_module = NULL;
 }
 
 

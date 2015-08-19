@@ -34,7 +34,8 @@ void AaExpression::Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,
 		AaExpression* producer = *iter;
 		bool bypass = (bypass_if_true || producer->Update_Protocol_Has_Delay(visited_elements));
 		
-		__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, bypass);
+		if(visited_elements.find(producer) != visited_elements.end())
+			__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, bypass);
 	}
 }
 
@@ -65,7 +66,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 	AaStatement* pstmt = this->Get_Associated_Statement();
 	assert(pstmt != NULL); // this is always a target..  so statement completion should retrigger read.
 
-	bool is_volatile = pstmt->Get_Is_Volatile();
+	bool this_is_volatile = pstmt->Get_Is_Volatile();
 	bool err_flag = false;
 
 	// the transition that triggers the write.
@@ -113,28 +114,48 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				// statement a := (b+c) has used the value of b.
 				//
 				ofile << "// WAR dependency: Read: " << expr->To_String() << " before Write: " << pstmt->To_String() << endl;
+				AaStatement* e_stmt = expr->Get_Associated_Statement();
 
 				// The target "b = (d+e)" cannot be updated until 
 				// the statement a := (b+c) has sampled b..  
 				// This is conservative.
-				__J(write_trigger_transition_name, 
-					__SCT(expr->Get_Associated_Statement()));
+				__J(write_trigger_transition_name, __SCT(e_stmt));
 
 				// The completion of "b = (d+e)" reenables the
 				// evaluation of "a = (b+c)"
 				if(pipeline_flag)
 				{
 					ofile << "// WAR dependency: release  Read: " << expr->To_String() << " with Write: " << pstmt->To_String() << endl;
-					// expr can get a new value only after this has completed.
-					__MJ(__SST(expr), __UCT(pstmt), false); // No bypass
-				}
 
-				if(is_volatile)
-				{
-					string expr_string = expr->To_String();
-					string stmt_string = pstmt->To_String();
-					AaRoot::Error("Volatile statement should not have  WAR dependencies..", pstmt);
-					cerr << "(write) expression " << expr_string << ", reads statement " << stmt_string << endl;	
+					if(this_is_volatile && e_stmt->Get_Is_Volatile())
+					{
+						AaRoot::Error("WAR dependency cycle across volatile statements .. Write: ", e_stmt);
+						AaRoot::Error("WAR dependency cycle across volatile statements .. Read:", pstmt);
+					}
+
+					// expr can get a new value only after this has completed.
+					if(!this_is_volatile)
+					{
+						__MJ(__SST(expr), __UCT(pstmt), false); // No bypass
+					}
+					else
+					{	
+						// this is volatile.. reenable expr from root-sources
+						// of this..
+						ofile << "// WAR read release  from volatile write.: " << endl;
+						// collect root sources for this.
+						set<AaExpression*> root_set;
+						this->Collect_Root_Sources(root_set);
+						for(set<AaExpression*>::iterator rsiter = root_set.begin(), frsiter = root_set.end();
+								rsiter != frsiter; rsiter++)
+						{
+							AaExpression* root_expr = *rsiter;
+							if(visited_elements.find(root_expr) != visited_elements.end())
+							{
+								__MJ(__SST(expr), __UCT(root_expr), true); // bypass from update-complete.
+							}
+						}
+					}
 				}
 			}
 		}
@@ -167,7 +188,7 @@ void AaExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
 	// when this completes, the guard can be re-evaluated.
 	expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
 
-	// With new SplitGuardInterface, this depdendency is
+	// With new SplitGuardInterface, this dependency is
 	// no longer necessary.
 	//__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
 			//__UCT(this), true);  // bypass

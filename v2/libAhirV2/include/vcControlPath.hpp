@@ -7,6 +7,7 @@ class vcCompatibilityLabel;
 class vcCPPipelinedLoopBody;
 class vcCPPipelinedForkBlock;
 class vcCPBlock;
+class vcModule;
 class vcCPElement: public vcRoot
 {
 
@@ -1009,6 +1010,7 @@ public:
 
   void Print(ostream& ofile);
   void Print_VHDL(ostream& ofile);
+  void Print_VHDL_Logger(ostream& ofile);
 
   void Print_DP_To_CP_VHDL_Link(ostream& ofile);
   void Print_CP_To_DP_VHDL_Link(int idx, ostream& ofile);
@@ -1040,6 +1042,7 @@ class vcControlPath: public vcCPSeriesBlock
   int  _pipeline_buffering;
   bool _pipeline_full_rate_flag;
 
+  vcModule* _parent_module;
 protected:
   set<vcCompatibilityLabel*> _compatibility_label_set;
   vector<vcCPElement*> _bfs_ordered_labels;
@@ -1048,6 +1051,7 @@ protected:
   map<vcCompatibilityLabel*, set<vcCompatibilityLabel*> > _compatible_label_map;
 
 
+   
   map<string, vcCompatibilityLabel*> _join_label_map;
 
   set<vcCPElementGroup*, vcRoot_Compare> _cpelement_groups;
@@ -1061,6 +1065,9 @@ public:
 
   vcControlPath(string id);
   virtual string Kind() {return("vcControlPath");}
+
+  void  Set_Parent_Module(vcModule* m) {_parent_module = m;}
+  vcModule* Get_Parent_Module() {return(_parent_module);}
 
   vcTransition* Find_Transition(vector<string>& hier_ref);
   vcPlace* Find_Place(vector<string>& hier_ref);
