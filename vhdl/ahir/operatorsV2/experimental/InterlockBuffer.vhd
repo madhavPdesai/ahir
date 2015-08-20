@@ -11,7 +11,8 @@ entity InterlockBuffer is
   generic (name: string; buffer_size: integer := 2; 
 		in_data_width : integer := 32;
 		out_data_width : integer := 32;
-		flow_through: boolean := false);
+		flow_through: boolean := false;
+		bypass_flag : boolean := false);
   port (write_req: in boolean;
         write_ack: out boolean;
         write_data: in std_logic_vector(in_data_width-1 downto 0);
@@ -134,7 +135,8 @@ begin  -- default_arch
   buf : UnloadBuffer generic map (
     name =>  name & " buffer ",
     data_width => data_width,
-    buffer_size => buffer_size)
+    buffer_size => buffer_size, 
+    bypass_flag => bypass_flag)
     port map (
       write_req   => buf_write_req,
       write_ack   => buf_write_ack,

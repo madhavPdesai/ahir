@@ -8,7 +8,7 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity UnloadBuffer is
-  generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
+  generic (name: string; buffer_size: integer := 2; data_width : integer := 32; bypass_flag : boolean := false);
   port ( write_req: in std_logic;
         write_ack: out std_logic;
         write_data: in std_logic_vector(data_width-1 downto 0);
@@ -33,6 +33,8 @@ architecture default_arch of UnloadBuffer is
   signal fsm_state : UnloadFsmState;
 
   signal load_reg: boolean;
+
+  signal unload_ack_no_byp, unload_ack_byp : boolean;
   
 begin  -- default_arch
 
@@ -60,18 +62,21 @@ begin  -- default_arch
   -- FSM
   process(clk,unload_req, pop_ack)
      variable nstate: UnloadFsmState;
-     variable ackv: boolean;
+     variable loadv : boolean;
+     variable bypassv : boolean;
      variable preq : std_logic;
   begin
      nstate :=  fsm_state;
      preq := '0';
-     ackv := false;
+     loadv := false;
+     bypassv := false;
   
      case fsm_state is
          when idle => 
                if(unload_req and (pop_ack(0) = '1')) then
+		    -- load output register.
 		    preq := '1';   
-		    ackv := true;
+		    loadv := true;
                elsif (unload_req) then
 		    -- desire to unload, but nothing present.
                     nstate := waiting;
@@ -80,31 +85,45 @@ begin  -- default_arch
 		preq := '1';
 	        if(pop_ack(0) = '1') then
 		    -- ack the unload-req.
-		    nstate := idle;
-		    ackv := true;
+		    loadv := true;
+		    bypassv := bypass_flag;
+		    -- if a new unload req arrives
+		    -- stay in idle.
+		    if(not unload_req) then	
+		    	nstate := idle;
+		    end if;
 		end if;
      end case;
  
      pop_req(0) <= preq;
-     load_reg <= ackv;
+     load_reg <= loadv;
+     unload_ack_byp <= bypassv;
 
      if(clk'event and clk = '1') then
 	if(reset = '1') then
 		fsm_state <= idle;
-		unload_ack <= false;
+		unload_ack_no_byp <= false;
 	else
 		fsm_state <= nstate;
+		unload_ack_no_byp <= (loadv and (not bypassv));
 	end if;
 
-	if(ackv) then
+	if(loadv) then
            output_register <= pipe_data_out;
         end if;
-
-	unload_ack <= ackv;
      end if;
   end process;
 
-  -- no bypass!
-  read_data <= output_register;
+  -- without bypass
+  bypassGen: if bypass_flag generate
+  	read_data <= pipe_data_out when unload_ack_byp else output_register;
+	unload_ack <= unload_ack_byp or unload_ack_no_byp;
+  end generate bypassGen;
+
+  -- with bypass.
+  nobypassGen: if not bypass_flag generate
+	read_data <= output_register;
+	unload_ack <= unload_ack_no_byp;
+  end generate nobypassGen;
 
 end default_arch;

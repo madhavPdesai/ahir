@@ -38,7 +38,8 @@ begin  -- Behave
 
    buf: UnloadBuffer generic map (name => name & " buffer ",
 				data_width => data_width,
-			 	buffer_size => buffer_size)
+			 	buffer_size => buffer_size,
+				bypass_flag => true)
 		port map(write_req => buf_write,
                          write_ack => buf_has_room,
 			 write_data => write_data,

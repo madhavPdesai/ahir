@@ -1970,7 +1970,8 @@ package BaseComponents is
     generic (name: string; buffer_size: integer := 2; 
 		in_data_width : integer := 32;
 		out_data_width : integer := 32;
-		flow_through: boolean := false);
+		flow_through: boolean := false;
+		bypass_flag : boolean := false);
     port ( write_req: in boolean;
         write_ack: out boolean;
         write_data: in std_logic_vector(in_data_width-1 downto 0);
@@ -2051,7 +2052,7 @@ package BaseComponents is
   end component;
 
   component UnloadBuffer 
-    generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
+    generic (name: string; buffer_size: integer := 2; data_width : integer := 32; bypass_flag: boolean := false);
     port (write_req: in std_logic;
           write_ack: out std_logic;
           write_data: in std_logic_vector(data_width-1 downto 0);
