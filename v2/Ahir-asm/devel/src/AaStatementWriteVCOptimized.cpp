@@ -391,8 +391,10 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			expr->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
 					visited_elements,ls_map,pipe_map,barrier,ofile);
 
-			__J(__SST(expr), __UCT(this));
+			if(!expr->Is_Constant() && !expr->Is_Implicit_Variable_Reference())
+				__J(__SST(expr), __UCT(this));
 		}
+		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 		visited_elements.insert(this);
 	} 
 	else

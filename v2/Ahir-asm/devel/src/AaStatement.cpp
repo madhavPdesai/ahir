@@ -1647,6 +1647,8 @@ void AaCallStatement::Print(ostream& ofile)
 {
 	AaModule* cm = (AaModule*) _called_module;
 	string guard_string;
+
+	
 	if(this->_guard_expression != NULL)
 	{
 		guard_string = "$guard (";
@@ -1656,6 +1658,9 @@ void AaCallStatement::Print(ostream& ofile)
 		guard_string += this->_guard_expression->To_String();
 		guard_string += ") ";
 	}
+
+        if(this->Get_Is_Volatile())
+		ofile << " $volatile ";
 
 	if((cm->Get_Inline_Flag() || cm->Get_Macro_Flag()) && AaProgram::_print_inlined_functions_in_caller)
 	{

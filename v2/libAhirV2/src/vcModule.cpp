@@ -288,8 +288,20 @@ void vcModule::Print_VHDL(ostream& ofile)
   if(!this->_foreign_flag)
     {
       vcSystem::Print_VHDL_Inclusions(ofile);
-      this->Print_VHDL_Entity(ofile);
-      this->Print_VHDL_Architecture(ofile);
+	if(this->Get_Volatile_Flag())
+	{
+      		this->Print_VHDL_Volatile_Entity(ofile);
+      		this->Print_VHDL_Volatile_Architecture(ofile);
+	}
+	else if(this->Get_Operator_Flag())
+	{
+		assert(0); // in progress..
+	}
+	else
+	{
+      		this->Print_VHDL_Entity(ofile);
+      		this->Print_VHDL_Architecture(ofile);
+	}
     }
 }
 
@@ -489,6 +501,11 @@ string vcModule::Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile)
       semi_colon = ";";
     }
 
+  return(semi_colon);
+}
+
+string vcModule::Print_VHDL_Control_Ports(string semi_colon, ostream& ofile)
+{
   ofile << semi_colon << endl;
   ofile <<  "clk : in std_logic;" << endl ;
   ofile <<  "reset : in std_logic;"  << endl;
@@ -506,7 +523,7 @@ void vcModule::Print_VHDL_Ports(ostream& ofile)
   string semi_colon;
   ofile << "port ( -- {" << endl;
 
-  // arguments, clock, reset etc.
+  // arguments
   semi_colon = this->Print_VHDL_Argument_Ports(semi_colon, ofile);
 
   // print external load/store ports.
@@ -524,6 +541,9 @@ void vcModule::Print_VHDL_Ports(ostream& ofile)
   // input and output tag
   semi_colon = this->Print_VHDL_Tag_Interface_Ports(semi_colon,ofile);
 
+  // clock, reset etc.
+  semi_colon = this->Print_VHDL_Control_Ports(semi_colon, ofile);
+
   ofile << "-- } " << endl << ");" << endl;
 }
 
@@ -540,10 +560,17 @@ string vcModule::Print_VHDL_Tag_Interface_Ports(string semi_colon,ostream& ofile
 
 void vcModule::Print_VHDL_Component(ostream& ofile)
 {
-  ofile << "component " << this->Get_VHDL_Id() << " is -- {" << endl;
-  ofile << " generic (tag_length : integer); " << endl;
-  this->Print_VHDL_Ports(ofile);
-  ofile << "-- }" << endl << "end component;" << endl;
+  if(this->Get_Volatile_Flag())
+	this->Print_VHDL_Volatile_Component(ofile);
+  else if(this->Get_Operator_Flag())
+	assert(0); // in progress
+  else
+  {
+	  ofile << "component " << this->Get_VHDL_Id() << " is -- {" << endl;
+	  ofile << " generic (tag_length : integer); " << endl;
+	  this->Print_VHDL_Ports(ofile);
+	  ofile << "-- }" << endl << "end component;" << endl;
+  }
 }
 
 
@@ -650,6 +677,15 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 
 	ofile << "signal " << cp_entry_symbol << ": Boolean;" << endl;
 	ofile << "signal " << cp_exit_symbol << ": Boolean;" << endl;
+
+	ofile << "-- volatile/operator module components. " << endl;
+	for(set<vcModule*>::iterator mciter = _called_modules.begin(), fmciter = _called_modules.end();
+			mciter != fmciter; mciter++)
+	{
+		vcModule* mc = *mciter;
+		if(mc->Get_Volatile_Flag() || mc->Get_Operator_Flag())
+			mc->Print_VHDL_Component(ofile);
+	}
 
 	// print link signals between CP and DP
 	ofile << "-- links between control-path and data-path" << endl;

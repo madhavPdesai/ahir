@@ -206,6 +206,7 @@ class vcModule: public vcRoot
 
   void Print_VHDL_Ports(ostream& ofile);
   string Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile);
+  string Print_VHDL_Control_Ports(string semi_colon, ostream& ofile);
   void Print_VHDL_Component(ostream& ofile);
   void Print_VHDL_Operator_Component(ostream& ofile);
   void Print_VHDL_Volatile_Component(ostream& ofile);

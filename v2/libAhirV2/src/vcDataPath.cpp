@@ -961,7 +961,9 @@ string  vcDataPath::Print_VHDL_Call_Interface_Ports(string semi_colon, ostream& 
   for(int idx = 0; idx < _compatible_call_groups.size(); idx++)
     {
       called_module = ((vcCall*) (*(_compatible_call_groups[idx].begin())))->Get_Called_Module();
-      called_module_to_call_group_map[called_module].push_back(idx);
+
+      if(!(called_module->Get_Operator_Flag() || called_module->Get_Volatile_Flag()))
+      	called_module_to_call_group_map[called_module].push_back(idx);
     }
 
   // for each call group
@@ -2750,6 +2752,8 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
       vcModule* called_module = NULL;
 
+      bool skip_because_volatile = false;
+
       // ok. collect all the information..
       for(set<vcDatapathElement*>::iterator iter = _compatible_call_groups[idx].begin();
 	  iter != _compatible_call_groups[idx].end();
@@ -2769,7 +2773,8 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 	  if(so->Get_Flow_Through() || called_module->Get_Volatile_Flag())
 	  {
 		so->Print_Flow_Through_VHDL(ofile);
-		continue;
+		skip_because_volatile = true;
+		break;
 	  }
 	  else if(this->Get_Parent()->Get_Volatile_Flag())
 	  {
@@ -2797,6 +2802,9 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 	}
       assert(called_module != NULL);
 
+
+      if(skip_because_volatile)
+	continue;
 
       string input_buffering_string;
       int max_inbuf = this->Generate_Buffering_String("inBUFs", inwire_buffering, input_buffering_string);
@@ -3182,7 +3190,8 @@ string vcDataPath::Print_VHDL_Call_Interface_Port_Map(string comma, ostream& ofi
   for(int idx = 0; idx < _compatible_call_groups.size(); idx++)
     {
       called_module = ((vcCall*) (*(_compatible_call_groups[idx].begin())))->Get_Called_Module();
-      called_module_set.insert(called_module);
+      if(!(called_module->Get_Operator_Flag() || called_module->Get_Volatile_Flag()))
+      	called_module_set.insert(called_module);
     }
 
   for(set<vcModule*,vcRoot_Compare>::iterator iter = called_module_set.begin();

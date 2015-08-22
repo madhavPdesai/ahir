@@ -29,8 +29,8 @@ void Sender()
 	{
 		uint32_t r = rand();
 		val[idx] = r;
-		acc_value = (acc_value ^ r);
 		expected_result[idx] = acc_value;
+		acc_value = (acc_value ^ r);
 	}
 	write_uint32_n("in_data",val,ORDER);
 }

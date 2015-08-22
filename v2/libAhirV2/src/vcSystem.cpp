@@ -419,7 +419,7 @@ void  vcSystem::Print_VHDL(ostream& ofile)
 	}
        else
 	{
-      		cerr << "Info: skipped printing VHDL model for function library module " << (*moditer).first << endl;
+      		cerr << "Info: skipped printing VHDL model for function-library module " << (*moditer).first << endl;
 	}
     }
 
@@ -1002,12 +1002,17 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
       string mod_name = (*moditer).first;
       int D;
       bool is_function_library_module = this->Is_Function_Library_Module(D,mod_name);
+      bool is_volatile_or_operator = (m->Get_Volatile_Flag() ||  m->Get_Operator_Flag());
 
       ofile << "-- declarations related to module " << m->Get_VHDL_Id() << endl;
 
       // module component declarations
-      if(!is_function_library_module)
+      if(!is_function_library_module && !is_volatile_or_operator)
       	m->Print_VHDL_Component(ofile);
+
+	// volatile/operators are instantiated in module data-paths.
+      if(is_volatile_or_operator)
+	continue;
 
       if(!this->Is_A_Top_Module(m) || this->Is_An_Ever_Running_Top_Module(m))
 	{
@@ -1039,6 +1044,12 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
       moditer != _modules.end();
       moditer++)
     {
+      vcModule* m = (*moditer).second;
+
+      // skip volatile/operators.
+      if(m->Get_Volatile_Flag() || m->Get_Operator_Flag())
+	continue;
+
       ofile << "-- module " << (*moditer).second->Get_VHDL_Id() << endl;
       if(!this->Is_A_Top_Module((*moditer).second))
 	{

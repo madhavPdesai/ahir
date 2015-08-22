@@ -88,10 +88,7 @@ public:
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcCall");}
-  virtual bool Is_Shareable_With(vcDatapathElement* other) 
-  {
-    return((this->Kind() == other->Kind()) && (this->_called_module == ((vcCall*)other)->Get_Called_Module()));
-  }
+  virtual bool Is_Shareable_With(vcDatapathElement* other) ;
 
   virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering);
   virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering);

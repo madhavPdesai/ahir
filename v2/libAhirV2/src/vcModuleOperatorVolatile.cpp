@@ -44,7 +44,7 @@ void vcModule::Print_VHDL_Volatile_Entity(ostream& ofile)
 {
   ofile << "entity " << this->Get_VHDL_Id() << "_Volatile is -- {" << endl;
   ofile << "port ( -- {" << endl;
-  string sc = this->_data_path->Print_VHDL_IO_Interface_Ports("", ofile);
+  string sc = this->Print_VHDL_Argument_Ports("", ofile);
   ofile << "-- } " << endl << ");" << endl;
   ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Id() << "_Volatile;" << endl;
 }
@@ -73,13 +73,6 @@ void vcModule::Print_VHDL_Volatile_Architecture(ostream& ofile)
 		ofile << "signal " << w->Get_VHDL_Signal_Id() << " : " 
 			<<  " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
 
-		// all inarg_reenable signals must be joined
-		// to produce input_sample_reenable!
-		// input-sample-reenable will unload from the
-		// input buffer.
-		string ue_sig =  w->Get_VHDL_Id() + "_update_enable";
-		ofile << "signal " << ue_sig << ": Boolean;" << endl;
-
 	}
 
 	// output port buffer signals.
@@ -103,16 +96,20 @@ void vcModule::Print_VHDL_Volatile_Architecture(ostream& ofile)
 
 	ofile << "-- }" << endl << "begin --  {" << endl;
 
+	ofile << "-- input buffering --------------------------------------------------------" << endl;
+	for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
+	{
+		vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
+		ofile << w->Get_VHDL_Signal_Id() << " <= " << w->Get_VHDL_Id() << ";" << endl;
+	}
 
-	ofile << "-- output handling  -------------------------------------------------------" << endl;
+	ofile << "-- output buffering  -------------------------------------------------------" << endl;
 	{
 		for(int idx = 0, fidx = outarg_wires.size(); idx < fidx; idx++)
 		{
 			vcOutputWire* w = (vcOutputWire*) outarg_wires[idx];
-			int wsize  = w->Get_Type()->Size();
 			if(w->Is_Constant())
 				ofile << w->Get_VHDL_Signal_Id() << " <= " << w->Get_Value()->To_VHDL_String() << ";" << endl;
-
 			ofile << w->Get_VHDL_Id() <<  " <= " << w->Get_VHDL_Signal_Id() << ";" << endl;
 		}
 
@@ -131,7 +128,7 @@ void vcModule::Print_VHDL_Volatile_Component(ostream& ofile)
 {
   ofile << "component " << this->Get_VHDL_Id() << "_Volatile is -- {" << endl;
   ofile << "port ( -- {" << endl;
-  string sc = this->_data_path->Print_VHDL_IO_Interface_Ports("", ofile);
+  string sc = this->Print_VHDL_Argument_Ports("", ofile);
   ofile << "-- } " << endl << ");" << endl;
   ofile << "-- }" << endl << "end component; " << endl;
 }

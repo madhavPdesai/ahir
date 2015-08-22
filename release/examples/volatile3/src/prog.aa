@@ -1,20 +1,23 @@
 $pipe in_data  : $uint<32> $depth 4
 $pipe out_data : $uint<32> $depth 4
 
+$volatile $module [mXOR] $in (U V: $uint<32>) $out (Z: $uint<32>) $is
+{
+   Z := (U ^ V)
+}
+
+
 $module [volatile_check_daemon] $in() $out () $is
 {
 	$branchblock[lOoP] {
 		$dopipeline $depth 16 $buffering 4 
 		$fullrate
 		$merge $entry $loopback 
-			$phi accumulated_value := 0 $on $entry nav $on $loopback
+			$phi accumulated_value := 0 $on $entry next_accumulated_value $on $loopback
 		$endmerge
 		X := in_data
-		$volatile t1 := (X ^ accumulated_value)
-		$volatile nav := (X ^ accumulated_value)
-		t2 := (X ^ t1)
-		$volatile next_accumulated_value := (t2 ^ X)
-		out_data := next_accumulated_value
+		$volatile $call mXOR (X accumulated_value) (next_accumulated_value)
+		out_data := accumulated_value
 		$while 1
 	}
 }

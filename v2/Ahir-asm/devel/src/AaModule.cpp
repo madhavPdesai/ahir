@@ -99,6 +99,10 @@ void AaModule::Print(ostream& ofile)
     if(this->Get_Pipeline_Full_Rate_Flag())
 	ofile << "$fullrate ";
   }
+  if(this->Get_Operator_Flag())
+	ofile << "$operator ";
+  else if(this->Get_Volatile_Flag())
+	ofile << "$volatile ";
 
   ofile << "$module [" << this->Get_Label() << "]" << endl;
   ofile << "\t $in (";

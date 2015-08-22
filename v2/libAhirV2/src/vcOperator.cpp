@@ -508,9 +508,29 @@ vcCall::vcCall(string id, vcModule* m, vector<vcWire*>& in_wires, vector<vcWire*
 	_inline_flag = inline_flag;
 }
 
+bool vcCall::Is_Shareable_With(vcDatapathElement* other) 
+{
+	vcCall* ocall = NULL;
+	if(other->Is("vcCall"))
+		ocall = (vcCall*)other;
+
+	if(ocall == NULL)
+		return(false);
+
+	return( 	!this->_called_module->Get_Volatile_Flag() && 
+			!this->_called_module->Get_Operator_Flag() && 
+			!ocall->_called_module->Get_Volatile_Flag() && 
+			!ocall->_called_module->Get_Operator_Flag() && 
+			(this->_called_module == ocall->Get_Called_Module()));
+}
+
 int vcCall::Get_Delay()
 {
 	bool is_lib_mod = _called_module->Get_Is_Function_Library_Module();
+
+	if(this->_called_module->Get_Volatile_Flag())
+		return(0);
+
 	if(is_lib_mod)
 		return(_called_module->Get_Delay());
 	else
@@ -572,16 +592,18 @@ void vcCall::Print(ostream& ofile)
 
 void vcCall::Print_Flow_Through_VHDL(ostream& ofile)
 {
+	assert(this->_called_module->Get_Volatile_Flag());
+
 	ofile << "call_inst_" << this->Get_Root_Index() << ": ";
-	ofile << this->_called_module->Get_VHDL_Id() << " port map(";
+	ofile << this->_called_module->Get_VHDL_Id() << "_Volatile port map(";
 	bool first_one = true;
 	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Input_Arguments(); idx < fidx; idx++)
 	{
 		if(!first_one)
 		{
 			ofile << ", ";
-			first_one = false;
 		}
+		first_one = false;
 		ofile << this->_called_module->Get_Input_Argument(idx) << " => "
 			<< this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
 	}
@@ -590,8 +612,8 @@ void vcCall::Print_Flow_Through_VHDL(ostream& ofile)
 		if(!first_one)
 		{
 			ofile << ", ";
-			first_one = false;
 		}
+		first_one = false;
 		ofile << this->_called_module->Get_Output_Argument(idx) << " => "
 			<< this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
 	}
