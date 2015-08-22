@@ -1085,7 +1085,7 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
       iter++)
     {
       vcSelect* s = (*iter).second;
-      if(!s->Get_Flow_Through())
+      if(!s->Get_Flow_Through() && !this->Get_Parent()->Get_Volatile_Flag())
       {
 	      if(vcSystem::_enable_logging)
 		      s->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
@@ -1109,7 +1109,7 @@ void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
 			iter++)
 	{
 		vcSlice* s = (*iter).second;
-		if(!s->Get_Flow_Through())
+		if(!s->Get_Flow_Through() && !this->Get_Parent()->Get_Volatile_Flag())
 		{
 			if(vcSystem::_enable_logging)
 				s->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
@@ -1132,7 +1132,7 @@ void vcDataPath::Print_VHDL_Permutation_Instances(ostream& ofile)
 			iter++)
 	{
 		vcPermutation* s = (*iter).second;
-		if(!s->Get_Flow_Through())
+		if(!s->Get_Flow_Through() && !this->Get_Parent()->Get_Volatile_Flag())
 		{
 			if(vcSystem::_enable_logging)
 				s->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
@@ -1170,7 +1170,7 @@ void vcDataPath::Print_VHDL_Interlock_Buffer_Instances(ostream& ofile)
 			iter++)
 	{
 		vcInterlockBuffer* p = (*iter).second;
-		if(!p->Get_Flow_Through())
+		if(!p->Get_Flow_Through() && !this->Get_Parent()->Get_Volatile_Flag())
 		{
 			if(vcSystem::_enable_logging)
 			{
@@ -1195,6 +1195,11 @@ void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
 			iter++)
 	{
 		vcEquivalence* s = (*iter).second;
+		if(s->Get_Flow_Through() || this->Get_Parent()->Get_Volatile_Flag())
+		{
+			s->Print_Flow_Through_VHDL(ofile);
+			continue;
+		}
 		if(vcSystem::_enable_logging)
 			s->vcOperator::Print_VHDL_Logger(parent_name, ofile);
 		ofile << s->Get_VHDL_Id() << ": Block -- { " << endl;
@@ -1322,7 +1327,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       vcSplitOperator* lead_op = ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())));
 
       // used in the unshared case.
-      bool flow_through = lead_op->Get_Flow_Through();
+      bool flow_through = (lead_op->Get_Flow_Through() || this->Get_Parent()->Get_Volatile_Flag());
       
       //
       // if it is a flow-through operator, just print 
@@ -1873,6 +1878,12 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 
   string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
   string parent_name = this->Get_Parent()->Get_Id();
+  if(this->Get_Parent()->Get_Volatile_Flag() && (this->_compatible_load_groups.size() > 0))
+  {
+	vcSystem::Error("volatile module " + this->Get_Parent()->Get_VHDL_Id() + " cannot have loads.");
+	return;
+  }
+
   // print LoadReqShared instance and LoadCompleteShared instance.
   for(int idx = 0; idx < this->_compatible_load_groups.size(); idx++)
     { // for each operator group.
@@ -2110,6 +2121,11 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 { 
   string parent_name = this->Get_Parent()->Get_Id();
 	string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
+  if(this->Get_Parent()->Get_Volatile_Flag() && (this->_compatible_store_groups.size() > 0))
+  {
+	vcSystem::Error("volatile module " + this->Get_Parent()->Get_VHDL_Id() + " cannot have stores.");
+	return;
+  }
 
 	for(int idx = 0; idx < this->_compatible_store_groups.size(); idx++)
 	{ // for each operator group.
@@ -2339,6 +2355,12 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
   string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
   string parent_name = this->Get_Parent()->Get_Id();
 
+  if(this->Get_Parent()->Get_Volatile_Flag() && (this->_compatible_inport_groups.size() > 0))
+  {
+	vcSystem::Error("volatile module " + this->Get_Parent()->Get_VHDL_Id() + " cannot interact with pipes.");
+	return;
+  }
+
   for(int idx = 0; idx < this->_compatible_inport_groups.size(); idx++)
     { // for each operator group.
 
@@ -2490,6 +2512,11 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 { 
 	string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
   string parent_name = this->Get_Parent()->Get_Id();
+  if(this->Get_Parent()->Get_Volatile_Flag() && (this->_compatible_outport_groups.size() > 0))
+  {
+	vcSystem::Error("volatile module " + this->Get_Parent()->Get_VHDL_Id() + " cannot interact with pipes.");
+	return;
+  }
 
 	for(int idx = 0; idx < this->_compatible_outport_groups.size(); idx++)
 	{ // for each operator group.
@@ -2696,7 +2723,6 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
   string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
   string parent_name = this->Get_Parent()->Get_Id();
 
-  // print LoadReqShared instance and LoadCompleteShared instance.
   for(int idx = 0; idx < this->_compatible_call_groups.size(); idx++)
     { // for each operator group.
 
@@ -2739,6 +2765,19 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 	    called_module = so->Get_Called_Module();
 	  else
 	    assert(called_module == so->Get_Called_Module());
+
+	  if(so->Get_Flow_Through() || called_module->Get_Volatile_Flag())
+	  {
+		so->Print_Flow_Through_VHDL(ofile);
+		continue;
+	  }
+	  else if(this->Get_Parent()->Get_Volatile_Flag())
+	  {
+		vcSystem::Error("call to a non-volatile module " + called_module->Get_VHDL_Id() +
+					" from a volatile module " + this->Get_Parent()->Get_VHDL_Id());
+		continue;
+          }
+
 
 	  elements.push_back(so->Get_VHDL_Id());
 	  dpe_elements.push_back(so);

@@ -133,14 +133,16 @@ vc_MemoryLocation[vcSystem* sys, vcMemorySpace* ms]
 ;
 
 //--------------------------------------------------------------------------------------------------------------------------------------
-// vc_Module : (FOREIGN) ?  MODULE vc_Label  LBRACE vc_Inargs vc_Outargs vc_MemorySpace* vc_Pipe* vc_Controlpath vc_Datapath? vc_Link* vc_AttributeSpec* RBRACE
+// vc_Module : (FOREIGN | PIPELINE)? (OPERATOR | MODULE)?  MODULE vc_Label  LBRACE vc_Inargs vc_Outargs vc_MemorySpace* vc_Pipe* vc_Controlpath vc_Datapath? vc_Link* vc_AttributeSpec* RBRACE
 //--------------------------------------------------------------------------------------------------------------------------------------
 vc_Module[vcSystem* sys] returns[vcModule* m]
 {
 	string lbl;
 	m = NULL;
     bool foreign_flag = false;
-	bool pipeline_flag = false;
+    bool pipeline_flag = false;
+    bool operator_flag = false;
+    bool volatile_flag = false;
     vcMemorySpace* ms;
     int depth = 1;
     int buffering = 1;
@@ -152,6 +154,7 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 		(BUFFERING bid: UINTEGER {buffering = atoi(did->getText().c_str());})? 
 		(FULLRATE {full_rate_flag = true;})? 
 	))?
+	( (OPERATOR {operator_flag = true;} ) | (VOLATILE {volatile_flag = true;}) )?
         MODULE lbl = vc_Label 
         { 
             m = new vcModule(sys,lbl); 
@@ -163,6 +166,8 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 		m->Set_Pipeline_Buffering(buffering);
 		m->Set_Pipeline_Full_Rate_Flag(full_rate_flag);
 	    }
+	    m->Set_Operator_Flag(operator_flag);
+	    m->Set_Volatile_Flag(volatile_flag);
         } 
         LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
         (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
@@ -1670,6 +1675,8 @@ MAXACCESSWIDTH : "$maxaccesswidth";
 MODULE        : "$module";
 FOREIGN       : "$foreign";
 PIPELINE      : "$pipeline";
+OPERATOR      : "$operator";
+VOLATILE      : "$volatile";
 SERIESBLOCK   : ";;";
 PARALLELBLOCK : "||";
 FORKBLOCK     : "::";

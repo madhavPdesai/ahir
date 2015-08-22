@@ -19,6 +19,8 @@ vcModule::vcModule(vcSystem* sys, string module_name):vcRoot(module_name)
   this->_max_number_of_caller_tags_needed = 0;
   this->_foreign_flag = false;
   this->_pipeline_flag = false;
+  this->_operator_flag = false;
+  this->_volatile_flag = false;
   this->_pipeline_depth = 1;
   this->_is_function_library_module = false;
   this->_delay = 2;
@@ -38,6 +40,10 @@ void vcModule::Print(ostream& ofile)
     ofile << vcLexerKeywords[__FOREIGN] << " ";
   if(this->_pipeline_flag)
     ofile << vcLexerKeywords[__PIPELINE] << " ";
+  if(this->_operator_flag)
+    ofile << vcLexerKeywords[__OPERATOR] << " ";
+  if(this->_volatile_flag)
+    ofile << vcLexerKeywords[__VOLATILE] << " ";
 
   ofile << vcLexerKeywords[__MODULE] << " " <<  this->Get_Label() << " {" << endl;
   if(this->_input_arguments.size() > 0)

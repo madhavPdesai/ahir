@@ -58,9 +58,11 @@ class AaModule: public AaSeriesBlockStatement
   bool _inline_flag;
   bool _macro_flag;
   bool _pipeline_flag;
-
+  bool _operator_flag;
+  bool _volatile_flag;
   bool _writes_to_shared_pipe;
   bool _reads_from_shared_pipe;
+
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
   ~AaModule();
@@ -76,6 +78,12 @@ class AaModule: public AaSeriesBlockStatement
 
   virtual void Set_Pipeline_Full_Rate_Flag(bool v) {_pipeline_full_rate_flag = v;}
   virtual bool Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
+
+  virtual void Set_Operator_Flag(bool v) {_operator_flag = v;}
+  virtual bool Get_Operator_Flag() {return(_operator_flag);}
+
+  virtual void Set_Volatile_Flag(bool v) {_volatile_flag = v;}
+  virtual bool Get_Volatile_Flag() {return(_volatile_flag);}
 
   void Update_Memory_Space_Info();
 

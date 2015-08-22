@@ -579,7 +579,7 @@ class AaCallStatement: public AaStatement
   unsigned int Get_Number_Of_Input_Args() {return(this->_input_args.size());}
   unsigned int Get_Number_Of_Output_Args() {return(this->_output_args.size());}
   string Get_Function_Name() {return(this->_function_name);}
-  void Set_Called_Module(AaModule* m) { this->_called_module = m; }
+  void Set_Called_Module(AaModule* m);
   AaModule* Get_Called_Module() {return(this->_called_module);}
   virtual void Set_Pipeline_Parent(AaStatement* dws);
 

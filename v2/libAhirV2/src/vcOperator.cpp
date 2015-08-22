@@ -51,6 +51,52 @@ void vcEquivalence::Print(ostream& ofile)
 }
 
 
+void vcEquivalence::Print_Flow_Through_VHDL(ostream& ofile)
+{
+	ofile << "-- equivalence " << this->Get_VHDL_Id() << endl;
+	ofile << "process(";
+  	for(int idx = 0; idx < _input_wires.size(); idx++)
+	{
+		if(idx > 0)
+			ofile << ", ";
+		ofile << _input_wires[idx]->Get_VHDL_Signal_Id();
+	}
+	ofile << ") --{" << endl;
+	int iW  = this->Get_Input_Width();
+	int oW  = this->Get_Output_Width();
+	ofile << "variable iv : std_logic_vector(" << iW-1 << " downto 0);" << endl;
+	ofile << "variable ov : std_logic_vector(" << oW-1 << " downto 0);" << endl;
+	ofile << "-- }" << endl;
+	ofile << "begin -- {" << endl;
+	ofile << "iv := ";
+  	for(int idx = 0; idx < _input_wires.size(); idx++)
+	{
+		if(idx > 0)
+			ofile << " & ";
+		ofile << _input_wires[idx]->Get_VHDL_Signal_Id();
+	}
+	ofile << ";" << endl;
+	if(iW > oW)
+	{
+		ofile << "ov := iv(" << oW-1 << " downto 0);" << endl;
+	}
+	else
+	{
+		ofile << "ov(" << iW-1 << " downto 0) := iv;" << endl;
+	}
+	int H = oW-1;
+  	for(int idx = 0; idx < _output_wires.size(); idx++)
+    	{
+		vcWire* w = _output_wires[idx];
+		int L = (H- w->Get_Size())+1;
+		ofile << w->Get_VHDL_Signal_Id() << " <= ov(" << H << " downto " << L << ");" << endl;
+		H = H-L;
+    	}
+	ofile << "--}" << endl;
+	ofile << "end process;" << endl;
+}
+
+
 void vcOperator::Print_VHDL_Logger(string& module_name, ostream& ofile)
 {
 	string req_id = this->_reqs[0]->Get_CP_To_DP_Symbol();
@@ -128,20 +174,20 @@ void vcSplitOperator::Print_VHDL_Logger(string& module_name, ostream& ofile)
 
 vcLoadStore::vcLoadStore(string id, vcMemorySpace* ms):vcSplitOperator(id)
 {
-  _memory_space = ms;
-  assert(ms != NULL);
+	_memory_space = ms;
+	assert(ms != NULL);
 
-  
+
 }
 
 
 void vcLoadStore::Check_Memory_Space_Consistency(int addr_width, int data_width)
 {
-  if(_memory_space->Get_Address_Width() != addr_width)
-    {
-      string err_msg = string("load/store operator address-wire width must\n") +
-	"be the same as the memory space address width\n" +
-	"for load/store with id " + this->Get_Id() + 
+	if(_memory_space->Get_Address_Width() != addr_width)
+	{
+		string err_msg = string("load/store operator address-wire width must\n") +
+			"be the same as the memory space address width\n" +
+			"for load/store with id " + this->Get_Id() + 
 	" (memory space " + _memory_space->Get_Id() + ")"; 
 
       vcSystem::Error(err_msg);

@@ -637,6 +637,11 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
 	ofile << "$fullrate ";
   }
 
+  if(this->Get_Operator_Flag())
+	ofile << " $operator ";
+  else if(this->Get_Volatile_Flag())
+	ofile << " $volatile ";
+
   ofile << "$module [" << this->Get_Label() << "] {" << endl;
   if(_input_args.size() > 0)
     {
@@ -888,6 +893,17 @@ void AaModule::Set_Statement_Sequence(AaStatementSequence* statement_sequence)
 					|| s->Is("AaReportStatement") || s->Is("AaNullStatement")))
 			{
 				AaRoot::Error("pipelined module can contain only call/assignment/null statements.", s);
+				err_flag = true;
+			}
+			else
+				s->Set_Pipeline_Parent(this);
+		}
+
+		if(this->Get_Operator_Flag() || this->Get_Volatile_Flag())
+		{
+			if(!(s->Is("AaAssignmentStatement") ||  s->Is("AaNullStatement")))
+			{
+				AaRoot::Error("operator/volatile module can contain only assignment/null statements.", s);
 				err_flag = true;
 			}
 			else

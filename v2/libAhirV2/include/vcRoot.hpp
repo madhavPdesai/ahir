@@ -19,6 +19,8 @@ enum vcLexerKeytags
     __MODULE        ,
     __FOREIGN        ,
     __PIPELINE        ,
+    __OPERATOR        ,
+    __VOLATILE        ,
     __SERIESBLOCK   	,
     __PARALLELBLOCK 	,
     __FORKBLOCK     	,
@@ -156,6 +158,8 @@ static string vcLexerKeywords[] =
       "$module"		,
       "$foreign"		,
       "$pipeline"		,
+      "$operator"		,
+      "$volatile"		,
       ";;"		, // series block
       "||"		, // parallel block
       "::"		, // fork-join block

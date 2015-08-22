@@ -52,6 +52,8 @@ class vcModule: public vcRoot
   bool _inline;
   bool _foreign_flag; 
   bool _pipeline_flag; 
+  bool _operator_flag; 
+  bool _volatile_flag; 
   bool _pipeline_full_rate_flag;
   bool _is_function_library_module;
 
@@ -74,6 +76,12 @@ class vcModule: public vcRoot
 
   void Set_Pipeline_Full_Rate_Flag(bool d) {_pipeline_full_rate_flag = d;}
   int  Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
+
+  void Set_Operator_Flag(bool v) {_operator_flag = v;}
+  bool Get_Operator_Flag() {return(_operator_flag);}
+
+  void Set_Volatile_Flag(bool v) {_volatile_flag = v;}
+  bool Get_Volatile_Flag() {return(_volatile_flag);}
 
   void Set_Delay(int d) {_delay = d;}
   int  Get_Delay() {return(_delay);}
@@ -193,11 +201,20 @@ class vcModule: public vcRoot
 
   // VHDL related stuff..
   virtual void Print_VHDL(ostream& ofile);
+  virtual void Print_VHDL_Operator_Form(ostream& ofile);
+  virtual void Print_VHDL_Volatile_Form(ostream& ofile);
+
   void Print_VHDL_Ports(ostream& ofile);
   string Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile);
   void Print_VHDL_Component(ostream& ofile);
+  void Print_VHDL_Operator_Component(ostream& ofile);
+  void Print_VHDL_Volatile_Component(ostream& ofile);
   void Print_VHDL_Entity(ostream& ofile);
   void Print_VHDL_Architecture(ostream& ofile);
+  void Print_VHDL_Operator_Entity(ostream& ofile);
+  void Print_VHDL_Operator_Architecture(ostream& ofile);
+  void Print_VHDL_Volatile_Entity(ostream& ofile);
+  void Print_VHDL_Volatile_Architecture(ostream& ofile);
 
   string Get_VHDL_Call_Interface_Port_Name(string pid);
   string Get_VHDL_Call_Interface_Port_Section(vcModule* m,

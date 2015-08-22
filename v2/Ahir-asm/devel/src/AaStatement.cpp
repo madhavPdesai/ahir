@@ -1865,6 +1865,15 @@ void AaCallStatement::Print(ostream& ofile)
   ofile << endl;
 }
 
+void AaCallStatement::Set_Called_Module(AaModule* m)
+{ 
+	this->_called_module = m; 
+	if(this->Get_Is_Volatile() != m->Get_Volatile_Flag())
+	{
+		AaRoot::Error("volatility of call statement not the same as that of called module", this);
+	}
+}
+
 void AaCallStatement::Map_Source_References()
 {
 	AaModule* called_module = AaProgram::Find_Module(this->_function_name);
@@ -1942,13 +1951,13 @@ void AaCallStatement::Map_Source_References()
 bool AaCallStatement::Can_Block(bool pipeline_flag)
 {
 
-  if(this->AaStatement::Can_Block(pipeline_flag))
-	return(true);
+	if(this->AaStatement::Can_Block(pipeline_flag))
+		return(true);
 
-  if(((AaModule*) this->_called_module)->Can_Block(pipeline_flag))
-	return(true);
-	
-  return(false);
+	if(((AaModule*) this->_called_module)->Can_Block(pipeline_flag))
+		return(true);
+
+	return(false);
 }
 
 // For foreign module, we have to ensure that all arguments 

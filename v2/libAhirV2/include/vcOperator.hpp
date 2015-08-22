@@ -43,6 +43,7 @@ public:
   virtual string Kind() {return("vcEquivalence");}    
   virtual void Print(ostream& ofile);
   virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
+  virtual void Print_Flow_Through_VHDL(ostream& ofile);
   friend class vcDataPath;
 };
 
