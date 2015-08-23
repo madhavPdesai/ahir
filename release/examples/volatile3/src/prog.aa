@@ -16,7 +16,9 @@ $module [volatile_check_daemon] $in() $out () $is
 			$phi accumulated_value := 0 $on $entry next_accumulated_value $on $loopback
 		$endmerge
 		X := in_data
-		$volatile $call mXOR (X accumulated_value) (next_accumulated_value)
+		$volatile $call mXOR (X accumulated_value) (t1)
+		$volatile $call mXOR (t1 accumulated_value) (t2)
+		$volatile $call mXOR (t2 accumulated_value) (next_accumulated_value)
 		out_data := accumulated_value
 		$while 1
 	}

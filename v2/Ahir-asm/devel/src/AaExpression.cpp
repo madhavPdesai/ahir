@@ -4504,8 +4504,10 @@ bool AaBinaryExpression::Is_Trivial()
 	if(this->_operation == __OR || this->_operation == __AND ||
 			this->_operation == __NOR || this->_operation == __NAND ||
 			this->_operation == __XOR || this->_operation == __XNOR || 
-			this->_operation == __CONCAT || this->_operation == __BITSEL)
+			this->_operation == __CONCAT || this->_operation == __BITSEL ||
+			this->_operation == __EQUAL || this->_operation == __NOTEQUAL )
 		// some operations are obviously trivial.
+		// we can keep adding to this list based on certain rules..
 		return(true);
 	else
 	{

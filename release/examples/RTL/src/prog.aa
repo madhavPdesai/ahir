@@ -1,0 +1,31 @@
+$pipe in_data  : $uint<8> $depth 2
+$pipe out_data : $uint<8> $depth 2
+
+// language recognizer.  If we see three 1's in a row, then
+// output a 1, else output a 0.
+//
+// State coding:
+//       {}   0
+//       1    1
+//       11   2
+//
+$module [fsm_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 4 
+		$fullrate
+		$merge $entry $loopback 
+			$phi current_state := ($bitcast ($uint<2>) 0) $on $entry next_state $on $loopback
+		$endmerge
+		X := in_data
+		$volatile next_state := 
+			($excmux 
+				(current_state == 0) ($mux (X==1) 1 0)
+				(current_state == 1) ($mux (X==1) 2 0)
+				(current_state == 2) ($mux (X==1) 2 0))
+
+		$volatile Y := ($mux ((current_state == 2) & (X == 1)) 1 0)
+		out_data := Y
+		$while 1
+	}
+}
