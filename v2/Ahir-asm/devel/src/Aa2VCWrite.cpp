@@ -384,7 +384,7 @@ void Write_VC_Intermediate_Wire_Declaration(string name, AaType* type, ostream& 
 
 
 void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode, 
-			bool port, bool in_flag, bool out_flag, bool signal_flag,  ostream& ofile)
+			bool port, bool in_flag, bool out_flag, bool signal_flag, bool p2p_flag,  ostream& ofile)
 {
   if(lifo_mode)
 	ofile << "$lifo ";
@@ -402,6 +402,9 @@ void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode,
 
   if(signal_flag)
 	  ofile << "$signal ";
+
+  if(p2p_flag)
+	  ofile << " $p2p ";
 
   ofile << endl;
 }

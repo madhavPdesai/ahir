@@ -279,6 +279,7 @@ class AaPipeObject: public AaObject
   bool _signal;
   bool _port;
   bool _synch;
+  bool _p2p;
  public:
 
   
@@ -300,6 +301,9 @@ class AaPipeObject: public AaObject
 
   void Set_Signal(bool v) { _signal = v; }
   bool Get_Signal() {return(_signal);}
+
+  void Set_P2P(bool v) { _p2p = v; }
+  bool Get_P2P() {return(_p2p);}
 
   void Set_Port(bool v) { _port = v; }
   bool Get_Port() {return(_port);}

@@ -362,6 +362,7 @@ AaPipeObject::AaPipeObject(AaScope* parent_tpr, string oname, AaType* otype):AaO
 	_out_mode = false;
 	_signal = false;
 	_synch  = false;
+	_p2p  = false;
 };
 
 void AaPipeObject::Set_Depth(int d)
@@ -403,6 +404,9 @@ void AaPipeObject::Print(ostream& ofile)
 	if(_synch)
 		ofile << " $synch ";
 
+	if(_p2p)
+		ofile << " $p2p ";
+
 	ofile << endl << "// can point into ";
 	Print_Storage_Object_Set(this->Get_Addressed_Objects(),ofile);
 	ofile << endl;
@@ -417,6 +421,11 @@ void AaPipeObject::Add_Reader(AaModule* m)
 		return;
 	}
 	_reader_modules.insert(m);
+
+	if(this->Get_P2P() && (_reader_modules.size() > 1))
+	{
+		AaRoot::Error("pipe " + this->Get_Name() + " is marked as P@P.. cannot have multiple readers.", this);
+	}
 }
 
 void AaPipeObject::Add_Writer(AaModule* m) 
@@ -427,6 +436,11 @@ void AaPipeObject::Add_Writer(AaModule* m)
 		return;
 	}
 	_writer_modules.insert(m);
+
+	if(this->Get_P2P() && (_writer_modules.size() > 1))
+	{
+		AaRoot::Error("pipe " + this->Get_Name() + " is marked as P@P.. cannot have multiple writers.", this);
+	}
 }
 
 //
@@ -449,6 +463,7 @@ void AaPipeObject::Write_VC_Model(ostream& ofile)
 			this->Get_In_Mode(),
 			this->Get_Out_Mode(),
 			this->Get_Signal(),
+			this->Get_P2P(),
 			ofile);
 }
 

@@ -45,7 +45,7 @@ begin  -- default_arch
     num_writes => 1,
     data_width => data_width,
     lifo_mode  => false,
-    depth      => buffer_size)
+    depth      => buffer_size )
     port map (
       read_req   => pop_req,
       read_ack   => pop_ack,

@@ -1465,6 +1465,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 	    bool is_port = false;
 	    bool is_signal = false;
 	    bool is_synch  = false;
+	    bool is_p2p   = false;
         }
         : (LIFO { lifo_flag = true; })? 
 		(st:PIPE aA_Object_Declaration_List_Base[scope,oname_list,otype,initial_value]) 
@@ -1473,6 +1474,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 		(PORT  {is_port = true;})?
 		(SIGNAL {is_signal = true;})?
 		(SYNCH {is_synch = true;})?
+		(P2P {is_p2p = true;})?
         {
 	    for(int I = 0, fI = oname_list.size(); I < fI; I++)
 	    {
@@ -1489,6 +1491,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 	    	((AaPipeObject*)obj)->Set_Port(is_port);
 	    	((AaPipeObject*)obj)->Set_Synch(is_synch);
 	    	((AaPipeObject*)obj)->Set_Signal(is_signal);
+	    	((AaPipeObject*)obj)->Set_P2P(is_p2p);
 
 		if(scope == NULL)
 			AaProgram::Add_Object(obj);
@@ -2064,6 +2067,9 @@ VOID            : "$void";
 // mark, synch
 MARK            : "$mark";
 SYNCH           : "$synch";
+
+// point-to-point pipe attribute.
+P2P		: "$p2p";
 
 
 // combinational/operator module types.

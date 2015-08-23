@@ -1139,6 +1139,22 @@ package BaseComponents is
       clk, reset : in  std_logic);
   end component;
 
+  component InputPortSingleReader is
+  generic (name : string;
+	   data_width: integer);
+  port (
+    -- pulse interface with the data-path
+    sample_req        : in  boolean;
+    sample_ack        : out boolean;
+    update_req        : in  boolean;
+    update_ack        : out boolean;
+    data              : out std_logic_vector((data_width-1) downto 0);
+    -- ready/ready interface with outside world
+    oreq       : out std_logic;
+    oack       : in  std_logic;
+    odata      : in  std_logic_vector((data_width-1) downto 0);
+    clk, reset : in  std_logic);
+  end component;
 
   component OutputPort
     generic(num_reqs: integer;
@@ -1191,6 +1207,20 @@ package BaseComponents is
       clk, reset : in  std_logic);
   end component;
 
+  component OutputPortSingleWriter is
+  generic(name : string;
+	  data_width: integer);
+  port (
+    sample_req        : in  boolean;
+    sample_ack        : out boolean;
+    update_req        : in  boolean;
+    update_ack        : out boolean;
+    data       : in  std_logic_vector((data_width-1) downto 0);
+    oreq       : out std_logic;
+    oack       : in  std_logic;
+    odata      : out std_logic_vector((data_width-1) downto 0);
+    clk, reset : in  std_logic);
+  end component;
   -----------------------------------------------------------------------------
   -- load/store
   -----------------------------------------------------------------------------

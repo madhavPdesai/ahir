@@ -41,6 +41,7 @@ class vcPipe: public vcRoot
   bool _in_flag;
   bool _out_flag;
   bool _signal;
+  bool _p2p;
 public:
 
   
@@ -56,10 +57,14 @@ public:
     _in_flag = false;
     _out_flag = false;
     _signal = false;
+    _p2p = false;
   }
 
   void Set_Port(bool v) { _port = v; }
   bool Get_Port() {return(_port);}
+
+  void Set_P2P(bool v) { _p2p = v; }
+  bool Get_P2P() {return(_p2p);}
 
   void Set_In_Flag(bool v) { _in_flag = v; }
   bool Get_In_Flag() {return(_in_flag);}
@@ -110,21 +115,17 @@ public:
 
     if(_signal)
 	    ofile << vcLexerKeywords[__SIGNAL]  << " ";
+
+    if(_p2p)
+	    ofile << vcLexerKeywords[__P2P]  << " ";
+
     ofile << endl;
   }
 
 
-  void Register_Pipe_Read(vcModule* m, int idx)
-  {
-    _pipe_read_map[m].push_back(idx);
-    _pipe_read_count++;
-  }
+  void Register_Pipe_Read(vcModule* m, int idx);
+  void Register_Pipe_Write(vcModule* m, int idx);
 
-  void Register_Pipe_Write(vcModule* m, int idx)
-  {
-    _pipe_write_map[m].push_back(idx);
-    _pipe_write_count++;
-  }
 
   void Deregister_Pipe_Accesses(vcModule* m)
   {

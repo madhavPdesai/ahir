@@ -9,45 +9,64 @@
 #include <vcModule.hpp>
 #include <vcSystem.hpp>
 
+void vcPipe::Register_Pipe_Read(vcModule* m, int idx)
+{
+	_pipe_read_map[m].push_back(idx);
+	_pipe_read_count++;
+	if(_p2p && (_pipe_read_count > 1))
+	{
+		vcSystem::Error("P2P pipe " + this->Get_VHDL_Id() + " cannot have multiole readers.");
+	}
+}
+
+void vcPipe::Register_Pipe_Write(vcModule* m, int idx)
+{
+	_pipe_write_map[m].push_back(idx);
+	_pipe_write_count++;
+	if(_p2p && (_pipe_write_count > 1))
+	{
+		vcSystem::Error("P2P pipe " + this->Get_VHDL_Id() + " cannot have multiole writers.");
+	}
+}
 
 void vcPipe::Print_VHDL_Pipe_Port_Signals(ostream& ofile)
 {
-  string pipe_id = To_VHDL(this->Get_Id());
-  int pipe_width = this->Get_Width();
-      
-  int num_reads = this->Get_Pipe_Read_Count();
-  int num_writes = this->Get_Pipe_Write_Count();
+	string pipe_id = To_VHDL(this->Get_Id());
+	int pipe_width = this->Get_Width();
 
-  bool is_input_pipe  = ((num_reads > 0) && (num_writes == 0));
-  bool is_output_pipe = ((num_reads == 0) && (num_writes > 0));
-  bool is_internal_pipe = ((num_reads > 0) && (num_writes > 0));
-     
-  if(is_input_pipe)
-    {
-	    ofile << "-- write to pipe " << pipe_id << endl;
-	    ofile << "signal " 
-		    << pipe_id 
-		    << "_pipe_write_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-	    ofile << "signal " << pipe_id << "_pipe_write_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
-	    ofile << "signal " << pipe_id << "_pipe_write_ack : std_logic_vector(0 downto 0);" << endl;
-	    if(this->Get_Signal() || this->Get_Port())
-	    {
-		    ofile << "signal " 
-			    << pipe_id 
-			    << ": std_logic_vector(" << (pipe_width-1) << " downto 0);" << endl;
-	    }
-    }
+	int num_reads = this->Get_Pipe_Read_Count();
+	int num_writes = this->Get_Pipe_Write_Count();
 
-  if(is_output_pipe)
-  {
-	  ofile << "-- read from pipe " << pipe_id << endl;
-		  ofile << "signal "
-			  << pipe_id << "_pipe_read_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		  ofile << "signal " << pipe_id << "_pipe_read_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
-		  ofile << "signal " << pipe_id << "_pipe_read_ack : std_logic_vector(0 downto 0);" << endl;
-	  if(this->Get_Signal() || this->Get_Port())
-		  ofile << "signal " << pipe_id << ": std_logic_vector(" << (pipe_width-1) << " downto 0);" << endl;
-  }
+	bool is_input_pipe  = ((num_reads > 0) && (num_writes == 0));
+	bool is_output_pipe = ((num_reads == 0) && (num_writes > 0));
+	bool is_internal_pipe = ((num_reads > 0) && (num_writes > 0));
+
+	if(is_input_pipe)
+	{
+		ofile << "-- write to pipe " << pipe_id << endl;
+		ofile << "signal " 
+			<< pipe_id 
+			<< "_pipe_write_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		ofile << "signal " << pipe_id << "_pipe_write_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
+		ofile << "signal " << pipe_id << "_pipe_write_ack : std_logic_vector(0 downto 0);" << endl;
+		if(this->Get_Signal() || this->Get_Port())
+		{
+			ofile << "signal " 
+				<< pipe_id 
+				<< ": std_logic_vector(" << (pipe_width-1) << " downto 0);" << endl;
+		}
+	}
+
+	if(is_output_pipe)
+	{
+		ofile << "-- read from pipe " << pipe_id << endl;
+		ofile << "signal "
+			<< pipe_id << "_pipe_read_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		ofile << "signal " << pipe_id << "_pipe_read_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
+		ofile << "signal " << pipe_id << "_pipe_read_ack : std_logic_vector(0 downto 0);" << endl;
+		if(this->Get_Signal() || this->Get_Port())
+			ofile << "signal " << pipe_id << ": std_logic_vector(" << (pipe_width-1) << " downto 0);" << endl;
+	}
 }
 
 
