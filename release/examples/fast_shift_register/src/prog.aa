@@ -1,0 +1,18 @@
+// depth 0 pipes.
+$pipe in_data  : $uint<32>  $depth 0 $p2p
+$pipe mid_data : $uint<32>  $depth 0 $p2p
+$pipe out_data : $uint<32>  $depth 0 $p2p
+
+$module [sreg_daemon]
+$in () $out () $is
+{
+	$branchblock[stage0] {
+                $merge $entry loopback $endmerge
+			$dopipeline $depth 16 $buffering 2 
+				$merge $entry $loopback $endmerge	
+				mid_data := in_data
+				out_data := mid_data
+			$while 1	
+		$place [loopback]
+	}
+}

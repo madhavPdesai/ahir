@@ -2794,10 +2794,10 @@ package BaseComponents is
 	   data_width: integer);
   port (
     -- pulse interface with the data-path
-    sample_req        : in  boolean;
-    sample_ack        : out boolean;
-    update_req        : in  boolean;
-    update_ack        : out boolean;
+    sample_req        : in  BooleanArray(0 downto 0);
+    sample_ack        : out BooleanArray(0 downto 0);
+    update_req        : in  BooleanArray(0 downto 0);
+    update_ack        : out BooleanArray(0 downto 0);
     data              : out std_logic_vector((data_width-1) downto 0);
     -- ready/ready interface with outside world
     oreq       : out std_logic;
@@ -2861,10 +2861,10 @@ package BaseComponents is
   generic(name : string;
 	  data_width: integer);
   port (
-    sample_req        : in  boolean;
-    sample_ack        : out boolean;
-    update_req        : in  boolean;
-    update_ack        : out boolean;
+    sample_req        : in  BooleanArray(0 downto 0);
+    sample_ack        : out BooleanArray(0 downto 0);
+    update_req        : in  BooleanArray(0 downto 0);
+    update_ack        : out BooleanArray(0 downto 0);
     data       : in  std_logic_vector((data_width-1) downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -19736,10 +19736,6 @@ use ahir.Utilities.all;
 
 --
 -- optimized for single-reader case.
---    sample_req->sample_ack is 0-delay.
---    update_req->update_ack has unit delay.
---    update_req->oreq has 0 delay.
---    oack -> update_ack has unit delay.
 --
 -- Assumptions
 --    successive update-reqs will be separated
@@ -19753,10 +19749,10 @@ entity InputPortSingleReader is
 	   data_width: integer);
   port (
     -- pulse interface with the data-path
-    sample_req        : in  boolean;
-    sample_ack        : out boolean;
-    update_req        : in  boolean;
-    update_ack        : out boolean;
+    sample_req        : in  BooleanArray(0 downto 0);
+    sample_ack        : out BooleanArray(0 downto 0);
+    update_req        : in  BooleanArray(0 downto 0);
+    update_ack        : out BooleanArray(0 downto 0);
     data              : out std_logic_vector((data_width-1) downto 0);
     -- ready/ready interface with outside world
     oreq       : out std_logic;
@@ -19772,14 +19768,18 @@ architecture Base of InputPortSingleReader is
   type FsmState is (Idle, WaitingForOack);
 
   signal fsm_state : FsmState;
+  signal joined_req: boolean;
 
 begin
 
-  -- sample req is always responded to..
-  sample_ack <= sample_req;
+  -- join.
+  reqJoin: join2
+		generic map(bypass => true, name => name & " req-join ")
+		port map(pred0 => sample_req(0), pred1 => update_req(0), symbol_out => joined_req,
+				clk => clk, reset => reset);
 
   -- state machine.
-  process(clk, reset, update_ack,  oack, odata)
+  process(clk, reset, joined_req,  oack, odata)
 	variable next_fsm_state: FsmState;
 	variable oreqv : std_logic;
 	variable update_ack_v: boolean;
@@ -19790,9 +19790,9 @@ begin
 	
 	case fsm_state is 
 		when Idle =>
-			if(update_req) then
+			if(joined_req) then
 				oreqv := '1';
-			 	if  (oack = '1')) then
+			 	if  (oack = '1') then
 					update_ack_v := true;
 				else 
 					next_fsm_state := WaitingForOack;
@@ -19807,14 +19807,15 @@ begin
 	end case;
 
 	oreq <= oreqv;
+        sample_ack(0) <= update_ack_v;
 	
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			fsm_state <= Idle;
-			update_ack <= false;
+			update_ack(0) <= false;
 		else
 			fsm_state <= next_fsm_state;
-			update_ack <= update_ack_v;
+			update_ack(0) <= update_ack_v;
 		end if;
 
 		if(update_ack_v) then
@@ -20361,8 +20362,10 @@ use ahir.BaseComponents.all;
 --
 -- optimized for single writer.
 -- update-req to update-ack has unit delay (dummy req/ack pair).
+-- sample-req to update-ack has unit delay.
 -- sample-req to sample-ack has 0 delay.
--- sample-req to oreq has 0 delay.
+-- update-req to sample-ack has 0 delay.
+-- sample-req,update-req to oreq has 0 delay.
 -- oreq to oack is assumed to have unit delay (pipe).
 --
 -- assumption: data is maintained valid between sample-req and sample-ack.
@@ -20371,10 +20374,10 @@ entity OutputPortSingleWriter is
   generic(name : string;
 	  data_width: integer);
   port (
-    sample_req        : in  boolean;
-    sample_ack        : out boolean;
-    update_req        : in  boolean;
-    update_ack        : out boolean;
+    sample_req        : in  BooleanArray(0 downto 0);
+    sample_ack        : out BooleanArray(0 downto 0);
+    update_req        : in  BooleanArray(0 downto 0);
+    update_ack        : out BooleanArray(0 downto 0);
     data       : in  std_logic_vector((data_width-1) downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -20385,30 +20388,28 @@ end entity;
 architecture Base of OutputPortSingleWriter is
   type   FsmState is (Idle, Waiting);
   signal fsm_state : FsmState;
+  signal joined_req : boolean;
 begin
 
-  process(clk,reset)
-  begin
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			update_ack <= false;
-		else 
-			update_ack <= update_req;
-		end if;
-	end if;
-  end process;
+  -- join.
+  reqJoin: join2
+		generic map(bypass => true, name => name & " req-join ")
+		port map(pred0 => sample_req(0), pred1 => update_req(0), symbol_out => joined_req,
+				clk => clk, reset => reset);
 
-  process(clk, reset, oack)
+  process(clk, reset, oack, joined_req)
 	variable next_fsm_state : FsmState;
 	variable oreqv : std_logic;
 	variable sample_ackv : boolean;
+
   begin
 	next_fsm_state := fsm_state;
 	oreqv := '0';
 	sample_ackv := false;
+
 	case fsm_state is
 		when Idle =>
-			if(sample_req) then
+			if(joined_req) then
 				oreqv := '1';
 				if(oack = '1') then
 					sample_ackv := true;
@@ -20424,13 +20425,15 @@ begin
 	end case;
 
 	oreq <= oreqv;
-	sample_ack <= sample_ackv;
+	sample_ack(0) <= sample_ackv;
 
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			fsm_state <= Idle;
+			update_ack(0) <= false;
 		else
 			fsm_state <= next_fsm_state;
+			update_ack(0) <= sample_ackv;
 		end if;
 	end if;
   end process; 
@@ -21370,6 +21373,51 @@ begin
         end generate;
 
 end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- brief description:
+--  as the name indicates, a squash-shift-register
+--  provides an implementation of a pipeline.
+entity SquashShiftRegister is
+  generic (name : string;
+	   data_width: integer;
+           depth: integer := 1);
+  port (
+    read_req       : in  std_logic;
+    read_ack       : out std_logic;
+    read_data      : out std_logic_vector(data_width-1 downto 0);
+    write_req       : in  std_logic;
+    write_ack       : out std_logic;
+    write_data      : in std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  
+end SquashShiftRegister;
+
+architecture default_arch of SquashShiftRegister is
+
+  signal stage_full: std_logic_vector(0 to depth);
+
+  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
+  signal stage_data : SSRArray(0 to depth);
+  
+begin  -- default_arch
+
+    -- shift-right if there is a bubble 
+    -- anywhere in the shift-register,
+    -- and if the write-signal is active.
+    --
+    -- stall stage I if I+1 is not ready to
+    -- accept.
+    -- etc.. etc..  TODO.
+
+end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

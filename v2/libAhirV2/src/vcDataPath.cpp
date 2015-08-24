@@ -2507,11 +2507,22 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
       // now the operator instances 
       string group_name = p->Get_VHDL_Id() + "_read_" + IntToStr(idx);
       string name = '"' + group_name + '"';
-      ofile << group_name << ": InputPortFullRate -- { " << endl;
-      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
-	      << "  num_reqs => " << num_reqs << ","
-	      << "  output_buffering => outBUFs, "
-	      << "  no_arbitration => " << no_arb_string << ")" << endl;
+
+      // single reader?
+      bool single_reader = p->Get_P2P();
+      if(single_reader)
+      {
+	      ofile << group_name << ": InputPortSingleReader -- { " << endl;
+	      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ")"  << endl;
+      }
+      else
+      {
+	      ofile << group_name << ": InputPortFullRate -- { " << endl;
+	      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
+		      << "  num_reqs => " << num_reqs << ","
+		      << "  output_buffering => outBUFs, "
+		      << "  no_arbitration => " << no_arb_string << ")" << endl;
+      }
       ofile << "port map (-- {\n sample_req => reqL " << ", " <<  endl
 	      << "    sample_ack => ackL" << ", " <<  endl
 	      << "    update_req => reqR" << ", " <<  endl
@@ -2532,12 +2543,12 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 { 
 	string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
-  string parent_name = this->Get_Parent()->Get_Id();
-  if(this->Get_Parent()->Get_Volatile_Flag() && (this->_compatible_outport_groups.size() > 0))
-  {
-	vcSystem::Error("volatile module " + this->Get_Parent()->Get_VHDL_Id() + " cannot interact with pipes.");
-	return;
-  }
+	string parent_name = this->Get_Parent()->Get_Id();
+	if(this->Get_Parent()->Get_Volatile_Flag() && (this->_compatible_outport_groups.size() > 0))
+	{
+		vcSystem::Error("volatile module " + this->Get_Parent()->Get_VHDL_Id() + " cannot interact with pipes.");
+		return;
+	}
 
 	for(int idx = 0; idx < this->_compatible_outport_groups.size(); idx++)
 	{ // for each operator group.
@@ -2556,48 +2567,48 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 		vector<vcWire*> guards;
 		vector<bool> guard_complements;
 
-      vector<vcDatapathElement*> dpe_elements;
+		vector<vcDatapathElement*> dpe_elements;
 
-      // to keep track of the ids of the operators in this group.
-      vector<string> elements;
+		// to keep track of the ids of the operators in this group.
+		vector<string> elements;
 
-      vcPipe* p = NULL;
-      int data_width = -1;
+		vcPipe* p = NULL;
+		int data_width = -1;
 
-      // ok. collect all the information..
-      for(set<vcDatapathElement*>::iterator iter = _compatible_outport_groups[idx].begin();
-	  iter != _compatible_outport_groups[idx].end();
-	  iter++)
-	{
+		// ok. collect all the information..
+		for(set<vcDatapathElement*>::iterator iter = _compatible_outport_groups[idx].begin();
+				iter != _compatible_outport_groups[idx].end();
+				iter++)
+		{
 
-	  assert((*iter)->Is("vcOutport"));
-	  vcOutport* so = (vcOutport*) (*iter);
-	  if(vcSystem::_enable_logging)
-	  	so->Print_VHDL_Logger(parent_name, ofile);
+			assert((*iter)->Is("vcOutport"));
+			vcOutport* so = (vcOutport*) (*iter);
+			if(vcSystem::_enable_logging)
+				so->Print_VHDL_Logger(parent_name, ofile);
 
-	  if(p == NULL)
-	    p = ((vcOutport*) so)->Get_Pipe();
-	  else
-	    assert(p == ((vcOutport*) so)->Get_Pipe());
+			if(p == NULL)
+				p = ((vcOutport*) so)->Get_Pipe();
+			else
+				assert(p == ((vcOutport*) so)->Get_Pipe());
 
-	  if(data_width < 0)
-	    data_width = so->Get_Data()->Get_Size();
-	  else
-	    assert(data_width == so->Get_Data()->Get_Size());
+			if(data_width < 0)
+				data_width = so->Get_Data()->Get_Size();
+			else
+				assert(data_width == so->Get_Data()->Get_Size());
 
-	  elements.push_back(so->Get_VHDL_Id());
-	  dpe_elements.push_back(so);
+			elements.push_back(so->Get_VHDL_Id());
+			dpe_elements.push_back(so);
 
-	  so->Append_Inwires(inwires);
-	  so->Append_Inwire_Buffering(inwire_buffering);
+			so->Append_Inwires(inwires);
+			so->Append_Inwire_Buffering(inwire_buffering);
 
-	  sample_req.push_back(so->Get_Req(0));
-	  sample_ack.push_back(so->Get_Ack(0));
+			sample_req.push_back(so->Get_Req(0));
+			sample_ack.push_back(so->Get_Ack(0));
 
-	  update_req.push_back(so->Get_Req(1));
-	  update_ack.push_back(so->Get_Ack(1));
+			update_req.push_back(so->Get_Req(1));
+			update_ack.push_back(so->Get_Ack(1));
 
- 	  so->Append_Guard(guards, guard_complements);
+			so->Append_Guard(guards, guard_complements);
 	}
       assert(p != NULL);
       assert(data_width > 0);
@@ -2662,97 +2673,106 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       // now the operator instances 
       string group_name = p->Get_VHDL_Id() + "_write_" + IntToStr(idx);
       string name = '"' + p->Get_VHDL_Id() + '"';
-      ofile << group_name << ": OutputPortFullRate -- { " << endl;
-      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
-	    << " num_reqs => " << num_reqs << ","
-	    << " input_buffering => inBUFs," 
-	    << " no_arbitration => " << no_arb_string << ")" << endl;
+      bool single_writer = p->Get_P2P();
+      if(single_writer)
+      {
+	      ofile << group_name << ": OutputPortSingleWriter -- { " << endl;
+	      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ")" << endl;
+      }
+      else
+      {
+	      ofile << group_name << ": OutputPortFullRate -- { " << endl;
+	      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
+		      << " num_reqs => " << num_reqs << ","
+		      << " input_buffering => inBUFs," 
+		      << " no_arbitration => " << no_arb_string << ")" << endl;
+      }
       ofile << "port map (--{\n sample_req => sample_req " << ", " <<  endl
-	    << "    sample_ack => sample_ack " << ", " <<  endl
-	    << "    update_req => update_req " << ", " <<  endl
-	    << "    update_ack => update_ack " << ", " <<  endl
-	    << "    data => data_in, " << endl
-	    << "    oreq => " 
-	    << this->Get_VHDL_IOport_Interface_Port_Section(p,"out" , "write_req", idx)  << "," << endl
-	    << "    oack => " 
-	    << this->Get_VHDL_IOport_Interface_Port_Section(p,"out",  "write_ack", idx)  << "," << endl
-	    << "    odata => " 
-	    << this->Get_VHDL_IOport_Interface_Port_Section(p,"out", "write_data", idx)  << "," << endl
-	    << "  clk => clk, reset => reset -- }\n);-- }" << endl;
+	      << "    sample_ack => sample_ack " << ", " <<  endl
+	      << "    update_req => update_req " << ", " <<  endl
+	      << "    update_ack => update_ack " << ", " <<  endl
+	      << "    data => data_in, " << endl
+	      << "    oreq => " 
+	      << this->Get_VHDL_IOport_Interface_Port_Section(p,"out" , "write_req", idx)  << "," << endl
+	      << "    oack => " 
+	      << this->Get_VHDL_IOport_Interface_Port_Section(p,"out",  "write_ack", idx)  << "," << endl
+	      << "    odata => " 
+	      << this->Get_VHDL_IOport_Interface_Port_Section(p,"out", "write_data", idx)  << "," << endl
+	      << "  clk => clk, reset => reset -- }\n);-- }" << endl;
       ofile << "-- }\n end Block; -- outport group " << idx << endl; // thats it..
-    }
+	}
 }
 
 
 string vcDataPath::Get_VHDL_IOport_Interface_Port_Name(string pipe_id, string pid)
 {
-  return(this->Get_Parent()->Get_Parent()->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,pid));
+	return(this->Get_Parent()->Get_Parent()->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,pid));
 }
 
 string vcDataPath::Get_VHDL_IOport_Interface_Port_Section(vcPipe* p, 
-							  string in_or_out,
-							  string pid,
-							  int idx)
+		string in_or_out,
+		string pid,
+		int idx)
 {
 
-  string pipe_id = p->Get_Id();
-  string port_name = p->Get_VHDL_Pipe_Interface_Port_Name(pid);
+	string pipe_id = p->Get_Id();
+	string port_name = p->Get_VHDL_Pipe_Interface_Port_Name(pid);
 
-  vcModule* m = this->Get_Parent();
-  vcSystem* sys = m->Get_Parent();
+	vcModule* m = this->Get_Parent();
+	vcSystem* sys = m->Get_Parent();
 
-  map<vcPipe*,vector<int> >::iterator iter;
-  if(in_or_out == "in")
-    {
-      iter = _inport_group_map.find(p);
-      assert(iter != _inport_group_map.end());
-    }
-  else
-    {
-      iter = _outport_group_map.find(p);
-      assert(iter != _outport_group_map.end());
-    }
+	map<vcPipe*,vector<int> >::iterator iter;
+	if(in_or_out == "in")
+	{
+		iter = _inport_group_map.find(p);
+		assert(iter != _inport_group_map.end());
+	}
+	else
+	{
+		iter = _outport_group_map.find(p);
+		assert(iter != _outport_group_map.end());
+	}
 
-  int down_index;
-  // left to right 
-  for(int index = 0; index < (*iter).second.size(); index++)
-    {
-      down_index = ((*iter).second.size()-1) - index; // position from left.
-      if(idx == (*iter).second[index])
-	break;
-      if(index == (*iter).second.size() - 1)
-	assert(0);
-    }
+	int down_index;
+	// left to right 
+	for(int index = 0; index < (*iter).second.size(); index++)
+	{
+		down_index = ((*iter).second.size()-1) - index; // position from left.
+		if(idx == (*iter).second[index])
+			break;
+		if(index == (*iter).second.size() - 1)
+			assert(0);
+	}
 
 
-  int pipe_width = p->Get_Width();
+	int pipe_width = p->Get_Width();
 
-  if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
-    return(port_name +  "(" + IntToStr(down_index) + ")");
-  else if(pid.find("data") != string::npos)
-    return(port_name + "(" 
-	   + IntToStr(((down_index+1)*pipe_width)-1) + " downto "
-	   + IntToStr(down_index*pipe_width) + ")");
-  else
-    assert(0); // fatal
+	if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
+		return(port_name +  "(" + IntToStr(down_index) + ")");
+	else if(pid.find("data") != string::npos)
+		return(port_name + "(" 
+				+ IntToStr(((down_index+1)*pipe_width)-1) + " downto "
+				+ IntToStr(down_index*pipe_width) + ")");
+	else
+		assert(0); // fatal
 }
 
 
 void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 { 
 
-  string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
-  string parent_name = this->Get_Parent()->Get_Id();
+	string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
+	string parent_name = this->Get_Parent()->Get_Id();
 
-  for(int idx = 0; idx < this->_compatible_call_groups.size(); idx++)
-    { // for each operator group.
+	for(int idx = 0; idx < this->_compatible_call_groups.size(); idx++)
+	{ // for each operator group.
 
-      // number of requesters.
-      int num_reqs = _compatible_call_groups[idx].size();
+		// number of requesters.
+		int num_reqs = _compatible_call_groups[idx].size();
 
-      // to collect inwires, outwires and reqs/acks.
-      vector<vcWire*> inwires;
-      vector<int> inwire_buffering;
+		// to collect inwires, outwires and reqs/acks.
+		vector<vcWire*> inwires;
+		vector<int> inwire_buffering;
 
       vector<vcTransition*> reqL;
       vector<vcTransition*> ackL;

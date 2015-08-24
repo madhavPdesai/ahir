@@ -10,10 +10,6 @@ use ahir.Utilities.all;
 
 --
 -- optimized for single-reader case.
---    sample_req->sample_ack is 0-delay.
---    update_req->update_ack has unit delay.
---    update_req->oreq has 0 delay.
---    oack -> update_ack has unit delay.
 --
 -- Assumptions
 --    successive update-reqs will be separated
@@ -27,10 +23,10 @@ entity InputPortSingleReader is
 	   data_width: integer);
   port (
     -- pulse interface with the data-path
-    sample_req        : in  boolean;
-    sample_ack        : out boolean;
-    update_req        : in  boolean;
-    update_ack        : out boolean;
+    sample_req        : in  BooleanArray(0 downto 0);
+    sample_ack        : out BooleanArray(0 downto 0);
+    update_req        : in  BooleanArray(0 downto 0);
+    update_ack        : out BooleanArray(0 downto 0);
     data              : out std_logic_vector((data_width-1) downto 0);
     -- ready/ready interface with outside world
     oreq       : out std_logic;
@@ -46,14 +42,18 @@ architecture Base of InputPortSingleReader is
   type FsmState is (Idle, WaitingForOack);
 
   signal fsm_state : FsmState;
+  signal joined_req: boolean;
 
 begin
 
-  -- sample req is always responded to..
-  sample_ack <= sample_req;
+  -- join.
+  reqJoin: join2
+		generic map(bypass => true, name => name & " req-join ")
+		port map(pred0 => sample_req(0), pred1 => update_req(0), symbol_out => joined_req,
+				clk => clk, reset => reset);
 
   -- state machine.
-  process(clk, reset, update_ack,  oack, odata)
+  process(clk, reset, joined_req,  oack, odata)
 	variable next_fsm_state: FsmState;
 	variable oreqv : std_logic;
 	variable update_ack_v: boolean;
@@ -64,9 +64,9 @@ begin
 	
 	case fsm_state is 
 		when Idle =>
-			if(update_req) then
+			if(joined_req) then
 				oreqv := '1';
-			 	if  (oack = '1')) then
+			 	if  (oack = '1') then
 					update_ack_v := true;
 				else 
 					next_fsm_state := WaitingForOack;
@@ -81,14 +81,15 @@ begin
 	end case;
 
 	oreq <= oreqv;
+        sample_ack(0) <= update_ack_v;
 	
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			fsm_state <= Idle;
-			update_ack <= false;
+			update_ack(0) <= false;
 		else
 			fsm_state <= next_fsm_state;
-			update_ack <= update_ack_v;
+			update_ack(0) <= update_ack_v;
 		end if;
 
 		if(update_ack_v) then
