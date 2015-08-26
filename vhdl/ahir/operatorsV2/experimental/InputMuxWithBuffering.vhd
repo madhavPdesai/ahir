@@ -72,8 +72,7 @@ begin  -- Behave
 
      rxBuf: ReceiveBuffer generic map(name => name & " receive-buffer " & Convert_To_String(I),
 					buffer_size =>  buffering(I),
-					data_width => owidth,
-					kill_counter_range => 1)
+					data_width => owidth)
 		port map (write_req => reqL(I),
 			  write_ack => ackL(I),
 			  write_data => rx_data_in(I),
@@ -82,7 +81,6 @@ begin  -- Behave
 			  read_req => ackToRx(I),
 			  read_ack => reqFromRx(I),
 			  -------------------------
-			  kill =>  kill_zero,
 			  read_data => rx_data_out(I),
 			  clk => clk, reset => reset);
 					

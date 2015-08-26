@@ -32,9 +32,17 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_is_malformed = false;
   this->_pipeline_parent = NULL;
   this->_is_intermediate = true;
+  this->_buffering = 1;
 }
 
 AaExpression::~AaExpression() {};
+
+void AaExpression::Print_Buffering(ostream& ofile)
+{
+  int bb  = this->Get_Buffering();
+  if (bb > 1)
+	ofile << " $buffering " << bb << " ";
+}
 
 bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
 {
@@ -3700,6 +3708,7 @@ void AaTypeCastExpression::Print(ostream& ofile)
   this->Get_To_Type()->Print(ofile);
   ofile << ") ";
   this->Get_Rest()->Print(ofile);
+  this->Print_Buffering(ofile);
   ofile << " )";
 }
 
@@ -4004,7 +4013,9 @@ void AaSliceExpression::Print(ostream& ofile)
 {
 	ofile << "( $slice ";
 	this->_rest->Print(ofile);
-	ofile << " " << this->Get_Type()->Size() + this->_low_index - 1 << " " << this->_low_index << " ) ";
+	ofile << " " << this->Get_Type()->Size() + this->_low_index - 1 << " " << this->_low_index;
+  	this->Print_Buffering(ofile);
+        ofile  << " ) ";
 }
 
 void AaSliceExpression::PrintC(ofstream& ofile)
@@ -4042,6 +4053,7 @@ void AaUnaryExpression::Print(ostream& ofile)
 	ofile << Aa_Name(this->Get_Operation());
 	ofile << " ";
 	this->Get_Rest()->Print(ofile);
+  	this->Print_Buffering(ofile);
 	ofile << " )";
 }
 
@@ -4325,6 +4337,7 @@ void AaBitmapExpression::Print(ostream& ofile)
 	{
 		ofile << " " <<  _bitmap_vector[idx].first << " " << _bitmap_vector[idx].second << " ";
 	}
+  	this->Print_Buffering(ofile);
 	ofile << " ) ";
 }
 
@@ -4397,6 +4410,7 @@ void AaBinaryExpression::Print(ostream& ofile)
   ofile << Aa_Name(this->Get_Operation());
   ofile << " ";
   this->Get_Second()->Print(ofile);
+  this->Print_Buffering(ofile);
   ofile << ")";
 }
 
@@ -4791,6 +4805,7 @@ void AaTernaryExpression::Print(ostream& ofile)
 	this->Get_If_True()->Print(ofile);
 	ofile << "  ";
 	this->Get_If_False()->Print(ofile);
+  	this->Print_Buffering(ofile);
 	ofile << " ) ";
 }
 

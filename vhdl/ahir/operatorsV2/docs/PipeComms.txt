@@ -1,59 +1,56 @@
-	A note on pipes and input/output ports in modules.
-		Madhav Desai.
 
-1.  Pipes provide the following  interfaces
-	push-req/push-ack
-	pop-req/pop-ack.
+    Signaling Delays in operator components.
 
-    When a pipe has at least one slot, the 
-        push-req -> push-ack 
-        pop-req  -> pop-ack 
-    paths are cut by a register (unit delay).
+1.  All "standard operators"
+	sample-req -> sample-ack  0
+	update-req -> update-ack  1
 
-    When a pipe has no slots (depth = 0), then
-        push-req -> pop-ack
-        pop-req  -> push-ack 
-    have zero delay.
+	all other dependencies 
+	have unit delay.
 
 
-2.  Input ports (single-reader case)
-       connected to pipe.
-    
-    	update-req ->  pop-req  0-delay
-        pop-ack    ->  update-ack 1-delay
+2.  Input port single reader
 
+	sample-req -> sample-ack 0
+	update-req -> update-ack 1
+	update-req -> sample-ack 0
 
-3. Output ports (single-writer case)
-       connected to pipe.
-	sample-req -> push-req 0-delay
-        push-ack   -> sample-ack 0-delay.
-
-
-4. Putting it all together with a >0 depth pipe:
-
-     no issues: since all control paths in the pipe
-     have unit delay.
-
-4. Putting it all together with a 0-depth pipe:
-
-      Output port  ->  Pipe  -> Input Port
-
-      sample-req-o -> push-req      0-delay
-      push-req     -> pop-ack       0-delay
-      pop-ack      -> update-ack-i  1-delay
-     
-      update-req-i -> pop-req  	    0-delay
-      pop-req      -> push_ack      0-delay
-      push-ack     -> sample-ack-0  0-delay.
-
-     0-delay chain: 
-       sr-o -> push-req -> pop-ack -> ua-i
-       sr-o -> sa-o
-
-       ur-i -> pop_req  -> push_ack -> sa-o
-
-     Thus, paths to sr-o on the writer side will
-     extend to ua-i on the reader side.  And
-     paths to ur-i on the reader side will extend
-     to sa-o on the writer side.   
+	sample-req -> read-req   0
+	update-req -> read-req   0
+        read-ack   -> sample-ack 1
+        read-ack   -> update-ack 0
 	
+
+
+3. Output port single-writer 
+	sample-req -> sample-ack 0
+	update-req -> update-ack 1
+	update-req -> sample-ack 0
+
+	sample-req -> write-req  0
+        update-req -> write-req  0
+	write-ack  -> sample-ack 0
+        write-ack  -> update-ack 1
+
+4. 0-depth pipe.
+	
+	write-req -> read-ack  0
+        read-req  -> write-ack 0
+
+
+5. 1-depth pipe (PipelineRegister)
+
+	read-req  -> read-ack    1
+	write-req -> write-ack   0
+	read-req  -> write-ack   0
+
+6. 0-pipe -> Input port single reader -> Output port single writer -> 0-pipe -> I/P port -> O/P port -> 0-pipe..
+
+	read-ack -> update-ack -> sample-req -> write-req -> read-ack -> update-ack -> sample-req ->
+
+
+7. Input port single reader -> 1-depth pipe -> Output port single writer.
+
+	read-ack -> update-ack -> sample-req -> write-req -> read-ack -> update-ack -> sample-req ->
+	
+

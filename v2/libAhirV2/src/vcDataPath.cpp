@@ -166,6 +166,7 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 				 (vcSystem::_suppress_io_pipes ? 0 : pipe_depth) :
 				 pipe_depth);
 
+
 		  ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
 		  ofile << "generic map( -- { " << endl;
 		  ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
@@ -184,12 +185,12 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 			  << "write_data => "<< pipe_id << "_pipe_write_data," << endl 
 			  << "clk => clk,"
 			  << "reset => reset -- }\n ); -- }" << endl;
-	  }
-  }
-  else
-  {
-	  vcSystem::Warning("pipe " + pipe_id + " not used in the system, ignored");
-  }
+		}
+	}
+	else
+	{
+		vcSystem::Warning("pipe " + pipe_id + " not used in the system, ignored");
+	}
 }
 
 bool vcPipe::Get_Pipe_Module_Section(vcModule* caller_module, 
@@ -240,32 +241,32 @@ string vcPipe::Get_Pipe_Aggregate_Section(string pid,
 
 	int data_width;
 	string ret_string = this->Get_VHDL_Pipe_Interface_Port_Name(pid);
-    
-  // find data_width.
-  if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
-    data_width = 1;
-  else if(pid.find("data") != string::npos)
-    data_width = this->Get_Width();
-  else
-    assert(0); // fatal
-    
-  ret_string += "(";
-  ret_string += IntToStr(((hindex+1)*data_width)-1);
-  ret_string += " downto ";
-  ret_string += IntToStr(lindex*data_width);
-  ret_string += ")";
-  return(ret_string);
+
+	// find data_width.
+	if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
+		data_width = 1;
+	else if(pid.find("data") != string::npos)
+		data_width = this->Get_Width();
+	else
+		assert(0); // fatal
+
+	ret_string += "(";
+	ret_string += IntToStr(((hindex+1)*data_width)-1);
+	ret_string += " downto ";
+	ret_string += IntToStr(lindex*data_width);
+	ret_string += ")";
+	return(ret_string);
 }
 
 vcWire::vcWire(string id, vcType* t) :vcRoot(id)
 {
-  this->_type = t;
+	this->_type = t;
 }
 
 void vcWire::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__WIRE] << " " << this->Get_Id() << vcLexerKeywords[__COLON] << " " ;
-  this->Get_Type()->Print(ofile);
+	ofile << vcLexerKeywords[__WIRE] << " " << this->Get_Id() << vcLexerKeywords[__COLON] << " " ;
+	this->Get_Type()->Print(ofile);
   ofile << endl;
 }
 
@@ -2517,7 +2518,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
       }
       else
       {
-	      ofile << group_name << ": InputPortFullRate -- { " << endl;
+	      ofile << group_name << ": InputPortRevised -- { " << endl;
 	      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
 		      << "  num_reqs => " << num_reqs << ","
 		      << "  output_buffering => outBUFs, "
@@ -2681,7 +2682,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       }
       else
       {
-	      ofile << group_name << ": OutputPortFullRate -- { " << endl;
+	      ofile << group_name << ": OutputPortRevised -- { " << endl;
 	      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
 		      << " num_reqs => " << num_reqs << ","
 		      << " input_buffering => inBUFs," 

@@ -108,15 +108,13 @@ begin  -- Behave
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
 					buffer_size => input_buffering(I),
-					data_width => rx_word_length,
-					kill_counter_range => 655535)
+					data_width => rx_word_length)
 		port map(write_req => reqL(I), 
 			 write_ack => ackL(I), 
 			 write_data => rx_data_in(I), 
 			 read_req => imux_data_in_accept(I), 
 			 read_ack => imux_data_in_valid(I), 
                          read_data => rx_data_out(I),
-			 kill => kill_sig, 
 			 clk => clk, 
 			 reset => reset);
 

@@ -424,6 +424,10 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 		else if(this->_object->Is("AaPipeObject"))
 			// needed to hook up pipe dependencies.
 		{
+			//
+			// a pipe read.. only the update transitions are in 
+			// play here.
+			//
 			if(barrier != NULL)
 			{
 				ofile << "// barrier " << endl;
@@ -451,8 +455,11 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 
 			if(pipeline_flag)
 			{
-				// SelfRelease
-				__SelfReleaseSplitProtocolPattern
+				//
+				// SelfRelease (only the UST part).
+				// the sample part does not need to be reenabled.
+				//
+  				__MJ(__UST(this),__UCT(this),true);
 			}
 		}
 
@@ -549,7 +556,8 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 
 		if(pipeline_flag)
 		{
-			__SelfReleaseSplitProtocolPattern
+			// only the sample pair.
+  			__MJ(__SST(this),__SCT(this),false);
 		}
 
 

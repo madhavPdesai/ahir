@@ -57,7 +57,6 @@ architecture Vanilla of StoreReqSharedWithInputBuffers is
   type RxBufWordArray is array (natural range <>) of std_logic_vector(rx_word_length-1 downto 0);
 
   signal rx_data_in, rx_data_out : RxBufWordArray(num_reqs-1 downto 0);
-  signal kill_sig : std_logic;
 
   signal imux_data_in_accept,  imux_data_in_valid: std_logic_vector(num_reqs-1 downto 0);
   signal imux_data_in: std_logic_vector((rx_word_length*num_reqs)-1 downto 0);
@@ -69,7 +68,6 @@ architecture Vanilla of StoreReqSharedWithInputBuffers is
 begin  -- Behave
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
  
-  kill_sig <= '0'; -- no killing!
 
   tagGen: for I in 0 to num_reqs-1 generate
 	rx_tag_in(I) <= To_Unsigned(I,tag_length);	
@@ -101,15 +99,13 @@ begin  -- Behave
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
 					buffer_size => input_buffering(I),
-					data_width => rx_word_length,
-					kill_counter_range => 655535)
+					data_width => rx_word_length)
 		port map(write_req => reqL(I), 
 			 write_ack => ackL(I), 
 			 write_data => rx_data_in(I), 
 			 read_req => imux_data_in_accept(I), 
 			 read_ack => imux_data_in_valid(I), 
                          read_data => rx_data_out(I),
-			 kill => kill_sig, 
 			 clk => clk, 
 			 reset => reset);
 

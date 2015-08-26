@@ -835,15 +835,13 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		ofile <<  "out_buffer: ReceiveBuffer -- {" << endl
 			<< " generic map(name => \"" << this->Get_VHDL_Id() << "_out_buffer\", -- {" << endl
 			<< " buffer_size => " << output_buffering << "," << endl
-			<< " data_width => tag_length + " << this->Get_Out_Arg_Width() << ", " << endl
-			<< " kill_counter_range => 1) -- }" << endl;
+			<< " data_width => tag_length + " << this->Get_Out_Arg_Width() << ") --} " << endl;
 		ofile << " port map(write_req => out_buffer_write_req_symbol, -- {" << endl
 			<< " write_ack => out_buffer_write_ack_symbol, " << endl
 			<< " write_data => out_buffer_data_in," << endl
 			<< " read_req => out_buffer_read_req, " << endl
 			<< " read_ack => out_buffer_read_ack, " << endl
 			<< " read_data => out_buffer_data_out," << endl
-			<< " kill => default_zero_sig," << endl
 			<< " clk => clk, reset => reset); -- }}" << endl;
 
 

@@ -853,20 +853,62 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> 
 		ofile << "// pipe read/write dependencies for pipe " << (*iter).first << endl;
 		AaExpression* last_expr = NULL;
 		AaExpression* first_expr = (*iter).second[0];
+		vector<AaExpression*> write_expr_vector;
+		vector<AaExpression*> read_expr_vector;
 		for(int idx = 0, fidx = (*iter).second.size(); idx < fidx; idx++)
 		{
+
 			AaExpression* expr = (*iter).second[idx];
-			if(last_expr != NULL)
-				Write_VC_Pipe_Dependency(pipeline_flag, last_expr,expr,false,ofile );
-			last_expr = expr;
+			if(expr->Get_Is_Target())
+				write_expr_vector.push_back(expr);
+			else
+				read_expr_vector.push_back(expr);
 		}
-		if(pipeline_flag)
+
+		ofile << "// read-dependencies for pipe " << (*iter).first << endl;
+		if(read_expr_vector.size() > 1)
 		{
-			ofile << "// ring dependency in pipeline." << endl;
-			// if last-expression is 
-			if((first_expr != NULL) && (last_expr != NULL) && (first_expr != last_expr))
-				Write_VC_Pipe_Dependency(pipeline_flag, last_expr,first_expr,true, ofile);
-			// __MJ(__SST(first_expr), __UCT(last_expr), false); // no bypass.
+			for(int I = 0, fI = read_expr_vector.size(); I < fI; I++)
+			{
+				if(I == 0) continue;
+
+				AaExpression* first = read_expr_vector[I-1];
+				AaExpression* second = read_expr_vector[I];
+				__J(__SST(second), __UCT(first));
+				if(pipeline_flag && (I == (fI-1)))
+				{
+					AaExpression* last = read_expr_vector[I];
+					AaExpression* first = read_expr_vector[0];
+
+					ofile << "// ring dependency in pipeline." << endl;
+					__MJ(__UST(first), __UCT(last),  true); // bypass.
+				}
+			}
+		}
+		if(write_expr_vector.size() > 1)
+		{
+			for(int I = 0, fI = write_expr_vector.size(); I < fI; I++)
+			{
+				if(I == 0) continue;
+
+				AaExpression* first = write_expr_vector[I-1];
+				AaExpression* second = write_expr_vector[I];
+				string delay_trans_name = "delay_transition_" +
+								Int64ToStr(first->Get_Index()) + "_" +
+								Int64ToStr(second->Get_Index());
+
+				ofile << "$T [" << delay_trans_name << "] $delay" <<  endl;
+				__J(delay_trans_name, __SCT(first));	
+				__J(__SST(second), delay_trans_name);
+				if(pipeline_flag && (I == (fI-1)))
+				{
+					AaExpression* last = write_expr_vector[I];
+					AaExpression* first = write_expr_vector[0];
+
+					ofile << "// ring dependency in pipeline." << endl;
+					__MJ(__SST(first), __SCT(last),  false); // no-bypass.
+				}
+			}
 		}
 	}
 }

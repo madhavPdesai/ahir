@@ -38,6 +38,8 @@ architecture default_arch of UnloadBuffer is
   
 begin  -- default_arch
 
+  assert (buffer_size > 0) report "Unload buffer size must be > 0" & ": buffer = " & name  severity error;
+  
   -- the input pipe.
   bufPipe : PipeBase generic map (
     name =>  name & " fifo ",
@@ -45,7 +47,7 @@ begin  -- default_arch
     num_writes => 1,
     data_width => data_width,
     lifo_mode  => false,
-    depth      => buffer_size )
+    depth      => buffer_size)
     port map (
       read_req   => pop_req,
       read_ack   => pop_ack,
@@ -73,13 +75,15 @@ begin  -- default_arch
   
      case fsm_state is
          when idle => 
-               if(unload_req and (pop_ack(0) = '1')) then
+               if(unload_req) then
+                 preq := '1';   
+                 if (pop_ack(0) = '1') then
 		    -- load output register.
-		    preq := '1';   
 		    loadv := true;
-               elsif (unload_req) then
+                 else
 		    -- desire to unload, but nothing present.
                     nstate := waiting;
+                 end if;
                end if;
 	 when waiting =>
 		preq := '1';

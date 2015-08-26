@@ -1116,6 +1116,7 @@ aA_Not_Expression[AaScope* scope] returns [AaExpression* expr]
                 {
                     expr = new AaUnaryExpression(scope,op,rest); 
                 } 
+		(aA_Expression_Buffering_Spec[expr])?
              )   
 	RPAREN
         {
@@ -1137,12 +1138,13 @@ aA_Cast_Expression[AaScope* scope] returns [AaExpression* expr]
                 LPAREN ((to_type = aA_Type_Reference[scope])  | (to_type = aA_Named_Type_Reference[scope]) )  RPAREN
                 (rest = aA_Expression[scope] )
             )
+            {
+	    	expr = new AaTypeCastExpression(scope,to_type,rest);
+            	((AaTypeCastExpression*)expr)->Set_Bit_Cast(bit_cast);
+            	if(expr) expr->Set_Line_Number(lpid->getLine());
+            }
+	    (aA_Expression_Buffering_Spec[expr])?
 	RPAREN
-        {
-	    expr = new AaTypeCastExpression(scope,to_type,rest);
-            ((AaTypeCastExpression*)expr)->Set_Bit_Cast(bit_cast);
-            if(expr) expr->Set_Line_Number(lpid->getLine());
-        }
 ;
 
 
@@ -1150,7 +1152,7 @@ aA_Slice_Expression[AaScope* scope] returns [AaExpression* expr]
 {       
     AaExpression* rest = NULL;
 }:
-		lpid: LPAREN SLICE rest=aA_Expression[scope] hid:UINTEGER lid:UINTEGER RPAREN
+		lpid: LPAREN SLICE rest=aA_Expression[scope] hid:UINTEGER lid:UINTEGER 
 		{
 			pair<int,int> slice;
 			slice.first = atoi(hid->getText().c_str());
@@ -1168,6 +1170,8 @@ aA_Slice_Expression[AaScope* scope] returns [AaExpression* expr]
 	    		expr = new AaSliceExpression(scope, t, slice.second, rest);
             		if(expr) expr->Set_Line_Number(hid->getLine());
         	}
+	        (aA_Expression_Buffering_Spec[expr])?
+		RPAREN
 ;
 
 aA_Bitmap_Expression[AaScope* scope] returns [AaExpression* expr]
@@ -1182,11 +1186,12 @@ aA_Bitmap_Expression[AaScope* scope] returns [AaExpression* expr]
 			int tgt = atoi(tid->getText().c_str());
 			destination_map[tgt] = src;
 		})+
+        	{
+	    		expr = new AaBitmapExpression(scope, destination_map, rest);
+            		if(expr) expr->Set_Line_Number(lpid->getLine());
+        	}
+	        (aA_Expression_Buffering_Spec[expr])?
 	RPAREN
-        {
-	    expr = new AaBitmapExpression(scope, destination_map, rest);
-            if(expr) expr->Set_Line_Number(lpid->getLine());
-        }
 ;
 
 //----------------------------------------------------------------------------------------------------------
@@ -1205,11 +1210,12 @@ aA_Binary_Expression[AaScope* scope] returns [AaExpression* expr]
         first = aA_Expression[scope]  
         opid = aA_Binary_Op 
         second = aA_Expression[scope] 
-        RPAREN 
         {
             expr = new AaBinaryExpression(scope,opid,first,second);
             expr->Set_Line_Number(lp->getLine());
         }
+	(aA_Expression_Buffering_Spec[expr])?
+        RPAREN 
     ;   
 
 
@@ -1229,11 +1235,12 @@ aA_Ternary_Expression[AaScope* scope] returns [AaExpression* expr]
         testexpr = aA_Expression[scope] 
         (iftrue = aA_Expression[scope])  
         (iffalse = aA_Expression[scope])
-  RPAREN
         {
             expr = new AaTernaryExpression(scope,testexpr,iftrue,iffalse);
             expr->Set_Line_Number(lp->getLine());
         }
+	(aA_Expression_Buffering_Spec[expr])?
+  RPAREN
 ;   
 
 //----------------------------------------------------------------------------------------------------------
@@ -1248,10 +1255,11 @@ aA_VectorConcatenate_Expression[AaScope* scope] returns [AaExpression* expr]
 : lp: LPAREN 
 	VECTORCONCAT
 	(nexpr = aA_Expression[scope]  {expr_vector.push_back(nexpr);})+
-  RPAREN
         {
             expr = Make_Reduce_Expression(scope, lp->getLine(), __CONCAT, expr_vector);
         }
+	(aA_Expression_Buffering_Spec[expr])?
+  RPAREN
 ;   
 
 //----------------------------------------------------------------------------------------------------------
@@ -1270,10 +1278,11 @@ aA_Reduce_Expression[AaScope* scope] returns [AaExpression* expr]
 	( (OR {op = __OR;}) |  (AND {op = __AND;}) | (XOR {op = __XOR;}))
 
 	(nexpr = aA_Expression[scope]  {expr_vector.push_back(nexpr);})+
-  RPAREN
         {
             expr = Make_Reduce_Expression(scope, lp->getLine(), op, expr_vector);
         }
+	(aA_Expression_Buffering_Spec[expr])?
+  RPAREN
 ;   
 
 //----------------------------------------------------------------------------------------------------------
@@ -1295,10 +1304,11 @@ aA_PriorityMux_Expression[AaScope* scope] returns [AaExpression* expr]
 			expr_pair_vector.push_back(pair<AaExpression*,AaExpression*> (te,ce));
 		}
 	)+ ( DEFAULT de = aA_Expression[scope])
-  RPAREN
         {
             expr = Make_Priority_Mux_Expression(scope, lp->getLine(),0, expr_pair_vector, de);
         }
+	(aA_Expression_Buffering_Spec[expr])?
+  RPAREN
 ;   
 
 //----------------------------------------------------------------------------------------------------------
@@ -1320,11 +1330,27 @@ aA_ExclusiveMux_Expression[AaScope* scope] returns [AaExpression* expr]
 			expr_pair_vector.push_back(pair<AaExpression*,AaExpression*> (te,ce));
 		}
 	)+ 
-  RPAREN
         {
             expr = Make_Exclusive_Mux_Expression(scope, lp->getLine(),0, expr_pair_vector.size()-1,  expr_pair_vector);
         }
+	(aA_Expression_Buffering_Spec[expr])?
+  RPAREN
 ;   
+
+
+//----------------------------------------------------------------------------------------------------------
+//  aA_Expression_Buffering_Spec:
+//      DELAY uinteger
+//----------------------------------------------------------------------------------------------------------
+//
+aA_Expression_Buffering_Spec[AaExpression* expr] 
+{
+   int spec_delay = 1;
+}:
+
+	BUFFERING  did:UINTEGER 
+        {spec_delay = atoi(did->getText().c_str()); expr->Set_Buffering(spec_delay);}
+;
 
 //----------------------------------------------------------------------------------------------------------
 // aA_Binary_Op : OR | AND | NOR | NAND | XOR | XNOR | SHL | SHR | ROL | ROR | PLUS | MINUS | DIV | MUL | EQUAL | NOTEQUAL | LESS | LESSEQUAL | GREATER | GREATEREQUAL 

@@ -12,7 +12,7 @@ use ahir.BaseComponents.all;
 -- that allows back-to-back transfers to an output
 -- port.  The combinational paths are a bit longer
 -- but cant have everything..
-entity OutputPortFullRate is
+entity OutputPortRevised is
   generic(name : string;
 	  num_reqs: integer;
 	  data_width: integer;
@@ -21,8 +21,8 @@ entity OutputPortFullRate is
   port (
     sample_req        : in  BooleanArray(num_reqs-1 downto 0);
     sample_ack        : out BooleanArray(num_reqs-1 downto 0);
-    update_req        : in  BooleanArray(num_reqs-1 downto 0);
-    update_ack        : out BooleanArray(num_reqs-1 downto 0);
+    update_req        : in  BooleanArray(num_reqs-1 downto 0); -- sacrificial.
+    update_ack        : out BooleanArray(num_reqs-1 downto 0); -- sacrificial.
     data       : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -30,7 +30,7 @@ entity OutputPortFullRate is
     clk, reset : in  std_logic);
 end entity;
 
-architecture Base of OutputPortFullRate is
+architecture Base of OutputPortRevised is
 
   signal reqR, ackR : std_logic_vector(num_reqs-1 downto 0);
 
@@ -52,21 +52,20 @@ begin
   BufGen : for I in 0 to num_reqs-1 generate
 	
 	in_data_array(I) <= data(((I+1)*data_width)-1 downto (I*data_width));
+	update_ack(I) <= update_req(I); -- sacrificial.. to maintain pretense of split protocol.
 
-	rxB: PulseLevelPulseInterlockBuffer 
+	rxB: ReceiveBuffer 
 		generic map( name => name & " rxBuf " & Convert_To_String(I),
 				buffer_size => input_buf_sizes(I),
 				data_width => data_width)
 		port map(write_req => sample_req(I),
-		 write_ack => sample_ack(I),
-		 write_data => in_data_array(I),
-	         update_req => update_req(I),
-		 update_ack => update_ack(I),
-		 -- note: cross-over
-		 read_enable =>  ackR(I),
-		 has_data => reqR(I), 
-	         read_data => out_data_array(I),	
-		 clk => clk, reset => reset);
+		 	write_ack => sample_ack(I),
+		 	write_data => in_data_array(I),
+		 	-- note: cross-over
+		 	read_req =>  ackR(I),
+		 	read_ack => reqR(I), 
+	         	read_data => out_data_array(I),	
+		 	clk => clk, reset => reset);
 
   end generate BufGen;
 
@@ -91,6 +90,4 @@ begin
       odata => odata,
       clk   => clk,
       reset => reset);
-    
-
 end Base;

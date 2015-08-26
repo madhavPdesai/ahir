@@ -1,6 +1,6 @@
 // depth 0 pipes.
 $pipe in_data  : $uint<32>  $depth 0 $p2p
-$pipe mid_data : $uint<32>  $depth 0 $p2p
+$pipe mid_data : $uint<32>  $depth 1 $p2p
 $pipe out_data : $uint<32>  $depth 0 $p2p
 
 $module [sreg_daemon]

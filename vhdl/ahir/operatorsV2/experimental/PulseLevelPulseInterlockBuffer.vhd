@@ -48,15 +48,13 @@ begin  -- Behave
 
    Rxbuf: ReceiveBuffer generic map (name => name & " buffer ",
 				data_width => data_width,
-			 	buffer_size => buffer_size,
-				kill_counter_range => 1)
+			 	buffer_size => buffer_size)
 		port map(write_req => write_req,
                          write_ack => write_ack,
 			 write_data => write_data,
 			 read_req => rx_read_enable,
 			 read_ack => rx_has_data,
                          read_data => rx_read_data,
-			 kill => zero_sig,
 			 clk => clk, reset => reset);		
 
 

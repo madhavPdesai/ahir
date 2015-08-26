@@ -506,6 +506,18 @@ package BaseComponents is
     
   end component PipeBase;
 
+  component PipelineRegister is
+  generic (name : string;
+           data_width: integer);
+  port (
+    read_req       : in  std_logic;
+    read_ack       : out std_logic;
+    read_data      : out std_logic_vector(data_width-1 downto 0);
+    write_req       : in  std_logic;
+    write_ack       : out std_logic;
+    write_data      : in std_logic_vector((data_width-1) downto 0);
+    clk, reset : in  std_logic);
+   end component PipelineRegister;
 
   -----------------------------------------------------------------------------
   -- phi,branch,select
@@ -1144,8 +1156,8 @@ package BaseComponents is
 	   data_width: integer);
   port (
     -- pulse interface with the data-path
-    sample_req        : in  BooleanArray(0 downto 0);
-    sample_ack        : out BooleanArray(0 downto 0);
+    sample_req        : in  BooleanArray(0 downto 0); -- sacrificial.
+    sample_ack        : out BooleanArray(0 downto 0); -- sacrificial.
     update_req        : in  BooleanArray(0 downto 0);
     update_ack        : out BooleanArray(0 downto 0);
     data              : out std_logic_vector((data_width-1) downto 0);
@@ -1213,8 +1225,8 @@ package BaseComponents is
   port (
     sample_req        : in  BooleanArray(0 downto 0);
     sample_ack        : out BooleanArray(0 downto 0);
-    update_req        : in  BooleanArray(0 downto 0);
-    update_ack        : out BooleanArray(0 downto 0);
+    update_req        : in  BooleanArray(0 downto 0); -- sacrificial
+    update_ack        : out BooleanArray(0 downto 0); -- sacrificial
     data       : in  std_logic_vector((data_width-1) downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -1932,7 +1944,7 @@ package BaseComponents is
   -------------------------------------------------------------------------------------
   -- full-rate versions of I/O ports
   -------------------------------------------------------------------------------------
-  component InputPortFullRate 
+  component InputPortRevised 
     generic(name : string;
 	   num_reqs: integer;
 	   data_width: integer;
@@ -1940,8 +1952,8 @@ package BaseComponents is
 	   no_arbitration: boolean := false);
     port (
     -- pulse interface with the data-path
-    sample_req        : in  BooleanArray(num_reqs-1 downto 0);
-    sample_ack        : out BooleanArray(num_reqs-1 downto 0);
+    sample_req        : in  BooleanArray(num_reqs-1 downto 0); -- sacrificial
+    sample_ack        : out BooleanArray(num_reqs-1 downto 0); -- sacrificial
     update_req        : in  BooleanArray(num_reqs-1 downto 0);
     update_ack        : out BooleanArray(num_reqs-1 downto 0);
     data       : out std_logic_vector((num_reqs*data_width)-1 downto 0);
@@ -1952,7 +1964,7 @@ package BaseComponents is
     clk, reset : in  std_logic);
   end component;
 
-  component OutputPortFullRate 
+  component OutputPortRevised 
     generic(name : string;
 	  num_reqs: integer;
 	  data_width: integer;
@@ -1961,8 +1973,8 @@ package BaseComponents is
     port (
     sample_req        : in  BooleanArray(num_reqs-1 downto 0);
     sample_ack        : out BooleanArray(num_reqs-1 downto 0);
-    update_req        : in  BooleanArray(num_reqs-1 downto 0);
-    update_ack        : out BooleanArray(num_reqs-1 downto 0);
+    update_req        : in  BooleanArray(num_reqs-1 downto 0); -- sacrificial
+    update_ack        : out BooleanArray(num_reqs-1 downto 0); -- sacrificial
     data       : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -2012,14 +2024,26 @@ package BaseComponents is
         reset: in std_logic);
   end component InterlockBuffer;
 
+  component PipelineSynchBuffer is
+    generic (name : string; in_data_width: integer; out_data_width: integer);
+  port (
+    read_req       : in  boolean;
+    read_ack       : out boolean;
+    read_data      : out std_logic_vector(in_data_width-1 downto 0);
+    write_req       : in  boolean;
+    write_ack       : out boolean;
+    write_data      : in std_logic_vector((out_data_width-1) downto 0);
+    clk, reset : in  std_logic);
+  
+  end component PipelineSynchBuffer;
+
   component ReceiveBuffer  is
-    generic (name: string; buffer_size: integer := 2; data_width : integer := 32; kill_counter_range: integer := 65535);
+    generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
     port ( write_req: in boolean;
          write_ack: out boolean;
          write_data: in std_logic_vector(data_width-1 downto 0);
          read_req: in std_logic;
          read_ack: out std_logic;
-	 kill      : in std_logic;
          read_data: out std_logic_vector(data_width-1 downto 0);
          clk : in std_logic;
          reset: in std_logic);

@@ -73,9 +73,14 @@ class AaExpression: public AaRoot
 
 	void Replace_Field_Expression(AaExpression** eptr, AaExpression* used_expr, AaAssignmentStatement* replacement);
 
+	int _buffering;
 	public:
 
 	AaValue* _expression_value;
+
+	void Set_Buffering(int d) {_buffering = d;}
+	int Get_Buffering() {return(_buffering);}
+ 	virtual void Print_Buffering(ostream& ofile);
 
 
 	virtual AaScope* Get_Scope() { return(this->_scope);}

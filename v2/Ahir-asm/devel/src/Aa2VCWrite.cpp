@@ -584,76 +584,37 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
 	}
 }
 
+// sample complete of src to sample complete of start.
+// need to modify this.  we need to enforce ordering only
+// on reads and only on writes
 void Write_VC_Pipe_Dependency(bool pipeline_flag, 
-			      AaExpression* src,
-			      AaExpression* tgt,
+			      AaExpression* first,
+			      AaExpression* second,
 			      bool mark_flag,
 			      ostream& ofile)
 {
   ofile << "// pipe dependency " << endl;
-  if(src->Get_Is_Target() && tgt->Get_Is_Target())
+  if(mark_flag)
   {
-	if(mark_flag)
-	{
-  		__MJ(__UST(tgt), __UCT(src), true); // bypass
-	}
-	else
-  		__J(__UST(tgt), __UCT(src)); // no need for delay
-  }
-  else if(!src->Get_Is_Target() && tgt->Get_Is_Target())
-  {
-	// delay is needed, else paths will get too long, also there is no penalty
-	// for the delay.
-	if(mark_flag)
-	{
-  		__MJ(__UST(tgt), __SCT(src), false); // no-bypass
-	}
-	else
-	{
-  		string delay_trans = src->Get_VC_Name() + "_" + tgt->Get_VC_Name() + "_delay";
-  		ofile << "$T [" << delay_trans << "] $delay" << endl;
-		__J(delay_trans, __SCT(src));
-		__J(__UST(tgt), delay_trans);
-	}
-  }
-  else if(src->Get_Is_Target() && !tgt->Get_Is_Target())
-  {
-	if(mark_flag)
-	{
-		__MJ(__SST(tgt), __UCT(src), true); // bypass
-	}
-	else
-		__J(__SST(tgt), __UCT(src)); // no need for delay.
+	  __MJ(__SST(second), __UCT(first), false); // no bypass
   }
   else
   {
-	if(mark_flag)
-	{
-		__MJ(__SST(tgt), __SCT(src), false); // no-bypass
-	}
-	else
-	{
-		// delay is needed, else paths will get too long, also there is no penalty
-		// for the delay.
-  		string delay_trans = src->Get_VC_Name() + "_" + tgt->Get_VC_Name() + "_delay";
-  		ofile << "$T [" << delay_trans << "] $delay" << endl;
-		__J(delay_trans, __SCT(src));
-		__J(__SST(tgt), delay_trans);
-	}
+	  __J(__SST(second), __UCT(first)); // no need for delay
   }
 }
 
 void Write_VC_Reenable_Joins(set<string>& active_reenable_points, 
-				map<string, bool>& active_reenable_bypass_flags, string& rel_tran, 
-				bool force_bypass_flag, ostream& ofile)
+		map<string, bool>& active_reenable_bypass_flags, string& rel_tran, 
+		bool force_bypass_flag, ostream& ofile)
 {
 	for(set<string>::iterator siter = active_reenable_points.begin(),
-		fiter = active_reenable_points.end();
-		siter != fiter;
-		siter++)
+			fiter = active_reenable_points.end();
+			siter != fiter;
+			siter++)
 	{
 		assert(active_reenable_bypass_flags.find(*siter) != active_reenable_bypass_flags.end());
-	
+
 		bool bypass_this = (force_bypass_flag || active_reenable_bypass_flags[(*siter)]);
 		__MJ((*siter), rel_tran, bypass_this);
 	}

@@ -2156,6 +2156,18 @@ package BaseComponents is
     
   end component PipeBase;
 
+  component PipelineRegister is
+  generic (name : string;
+           data_width: integer);
+  port (
+    read_req       : in  std_logic;
+    read_ack       : out std_logic;
+    read_data      : out std_logic_vector(data_width-1 downto 0);
+    write_req       : in  std_logic;
+    write_ack       : out std_logic;
+    write_data      : in std_logic_vector((data_width-1) downto 0);
+    clk, reset : in  std_logic);
+   end component PipelineRegister;
 
   -----------------------------------------------------------------------------
   -- phi,branch,select
@@ -2794,8 +2806,8 @@ package BaseComponents is
 	   data_width: integer);
   port (
     -- pulse interface with the data-path
-    sample_req        : in  BooleanArray(0 downto 0);
-    sample_ack        : out BooleanArray(0 downto 0);
+    sample_req        : in  BooleanArray(0 downto 0); -- sacrificial.
+    sample_ack        : out BooleanArray(0 downto 0); -- sacrificial.
     update_req        : in  BooleanArray(0 downto 0);
     update_ack        : out BooleanArray(0 downto 0);
     data              : out std_logic_vector((data_width-1) downto 0);
@@ -2863,8 +2875,8 @@ package BaseComponents is
   port (
     sample_req        : in  BooleanArray(0 downto 0);
     sample_ack        : out BooleanArray(0 downto 0);
-    update_req        : in  BooleanArray(0 downto 0);
-    update_ack        : out BooleanArray(0 downto 0);
+    update_req        : in  BooleanArray(0 downto 0); -- sacrificial
+    update_ack        : out BooleanArray(0 downto 0); -- sacrificial
     data       : in  std_logic_vector((data_width-1) downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -3582,7 +3594,7 @@ package BaseComponents is
   -------------------------------------------------------------------------------------
   -- full-rate versions of I/O ports
   -------------------------------------------------------------------------------------
-  component InputPortFullRate 
+  component InputPortRevised 
     generic(name : string;
 	   num_reqs: integer;
 	   data_width: integer;
@@ -3590,8 +3602,8 @@ package BaseComponents is
 	   no_arbitration: boolean := false);
     port (
     -- pulse interface with the data-path
-    sample_req        : in  BooleanArray(num_reqs-1 downto 0);
-    sample_ack        : out BooleanArray(num_reqs-1 downto 0);
+    sample_req        : in  BooleanArray(num_reqs-1 downto 0); -- sacrificial
+    sample_ack        : out BooleanArray(num_reqs-1 downto 0); -- sacrificial
     update_req        : in  BooleanArray(num_reqs-1 downto 0);
     update_ack        : out BooleanArray(num_reqs-1 downto 0);
     data       : out std_logic_vector((num_reqs*data_width)-1 downto 0);
@@ -3602,7 +3614,7 @@ package BaseComponents is
     clk, reset : in  std_logic);
   end component;
 
-  component OutputPortFullRate 
+  component OutputPortRevised 
     generic(name : string;
 	  num_reqs: integer;
 	  data_width: integer;
@@ -3611,8 +3623,8 @@ package BaseComponents is
     port (
     sample_req        : in  BooleanArray(num_reqs-1 downto 0);
     sample_ack        : out BooleanArray(num_reqs-1 downto 0);
-    update_req        : in  BooleanArray(num_reqs-1 downto 0);
-    update_ack        : out BooleanArray(num_reqs-1 downto 0);
+    update_req        : in  BooleanArray(num_reqs-1 downto 0); -- sacrificial
+    update_ack        : out BooleanArray(num_reqs-1 downto 0); -- sacrificial
     data       : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -3662,14 +3674,26 @@ package BaseComponents is
         reset: in std_logic);
   end component InterlockBuffer;
 
+  component PipelineSynchBuffer is
+    generic (name : string; in_data_width: integer; out_data_width: integer);
+  port (
+    read_req       : in  boolean;
+    read_ack       : out boolean;
+    read_data      : out std_logic_vector(in_data_width-1 downto 0);
+    write_req       : in  boolean;
+    write_ack       : out boolean;
+    write_data      : in std_logic_vector((out_data_width-1) downto 0);
+    clk, reset : in  std_logic);
+  
+  end component PipelineSynchBuffer;
+
   component ReceiveBuffer  is
-    generic (name: string; buffer_size: integer := 2; data_width : integer := 32; kill_counter_range: integer := 65535);
+    generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
     port ( write_req: in boolean;
          write_ack: out boolean;
          write_data: in std_logic_vector(data_width-1 downto 0);
          read_req: in std_logic;
          read_ack: out std_logic;
-	 kill      : in std_logic;
          read_data: out std_logic_vector(data_width-1 downto 0);
          clk : in std_logic;
          reset: in std_logic);
@@ -12242,6 +12266,12 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
+--
+-- base Pipe.
+--  in all cases, we will go for an implementation which
+--  gives a throughput of one word/cycle.
+--
+
 entity PipeBase is
   generic (name : string;
 	   num_reads: integer;
@@ -12324,20 +12354,37 @@ begin  -- default_arch
 
   Shallow: if (not signal_mode) and (depth < 3) and (not lifo_mode) generate
 
-    queue : QueueBase generic map (	
-      name => name & ":Queue:",	
-      queue_depth => depth,
-      data_width       => data_width)
-      port map (
-        push_req   => pipe_req,
-        push_ack => pipe_ack,
-        data_in  => pipe_data,
-        pop_req  => pipe_req_repeated,
-        pop_ack  => pipe_ack_repeated,
-        data_out => pipe_data_repeated,
-        clk      => clk,
-        reset    => reset);
-    
+    singleBufferedCase: if(depth = 1) generate
+       preg: PipelineRegister
+		generic map (name => name & ":PipelineRegister:", 
+				data_width => data_width)
+		port map(
+        		write_req   => pipe_req,
+        		write_ack => pipe_ack,
+        		write_data  => pipe_data,
+        		read_req  => pipe_req_repeated,
+        		read_ack  => pipe_ack_repeated,
+        		read_data => pipe_data_repeated,
+        		clk      => clk,
+        		reset    => reset
+			);
+    end generate singleBufferedCase;
+
+    notSingleBufferedCase: if (depth /= 1) generate
+      queue : QueueBase generic map (	
+        name => name & ":Queue:",	
+        queue_depth => depth,
+        data_width       => data_width)
+        port map (
+          push_req   => pipe_req,
+          push_ack => pipe_ack,
+          data_in  => pipe_data,
+          pop_req  => pipe_req_repeated,
+          pop_ack  => pipe_ack_repeated,
+          data_out => pipe_data_repeated,
+          clk      => clk,
+          reset    => reset);
+    end generate notSingleBufferedCase; 
   end generate Shallow;
 
   DeepFifo: if (not signal_mode) and (depth > 2) and (not lifo_mode) generate
@@ -12425,32 +12472,41 @@ end entity;
 architecture Behave of Pulse_To_Level_Translate_Entity is
   type PullModeState is (Idle,Ack,Waiting);
   signal pull_mode_state : PullModeState;
-  constant moore_flag : boolean := false;
 begin  -- Behave
 
-  process(clk)
+  process(clk, rL, aR)
     variable nstate : PullModeState;
   begin
     nstate := pull_mode_state;
+    rR <= '0';
+    aL <= false;
 
       case pull_mode_state is
         when Idle =>
           if(rL) then
-            if((not moore_flag) and (aR = '1')) then
+            rR <= '1';
+            if(aR = '1') then
               nstate := Ack;
             else
               nstate := Waiting;
             end if;
           end if;
         when Ack =>
-          nstate := Idle;
+          aL <= true;
+          if(rL) then
+            rR <= '1' ;
+	    if(aR = '0')  then
+               	nstate := Waiting;
+	    end if;
+          else
+            nstate := Idle;
+          end if; 
         when Waiting =>
           if(aR = '1') then
             nstate := Ack;
           end if;
         when others => null;
       end case;
-
 
     if(clk'event and clk = '1') then
 	if reset = '1' then
@@ -12460,11 +12516,6 @@ begin  -- Behave
 	end if;
     end if;
   end process;
-
-
-  rR <= '1' when ((not moore_flag) and (pull_mode_state = Idle) and rL) or (pull_mode_state = Waiting) else '0';
-  aL <= true when (pull_mode_state = Ack) else false;
-      
 end Behave;
 -- copyright: Madhav Desai
 library ieee;
@@ -14830,6 +14881,8 @@ architecture default_arch of UnloadBuffer is
   
 begin  -- default_arch
 
+  assert (buffer_size > 0) report "Unload buffer size must be > 0" & ": buffer = " & name  severity error;
+  
   -- the input pipe.
   bufPipe : PipeBase generic map (
     name =>  name & " fifo ",
@@ -14837,7 +14890,7 @@ begin  -- default_arch
     num_writes => 1,
     data_width => data_width,
     lifo_mode  => false,
-    depth      => buffer_size )
+    depth      => buffer_size)
     port map (
       read_req   => pop_req,
       read_ack   => pop_ack,
@@ -14865,13 +14918,15 @@ begin  -- default_arch
   
      case fsm_state is
          when idle => 
-               if(unload_req and (pop_ack(0) = '1')) then
+               if(unload_req) then
+                 preq := '1';   
+                 if (pop_ack(0) = '1') then
 		    -- load output register.
-		    preq := '1';   
 		    loadv := true;
-               elsif (unload_req) then
+                 else
 		    -- desire to unload, but nothing present.
                     nstate := waiting;
+                 end if;
                end if;
 	 when waiting =>
 		preq := '1';
@@ -18941,209 +18996,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
-use ahir.Types.all;
-use ahir.Subprograms.all;
-use ahir.OperatorPackage.all;
-use ahir.BaseComponents.all;
-use ahir.FloatOperatorPackage.all;
-
---
--- output = input_1 op input_2.
---
--- input_1 uses the higher bits of data_in, and the (1) index of sample-req/ack.
---
--- note: if output is determined without needing an input, then that
---       input is killed..
-entity BinaryLogicalOperator is
-  generic
-    (
-      name  : string;
-      operator_id         : string;            -- operator id
-      input_width         : integer;           -- input width
-      output_width        : integer;           -- the width of the output.
-      input_1_buffer_depth: integer;           -- buffering at input 1.
-      input_2_buffer_depth: integer;           -- buffering at input 2.
-      output_buffer_depth : integer;           -- buffering at output.
-	-- both should never be constants.
-      input_1_is_constant : boolean := false;
-      input_2_is_constant : boolean := false;
-      flow_through: boolean := false
-      );
-  port (
-    -- input operands.
-    sample_req : in BooleanArray(1 downto 0);  -- sample reqs, one per input.
-    sample_ack : out BooleanArray(1 downto 0); -- sample acks, one per output.
-    data_in      : in  std_logic_vector((2*input_width)-1 downto 0);
-    -- result.
-    update_req : in Boolean;  -- req for output update.
-    update_ack : out Boolean; -- ack for output update.
-    data_out      : out std_logic_vector(output_width-1 downto 0);
-    -- clock, reset.
-    clk, reset : in  std_logic);
-end BinaryLogicalOperator;
-
-
-architecture Vanilla of BinaryLogicalOperator is
-	constant cZero: std_logic_vector(input_width-1 downto 0) := (others => '0');
-	constant cOne: std_logic_vector(input_width-1 downto 0) := (others => '1');
-
-	signal in_data_1: std_logic_vector(input_width-1 downto 0);
-	signal in_data_1_valid, in_data_1_accept, in_data_1_kill, in_data_1_zero, in_data_1_one: std_logic;
-
-	signal in_data_2: std_logic_vector(input_width-1 downto 0);
-	signal in_data_2_valid, in_data_2_accept, in_data_2_kill, in_data_2_zero, in_data_2_one: std_logic;
-
-	signal out_data: std_logic_vector(output_width-1 downto 0);
-	signal out_data_valid, out_data_accept: std_logic;
-
-begin  -- Vanilla
-	andCase: if(operator_id = "ApIntAnd") generate
-			out_data <= (in_data_1 and in_data_2);
-	end generate andCase;
-
-	nandCase: if(operator_id = "ApIntNand") generate
-		out_data <= not (in_data_1 and in_data_2);
-	end generate nandCase;
-
-	orCase: if(operator_id = "ApIntOr") generate
-		out_data <= (in_data_1 or in_data_2);
-	end generate orCase;
-
-	norCase: if(operator_id = "ApIntNor") generate
-		out_data <= not (in_data_1 or in_data_2);
-	end generate norCase;
-
-	xorCase: if(operator_id = "ApIntXor") generate
-		out_data <= (in_data_1 xor in_data_2);
-	end generate xorCase;
-
-	xnorCase: if(operator_id = "ApIntXnor") generate
-		out_data <= not (in_data_1 xor in_data_2);
-	end generate xnorCase;
-
-    noFlowThrough:  if (not flow_through) generate
-	in_data_1_zero <= '1' when (in_data_1 = cZero) else '0';
-	in_data_1_one <= '1' when (in_data_1 = cOne) else '0';
-	in_data_2_zero <= '1' when (in_data_2 = cZero) else '0';
-	in_data_2_one <= '1' when (in_data_2 = cOne) else '0';
-
-        -- receive buffers.
-	i1NoConst: if (not input_1_is_constant) generate
-		rx1: ReceiveBuffer generic map(name => name & " receiver-buffer-input-1 ",
-						buffer_size => 	input_1_buffer_depth,
-						data_width => input_width,
-						kill_counter_range => 65535)
-			port map(write_req => sample_req(1),
-				 write_ack => sample_ack(1),
-			         write_data => data_in((2*input_width)-1 downto input_width),
-				 read_req => in_data_1_accept,
-				 read_ack => in_data_1_valid,
-				 read_data => in_data_1,
-				 kill => in_data_1_kill,
-				 clk => clk, reset => reset);	
-        end generate i1NoConst;
-
-	i1Const: if (input_1_is_constant) generate
-		in_data_1 <=  data_in((2*input_width)-1 downto input_width);
-		in_data_1_valid <= '1';
-		in_data_1_kill <= '0';
-		sample_ack(1) <= sample_req(1);
-        end generate i1Const;
-
-	i2NoConst: if (not input_2_is_constant) generate
-		rx2: ReceiveBuffer generic map(name => name & " receiver-buffer-input-2 ",
-						buffer_size => 	input_2_buffer_depth,
-						data_width => input_width,
-						kill_counter_range => 65535)
-			port map(write_req => sample_req(0),
-				 write_ack => sample_ack(0),
-			         write_data => data_in(input_width-1 downto 0),
-				 read_req => in_data_2_accept,
-				 read_ack => in_data_2_valid,
-				 read_data => in_data_2,
-				 kill => in_data_2_kill,
-				 clk => clk, reset => reset);	
-        end generate i2NoConst;
-
-	i2Const: if (input_2_is_constant) generate
-		in_data_2 <=  data_in(input_width-1 downto 0);
-		in_data_2_valid <= '1';
-		in_data_2_kill <= '0';
-		sample_ack(0) <= sample_req(0);
-        end generate i2Const;
-
-
-	in_data_1_accept <=  in_data_1_valid and out_data_valid and out_data_accept;
-        in_data_1_kill   <= (not in_data_1_valid) and out_data_valid and out_data_accept;
-
-	in_data_2_accept <=  in_data_2_valid and out_data_valid and out_data_accept;
-        in_data_2_kill   <= (not in_data_2_valid) and out_data_valid and out_data_accept;
-        
-	-- the operator itself. operator-id can be ApIntAnd, ApIntOr, ApIntXor, ApIntNor, 
-        -- ApIntNand, ApIntXnor.
-	andGen: if ((operator_id = "ApIntAnd") or (operator_id = "ApIntNand")) generate
-
-		-- out-valid = i1valid.i2valid  + i1valid.(i1=0) + i2valid.(i2=0)
-		out_data_valid <= (in_data_1_valid and in_data_2_valid) 
-					or (in_data_1_valid and in_data_1_zero) or
-						(in_data_2_valid and in_data_2_zero);
-
-        end generate andGen;
-
-	orGen: if ((operator_id = "ApIntOr") or (operator_id = "ApIntNor")) generate
-
-		-- out-valid = i1valid.i2valid  + i1valid.(i1=1) + i2valid.(i2=1)
-		out_data_valid <= (in_data_1_valid and in_data_2_valid) 
-					or (in_data_1_valid and in_data_1_one) or
-						(in_data_2_valid and in_data_2_one);
-
-
-        end generate orGen;
-
-	xorGen: if ((operator_id = "ApIntXor") or (operator_id = "ApIntXnor")) generate
-
-		out_data_valid <= in_data_1_valid and in_data_2_valid;
-
-
-        end generate xorGen;
-
-       
-	
-	-- unload buffer on the output side. 
-        ub: UnloadBuffer generic map (name => name & " output-buffer ",
-					buffer_size => output_buffer_depth,
-					data_width => output_width)
-		port map(write_req => out_data_valid,
-			 write_ack => out_data_accept,
-			 write_data => out_data,
-			 unload_req => update_req,
-			 unload_ack => update_ack,
-			 read_data => data_out,
-			 clk => clk, reset => reset); 
-  end generate noFlowThrough;
-
-  flowThrough: if (flow_through) generate
-
-	-- operator is just like a combinational operator.
-	-- All other sequencing must be handled correctly by 
-	-- the control-path.
-
-	update_ack   <= update_req;
-	sample_ack <= sample_req;	
-		
-	in_data_1 <=  data_in((2*input_width)-1 downto input_width);
-	in_data_2 <=  data_in(input_width-1 downto 0);
-
-	data_out <= out_data;
-	
-  end generate flowThrough;
-
-end Vanilla;
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library ahir;
 use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
@@ -19519,8 +19371,7 @@ begin  -- Behave
 
      rxBuf: ReceiveBuffer generic map(name => name & " receive-buffer " & Convert_To_String(I),
 					buffer_size =>  buffering(I),
-					data_width => owidth,
-					kill_counter_range => 1)
+					data_width => owidth)
 		port map (write_req => reqL(I),
 			  write_ack => ackL(I),
 			  write_data => rx_data_in(I),
@@ -19529,7 +19380,6 @@ begin  -- Behave
 			  read_req => ackToRx(I),
 			  read_ack => reqFromRx(I),
 			  -------------------------
-			  kill =>  kill_zero,
 			  read_data => rx_data_out(I),
 			  clk => clk, reset => reset);
 					
@@ -19632,7 +19482,7 @@ use ahir.Utilities.all;
 -- of a new output data-item is indicated by an
 -- ack pulse.
 --
-entity InputPortFullRate is
+entity InputPortRevised is
   generic (name : string;
 	   num_reqs: integer;
 	   data_width: integer;
@@ -19640,8 +19490,8 @@ entity InputPortFullRate is
 	   no_arbitration: boolean := false);
   port (
     -- pulse interface with the data-path
-    sample_req        : in  BooleanArray(num_reqs-1 downto 0);
-    sample_ack        : out BooleanArray(num_reqs-1 downto 0);
+    sample_req        : in  BooleanArray(num_reqs-1 downto 0); -- sacrificial.
+    sample_ack        : out BooleanArray(num_reqs-1 downto 0); -- sacrificial.
     update_req        : in  BooleanArray(num_reqs-1 downto 0);
     update_ack        : out BooleanArray(num_reqs-1 downto 0);
     data              : out std_logic_vector((num_reqs*data_width)-1 downto 0);
@@ -19653,7 +19503,7 @@ entity InputPortFullRate is
 end entity;
 
 
-architecture Base of InputPortFullRate is
+architecture Base of InputPortRevised is
 
   --alias outBUFs: IntegerArray(num_reqs-1 downto 0) is output_buffering;
   signal has_room, write_enable : std_logic_vector(num_reqs-1 downto 0);
@@ -19672,20 +19522,22 @@ begin
   -----------------------------------------------------------------------------
   ProTx : for I in 0 to num_reqs-1 generate
 
-    p2LInst: PulseToLevelHalfInterlockBuffer
+    sample_ack(I) <= sample_req(I); -- to maintain illusion of split protocol.
+
+    ulbInst: UnloadBuffer
 	generic map(name => name & " buffer " & Convert_To_String(I),
 			data_width => data_width,
-			buffer_size => output_buffering(I))
-        port map (sample_req            => sample_req(I),
-		  sample_ack            => sample_ack(I),
-		  has_room              => has_room(I),
-		  write_enable          => write_enable(I),
-		  write_data            => write_data(I), 
-		  update_req            => update_req(I),
-		  update_ack            => update_ack(I),
-		  read_data                  => read_data(I), 
-	          clk => clk, reset => reset);
-    
+			buffer_size => output_buffering(I),
+			bypass_flag => true)
+        port map (write_ack              => has_room(I),
+		  write_req              => write_enable(I),
+		  write_data             => write_data(I), 
+		  unload_req             => update_req(I),
+		  unload_ack             => update_ack(I),
+		  read_data              => read_data(I), 
+	          clk => clk, 
+		  reset => reset);
+
   end generate ProTx;
 
   demux : InputPortLevel generic map (
@@ -19749,8 +19601,8 @@ entity InputPortSingleReader is
 	   data_width: integer);
   port (
     -- pulse interface with the data-path
-    sample_req        : in  BooleanArray(0 downto 0);
-    sample_ack        : out BooleanArray(0 downto 0);
+    sample_req        : in  BooleanArray(0 downto 0); -- sacrificial.
+    sample_ack        : out BooleanArray(0 downto 0); -- sacrificial.
     update_req        : in  BooleanArray(0 downto 0);
     update_ack        : out BooleanArray(0 downto 0);
     data              : out std_logic_vector((data_width-1) downto 0);
@@ -19768,18 +19620,12 @@ architecture Base of InputPortSingleReader is
   type FsmState is (Idle, WaitingForOack);
 
   signal fsm_state : FsmState;
-  signal joined_req: boolean;
-
 begin
 
-  -- join.
-  reqJoin: join2
-		generic map(bypass => true, name => name & " req-join ")
-		port map(pred0 => sample_req(0), pred1 => update_req(0), symbol_out => joined_req,
-				clk => clk, reset => reset);
+  sample_ack(0) <= sample_req(0); -- sacrificial, pretend to have split protocol.
 
   -- state machine.
-  process(clk, reset, joined_req,  oack, odata)
+  process(clk, reset, update_req,  oack, odata)
 	variable next_fsm_state: FsmState;
 	variable oreqv : std_logic;
 	variable update_ack_v: boolean;
@@ -19790,7 +19636,7 @@ begin
 	
 	case fsm_state is 
 		when Idle =>
-			if(joined_req) then
+			if(update_req(0)) then
 				oreqv := '1';
 			 	if  (oack = '1') then
 					update_ack_v := true;
@@ -19807,7 +19653,6 @@ begin
 	end case;
 
 	oreq <= oreqv;
-        sample_ack(0) <= update_ack_v;
 	
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
@@ -19838,10 +19683,10 @@ use ahir.BaseComponents.all;
 
 entity InterlockBuffer is
   generic (name: string; buffer_size: integer := 2; 
-		in_data_width : integer := 32;
-		out_data_width : integer := 32;
-		flow_through: boolean := false;
-		bypass_flag : boolean := false);
+  in_data_width : integer := 32;
+  out_data_width : integer := 32;
+  flow_through: boolean := false;
+  bypass_flag : boolean := false);
   port (write_req: in boolean;
         write_ack: out boolean;
         write_data: in std_logic_vector(in_data_width-1 downto 0);
@@ -19866,117 +19711,114 @@ begin  -- default_arch
 
   -- interlock buffer must have buffer-size > 0
   assert buffer_size > 0 report " interlock buffer size must be > 0 " severity failure;
- 
+  
   flowThrough: if flow_through generate
 
-	write_ack <= write_req;
-	read_ack <= read_req;
+    write_ack <= write_req;
+    read_ack <= read_req;
 
-    	inSmaller: if in_data_width <= out_data_width generate
-                process(write_data)
-                    variable rvar : std_logic_vector(out_data_width-1 downto 0);
-                begin
- 		    rvar := (others => '0');
-		    rvar(in_data_width-1 downto 0) := write_data;
-                    read_data <= rvar;
-                end process;
-        end generate inSmaller;
+    inSmaller: if in_data_width <= out_data_width generate
+      process(write_data)
+        variable rvar : std_logic_vector(out_data_width-1 downto 0);
+      begin
+        rvar := (others => '0');
+        rvar(in_data_width-1 downto 0) := write_data;
+        read_data <= rvar;
+      end process;
+    end generate inSmaller;
 
-        outSmaller: if out_data_width < in_data_width generate
-                read_data <= write_data(out_data_width-1 downto 0);
-        end generate outSmaller;
+    outSmaller: if out_data_width < in_data_width generate
+      read_data <= write_data(out_data_width-1 downto 0);
+    end generate outSmaller;
 
   end generate flowThrough;
 
   NoFlowThrough: if (not flow_through) generate
 
-  bufEqOne: if buffer_size = 1 generate
-	regBlock: block
-  		signal req, ack: boolean;
-	begin
-		reg: RegisterBase 
-			generic map (in_data_width => in_data_width,
-					out_data_width => out_data_width)
-			port map(din => write_data, dout => read_data, req => req,
-					ack => ack, clk => clk, reset => reset);
 
-		jReq: join2 generic map (bypass => true, name => name & ":join2")
-				port map (pred0 => write_req,
-						pred1 => read_req,
-						symbol_out => req,
-						clk => clk, reset => reset);
+    synchBuf: if (buffer_size = 1) generate
+	sbuf: PipelineSynchBuffer
+		generic map (name => name & " synch-buffer ",
+				in_data_width => in_data_width,
+				out_data_width => out_data_width)
+		port map(
+				write_req => write_req,
+				write_ack => write_ack,
+				write_data => write_data,
+				read_req => read_req,
+				read_ack => read_ack,
+				read_data => read_data,
+				clk => clk, reset => reset
+			);
 
-		write_ack <= ack;
-		read_ack  <= ack;
-	end block;
-  end generate bufEqOne;
+    end generate synchBuf;
 
-  bufGtOne: if buffer_size > 1 generate 
-    inSmaller: if in_data_width <= out_data_width generate
-	buf_write_data <= write_data;
-
-	process(buf_read_data)
-	begin
-  		read_data <= (others => '0');
-  		read_data(data_width-1 downto 0)  <= buf_read_data;
-	end process;
-     end generate inSmaller;
-
-     outSmaller: if out_data_width < in_data_width generate
-	buf_write_data <= write_data(data_width-1 downto 0);
-  	read_data  <= buf_read_data;
-     end generate outSmaller;
-
-  -- write FSM to pipe.
-  process(clk,reset, l_fsm_state, buf_write_ack, write_req)
-	variable nstate : LoadFsmState;
-  begin
-	nstate := l_fsm_state;
-	buf_write_req <= '0';
+    interlockBuf: if (buffer_size > 1) generate
+      inSmaller: if in_data_width <= out_data_width generate
+        buf_write_data <= write_data;
+  
+        process(buf_read_data)
+          begin
+          read_data <= (others => '0');
+          read_data(data_width-1 downto 0)  <= buf_read_data;
+        end process;
+      end generate inSmaller;
+  
+      outSmaller: if out_data_width < in_data_width generate
+        buf_write_data <= write_data(data_width-1 downto 0);
+        read_data  <= buf_read_data;
+      end generate outSmaller;
+  
+      -- write FSM to pipe.
+      process(clk,reset, l_fsm_state, buf_write_ack, write_req)
+        variable nstate : LoadFsmState;
+      begin
+        nstate := l_fsm_state;
+        buf_write_req <= '0';
         write_ack <= false;
-	if(l_fsm_state = l_idle) then
-		if(write_req) then
-			buf_write_req <= '1';
-			if(buf_write_ack = '1') then
-				write_ack <= true;
-			else
-				nstate := l_busy;
-			end if;
-		end if;
-	else
-		buf_write_req <= '1';
-		if(buf_write_ack = '1') then
-			nstate := l_idle;
-			write_ack <= true;
-		end if;
-	end if;
+        if(l_fsm_state = l_idle) then
+	  if(write_req) then
+            buf_write_req <= '1';
+            if(buf_write_ack = '1') then
+              write_ack <= true;
+            else
+              nstate := l_busy;
+            end if;
+	  end if;
+        else
+	  buf_write_req <= '1';
+	  if(buf_write_ack = '1') then
+            nstate := l_idle;
+            write_ack <= true;
+	  end if;
+        end if;
+  
+        if(clk'event and clk = '1') then
+	  if(reset = '1') then
+            l_fsm_state <= l_idle;
+	  else
+            l_fsm_state <= nstate;
+	  end if;
+        end if;
+      end process;
+  
+      -- the unload buffer.
+      buf : UnloadBuffer generic map (
+        name =>  name & " buffer ",
+        data_width => data_width,
+        buffer_size => buffer_size, 
+        bypass_flag => bypass_flag)
+        port map (
+          write_req   => buf_write_req,
+          write_ack   => buf_write_ack,
+          write_data  => buf_write_data,
+          unload_req  => read_req,
+          unload_ack  => read_ack,
+          read_data   => buf_read_data,
+          clk         => clk,
+          reset       => reset);
 
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			l_fsm_state <= l_idle;
-		else
-			l_fsm_state <= nstate;
-		end if;
-	end if;
-  end process;
-
-  -- the unload buffer.
-  buf : UnloadBuffer generic map (
-    name =>  name & " buffer ",
-    data_width => data_width,
-    buffer_size => buffer_size, 
-    bypass_flag => bypass_flag)
-    port map (
-      write_req   => buf_write_req,
-      write_ack   => buf_write_ack,
-      write_data  => buf_write_data,
-      unload_req  => read_req,
-      unload_ack  => read_ack,
-      read_data   => buf_read_data,
-      clk         => clk,
-      reset       => reset);
-
-  end generate bufGtOne;
+    end generate interlockBuf;
   end generate NoFlowThrough;
 
 end default_arch;
@@ -20189,15 +20031,13 @@ begin  -- Behave
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
 					buffer_size => input_buffering(I),
-					data_width => rx_word_length,
-					kill_counter_range => 655535)
+					data_width => rx_word_length)
 		port map(write_req => reqL(I), 
 			 write_ack => ackL(I), 
 			 write_data => rx_data_in(I), 
 			 read_req => imux_data_in_accept(I), 
 			 read_ack => imux_data_in_valid(I), 
                          read_data => rx_data_out(I),
-			 kill => kill_sig, 
 			 clk => clk, 
 			 reset => reset);
 
@@ -20267,7 +20107,7 @@ use ahir.BaseComponents.all;
 -- that allows back-to-back transfers to an output
 -- port.  The combinational paths are a bit longer
 -- but cant have everything..
-entity OutputPortFullRate is
+entity OutputPortRevised is
   generic(name : string;
 	  num_reqs: integer;
 	  data_width: integer;
@@ -20276,8 +20116,8 @@ entity OutputPortFullRate is
   port (
     sample_req        : in  BooleanArray(num_reqs-1 downto 0);
     sample_ack        : out BooleanArray(num_reqs-1 downto 0);
-    update_req        : in  BooleanArray(num_reqs-1 downto 0);
-    update_ack        : out BooleanArray(num_reqs-1 downto 0);
+    update_req        : in  BooleanArray(num_reqs-1 downto 0); -- sacrificial.
+    update_ack        : out BooleanArray(num_reqs-1 downto 0); -- sacrificial.
     data       : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -20285,7 +20125,7 @@ entity OutputPortFullRate is
     clk, reset : in  std_logic);
 end entity;
 
-architecture Base of OutputPortFullRate is
+architecture Base of OutputPortRevised is
 
   signal reqR, ackR : std_logic_vector(num_reqs-1 downto 0);
 
@@ -20307,21 +20147,20 @@ begin
   BufGen : for I in 0 to num_reqs-1 generate
 	
 	in_data_array(I) <= data(((I+1)*data_width)-1 downto (I*data_width));
+	update_ack(I) <= update_req(I); -- sacrificial.. to maintain pretense of split protocol.
 
-	rxB: PulseLevelPulseInterlockBuffer 
+	rxB: ReceiveBuffer 
 		generic map( name => name & " rxBuf " & Convert_To_String(I),
 				buffer_size => input_buf_sizes(I),
 				data_width => data_width)
 		port map(write_req => sample_req(I),
-		 write_ack => sample_ack(I),
-		 write_data => in_data_array(I),
-	         update_req => update_req(I),
-		 update_ack => update_ack(I),
-		 -- note: cross-over
-		 read_enable =>  ackR(I),
-		 has_data => reqR(I), 
-	         read_data => out_data_array(I),	
-		 clk => clk, reset => reset);
+		 	write_ack => sample_ack(I),
+		 	write_data => in_data_array(I),
+		 	-- note: cross-over
+		 	read_req =>  ackR(I),
+		 	read_ack => reqR(I), 
+	         	read_data => out_data_array(I),	
+		 	clk => clk, reset => reset);
 
   end generate BufGen;
 
@@ -20346,8 +20185,6 @@ begin
       odata => odata,
       clk   => clk,
       reset => reset);
-    
-
 end Base;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -20360,13 +20197,6 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 --
--- optimized for single writer.
--- update-req to update-ack has unit delay (dummy req/ack pair).
--- sample-req to update-ack has unit delay.
--- sample-req to sample-ack has 0 delay.
--- update-req to sample-ack has 0 delay.
--- sample-req,update-req to oreq has 0 delay.
--- oreq to oack is assumed to have unit delay (pipe).
 --
 -- assumption: data is maintained valid between sample-req and sample-ack.
 --
@@ -20376,8 +20206,8 @@ entity OutputPortSingleWriter is
   port (
     sample_req        : in  BooleanArray(0 downto 0);
     sample_ack        : out BooleanArray(0 downto 0);
-    update_req        : in  BooleanArray(0 downto 0);
-    update_ack        : out BooleanArray(0 downto 0);
+    update_req        : in  BooleanArray(0 downto 0); -- sacrificial
+    update_ack        : out BooleanArray(0 downto 0); -- sacrificial
     data       : in  std_logic_vector((data_width-1) downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -20388,16 +20218,11 @@ end entity;
 architecture Base of OutputPortSingleWriter is
   type   FsmState is (Idle, Waiting);
   signal fsm_state : FsmState;
-  signal joined_req : boolean;
 begin
 
-  -- join.
-  reqJoin: join2
-		generic map(bypass => true, name => name & " req-join ")
-		port map(pred0 => sample_req(0), pred1 => update_req(0), symbol_out => joined_req,
-				clk => clk, reset => reset);
+  update_ack <= update_req; -- sacrificial, pretend to have split protocol.
 
-  process(clk, reset, oack, joined_req)
+  process(clk, reset, oack, sample_req)
 	variable next_fsm_state : FsmState;
 	variable oreqv : std_logic;
 	variable sample_ackv : boolean;
@@ -20409,7 +20234,7 @@ begin
 
 	case fsm_state is
 		when Idle =>
-			if(joined_req) then
+			if(sample_req(0)) then
 				oreqv := '1';
 				if(oack = '1') then
 					sample_ackv := true;
@@ -20430,10 +20255,8 @@ begin
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			fsm_state <= Idle;
-			update_ack(0) <= false;
 		else
 			fsm_state <= next_fsm_state;
-			update_ack(0) <= sample_ackv;
 		end if;
 	end if;
   end process; 
@@ -20520,6 +20343,161 @@ begin  -- Behave
 end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity PipelineRegister is
+  generic (name : string; data_width: integer);
+  port (
+    read_req       : in  std_logic;
+    read_ack       : out std_logic;
+    read_data      : out std_logic_vector(data_width-1 downto 0);
+    write_req       : in  std_logic;
+    write_ack       : out std_logic;
+    write_data      : in std_logic_vector((data_width-1) downto 0);
+    clk, reset : in  std_logic);
+  
+end PipelineRegister;
+
+architecture default_arch of PipelineRegister is
+
+   type FsmState is (Empty, Full);
+   signal fsm_state : FsmState;
+   signal data_reg : std_logic_vector(data_width-1 downto 0);
+  
+begin  -- default_arch
+
+	process(clk, reset, write_req, read_req, write_data, fsm_state)
+		variable next_state : FsmState;
+		variable read_ack_v, write_ack_v, latch_v : std_logic;
+	begin
+		next_state := fsm_state;
+		read_ack_v := '0';
+		write_ack_v := '0';
+		latch_v := '0';
+	
+		case fsm_state is 
+			when Empty =>
+				write_ack_v := '1';
+				if(write_req = '1') then
+					next_state := Full;
+					latch_v := '1';
+				end if;
+			when Full =>
+				read_ack_v := '1';
+				if(read_req = '1') then
+					if(write_req = '0') then
+						next_state := Empty;
+					else
+						latch_v := '1';
+						write_ack_v := '1';
+					end if;
+				end if;
+		end case;
+					
+		write_ack <= write_ack_v;
+		read_ack  <= read_ack_v;
+
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				fsm_state <= Empty;
+			else
+				fsm_state <= next_state;
+			end if;
+
+			if(latch_v = '1') then
+				data_reg <= write_data;
+			end if;
+		end if;
+	end process;
+
+	read_data <=  data_reg;
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+--
+--
+-- gets the read/write cycle into synch.
+--   read_req -> read_ack 0-delay
+--   write_req -> write_ack 1-delay
+--   write_req -> read_ack 0-delay.
+--     (note that the last dependency will increase the
+--       combinational path lengths... handle with care).
+--
+-- In a 
+--   buf0 -> buf1 -> buf2 ...
+-- chain, the combinational paths in the CP will become
+-- w-req-k -|-> read-ack-k -|-> write-req-k+1 -> read-req-k+1 -> 
+--  etc..
+--
+--  To cut the long path we will have to use an InterlockBuffer
+-- periodically.
+--
+--
+entity PipelineSynchBuffer is
+  generic (name : string; in_data_width: integer; out_data_width: integer);
+  port (
+    read_req       : in  boolean;
+    read_ack       : out boolean;
+    read_data      : out std_logic_vector(in_data_width-1 downto 0);
+    write_req       : in  boolean;
+    write_ack       : out boolean;
+    write_data      : in std_logic_vector((out_data_width-1) downto 0);
+    clk, reset : in  std_logic);
+  
+end PipelineSynchBuffer;
+
+architecture default_arch of PipelineSynchBuffer is
+  constant min_data_width: integer := Minimum(in_data_width, out_data_width);
+  signal data_register : std_logic_vector(min_data_width-1 downto 0);
+  signal joined_req : boolean;
+
+begin  -- default_arch
+  -- join.
+  reqJoin: join2
+		generic map(bypass => true, name => name & " req-join ")
+		port map(pred0 => read_req, pred1 => write_req, symbol_out => joined_req,
+				clk => clk, reset => reset);
+
+  -- 0-delay.
+  write_ack <= joined_req;
+
+  -- state machine.
+  process(clk, reset, joined_req)
+  begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			read_ack <= false;
+		else 
+			read_ack <= joined_req;
+		end if;
+
+		if(joined_req) then
+			data_register <= write_data(min_data_width-1 downto 0);	
+		end if;
+	end if;	
+  end process;
+
+  process(data_register) 
+  begin
+	read_data <= (others => '0');
+	read_data(min_data_width-1 downto 0) <= data_register;
+  end process;
+
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
@@ -20568,15 +20546,13 @@ begin  -- Behave
 
    Rxbuf: ReceiveBuffer generic map (name => name & " buffer ",
 				data_width => data_width,
-			 	buffer_size => buffer_size,
-				kill_counter_range => 1)
+			 	buffer_size => buffer_size)
 		port map(write_req => write_req,
                          write_ack => write_ack,
 			 write_data => write_data,
 			 read_req => rx_read_enable,
 			 read_ack => rx_has_data,
                          read_data => rx_read_data,
-			 kill => zero_sig,
 			 clk => clk, reset => reset);		
 
 
@@ -20812,13 +20788,12 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity ReceiveBuffer  is
-  generic (name: string; buffer_size: integer := 2; data_width : integer := 32; kill_counter_range: integer := 65535);
+  generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
   port ( write_req: in boolean;
          write_ack: out boolean;
          write_data: in std_logic_vector(data_width-1 downto 0);
          read_req: in std_logic;
          read_ack: out std_logic;
-	 kill      : in std_logic;
          read_data: out std_logic_vector(data_width-1 downto 0);
          clk : in std_logic;
          reset: in std_logic);
@@ -20830,14 +20805,11 @@ architecture default_arch of ReceiveBuffer is
   signal pipe_data_in:  std_logic_vector(data_width-1 downto 0);
 
 
-  signal kill_counter : integer range 0 to kill_counter_range;
-  signal kill_counter_incr, kill_counter_decr: boolean;
 
   type RxBufFsmState is (idle, busy);
   signal fsm_state : RxBufFsmState;
 
 
-  signal kill_active: boolean;
 
 begin  -- default_arch
 
@@ -20863,23 +20835,19 @@ begin  -- default_arch
 
 
   -- FSM
-  process(clk,reset, write_req, push_ack,kill_active,kill)
+  process(clk,reset, write_req, push_ack)
 	variable nstate : RxBufFsmState;
 	variable pushreqv: std_logic;
 	variable decr: boolean;
 	variable wackv : boolean;
   begin
-	decr := false; 
 	wackv := false;
 	pushreqv := '0'; 
 
 	nstate := fsm_state;
 	case fsm_state is
 		when idle => 
-			if(write_req and kill_active) then
-				decr := true;
-				wackv := true;	
-			elsif(write_req and (not kill_active)) then
+			if(write_req) then
 				pushreqv := '1';
 				if(push_ack(0) = '1') then 
 					wackv := true;
@@ -20888,22 +20856,15 @@ begin  -- default_arch
 				end if;
 			end if;
 		when busy => 
-			if(kill_active) then
-				decr := true;
-				wackv := true;
+			pushreqv := '1';
+			if (push_ack(0) = '1') then
 				nstate := idle;
-			else
-				pushreqv := '1';
-				if (push_ack(0) = '1') then
-					nstate := idle;
-					wackv := true;
-				end if;
+				wackv := true;
 			end if;
 	end case;
 
 	push_req(0) <= pushreqv;
 	write_ack <= wackv;
-	kill_counter_decr <= decr;
 
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
@@ -20914,26 +20875,6 @@ begin  -- default_arch
 	end if;
 		
   end process;
-
-
-  -- kill counter.
-  kill_active <= (kill = '1') or (kill_counter > 0);
-  kill_counter_incr <= (kill = '1');
-  process(clk)
-  begin
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			kill_counter <= 0;
-		else
-			if(kill_counter_decr and (not kill_counter_incr)) then
-				kill_counter <= kill_counter - 1;
-			elsif ((not kill_counter_decr) and kill_counter_incr) then
-				kill_counter <= kill_counter + 1;
-			end if;
-		end if;
-	end if;
-  end process;
-
 end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -21375,51 +21316,6 @@ begin
 end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
-
-library ahir;
-use ahir.Types.all;
-use ahir.Subprograms.all;
-use ahir.Utilities.all;
-use ahir.BaseComponents.all;
-
--- brief description:
---  as the name indicates, a squash-shift-register
---  provides an implementation of a pipeline.
-entity SquashShiftRegister is
-  generic (name : string;
-	   data_width: integer;
-           depth: integer := 1);
-  port (
-    read_req       : in  std_logic;
-    read_ack       : out std_logic;
-    read_data      : out std_logic_vector(data_width-1 downto 0);
-    write_req       : in  std_logic;
-    write_ack       : out std_logic;
-    write_data      : in std_logic_vector(data_width-1 downto 0);
-    clk, reset : in  std_logic);
-  
-end SquashShiftRegister;
-
-architecture default_arch of SquashShiftRegister is
-
-  signal stage_full: std_logic_vector(0 to depth);
-
-  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  signal stage_data : SSRArray(0 to depth);
-  
-begin  -- default_arch
-
-    -- shift-right if there is a bubble 
-    -- anywhere in the shift-register,
-    -- and if the write-signal is active.
-    --
-    -- stall stage I if I+1 is not ready to
-    -- accept.
-    -- etc.. etc..  TODO.
-
-end default_arch;
-library ieee;
-use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
@@ -21477,7 +21373,6 @@ architecture Vanilla of StoreReqSharedWithInputBuffers is
   type RxBufWordArray is array (natural range <>) of std_logic_vector(rx_word_length-1 downto 0);
 
   signal rx_data_in, rx_data_out : RxBufWordArray(num_reqs-1 downto 0);
-  signal kill_sig : std_logic;
 
   signal imux_data_in_accept,  imux_data_in_valid: std_logic_vector(num_reqs-1 downto 0);
   signal imux_data_in: std_logic_vector((rx_word_length*num_reqs)-1 downto 0);
@@ -21489,7 +21384,6 @@ architecture Vanilla of StoreReqSharedWithInputBuffers is
 begin  -- Behave
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
  
-  kill_sig <= '0'; -- no killing!
 
   tagGen: for I in 0 to num_reqs-1 generate
 	rx_tag_in(I) <= To_Unsigned(I,tag_length);	
@@ -21521,15 +21415,13 @@ begin  -- Behave
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
 					buffer_size => input_buffering(I),
-					data_width => rx_word_length,
-					kill_counter_range => 655535)
+					data_width => rx_word_length)
 		port map(write_req => reqL(I), 
 			 write_ack => ackL(I), 
 			 write_data => rx_data_in(I), 
 			 read_req => imux_data_in_accept(I), 
 			 read_ack => imux_data_in_valid(I), 
                          read_data => rx_data_out(I),
-			 kill => kill_sig, 
 			 clk => clk, 
 			 reset => reset);
 

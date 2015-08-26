@@ -23,8 +23,8 @@ entity InputPortSingleReader is
 	   data_width: integer);
   port (
     -- pulse interface with the data-path
-    sample_req        : in  BooleanArray(0 downto 0);
-    sample_ack        : out BooleanArray(0 downto 0);
+    sample_req        : in  BooleanArray(0 downto 0); -- sacrificial.
+    sample_ack        : out BooleanArray(0 downto 0); -- sacrificial.
     update_req        : in  BooleanArray(0 downto 0);
     update_ack        : out BooleanArray(0 downto 0);
     data              : out std_logic_vector((data_width-1) downto 0);
@@ -42,18 +42,12 @@ architecture Base of InputPortSingleReader is
   type FsmState is (Idle, WaitingForOack);
 
   signal fsm_state : FsmState;
-  signal joined_req: boolean;
-
 begin
 
-  -- join.
-  reqJoin: join2
-		generic map(bypass => true, name => name & " req-join ")
-		port map(pred0 => sample_req(0), pred1 => update_req(0), symbol_out => joined_req,
-				clk => clk, reset => reset);
+  sample_ack(0) <= sample_req(0); -- sacrificial, pretend to have split protocol.
 
   -- state machine.
-  process(clk, reset, joined_req,  oack, odata)
+  process(clk, reset, update_req,  oack, odata)
 	variable next_fsm_state: FsmState;
 	variable oreqv : std_logic;
 	variable update_ack_v: boolean;
@@ -64,7 +58,7 @@ begin
 	
 	case fsm_state is 
 		when Idle =>
-			if(joined_req) then
+			if(update_req(0)) then
 				oreqv := '1';
 			 	if  (oack = '1') then
 					update_ack_v := true;
@@ -81,7 +75,6 @@ begin
 	end case;
 
 	oreq <= oreqv;
-        sample_ack(0) <= update_ack_v;
 	
 	if(clk'event and clk = '1') then
 		if(reset = '1') then

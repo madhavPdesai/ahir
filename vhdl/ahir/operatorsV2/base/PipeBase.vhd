@@ -7,6 +7,12 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
+--
+-- base Pipe.
+--  in all cases, we will go for an implementation which
+--  gives a throughput of one word/cycle.
+--
+
 entity PipeBase is
   generic (name : string;
 	   num_reads: integer;
@@ -89,20 +95,37 @@ begin  -- default_arch
 
   Shallow: if (not signal_mode) and (depth < 3) and (not lifo_mode) generate
 
-    queue : QueueBase generic map (	
-      name => name & ":Queue:",	
-      queue_depth => depth,
-      data_width       => data_width)
-      port map (
-        push_req   => pipe_req,
-        push_ack => pipe_ack,
-        data_in  => pipe_data,
-        pop_req  => pipe_req_repeated,
-        pop_ack  => pipe_ack_repeated,
-        data_out => pipe_data_repeated,
-        clk      => clk,
-        reset    => reset);
-    
+    singleBufferedCase: if(depth = 1) generate
+       preg: PipelineRegister
+		generic map (name => name & ":PipelineRegister:", 
+				data_width => data_width)
+		port map(
+        		write_req   => pipe_req,
+        		write_ack => pipe_ack,
+        		write_data  => pipe_data,
+        		read_req  => pipe_req_repeated,
+        		read_ack  => pipe_ack_repeated,
+        		read_data => pipe_data_repeated,
+        		clk      => clk,
+        		reset    => reset
+			);
+    end generate singleBufferedCase;
+
+    notSingleBufferedCase: if (depth /= 1) generate
+      queue : QueueBase generic map (	
+        name => name & ":Queue:",	
+        queue_depth => depth,
+        data_width       => data_width)
+        port map (
+          push_req   => pipe_req,
+          push_ack => pipe_ack,
+          data_in  => pipe_data,
+          pop_req  => pipe_req_repeated,
+          pop_ack  => pipe_ack_repeated,
+          data_out => pipe_data_repeated,
+          clk      => clk,
+          reset    => reset);
+    end generate notSingleBufferedCase; 
   end generate Shallow;
 
   DeepFifo: if (not signal_mode) and (depth > 2) and (not lifo_mode) generate

@@ -9,13 +9,6 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 --
--- optimized for single writer.
--- update-req to update-ack has unit delay (dummy req/ack pair).
--- sample-req to update-ack has unit delay.
--- sample-req to sample-ack has 0 delay.
--- update-req to sample-ack has 0 delay.
--- sample-req,update-req to oreq has 0 delay.
--- oreq to oack is assumed to have unit delay (pipe).
 --
 -- assumption: data is maintained valid between sample-req and sample-ack.
 --
@@ -25,8 +18,8 @@ entity OutputPortSingleWriter is
   port (
     sample_req        : in  BooleanArray(0 downto 0);
     sample_ack        : out BooleanArray(0 downto 0);
-    update_req        : in  BooleanArray(0 downto 0);
-    update_ack        : out BooleanArray(0 downto 0);
+    update_req        : in  BooleanArray(0 downto 0); -- sacrificial
+    update_ack        : out BooleanArray(0 downto 0); -- sacrificial
     data       : in  std_logic_vector((data_width-1) downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -37,16 +30,11 @@ end entity;
 architecture Base of OutputPortSingleWriter is
   type   FsmState is (Idle, Waiting);
   signal fsm_state : FsmState;
-  signal joined_req : boolean;
 begin
 
-  -- join.
-  reqJoin: join2
-		generic map(bypass => true, name => name & " req-join ")
-		port map(pred0 => sample_req(0), pred1 => update_req(0), symbol_out => joined_req,
-				clk => clk, reset => reset);
+  update_ack <= update_req; -- sacrificial, pretend to have split protocol.
 
-  process(clk, reset, oack, joined_req)
+  process(clk, reset, oack, sample_req)
 	variable next_fsm_state : FsmState;
 	variable oreqv : std_logic;
 	variable sample_ackv : boolean;
@@ -58,7 +46,7 @@ begin
 
 	case fsm_state is
 		when Idle =>
-			if(joined_req) then
+			if(sample_req(0)) then
 				oreqv := '1';
 				if(oack = '1') then
 					sample_ackv := true;
@@ -79,10 +67,8 @@ begin
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			fsm_state <= Idle;
-			update_ack(0) <= false;
 		else
 			fsm_state <= next_fsm_state;
-			update_ack(0) <= sample_ackv;
 		end if;
 	end if;
   end process; 
