@@ -1464,6 +1464,8 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& of
 
 			// extreme pipelining
 			// double buffering at the input side.
+
+			/*
 			if(extreme_pipeline_flag)
 			{
 				ofile << " $buffering $in " 
@@ -1478,6 +1480,7 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& of
 					<< src_name
 					<< " 1"  << endl;
 			}
+			*/
 		}
 	}
 }
@@ -1549,7 +1552,7 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances(AaExpression* target, 
 			//  extreme pipelining
 			if(extreme_pipelining_flag)
 			{
-				ofile << "$buffering $out " << dpe_name << " " << tgt_name << " 2" << endl;
+				ofile << "$buffering $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering() <<  endl;
 			}
 		}
 	}
@@ -2560,10 +2563,8 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
       //  extreme pipelining.
       if(this->Is_Part_Of_Extreme_Pipeline())
 	{
-		ofile << "$buffering  $in " << dpe_name << " "
-			<< src_name << " 2" << endl;
-		ofile << "$buffering  $out " << dpe_name << " "
-			<< tgt_name << " 2" << endl;
+		//ofile << "$buffering  $in " << dpe_name << " " << src_name << " 2" << endl;
+		ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering() << endl;
 	}
 
     }
@@ -2609,8 +2610,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 	  // extreme pipelining
 	  if(this->Is_Part_Of_Extreme_Pipeline())
 	  {
-			ofile << "$buffering  $out " << pipe_inst << " "
-				<< source_wire << " 2" << endl;
+			ofile << "$buffering  $out " << pipe_inst << " " << source_wire << " " << this->Get_Buffering() << endl;
 	  }
 	}
       else
@@ -2645,10 +2645,8 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 	  // extreme pipelining
 	  if(this->Is_Part_Of_Extreme_Pipeline())
 	  {
-			ofile << "$buffering  $in " << dpe_name << " "
-				<< src_name << " 2" << endl;
-			ofile << "$buffering  $out " << dpe_name << " "
-				<< tgt_name << " 2" << endl;
+			//ofile << "$buffering  $in " << dpe_name << " " << src_name << " 2" << endl;
+			ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering() << endl;
 	  }
 	}
       else
@@ -3620,10 +3618,8 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
 	// extreme pipelining.
 	if(this->Is_Part_Of_Extreme_Pipeline())
 	{
-		ofile << "$buffering  $in " << dpe_name << " "
-			<< src_name << " 2" << endl;
-		ofile << "$buffering  $out " << dpe_name << " "
-			<< tgt_name << " 2" << endl;
+		//ofile << "$buffering  $in " << dpe_name << " " << src_name << " 2" << endl;
+		ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering() << endl;
 	}
     }
 }
@@ -3886,10 +3882,8 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 	  // extreme pipelining.
 	  if(this->Is_Part_Of_Extreme_Pipeline())
 	  {
-		  ofile << "$buffering  $in " << dpe_name << " "
-			  << src_name << " 2" << endl;
-		  ofile << "$buffering  $out " << dpe_name << " "
-			  << tgt_name << " 2" << endl;
+		  //ofile << "$buffering  $in " << dpe_name << " " << src_name << " 2" << endl;
+		  ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering()  << endl;
 	  }
 	  int delay = (flow_through ? 0 : this->Get_Delay());
 	  ofile << "$delay " << dpe_name << " " << delay << endl;
@@ -3999,10 +3993,8 @@ void AaSliceExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 	  // extreme pipelining.
 	  if(this->Is_Part_Of_Extreme_Pipeline())
 	  {
-		  ofile << "$buffering  $in " << dpe_name << " "
-			  << src_name << " 2" << endl;
-		  ofile << "$buffering  $out " << dpe_name << " "
-			  << tgt_name << " 2" << endl;
+		  //ofile << "$buffering  $in " << dpe_name << " " << src_name << " 2" << endl;
+		  ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering()  << endl;
 	  }
 	  int delay = (flow_through ? 0 : this->Get_Delay());
 	  ofile << "$delay " << dpe_name << " " << delay << endl;
@@ -4217,10 +4209,8 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
       // extreme pipelining.
       if(this->Is_Part_Of_Extreme_Pipeline())
       {
-	      ofile << "$buffering  $in " << dpe_name << " "
-		      << src_name << " 2" << endl;
-	      ofile << "$buffering  $out " << dpe_name << " "
-		      << tgt_name << " 2" << endl;
+	      //ofile << "$buffering  $in " << dpe_name << " " << src_name << " 2" << endl;
+	      ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering() << endl;
       }
       int delay = (flow_through ? 0 : this->Get_Delay());
       ofile << "$delay " << dpe_name << " " << delay << endl;
@@ -4319,10 +4309,8 @@ void AaBitmapExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
       // extreme pipelining.
       if(this->Is_Part_Of_Extreme_Pipeline())
       {
-	      ofile << "$buffering  $in " << dpe_name << " "
-		      << src_name << " 2" << endl;
-	      ofile << "$buffering  $out " << dpe_name << " "
-		      << tgt_name << " 2" << endl;
+	      //ofile << "$buffering  $in " << dpe_name << " " << src_name << " 2" << endl;
+	      ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering()  << endl;
       }
       int delay = (flow_through ? 0 : this->Get_Delay());
       ofile << "$delay " << dpe_name << " " << delay << endl;
@@ -4681,12 +4669,9 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 		// extreme pipelining.
 		if(this->Is_Part_Of_Extreme_Pipeline())
 		{
-			ofile << "$buffering  $in " << dpe_name << " "
-				<< src_1_name << " 2" << endl;
-			ofile << "$buffering  $in " << dpe_name << " "
-				<< src_2_name << " 2" << endl;
-			ofile << "$buffering  $out " << dpe_name << " "
-				<< tgt_name << " 2" << endl;
+			//ofile << "$buffering  $in " << dpe_name << " " << src_1_name << " 2" << endl;
+			//ofile << "$buffering  $in " << dpe_name << " " << src_2_name << " 2" << endl;
+			ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering() << endl;
 		}
 		int delay = (flow_through ? 0 : this->Get_Delay());
 		ofile << "$delay " << dpe_name << " " << delay << endl;
@@ -4979,14 +4964,10 @@ void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostr
 		// extreme pipelining.
 		if(this->Is_Part_Of_Extreme_Pipeline())
 		{
-			ofile << "$buffering  $in " << dpe_name << " "
-				<< src_1_name << " 2" << endl;
-			ofile << "$buffering  $in " << dpe_name << " "
-				<< src_2_name << " 2" << endl;
-			ofile << "$buffering  $in " << dpe_name << " "
-				<< src_3_name << " 2" << endl;
-			ofile << "$buffering  $out " << dpe_name << " "
-				<< tgt_name << " 2" << endl;
+			//ofile << "$buffering  $in " << dpe_name << " " << src_1_name << " 2" << endl;
+			//ofile << "$buffering  $in " << dpe_name << " " << src_2_name << " 2" << endl;
+			//ofile << "$buffering  $in " << dpe_name << " " << src_3_name << " 2" << endl;
+			ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering()  << endl;
 		}
 
 	}

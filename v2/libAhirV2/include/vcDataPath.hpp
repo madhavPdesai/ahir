@@ -463,7 +463,7 @@ protected:
  	if(_input_wire_buffering_map.find(w) != _input_wire_buffering_map.end())
 		return(_input_wire_buffering_map[w]);
 	else
-		return(1);
+		return(0);
   }
 
   void Set_Output_Buffering(vcWire* w, int buffering)
