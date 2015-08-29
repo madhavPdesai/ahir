@@ -2068,6 +2068,8 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
       // prepare guard vector.
       Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
 
+      // access regulator: limits the number of pending requests to the operator
+      // from a particular request point.
       this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
 
       /*

@@ -552,7 +552,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 		ofile << "$T [req] $T [ack] " << endl;
 		ofile << "}" << endl;
 
-		__ConnectSplitProtocolPattern;
+		__ConnectChainedSplitProtocolPattern;
 
 		if(pipeline_flag)
 		{

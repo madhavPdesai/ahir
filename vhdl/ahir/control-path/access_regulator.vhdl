@@ -1,6 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+-- author: Madhav Desai.
+
 library ahir;
 use ahir.Types.all;
 use ahir.Utilities.all;

@@ -9132,8 +9132,18 @@ begin
     sc_ack_out <= wr_demux_out_req;
 
 end struct;
+-- author: Madhav Desai
+--
+-- limit the number of pending requests
+-- to at most num_slots.
+--
+--  That is, forward req -> regulated-req
+--  only if the numer of pending req's which
+--  have not been acked is less than num_slots.
+--
 library ieee;
 use ieee.std_logic_1164.all;
+
 
 library ahir;
 use ahir.Types.all;
@@ -9198,6 +9208,7 @@ begin  -- default_arch
    -- note that the capacity can be num_slots, because
    -- the release ack-request should never arrive earlier than the 
    -- unregulated request.
+   -- 
    -- Check: capacity must be num_slots+1 because req->ack
    --        turnaround from operator can be 0-delay?
    --
@@ -9229,6 +9240,8 @@ begin  -- default_arch
 end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
+
+-- author: Madhav Desai.
 
 library ahir;
 use ahir.Types.all;

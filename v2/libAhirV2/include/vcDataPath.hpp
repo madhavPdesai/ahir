@@ -473,9 +473,6 @@ protected:
  
   int Get_Output_Buffering(vcWire* w)
   {
-	int D,B;
-	bool cf = this->Is_Part_Of_Pipelined_Loop(D,B);
-	int min_val = (cf ? 2 : 1);
 	int R;
 
  	if(_output_wire_buffering_map.find(w) != _output_wire_buffering_map.end())
@@ -487,7 +484,7 @@ protected:
 		R = 1;
 	}
 
-	return ((R < min_val) ? min_val :R);
+	return ((R < 1) ? 1 :R);
   }
 
   void Generate_Input_Log_Strings(string& log_string);

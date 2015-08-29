@@ -36,11 +36,20 @@
       string _update_regn = this->Get_VC_Name() + "_Update";\
       __F(__SST(this), _sample_regn);\
       __J(__SCT(this), _sample_regn);\
-      __J(__UST(this),__SCT(this));\
+      __F(__SCT(this), "$null");\
       __F(__UST(this), _update_regn);\
       __J(__UCT(this), _update_regn);\
 	}
 
+#define __ConnectChainedSplitProtocolPattern  {\
+      string _sample_regn = this->Get_VC_Name() + "_Sample";\
+      string _update_regn = this->Get_VC_Name() + "_Update";\
+      __F(__SST(this), _sample_regn);\
+      __J(__SCT(this), _sample_regn);\
+      __J(__UST(this), __SCT(this));\
+      __F(__UST(this), _update_regn);\
+      __J(__UCT(this), _update_regn);\
+	}
 #define __SelfReleaseSplitProtocolPattern {\
   ofile << "// self-release: " << endl;\
   __MJ(__SST(this),__SCT(this),false);\

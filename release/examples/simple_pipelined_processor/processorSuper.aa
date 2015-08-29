@@ -1,16 +1,10 @@
 // Aa code produced by llvm2aa (version 1.0)
 $pipe halt_pipe : $uint<16> $depth 1
-$pipe imm_pipe : $uint<16> $depth 1
 $pipe ir_pipe : $uint<16> $depth 1
 $pipe next_pc : $uint<16> $depth 1
-$pipe offs_pipe : $uint<16> $depth 1
-$pipe op_pipe : $uint<16> $depth 1
 $pipe out_port : $uint<16> $depth 1
 $pipe pc_to_decode : $uint<16> $depth 1
 $pipe pc_to_execute : $uint<16> $depth 1
-$pipe r1_pipe : $uint<16> $depth 1
-$pipe r2_pipe : $uint<16> $depth 1
-$pipe r3_pipe : $uint<16> $depth 1
 $storage mem:$array [64] $of $uint<16>
 $storage reg:$array [16] $of $uint<16>
 $storage xx_xstr:$array [8] $of $uint<8>
@@ -65,8 +59,8 @@ $is
 }
 
 $module [decode] 
-$in ()
-$out ()
+$in (instr: $uint<16>)
+$out (op r1 r2 r3 imm offs: $uint<16>)
 $is 
 {
   $branchblock [body] 
