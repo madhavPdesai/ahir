@@ -969,8 +969,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
 		// chain for the inport operation
 		else if(this->_object->Is("AaPipeObject"))
 		{
+			// for pipe accesses, chained protocol.
 			ofile << "// " << this->To_String() << endl;
-			ofile << "||[" << this->Get_VC_Name() << "] { // pipe read" << endl;
+			ofile << ";;[" << this->Get_VC_Name() << "] { // pipe read" << endl;
 			ofile << ";;[Sample] {" << endl;
 			ofile << "$T [req] $T [ack] " << endl;
 			ofile << "}" << endl;
@@ -1269,6 +1270,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
 	// chain for the inport operation
 	else if(this->_object->Is("AaPipeObject"))
 	{
+		// for pipe accesses, chained protocol.
 		ofile << "// " << this->To_String() << endl;
 		ofile << ";;[" << this->Get_VC_Name() << "_Sample] { // sample-data. " << endl;
 		ofile << "$T [req] $T [req] " << endl;

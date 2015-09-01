@@ -131,6 +131,12 @@ void vcModule::Add_Link(vcDatapathElement* dpe, vector<vcTransition*>& reqs, vec
       return;
     }
 
+  if(dpe->Get_Flow_Through())
+  {
+      vcSystem::Warning("control-path links to flow-through DPE " + dpe->Get_Id() + " ignored,  in module " + this->Get_Id());
+      return;
+  }
+
   this->_linked_dpe_set.insert(dpe);
 
   dpe->Add_Reqs(reqs);
