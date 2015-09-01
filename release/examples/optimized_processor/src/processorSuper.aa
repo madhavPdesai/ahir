@@ -9,8 +9,9 @@ $storage reg_array:$array [16] $of $uint<16>
 
 $pipe fetch_to_exec : $uint<32> $depth 2 
 $pipe exec_to_fetch : $uint<16> $depth 2 
+$pipe out_port : $uint<16> $depth 2 
 $pipe env_to_processor_start_pc : $uint<16>
-$pipe halt_pipe : $uint<8>
+$pipe processor_to_env_halt : $uint<16>
 
 
 // r1 rr1 wr1 r2 rr2 r3 rr3 
@@ -43,6 +44,23 @@ $is
 	$guard (locks_available) reg_locks := post_set_erlock
 }
 
+$module [init_regs] $in () $out () $is
+{
+	$branchblock[lOoP] {
+		$merge $entry loopback 
+			$phi I := Z16 $on $entry NI $on loopback
+		$endmerge
+
+		NI := (I+1)
+	
+		reg_array[I] := 0
+
+		$if (NI < 16) 	$then
+			$place [loopback]
+		$endif
+		
+	}
+}
 
 $pipeline $module [access_regs]
 	$in (r1: $uint<4> rr1 wr1: $uint<1> wr1_val: $uint<16> r2: $uint<4> rr2: $uint<1> r3: $uint<4> rr3: $uint<1>)
@@ -58,6 +76,9 @@ $module [reg_read_daemon]
 	$in ()
 	$out () $is
 {
+
+	$call init_regs () ()
+	$call access_reg_locks ((~Z16) Z16 Z16) (ignore_flag)
 
 	$branchblock [lOoP] {
 		$dopipeline $depth 8 $buffering 2 $fullrate
@@ -119,7 +140,7 @@ $module [reg_write_daemon]
 
 $module [write_to_mem] $in (addr data : $uint<16>) $out () $is
 {
-	mem_array[addr] := data
+	$call mem_access (addr data Z1) (ignored)
 }
 
 $pipeline $module [mem_access] 
@@ -128,7 +149,9 @@ $out (mem_read_data: $uint<16>)
 $is 
 {
 	    $guard (~mem_read_write_bar) mem_array[mem_addr] := mem_write_data
+	    $guard (~mem_read_write_bar) $report (mem_access mem_write addr mem_addr data mem_write_data)
 	    $guard (mem_read_write_bar)  mem_read_data := mem_array[mem_addr]
+	    $guard (mem_read_write_bar) $report (mem_access mem_read addr mem_addr data mem_read_data)
 }
 
 $volatile $module [decode] $in (instr: $uint<16>) $out (op r1 r2 r3: $uint<4> imm offs: $uint<16>)
@@ -158,27 +181,42 @@ $volatile $module [is_branch] $in (instr: $uint<16>) $out (is_branch_instr: $uin
 $module [fetch_daemon] $in () $out () $is
 {
   start_pc := env_to_processor_start_pc
+  $report (fetch_daemon fetch_daemon_start__  start_pc start_pc)
   $branchblock [body] 
   {
-	$dopipeline $depth 8 $buffering 1 $fullrate 
+	$dopipeline $depth 8 $buffering 2 $fullrate 
 		$merge $entry $loopback 
 			$phi pc := start_pc $on $entry npc $on $loopback
-			$phi use_branch_pc := Z1 $on $entry is_branch_instr $on $loopback
+			$phi use_branch_pc := Z1 $on $entry next_use_branch_pc $on $loopback
 		$endmerge 
 
 		$guard (~use_branch_pc) $call mem_access  (pc Z16 O1) (instr)
+		$guard (~use_branch_pc) 
+			$report (fetch_daemon fetch_daemon_non_branch_instr_access
+					pc pc instr instr)
 		$volatile $call is_branch (instr) (is_branch_instr)
 
 		$guard (use_branch_pc)  branch_pc := exec_to_fetch
 		$guard (use_branch_pc)  $call mem_access  (branch_pc Z16 01) (instr_b)
-		$volatile $call is_branch (instr_b) (is_branch_instr_b)
+		$guard (use_branch_pc) 
+			$report (fetch_daemon fetch_daemon_branch_instr_access
+					branch_pc branch_pc instr_b instr_b)
 
+		$volatile $call is_branch (instr_b) (is_branch_instr_b)
 		$volatile npc := ($mux use_branch_pc (branch_pc + 1) (pc + 1))
+
+		next_use_branch_pc := ($mux use_branch_pc is_branch_instr_b is_branch_instr)
 
 		$guard (~use_branch_pc) 
 			fetch_to_exec := 	($concat pc instr)
+		$guard (~use_branch_pc)
+			$report (fetch_daemon to_exec_non_branch pc pc instr instr)
+
 		$guard (use_branch_pc) 
 			fetch_to_exec := 	($concat branch_pc instr_b)
+
+		$guard (use_branch_pc)
+			$report (fetch_daemon to_exec_branch branch_pc branch_pc instr_b instr_b)
 
 	$while 1
   }
@@ -191,8 +229,11 @@ $module [execute_daemon] $in () $out () $is
       $dopipeline $depth 16 $buffering 2 $fullrate
 	$merge $entry $loopback $endmerge
 
+	$report (execute_daemon waiting_for_fetch)
 	iinfo := fetch_to_exec
         $volatile $split (iinfo 16 16) (pc instr)
+
+	$report (execute_daemon from_fetch  pc pc instr instr)
 
 	$volatile $call decode (instr) (op r1 r2 r3 imm offs)
 
@@ -221,12 +262,18 @@ $module [execute_daemon] $in () $out () $is
     	// read-a-reg
         $volatile read_or_lock_reg_flag := ($reduce | rr1 rr2 rr3 wr1)
 	$volatile rcmd := ($concat r1 rr1 wr1 r2 rr2 r3 rr3)
+
 	$guard (read_or_lock_reg_flag)
 		reg_read_access_command := rcmd
+	$guard (read_or_lock_reg_flag)
+		$report (execute_daemon reg_read_access_cmd
+						r1 r1 rr1 rr1 wr1 wr1 r2 r2 rr2 rr2 r3 r3 rr3 rr3)
 	$guard (read_or_lock_reg_flag) 
 		rrsp := reg_read_access_response
 
 	$volatile $split (rrsp 16 16 16) (r1_val r2_val r3_val)
+	$guard (read_or_lock_reg_flag)
+		$report (execute_daemon reg_read_access_response r1_val r1_val r2_val r2_val r3_val r3_val)
 
     	$guard (op_3) mem_address_1 := (r2_val + r3_val)
     	$guard (op_8) mem_address_2 := (pc + 1)
@@ -235,7 +282,7 @@ $module [execute_daemon] $in () $out () $is
     	amem := (wr_mem | rd_mem)
     	$guard (amem) $call mem_access (mem_address mem_write_data rd_mem) (mem_read_data)
 	
-    	$guard (op_0) halt_pipe := 1
+    	$guard (op_0) processor_to_env_halt := 1
     	wr1_val := ($excmux 
 			op_1   (r2_val + r3_val) 
 			op_2   (r2_val - r3_val)
@@ -245,7 +292,12 @@ $module [execute_daemon] $in () $out () $is
 			op_7   r2_val)
 	$volatile wcmd := ($concat r1 wr1_val)
 	$guard (wr1) reg_write_access_command := wcmd
+	$guard (wr1)
+		$report (execute_daemon write_reg_cmd r1 r1 wr1_val wr1_val)
+
 	$guard (wr1) wrsp := reg_write_access_response
+	$guard (wr1)
+		$report (execute_daemon write_reg_response wrsp wrsp)
 
 
     	npc := ($mux 
@@ -258,6 +310,7 @@ $module [execute_daemon] $in () $out () $is
 
 	$volatile is_branch_instr := ($reduce | op_8 op_9 op_10)
 
+	$report (execute_daemon is_branch_instr is_branch_instr is_branch_instr)
 	$guard (is_branch_instr) exec_to_fetch := npc
     	$guard (op_14) out_port := r1_val
      $while 1

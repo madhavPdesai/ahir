@@ -332,6 +332,7 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* add
 			outwires,
 			this->Get_VC_Guard_String(),
 			ofile);
+	ofile << " $flowthrough " << endl;
 }
 
 
@@ -733,6 +734,7 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
 					outwires,
 					this->Get_VC_Guard_String(),
 					ofile);
+			ofile << " $flowthrough " << endl;
 		}
 	}
 }
@@ -988,6 +990,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 								outputs,
 								this->Get_VC_Guard_String(),
 								ofile);
+						ofile << " $flowthrough " << endl;
 					}
 					else
 					{
@@ -1058,6 +1061,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 								outputs,
 								this->Get_VC_Guard_String(),
 								ofile);
+						ofile << " $flowthrough " << endl;
 					}
 				}
 				else
@@ -1155,6 +1159,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 						outputs,
 						this->Get_VC_Guard_String(),
 						ofile);
+				ofile << " $flowthrough " << endl;
 			}
 		}
 
@@ -1193,6 +1198,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 						this->Get_VC_Resized_Base_Address_Name(),
 						this->Get_VC_Guard_String(),
 						ofile);
+				ofile << " $flowthrough " << endl;
 			}
 		}
 
@@ -1237,6 +1243,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 					this->Get_VC_Root_Address_Name(),
 					this->Get_VC_Guard_String(),
 					ofile);
+			ofile << " $flowthrough " << endl;
 
 		}
 	}

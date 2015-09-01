@@ -14,7 +14,6 @@ vcEquivalence::vcEquivalence(string id,
 			     vector<vcWire*>& outwires):
   vcOperator(id)
 {
-  _flow_through = true;
   this->Set_Input_Wires(inwires);
   this->Set_Output_Wires(outwires);
   if(_in_width != _out_width)
