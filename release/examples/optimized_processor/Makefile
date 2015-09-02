@@ -3,7 +3,7 @@ AHIR_INCLUDE=$(AHIR_RELEASE)/include
 AHIR_LIB=$(AHIR_RELEASE)/lib
 VHDL_LIB=$(AHIR_RELEASE)/vhdl/
 
-all: SW HW 
+all: SW HW AA2C
 
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.

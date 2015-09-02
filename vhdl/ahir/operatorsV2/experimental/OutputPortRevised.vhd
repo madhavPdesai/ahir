@@ -52,7 +52,18 @@ begin
   BufGen : for I in 0 to num_reqs-1 generate
 	
 	in_data_array(I) <= data(((I+1)*data_width)-1 downto (I*data_width));
-	update_ack(I) <= update_req(I); -- sacrificial.. to maintain pretense of split protocol.
+	
+	-- update ack..
+	process(clk,reset)
+        begin
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				update_ack(I) <= false;
+			else
+				update_ack(I) <= update_req(I); -- sacrificial.. to maintain pretense of split protocol.
+			end if;
+		end if;
+	end process;
 
 	rxB: ReceiveBuffer 
 		generic map( name => name & " rxBuf " & Convert_To_String(I),

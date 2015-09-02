@@ -3679,10 +3679,10 @@ package BaseComponents is
   port (
     read_req       : in  boolean;
     read_ack       : out boolean;
-    read_data      : out std_logic_vector(in_data_width-1 downto 0);
+    read_data      : out std_logic_vector(out_data_width-1 downto 0);
     write_req       : in  boolean;
     write_ack       : out boolean;
-    write_data      : in std_logic_vector((out_data_width-1) downto 0);
+    write_data      : in std_logic_vector((in_data_width-1) downto 0);
     clk, reset : in  std_logic);
   
   end component PipelineSynchBuffer;
@@ -20021,7 +20021,7 @@ begin  -- Behave
   -- receive buffers.
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
-					buffer_size => input_buffering(I),
+					buffer_size => Maximum(2,input_buffering(I)),
 					data_width => rx_word_length)
 		port map(write_req => reqL(I), 
 			 write_ack => ackL(I), 
@@ -20138,7 +20138,18 @@ begin
   BufGen : for I in 0 to num_reqs-1 generate
 	
 	in_data_array(I) <= data(((I+1)*data_width)-1 downto (I*data_width));
-	update_ack(I) <= update_req(I); -- sacrificial.. to maintain pretense of split protocol.
+	
+	-- update ack..
+	process(clk,reset)
+        begin
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				update_ack(I) <= false;
+			else
+				update_ack(I) <= update_req(I); -- sacrificial.. to maintain pretense of split protocol.
+			end if;
+		end if;
+	end process;
 
 	rxB: ReceiveBuffer 
 		generic map( name => name & " rxBuf " & Convert_To_String(I),
@@ -20441,10 +20452,10 @@ entity PipelineSynchBuffer is
   port (
     read_req       : in  boolean;
     read_ack       : out boolean;
-    read_data      : out std_logic_vector(in_data_width-1 downto 0);
+    read_data      : out std_logic_vector(out_data_width-1 downto 0);
     write_req       : in  boolean;
     write_ack       : out boolean;
-    write_data      : in std_logic_vector((out_data_width-1) downto 0);
+    write_data      : in std_logic_vector((in_data_width-1) downto 0);
     clk, reset : in  std_logic);
   
 end PipelineSynchBuffer;
@@ -21003,6 +21014,11 @@ use ahir.BaseComponents.all;
 -- for the operation to finish...).  This helps pipelining.
 -- TODO: QueueBase can be replaced with a simpler shift-stage?
 --       (maybe not.., because this slows down the guard=0 case).
+--
+-- Assumptions
+--   1. sr_in -> sr_in without intervening sa_out is not possible.
+--   2. cr_in -> cr_in without intervening ca_out is not possible.
+--
 entity SplitGuardInterfaceBase is
 	generic (buffering:integer);
 	port (sr_in: in Boolean;
@@ -21147,13 +21163,15 @@ begin
 	------------------------------------------------------------------------------------------
 	--   r_Idle          0        _           _            _      r_Idle
 	--   r_Idle          1        0           _            _      W-Queue
-	--   r_Idle          1        1           1            _      W-Ack-In  1              1
+	--   r_Idle          1        1           1            1      r_Idle    1      1       1
+	--   r_Idle          1        1           1            0      W-Ack-In  1              1
 	--   r_Idle          1        1           0            _      r_Idle           1d      1
 	------------------------------------------------------------------------------------------
         --   Present-state  cr_in  pop_ack      qdata        ca_in    Nstate  cr_out  ca_out  pop
 	------------------------------------------------------------------------------------------
 	--   W-Queue         _        0           _            _      W-Queue
-	--   W-Queue         _        1           1            _      W-Ack-In  1              1
+	--   W-Queue         _        1           1            0      W-Ack-In  1              1
+	--   W-Queue         _        1           1            1      r_Idle    1      1       1
 	--   W-Queue         0        1           0            _      r_Idle           1       1
 	--   W-Queue         1        1           0            _      W-Queue          1       1
 	------------------------------------------------------------------------------------------
@@ -21181,13 +21199,20 @@ begin
 		case rhs_state is
 			when r_Idle =>
 				if cr_in then
+					--
+					-- what happens if ca_in appears immediately?
+					--	
 					if(pop_ack = '0') then
 						nstate := r_Wait_On_Queue;			
 					else
 						pop <= '1';
 						if(qdata(0) = '1') then
-							nstate := r_Wait_On_Ack_In;
 							cr_out <= true;
+							if(ca_in) then	
+								ca_out_u_var := true;
+							else
+								nstate := r_Wait_On_Ack_In;
+							end if;
 							next_c_counter := (next_c_counter + 1);
 						else
 							ca_out_d_var := true;
@@ -21199,8 +21224,16 @@ begin
 				if(pop_ack = '1') then
 					pop <= '1';
 					if(qdata(0) = '1') then
-						nstate := r_Wait_On_Ack_In;
 						cr_out <= true;
+
+						if(ca_in) then	
+							ca_out_u_var := true;
+							nstate := r_Idle;
+						else
+							nstate := r_Wait_On_Ack_In;
+						end if;
+					
+						nstate := r_Wait_On_Ack_In;
 						next_c_counter := (next_c_counter + 1);
 					else
 						ca_out_u_var := true;
@@ -21307,6 +21340,51 @@ begin
 end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- brief description:
+--  as the name indicates, a squash-shift-register
+--  provides an implementation of a pipeline.
+entity SquashShiftRegister is
+  generic (name : string;
+	   data_width: integer;
+           depth: integer := 1);
+  port (
+    read_req       : in  std_logic;
+    read_ack       : out std_logic;
+    read_data      : out std_logic_vector(data_width-1 downto 0);
+    write_req       : in  std_logic;
+    write_ack       : out std_logic;
+    write_data      : in std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  
+end SquashShiftRegister;
+
+architecture default_arch of SquashShiftRegister is
+
+  signal stage_full: std_logic_vector(0 to depth);
+
+  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
+  signal stage_data : SSRArray(0 to depth);
+  
+begin  -- default_arch
+
+    -- shift-right if there is a bubble 
+    -- anywhere in the shift-register,
+    -- and if the write-signal is active.
+    --
+    -- stall stage I if I+1 is not ready to
+    -- accept.
+    -- etc.. etc..  TODO.
+
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
@@ -21405,7 +21483,7 @@ begin  -- Behave
   -- receive buffers.
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
-					buffer_size => input_buffering(I),
+					buffer_size => Maximum(2,input_buffering(I)),
 					data_width => rx_word_length)
 		port map(write_req => reqL(I), 
 			 write_ack => ackL(I), 

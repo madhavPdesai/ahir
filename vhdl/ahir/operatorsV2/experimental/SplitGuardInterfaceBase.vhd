@@ -20,6 +20,11 @@ use ahir.BaseComponents.all;
 -- for the operation to finish...).  This helps pipelining.
 -- TODO: QueueBase can be replaced with a simpler shift-stage?
 --       (maybe not.., because this slows down the guard=0 case).
+--
+-- Assumptions
+--   1. sr_in -> sr_in without intervening sa_out is not possible.
+--   2. cr_in -> cr_in without intervening ca_out is not possible.
+--
 entity SplitGuardInterfaceBase is
 	generic (buffering:integer);
 	port (sr_in: in Boolean;
@@ -201,7 +206,7 @@ begin
 			when r_Idle =>
 				if cr_in then
 					--
-					-- what happens in ca_in appears immediately?
+					-- what happens if ca_in appears immediately?
 					--	
 					if(pop_ack = '0') then
 						nstate := r_Wait_On_Queue;			

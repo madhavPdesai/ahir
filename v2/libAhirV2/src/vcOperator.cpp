@@ -67,6 +67,7 @@ void vcEquivalence::Print_Flow_Through_VHDL(ostream& ofile)
 	ofile << "variable ov : std_logic_vector(" << oW-1 << " downto 0);" << endl;
 	ofile << "-- }" << endl;
 	ofile << "begin -- {" << endl;
+	ofile << "ov := (others => '0');" << endl;
 	ofile << "iv := ";
   	for(int idx = 0; idx < _input_wires.size(); idx++)
 	{
