@@ -1155,7 +1155,12 @@ bool AaSimpleObjectReference::Update_Protocol_Has_Delay(set<AaRoot*>& visited_el
 			return(true);
 
 		if(this->_object->Is("AaPipeObject"))
-			return(true);
+		{
+			if(!this->Get_Is_Target())
+				return(true);
+			else
+				return(false);
+		}
 
 		if(this->_object->Is_Interface_Object())
 		{

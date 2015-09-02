@@ -164,13 +164,15 @@ begin
 	------------------------------------------------------------------------------------------
 	--   r_Idle          0        _           _            _      r_Idle
 	--   r_Idle          1        0           _            _      W-Queue
-	--   r_Idle          1        1           1            _      W-Ack-In  1              1
+	--   r_Idle          1        1           1            1      r_Idle    1      1       1
+	--   r_Idle          1        1           1            0      W-Ack-In  1              1
 	--   r_Idle          1        1           0            _      r_Idle           1d      1
 	------------------------------------------------------------------------------------------
         --   Present-state  cr_in  pop_ack      qdata        ca_in    Nstate  cr_out  ca_out  pop
 	------------------------------------------------------------------------------------------
 	--   W-Queue         _        0           _            _      W-Queue
-	--   W-Queue         _        1           1            _      W-Ack-In  1              1
+	--   W-Queue         _        1           1            0      W-Ack-In  1              1
+	--   W-Queue         _        1           1            1      r_Idle    1      1       1
 	--   W-Queue         0        1           0            _      r_Idle           1       1
 	--   W-Queue         1        1           0            _      W-Queue          1       1
 	------------------------------------------------------------------------------------------
@@ -198,13 +200,20 @@ begin
 		case rhs_state is
 			when r_Idle =>
 				if cr_in then
+					--
+					-- what happens in ca_in appears immediately?
+					--	
 					if(pop_ack = '0') then
 						nstate := r_Wait_On_Queue;			
 					else
 						pop <= '1';
 						if(qdata(0) = '1') then
-							nstate := r_Wait_On_Ack_In;
 							cr_out <= true;
+							if(ca_in) then	
+								ca_out_u_var := true;
+							else
+								nstate := r_Wait_On_Ack_In;
+							end if;
 							next_c_counter := (next_c_counter + 1);
 						else
 							ca_out_d_var := true;
@@ -216,8 +225,16 @@ begin
 				if(pop_ack = '1') then
 					pop <= '1';
 					if(qdata(0) = '1') then
-						nstate := r_Wait_On_Ack_In;
 						cr_out <= true;
+
+						if(ca_in) then	
+							ca_out_u_var := true;
+							nstate := r_Idle;
+						else
+							nstate := r_Wait_On_Ack_In;
+						end if;
+					
+						nstate := r_Wait_On_Ack_In;
 						next_c_counter := (next_c_counter + 1);
 					else
 						ca_out_u_var := true;

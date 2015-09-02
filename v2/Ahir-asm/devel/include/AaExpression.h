@@ -730,6 +730,7 @@ class AaSimpleObjectReference: public AaObjectReference
 		leaf_expression_set.insert(this);
 	}
 
+	virtual void Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile);
 
 	virtual bool Is_Implicit_Variable_Reference();
 	virtual bool Is_Interface_Object_Reference();
