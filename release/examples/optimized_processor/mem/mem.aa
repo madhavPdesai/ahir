@@ -1,0 +1,55 @@
+$storage mem_array:$array [64] $of $uint<16>
+
+
+$module [write_to_mem_daemon] $in () $out () $is
+{
+	$branchblock [lOoP] {
+		$dopipeline $depth 4 $buffering 1 
+		$merge $entry $loopback $endmerge
+		
+		addr  := env_to_processor_mem_write
+		wdata := env_to_processor_mem_write	
+
+		cpu_to_mem_data_access_command := 
+			($concat Z1 addr wdata)
+
+		$while 1
+	}
+}
+
+// read/write
+$module [mem_data_access_daemon]  $in () $out () $is
+{
+	$branchblock [lOoP] {
+		$dopipeline $depth 8 $buffering 2 $fullrate
+
+		$merge $entry $loopback $endmerge
+
+		cmd := cpu_to_mem_data_access_command
+		$volatile $split (cmd 1 16 16) (write_bar addr wdata)
+	    	
+	 	$guard (write_bar) rdata := mem_array[addr]
+	    	$guard (~write_bar) mem_array[addr] := wdata
+
+		$guard (write_bar) mem_to_cpu_data_access_response := rdata
+
+		$while 1
+	}
+}
+
+// instruction access.
+$module [mem_instr_access_daemon]  $in () $out () $is
+{
+	$branchblock [lOoP] {
+		$dopipeline $depth 8 $buffering 2 $fullrate
+
+		$merge $entry $loopback $endmerge
+
+		addr := cpu_to_mem_instr_access_command
+	 	instr := mem_array[addr]
+
+		mem_to_cpu_instr_access_response := instr
+		$while 1
+	}
+}
+
