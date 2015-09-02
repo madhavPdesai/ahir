@@ -1,0 +1,31 @@
+$pipe fetch_to_exec : $uint<32> $depth 2 
+$pipe writeback_to_fetch : $uint<16> $depth 2 
+$pipe out_port : $uint<16> $depth 2 
+$pipe env_to_processor_start_pc : $uint<16>
+$pipe processor_to_env_halt : $uint<16>
+
+// r1 rr1 wr1 r2 rr2 r3 rr3 
+// 4  1   1    4  1    4  1 =  16
+$pipe reg_read_access_command : $uint<16>
+
+// r1-val r2-val r3-val
+//  16     16     16
+$pipe reg_read_access_response : $uint<48>
+
+// r1 r1-val
+// 4   16
+$pipe reg_write_access_command : $uint<20>
+
+// 1-bit
+$pipe reg_write_access_response : $uint<1>
+
+// 16-bit
+$pipe env_to_processor_mem_write: $uint<16>
+
+// wrbar addr wdata
+//  1    16   16
+$pipe cpu_to_mem_data_access_command: $uint<33>
+
+// rdata
+$pipe  mem_to_cpu_data_access_response: $uint<16>
+

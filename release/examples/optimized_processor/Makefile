@@ -59,6 +59,6 @@ ghdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl
 	ghdl -m --work=work -Wl,-L$(AHIR_LIB) -Wl,-lVhpi ahir_system_test_bench 
 
 clean:
-	rm -f *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_port* testbench_sw testbench_hw ahir_system_*test_bench vhpi.log *.dot *.ghw aa2c/*.* objsw/*.* objhw/*.* objaa2c/*.*
+	rm -f *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_port* testbench_* ahir_system_*test_bench vhpi.log *.dot *.ghw aa2c/*.* objsw/*.* objhw/*.* objaa2c/*.* *.vc
 
 PHONY: all clean	
