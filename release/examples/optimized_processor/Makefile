@@ -18,7 +18,7 @@ HW: aa2vc vc2vhdl vhdltb ghdlsim
 TOVHDL: aa2vc vc2vhdl
 
 # Aa 2 c
-AAFILES=common/pipes.aa core/core.aa mem/mem.aa regfile/regfile.aa 
+AAFILES=common/constants.aa common/pipes.aa core/core.aa mem/mem.aa regfile/regfile.aa 
 AA2C: $(AAFILES) testbench/testbench.c
 	Aa2C $(TOPMODULES) -o aa2c $(AAFILES)
 	gcc -g -c -o objaa2c/testbench.o -DAA2C -Iaa2c -I$(AHIR_INCLUDE) testbench/testbench.c

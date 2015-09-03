@@ -135,10 +135,28 @@ string AaObject::C_Reference_String()
 }
 
 
+AaModule* AaObject::Get_Module()
+{
+	AaScope* us = this->Get_Scope();
+	if(us == NULL)
+		return(NULL);
+	else if(us->Is("AaModule"))
+		return((AaModule*)us);
+
+	AaScope* root_scope = us->Get_Root_Scope();
+	if((root_scope != NULL) && root_scope->Is("AaModule"))
+		return ((AaModule*) root_scope);
+
+	return(NULL);
+}
+
 void AaObject::PrintC_Declaration(ofstream& ofile)
 {
 	AaType* t = this->Get_Type();
-	Print_C_Declaration(this->C_Reference_String(), t, ofile);
+	AaModule* m = this->Get_Module();
+	
+	bool static_flag = ((m != NULL) && m->Static_Flag_In_C());
+	Print_C_Declaration(this->C_Reference_String(), static_flag, t, ofile);
 
 
 	if(_value != NULL)

@@ -33,8 +33,9 @@ typedef struct _bit_vector_ {
 } bit_vector;
 
 
-#define __declare_bit_vector(x,w) bit_vector x; init_bit_vector(&x,w);
-#define __declare_bit_vector(x,w)  bit_vector x; init_bit_vector(&x,w);
+#define __declare_bit_vector(x,w) bit_vector x =  {.width = 0}; init_bit_vector(&x,w);
+#define __declare_static_bit_vector(x,w) static bit_vector x = {.width = 0}; init_static_bit_vector(&x,w);
+
 uint32_t  __array_size(bit_vector* x);
 void      __set_byte(bit_vector* x, uint32_t byte_index, uint8_t v);
 uint8_t   __get_byte(bit_vector* x, uint32_t byte_index);
@@ -43,6 +44,7 @@ uint8_t   __get_undefined_byte(bit_vector* x, uint32_t byte_index);
 uint8_t   __sign_bit(bit_vector* x);
 
 void init_bit_vector(bit_vector* t, uint32_t width);
+void init_static_bit_vector(bit_vector* t, uint32_t width);
 void free_bit_vector(bit_vector* t);
 void print_bit_vector(bit_vector* t, FILE* ofile);
 void printf_bit_vector(bit_vector* t);

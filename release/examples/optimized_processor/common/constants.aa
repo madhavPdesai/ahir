@@ -1,0 +1,5 @@
+$constant Z1 : $uint<1>  := 0
+$constant Z4 : $uint<4>  := 0
+$constant Z16 : $uint<16> := 0
+$constant O1 : $uint<1>  := 1
+$constant O16 : $uint<16> := 1

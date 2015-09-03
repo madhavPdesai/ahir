@@ -105,6 +105,14 @@ void init_bit_vector(bit_vector* t, uint32_t width)
 	t->width = width;
 }
 
+void init_static_bit_vector(bit_vector* t, uint32_t width)
+{
+	if(t->width == 0)
+	{
+		allocate_sized_u8_array(&(t->val), __nbytes(width));;
+		t->width = width;
+	}
+}
 
 void free_bit_vector(bit_vector* t)
 {

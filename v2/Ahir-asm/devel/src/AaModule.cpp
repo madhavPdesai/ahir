@@ -276,6 +276,7 @@ void AaModule::Write_C_Source(ofstream& srcfile, ofstream& headerfile)
   if(this->Get_Foreign_Flag())
     return;
 
+  bool static_flag = this->Static_Flag_In_C();
 
   // outer wrap function if all argument types are "native"
   bool all_types_native = this->Can_Have_Native_C_Interface();
@@ -441,14 +442,15 @@ void AaModule::Write_C_Source(ofstream& srcfile, ofstream& headerfile)
     {
 	string o_name =  this->_input_args[i]->Get_C_Name();
 	string n_name = "__p" + o_name;
-	Print_C_Declaration(o_name, this->_input_args[i]->Get_Type(), headerfile);
+
+	Print_C_Declaration(o_name, static_flag,  this->_input_args[i]->Get_Type(), headerfile);
 	Print_C_Assignment(o_name, "(*" + n_name + ")", this->_input_args[i]->Get_Type(), headerfile);
     }
   for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
     {
 	string o_name =  this->_output_args[i]->Get_C_Name();
 	string n_name = "__p" + o_name;
-	Print_C_Declaration(o_name, this->_output_args[i]->Get_Type(), headerfile);
+	Print_C_Declaration(o_name, static_flag,  this->_output_args[i]->Get_Type(), headerfile);
     }
 
   this->Write_C_Object_Declarations(headerfile);

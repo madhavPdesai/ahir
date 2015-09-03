@@ -16,7 +16,7 @@ class AaPipeObject;
 void Print_C_Assert_If_Bitvector_Undefined(string var_name, ostream& ofile);
 		
 void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, bool signal_mode, bool lifo_mode,ofstream& ofile);
-void Print_C_Declaration(string obj_name, AaType* obj_type,  ofstream& ofile);
+void Print_C_Declaration(string obj_name, bool static_flag, AaType* obj_type,  ofstream& ofile);
 void Print_C_Global_Declaration(string obj_name, AaType* obj_type, ofstream& ofile);
 void Print_C_Global_Initialization(string obj_name, AaType* obj_type,  ofstream& ofile);
 void Print_C_Assignment_To_Constant(string tgt_c_ref, AaType* tgt_type, AaValue* v, ofstream& ofile);

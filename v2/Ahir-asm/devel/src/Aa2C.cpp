@@ -1,6 +1,7 @@
 #include <AaType.h>
 #include <AaValue.h>
 #include <AaObject.h>
+#include <AaModule.h>
 #include <AaExpression.h>
 #include <AaProgram.h>
 #include <Aa2C.h>
@@ -43,13 +44,20 @@ void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, 
 	}
 }
 
-void Print_C_Declaration(string obj_name, AaType* t, ofstream& ofile)
+void Print_C_Declaration(string obj_name, bool static_flag, AaType* t, ofstream& ofile)
 {
 	if(!t->Is_Pointer_Type())
 	{
 		if(t->Is_Integer_Type())
 		{
-			ofile << "__declare_bit_vector(" << obj_name << "," << t->Size() << ");" << __endl__;
+			if(static_flag)
+			{
+				ofile << "__declare_static_bit_vector(" << obj_name << "," << t->Size() << ");" << __endl__;
+			}
+			else
+			{
+				ofile << "__declare_bit_vector(" << obj_name << "," << t->Size() << ");" << __endl__;
+			}
 		}
 		else 
 		{

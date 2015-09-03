@@ -18,6 +18,15 @@ AaStatement::AaStatement(AaScope* p): AaScope(p)
 
 AaStatement::~AaStatement() {};
 
+AaModule* AaStatement::Get_Module()
+{
+	AaScope* root_scope = this->Get_Root_Scope();
+	if((root_scope != NULL) && (root_scope->Is("AaModule")))
+		return((AaModule*) root_scope);
+	else
+		return(NULL);
+}
+
 bool AaStatement::Is_Part_Of_Extreme_Pipeline()
 {
 	AaStatement* dws = this->Get_Pipeline_Parent();
@@ -2389,6 +2398,8 @@ void AaBlockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	map<string, AaType*> export_type_map;
 	map<string, string> renamed_export_map;
 
+	AaModule* m = this->Get_Module();
+	bool static_flag = ((m != NULL) && (m->Static_Flag_In_C()));
 	// setup export type map.
 	for(map<string,string>::iterator iter = _exports.begin(), fiter = _exports.end();
 			iter != fiter; iter++)
@@ -2436,7 +2447,7 @@ void AaBlockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	for(map<string,AaType*>::iterator iter = export_type_map.begin(), fiter = export_type_map.end();
 			iter != fiter; iter++)
 	{
-		Print_C_Declaration((*iter).first, (*iter).second, headerfile);
+		Print_C_Declaration((*iter).first, static_flag, (*iter).second, headerfile);
 	}
 	this->Write_C_Object_Declarations(headerfile);
 	if(this->_statement_sequence != NULL)

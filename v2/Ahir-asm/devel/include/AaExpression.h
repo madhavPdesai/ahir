@@ -16,6 +16,7 @@ class AaStatement;
 class AaAssignmentStatement;
 class AaDoWhileStatement;
 class AaSimpleObjectReference;
+class AaModule;
 class AaExpression: public AaRoot
 {
 	// the containing scope of this expression
@@ -84,6 +85,7 @@ class AaExpression: public AaRoot
 
 
 	virtual AaScope* Get_Scope() { return(this->_scope);}
+	virtual AaModule* Get_Module();
 
 	AaExpression(AaScope* scope_tpr);
 	~AaExpression();

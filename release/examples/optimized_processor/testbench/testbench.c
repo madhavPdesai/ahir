@@ -61,7 +61,7 @@ void *execute_(void* args)
 int main()
 {
   int idx = 5;
-
+  FILE* trace_file = NULL;
 
 #ifdef SW
   init_pipe_handler();
@@ -74,8 +74,9 @@ int main()
 #endif
 
 #ifdef AA2C
+  trace_file = fopen("trace.txt", "w");
   init_pipe_handler();
-  start_daemons(stderr);
+  start_daemons(trace_file);
 #endif
 
   // In the HW case, will need to initialize the processor memory.
@@ -105,6 +106,7 @@ int main()
 
 #ifdef AA2C
   stop_daemons();
+  fclose(trace_file);
 #endif
   return(0); 
 }

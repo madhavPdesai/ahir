@@ -1,17 +1,30 @@
 $storage reg_array:$array [16] $of $uint<16>
+$pipe start_write_daemon : $uint<1>
 
 $pipeline $module [access_reg_locks]
-	$in  (clear_mask test_mask set_mask: $uint<16>)
+	$in  (i_count clear_mask test_mask set_mask: $uint<16>)
 	$out (locks_available : $uint<1>)
 $is
 {
 	$storage reg_locks: $uint<16>
+
+	$report (access_reg_locks argument_values
+			i_count i_count
+			clear_mask clear_mask
+			test_mask test_mask
+			set_mask set_mask)
 	
 	erlock := reg_locks
 	$volatile post_clear_erlock := (erlock & (~ clear_mask))
-	locks_available   := ((test_mask & post_clear_erlock) != 0)
+	locks_available   := ((test_mask & post_clear_erlock) == 0)
 	$volatile post_set_erlock   := (post_clear_erlock | set_mask)
-	$guard (locks_available) reg_locks := post_set_erlock
+	reg_locks := post_set_erlock
+
+	$report (access_reg_locks return_values
+				erlock erlock
+				post_clear_erlock post_clear_erlock
+				post_set_erlock   post_set_erlock
+				locks_available locks_available)
 }
 
 $module [init_regs] $in () $out () $is
@@ -33,13 +46,22 @@ $module [init_regs] $in () $out () $is
 }
 
 $pipeline $module [access_regs]
-	$in (r1: $uint<4> rr1 wr1: $uint<1> wr1_val: $uint<16> r2: $uint<4> rr2: $uint<1> r3: $uint<4> rr3: $uint<1>)
+	$in (i_count: $uint<16> r1: $uint<4> rr1 wr1: $uint<1> wr1_val: $uint<16> r2: $uint<4> rr2: $uint<1> r3: $uint<4> rr3: $uint<1>)
 	$out (r1_val r2_val r3_val: $uint<16>) $is
 {
+	
+	$report (access_regs argument_values
+				i_count i_count
+				r1 r1 rr1 rr1 wr1 wr1 wr1_val wr1_val r2 r2 rr2 rr2 r3 r3 rr3 rr3)
 	$guard (wr1) reg_array[r1] := wr1_val
 	$guard (rr1) r1_val := reg_array[r1]
 	$guard (rr2) r2_val := reg_array[r2]
 	$guard (rr3) r3_val := reg_array[r3]
+
+	$report (access_regs return_values
+			i_count i_count
+			r1_val r1_val r2_val r2_val r3_val r3_val)
+
 }
 
 $module [reg_read_daemon] 
@@ -48,7 +70,9 @@ $module [reg_read_daemon]
 {
 
 	$call init_regs () ()
-	$call access_reg_locks ((~Z16) Z16 Z16) (ignore_flag)
+	$call access_reg_locks (Z16 (~Z16) Z16 Z16) (ignore_flag)
+
+	start_write_daemon := 1
 
 	$branchblock [lOoP] {
 		$dopipeline $depth 8 $buffering 2 $fullrate
@@ -59,8 +83,12 @@ $module [reg_read_daemon]
 
 			$guard (free_state) cmd := reg_read_access_command 
 
-			$split (cmd 4 1 1 4 1 4 1)
-					(r1 rr1 wr1 r2 rr2 r3 rr3)
+			$split (cmd 16 4 1 1 4 1 4 1)
+					(i_count r1 rr1 wr1 r2 rr2 r3 rr3)
+			$guard (free_state) $report (reg_read_daemon read_command
+							i_count i_count
+								r1 r1 rr1 rr1 wr1 wr1
+								r2 r2 rr2 rr2 r3 r3 rr3 rr3 )
 
 			$volatile test_mask 
 				:= ($reduce | 
@@ -70,13 +98,13 @@ $module [reg_read_daemon]
 					   )
 			$volatile set_mask
 				:= ($mux wr1 (O16 << ($bitcast ($uint<16>) r1)) Z16)
-			$call access_reg_locks (Z16 test_mask set_mask) (all_locks_available)
+			$call access_reg_locks (i_count Z16 test_mask set_mask) (all_locks_available)
 
 			$guard (all_locks_available)
-				$call access_regs (r1 rr1 Z1 Z16 r2 rr2 r3 rr3) (r1_val r2_val r3_val)
+				$call access_regs (i_count r1 rr1 Z1 Z16 r2 rr2 r3 rr3) (r1_val r2_val r3_val)
 
 			$guard (all_locks_available)
-					reg_read_access_response := ($concat r1_val r2_val r3_val)
+					reg_read_access_response := ($concat i_count r1_val r2_val r3_val)
 
 			$while 1
 
@@ -90,16 +118,25 @@ $module [reg_write_daemon]
 	$out () $is
 {
 
+	start_flag := start_write_daemon
+
 	$branchblock [lOoP] {
 		$dopipeline $depth 8 $buffering 2 $fullrate
 
 			$merge $entry $loopback $endmerge
 
 			cmd := reg_write_access_command 
-			$split (cmd 4 16) (r1 r1_val)
-			$call access_regs (r1 Z1 O1 r1_val Z4 Z1 Z4 Z1) (i1 i2 i3)
-			$call access_reg_locks
-				((~Z16) (~Z16) (O16 << ($bitcast ($uint<16>) r1))) (all_locks_available)
+			$split (cmd 16 4 16) (i_count r1 r1_val)
+
+			$report (reg_write_daemon write_reg_command 
+					i_count i_count
+					r1 r1 r1_val r1_val)
+
+			$call access_regs (i_count r1 Z1 O1 r1_val Z4 Z1 Z4 Z1) (i1 i2 i3) $mark AR
+
+			$call access_reg_locks 
+				(i_count (O16 << ($bitcast ($uint<16>) r1)) Z16 Z16) (all_locks_available) $synch (AR)
+
 
 		$while 1
 	}

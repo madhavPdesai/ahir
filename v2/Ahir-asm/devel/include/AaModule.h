@@ -134,6 +134,9 @@ class AaModule: public AaSeriesBlockStatement
   void Set_Macro_Flag(bool ff);
   bool Get_Macro_Flag() {return(this->_macro_flag);}
 
+  bool Static_Flag_In_C() 
+	{return(!(_inline_flag || _macro_flag || _volatile_flag || _operator_flag));}
+
   void Add_Argument(AaInterfaceObject* obj);
 
   void Set_Print_Remap(AaInterfaceObject* obj, AaExpression* expr) { _print_remap[obj] = expr;}

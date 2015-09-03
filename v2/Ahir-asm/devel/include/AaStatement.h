@@ -56,6 +56,9 @@ class AaStatement: public AaScope
 	_marked_statement_map[mid] = stmt;
   }
 
+
+  virtual AaModule* Get_Module();
+
   virtual AaStatement* Get_Marked_Statement(string mark)
   {
 	map<string,AaStatement*>::iterator miter = _marked_statement_map.find(mark);
