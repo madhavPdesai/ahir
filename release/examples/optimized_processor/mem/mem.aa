@@ -10,8 +10,7 @@ $module [write_to_mem_daemon] $in () $out () $is
 		addr  := env_to_processor_mem_write
 		wdata := env_to_processor_mem_write	
 
-		cpu_to_mem_data_access_command := 
-			($concat Z1 addr wdata)
+		mem_array[addr] := wdata
 
 		$while 1
 	}

@@ -772,13 +772,18 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			if(src1_type->Size() == 32)
 			{
-				ofile << "bit_vector_set_bit(&(" << tgt << "),0, fp32_unordered(" << src1 << "," << src2 << "));" 
+				ofile << "if(fp32_unordered(" << src1 << "," << src2 << ")) bit_vector_set(&(" << tgt << "));" 
+					<< " else bit_vector_clear(&(" << tgt << "));"
 					<< __endl__;
+				//ofile << "bit_vector_set_bit(&(" << tgt << "),0, fp32_unordered(" << src1 << "," << src2 << "));" 
+					//<< __endl__;
 			}
 			else if(src1_type->Size() == 64)
 			{
-				ofile << "bit_vector_set_bit(&(" << tgt << "),0, fp64_unordered(" << src1 << "," << src2 << "));" 
-					<< __endl__;
+				ofile << "if(fp64_unordered(" << src1 << "," << src2 << ")) bit_vector_set(&(" << tgt << "));" 
+					<< " else bit_vector_clear(&(" << tgt<< "));" << __endl__;
+				//ofile << "bit_vector_set_bit(&(" << tgt << "),0, fp64_unordered(" << src1 << "," << src2 << "));" 
+					//<< __endl__;
 			}
 			else
 			{

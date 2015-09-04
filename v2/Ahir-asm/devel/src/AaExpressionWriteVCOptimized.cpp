@@ -448,7 +448,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			ofile << "$T [cr] $T [ca] " << endl;
 			ofile << "}" << endl;
 
-			__ConnectSplitProtocolPattern;
+			__ConnectChainedSplitProtocolPattern;
 
 			// record the pipe!  Introduce pipe related dependencies 
 			// later. 

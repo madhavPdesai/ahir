@@ -48,28 +48,68 @@ architecture Base of InputPortRevised is
 
   signal ack_raw: BooleanArray(num_reqs-1 downto 0);
   
+  type FsmState is (Idle, Waiting);
 begin
 
   -----------------------------------------------------------------------------
-  -- interlock buffer.
+  -- data register for every requester.
   -----------------------------------------------------------------------------
   ProTx : for I in 0 to num_reqs-1 generate
 
     sample_ack(I) <= sample_req(I); -- to maintain illusion of split protocol.
 
-    ulbInst: UnloadBuffer
-	generic map(name => name & " buffer " & Convert_To_String(I),
-			data_width => data_width,
-			buffer_size => output_buffering(I),
-			bypass_flag => true)
-        port map (write_ack              => has_room(I),
-		  write_req              => write_enable(I),
-		  write_data             => write_data(I), 
-		  unload_req             => update_req(I),
-		  unload_ack             => update_ack(I),
-		  read_data              => read_data(I), 
-	          clk => clk, 
-		  reset => reset);
+    -- FSM.
+    fsm: block
+	signal fsm_state: FsmState;
+	signal data_reg : std_logic_vector(data_width-1 downto 0);
+    begin
+	process(clk, reset, write_enable(I))
+		variable next_fsm_state: FsmState;
+		variable has_room_v : std_logic;
+		variable latch_v : boolean;
+	begin
+		next_fsm_state := fsm_state;
+		has_room_v     := '0';
+		latch_v        := false;
+		case fsm_state is
+			when Idle  =>
+				if(update_req(I)) then
+					has_room_v := '1';
+					if(write_enable(I) = '1') then
+						latch_v := true;
+					else
+						next_fsm_state := Waiting;
+					end if;
+				end if;
+			when Waiting =>
+				has_room_v := '1';
+				if(write_enable(I) = '1') then
+					latch_v := true;
+					next_fsm_state := Idle;
+				end if;
+		end case;
+
+
+		has_room(I) <= has_room_v;
+		
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				update_ack(I) <= false;
+				fsm_state <= Idle;
+			else
+				fsm_state <= next_fsm_state;
+				update_ack(I) <= latch_v;
+			end if;
+
+			if(latch_v) then
+				data_reg <= write_data(I);
+			end if;
+		end if;
+	end process;
+
+	-- read-data I
+	read_data(I) <= data_reg;
+    end block;
 
   end generate ProTx;
 

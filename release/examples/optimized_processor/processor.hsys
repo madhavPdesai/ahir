@@ -1,0 +1,13 @@
+$system processor $library work
+	$in
+		$pipe env_to_processor_mem_write 
+		$pipe env_to_processor_start_pc 
+	$out
+		$pipe out_port
+		$pipe processor_to_env_halt
+
+{
+	$instance core_inst work:core	
+	$instance mem_inst  work:mem	
+	$instance regfile_inst  work:regfile	
+}
