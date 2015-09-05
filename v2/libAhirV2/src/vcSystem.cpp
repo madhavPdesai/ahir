@@ -1112,6 +1112,7 @@ use ahir.subprograms.all;\n			\
 use ahir.components.all;\n			\
 use ahir.basecomponents.all;\n			\
 use ahir.operatorpackage.all;\n  \
+use ahir.floatoperatorpackage.all;\n  \
 use ahir.utilities.all;\n";
 
   if(vcSystem::_uses_function_library)
