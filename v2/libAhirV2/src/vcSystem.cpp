@@ -1105,6 +1105,10 @@ void  vcSystem::Print_VHDL_Inclusions(ostream& ofile)
 
   ofile << "library ieee;\n\
 use ieee.std_logic_1164.all;\n			\
+library aHiR_ieee_proposed;\n \
+use aHiR_ieee_proposed.math_utility_pkg.all;\n \
+use aHiR_ieee_proposed.fixed_pkg.all;\n \
+use aHiR_ieee_proposed.float_pkg.all;\n \
 library ahir;\n					\
 use ahir.memory_subsystem_package.all;\n	\
 use ahir.types.all;\n				\
