@@ -27,6 +27,23 @@ using namespace std;
 #include <assert.h>
 #include <stdint.h>
 
+enum rtlOperation {
+	__NOP,
+	__NOT,
+	__OR,
+	__AND,
+	__XOR,
+	__NOR,
+	__NAND,
+	__XNOR,
+	__PLUS,
+	__MINUS,
+	__CONCAT,
+	__SLICE,
+	__BITSEL
+};
+
+class rtlThread;
 class hierRoot
 {
 	public:
@@ -113,6 +130,8 @@ class hierSystem: public hierRoot
 	set<string> _driven_pipes;
 	set<string> _driving_pipes;
 
+	vector<rtlThread*> _thread_vector;
+	map<string, rtlThread*> _thread_map;
 public:
 
 	hierSystem(string id) :hierRoot(id)
@@ -332,6 +351,9 @@ public:
 		}
 		_child_map[child_id] = child;
 	}
+
+	void Add_Thread(rtlThread* t);
+
 
 	// return true if error found.
 	bool Check_For_Errors();

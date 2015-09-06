@@ -13,6 +13,7 @@ header "post_include_cpp" {
 
 header "post_include_hpp" {
 #include <hierSystem.h>
+#include <rtlThread.h>
 #include <antlr/RecognitionException.hpp>
 	ANTLR_USING_NAMESPACE(antlr)
 #include <map>
@@ -61,7 +62,10 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 
 { 
 	sys =  NULL;
-	hierSystemInstance* subsys = NULL;
+
+	hierSystemInstance* subsys    = NULL;
+	rtlThread*   subthread = NULL;
+
 	bool signal_flag = false;
 	string lib_id = "work";
 	int depth = 1;
@@ -168,19 +172,46 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 
 	(
 
-		subsys = hier_System_Instance[sys, sys_vector, global_pipe_map, global_pipe_signals] 
-		{
-			if(subsys != NULL)
-				sys->Add_Child(subsys);
-			else
+		(
+
+			subsys = hier_System_Instance[sys, sys_vector, global_pipe_map, global_pipe_signals] 
 			{
-				sys->Report_Error("null subsystem instance ");
+				if(subsys != NULL)
+					sys->Add_Child(subsys);
+				else
+				{
+					sys->Report_Error("null subsystem instance ");
+				}
+				subsys = NULL;
 			}
-		}
+		) |
+		(   
+			subthread = hier_System_Thread[sys]
+			{
+				if(subthread != NULL)
+					sys->Add_Thread(subthread);
+				else
+				{
+					sys->Report_Error("null subsystem thread ");
+				}
+
+				subthread = NULL;
+			}
+		)
 	)*
 
 	RBRACE
 ;
+
+
+// thread.
+hier_System_Thread[hierSystem* sys] returns [rtlThread* t]
+{
+	t = NULL;
+}:
+	THREAD tname:SIMPLE_IDENTIFIER {t = new rtlThread(sys, tname->getText());}
+;
+
 
 
 hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<string, pair<int,int> >& global_pipe_map,
@@ -302,6 +333,7 @@ SIGNAL: "$signal";
 INSTANCE: "$instance";
 LIBRARY: "$library";
 DEPTH: "$depth";
+THREAD: "$thread";
 
 
 // language keywords (all start with $)

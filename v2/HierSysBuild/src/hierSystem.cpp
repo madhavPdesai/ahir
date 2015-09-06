@@ -2,8 +2,15 @@
 #include <ostream>
 #include <assert.h>
 #include <hierSystem.h>
+#include <rtlThread.h>
 
-	
+void hierSystem::Add_Thread(rtlThread* t)
+{
+	_thread_vector.push_back(t);
+	_thread_map[t->Get_Id()]  = t;
+	// do nothing else for now.	
+}
+
 void hierSystem::List_In_Pipe_Names(vector<string>& pvec)
 {
 	listPipeMap(_in_pipes,pvec);
@@ -26,23 +33,23 @@ hierSystemInstance::hierSystemInstance(hierSystem* parent, hierSystem* base_sys,
 }
 
 bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
-						map<string, pair<int,int> >& global_pipe_map,
-						set<string>& global_signals)
+		map<string, pair<int,int> >& global_pipe_map,
+		set<string>& global_signals)
 {
 	// check if actual exists?  If not check if it exists in the
 	// visible pipes
 	hierSystem* parent = this->_parent;
-	
+
 	if(parent->Get_Pipe_Width(actual) <= 0)
 	{
 		int w, d;
 		bool is_sig;
 		bool err = getPipeInfoFromGlobals(actual, global_pipe_map, global_signals,
-						w, d, is_sig);	
+				w, d, is_sig);	
 		if(err)
 		{
 			this->Report_Error("Instance " + this->Get_Id() + " in " + parent->Get_Id() + 
-							".. did not find actual " + actual);
+					".. did not find actual " + actual);
 			return(true);
 		} 
 		else
@@ -69,11 +76,11 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 	bool actual_is_output = (parent->Get_Output_Pipe_Width(actual) > 0);
 
 	bool conn_error = ((formal_is_input && actual_is_output) || 
-				(formal_is_output && actual_is_input));
+			(formal_is_output && actual_is_input));
 	if(conn_error)
 	{
 		hierRoot::Report_Error("connection mismatch: instance " + this->Get_Id() + " in " 
-						+ parent->Get_Id() + " for " + formal  + " => " + actual);
+				+ parent->Get_Id() + " for " + formal  + " => " + actual);
 		return(true);
 	}
 
@@ -81,7 +88,7 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 		parent->Set_Driving_Pipe(actual);
 	if(formal_is_output)
 		parent->Set_Driven_Pipe(actual);
-	
+
 	if(_base_system->Has_Port(formal))
 	{
 		if(_port_map.find(formal) != _port_map.end())
