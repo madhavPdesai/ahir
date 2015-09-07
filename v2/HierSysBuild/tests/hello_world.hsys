@@ -30,6 +30,10 @@ $system Top
 {
         $pipe tmp 16
         $signal tmp_sig 16
+
+	$def_thread   TT
+	$threadinstance tt0:TT
+
         $instance i0  LLIB:Left   A => a Asig => asig  TMP => tmp TMPsig => tmp_sig 
         $instance i1  RLIB:Right  TMPsig => tmp_sig TMP => tmp B => b Bsig => bsig
 }

@@ -10,12 +10,17 @@ class rtlExpression: public hierRoot
 	public:
 };
 
-class rtlObjectReference: public hierRoot
+class rtlConstantLiteral: public rtlExpression
+{
+	public:
+};
+
+class rtlObjectReference: public rtlExpression
 {
 };
 
 
-class rtlUnaryExpression: public hierRoot
+class rtlUnaryExpression: public rtlExpression
 {
 	rtlOperation _op;
 	rtlExpression* _rest;
@@ -23,7 +28,7 @@ class rtlUnaryExpression: public hierRoot
 	public:
 };
 
-class rtlBinaryExpression: public hierRoot
+class rtlBinaryExpression: public rtlExpression
 {
 	rtlOperation _op;
 	rtlExpression* _first;
@@ -32,7 +37,7 @@ class rtlBinaryExpression: public hierRoot
 	public:
 };
 
-class rtlTernaryExpression: public hierRoot
+class rtlTernaryExpression: public rtlExpression
 {
 	rtlExpression* _test;
 	rtlExpression* _if_true;
@@ -46,12 +51,12 @@ class rtlStatement: public hierRoot
 	public:
 };
 
-class rtlEmitStatement: public hierRoot
+class rtlEmitStatement: public rtlStatement
 {
 	rtlObjectReference* _obj_ref;
 };
 
-class rtlAssignStatement: public hierRoot
+class rtlAssignStatement: public rtlStatement
 {
 	rtlObjectReference* _target;
 	rtlExpression*	    _source;
@@ -60,7 +65,7 @@ class rtlAssignStatement: public hierRoot
 };
 
 
-class rtlCallStatement: public hierRoot
+class rtlCallStatement: public rtlStatement
 {
 
 	rtlThread* _called_thread;
@@ -70,15 +75,22 @@ class rtlCallStatement: public hierRoot
 	public:
 };
 
-class rtlForkJoinStatement: public  hierRoot
+class rtlForkJoinStatement: public  rtlStatement
 {
 	vector<rtlCallStatement*> _called_threads;	
 	public:
 };
 
+//
+// TODO
+// make a new class: hierModule and
+// derive hierSystem, rtlThread from it.
+// 
 class rtlThread: public hierRoot
 {
+
 	hierSystem* _parent_system;
+	map<string, int> _default_parameter_map;
 
 	vector<rtlStatement*> _statements;
 
@@ -87,11 +99,47 @@ class rtlThread: public hierRoot
 
 	public:
 	rtlThread(hierSystem* sys, string id);
+	void Add_Default_Parameter(string param_name, int pvalue)
+	{
+		_default_parameter_map[param_name] = pvalue;
+	}
+
 	void Add_Statement(rtlStatement* stmt) {_statements.push_back(stmt);}
 
 	void Add_Caller_Thread(rtlThread* t) {_caller_threads.insert(t);}
 	void Add_Called_Thread(rtlThread* t) {_called_threads.insert(t);}
+	void Set_Default_Parameter_Map(vector<pair<string,int> >& param_map);
+
+	void Print(ostream& ofile);
+
+	friend class rtlThreadInstance;
 	
+};
+
+// TODO
+// make a generic class rootInstance and
+// derive hierInstance and rtlThreadInstance
+// from it.
+class rtlThreadInstance: public hierRoot
+{
+	map<string, string> _port_map;
+	map<string, int>    _parameter_map;
+
+	hierSystem* _parent_system;
+	string _instance_name;
+	string _thread_name;
+
+	public:
+
+	rtlThreadInstance(hierSystem* sys, string inst_name, string rtl_thread_name);
+	void Set_Port_Map(vector<pair<string,string> >& port_map);
+
+	void Set_Parameter_Map(vector<pair<string,int> >& param_map);
+
+
+	void Print(ostream& ofile);
+
+	friend class rtlThread;
 };
 
 

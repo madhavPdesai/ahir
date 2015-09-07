@@ -65,6 +65,7 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 
 	hierSystemInstance* subsys    = NULL;
 	rtlThread*   subthread = NULL;
+	rtlThreadInstance* thread_inst = NULL;
 
 	bool signal_flag = false;
 	string lib_id = "work";
@@ -197,6 +198,19 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 
 				subthread = NULL;
 			}
+		) |
+		(
+			thread_inst = hier_System_Thread_Instance[sys]
+			{
+				if(thread_inst != NULL)
+					sys->Add_Thread_Instance(thread_inst);
+				else
+				{
+					sys->Report_Error("null subsystem thread ");
+				}
+
+				thread_inst = NULL;
+			}
 		)
 	)*
 
@@ -208,10 +222,41 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 hier_System_Thread[hierSystem* sys] returns [rtlThread* t]
 {
 	t = NULL;
+	vector<pair<string,int> > def_params;
 }:
-	THREAD tname:SIMPLE_IDENTIFIER {t = new rtlThread(sys, tname->getText());}
+	DEFTHREAD tname:SIMPLE_IDENTIFIER {t = new rtlThread(sys, tname->getText());}
+	(DEFPARAMETER (pname: SIMPLE_IDENTIFIER pvalue:UINTEGER
+			{
+			   def_params.push_back(pair<string,int>(pname->getText(),atoi(pvalue->getText().c_str())));
+			} )+)?
+	{
+		if(def_params.size() > 0)
+			t->Set_Default_Parameter_Map(def_params);
+	}
 ;
 
+
+hier_System_Thread_Instance[hierSystem* sys] returns [rtlThreadInstance* t]
+{
+	t = NULL;
+	vector<pair<string,string> > port_map;
+	vector<pair<string,int> > param_map;
+}:
+	THREADINSTANCE inst_name:SIMPLE_IDENTIFIER COLON tname:SIMPLE_IDENTIFIER 
+	(PARAMETER (pname: SIMPLE_IDENTIFIER pvalue:UINTEGER
+			{
+			   param_map.push_back(pair<string,int>(pname->getText(),atoi(pvalue->getText().c_str())));
+			} )+)?
+	(formal_id: SIMPLE_IDENTIFIER IMPLIES actual_id: SIMPLE_IDENTIFIER
+		{
+			port_map.push_back(pair<string,string>(formal_id->getText(), actual_id->getText()));
+		})*
+	{
+		t = new rtlThreadInstance(sys, inst_name->getText(), tname->getText());
+		t->Set_Port_Map(port_map);
+		t->Set_Parameter_Map(param_map);
+	}
+;
 
 
 hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<string, pair<int,int> >& global_pipe_map,
@@ -333,7 +378,11 @@ SIGNAL: "$signal";
 INSTANCE: "$instance";
 LIBRARY: "$library";
 DEPTH: "$depth";
-THREAD: "$thread";
+DEFTHREAD: "$def_thread";
+THREADINSTANCE: "$threadinstance";
+DEFPARAMETER: "$def_parameter";
+PARAMETER: "$parameter";
+
 
 
 // language keywords (all start with $)

@@ -44,6 +44,7 @@ enum rtlOperation {
 };
 
 class rtlThread;
+class rtlThreadInstance;
 class hierRoot
 {
 	public:
@@ -130,8 +131,12 @@ class hierSystem: public hierRoot
 	set<string> _driven_pipes;
 	set<string> _driving_pipes;
 
-	vector<rtlThread*> _thread_vector;
-	map<string, rtlThread*> _thread_map;
+	// thread related stuff.
+	map<string,rtlThread*> _thread_def_map;
+
+	// order is important!
+	vector<rtlThreadInstance*> _thread_instances;
+
 public:
 
 	hierSystem(string id) :hierRoot(id)
@@ -353,6 +358,7 @@ public:
 	}
 
 	void Add_Thread(rtlThread* t);
+	void Add_Thread_Instance(rtlThreadInstance* t);
 
 
 	// return true if error found.

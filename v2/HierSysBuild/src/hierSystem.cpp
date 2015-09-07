@@ -6,8 +6,16 @@
 
 void hierSystem::Add_Thread(rtlThread* t)
 {
-	_thread_vector.push_back(t);
-	_thread_map[t->Get_Id()]  = t;
+	_thread_def_map[t->Get_Id()]  = t;
+	// do nothing else for now.	
+}
+
+void hierSystem::Add_Thread_Instance(rtlThreadInstance* t)
+{
+	// need to check that no two instances
+	// have the same instance-id.
+	_thread_instances.push_back(t);
+
 	// do nothing else for now.	
 }
 
@@ -247,6 +255,20 @@ void hierSystem::Print(ostream& ofile)
 	{
 		(*iter).second->Print(ofile);
 	}
+
+	// print threads.
+	for(map<string, rtlThread*>::iterator titer = _thread_def_map.begin(), ftiter = _thread_def_map.end();
+		titer != ftiter; titer++)
+	{
+		(*titer).second->Print(ofile);
+	}
+
+	// print thread instances.
+	for(int iT=0, fiT = _thread_instances.size(); iT < fiT; iT++)
+	{
+		_thread_instances[iT]->Print(ofile);
+	}
+
 	ofile << "}" << endl;
 }
 
