@@ -13,6 +13,7 @@ header "post_include_cpp" {
 
 header "post_include_hpp" {
 #include <hierSystem.h>
+#include <rtlType.h>
 #include <rtlThread.h>
 #include <antlr/RecognitionException.hpp>
 	ANTLR_USING_NAMESPACE(antlr)
@@ -366,7 +367,12 @@ rtl_ObjectDeclaration[rtlThread* t]
 	( sid: SIMPLE_IDENTIFIER {names.push_back(sid->getText());} )+
 	COLON
 	(type = rtl_TypeDeclaration[t])
-	(ASSIGNEQUAL bs: BITSTRING {init_value = bs->getText();})?
+	(ASSIGNEQUAL 
+		(	
+			(ibs: UINTEGER  {init_value = ibs->getText();})  |
+			(bbs: BINARY  {init_value = bbs->getText();})  |
+			(hbs: HEXADECIMAL  {init_value = hbs->getText();}) 
+		)?
 	{
 		for(int I = 0, fI = names.size(); I < fI; I++)
 		{
@@ -508,15 +514,19 @@ rtl_Expression[rtlThread* t] returns [rtlExpression* expr]
 ;
 
 
-rtl_Constant_Literal_Expression[rtlThread* t] returns [rtlExpression* expr]
+rtl_Constant_Literal_Expression[rtlThread* thrd] returns [rtlExpression* expr]
 {
 	string init_value;
+	rtlType* t = NULL;
 }:
+	LPAREN
+	t = rtl_Type	
 	( (iid: UINTEGER {init_value = iid->getText();}) |
 		(bid: BINARY {init_value = bid->getText();}) |
 			(hid : HEXADECIMAL {init_value = hid->getText()))
+	RPAREN
 	{
-		expr = new rtlConstantLiteral(init_value);
+		expr = new rtlConstantLiteralExpression(t, init_value);
 	}	
 ;
 
@@ -641,6 +651,66 @@ rtl_Label returns [string label]
 ;
 
 
+rtl_TypeDeclaration[rtlThread* thrd] returns [rtlType* t]
+{
+	t  = NULL;
+}:
+	((t = rtl_IntegerType_Declaration[thrd]) |
+		(t = rtl_UnsignedType_Declaration[thrd]) |
+			(t = rtl_SignedType_Declaration[thrd]) |
+				(t = rtl_ArrayType_Declaration[thrd]))
+;
+
+rtl_IntegerType_Declaration[rtlThread* thrd] returns [rtlType* t]
+{
+	int L = INT_MIN;
+	bool neg_L = false;
+	int H = INT_MAX;
+	bool neg_H = false;
+}:
+	INTEGER (MINUS {neg_L = true;})? lid:UINTEGER  (MINUS {neg_H = true;})? hid: UINTEGER
+	{
+		L = (neg_L ? - atoi(lid->getText().c_str()) : atoi (lid->getText().c_str()));
+		H = (neg_H ? - atoi(hid->getText().c_str()) : atoi (hid->getText().c_str()));
+		t = Make_Integer_Type(L,H);
+	}
+;
+
+		
+rtl_UnsignedType_Declaration[thrd] returns [rtlType* t]
+{
+	int width;
+}:
+	UNSIGNED LESS wid:UINTEGER GREATER 
+	{
+		t = Make_Unsigned_Type(atoi(wid->getText().c_str()));
+	}
+;
+
+rtl_SignedType_Declaration[thrd] returns [rtlType* t]
+{
+	int width;
+}:
+	SIGNED LESS wid:UINTEGER GREATER 
+	{
+		t = Make_Signed_Type(atoi(wid->getText().c_str()));
+	}
+;
+
+rtl_ArrayType_Declaration[rtlThread* thrd] returns [rtlType* t]
+{
+	vector<int> dims;
+	rtlType* ele_type = NULL;
+}:
+	ARRAY 
+	( LBRACKET did:UINTEGER RBRACKET {dims.push_back(atoi(did->getText().c_str()));} )+
+	OF
+	ele_type = rtl_Type[thrd]
+	{
+		t = Make_Array_Type(dims, ele_type);
+	}
+;
+
 // lexer rules
 class hierSysLexer extends Lexer;
 
@@ -681,8 +751,16 @@ STRING: "$string";
 NuLL: "$null";
 EMIT: "$emit";
 GOTO: "$goto";
+INTEGER: "$integer";
+UNSIGNED: "$unsigned";
+SIGNED: "$signed";
+ARRAY:"$array";
+OF:"$of";
 
 
+
+BINARY : "_b"  ('0' | '1')+ ;
+HEXADECIMAL: "_h" (DIGIT | ('a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' ))+ ;
 
 // language keywords (all start with $)
 UINTEGER          : DIGIT (DIGIT)*;

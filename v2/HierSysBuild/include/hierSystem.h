@@ -61,6 +61,7 @@ class hierRoot
 	void Report_Warning(string err_msg) { cerr << "Warning: " << err_msg << endl;}
 	void Report_Error(string err_msg) { cerr << "Error: " << err_msg << endl; this->Set_Error(true); }
 	
+	
 };
 
 

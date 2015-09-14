@@ -18,7 +18,7 @@ class rtlExpression: public hierRoot
 
 	public:
 	
-	rtlExpression();
+	rtlExpression(string id);
 
 	string Kind() {return("rtlExpression");}
 
@@ -34,8 +34,7 @@ class rtlExpression: public hierRoot
 	virtual void Evaluate(rtlThread* t) {assert(0);}
 
 	virtual bool Is(string kind) {return(kind == this->Kind());}
-	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL();
+	virtual void Print(ostream& ofile) {assert(0);}
 };
 
 class rtlConstantLiteralExpression: public rtlExpression
@@ -43,15 +42,18 @@ class rtlConstantLiteralExpression: public rtlExpression
 	string _literal_string;
 	public:
 	
-	// parse literal string and set type.
-	rtlConstantLiteralExpression(string lit_string);
+	// literal string and type.
+	rtlConstantLiteralExpression(rtlType* t, string lit_string): rtlExpression(lit_string) 
+	{
+		_type = t;
+		_literal_string = lit_string;
+	}
 
 	string Kind() {return("rtlConstantLiteralExpression");}
 
 	virtual void Evaluate(rtlThread* t);
 
-	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL();
+	virtual void Print(ostream& ofile) {ofile << " " << _literal_string << " ";}
 };
 
 class rtlObjectReference: public rtlExpression
@@ -62,7 +64,7 @@ class rtlObjectReference: public rtlExpression
 
 	public:
 
-	rtlObjectReference(rtlObject* obj);
+	rtlObjectReference(string id, rtlObject* obj): rtlExpression(id) {_object = obj;}
 	string Kind() {return("rtlObjectReference");}
 
 };
@@ -74,13 +76,11 @@ class rtlSimpleObjectReference: public rtlObjectRefernce
 	public:
 
 	// type extracted from object.
-	rtlSimpleObjectReference(rtlObject* obj);
+	rtlSimpleObjectReference(rtlObject* obj): rtlObjectReference(obj->Get_Id(),obj) {}
 	string Kind() {return("rtlSimpleObjectReference");}
 
 	virtual void Evaluate(rtlThread* t);
-
 	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL();
 };
 
 class rtlArrayObjectReference: public rtlObjectRefernce
@@ -92,12 +92,10 @@ class rtlArrayObjectReference: public rtlObjectRefernce
 	// type is extracted from object-type's element.
 	// Note: currently array references must be to the element-type
 	rtlArrayObjectReference(rtlObject* obj, vector<rtlExpression*>& indices);
-
-	string Kind() {return("rtlSimpleObjectReference");}
+	string Kind() {return("rtlArrayObjectReference");}
 
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL();
 };
 
 class rtlSliceExpression: public rtlExpression
@@ -107,13 +105,18 @@ class rtlSliceExpression: public rtlExpression
 	rtlExpression* _high;
 	rtlExpression* _low;
 
-	rtlSliceExpression(rtlExpression* base, rtlExpression* hexpr, rtlExpression* lexpr);
+	rtlSliceExpression(rtlExpression* base, rtlExpression* hexpr, rtlExpression* lexpr):
+			rtlExpression(base->Get_Id() + "[" + hexpr->Get_Id() + ":" + lexpr->Get_Id() + "]")
+	{
+		_base = base;
+		_high = hexpr;
+		_low  = lexpr;
+	}
 
 	string Kind() {return("rtlSliceExpression");}
 
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL();
 };
 
 class rtlUnaryExpression: public rtlExpression
@@ -127,9 +130,7 @@ class rtlUnaryExpression: public rtlExpression
 	string Kind() {return("rtlUnaryExpression");}
 
 	virtual void Evaluate(rtlThread* t);
-
 	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL();
 };
 
 class rtlBinaryExpression: public rtlExpression
@@ -146,9 +147,7 @@ class rtlBinaryExpression: public rtlExpression
 	string Kind() {return("rtlBinaryExpression");}
 
 	virtual void Evaluate(rtlThread* t);
-
 	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL();
 };
 
 class rtlTernaryExpression: public rtlExpression
@@ -159,13 +158,11 @@ class rtlTernaryExpression: public rtlExpression
 
 	public:
 
-	rtlTernayExpression(rtlOperation op, rtlExpression* test, rtlExpression* if_true, rtlExpression* if_false);
+	rtlTernayExpression(rtlExpression* test, rtlExpression* if_true, rtlExpression* if_false);
 	string Kind() {return("rtlTernayExpression");}
 
 	virtual void Evaluate(rtlThread* t);
-
 	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL();
 };
 
 #endif

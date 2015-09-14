@@ -2,20 +2,20 @@
 #define _rtl_Type__
 
 
+//
+// types of rtl objects
+//  
+// base class
 class rtlType
 {
   public:
 
-  rtlType();
+  rtlType(string id);
 
   virtual string Kind() {return("rtlType");}
   virtual int Size() {assert(0);}
-  virtual bool Is_Integer_Type() {return(false);}
-  virtual bool Is_Uinteger_Type() {return(false);}
-  virtual bool Is_Array_Type() {return(false);}
 
   virtual string Get_Name() {assert(0);}
-  virtual string Get_VHDL_Name() {assert(0);}
 
   virtual rtlType* Get_Element_Type(int idx) 
   {
@@ -28,26 +28,29 @@ class rtlType
 
   void Print(ostream& ofile);
   virtual void Print(ofstream& ofile);
-  virtual void Print(stringstream& ofile);
+  virtual void Print(string& ostring);
 
 };
 
 
+//
+// the 32 bit integer type.
+// 
 class rtlIntegerType: public rtlType
 {
+	int _low;
+	int _high;
 	public:
-	rtlIntegerType();
+	rtlIntegerType(string id, int low, int high);
 	string Kind() {return("rtlInteger");}
-
-  	virtual string Get_Name() {return("int");}
-  	virtual string Get_VHDL_Name() {return("integer");}
-
-  	void Print(ostream& ofile);
-
+  	virtual void Print(ostream& ofile);
 };
 
 
-class rtlUnsigned: public rtlType
+//
+// The arbitrary precision unsigned type
+//
+class rtlUnsignedType: public rtlType
 {
  protected:
   // width > 0
@@ -55,32 +58,36 @@ class rtlUnsigned: public rtlType
 
  public:
   virtual unsigned int Get_Width() {return(this->_width);}
-  rtlUnsigned(unsigned int width):rtlType() {_width = width;}
+  rtlUnsignedType(string id, unsigned int width):rtlType(id) {_width = width;}
 
-  virtual string Kind() {return("rtlUnsigned");}
+  virtual string Kind() {return("rtlUnsignedType");}
    
   virtual int Size() {return(this->_width);}
-  virtual string Get_Name() {return("$uint<" + IntToStr(_width) + ">");}
-  virtual string Get_VHDL_Name() {return("unsigned(" + IntToStr(_width-1) + " downto 0)");}
-  void Print(ostream& ofile);
+  virtual void Print(ostream& ofile);
 };
 
 
-class rtlSigned: public rtlUnsigned
+//
+// the arbitrary precision signed type
+//
+class rtlSignedType: public rtlUnsignedType
 {
   // gets width from Unsigned
 
  public:
 
-  rtlSigned(unsigned int width);
+  rtlSignedType(string id, unsigned int width);
+  rtlUnsignedType(string id, unsigned int width):rtlUnsignedType(id,width) {}
   void Print(ostream& ofile);
-  virtual string Kind() {return("rtlSigned");}
+  virtual string Kind() {return("rtlSignedType");}
 
   virtual string Get_Name() {return("$int<" + IntToStr(_width) + ">");}
-  virtual string Get_VHDL_Name() {return("signed(" + IntToStr(_width-1) + " downto 0)");}
-
 };
 
+//
+// the array type
+//   (multi-dimensional array of elements).
+//
 class rtlArrayType: public rtlType
 {
   // multi-dimensional array types are possible
@@ -107,7 +114,7 @@ class rtlArrayType: public rtlType
   virtual rtlType* Get_Element_Type() {return(this->_element_type);}
   virtual rtlType* Get_Element_Type(int idx) {return(this->_element_type);} 
 
-  rtlArrayType(rtlType* element_type, vector<unsigned int>& dimensions);
+  rtlArrayType(string id, rtlType* element_type, vector<unsigned int>& dimensions);
 
 
   virtual int Size() 
@@ -129,19 +136,8 @@ class rtlArrayType: public rtlType
     return(ret_val);
   }
 
-  virtual string Get_Name(ostream& ofile) 
-  { 
-    string ret_name =  string( "$array");
-    for(int I = 0, fI = _dimensions.size();  I < fI; I++)
-    {
-	ret_name += "[" + IntToStr(_dimensions[I]) + "]";
-    }
-    ret_name += " ";
-    ret_name += this->Get_Element_Type()->Get_Name();
-    return(ret_name);
-  }
+  virtual void Print(ostream& ofile);
 
-  virtual string Get_VHDL_Name();
 };
 
 //
