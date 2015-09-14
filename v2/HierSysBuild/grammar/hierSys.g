@@ -65,7 +65,7 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 
 	hierSystemInstance* subsys    = NULL;
 	rtlThread*   subthread = NULL;
-	rtlThreadInstance* thread_inst = NULL;
+	rtlString*   ti = NULL;
 
 	bool signal_flag = false;
 	string lib_id = "work";
@@ -187,7 +187,7 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 			}
 		) |
 		(   
-			subthread = hier_System_Thread[sys]
+			subthread = rtl_Thread[sys]
 			{
 				if(subthread != NULL)
 					sys->Add_Thread(subthread);
@@ -200,16 +200,14 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 			}
 		) |
 		(
-			thread_inst = hier_System_Thread_Instance[sys]
+			ti = rtl_String[sys]
 			{
-				if(thread_inst != NULL)
-					sys->Add_Thread_Instance(thread_inst);
+				if(ti != NULL)
+					sys->Add_String(ti);
 				else
 				{
-					sys->Report_Error("null subsystem thread ");
+					sys->Report_Error("null thread instance ");
 				}
-
-				thread_inst = NULL;
 			}
 		)
 	)*
@@ -217,46 +215,6 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 	RBRACE
 ;
 
-
-// thread.
-hier_System_Thread[hierSystem* sys] returns [rtlThread* t]
-{
-	t = NULL;
-	vector<pair<string,int> > def_params;
-}:
-	DEFTHREAD tname:SIMPLE_IDENTIFIER {t = new rtlThread(sys, tname->getText());}
-	(DEFPARAMETER (pname: SIMPLE_IDENTIFIER pvalue:UINTEGER
-			{
-			   def_params.push_back(pair<string,int>(pname->getText(),atoi(pvalue->getText().c_str())));
-			} )+)?
-	{
-		if(def_params.size() > 0)
-			t->Set_Default_Parameter_Map(def_params);
-	}
-;
-
-
-hier_System_Thread_Instance[hierSystem* sys] returns [rtlThreadInstance* t]
-{
-	t = NULL;
-	vector<pair<string,string> > port_map;
-	vector<pair<string,int> > param_map;
-}:
-	THREADINSTANCE inst_name:SIMPLE_IDENTIFIER COLON tname:SIMPLE_IDENTIFIER 
-	(PARAMETER (pname: SIMPLE_IDENTIFIER pvalue:UINTEGER
-			{
-			   param_map.push_back(pair<string,int>(pname->getText(),atoi(pvalue->getText().c_str())));
-			} )+)?
-	(formal_id: SIMPLE_IDENTIFIER IMPLIES actual_id: SIMPLE_IDENTIFIER
-		{
-			port_map.push_back(pair<string,string>(formal_id->getText(), actual_id->getText()));
-		})*
-	{
-		t = new rtlThreadInstance(sys, inst_name->getText(), tname->getText());
-		t->Set_Port_Map(port_map);
-		t->Set_Parameter_Map(param_map);
-	}
-;
 
 
 hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<string, pair<int,int> >& global_pipe_map,
@@ -346,6 +304,343 @@ hier_system_Pipe_Declaration[map<string, pair<int,int> >& pipe_map, set<string>&
 	}
         ;
 
+// thread.
+rtl_Thread[hierSystem* sys] returns [rtlThread* t]
+{
+	t = NULL;
+	vector<pair<string,int> > def_params;
+}:
+	THREAD tname:SIMPLE_IDENTIFIER {t = new rtlThread(sys, tname->getText());}
+	(
+		(rtl_ObjectDeclaration[t] | rtl_LabeledBlockStatement[t])*
+	)*
+;
+
+rtl_String[hierSystem* sys] returns [rtlString* ti]
+{
+	ti = NULL;
+	vector<pair<string,string> > pmap;
+}:
+	STRING 
+		inst_name_id: SIMPLE_IDENTIFIER
+		COLON
+		thread_name_id: SIMPLE_IDENTIFIER
+
+		( formal_id: SIMPLE_IDENTIFIER IMPLIES actual_id:SIMPLE_IDENTIFIER 
+			{
+				pmap.push_back(pair<string,string> (formal_id->getText(), actual_id->getText()));
+			}
+		)*
+	{
+		rtlThread* bt = sys->Find_Thread(thread_name_id->getText());
+		if (bt != NULL)
+		{
+			ti = new rtlString(inst_name_id->getText(), bt, pmap);
+			sys->Add_String(ti);
+		}
+		else
+		{
+			sys->Report_Error("Error: could not find base thread " + 
+								thread_name_id->getText() + " in system " + sys->Get_Id());
+		}
+	}	
+;
+
+
+// rtl-object declaration
+rtl_ObjectDeclaration[rtlThread* t]
+{
+	bool variable_flag = false;
+	bool constant_flag = false;
+	bool signal_flag = false;
+	rtlObject* obj = NULL;
+	rtlType* type = NULL;
+	vector<string> names;
+	string init_value;
+}:
+	(
+		(VARIABLE {variable_flag  = true;}) |
+		(CONSTANT {constant_flag  = true;}) |
+		(SIGNAL   {signal_flag    = true;}) 
+	)
+	( sid: SIMPLE_IDENTIFIER {names.push_back(sid->getText());} )+
+	COLON
+	(type = rtl_TypeDeclaration[t])
+	(ASSIGNEQUAL bs: BITSTRING {init_value = bs->getText();})?
+	{
+		for(int I = 0, fI = names.size(); I < fI; I++)
+		{
+			string obj_name = names[I];
+			if(variable_flag) 
+			{
+				obj = new rtlVariable(obj_name, type); 
+			}
+			else if(signal_flag)
+			{
+				obj = new rtlSignal(obj_name, type); 
+			}
+			else if(constant_flag)
+			{
+				rtlValue* val = Make_Rtl_Value(type, init_value);	
+				obj = new rtlConstant(obj_name, type, val);
+			}
+		}
+	}
+
+;
+
+	
+	 
+
+// rtl-statement
+rtl_Simple_Statement[rtlThread* t] returns [rtlStatement* stmt]
+:
+	( (stmt=rtl_AssignStatement[t]) |
+		(stmt=rtl_EmitStatement[t]) |
+		  (stmt=rtl_NullStatement[t]) |
+		    (stmt=rtl_GotoStatement[t])  |
+			(stmt=rtl_IfStatement[t]) )
+			
+;
+
+
+// assignment statement
+rtl_AssignStatement[rtlThread* t] returns [rtlStatement* stmt]
+{
+	rtlExpression* tgt = NULL;
+	rtlExpression* src = NULL;
+}:
+	(tgt = rtl_Expression[t])
+	(src = rtl_Expression[t])
+	{
+		stmt = new rtlAssignStatement(t, tgt, src);
+	}
+;
+
+		
+rtl_EmitStatement[rtlThread* t]  returns [rtlStatement* stmt]
+{
+	rtlObject* emittee = NULL;
+}:
+	EMIT sid:SIMPLE_IDENTIFIER
+		{
+			emittee = t->Find_Object(sid->getText());
+			assert(emittee != NULL);
+
+			stmt = new rtlEmitStatement(t, emittee);
+		}
+;
+
+rtl_NullStatement[rtlThread* t]  returns [rtlStatement* stmt]
+{
+}:
+	NuLL 
+		{
+			stmt = new rtlNullStatement(t);
+		}
+;
+
+rtl_GotoStatement[rtlThread* t] returns [rtlStatement* stmt]
+{
+	string lbl;
+}:
+	GOTO sid: SIMPLE_IDENTIFIER 
+	{
+		lbl = sid->getText();
+		stmt  = new rtlGotoStatement(t, lbl);
+	}
+;
+
+rtl_Block_Statement[rtlThread* t] returns [rtlBlockStatement* stmt]
+{
+	rtlStatement* astmt = NULL;
+	vector<rtlStatement*> stmts;
+}:
+	LBRACE
+		( astmt = rtl_Simple_Statement[t] {stmts.push_back(astmt); astmt = NULL;})+
+	RBRACE
+	{
+		stmt = new rtlBlockStatement(t, stmts);
+	}
+;
+
+rtl_If_Statement[rtlThread* t] returns [rtlStatement* stmt]
+{
+	rtlExpression* testexpr = NULL;
+	rtlBlockStatement* if_block = NULL;
+	rtlBlockStatement* else_block = NULL;
+}
+:
+	IF (test_expr = rtlExpression[t])  LBRACE (if_block  = rtl_BlockStatement[t]) RBRACE
+	(ELSE LBRACE (else_block = rtl_BlockStatement[t]) RBRACE)?
+	{ stmt = (rtlStatement*) new rtlIfStatement(t, testexpr, if_block, else_block);}
+;
+
+rtl_Labeled_Block_Statement[rtlThread* t]
+{
+	rtlStatement* astmt = NULL;
+	rtlLabeledBlockStatement* bstmt = NULL;
+	vector<rtlStatement*> stmts;
+	string lbl;
+}:
+	lbl = rtl_Label
+
+	LBRACE
+		( astmt = rtl_Simple_Statement[t] {stmts.push_back(astmt); astmt = NULL;})+
+	RBRACE
+	{
+		bstmt = new rtlLabeledBlockStatement(lbl, t, stmts);
+		t->Add_Statement(bstmt);
+	}
+;
+
+rtl_Expression[rtlThread* t] returns [rtlExpression* expr]
+{
+	expr = NULL;
+}
+:
+	( (expr = rtl_Constant_Literal_Expression[t]) |
+		(expr = rtl_Object_Reference[t]) | 
+		   (expr = rtl_Slice_Expression[t]) | 
+			(expr = rtl_Unary_Expression[t]) |
+				(expr = rtl_Binary_Expression[t]) |
+					(expr = rtl_Ternary_Expression[t]) )
+;
+
+
+rtl_Constant_Literal_Expression[rtlThread* t] returns [rtlExpression* expr]
+{
+	string init_value;
+}:
+	( (iid: UINTEGER {init_value = iid->getText();}) |
+		(bid: BINARY {init_value = bid->getText();}) |
+			(hid : HEXADECIMAL {init_value = hid->getText()))
+	{
+		expr = new rtlConstantLiteral(init_value);
+	}	
+;
+
+
+rtl_Object_Reference[rtlThread* t] returns [rtlExpression* expr]
+{
+	string obj_name;
+	vector<rtlExpression*> indices;	
+	bool array_flag = false;
+	rtlExpression* iexpr = NULL;
+}:
+	sid: SIMPLE_IDENTIFIER {obj_name = sid->getText();}
+	( LBRACKET iexpr = rtl_Expression[t] RBRACKET {array_flag = true; indices.push_back(iexpr); iexpr = NULL;} )*
+	{
+		rtlObject* obj = t->Find_Object(obj_name);
+		assert(obj != NULL);
+
+		if(array_flag)
+			expr = new rtlArrayObjectReference(obj, indices);
+		else
+			expr = new rtlSimpleObjectReference(obj);
+	}
+;
+
+rtl_Slice_Expression[rtlThread* t] returns [rtlExpression* expr]
+{
+	rtlExpression* base_expr;
+	rtlExpression* high_expr;
+	rtlExpression* low_expr;
+}:
+	LPAREN 
+		SLICE base_expr = rtl_Expression[t]
+			high_expr = rtl_Expression[t]
+			low_expr  = rtl_Expression[t]
+	RPAREN
+	{
+		expr = new rtlSliceExpression(base_expr, high_expr, low_expr);
+	}
+;
+
+rtl_Unary_Expression[rtlThread* t] returns [rtlExpression* expr]
+{
+	rtlOperation  op;
+	rtlExpression* rest;
+}:
+	LPAREN
+		op = rtl_Operation 
+		rest  = rtl_Expression[t]
+	RPAREN
+	{
+		expr = new rtlUnaryExpression(op, rest);
+	}
+;
+
+rtl_Binary_Expression[rtlThread* t] returns [rtlExpression* expr]
+{
+	rtlExpression* first = NULL;
+	rtlExpression* second = NULL;
+	rtlOperation op;
+}:
+	LPAREN
+		first = rtl_Expression[t]
+		op = rtl_Operation
+		second = rtl_Expression[t]
+	RPAREN	
+	{
+		expr = new rtlBinaryExpression(op, first, second);
+	}
+;
+
+rtl_Ternary_Expression[rtlThread* t] returns [rtlExpression* expr]
+{
+	rtlExpression* test_expr = NULL;
+	rtlExpression* if_true = NULL;
+	rtlExpression* if_false = NULL;
+}:
+	LPAREN
+		test_expression = rtl_Expression[t]
+		QUESTION
+		if_true = rtl_Expression[t]
+		COLON
+		if_false = rtl_Expression[t]
+	RPAREN
+	{
+		expr = new rtlTernaryExpression(test_expression, if_true, if_false);
+	}
+;
+
+rtl_Unary_Operation returns [rtlOperation op]
+:
+	NOT {return (__NOT);}
+;
+
+rtl_Binary_Operation returns [rtlOperation op]
+{
+}:
+        ( id_or:OR {op = __OR;}) |
+        ( id_and:AND {op = __AND;}) | 
+        ( id_nor:NOR { op = __NOR;}) | 
+        ( id_nand:NAND { op = __NAND;}) | 
+        ( id_xor:XOR { op = __XOR;}) | 
+        ( id_xnor:XNOR { op = __XNOR;}) | 
+        ( id_shl:SHL { op = __SHL;}) |
+        ( id_shr:SHR { op = __SHR;}) | 
+        ( id_rol:ROL { op = __ROL;}) | 
+        ( id_ror:ROR { op = __ROR;}) | 
+        ( id_plus:PLUS { op = __PLUS;}) | 
+        ( id_minus:MINUS { op = __MINUS;}) | 
+        ( id_mul:MUL { op = __MUL;}) | 
+        ( id_EQUAL:EQUAL { op = __EQUAL;}) | 
+        ( id_notequal:NOTEQUAL { op = __NOTEQUAL;}) | 
+        ( id_less:LESS { op = __LESS;}) | 
+        ( id_lessequal:LESSEQUAL { op = __LESSEQUAL;}) | 
+        ( id_greater:GREATER { op = __GREATER;}) | 
+        ( id_greaterequal:GREATEREQUAL { op = __GREATEREQUAL;}) | 
+        ( id_concat:CONCAT { op = __CONCAT;})  
+;
+
+rtl_Label returns [string label]
+:
+	LBRACKET sid: SIMPLE_IDENTIFIER {label = sid->getText();} RBRACKET
+;
+
+
 // lexer rules
 class hierSysLexer extends Lexer;
 
@@ -367,6 +662,9 @@ GREATER_THAN: ">";
 UINT: "$uint";
 PORT: "$port";
 SYNCH: "$synch";
+LBRACKET:"[";
+RBRACKET:"]";
+
 
 
 SYSTEM: "$system";
@@ -378,10 +676,11 @@ SIGNAL: "$signal";
 INSTANCE: "$instance";
 LIBRARY: "$library";
 DEPTH: "$depth";
-DEFTHREAD: "$def_thread";
-THREADINSTANCE: "$threadinstance";
-DEFPARAMETER: "$def_parameter";
-PARAMETER: "$parameter";
+THREAD: "$thread";
+STRING: "$string";
+NuLL: "$null";
+EMIT: "$emit";
+GOTO: "$goto";
 
 
 

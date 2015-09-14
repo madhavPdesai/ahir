@@ -43,8 +43,8 @@ enum rtlOperation {
 	__BITSEL
 };
 
+class rtlObject;
 class rtlThread;
-class rtlThreadInstance;
 class hierRoot
 {
 	public:
@@ -131,11 +131,12 @@ class hierSystem: public hierRoot
 	set<string> _driven_pipes;
 	set<string> _driving_pipes;
 
-	// thread related stuff.
-	map<string,rtlThread*> _thread_def_map;
+	//
+	// order is important (for generating C model).
+	//
+	map<string, rtlThread*> _thread_map;
+	vector<rtlString*> _rtl_strings;
 
-	// order is important!
-	vector<rtlThreadInstance*> _thread_instances;
 
 public:
 
@@ -357,8 +358,11 @@ public:
 		_child_map[child_id] = child;
 	}
 
+	//
+	// threads and thread-objects.
+	//
 	void Add_Thread(rtlThread* t);
-	void Add_Thread_Instance(rtlThreadInstance* t);
+	void Add_String(rtlString* ti);
 
 
 	// return true if error found.
