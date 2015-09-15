@@ -7,7 +7,7 @@
 
 rtlThread::rtlThread(hierSystem* sys, string id): hierRoot(id)
 {
-	_parent_system = sys;
+	_parent = sys;
 }
 
 void rtlThread::Print(ostream& ofile)

@@ -27,6 +27,8 @@ class rtlObject: public hierRoot
 	virtual bool Get_Is_Input() {return(false);}
 	virtual bool Get_Is_Output() {return(false);}
 	virtual bool Get_Is_Internal() {return(false);}
+
+	virtual rtlValue* Get_Value() {return(NULL);}
 	
 };
 
@@ -39,7 +41,7 @@ class rtlConstant: public rtlObject
 
 	virtual bool Get_Is_Internal() {return(true);}
 	virtual bool Is_Constant() {return(true);}
-
+	virtual rtlValue* Get_Value() {return(_value);}
 };
 
 class rtlVariable: public rtlObject

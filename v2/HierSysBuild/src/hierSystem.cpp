@@ -4,19 +4,42 @@
 #include <hierSystem.h>
 #include <rtlThread.h>
 
-void hierSystem::Add_Thread(rtlThread* t)
+int root_object_counter = 0;
+	
+hierRoot::hierRoot(string id)
 {
-	_thread_def_map[t->Get_Id()]  = t;
-	// do nothing else for now.	
+	_id = id;
+	_error = false;
+
+	root_object_counter++;
+	_index = root_object_counter;	
 }
 
-void hierSystem::Add_Thread_Instance(rtlThreadInstance* t)
+hierRoot::hierRoot()
 {
+	_error = false;
+
+	root_object_counter++;
+	_index = root_object_counter;	
+	_id = "anon_" + IntToStr(root_object_counter);
+}
+
+void hierSystem::Add_Thread(rtlThread* t)
+{
+  assert(_thread_map.find(t->Get_Id()) == _thread_map.end());
+  _thread_map[t->Get_Id()]  = t;
+}
+
+void hierSystem::Add_String(rtlString* t)
+{
+
 	// need to check that no two instances
 	// have the same instance-id.
-	_thread_instances.push_back(t);
+  assert(0);
 
-	// do nothing else for now.	
+  _rtl_strings.push_back(t);
+
+  // do nothing else for now.	
 }
 
 void hierSystem::List_In_Pipe_Names(vector<string>& pvec)
@@ -257,16 +280,16 @@ void hierSystem::Print(ostream& ofile)
 	}
 
 	// print threads.
-	for(map<string, rtlThread*>::iterator titer = _thread_def_map.begin(), ftiter = _thread_def_map.end();
+	for(map<string, rtlThread*>::iterator titer = _thread_map.begin(), ftiter = _thread_map.end();
 		titer != ftiter; titer++)
 	{
 		(*titer).second->Print(ofile);
 	}
 
 	// print thread instances.
-	for(int iT=0, fiT = _thread_instances.size(); iT < fiT; iT++)
+	for(int iT=0, fiT = _rtl_strings.size(); iT < fiT; iT++)
 	{
-		_thread_instances[iT]->Print(ofile);
+		_rtl_strings[iT]->Print(ofile);
 	}
 
 	ofile << "}" << endl;

@@ -1,12 +1,18 @@
 #ifndef rtl_Expression_h__
 #define rtl_Expression_h__
 
-using namespace std;
+
+#include <rtlInclusions.h>
+#include <hierSystem.h>
+#include <rtlType.h>
+
+
 
 class hierRoot;
 class rtlType;
 class rtlValue;
 class rtlObject;
+enum  rtlOperation;
 
 class rtlExpression: public hierRoot
 {
@@ -19,6 +25,7 @@ class rtlExpression: public hierRoot
 	public:
 	
 	rtlExpression(string id);
+	rtlExpression();
 
 	string Kind() {return("rtlExpression");}
 
@@ -31,29 +38,31 @@ class rtlExpression: public hierRoot
 	rtlType* Get_Type() {return(_type);}
 
 
+
 	virtual void Evaluate(rtlThread* t) {assert(0);}
 
 	virtual bool Is(string kind) {return(kind == this->Kind());}
 	virtual void Print(ostream& ofile) {assert(0);}
+
+	virtual rtlValue* Get_Value() {return(_value);}
 };
 
 class rtlConstantLiteralExpression: public rtlExpression
 {
-	string _literal_string;
 	public:
 	
 	// literal string and type.
-	rtlConstantLiteralExpression(rtlType* t, string lit_string): rtlExpression(lit_string) 
+	rtlConstantLiteralExpression(rtlType* t, rtlValue* v): rtlExpression() 
 	{
 		_type = t;
-		_literal_string = lit_string;
+		_value = v;
 	}
 
 	string Kind() {return("rtlConstantLiteralExpression");}
 
 	virtual void Evaluate(rtlThread* t);
 
-	virtual void Print(ostream& ofile) {ofile << " " << _literal_string << " ";}
+	virtual void Print(ostream& ofile);
 };
 
 class rtlObjectReference: public rtlExpression
@@ -66,24 +75,26 @@ class rtlObjectReference: public rtlExpression
 
 	rtlObjectReference(string id, rtlObject* obj): rtlExpression(id) {_object = obj;}
 	string Kind() {return("rtlObjectReference");}
-
+	
+	virtual rtlObject* Get_Object() {return(_object);}
 };
 
 
-class rtlSimpleObjectReference: public rtlObjectRefernce
+class rtlSimpleObjectReference: public rtlObjectReference
 {
 
 	public:
 
 	// type extracted from object.
-	rtlSimpleObjectReference(rtlObject* obj): rtlObjectReference(obj->Get_Id(),obj) {}
+	rtlSimpleObjectReference(rtlObject* obj);
+
 	string Kind() {return("rtlSimpleObjectReference");}
 
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
 };
 
-class rtlArrayObjectReference: public rtlObjectRefernce
+class rtlArrayObjectReference: public rtlObjectReference
 {
 	protected:
 	vector<rtlExpression*> _indices;
@@ -102,15 +113,17 @@ class rtlSliceExpression: public rtlExpression
 {
 	protected:
 	rtlExpression* _base;
-	rtlExpression* _high;
-	rtlExpression* _low;
+	int _high;
+	int _low;
 
-	rtlSliceExpression(rtlExpression* base, rtlExpression* hexpr, rtlExpression* lexpr):
-			rtlExpression(base->Get_Id() + "[" + hexpr->Get_Id() + ":" + lexpr->Get_Id() + "]")
+ public:
+	rtlSliceExpression(rtlExpression* base,  int hindex, int lindex):
+			rtlExpression(base->Get_Id() + "[" + IntToStr(hindex)  + ":" + IntToStr(lindex) + "]")
 	{
+		_type = Find_Or_Make_Unsigned_Type((hindex-lindex)+1);
 		_base = base;
-		_high = hexpr;
-		_low  = lexpr;
+		_high = hindex;
+		_low  = lindex;
 	}
 
 	string Kind() {return("rtlSliceExpression");}
@@ -158,8 +171,8 @@ class rtlTernaryExpression: public rtlExpression
 
 	public:
 
-	rtlTernayExpression(rtlExpression* test, rtlExpression* if_true, rtlExpression* if_false);
-	string Kind() {return("rtlTernayExpression");}
+	rtlTernaryExpression(rtlExpression* test, rtlExpression* if_true, rtlExpression* if_false);
+	string Kind() {return("rtlTernaryExpression");}
 
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);

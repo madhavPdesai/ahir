@@ -27,33 +27,24 @@ using namespace std;
 #include <assert.h>
 #include <stdint.h>
 
-enum rtlOperation {
-	__NOP,
-	__NOT,
-	__OR,
-	__AND,
-	__XOR,
-	__NOR,
-	__NAND,
-	__XNOR,
-	__PLUS,
-	__MINUS,
-	__CONCAT,
-	__SLICE,
-	__BITSEL
-};
 
 class rtlObject;
 class rtlThread;
+class rtlString;
+
 class hierRoot
 {
 	public:
+	int    _index;
 	string _id;
 	bool _error;
 	
-	hierRoot(string id) {_id = id; _error = false;}
+	hierRoot(string id);
+	hierRoot();
 
 	string Get_Id() {return(_id);}
+	int Get_Index() {return(_index);}
+
 	void Set_Error(bool v) {_error = true;}
 	bool Get_Error() {return(_error);}
 
@@ -61,12 +52,13 @@ class hierRoot
 	void Report_Warning(string err_msg) { cerr << "Warning: " << err_msg << endl;}
 	void Report_Error(string err_msg) { cerr << "Error: " << err_msg << endl; this->Set_Error(true); }
 	
+	virtual string Kind() {return("hierRoot");}
+	bool Is(string K) {return(K==this->Kind());}
+
 	
 };
 
-
 class hierSystem;
-
 class hierSystemInstance: public hierRoot
 {
 	public:
@@ -167,6 +159,7 @@ public:
 	void List_Internal_Pipe_Names(vector<string>& pvec);
 	
 	
+
 
 	void Add_Signal(string pname)
 	{
@@ -365,6 +358,8 @@ public:
 	void Add_Thread(rtlThread* t);
 	void Add_String(rtlString* ti);
 
+	rtlThread* Find_Thread(string tname);
+	rtlString* Find_String(string sname);
 
 	// return true if error found.
 	bool Check_For_Errors();
@@ -389,4 +384,7 @@ bool getPipeInfoFromGlobals(string pname, map<string, pair<int,int> >& pmap, set
 
 void addPipeToGlobalMaps(string oname, map<string, pair<int,int> >& pipe_map, 
 				set<string>& signals, int pipe_width, int pipe_depth, bool is_signal);
+
+
+string IntToStr(int u);
 #endif

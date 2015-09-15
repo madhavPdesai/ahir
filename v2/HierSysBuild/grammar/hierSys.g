@@ -12,8 +12,14 @@ header "post_include_cpp" {
 }
 
 header "post_include_hpp" {
+#include <limits.h>
 #include <hierSystem.h>
+#include <rtlEnums.h>
 #include <rtlType.h>
+#include <rtlExpression.h>
+#include <rtlObject.h>
+#include <rtlValue.h>
+#include <rtlStatement.h>
 #include <rtlThread.h>
 #include <antlr/RecognitionException.hpp>
 	ANTLR_USING_NAMESPACE(antlr)
@@ -275,35 +281,35 @@ hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<strin
 
 hier_system_Pipe_Declaration[map<string, pair<int,int> >& pipe_map, set<string>& signals] 
 {
-            vector<string> oname_list;
-            int pipe_depth = 1;
-	    int pipe_width = 0;
+    vector<string> oname_list;
+    int pipe_depth = 1;
+    int pipe_width = 0;
 
-	    bool lifo_flag = false;
-	    bool in_mode = false;
-	    bool out_mode = false;
-	    bool is_port = false;
-	    bool is_signal = false;
-	    bool is_synch  = false;
- }
-        :       (lid:LIFO { std::cerr << "Warning: lifo flag ignored.. line number " << lid->getLine() << endl; })? 
+    bool lifo_flag = false;
+    bool in_mode = false;
+    bool out_mode = false;
+    bool is_port = false;
+    bool is_signal = false;
+    bool is_synch  = false;
+}
+    :       (lid:LIFO { std::cerr << "Warning: lifo flag ignored.. line number " << lid->getLine() << endl; })? 
 		PIPE 
 		(psid:SIMPLE_IDENTIFIER {oname_list.push_back(psid->getText());})+
-		COLON UINT LESS_THAN wid:UINTEGER GREATER_THAN  
-			{pipe_width = atoi(wid->getText().c_str());} 
-        	(DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
+		COLON UINT LESS wid:UINTEGER GREATER  
+        {pipe_width = atoi(wid->getText().c_str());} 
+        (DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
 		(SIGNAL {is_signal = true;})?
         {
-	    for(int I = 0, fI = oname_list.size(); I < fI; I++)
-	    {
-		string oname = oname_list[I];
-			
-		addPipeToGlobalMaps(oname, pipe_map, signals,  pipe_width, pipe_depth, is_signal);
+            for(int I = 0, fI = oname_list.size(); I < fI; I++)
+                {
+                    string oname = oname_list[I];
+                    
+                    addPipeToGlobalMaps(oname, pipe_map, signals,  pipe_width, pipe_depth, is_signal);
 
-	   }
+                }
 
-	}
-        ;
+        }
+    ;
 
 // thread.
 rtl_Thread[hierSystem* sys] returns [rtlThread* t]
@@ -311,18 +317,17 @@ rtl_Thread[hierSystem* sys] returns [rtlThread* t]
 	t = NULL;
 	vector<pair<string,int> > def_params;
 }:
-	THREAD tname:SIMPLE_IDENTIFIER {t = new rtlThread(sys, tname->getText());}
-	(
-		(rtl_ObjectDeclaration[t] | rtl_LabeledBlockStatement[t])*
-	)*
-;
+        THREAD tname:SIMPLE_IDENTIFIER {t = new rtlThread(sys, tname->getText());}
+        (rtl_ObjectDeclaration[t])*
+        (rtl_LabeledBlockStatement[t])+
+    ;
 
 rtl_String[hierSystem* sys] returns [rtlString* ti]
 {
 	ti = NULL;
 	vector<pair<string,string> > pmap;
 }:
-	STRING 
+        STRING 
 		inst_name_id: SIMPLE_IDENTIFIER
 		COLON
 		thread_name_id: SIMPLE_IDENTIFIER
@@ -332,20 +337,20 @@ rtl_String[hierSystem* sys] returns [rtlString* ti]
 				pmap.push_back(pair<string,string> (formal_id->getText(), actual_id->getText()));
 			}
 		)*
-	{
-		rtlThread* bt = sys->Find_Thread(thread_name_id->getText());
-		if (bt != NULL)
-		{
-			ti = new rtlString(inst_name_id->getText(), bt, pmap);
-			sys->Add_String(ti);
-		}
-		else
-		{
-			sys->Report_Error("Error: could not find base thread " + 
-								thread_name_id->getText() + " in system " + sys->Get_Id());
-		}
-	}	
-;
+        {
+            rtlThread* bt = sys->Find_Thread(thread_name_id->getText());
+            if (bt != NULL)
+                {
+                    ti = new rtlString(inst_name_id->getText(), bt, pmap);
+                    sys->Add_String(ti);
+                }
+            else
+                {
+                    sys->Report_Error("Error: could not find base thread " + 
+                                      thread_name_id->getText() + " in system " + sys->Get_Id());
+                }
+        }	
+    ;
 
 
 // rtl-object declaration
@@ -357,49 +362,52 @@ rtl_ObjectDeclaration[rtlThread* t]
 	rtlObject* obj = NULL;
 	rtlType* type = NULL;
 	vector<string> names;
-	string init_value;
+	vector<string> init_values;
 }:
-	(
-		(VARIABLE {variable_flag  = true;}) |
+        (
+            (VARIABLE {variable_flag  = true;}) |
 		(CONSTANT {constant_flag  = true;}) |
 		(SIGNAL   {signal_flag    = true;}) 
 	)
 	( sid: SIMPLE_IDENTIFIER {names.push_back(sid->getText());} )+
-	COLON
-	(type = rtl_TypeDeclaration[t])
-	(ASSIGNEQUAL 
-		(	
-			(ibs: UINTEGER  {init_value = ibs->getText();})  |
-			(bbs: BINARY  {init_value = bbs->getText();})  |
-			(hbs: HEXADECIMAL  {init_value = hbs->getText();}) 
-		)?
-	{
-		for(int I = 0, fI = names.size(); I < fI; I++)
+        COLON
+        (type = rtl_Type_Declaration[t])
+        (ASSIGNEQUAL 
+            (	
+                (ibs: UINTEGER  {init_values.push_back(ibs->getText());})  |
+        (bbs: BINARY  {init_values.push_back(bbs->getText());})  |
+        (hbs: HEXADECIMAL  {init_values.push_back(hbs->getText());}) 
+    )*)
+
+    {
+        for(int I = 0, fI = names.size(); I < fI; I++)
 		{
 			string obj_name = names[I];
+            obj = NULL;
 			if(variable_flag) 
-			{
-				obj = new rtlVariable(obj_name, type); 
-			}
-			else if(signal_flag)
-			{
-				obj = new rtlSignal(obj_name, type); 
-			}
-			else if(constant_flag)
-			{
-				rtlValue* val = Make_Rtl_Value(type, init_value);	
-				obj = new rtlConstant(obj_name, type, val);
-			}
-		}
+                {
+                    obj = new rtlVariable(obj_name, type); 
+                }
+            else if(signal_flag)
+                {
+                    obj = new rtlSignal(obj_name, type); 
+                }
+            else if(constant_flag)
+                {
+                    rtlValue* val = Make_Rtl_Value(type, init_values);	
+                    obj = new rtlConstant(obj_name, type, val);
+                }
+            t->Add_Object(obj);
+        }
 	}
 
-;
+    ;
 
-	
-	 
+
+
 
 // rtl-statement
-rtl_Simple_Statement[rtlThread* t] returns [rtlStatement* stmt]
+rtl_SimpleStatement[rtlThread* t] returns [rtlStatement* stmt]
 :
 	( (stmt=rtl_AssignStatement[t]) |
 		(stmt=rtl_EmitStatement[t]) |
@@ -415,11 +423,15 @@ rtl_AssignStatement[rtlThread* t] returns [rtlStatement* stmt]
 {
 	rtlExpression* tgt = NULL;
 	rtlExpression* src = NULL;
+    bool volatile_flag = false;
 }:
+        (VOLATILE {volatile_flag = true;})?
 	(tgt = rtl_Expression[t])
+        ASSIGNEQUAL
 	(src = rtl_Expression[t])
 	{
-		stmt = new rtlAssignStatement(t, tgt, src);
+            tgt->Set_Is_Target(true);
+            stmt = new rtlAssignStatement(t,volatile_flag, tgt, src);
 	}
 ;
 
@@ -457,32 +469,37 @@ rtl_GotoStatement[rtlThread* t] returns [rtlStatement* stmt]
 	}
 ;
 
-rtl_Block_Statement[rtlThread* t] returns [rtlBlockStatement* stmt]
+rtl_BlockStatement[rtlThread* t] returns [rtlBlockStatement* stmt]
 {
 	rtlStatement* astmt = NULL;
 	vector<rtlStatement*> stmts;
 }:
 	LBRACE
-		( astmt = rtl_Simple_Statement[t] {stmts.push_back(astmt); astmt = NULL;})+
+		( astmt = rtl_SimpleStatement[t] {stmts.push_back(astmt); astmt = NULL;})+
 	RBRACE
 	{
 		stmt = new rtlBlockStatement(t, stmts);
 	}
 ;
 
-rtl_If_Statement[rtlThread* t] returns [rtlStatement* stmt]
+rtl_IfStatement[rtlThread* t] returns [rtlStatement* stmt]
 {
-	rtlExpression* testexpr = NULL;
+	rtlExpression* test_expr = NULL;
 	rtlBlockStatement* if_block = NULL;
 	rtlBlockStatement* else_block = NULL;
 }
 :
-	IF (test_expr = rtlExpression[t])  LBRACE (if_block  = rtl_BlockStatement[t]) RBRACE
-	(ELSE LBRACE (else_block = rtl_BlockStatement[t]) RBRACE)?
-	{ stmt = (rtlStatement*) new rtlIfStatement(t, testexpr, if_block, else_block);}
+	IF (test_expr = rtl_Expression[t])  
+        if_block  = rtl_BlockStatement[t]
+	(ELSE 
+            else_block = rtl_BlockStatement[t]
+        )?
+	{ 
+		stmt = (rtlStatement*) new rtlIfStatement(t, test_expr, if_block, else_block);
+	}
 ;
 
-rtl_Labeled_Block_Statement[rtlThread* t]
+rtl_LabeledBlockStatement[rtlThread* t]
 {
 	rtlStatement* astmt = NULL;
 	rtlLabeledBlockStatement* bstmt = NULL;
@@ -492,10 +509,10 @@ rtl_Labeled_Block_Statement[rtlThread* t]
 	lbl = rtl_Label
 
 	LBRACE
-		( astmt = rtl_Simple_Statement[t] {stmts.push_back(astmt); astmt = NULL;})+
+		( astmt = rtl_SimpleStatement[t] {stmts.push_back(astmt); astmt = NULL;})+
 	RBRACE
 	{
-		bstmt = new rtlLabeledBlockStatement(lbl, t, stmts);
+		bstmt = new rtlLabeledBlockStatement(t, lbl, stmts);
 		t->Add_Statement(bstmt);
 	}
 ;
@@ -514,19 +531,25 @@ rtl_Expression[rtlThread* t] returns [rtlExpression* expr]
 ;
 
 
+//
+// ($signed<5>) _b11010
+// ($array[2][2] $of $integer) 0 1 2 3
+//
 rtl_Constant_Literal_Expression[rtlThread* thrd] returns [rtlExpression* expr]
 {
-	string init_value;
+	vector<string> init_values;
 	rtlType* t = NULL;
 }:
-	LPAREN
-	t = rtl_Type	
-	( (iid: UINTEGER {init_value = iid->getText();}) |
-		(bid: BINARY {init_value = bid->getText();}) |
-			(hid : HEXADECIMAL {init_value = hid->getText()))
-	RPAREN
+	LPAREN t = rtl_Type_Declaration[thrd] RPAREN
+	( (iid: UINTEGER {init_values.push_back(iid->getText());}) |
+		(bid: BINARY {init_values.push_back(bid->getText());}) |
+			(hid : HEXADECIMAL {init_values.push_back(hid->getText());}))
+	(COMMA ( (iidn: UINTEGER {init_values.push_back(iidn->getText());}) |
+		(bidn: BINARY {init_values.push_back(bidn->getText());}) |
+			(hidn : HEXADECIMAL {init_values.push_back(hidn->getText());})))*
 	{
-		expr = new rtlConstantLiteralExpression(t, init_value);
+		rtlValue* v = Make_Rtl_Value(t, init_values);
+		expr = new rtlConstantLiteralExpression(t, v);
 	}	
 ;
 
@@ -554,16 +577,16 @@ rtl_Object_Reference[rtlThread* t] returns [rtlExpression* expr]
 rtl_Slice_Expression[rtlThread* t] returns [rtlExpression* expr]
 {
 	rtlExpression* base_expr;
-	rtlExpression* high_expr;
-	rtlExpression* low_expr;
+	int high_index;
+	int low_index;
 }:
 	LPAREN 
 		SLICE base_expr = rtl_Expression[t]
-			high_expr = rtl_Expression[t]
-			low_expr  = rtl_Expression[t]
+			hid: UINTEGER {high_index = atoi(hid->getText().c_str());}
+			lid: UINTEGER {low_index = atoi(lid->getText().c_str());}
 	RPAREN
 	{
-		expr = new rtlSliceExpression(base_expr, high_expr, low_expr);
+		expr = new rtlSliceExpression(base_expr, high_index, low_index);
 	}
 ;
 
@@ -573,7 +596,7 @@ rtl_Unary_Expression[rtlThread* t] returns [rtlExpression* expr]
 	rtlExpression* rest;
 }:
 	LPAREN
-		op = rtl_Operation 
+		op = rtl_Unary_Operation 
 		rest  = rtl_Expression[t]
 	RPAREN
 	{
@@ -589,7 +612,7 @@ rtl_Binary_Expression[rtlThread* t] returns [rtlExpression* expr]
 }:
 	LPAREN
 		first = rtl_Expression[t]
-		op = rtl_Operation
+		op = rtl_Binary_Operation
 		second = rtl_Expression[t]
 	RPAREN	
 	{
@@ -604,20 +627,26 @@ rtl_Ternary_Expression[rtlThread* t] returns [rtlExpression* expr]
 	rtlExpression* if_false = NULL;
 }:
 	LPAREN
-		test_expression = rtl_Expression[t]
-		QUESTION
+		MUX
+		test_expr = rtl_Expression[t]
 		if_true = rtl_Expression[t]
-		COLON
 		if_false = rtl_Expression[t]
 	RPAREN
 	{
-		expr = new rtlTernaryExpression(test_expression, if_true, if_false);
+		expr = new rtlTernaryExpression(test_expr, if_true, if_false);
 	}
 ;
 
+
+rtl_Operation returns [rtlOperation op]
+:
+	(op = rtl_Unary_Operation) | (op = rtl_Binary_Operation)
+;
+
+
 rtl_Unary_Operation returns [rtlOperation op]
 :
-	NOT {return (__NOT);}
+	NOT {op = __NOT;}
 ;
 
 rtl_Binary_Operation returns [rtlOperation op]
@@ -651,7 +680,7 @@ rtl_Label returns [string label]
 ;
 
 
-rtl_TypeDeclaration[rtlThread* thrd] returns [rtlType* t]
+rtl_Type_Declaration[rtlThread* thrd] returns [rtlType* t]
 {
 	t  = NULL;
 }:
@@ -672,28 +701,28 @@ rtl_IntegerType_Declaration[rtlThread* thrd] returns [rtlType* t]
 	{
 		L = (neg_L ? - atoi(lid->getText().c_str()) : atoi (lid->getText().c_str()));
 		H = (neg_H ? - atoi(hid->getText().c_str()) : atoi (hid->getText().c_str()));
-		t = Make_Integer_Type(L,H);
+		t = Find_Or_Make_Integer_Type(L,H);
 	}
 ;
 
 		
-rtl_UnsignedType_Declaration[thrd] returns [rtlType* t]
+rtl_UnsignedType_Declaration[rtlThread* thrd] returns [rtlType* t]
 {
 	int width;
 }:
 	UNSIGNED LESS wid:UINTEGER GREATER 
 	{
-		t = Make_Unsigned_Type(atoi(wid->getText().c_str()));
+		t = Find_Or_Make_Unsigned_Type(atoi(wid->getText().c_str()));
 	}
 ;
 
-rtl_SignedType_Declaration[thrd] returns [rtlType* t]
+rtl_SignedType_Declaration[rtlThread* thrd] returns [rtlType* t]
 {
 	int width;
 }:
 	SIGNED LESS wid:UINTEGER GREATER 
 	{
-		t = Make_Signed_Type(atoi(wid->getText().c_str()));
+		t = Find_Or_Make_Signed_Type(atoi(wid->getText().c_str()));
 	}
 ;
 
@@ -705,9 +734,9 @@ rtl_ArrayType_Declaration[rtlThread* thrd] returns [rtlType* t]
 	ARRAY 
 	( LBRACKET did:UINTEGER RBRACKET {dims.push_back(atoi(did->getText().c_str()));} )+
 	OF
-	ele_type = rtl_Type[thrd]
+	ele_type = rtl_Type_Declaration[thrd]
 	{
-		t = Make_Array_Type(dims, ele_type);
+		t = Find_Or_Make_Array_Type(dims, ele_type);
 	}
 ;
 
@@ -727,13 +756,47 @@ LPAREN : '(';
 RPAREN : ')';
 IMPLIES: "=>";
 COLON: ":";
-LESS_THAN: "<";
-GREATER_THAN: ">";
 UINT: "$uint";
-PORT: "$port";
-SYNCH: "$synch";
 LBRACKET:"[";
 RBRACKET:"]";
+MUX:"$mux";
+VARIABLE:"$variable";
+CONSTANT:"$constant";
+
+ASSIGNEQUAL      : ":=" ; // assignment
+
+// comparisons
+EQUAL            : "=="; // equality 
+NOTEQUAL         : "!="; // not equal
+LESS             : '<' ; // less-than
+LESSEQUAL        : "<="; // less-than-or-equal
+GREATER          : ">" ; // greater-than
+GREATEREQUAL     : ">="; // greater-than-or-equal
+
+// shifts
+SHL              : "<<"; // shift-left
+SHR              : ">>"; // shift-right
+ROL              : "<o<" ; // rotate-left.
+ROR              : ">o>" ;  // rotate-right
+
+// concatenate
+CONCAT           : "&&" ; // concatenation
+
+
+// arithmetic operators
+PLUS             : '+' ; // plus
+MINUS            : '-' ; // minus
+MUL              : '*' ; // multiply
+
+// logical operators
+NOT              : '~'     ;
+OR               : '|'     ;
+AND              : '&'     ;
+XOR              : '^'     ;
+NOR              : "~|"    ;
+NAND             : "~&"    ;
+XNOR             : "~^"    ;
+
 
 
 

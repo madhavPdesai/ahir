@@ -1,16 +1,17 @@
 #ifndef _rtl_Type__
 #define _rtl_Type__
 
+class hierRoot;
 
 //
 // types of rtl objects
 //  
 // base class
-class rtlType
+class rtlType: public hierRoot
 {
   public:
 
-  rtlType(string id);
+  rtlType();
 
   virtual string Kind() {return("rtlType");}
   virtual int Size() {assert(0);}
@@ -41,7 +42,7 @@ class rtlIntegerType: public rtlType
 	int _low;
 	int _high;
 	public:
-	rtlIntegerType(string id, int low, int high);
+	rtlIntegerType(int low, int high);
 	string Kind() {return("rtlInteger");}
   	virtual void Print(ostream& ofile);
 };
@@ -58,7 +59,7 @@ class rtlUnsignedType: public rtlType
 
  public:
   virtual unsigned int Get_Width() {return(this->_width);}
-  rtlUnsignedType(string id, unsigned int width):rtlType(id) {_width = width;}
+  rtlUnsignedType(unsigned int width):rtlType() {_width = width;}
 
   virtual string Kind() {return("rtlUnsignedType");}
    
@@ -76,8 +77,7 @@ class rtlSignedType: public rtlUnsignedType
 
  public:
 
-  rtlSignedType(string id, unsigned int width);
-  rtlUnsignedType(string id, unsigned int width):rtlUnsignedType(id,width) {}
+  rtlSignedType(unsigned int width):rtlUnsignedType(width) {}
   void Print(ostream& ofile);
   virtual string Kind() {return("rtlSignedType");}
 
@@ -114,7 +114,7 @@ class rtlArrayType: public rtlType
   virtual rtlType* Get_Element_Type() {return(this->_element_type);}
   virtual rtlType* Get_Element_Type(int idx) {return(this->_element_type);} 
 
-  rtlArrayType(string id, rtlType* element_type, vector<unsigned int>& dimensions);
+  rtlArrayType(rtlType* element_type, vector<unsigned int>& dimensions);
 
 
   virtual int Size() 
@@ -122,7 +122,7 @@ class rtlArrayType: public rtlType
     int ret_val = this->Get_Element_Type()->Size();
 
     for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
-      ret_val =  ret_val * this->_dimension[i];
+      ret_val =  ret_val * this->_dimensions[i];
 
     return(ret_val);
   }
@@ -132,8 +132,22 @@ class rtlArrayType: public rtlType
   {
     int ret_val = 1;
     for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
-      ret_val = ret_val*(this->_dimension[i]);
+      ret_val = ret_val*(this->_dimensions[i]);
     return(ret_val);
+  }
+
+  virtual int Get_Index(vector<int> indices)
+  {
+	assert(indices.size() == _dimensions.size());
+
+	int ret_val = 0;
+	int S = 1;
+	for(int I = _dimensions.size()-1; I >= 0; I--)
+	{
+		ret_val += (S*indices[I]);
+		S = S*_dimensions[I];
+	}
+	return(ret_val);
   }
 
   virtual void Print(ostream& ofile);
@@ -143,9 +157,10 @@ class rtlArrayType: public rtlType
 //
 // type manager... make types.
 //
-rtlType* Make_Uinteger_Type(int width);
-rtlType* Make_Integer_Type(int width);
-rtlType* Make_Array_Type(vector<int> dims, rtlType* element_type);
+rtlType* Find_Or_Make_Integer_Type(int low_val, int high_val);
+rtlType* Find_Or_Make_Unsigned_Type(int width);
+rtlType* Find_Or_Make_Signed_Type(int width);
+rtlType* Find_Or_Make_Array_Type(vector<int> dims, rtlType* element_type);
 
 // each type is assigned an identifier.
 string   Get_Type_Identifier(rtlType* t);

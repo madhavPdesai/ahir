@@ -4,7 +4,7 @@
 class rtlExpression;
 class rtlThread;
 
-class rtlStatement: public rtlStatement
+class rtlStatement: public hierRoot
 {
 
 	rtlThread* _parent_thread;
@@ -41,10 +41,11 @@ class rtlAssignStatement: public rtlStatement
 
 	rtlExpression* _target;
 	rtlExpression* _source; 
+	bool _volatile;
 
 	public:
 
-	rtlAssignStatement(rtlThread* p, rtlExpression* tgt, rtlExpression* src);
+	rtlAssignStatement(rtlThread* p,bool volatile_flag,  rtlExpression* tgt, rtlExpression* src);
 
 	bool Get_Volatile() {return(_volatile);}
 
@@ -62,7 +63,7 @@ class rtlAssignStatement: public rtlStatement
 	// reset values to signals.
 	virtual void Print_VHDL_Reset_Assignments(ostream& ofile) {}
 	// immediates (e.g. emits, calls).
-}
+};
 
 class rtlEmitStatement: public rtlStatement
 {
@@ -84,7 +85,7 @@ class rtlEmitStatement: public rtlStatement
 	// reset values to signals.
 	virtual void Print_VHDL_Reset_Assignments(ostream& ofile) {}
 	// immediates (e.g. emits, calls).
-}
+};
 
 class rtlGotoStatement: public rtlStatement
 {
@@ -96,7 +97,7 @@ class rtlGotoStatement: public rtlStatement
 	virtual void Print(ostream& ofile);
 	virtual void Print_VHDL(ostream& ofile);
 
-}
+};
 
 class rtlBlockStatement;
 class rtlIfStatement: public rtlStatement

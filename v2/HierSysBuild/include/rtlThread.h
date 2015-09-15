@@ -11,16 +11,21 @@ class rtlStatement;
 // 
 class rtlThread: public hierRoot
 {
-
+  hierSystem* _parent;
+  
 	vector<rtlStatement*> _statements;
-
+	map<string, rtlObject*> _objects;
 
 	public:
 
-	rtlThread(string id);
+	rtlThread(hierSystem* p, string id);
+	hierSystem* Get_Parent() {return(_parent);}
+
 
 	void Add_Statement(rtlStatement* stmt) {_statements.push_back(stmt);}
 
+	void Add_Object(rtlObject* obj);
+	rtlObject* Find_Object(string obj_name);
 
 	// replica print.
 	void Print(ostream& ofile);
@@ -48,16 +53,20 @@ class rtlString: public hierRoot
 {
 
 	rtlThread* _base_thread;
+	string _name;
 
 	map<string,string> _port_map;
 
+
 	public:
 	
-	rtlString(rtlThread* base, vector<pair<string,string> >& port_map);
+	rtlString(string inst_name, rtlThread* base, vector<pair<string,string> >& port_map);
 
 	// not clear how this will be done.. 
-	void PrintC(ostream& header_file, ostream& source_file);
+	void PrintC(ostream& header_file, ostream& source_file) {assert(0);}
 
+
+	void Print(ostream& ofile);
 
 	// each thread-instance is a component instance.
 	void Print_VHDL(ostream& ofile);

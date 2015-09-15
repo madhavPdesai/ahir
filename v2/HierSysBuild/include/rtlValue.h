@@ -1,43 +1,53 @@
 #ifndef rtl_Value_h__
 #define rtl_Value_h__
-
-class rtlType;
+#include<rtlType.h>
 class Value;
 class Unsigned;
 class Signed;
+class hierRoot;
 
-class rtlValue: public rtlRoot
+class rtlValue:public hierRoot
 {
 	protected:
 	rtlType* _type;
-	Value*   _value;
 	
 	public:
-
-	rtlValue(rtlType* t);
-	
-	Value* Get_Value() {return(_value);}
-	Value* Get_Value(int index) {return(NULL);}
-	Value* Get_Value(vector<int>& indices) {return(NULL);}
+	rtlValue(rtlType* t) { t = NULL;}
 	rtlType* Get_Type() {return(_type);}
+	virtual void Print(ostream& ofile);
+	virtual int  To_Integer() {assert(0);}
 
-	
+	virtual bool Get_Bit(int bit_index) {assert(0);}
+	virtual void Set_Bit(int bit_index, bool bit_val) {assert(0);}
+};
 
-	virtual string To_String();
-	virtual string To_VHDL_String();
-	virtual string To_Integer() {assert(0);}
+
+class rtlIntegerValue: public rtlValue
+{
+	protected:
+	int _value;
+
+	public:
+	rtlIntegerValue(rtlType* t, int v):rtlValue(t) {_value = v;}
+	int Get_Value() {return(_value);}
+	virtual void Print(ostream& ofile);
+	virtual int  To_Integer() {return(_value);}
+	virtual bool Get_Bit(int bi);
+	virtual void Set_Bit(int bit_index, bool bit_val);
 };
 
 
 
 class rtlUnsignedValue: public rtlValue
 {
+	Value* _value;
+
 	public:
-
-	rtlUnsignedValue(rtlType* t, unsigned int uv);
-	rtlUnsignedValue(rtlType* t, Unsigned* uv);
-	rtlUnsignedValue(rtlType* t, string bit_string);
-
+	rtlUnsignedValue(rtlType* t, Value* v):rtlValue(t) {_value = v;} 
+	virtual void Print(ostream& ofile);	
+	virtual int  To_Integer();		
+	virtual bool Get_Bit(int bi);
+	virtual void Set_Bit(int bit_index, bool bit_val);
 };
 
 
@@ -45,35 +55,42 @@ class rtlSignedValue: public rtlUnsignedValue
 {
 	public:
 
-	rtlSignedValue(rtlType* t, int sv);
-	rtlSignedValue(rtlType* t, Signed* sv);
-	rtlSignedValue(rtlType* t, string bit_string);
+	rtlSignedValue(rtlType* t, Value* v):rtlUnsignedValue(t,v) {}
+	virtual void Print(ostream& ofile);
+	virtual int  To_Integer();		
+	virtual bool Get_Bit(int bi);
+	virtual void Set_Bit(int bit_index, bool bit_val);
 };
 
-// a 32 bit integer value.
-class rtlIntegerValue: public rtlSignedValue
-{
-	public:
-	
-	// 32-bit integer.
-	rtlIntegerValue(int sv);
-};
-
-
+class Value;
 class rtlArrayValue: public rtlValue
 {
 	vector<rtlValue*> _values;
 
 	public:
-	rtlArrayValue(rtlType* t, vector<rtlValue*> vals);
+	rtlArrayValue(rtlType* t, vector<rtlValue*> vals):rtlValue(t)
+	{
+		_values = vals;
+	}
 
-	rtlValue* Get_Value(int index);
+	rtlValue* Get_Value(int index) 
+	{
+		if((index >= 0)	 && (index < _values.size()))
+		  return(_values[index]);
+		else
+			return(NULL);
+	}
 	rtlValue* Get_Value(vector<int>& indices);
-
+	virtual void Print(ostream& ofile);
 };
 
 
 // make a value..
-rtlValue* Make_Rtl_Value(rtlType* t, string init_string);
+rtlValue* Make_Rtl_Value(rtlType* t, vector<string>& init_values);
+rtlValue* Make_Unsigned_Zero(rtlType* t);
+rtlValue* Perform_Unary_Operation(rtlOperation op, rtlValue* v);
+rtlValue* Perform_Binary_Operation(rtlOperation op, rtlValue* f, rtlValue* s);
+bool      Is_Zero(rtlValue* v);
+bool      Are_Equal(rtlValue* f, rtlValue* s);
 
 #endif
