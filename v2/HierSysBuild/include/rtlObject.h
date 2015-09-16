@@ -24,6 +24,8 @@ class rtlObject: public hierRoot
 	virtual bool Get_Is_Internal() {return(false);}
 
 	virtual rtlValue* Get_Value() {return(NULL);}
+
+	virtual void Print(ostream& ofile) {assert(0);}
 	
 };
 
@@ -37,6 +39,7 @@ class rtlConstant: public rtlObject
 	virtual bool Get_Is_Internal() {return(true);}
 	virtual bool Is_Constant() {return(true);}
 	virtual rtlValue* Get_Value() {return(_value);}
+	virtual void Print(ostream& ofile);
 };
 
 class rtlVariable: public rtlObject
@@ -45,6 +48,7 @@ class rtlVariable: public rtlObject
 
 	rtlVariable(string name, rtlType* t);
 	virtual bool Get_Is_Internal() {return(true);}
+	virtual void Print(ostream& ofile);
 
 };
 
@@ -55,6 +59,7 @@ class rtlSignal: public rtlObject
 	rtlSignal(string name, rtlType* t);
 
 	virtual bool Is_Signal() {return(true);}
+	virtual void Print(ostream& ofile);
 };
 
 #endif

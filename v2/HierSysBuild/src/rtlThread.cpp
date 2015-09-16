@@ -7,6 +7,7 @@
 #include <Value.hpp>
 #include <rtlValue.h>
 #include <rtlObject.h>
+#include <rtlStatement.h>
 #include <rtlThread.h>
 
 
@@ -23,11 +24,20 @@ void rtlThread::Add_Object(rtlObject* obj)
 
 void rtlThread::Print(ostream& ofile)
 {
-	// TODO
-	ofile << "// $thread " << this->Get_Id() << endl;
+	ofile << "$thread " << this->Get_Id() << endl;
+
+	for(map<string,rtlObject*>::iterator oiter = _objects.begin(), foiter = _objects.end();
+		oiter != foiter; oiter++)
+	{
+		(*oiter).second->Print(ofile);
+	}
+
+	for(int I = 0, fI = _statements.size(); I < fI; I++)
+	{
+		_statements[I]->Print(ofile);
+	}
 }
 
-// TODO: pass hierSystem pointer also to the string?
 rtlString::rtlString(string inst_name, rtlThread* base, vector<pair<string,string> >& port_map):hierRoot(inst_name)
 {
 	_base_thread = base;
@@ -42,7 +52,12 @@ rtlString::rtlString(string inst_name, rtlThread* base, vector<pair<string,strin
 
 void rtlString::Print(ostream& ofile)
 {
-	// TODO
+	ofile << "$string " << this->Get_Id() << ":"  << _base_thread->Get_Id() << " ";
+	for(map<string,string>::iterator piter = _port_map.begin(), fpiter = _port_map.end();
+			piter != fpiter; piter++)
+	{
+		ofile << "  " << (*piter).first << " => " << (*piter).second << endl;
+	}
 }
 
 

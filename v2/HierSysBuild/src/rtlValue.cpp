@@ -134,16 +134,19 @@ rtlValue* Perform_Unary_Operation(rtlOperation op, rtlValue* v)
 
 rtlValue* Perform_Binary_Operation(rtlOperation op, rtlValue* f, rtlValue* s)
 {
+	// TODO
 	assert(0);
 }
 
 bool  Is_Zero(rtlValue* v)
 {
+	// TODO
 	assert(0);
 }
 
 bool  Are_Equal(rtlValue* f, rtlValue* s)
 {
+	// TODO
 	assert(0);
 }
 
