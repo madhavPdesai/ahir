@@ -21,6 +21,8 @@ class rtlValue:public hierRoot
 
 	virtual bool Get_Bit(int bit_index) {assert(0);}
 	virtual void Set_Bit(int bit_index, bool bit_val) {assert(0);}
+
+	virtual rtlValue* Copy() {assert(0);}
 };
 
 
@@ -34,6 +36,7 @@ class rtlIntegerValue: public rtlValue
 	int Get_Value() {return(_value);}
 	virtual void Print(ostream& ofile);
 	virtual int  To_Integer() {return(_value);}
+	virtual rtlValue* Copy();
 };
 
 
@@ -48,6 +51,9 @@ class rtlUnsignedValue: public rtlValue
 	virtual int  To_Integer();		
 	virtual bool Get_Bit(int bi);
 	virtual void Set_Bit(int bit_index, bool bit_val);
+	virtual rtlValue* Copy();
+
+	virtual Value* Get_Value() {return(_value);}
 };
 
 
@@ -58,6 +64,7 @@ class rtlSignedValue: public rtlUnsignedValue
 	rtlSignedValue(rtlType* t, Value* v):rtlUnsignedValue(t,v) {}
 	virtual void Print(ostream& ofile);
 	virtual int  To_Integer();		
+	virtual rtlValue* Copy();
 };
 
 class rtlArrayValue: public rtlValue
@@ -79,6 +86,7 @@ class rtlArrayValue: public rtlValue
 	}
 	rtlValue* Get_Value(vector<int>& indices);
 	virtual void Print(ostream& ofile);
+	virtual rtlValue* Copy();
 };
 
 

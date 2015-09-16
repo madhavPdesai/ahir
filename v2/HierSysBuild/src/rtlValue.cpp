@@ -16,30 +16,54 @@ void rtlIntegerValue::Print(ostream& ofile)
 	ofile << " " << _value << " ";
 }	
 
+rtlValue* rtlIntegerValue::Copy()
+{
+	rtlValue* ret_val = new rtlIntegerValue(this->Get_Type(), this->Get_Value());
+}
+
 
 void rtlUnsignedValue::Print(ostream& ofile)
 {
+	ofile << " " << this->Get_Value()->To_String() << " ";
+}
+
+rtlValue* rtlUnsignedValue::Copy()
+{
+	rtlValue* ret_val = new rtlUnsignedValue(this->Get_Type(), this->Get_Value());
 }
 
 int  rtlUnsignedValue::To_Integer()
 {
+	return(_value->To_Integer());
 }		
 bool rtlUnsignedValue::Get_Bit(int bi)
 {
+	return(((Unsigned*)this->Get_Value())->Get_Bit(bi));
 }
 void rtlUnsignedValue::Set_Bit(int bit_index, bool bit_val)
 {
+	((Unsigned*)this->Get_Value())->Set_Bit(bit_index,bit_val);
 }
 
+rtlValue* rtlSignedValue::Copy()
+{
+	rtlValue* ret_val = new rtlSignedValue(this->Get_Type(), this->Get_Value());
+}
 	
 void rtlSignedValue::Print(ostream& ofile)
 {
+	ofile << " " << this->Get_Value()->To_String() << " ";
 }
 
 int  rtlSignedValue::To_Integer()
 {
+	return(this->Get_Value()->To_Integer());
 }
 
+rtlValue* rtlArrayValue::Copy()
+{
+	rtlValue* ret_val = new rtlArrayValue(this->Get_Type(), this->_values);
+}
 		
 	
 void rtlArrayValue::Print(ostream& ofile)
@@ -122,26 +146,45 @@ rtlValue* Make_Rtl_Value(rtlType* t, vector<string>& init_values)
 
 rtlValue* Make_Unsigned_Zero(rtlType* t)
 {
-	// TODO
-	assert(0);
+	if(t->Is("rtlUnsignedType"))
+	{
+		Unsigned* v = new Unsigned(t->Size());
+		rtlValue* ret_val = new rtlUnsignedValue(t,v);
+		return(ret_val);
+	}
+	else
+		return(NULL);
 }
 
 rtlValue* Perform_Unary_Operation(rtlOperation op, rtlValue* v)
 {
-	// TODO 
-	assert(0);
+	if((op == __NOT) && (v->Is("rtlUnsignedValue")))
+	{
+		rtlUnsignedValue* uv = (rtlUnsignedValue*)v;
+		Unsigned* nv = new Unsigned(*((Unsigned*)(uv->Get_Value())));
+		nv->Complement();
+		rtlValue* ret_val = new rtlUnsignedValue(v->Get_Type(), nv);
+		return(ret_val);
+	}
+	else
+	{
+		return(NULL);
+	}
 }
 
 rtlValue* Perform_Binary_Operation(rtlOperation op, rtlValue* f, rtlValue* s)
 {
+	rtlType* ft = f->Get_Type();
+	rtlType* st = s->Get_Type();
+
+
 	// TODO
 	assert(0);
 }
 
 bool  Is_Zero(rtlValue* v)
 {
-	// TODO
-	assert(0);
+	return(v->To_Integer() == 0);
 }
 
 bool  Are_Equal(rtlValue* f, rtlValue* s)
