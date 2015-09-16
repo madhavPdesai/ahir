@@ -8,7 +8,7 @@
 map <rtlType*, string> type_to_identifier_map;
 map <string, rtlType*> identifier_to_type_map;
 
-rtlType::rtlType(string id):hierRoot(id)
+rtlType::rtlType():hierRoot()
 {
 }
 
@@ -32,7 +32,7 @@ void rtlType::Print(string& ostring)
 }
 
 	
-rtlIntegerType::rtlIntegerType(string id, int low, int high): rtlType(id)
+rtlIntegerType::rtlIntegerType(int low, int high): rtlType()
 {
 	assert (_low <= _high);
 
@@ -55,7 +55,7 @@ void rtlSignedType::Print(ostream& ofile)
 	ofile << " $signed<" << _width << ">" << endl;
 }
 
-rtlArrayType::rtlArrayType(string id, rtlType* element_type, vector<unsigned int>& dimensions): rtlType(id)
+rtlArrayType::rtlArrayType( rtlType* element_type, vector<int>& dimensions): rtlType()
 {
 	_element_type = element_type;
 	_dimensions = dimensions;
@@ -70,7 +70,7 @@ void rtlArrayType::Print(ostream& ofile)
 	}
 	ret_name += " $of ";
 	ret_name += this->Get_Element_Type()->Get_Name();
-	return(ret_name);
+	ofile << ret_name << " ";
 }
 
 rtlType* Find_Or_Make_Integer_Type(int low_val, int high_val)
@@ -78,11 +78,11 @@ rtlType* Find_Or_Make_Integer_Type(int low_val, int high_val)
 	string lookup_id = "int_" + IntToStr(low_val) + "_to_" + IntToStr(high_val);
 	rtlType* ret_type  = NULL;
 
-	if(identifier_to_type_map.find(lookup_id) == identifier_to_map.end())
+	if(identifier_to_type_map.find(lookup_id) == identifier_to_type_map.end())
 	{
 		rtlType* ret_type = new rtlIntegerType(low_val, high_val);
 		identifier_to_type_map[lookup_id] = ret_type;
-		type_to_identifier_map[t] = lookup_id;
+		type_to_identifier_map[ret_type] = lookup_id;
 	}
 	else
 	{
@@ -96,11 +96,11 @@ rtlType* Find_Or_Make_Unsigned_Type(int width)
 	string lookup_id = "unsigned_" + IntToStr(width-1) + "_downto_0";
 	rtlType* ret_type  = NULL;
 
-	if(identifier_to_type_map.find(lookup_id) == identifier_to_map.end())
+	if(identifier_to_type_map.find(lookup_id) == identifier_to_type_map.end())
 	{
 		rtlType* ret_type = new rtlUnsignedType(width);
 		identifier_to_type_map[lookup_id] = ret_type;
-		type_to_identifier_map[t] = lookup_id;
+		type_to_identifier_map[ret_type] = lookup_id;
 	}
 	else
 	{
@@ -114,11 +114,11 @@ rtlType* Find_Or_Make_Signed_Type(int width)
 	string lookup_id = "signed_" + IntToStr(width-1) + "_downto_0";
 	rtlType* ret_type  = NULL;
 
-	if(identifier_to_type_map.find(lookup_id) == identifier_to_map.end())
+	if(identifier_to_type_map.find(lookup_id) == identifier_to_type_map.end())
 	{
 		rtlType* ret_type = new rtlSignedType(width);
 		identifier_to_type_map[lookup_id] = ret_type;
-		type_to_identifier_map[t] = lookup_id;
+		type_to_identifier_map[ret_type] = lookup_id;
 	}
 	else
 	{
@@ -139,11 +139,11 @@ rtlType* Find_Or_Make_Array_Type(vector<int> dims, rtlType* element_type)
 
 	rtlType* ret_type  = NULL;
 
-	if(identifier_to_type_map.find(lookup_id) == identifier_to_map.end())
+	if(identifier_to_type_map.find(lookup_id) == identifier_to_type_map.end())
 	{
 		rtlType* ret_type = new rtlArrayType(element_type, dims);
 		identifier_to_type_map[lookup_id] = ret_type;
-		type_to_identifier_map[t] = lookup_id;
+		type_to_identifier_map[ret_type] = lookup_id;
 	}
 	else
 	{

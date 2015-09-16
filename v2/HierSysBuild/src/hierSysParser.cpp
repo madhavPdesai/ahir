@@ -37,7 +37,7 @@ hierSysParser::hierSysParser(const ANTLR_USE_NAMESPACE(antlr)ParserSharedInputSt
 void hierSysParser::sys_Description(
 	vector<hierSystem*>& sys_vec, map<string,pair<int,int> >&  global_pipe_map, set<string>& global_pipe_signals
 ) {
-#line 54 "hierSys.g"
+#line 55 "hierSys.g"
 	
 	
 		hierSystem* sys = NULL;
@@ -61,7 +61,7 @@ void hierSysParser::sys_Description(
 		for (;;) {
 			if ((LA(1) == SYSTEM)) {
 				sys=hier_System(sys_vec, global_pipe_map,global_pipe_signals);
-#line 61 "hierSys.g"
+#line 62 "hierSys.g"
 				sys_vec.push_back(sys);
 #line 67 "hierSysParser.cpp"
 			}
@@ -86,7 +86,7 @@ void hierSysParser::hier_system_Pipe_Declaration(
 	ANTLR_USE_NAMESPACE(antlr)RefToken  psid = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  wid = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  did = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 282 "hierSys.g"
+#line 283 "hierSys.g"
 	
 	vector<string> oname_list;
 	int pipe_depth = 1;
@@ -108,7 +108,7 @@ void hierSysParser::hier_system_Pipe_Declaration(
 		{
 			lid = LT(1);
 			match(LIFO);
-#line 295 "hierSys.g"
+#line 296 "hierSys.g"
 			std::cerr << "Warning: lifo flag ignored.. line number " << lid->getLine() << endl;
 #line 114 "hierSysParser.cpp"
 			break;
@@ -130,7 +130,7 @@ void hierSysParser::hier_system_Pipe_Declaration(
 			if ((LA(1) == SIMPLE_IDENTIFIER)) {
 				psid = LT(1);
 				match(SIMPLE_IDENTIFIER);
-#line 297 "hierSys.g"
+#line 298 "hierSys.g"
 				oname_list.push_back(psid->getText());
 #line 136 "hierSysParser.cpp"
 			}
@@ -148,7 +148,7 @@ void hierSysParser::hier_system_Pipe_Declaration(
 		wid = LT(1);
 		match(UINTEGER);
 		match(GREATER);
-#line 299 "hierSys.g"
+#line 300 "hierSys.g"
 		pipe_width = atoi(wid->getText().c_str());
 #line 154 "hierSysParser.cpp"
 		{
@@ -158,7 +158,7 @@ void hierSysParser::hier_system_Pipe_Declaration(
 			match(DEPTH);
 			did = LT(1);
 			match(UINTEGER);
-#line 300 "hierSys.g"
+#line 301 "hierSys.g"
 			pipe_depth = atoi(did->getText().c_str());
 #line 164 "hierSysParser.cpp"
 			break;
@@ -182,7 +182,7 @@ void hierSysParser::hier_system_Pipe_Declaration(
 		case SIGNAL:
 		{
 			match(SIGNAL);
-#line 301 "hierSys.g"
+#line 302 "hierSys.g"
 			is_signal = true;
 #line 188 "hierSysParser.cpp"
 			break;
@@ -200,7 +200,7 @@ void hierSysParser::hier_system_Pipe_Declaration(
 		}
 		}
 		}
-#line 302 "hierSys.g"
+#line 303 "hierSys.g"
 		
 		for(int I = 0, fI = oname_list.size(); I < fI; I++)
 		{
@@ -222,7 +222,7 @@ void hierSysParser::hier_system_Pipe_Declaration(
 hierSystem*  hierSysParser::hier_System(
 	vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global_pipe_map, set<string>& global_pipe_signals
 ) {
-#line 67 "hierSys.g"
+#line 68 "hierSys.g"
 	hierSystem* sys;
 #line 228 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  sysid = ANTLR_USE_NAMESPACE(antlr)nullToken;
@@ -236,7 +236,7 @@ hierSystem*  hierSysParser::hier_System(
 	ANTLR_USE_NAMESPACE(antlr)RefToken  sidint = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  uidint = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  didint = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 67 "hierSys.g"
+#line 68 "hierSys.g"
 	
 		sys =  NULL;
 	
@@ -263,7 +263,7 @@ hierSystem*  hierSysParser::hier_System(
 			match(LIBRARY);
 			libid = LT(1);
 			match(SIMPLE_IDENTIFIER);
-#line 85 "hierSys.g"
+#line 86 "hierSys.g"
 			lib_id = libid->getText();
 #line 269 "hierSysParser.cpp"
 			break;
@@ -278,7 +278,7 @@ hierSystem*  hierSysParser::hier_System(
 		}
 		}
 		}
-#line 86 "hierSys.g"
+#line 87 "hierSys.g"
 		
 					sys = new hierSystem(sysid->getText());
 					sys->Set_Library(lib_id);
@@ -300,7 +300,7 @@ hierSystem*  hierSysParser::hier_System(
 				{
 					{
 					match(SIGNAL);
-#line 95 "hierSys.g"
+#line 96 "hierSys.g"
 					signal_flag = true;
 #line 306 "hierSysParser.cpp"
 					}
@@ -320,7 +320,7 @@ hierSystem*  hierSysParser::hier_System(
 				{
 					uidi = LT(1);
 					match(UINTEGER);
-#line 96 "hierSys.g"
+#line 97 "hierSys.g"
 					pipe_width = atoi(uidi->getText().c_str());
 #line 326 "hierSysParser.cpp"
 					break;
@@ -345,7 +345,7 @@ hierSystem*  hierSysParser::hier_System(
 					match(DEPTH);
 					didi = LT(1);
 					match(UINTEGER);
-#line 97 "hierSys.g"
+#line 98 "hierSys.g"
 					depth = atoi(didi->getText().c_str());
 #line 351 "hierSysParser.cpp"
 					break;
@@ -362,7 +362,7 @@ hierSystem*  hierSysParser::hier_System(
 				}
 				}
 				}
-#line 98 "hierSys.g"
+#line 99 "hierSys.g"
 				
 								string pipe_name = sidi->getText();
 								if((pipe_width == 0) || (depth == 0))
@@ -408,7 +408,7 @@ hierSystem*  hierSysParser::hier_System(
 				{
 					{
 					match(SIGNAL);
-#line 124 "hierSys.g"
+#line 125 "hierSys.g"
 					signal_flag = true;
 #line 414 "hierSysParser.cpp"
 					}
@@ -428,7 +428,7 @@ hierSystem*  hierSysParser::hier_System(
 				{
 					uido = LT(1);
 					match(UINTEGER);
-#line 125 "hierSys.g"
+#line 126 "hierSys.g"
 					pipe_width = atoi(uido->getText().c_str());
 #line 434 "hierSysParser.cpp"
 					break;
@@ -453,7 +453,7 @@ hierSystem*  hierSysParser::hier_System(
 					match(DEPTH);
 					dido = LT(1);
 					match(UINTEGER);
-#line 126 "hierSys.g"
+#line 127 "hierSys.g"
 					depth = atoi(dido->getText().c_str());
 #line 459 "hierSysParser.cpp"
 					break;
@@ -470,7 +470,7 @@ hierSystem*  hierSysParser::hier_System(
 				}
 				}
 				}
-#line 127 "hierSys.g"
+#line 128 "hierSys.g"
 				
 								string pipe_name = sido->getText();
 								if((pipe_width == 0) || (depth == 0))
@@ -514,7 +514,7 @@ hierSystem*  hierSysParser::hier_System(
 				{
 					{
 					match(SIGNAL);
-#line 153 "hierSys.g"
+#line 154 "hierSys.g"
 					signal_flag = true;
 #line 520 "hierSysParser.cpp"
 					}
@@ -534,7 +534,7 @@ hierSystem*  hierSysParser::hier_System(
 				{
 					uidint = LT(1);
 					match(UINTEGER);
-#line 155 "hierSys.g"
+#line 156 "hierSys.g"
 					pipe_width = atoi(uidint->getText().c_str());
 #line 540 "hierSysParser.cpp"
 					break;
@@ -562,7 +562,7 @@ hierSystem*  hierSysParser::hier_System(
 					match(DEPTH);
 					didint = LT(1);
 					match(UINTEGER);
-#line 156 "hierSys.g"
+#line 157 "hierSys.g"
 					depth = atoi(didint->getText().c_str());
 #line 568 "hierSysParser.cpp"
 					break;
@@ -582,7 +582,7 @@ hierSystem*  hierSysParser::hier_System(
 				}
 				}
 				}
-#line 157 "hierSys.g"
+#line 158 "hierSys.g"
 				
 									string pipe_name = sidint->getText();
 									if((pipe_width == 0) || (depth == 0))
@@ -619,7 +619,7 @@ hierSystem*  hierSysParser::hier_System(
 			{
 				{
 				subsys=hier_System_Instance(sys, sys_vector, global_pipe_map, global_pipe_signals);
-#line 186 "hierSys.g"
+#line 187 "hierSys.g"
 				
 								if(subsys != NULL)
 									sys->Add_Child(subsys);
@@ -637,7 +637,7 @@ hierSystem*  hierSysParser::hier_System(
 			{
 				{
 				subthread=rtl_Thread(sys);
-#line 198 "hierSys.g"
+#line 199 "hierSys.g"
 				
 								if(subthread != NULL)
 									sys->Add_Thread(subthread);
@@ -656,7 +656,7 @@ hierSystem*  hierSysParser::hier_System(
 			{
 				{
 				ti=rtl_String(sys);
-#line 211 "hierSys.g"
+#line 212 "hierSys.g"
 				
 								if(ti != NULL)
 									sys->Add_String(ti);
@@ -690,7 +690,7 @@ hierSystemInstance*  hierSysParser::hier_System_Instance(
 	hierSystem* sys, vector<hierSystem*>& sys_vector, map<string, pair<int,int> >& global_pipe_map,
 			set<string>& global_signals
 ) {
-#line 227 "hierSys.g"
+#line 228 "hierSys.g"
 	hierSystemInstance* sys_inst;
 #line 696 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  inst_name = ANTLR_USE_NAMESPACE(antlr)nullToken;
@@ -698,7 +698,7 @@ hierSystemInstance*  hierSysParser::hier_System_Instance(
 	ANTLR_USE_NAMESPACE(antlr)RefToken  mod_name = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  formal_port = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  actual_pipe = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 227 "hierSys.g"
+#line 228 "hierSys.g"
 	
 		sys_inst = NULL;
 		string lib_id = "work";
@@ -715,7 +715,7 @@ hierSystemInstance*  hierSysParser::hier_System_Instance(
 		{
 			libid = LT(1);
 			match(SIMPLE_IDENTIFIER);
-#line 235 "hierSys.g"
+#line 236 "hierSys.g"
 			lib_id = libid->getText();
 #line 721 "hierSysParser.cpp"
 			break;
@@ -733,7 +733,7 @@ hierSystemInstance*  hierSysParser::hier_System_Instance(
 		match(COLON);
 		mod_name = LT(1);
 		match(SIMPLE_IDENTIFIER);
-#line 238 "hierSys.g"
+#line 239 "hierSys.g"
 		
 						hierSystem* base_sys = NULL;
 						// find module
@@ -765,7 +765,7 @@ hierSystemInstance*  hierSysParser::hier_System_Instance(
 				match(IMPLIES);
 				actual_pipe = LT(1);
 				match(SIMPLE_IDENTIFIER);
-#line 262 "hierSys.g"
+#line 263 "hierSys.g"
 				
 									if(sys_inst)
 										sys_inst->Add_Port_Mapping(formal_port->getText(), 
@@ -783,7 +783,7 @@ hierSystemInstance*  hierSysParser::hier_System_Instance(
 		}
 		_loop35:;
 		} // ( ... )*
-#line 271 "hierSys.g"
+#line 272 "hierSys.g"
 		
 						//
 						// BUG: add internal pipe to parent if needed..
@@ -805,11 +805,11 @@ hierSystemInstance*  hierSysParser::hier_System_Instance(
 rtlThread*  hierSysParser::rtl_Thread(
 	hierSystem* sys
 ) {
-#line 315 "hierSys.g"
+#line 316 "hierSys.g"
 	rtlThread* t;
 #line 811 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  tname = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 315 "hierSys.g"
+#line 316 "hierSys.g"
 	
 		t = NULL;
 		vector<pair<string,int> > def_params;
@@ -820,7 +820,7 @@ rtlThread*  hierSysParser::rtl_Thread(
 		match(THREAD);
 		tname = LT(1);
 		match(SIMPLE_IDENTIFIER);
-#line 320 "hierSys.g"
+#line 321 "hierSys.g"
 		t = new rtlThread(sys, tname->getText());
 #line 826 "hierSysParser.cpp"
 		{ // ( ... )*
@@ -860,14 +860,14 @@ rtlThread*  hierSysParser::rtl_Thread(
 rtlString*  hierSysParser::rtl_String(
 	hierSystem* sys
 ) {
-#line 325 "hierSys.g"
+#line 326 "hierSys.g"
 	rtlString* ti;
 #line 866 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  inst_name_id = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  thread_name_id = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  formal_id = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  actual_id = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 325 "hierSys.g"
+#line 326 "hierSys.g"
 	
 		ti = NULL;
 		vector<pair<string,string> > pmap;
@@ -889,7 +889,7 @@ rtlString*  hierSysParser::rtl_String(
 				match(IMPLIES);
 				actual_id = LT(1);
 				match(SIMPLE_IDENTIFIER);
-#line 336 "hierSys.g"
+#line 337 "hierSys.g"
 				
 								pmap.push_back(pair<string,string> (formal_id->getText(), actual_id->getText()));
 							
@@ -902,7 +902,7 @@ rtlString*  hierSysParser::rtl_String(
 		}
 		_loop49:;
 		} // ( ... )*
-#line 340 "hierSys.g"
+#line 341 "hierSys.g"
 		
 		rtlThread* bt = sys->Find_Thread(thread_name_id->getText());
 		if (bt != NULL)
@@ -932,7 +932,7 @@ void hierSysParser::rtl_ObjectDeclaration(
 	ANTLR_USE_NAMESPACE(antlr)RefToken  ibs = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  bbs = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  hbs = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 357 "hierSys.g"
+#line 358 "hierSys.g"
 	
 		bool variable_flag = false;
 		bool constant_flag = false;
@@ -951,7 +951,7 @@ void hierSysParser::rtl_ObjectDeclaration(
 		{
 			{
 			match(VARIABLE);
-#line 368 "hierSys.g"
+#line 369 "hierSys.g"
 			variable_flag  = true;
 #line 957 "hierSysParser.cpp"
 			}
@@ -961,7 +961,7 @@ void hierSysParser::rtl_ObjectDeclaration(
 		{
 			{
 			match(CONSTANT);
-#line 369 "hierSys.g"
+#line 370 "hierSys.g"
 			constant_flag  = true;
 #line 967 "hierSysParser.cpp"
 			}
@@ -971,7 +971,7 @@ void hierSysParser::rtl_ObjectDeclaration(
 		{
 			{
 			match(SIGNAL);
-#line 370 "hierSys.g"
+#line 371 "hierSys.g"
 			signal_flag    = true;
 #line 977 "hierSysParser.cpp"
 			}
@@ -989,7 +989,7 @@ void hierSysParser::rtl_ObjectDeclaration(
 			if ((LA(1) == SIMPLE_IDENTIFIER)) {
 				sid = LT(1);
 				match(SIMPLE_IDENTIFIER);
-#line 372 "hierSys.g"
+#line 373 "hierSys.g"
 				names.push_back(sid->getText());
 #line 995 "hierSysParser.cpp"
 			}
@@ -1015,7 +1015,7 @@ void hierSysParser::rtl_ObjectDeclaration(
 				{
 				ibs = LT(1);
 				match(UINTEGER);
-#line 377 "hierSys.g"
+#line 378 "hierSys.g"
 				init_values.push_back(ibs->getText());
 #line 1021 "hierSysParser.cpp"
 				}
@@ -1026,7 +1026,7 @@ void hierSysParser::rtl_ObjectDeclaration(
 				{
 				bbs = LT(1);
 				match(BINARY);
-#line 378 "hierSys.g"
+#line 379 "hierSys.g"
 				init_values.push_back(bbs->getText());
 #line 1032 "hierSysParser.cpp"
 				}
@@ -1037,7 +1037,7 @@ void hierSysParser::rtl_ObjectDeclaration(
 				{
 				hbs = LT(1);
 				match(HEXADECIMAL);
-#line 379 "hierSys.g"
+#line 380 "hierSys.g"
 				init_values.push_back(hbs->getText());
 #line 1043 "hierSysParser.cpp"
 				}
@@ -1052,7 +1052,7 @@ void hierSysParser::rtl_ObjectDeclaration(
 		_loop63:;
 		} // ( ... )*
 		}
-#line 382 "hierSys.g"
+#line 383 "hierSys.g"
 		
 		for(int I = 0, fI = names.size(); I < fI; I++)
 				{
@@ -1085,7 +1085,7 @@ void hierSysParser::rtl_ObjectDeclaration(
 void hierSysParser::rtl_LabeledBlockStatement(
 	rtlThread* t
 ) {
-#line 502 "hierSys.g"
+#line 503 "hierSys.g"
 	
 		rtlStatement* astmt = NULL;
 		rtlLabeledBlockStatement* bstmt = NULL;
@@ -1102,7 +1102,7 @@ void hierSysParser::rtl_LabeledBlockStatement(
 		for (;;) {
 			if ((_tokenSet_5.member(LA(1)))) {
 				astmt=rtl_SimpleStatement(t);
-#line 512 "hierSys.g"
+#line 513 "hierSys.g"
 				stmts.push_back(astmt); astmt = NULL;
 #line 1108 "hierSysParser.cpp"
 			}
@@ -1115,7 +1115,7 @@ void hierSysParser::rtl_LabeledBlockStatement(
 		_loop86:;
 		}  // ( ... )+
 		match(RBRACE);
-#line 514 "hierSys.g"
+#line 515 "hierSys.g"
 		
 				bstmt = new rtlLabeledBlockStatement(t, lbl, stmts);
 				t->Add_Statement(bstmt);
@@ -1131,10 +1131,10 @@ void hierSysParser::rtl_LabeledBlockStatement(
 rtlType*  hierSysParser::rtl_Type_Declaration(
 	rtlThread* thrd
 ) {
-#line 683 "hierSys.g"
+#line 684 "hierSys.g"
 	rtlType* t;
 #line 1137 "hierSysParser.cpp"
-#line 683 "hierSys.g"
+#line 684 "hierSys.g"
 	
 		t  = NULL;
 	
@@ -1188,7 +1188,7 @@ rtlType*  hierSysParser::rtl_Type_Declaration(
 rtlStatement*  hierSysParser::rtl_SimpleStatement(
 	rtlThread* t
 ) {
-#line 410 "hierSys.g"
+#line 411 "hierSys.g"
 	rtlStatement* stmt;
 #line 1194 "hierSysParser.cpp"
 	
@@ -1249,10 +1249,10 @@ rtlStatement*  hierSysParser::rtl_SimpleStatement(
 rtlStatement*  hierSysParser::rtl_AssignStatement(
 	rtlThread* t
 ) {
-#line 422 "hierSys.g"
+#line 423 "hierSys.g"
 	rtlStatement* stmt;
 #line 1255 "hierSysParser.cpp"
-#line 422 "hierSys.g"
+#line 423 "hierSys.g"
 	
 		rtlExpression* tgt = NULL;
 		rtlExpression* src = NULL;
@@ -1266,7 +1266,7 @@ rtlStatement*  hierSysParser::rtl_AssignStatement(
 		case VOLATILE:
 		{
 			match(VOLATILE);
-#line 428 "hierSys.g"
+#line 429 "hierSys.g"
 			volatile_flag = true;
 #line 1272 "hierSysParser.cpp"
 			break;
@@ -1289,7 +1289,7 @@ rtlStatement*  hierSysParser::rtl_AssignStatement(
 		{
 		src=rtl_Expression(t);
 		}
-#line 432 "hierSys.g"
+#line 433 "hierSys.g"
 		
 		tgt->Set_Is_Target(true);
 		stmt = new rtlAssignStatement(t,volatile_flag, tgt, src);
@@ -1306,11 +1306,11 @@ rtlStatement*  hierSysParser::rtl_AssignStatement(
 rtlStatement*  hierSysParser::rtl_EmitStatement(
 	rtlThread* t
 ) {
-#line 439 "hierSys.g"
+#line 440 "hierSys.g"
 	rtlStatement* stmt;
 #line 1312 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  sid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 439 "hierSys.g"
+#line 440 "hierSys.g"
 	
 		rtlObject* emittee = NULL;
 	
@@ -1320,7 +1320,7 @@ rtlStatement*  hierSysParser::rtl_EmitStatement(
 		match(EMIT);
 		sid = LT(1);
 		match(SIMPLE_IDENTIFIER);
-#line 444 "hierSys.g"
+#line 445 "hierSys.g"
 		
 					emittee = t->Find_Object(sid->getText());
 					assert(emittee != NULL);
@@ -1339,17 +1339,17 @@ rtlStatement*  hierSysParser::rtl_EmitStatement(
 rtlStatement*  hierSysParser::rtl_NullStatement(
 	rtlThread* t
 ) {
-#line 452 "hierSys.g"
+#line 453 "hierSys.g"
 	rtlStatement* stmt;
 #line 1345 "hierSysParser.cpp"
-#line 452 "hierSys.g"
+#line 453 "hierSys.g"
 	
 	
 #line 1349 "hierSysParser.cpp"
 	
 	try {      // for error handling
 		match(NuLL);
-#line 456 "hierSys.g"
+#line 457 "hierSys.g"
 		
 					stmt = new rtlNullStatement(t);
 				
@@ -1365,11 +1365,11 @@ rtlStatement*  hierSysParser::rtl_NullStatement(
 rtlStatement*  hierSysParser::rtl_GotoStatement(
 	rtlThread* t
 ) {
-#line 461 "hierSys.g"
+#line 462 "hierSys.g"
 	rtlStatement* stmt;
 #line 1371 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  sid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 461 "hierSys.g"
+#line 462 "hierSys.g"
 	
 		string lbl;
 	
@@ -1379,7 +1379,7 @@ rtlStatement*  hierSysParser::rtl_GotoStatement(
 		match(GOTO);
 		sid = LT(1);
 		match(SIMPLE_IDENTIFIER);
-#line 466 "hierSys.g"
+#line 467 "hierSys.g"
 		
 				lbl = sid->getText();
 				stmt  = new rtlGotoStatement(t, lbl);
@@ -1396,10 +1396,10 @@ rtlStatement*  hierSysParser::rtl_GotoStatement(
 rtlStatement*  hierSysParser::rtl_IfStatement(
 	rtlThread* t
 ) {
-#line 485 "hierSys.g"
+#line 486 "hierSys.g"
 	rtlStatement* stmt;
 #line 1402 "hierSysParser.cpp"
-#line 485 "hierSys.g"
+#line 486 "hierSys.g"
 	
 		rtlExpression* test_expr = NULL;
 		rtlBlockStatement* if_block = NULL;
@@ -1438,7 +1438,7 @@ rtlStatement*  hierSysParser::rtl_IfStatement(
 		}
 		}
 		}
-#line 497 "hierSys.g"
+#line 498 "hierSys.g"
 		
 				stmt = (rtlStatement*) new rtlIfStatement(t, test_expr, if_block, else_block);
 			
@@ -1454,10 +1454,10 @@ rtlStatement*  hierSysParser::rtl_IfStatement(
 rtlExpression*  hierSysParser::rtl_Expression(
 	rtlThread* t
 ) {
-#line 520 "hierSys.g"
+#line 521 "hierSys.g"
 	rtlExpression* expr;
 #line 1460 "hierSysParser.cpp"
-#line 520 "hierSys.g"
+#line 521 "hierSys.g"
 	
 		expr = NULL;
 	
@@ -1511,10 +1511,10 @@ rtlExpression*  hierSysParser::rtl_Expression(
 rtlBlockStatement*  hierSysParser::rtl_BlockStatement(
 	rtlThread* t
 ) {
-#line 472 "hierSys.g"
+#line 473 "hierSys.g"
 	rtlBlockStatement* stmt;
 #line 1517 "hierSysParser.cpp"
-#line 472 "hierSys.g"
+#line 473 "hierSys.g"
 	
 		rtlStatement* astmt = NULL;
 		vector<rtlStatement*> stmts;
@@ -1528,7 +1528,7 @@ rtlBlockStatement*  hierSysParser::rtl_BlockStatement(
 		for (;;) {
 			if ((_tokenSet_5.member(LA(1)))) {
 				astmt=rtl_SimpleStatement(t);
-#line 478 "hierSys.g"
+#line 479 "hierSys.g"
 				stmts.push_back(astmt); astmt = NULL;
 #line 1534 "hierSysParser.cpp"
 			}
@@ -1541,7 +1541,7 @@ rtlBlockStatement*  hierSysParser::rtl_BlockStatement(
 		_loop80:;
 		}  // ( ... )+
 		match(RBRACE);
-#line 480 "hierSys.g"
+#line 481 "hierSys.g"
 		
 				stmt = new rtlBlockStatement(t, stmts);
 			
@@ -1555,7 +1555,7 @@ rtlBlockStatement*  hierSysParser::rtl_BlockStatement(
 }
 
 string  hierSysParser::rtl_Label() {
-#line 677 "hierSys.g"
+#line 678 "hierSys.g"
 	string label;
 #line 1561 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  sid = ANTLR_USE_NAMESPACE(antlr)nullToken;
@@ -1564,7 +1564,7 @@ string  hierSysParser::rtl_Label() {
 		match(LBRACKET);
 		sid = LT(1);
 		match(SIMPLE_IDENTIFIER);
-#line 679 "hierSys.g"
+#line 680 "hierSys.g"
 		label = sid->getText();
 #line 1570 "hierSysParser.cpp"
 		match(RBRACKET);
@@ -1579,7 +1579,7 @@ string  hierSysParser::rtl_Label() {
 rtlExpression*  hierSysParser::rtl_Constant_Literal_Expression(
 	rtlThread* thrd
 ) {
-#line 538 "hierSys.g"
+#line 539 "hierSys.g"
 	rtlExpression* expr;
 #line 1585 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  iid = ANTLR_USE_NAMESPACE(antlr)nullToken;
@@ -1588,7 +1588,7 @@ rtlExpression*  hierSysParser::rtl_Constant_Literal_Expression(
 	ANTLR_USE_NAMESPACE(antlr)RefToken  iidn = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  bidn = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  hidn = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 538 "hierSys.g"
+#line 539 "hierSys.g"
 	
 		vector<string> init_values;
 		rtlType* t = NULL;
@@ -1606,7 +1606,7 @@ rtlExpression*  hierSysParser::rtl_Constant_Literal_Expression(
 			{
 			iid = LT(1);
 			match(UINTEGER);
-#line 544 "hierSys.g"
+#line 545 "hierSys.g"
 			init_values.push_back(iid->getText());
 #line 1612 "hierSysParser.cpp"
 			}
@@ -1617,7 +1617,7 @@ rtlExpression*  hierSysParser::rtl_Constant_Literal_Expression(
 			{
 			bid = LT(1);
 			match(BINARY);
-#line 545 "hierSys.g"
+#line 546 "hierSys.g"
 			init_values.push_back(bid->getText());
 #line 1623 "hierSysParser.cpp"
 			}
@@ -1628,7 +1628,7 @@ rtlExpression*  hierSysParser::rtl_Constant_Literal_Expression(
 			{
 			hid = LT(1);
 			match(HEXADECIMAL);
-#line 546 "hierSys.g"
+#line 547 "hierSys.g"
 			init_values.push_back(hid->getText());
 #line 1634 "hierSysParser.cpp"
 			}
@@ -1651,7 +1651,7 @@ rtlExpression*  hierSysParser::rtl_Constant_Literal_Expression(
 					{
 					iidn = LT(1);
 					match(UINTEGER);
-#line 547 "hierSys.g"
+#line 548 "hierSys.g"
 					init_values.push_back(iidn->getText());
 #line 1657 "hierSysParser.cpp"
 					}
@@ -1662,7 +1662,7 @@ rtlExpression*  hierSysParser::rtl_Constant_Literal_Expression(
 					{
 					bidn = LT(1);
 					match(BINARY);
-#line 548 "hierSys.g"
+#line 549 "hierSys.g"
 					init_values.push_back(bidn->getText());
 #line 1668 "hierSysParser.cpp"
 					}
@@ -1673,7 +1673,7 @@ rtlExpression*  hierSysParser::rtl_Constant_Literal_Expression(
 					{
 					hidn = LT(1);
 					match(HEXADECIMAL);
-#line 549 "hierSys.g"
+#line 550 "hierSys.g"
 					init_values.push_back(hidn->getText());
 #line 1679 "hierSysParser.cpp"
 					}
@@ -1693,7 +1693,7 @@ rtlExpression*  hierSysParser::rtl_Constant_Literal_Expression(
 		}
 		_loop105:;
 		} // ( ... )*
-#line 550 "hierSys.g"
+#line 551 "hierSys.g"
 		
 				rtlValue* v = Make_Rtl_Value(t, init_values);
 				expr = new rtlConstantLiteralExpression(t, v);
@@ -1710,11 +1710,11 @@ rtlExpression*  hierSysParser::rtl_Constant_Literal_Expression(
 rtlExpression*  hierSysParser::rtl_Object_Reference(
 	rtlThread* t
 ) {
-#line 557 "hierSys.g"
+#line 558 "hierSys.g"
 	rtlExpression* expr;
 #line 1716 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  sid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 557 "hierSys.g"
+#line 558 "hierSys.g"
 	
 		string obj_name;
 		vector<rtlExpression*> indices;	
@@ -1726,7 +1726,7 @@ rtlExpression*  hierSysParser::rtl_Object_Reference(
 	try {      // for error handling
 		sid = LT(1);
 		match(SIMPLE_IDENTIFIER);
-#line 564 "hierSys.g"
+#line 565 "hierSys.g"
 		obj_name = sid->getText();
 #line 1732 "hierSysParser.cpp"
 		{ // ( ... )*
@@ -1735,7 +1735,7 @@ rtlExpression*  hierSysParser::rtl_Object_Reference(
 				match(LBRACKET);
 				iexpr=rtl_Expression(t);
 				match(RBRACKET);
-#line 565 "hierSys.g"
+#line 566 "hierSys.g"
 				array_flag = true; indices.push_back(iexpr); iexpr = NULL;
 #line 1741 "hierSysParser.cpp"
 			}
@@ -1746,7 +1746,7 @@ rtlExpression*  hierSysParser::rtl_Object_Reference(
 		}
 		_loop108:;
 		} // ( ... )*
-#line 566 "hierSys.g"
+#line 567 "hierSys.g"
 		
 				rtlObject* obj = t->Find_Object(obj_name);
 				assert(obj != NULL);
@@ -1768,12 +1768,12 @@ rtlExpression*  hierSysParser::rtl_Object_Reference(
 rtlExpression*  hierSysParser::rtl_Slice_Expression(
 	rtlThread* t
 ) {
-#line 577 "hierSys.g"
+#line 578 "hierSys.g"
 	rtlExpression* expr;
 #line 1774 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  hid = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  lid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 577 "hierSys.g"
+#line 578 "hierSys.g"
 	
 		rtlExpression* base_expr;
 		int high_index;
@@ -1787,16 +1787,16 @@ rtlExpression*  hierSysParser::rtl_Slice_Expression(
 		base_expr=rtl_Expression(t);
 		hid = LT(1);
 		match(UINTEGER);
-#line 585 "hierSys.g"
+#line 586 "hierSys.g"
 		high_index = atoi(hid->getText().c_str());
 #line 1793 "hierSysParser.cpp"
 		lid = LT(1);
 		match(UINTEGER);
-#line 586 "hierSys.g"
+#line 587 "hierSys.g"
 		low_index = atoi(lid->getText().c_str());
 #line 1798 "hierSysParser.cpp"
 		match(RPAREN);
-#line 588 "hierSys.g"
+#line 589 "hierSys.g"
 		
 				expr = new rtlSliceExpression(base_expr, high_index, low_index);
 			
@@ -1812,10 +1812,10 @@ rtlExpression*  hierSysParser::rtl_Slice_Expression(
 rtlExpression*  hierSysParser::rtl_Unary_Expression(
 	rtlThread* t
 ) {
-#line 593 "hierSys.g"
+#line 594 "hierSys.g"
 	rtlExpression* expr;
 #line 1818 "hierSysParser.cpp"
-#line 593 "hierSys.g"
+#line 594 "hierSys.g"
 	
 		rtlOperation  op;
 		rtlExpression* rest;
@@ -1827,7 +1827,7 @@ rtlExpression*  hierSysParser::rtl_Unary_Expression(
 		op=rtl_Unary_Operation();
 		rest=rtl_Expression(t);
 		match(RPAREN);
-#line 602 "hierSys.g"
+#line 603 "hierSys.g"
 		
 				expr = new rtlUnaryExpression(op, rest);
 			
@@ -1843,10 +1843,10 @@ rtlExpression*  hierSysParser::rtl_Unary_Expression(
 rtlExpression*  hierSysParser::rtl_Binary_Expression(
 	rtlThread* t
 ) {
-#line 607 "hierSys.g"
+#line 608 "hierSys.g"
 	rtlExpression* expr;
 #line 1849 "hierSysParser.cpp"
-#line 607 "hierSys.g"
+#line 608 "hierSys.g"
 	
 		rtlExpression* first = NULL;
 		rtlExpression* second = NULL;
@@ -1860,7 +1860,7 @@ rtlExpression*  hierSysParser::rtl_Binary_Expression(
 		op=rtl_Binary_Operation();
 		second=rtl_Expression(t);
 		match(RPAREN);
-#line 618 "hierSys.g"
+#line 619 "hierSys.g"
 		
 				expr = new rtlBinaryExpression(op, first, second);
 			
@@ -1876,10 +1876,10 @@ rtlExpression*  hierSysParser::rtl_Binary_Expression(
 rtlExpression*  hierSysParser::rtl_Ternary_Expression(
 	rtlThread* t
 ) {
-#line 623 "hierSys.g"
+#line 624 "hierSys.g"
 	rtlExpression* expr;
 #line 1882 "hierSysParser.cpp"
-#line 623 "hierSys.g"
+#line 624 "hierSys.g"
 	
 		rtlExpression* test_expr = NULL;
 		rtlExpression* if_true = NULL;
@@ -1894,7 +1894,7 @@ rtlExpression*  hierSysParser::rtl_Ternary_Expression(
 		if_true=rtl_Expression(t);
 		if_false=rtl_Expression(t);
 		match(RPAREN);
-#line 635 "hierSys.g"
+#line 636 "hierSys.g"
 		
 				expr = new rtlTernaryExpression(test_expr, if_true, if_false);
 			
@@ -1908,13 +1908,13 @@ rtlExpression*  hierSysParser::rtl_Ternary_Expression(
 }
 
 rtlOperation  hierSysParser::rtl_Unary_Operation() {
-#line 647 "hierSys.g"
+#line 648 "hierSys.g"
 	rtlOperation op;
 #line 1914 "hierSysParser.cpp"
 	
 	try {      // for error handling
 		match(NOT);
-#line 649 "hierSys.g"
+#line 650 "hierSys.g"
 		op = __NOT;
 #line 1920 "hierSysParser.cpp"
 	}
@@ -1926,7 +1926,7 @@ rtlOperation  hierSysParser::rtl_Unary_Operation() {
 }
 
 rtlOperation  hierSysParser::rtl_Binary_Operation() {
-#line 652 "hierSys.g"
+#line 653 "hierSys.g"
 	rtlOperation op;
 #line 1932 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  id_or = ANTLR_USE_NAMESPACE(antlr)nullToken;
@@ -1949,7 +1949,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 	ANTLR_USE_NAMESPACE(antlr)RefToken  id_greater = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  id_greaterequal = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  id_concat = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 652 "hierSys.g"
+#line 653 "hierSys.g"
 	
 	
 #line 1956 "hierSysParser.cpp"
@@ -1961,7 +1961,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_or = LT(1);
 			match(OR);
-#line 655 "hierSys.g"
+#line 656 "hierSys.g"
 			op = __OR;
 #line 1967 "hierSysParser.cpp"
 			}
@@ -1972,7 +1972,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_and = LT(1);
 			match(AND);
-#line 656 "hierSys.g"
+#line 657 "hierSys.g"
 			op = __AND;
 #line 1978 "hierSysParser.cpp"
 			}
@@ -1983,7 +1983,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_nor = LT(1);
 			match(NOR);
-#line 657 "hierSys.g"
+#line 658 "hierSys.g"
 			op = __NOR;
 #line 1989 "hierSysParser.cpp"
 			}
@@ -1994,7 +1994,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_nand = LT(1);
 			match(NAND);
-#line 658 "hierSys.g"
+#line 659 "hierSys.g"
 			op = __NAND;
 #line 2000 "hierSysParser.cpp"
 			}
@@ -2005,7 +2005,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_xor = LT(1);
 			match(XOR);
-#line 659 "hierSys.g"
+#line 660 "hierSys.g"
 			op = __XOR;
 #line 2011 "hierSysParser.cpp"
 			}
@@ -2016,7 +2016,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_xnor = LT(1);
 			match(XNOR);
-#line 660 "hierSys.g"
+#line 661 "hierSys.g"
 			op = __XNOR;
 #line 2022 "hierSysParser.cpp"
 			}
@@ -2027,7 +2027,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_shl = LT(1);
 			match(SHL);
-#line 661 "hierSys.g"
+#line 662 "hierSys.g"
 			op = __SHL;
 #line 2033 "hierSysParser.cpp"
 			}
@@ -2038,7 +2038,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_shr = LT(1);
 			match(SHR);
-#line 662 "hierSys.g"
+#line 663 "hierSys.g"
 			op = __SHR;
 #line 2044 "hierSysParser.cpp"
 			}
@@ -2049,7 +2049,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_rol = LT(1);
 			match(ROL);
-#line 663 "hierSys.g"
+#line 664 "hierSys.g"
 			op = __ROL;
 #line 2055 "hierSysParser.cpp"
 			}
@@ -2060,7 +2060,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_ror = LT(1);
 			match(ROR);
-#line 664 "hierSys.g"
+#line 665 "hierSys.g"
 			op = __ROR;
 #line 2066 "hierSysParser.cpp"
 			}
@@ -2071,7 +2071,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_plus = LT(1);
 			match(PLUS);
-#line 665 "hierSys.g"
+#line 666 "hierSys.g"
 			op = __PLUS;
 #line 2077 "hierSysParser.cpp"
 			}
@@ -2082,7 +2082,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_minus = LT(1);
 			match(MINUS);
-#line 666 "hierSys.g"
+#line 667 "hierSys.g"
 			op = __MINUS;
 #line 2088 "hierSysParser.cpp"
 			}
@@ -2093,7 +2093,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_mul = LT(1);
 			match(MUL);
-#line 667 "hierSys.g"
+#line 668 "hierSys.g"
 			op = __MUL;
 #line 2099 "hierSysParser.cpp"
 			}
@@ -2104,7 +2104,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_EQUAL = LT(1);
 			match(EQUAL);
-#line 668 "hierSys.g"
+#line 669 "hierSys.g"
 			op = __EQUAL;
 #line 2110 "hierSysParser.cpp"
 			}
@@ -2115,7 +2115,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_notequal = LT(1);
 			match(NOTEQUAL);
-#line 669 "hierSys.g"
+#line 670 "hierSys.g"
 			op = __NOTEQUAL;
 #line 2121 "hierSysParser.cpp"
 			}
@@ -2126,7 +2126,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_less = LT(1);
 			match(LESS);
-#line 670 "hierSys.g"
+#line 671 "hierSys.g"
 			op = __LESS;
 #line 2132 "hierSysParser.cpp"
 			}
@@ -2137,7 +2137,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_lessequal = LT(1);
 			match(LESSEQUAL);
-#line 671 "hierSys.g"
+#line 672 "hierSys.g"
 			op = __LESSEQUAL;
 #line 2143 "hierSysParser.cpp"
 			}
@@ -2148,7 +2148,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_greater = LT(1);
 			match(GREATER);
-#line 672 "hierSys.g"
+#line 673 "hierSys.g"
 			op = __GREATER;
 #line 2154 "hierSysParser.cpp"
 			}
@@ -2159,7 +2159,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_greaterequal = LT(1);
 			match(GREATEREQUAL);
-#line 673 "hierSys.g"
+#line 674 "hierSys.g"
 			op = __GREATEREQUAL;
 #line 2165 "hierSysParser.cpp"
 			}
@@ -2170,7 +2170,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 			{
 			id_concat = LT(1);
 			match(CONCAT);
-#line 674 "hierSys.g"
+#line 675 "hierSys.g"
 			op = __CONCAT;
 #line 2176 "hierSysParser.cpp"
 			}
@@ -2190,7 +2190,7 @@ rtlOperation  hierSysParser::rtl_Binary_Operation() {
 }
 
 rtlOperation  hierSysParser::rtl_Operation() {
-#line 641 "hierSys.g"
+#line 642 "hierSys.g"
 	rtlOperation op;
 #line 2196 "hierSysParser.cpp"
 	
@@ -2245,12 +2245,12 @@ rtlOperation  hierSysParser::rtl_Operation() {
 rtlType*  hierSysParser::rtl_IntegerType_Declaration(
 	rtlThread* thrd
 ) {
-#line 693 "hierSys.g"
+#line 694 "hierSys.g"
 	rtlType* t;
 #line 2251 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  lid = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  hid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 693 "hierSys.g"
+#line 694 "hierSys.g"
 	
 		int L = INT_MIN;
 		bool neg_L = false;
@@ -2266,7 +2266,7 @@ rtlType*  hierSysParser::rtl_IntegerType_Declaration(
 		case MINUS:
 		{
 			match(MINUS);
-#line 700 "hierSys.g"
+#line 701 "hierSys.g"
 			neg_L = true;
 #line 2272 "hierSysParser.cpp"
 			break;
@@ -2288,7 +2288,7 @@ rtlType*  hierSysParser::rtl_IntegerType_Declaration(
 		case MINUS:
 		{
 			match(MINUS);
-#line 700 "hierSys.g"
+#line 701 "hierSys.g"
 			neg_H = true;
 #line 2294 "hierSysParser.cpp"
 			break;
@@ -2305,7 +2305,7 @@ rtlType*  hierSysParser::rtl_IntegerType_Declaration(
 		}
 		hid = LT(1);
 		match(UINTEGER);
-#line 701 "hierSys.g"
+#line 702 "hierSys.g"
 		
 				L = (neg_L ? - atoi(lid->getText().c_str()) : atoi (lid->getText().c_str()));
 				H = (neg_H ? - atoi(hid->getText().c_str()) : atoi (hid->getText().c_str()));
@@ -2323,11 +2323,11 @@ rtlType*  hierSysParser::rtl_IntegerType_Declaration(
 rtlType*  hierSysParser::rtl_UnsignedType_Declaration(
 	rtlThread* thrd
 ) {
-#line 709 "hierSys.g"
+#line 710 "hierSys.g"
 	rtlType* t;
 #line 2329 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  wid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 709 "hierSys.g"
+#line 710 "hierSys.g"
 	
 		int width;
 	
@@ -2339,7 +2339,7 @@ rtlType*  hierSysParser::rtl_UnsignedType_Declaration(
 		wid = LT(1);
 		match(UINTEGER);
 		match(GREATER);
-#line 714 "hierSys.g"
+#line 715 "hierSys.g"
 		
 				t = Find_Or_Make_Unsigned_Type(atoi(wid->getText().c_str()));
 			
@@ -2355,11 +2355,11 @@ rtlType*  hierSysParser::rtl_UnsignedType_Declaration(
 rtlType*  hierSysParser::rtl_SignedType_Declaration(
 	rtlThread* thrd
 ) {
-#line 719 "hierSys.g"
+#line 720 "hierSys.g"
 	rtlType* t;
 #line 2361 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  wid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 719 "hierSys.g"
+#line 720 "hierSys.g"
 	
 		int width;
 	
@@ -2371,7 +2371,7 @@ rtlType*  hierSysParser::rtl_SignedType_Declaration(
 		wid = LT(1);
 		match(UINTEGER);
 		match(GREATER);
-#line 724 "hierSys.g"
+#line 725 "hierSys.g"
 		
 				t = Find_Or_Make_Signed_Type(atoi(wid->getText().c_str()));
 			
@@ -2387,11 +2387,11 @@ rtlType*  hierSysParser::rtl_SignedType_Declaration(
 rtlType*  hierSysParser::rtl_ArrayType_Declaration(
 	rtlThread* thrd
 ) {
-#line 729 "hierSys.g"
+#line 730 "hierSys.g"
 	rtlType* t;
 #line 2393 "hierSysParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  did = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 729 "hierSys.g"
+#line 730 "hierSys.g"
 	
 		vector<int> dims;
 		rtlType* ele_type = NULL;
@@ -2408,7 +2408,7 @@ rtlType*  hierSysParser::rtl_ArrayType_Declaration(
 				did = LT(1);
 				match(UINTEGER);
 				match(RBRACKET);
-#line 735 "hierSys.g"
+#line 736 "hierSys.g"
 				dims.push_back(atoi(did->getText().c_str()));
 #line 2414 "hierSysParser.cpp"
 			}
@@ -2422,7 +2422,7 @@ rtlType*  hierSysParser::rtl_ArrayType_Declaration(
 		}  // ( ... )+
 		match(OF);
 		ele_type=rtl_Type_Declaration(thrd);
-#line 738 "hierSys.g"
+#line 739 "hierSys.g"
 		
 				t = Find_Or_Make_Array_Type(dims, ele_type);
 			

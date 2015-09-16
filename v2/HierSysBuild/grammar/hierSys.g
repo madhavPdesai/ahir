@@ -18,6 +18,7 @@ header "post_include_hpp" {
 #include <rtlType.h>
 #include <rtlExpression.h>
 #include <rtlObject.h>
+#include <Value.hpp>
 #include <rtlValue.h>
 #include <rtlStatement.h>
 #include <rtlThread.h>

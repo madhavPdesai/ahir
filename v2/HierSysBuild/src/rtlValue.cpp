@@ -2,15 +2,60 @@
 #include <ostream>
 #include <assert.h>
 #include <hierSystem.h>
-#include <rtlThread.h>
+#include <rtlEnums.h>
 #include <rtlType.h>
+#include <Value.hpp>
 #include <rtlValue.h>
+#include <rtlThread.h>
+
+using namespace std;
+using namespace _base_value_;
+
+void rtlIntegerValue::Print(ostream& ofile)
+{
+	ofile << " " << _value << " ";
+}	
+
+
+void rtlUnsignedValue::Print(ostream& ofile)
+{
+}
+
+int  rtlUnsignedValue::To_Integer()
+{
+}		
+bool rtlUnsignedValue::Get_Bit(int bi)
+{
+}
+void rtlUnsignedValue::Set_Bit(int bit_index, bool bit_val)
+{
+}
 
 	
+void rtlSignedValue::Print(ostream& ofile)
+{
+}
+
+int  rtlSignedValue::To_Integer()
+{
+}
+
+		
+	
+void rtlArrayValue::Print(ostream& ofile)
+{
+	for(int I = 0, fI = _values.size(); I < fI; I++)
+	{
+		ofile << " ";
+		_values[I]->Print(ofile);
+		ofile << " ";
+	}
+}
+
 rtlValue* rtlArrayValue::Get_Value(vector<int>& indices)
 {
 	assert(_type->Is("rtlArrayType"));	
-	rtlArrayType* at = (rtlArrayType*) t;	
+	rtlArrayType* at = (rtlArrayType*) _type;	
 	
 	int idx = at->Get_Index(indices);
 
@@ -39,7 +84,7 @@ rtlValue* Make_Rtl_Value(rtlType* t, vector<string>& init_values)
 
 		rtlUnsignedType* ut  = (rtlUnsignedType*) t;
 		int width = ut->Get_Width();
-		Value* v = new Unsigned(width, init_string);
+		_base_value_::Value* v = new Unsigned(width, init_string);
 		ret_val = new rtlUnsignedValue(t, v);
 	}
 	else if(t->Is("rtlSignedType"))
@@ -73,5 +118,32 @@ rtlValue* Make_Rtl_Value(rtlType* t, vector<string>& init_values)
 		assert(0);
 
 	return(ret_val);
+}
+
+rtlValue* Make_Unsigned_Zero(rtlType* t)
+{
+	// TODO
+	assert(0);
+}
+
+rtlValue* Perform_Unary_Operation(rtlOperation op, rtlValue* v)
+{
+	// TODO 
+	assert(0);
+}
+
+rtlValue* Perform_Binary_Operation(rtlOperation op, rtlValue* f, rtlValue* s)
+{
+	assert(0);
+}
+
+bool  Is_Zero(rtlValue* v)
+{
+	assert(0);
+}
+
+bool  Are_Equal(rtlValue* f, rtlValue* s)
+{
+	assert(0);
 }
 

@@ -55,6 +55,10 @@ class hierRoot
 	virtual string Kind() {return("hierRoot");}
 	bool Is(string K) {return(K==this->Kind());}
 
+
+	virtual void Print(ostream& ofile) {assert(0);}
+	void Print(ofstream& ofile);
+	void Print(string& ostring);
 	
 };
 
@@ -101,7 +105,7 @@ class hierSystemInstance: public hierRoot
 	}
 
 
-	void Print(ostream& ofile);
+	virtual void Print(ostream& ofile);
 	void Print_Vhdl(ostream& ofile);
 };
 
@@ -124,10 +128,12 @@ class hierSystem: public hierRoot
 	set<string> _driven_pipes;
 	set<string> _driving_pipes;
 
+	map<string, rtlThread*> _thread_map;
+
 	//
 	// order is important (for generating C model).
 	//
-	map<string, rtlThread*> _thread_map;
+	map<string, rtlString*> _rtl_string_map;
 	vector<rtlString*> _rtl_strings;
 
 
@@ -358,14 +364,27 @@ public:
 	void Add_Thread(rtlThread* t);
 	void Add_String(rtlString* ti);
 
-	rtlThread* Find_Thread(string tname);
-	rtlString* Find_String(string sname);
+	rtlThread* Find_Thread(string tname)
+	{
+		if(_thread_map.find(tname) != _thread_map.end())
+			return(_thread_map[tname]);
+		else
+			return(NULL);
+	}
+
+	rtlString* Find_String(string sname)
+	{
+		if(_rtl_string_map.find(sname) != _rtl_string_map.end())
+			return(_rtl_string_map[sname]);
+		else
+			return(NULL);
+	}
 
 	// return true if error found.
 	bool Check_For_Errors();
 
 	// print function.. reproduce description.
-	void Print(ostream& ofile);
+	virtual void Print(ostream& ofile);
 
 	// print VHDL
 	void Print_Vhdl_Port_Declarations(ostream& ofile);

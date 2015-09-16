@@ -12,28 +12,7 @@ class rtlStatement: public hierRoot
 	public:
 
 	rtlStatement(rtlThread* p);
-
-	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL(ostream& ofile);
-
-	// signal declarations associated with the statement.
-	// e.g. for the call/return wait signals.
-	virtual void Print_VHDL_Signal_Declarations(ostream& ofile) {}
-
-	// variable declarations associated with each statement.
-	// e.g. for the call/return wait variables.
-	//      for volatile statements.
-	virtual void Print_VHDL_Variable_Declarations(ostream& ofile) {}
-
-	// default assignments for the variabls
-	virtual void Print_VHDL_Variable_Default_Assignments(ostream& ofile) {}
-	// reset values to signals.
-	virtual void Print_VHDL_Reset_Assignments(ostream& ofile) {}
-	// immediates (e.g. emits, calls).
-	virtual void Print_VHDL_Immediate_Assignments(ostream& ofile) {}
-	// clocked assignments (e.g. call wait signals).
-	virtual void Print_VHDL_Clocked_Assignments(ostream& ofile) {}
-
+	virtual void Print(ostream& ofile) {assert(0);}
 };
 
 class rtlAssignStatement: public rtlStatement
@@ -50,19 +29,6 @@ class rtlAssignStatement: public rtlStatement
 	bool Get_Volatile() {return(_volatile);}
 
 	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL(ostream& ofile);
-
-	// signal declarations associated with the statement.
-	// e.g. for the call/return wait signals.
-	virtual void Print_VHDL_Signal_Declarations(ostream& ofile) {}
-	// variable declarations associated with each statement.
-	// e.g. for the call/return wait variables.
-	virtual void Print_VHDL_Variable_Declarations(ostream& ofile) {}
-	// default assignments for the variabls
-	virtual void Print_VHDL_Variable_Default_Assignments(ostream& ofile) {}
-	// reset values to signals.
-	virtual void Print_VHDL_Reset_Assignments(ostream& ofile) {}
-	// immediates (e.g. emits, calls).
 };
 
 class rtlEmitStatement: public rtlStatement
@@ -70,21 +36,12 @@ class rtlEmitStatement: public rtlStatement
 	rtlObject* _object;
 
 	public:
-	rtlEmitStatement(rtlThread* p, rtlObject* emittee);
+	rtlEmitStatement(rtlThread* p, rtlObject* emittee):rtlStatement(p)
+	{
+		_object = emittee;
+	}
 
 	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL(ostream& ofile);
-	// signal declarations associated with the statement.
-	// e.g. for the call/return wait signals.
-	virtual void Print_VHDL_Signal_Declarations(ostream& ofile) {}
-	// variable declarations associated with each statement.
-	// e.g. for the call/return wait variables.
-	virtual void Print_VHDL_Variable_Declarations(ostream& ofile) {}
-	// default assignments for the variabls
-	virtual void Print_VHDL_Variable_Default_Assignments(ostream& ofile) {}
-	// reset values to signals.
-	virtual void Print_VHDL_Reset_Assignments(ostream& ofile) {}
-	// immediates (e.g. emits, calls).
 };
 
 class rtlGotoStatement: public rtlStatement
@@ -92,10 +49,9 @@ class rtlGotoStatement: public rtlStatement
 	string _label;
 
 	public:
-	rtlGotoStatement(rtlThread* p, string lbl);
+	rtlGotoStatement(rtlThread* p, string lbl):rtlStatement(p) { _label = lbl;}
 
 	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL(ostream& ofile);
 
 };
 
@@ -109,22 +65,15 @@ class rtlIfStatement: public rtlStatement
 	rtlIfStatement(rtlThread* p,
 			rtlExpression* test, 
 			rtlBlockStatement* if_block,
-			rtlBlockStatement* else_block);
+			rtlBlockStatement* else_block):rtlStatement(p)
+	{
+		_test = test;
+		_if_block = if_block;
+		_else_block  = else_block;
+	}
+	
 
 	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL(ostream& ofile);
-
-	// signal declarations associated with the statement.
-	// e.g. for the call/return wait signals.
-	virtual void Print_VHDL_Signal_Declarations(ostream& ofile) {}
-	// variable declarations associated with each statement.
-	// e.g. for the call/return wait variables.
-	virtual void Print_VHDL_Variable_Declarations(ostream& ofile) {}
-	// default assignments for the variabls
-	virtual void Print_VHDL_Variable_Default_Assignments(ostream& ofile) {}
-	// reset values to signals.
-	virtual void Print_VHDL_Reset_Assignments(ostream& ofile) {}
-	// immediates (e.g. emits, calls).
 
 };
 
@@ -134,21 +83,12 @@ class rtlBlockStatement: public rtlStatement
 	vector<rtlStatement*> _statement_block;
 
 	public:
-	rtlBlockStatement(rtlThread* p, vector<rtlStatement*>& sblock);
+	rtlBlockStatement(rtlThread* p, vector<rtlStatement*>& sblock): rtlStatement(p)
+	{
+		_statement_block = sblock;
+	}
 
 	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL(ostream& ofile);
-	// signal declarations associated with the statement.
-	// e.g. for the call/return wait signals.
-	virtual void Print_VHDL_Signal_Declarations(ostream& ofile) {}
-	// variable declarations associated with each statement.
-	// e.g. for the call/return wait variables.
-	virtual void Print_VHDL_Variable_Declarations(ostream& ofile) {}
-	// default assignments for the variabls
-	virtual void Print_VHDL_Variable_Default_Assignments(ostream& ofile) {}
-	// reset values to signals.
-	virtual void Print_VHDL_Reset_Assignments(ostream& ofile) {}
-	// immediates (e.g. emits, calls).
 
 };
 
@@ -157,23 +97,12 @@ class rtlLabeledBlockStatement: public rtlBlockStatement
 	string _label; 
 
 	public:
-	rtlLabeledBlockStatement(rtlThread* p, string lbl, vector<rtlStatement*>& sblock);
+	rtlLabeledBlockStatement(rtlThread* p, string lbl, vector<rtlStatement*>& sblock):rtlBlockStatement(p,sblock)
+	{
+		_label = lbl;
+	}
 
 	virtual void Print(ostream& ofile);
-	virtual void Print_VHDL(ostream& ofile);
-
-	// signal declarations associated with the statement.
-	// e.g. for the call/return wait signals.
-	virtual void Print_VHDL_Signal_Declarations(ostream& ofile) {}
-	// variable declarations associated with each statement.
-	// e.g. for the call/return wait variables.
-	virtual void Print_VHDL_Variable_Declarations(ostream& ofile) {}
-	// default assignments for the variabls
-	virtual void Print_VHDL_Variable_Default_Assignments(ostream& ofile) {}
-	// reset values to signals.
-	virtual void Print_VHDL_Reset_Assignments(ostream& ofile) {}
-	// immediates (e.g. emits, calls).
-
 };
 
 
@@ -182,6 +111,7 @@ class rtlNullStatement: public rtlStatement
 {
 	public:
 	rtlNullStatement(rtlThread* p);
+	virtual void Print(ostream& ofile);
 };
 
 #endif

@@ -23,6 +23,19 @@ hierRoot::hierRoot()
 	_index = root_object_counter;	
 	_id = "anon_" + IntToStr(root_object_counter);
 }
+	
+void hierRoot::Print(ofstream& ofile)
+{
+  ostream *outstr = &ofile;
+  this->Print(*outstr);
+}
+	
+void hierRoot::Print(string& ostring)
+{
+  ostringstream string_stream(ostringstream::out);
+  this->Print(string_stream);
+  ostring += string_stream.str();
+}
 
 void hierSystem::Add_Thread(rtlThread* t)
 {
@@ -33,11 +46,14 @@ void hierSystem::Add_Thread(rtlThread* t)
 void hierSystem::Add_String(rtlString* t)
 {
 
-	// need to check that no two instances
-	// have the same instance-id.
-  assert(0);
-
-  _rtl_strings.push_back(t);
+	string tname  = t->Get_Id();
+	if(_rtl_string_map.find(tname) != _rtl_string_map.end())
+	{
+		this->Report_Error("multiple thread instances with instance name " + tname);
+		return;
+	}
+	_rtl_string_map[tname] = t;
+  	_rtl_strings.push_back(t);
 
   // do nothing else for now.	
 }

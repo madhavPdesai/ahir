@@ -4,6 +4,7 @@
 #include <hierSystem.h>
 #include <rtlEnums.h>
 #include <rtlType.h>
+#include <Value.hpp>
 #include <rtlValue.h>
 #include <rtlObject.h>
 #include <rtlExpression.h>
@@ -36,6 +37,11 @@ rtlSimpleObjectReference::rtlSimpleObjectReference(rtlObject* obj): rtlObjectRef
 	}
 }
 
+
+void rtlConstantLiteralExpression::Print(ostream& ofile)
+{
+	this->Get_Value()->Print(ofile);
+}
 void rtlSimpleObjectReference::Print(ostream& ofile) 
 {
 	if(_value != NULL)

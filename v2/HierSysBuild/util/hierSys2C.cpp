@@ -1,4 +1,5 @@
 #include <signal.h>
+#include <Value.hpp>
 #include <hierSystem.h>
 #include <hierSysParser.hpp>
 #include <hierSysLexer.hpp>

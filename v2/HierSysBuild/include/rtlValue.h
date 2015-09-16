@@ -1,10 +1,11 @@
 #ifndef rtl_Value_h__
 #define rtl_Value_h__
 #include<rtlType.h>
-class Value;
-class Unsigned;
-class Signed;
+
+using namespace _base_value_;
+
 class hierRoot;
+enum rtlOperation;
 
 class rtlValue:public hierRoot
 {
@@ -14,7 +15,8 @@ class rtlValue:public hierRoot
 	public:
 	rtlValue(rtlType* t) { t = NULL;}
 	rtlType* Get_Type() {return(_type);}
-	virtual void Print(ostream& ofile);
+	virtual void Print(ostream& ofile) {assert(0);}
+
 	virtual int  To_Integer() {assert(0);}
 
 	virtual bool Get_Bit(int bit_index) {assert(0);}
@@ -32,8 +34,6 @@ class rtlIntegerValue: public rtlValue
 	int Get_Value() {return(_value);}
 	virtual void Print(ostream& ofile);
 	virtual int  To_Integer() {return(_value);}
-	virtual bool Get_Bit(int bi);
-	virtual void Set_Bit(int bit_index, bool bit_val);
 };
 
 
@@ -58,11 +58,8 @@ class rtlSignedValue: public rtlUnsignedValue
 	rtlSignedValue(rtlType* t, Value* v):rtlUnsignedValue(t,v) {}
 	virtual void Print(ostream& ofile);
 	virtual int  To_Integer();		
-	virtual bool Get_Bit(int bi);
-	virtual void Set_Bit(int bit_index, bool bit_val);
 };
 
-class Value;
 class rtlArrayValue: public rtlValue
 {
 	vector<rtlValue*> _values;

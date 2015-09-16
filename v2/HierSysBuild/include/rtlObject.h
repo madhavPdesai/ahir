@@ -8,17 +8,12 @@ class rtlObject: public hierRoot
 	protected:
 
 	string _name;
-	int    _width;
 	rtlType* _type;
 
         public:
 
 	rtlObject(string name, rtlType* t);
 
-
-	string Get_Name() {return(_name);}
-	int Get_Width() {return(_width);}
-	int Get_Depth() {assert(0);}
 
 	virtual bool Is_Variable() {return(false);}
 	virtual bool Is_Signal()   {return(false);}

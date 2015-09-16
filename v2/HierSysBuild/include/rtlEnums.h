@@ -49,8 +49,7 @@ enum rtlOperation {
 	__PLUS,
 	__MINUS,
 	__MUL,
-	__CONCAT,
-	__SLICE
+	__CONCAT
 };
 
 string rtlOp_To_String(rtlOperation op);

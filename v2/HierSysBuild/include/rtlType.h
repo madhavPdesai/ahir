@@ -55,11 +55,11 @@ class rtlUnsignedType: public rtlType
 {
  protected:
   // width > 0
-  unsigned int _width;
+  int _width;
 
  public:
-  virtual unsigned int Get_Width() {return(this->_width);}
-  rtlUnsignedType(unsigned int width):rtlType() {_width = width;}
+  virtual int Get_Width() {return(this->_width);}
+  rtlUnsignedType(int width):rtlType() {_width = width;}
 
   virtual string Kind() {return("rtlUnsignedType");}
    
@@ -77,7 +77,7 @@ class rtlSignedType: public rtlUnsignedType
 
  public:
 
-  rtlSignedType(unsigned int width):rtlUnsignedType(width) {}
+  rtlSignedType(int width):rtlUnsignedType(width) {}
   void Print(ostream& ofile);
   virtual string Kind() {return("rtlSignedType");}
 
@@ -91,7 +91,7 @@ class rtlSignedType: public rtlUnsignedType
 class rtlArrayType: public rtlType
 {
   // multi-dimensional array types are possible
-  vector<unsigned int> _dimensions;
+  vector<int> _dimensions;
   
   // element type..
   rtlType* _element_type;
@@ -100,8 +100,8 @@ class rtlArrayType: public rtlType
 
   virtual string Kind() {return("rtlArrayType");}
 
-  unsigned int Get_Number_Of_Dimensions() {return(this->_dimensions.size());}
-  unsigned int Get_Dimension(int I)
+  int Get_Number_Of_Dimensions() {return(this->_dimensions.size());}
+  int Get_Dimension(int I)
 	{
 		if( (I >= 0) && (I < _dimensions.size()))
 		{
@@ -114,14 +114,14 @@ class rtlArrayType: public rtlType
   virtual rtlType* Get_Element_Type() {return(this->_element_type);}
   virtual rtlType* Get_Element_Type(int idx) {return(this->_element_type);} 
 
-  rtlArrayType(rtlType* element_type, vector<unsigned int>& dimensions);
+  rtlArrayType(rtlType* element_type, vector<int>& dimensions);
 
 
   virtual int Size() 
   {
     int ret_val = this->Get_Element_Type()->Size();
 
-    for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
+    for(int i=0; i < this->Get_Number_Of_Dimensions(); i++)
       ret_val =  ret_val * this->_dimensions[i];
 
     return(ret_val);
@@ -131,7 +131,7 @@ class rtlArrayType: public rtlType
   virtual int Number_Of_Elements()
   {
     int ret_val = 1;
-    for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
+    for(int i=0; i < this->Get_Number_Of_Dimensions(); i++)
       ret_val = ret_val*(this->_dimensions[i]);
     return(ret_val);
   }

@@ -1727,7 +1727,7 @@ void hierSysLexer::mWHITESPACE(bool _createToken) {
 		case 0xa /* '\n' */ :
 		{
 			match('\n' /* charlit */ );
-#line 832 "hierSys.g"
+#line 833 "hierSys.g"
 			newline();
 #line 1733 "hierSysLexer.cpp"
 			break;
@@ -1738,7 +1738,7 @@ void hierSysLexer::mWHITESPACE(bool _createToken) {
 		}
 		}
 		}
-#line 833 "hierSys.g"
+#line 834 "hierSys.g"
 		
 			_ttype = ANTLR_USE_NAMESPACE(antlr)Token::SKIP; 
 		
@@ -1777,11 +1777,11 @@ void hierSysLexer::mSINGLELINECOMMENT(bool _createToken) {
 		_loop221:;
 		} // ( ... )*
 		match('\n' /* charlit */ );
-#line 841 "hierSys.g"
+#line 842 "hierSys.g"
 		newline();
 #line 1783 "hierSysLexer.cpp"
 		}
-#line 843 "hierSys.g"
+#line 844 "hierSys.g"
 		
 			_ttype = ANTLR_USE_NAMESPACE(antlr)Token::SKIP; 
 		
