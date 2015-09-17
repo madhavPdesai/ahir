@@ -80,7 +80,7 @@ rtlType* Find_Or_Make_Integer_Type(int low_val, int high_val)
 
 	if(identifier_to_type_map.find(lookup_id) == identifier_to_type_map.end())
 	{
-		rtlType* ret_type = new rtlIntegerType(low_val, high_val);
+		ret_type = new rtlIntegerType(low_val, high_val);
 		identifier_to_type_map[lookup_id] = ret_type;
 		type_to_identifier_map[ret_type] = lookup_id;
 	}
@@ -98,7 +98,7 @@ rtlType* Find_Or_Make_Unsigned_Type(int width)
 
 	if(identifier_to_type_map.find(lookup_id) == identifier_to_type_map.end())
 	{
-		rtlType* ret_type = new rtlUnsignedType(width);
+		ret_type = new rtlUnsignedType(width);
 		identifier_to_type_map[lookup_id] = ret_type;
 		type_to_identifier_map[ret_type] = lookup_id;
 	}
@@ -116,7 +116,7 @@ rtlType* Find_Or_Make_Signed_Type(int width)
 
 	if(identifier_to_type_map.find(lookup_id) == identifier_to_type_map.end())
 	{
-		rtlType* ret_type = new rtlSignedType(width);
+		ret_type = new rtlSignedType(width);
 		identifier_to_type_map[lookup_id] = ret_type;
 		type_to_identifier_map[ret_type] = lookup_id;
 	}
@@ -141,7 +141,7 @@ rtlType* Find_Or_Make_Array_Type(vector<int> dims, rtlType* element_type)
 
 	if(identifier_to_type_map.find(lookup_id) == identifier_to_type_map.end())
 	{
-		rtlType* ret_type = new rtlArrayType(element_type, dims);
+		ret_type = new rtlArrayType(element_type, dims);
 		identifier_to_type_map[lookup_id] = ret_type;
 		type_to_identifier_map[ret_type] = lookup_id;
 	}

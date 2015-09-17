@@ -625,6 +625,27 @@ bool Unsigned::Equal(Unsigned& b)
 	return(!this->Greater(b) && !this->Less_Than(b));
 }
 
+void Unsigned::Resize(int w)
+{
+	int old_width = _width;
+	UWord* old_bit_field = _bit_field;
+	int old_array_size = this->Array_Size();
+
+	_bit_field = 0;
+
+	this->Reset_And_Clear(w);
+
+	int CW =((old_width < w) ? old_array_size : this->Array_Size());
+
+	for(int idx = 0, fidx = CW; idx < fidx; idx++)
+	{
+		this->_bit_field[idx] = old_bit_field[idx];
+	}
+
+	delete [] old_bit_field;
+}
+
+
 Signed::~Signed()
 {
 }
@@ -660,11 +681,26 @@ UWord Signed::AtoI(string ival)
 	return(u_word);
 }
 
+void Signed::Resize(int w)
+{
+	this->Unsigned::Resize(w);
+	this->Sign_Extend();
+}
+
 void Signed::Sign_Extend()
 {
 	bool sign_bit = this->Get_Bit(_width-1);
-	for(int idx = __WORD_SIZE__-1; idx >= _width; idx--)
+	
+	int asize = __WORD_SIZE__ * this->Array_Size();
+	for(int idx = asize-1; idx >= _width; idx--)
 		this->Set_Bit(idx,sign_bit);
+}
+
+
+void Signed::Shift_Right(int idx)
+{
+	this->Unsigned::Shift_Right(idx);
+	this->Sign_Extend();
 }
 
 void Signed::Fill_Byte_Array(uint8_t* v_array, uint32_t v_array_size) 

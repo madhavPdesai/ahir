@@ -43,12 +43,13 @@ class rtlString: public hierRoot
 {
 
 	rtlThread* _base_thread;
-	map<string,string> _port_map;
+	map<string,vector<string> >  _actual_to_formal_port_map;
 
 
 	public:
 	
-	rtlString(string inst_name, rtlThread* base, vector<pair<string,string> >& port_map);
+	rtlString(string inst_name, rtlThread* base);
+	void Add_Port_Map_Entry(vector<string>& formals, string actual);
 	void Print(ostream& ofile);
 
 };

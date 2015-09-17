@@ -40,12 +40,19 @@ rtlSimpleObjectReference::rtlSimpleObjectReference(rtlObject* obj): rtlObjectRef
 
 void rtlConstantLiteralExpression::Print(ostream& ofile)
 {
+	ofile << " (";
+	this->_type->Print(ofile);
+	ofile << ") ";
 	this->Get_Value()->Print(ofile);
 }
 void rtlSimpleObjectReference::Print(ostream& ofile) 
 {
 	if(_value != NULL)
 	{
+		ofile << " (";
+		this->_type->Print(ofile);
+		ofile << ") ";
+
 		_value->Print(ofile);
 		return;
 	}
@@ -63,6 +70,9 @@ void rtlArrayObjectReference::Print(ostream& ofile)
 {
 	if(this->_value != NULL)
 	{
+		ofile << " (";
+		this->_type->Print(ofile);
+		ofile << ") ";
 		this->_value->Print(ofile);
 		return;
 	}
@@ -83,6 +93,10 @@ void rtlSliceExpression::Print(ostream& ofile)
 {
 	if(_value != NULL)
 	{
+		ofile << " (";
+		this->_type->Print(ofile);
+		ofile << ") ";
+
 		_value->Print(ofile);
 		return;
 	}
@@ -103,6 +117,15 @@ rtlUnaryExpression::rtlUnaryExpression(rtlOperation op, rtlExpression* rest):
 	
 void rtlUnaryExpression::Print(ostream& ofile)
 {
+	if(this->_value)
+	{
+		ofile << " (";
+		this->_type->Print(ofile);
+		ofile << ") ";
+		this->_value->Print(ofile);
+		return;
+	
+	}
 	ofile << "( ";
 	ofile << rtlOp_To_String(_op);
 	ofile << " ";
@@ -120,6 +143,15 @@ rtlBinaryExpression::rtlBinaryExpression(rtlOperation op, rtlExpression* first, 
 
 void rtlBinaryExpression::Print(ostream& ofile)
 {
+	if(this->_value)
+	{
+		ofile << " (";
+		this->_type->Print(ofile);
+		ofile << ") ";
+		this->_value->Print(ofile);
+		return;
+	}
+
 	ofile << "( ";
 	_first->Print(ofile);
 	ofile << " ";
@@ -140,6 +172,15 @@ rtlTernaryExpression::rtlTernaryExpression(rtlExpression* test, rtlExpression* i
 
 void rtlTernaryExpression::Print(ostream& ofile)
 {
+	if(this->_value)
+	{
+		ofile << " (";
+		this->_type->Print(ofile);
+		ofile << ") ";
+		this->_value->Print(ofile);
+		return;
+	}
+
 	ofile << "( ";
 	_test->Print(ofile);
 	ofile << " ? ";

@@ -28,12 +28,63 @@ $system Top
 		$pipe b 16
 		$signal bsig 16
 {
-        $pipe tmp 16
+        $pipe tmp1 16
+        $pipe tmp2 16
+        $pipe tmp3 16
         $signal tmp_sig 16
 
-	$def_thread   TT
-	$threadinstance tt0:TT
 
-        $instance i0  LLIB:Left   A => a Asig => asig  TMP => tmp TMPsig => tmp_sig 
-        $instance i1  RLIB:Right  TMPsig => tmp_sig TMP => tmp B => b Bsig => bsig
+        $instance i0  LLIB:Left   A => a Asig => asig  TMP => tmp1 TMPsig => tmp_sig 
+
+	$thread   REPEATER
+		$in     rack wack: $unsigned<1>
+		$out    rreq wreq : $unsigned<1>
+		$in     rdata : $unsigned<16>
+		$out    wdata : $unsigned<16>
+		$signal data_reg : $unsigned<16>
+		$constant O1: $unsigned<1> := ($unsigned<1>) _b1
+
+		<reset>  {
+			$emit rreq
+			$if (rack == O1)
+			{
+				$emit wreq
+				$volatile wdata := rdata
+				$if (wack == O1) 
+				{
+					$goto reset
+				}
+				$else
+				{
+				    $goto wait_state	
+				    data_reg := rdata
+				}
+			}
+			$else {
+				$goto reset
+			}
+		}
+		<wait_state>  {
+				$emit wreq
+				$volatile wdata := data_reg
+				$if(wack == O1)
+				{
+					$goto reset_state
+				}
+				$else
+				{
+					$goto wait_state
+				}
+		}
+
+	
+	$string tt0:REPEATER
+		(rreq rdata rack) => tmp1
+		(wreq wdata wack) => tmp2
+
+	$string tt1:REPEATER
+		(rreq rdata rack) => tmp2
+		(wreq wdata wack) => tmp3
+
+        $instance i1  RLIB:Right  TMPsig => tmp_sig TMP => tmp3 B => b Bsig => bsig
 }

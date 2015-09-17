@@ -177,6 +177,8 @@ namespace _base_value_
 
     // essentially convert the UWord array to a byte-array.
     virtual void Fill_Byte_Array(uint8_t* v_array, uint32_t v_array_size);
+
+    virtual void Resize(int w);
   };
 
 
@@ -222,9 +224,11 @@ namespace _base_value_
     bool Greater_Equal(Signed&);
     bool Less_Equal(Signed&);
 
+    virtual void Resize(int w);
     virtual void Sign_Extend();
     virtual void Fill_Byte_Array(uint8_t* v_array, uint32_t v_array_size);
 
+    virtual void Shift_Right(int idx);
   };
 
 

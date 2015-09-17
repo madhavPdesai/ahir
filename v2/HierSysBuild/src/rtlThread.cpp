@@ -38,25 +38,57 @@ void rtlThread::Print(ostream& ofile)
 	}
 }
 
-rtlString::rtlString(string inst_name, rtlThread* base, vector<pair<string,string> >& port_map):hierRoot(inst_name)
+rtlString::rtlString(string inst_name, rtlThread* base):hierRoot(inst_name)
 {
 	_base_thread = base;
-	for(int I = 0, fI = port_map.size(); I < fI; I++)
-	{
-		_port_map[port_map[I].first] = port_map[I].second;
-	}
-
-	// TODO: check if ok..
 }
 
+	
+void rtlString::Add_Port_Map_Entry(vector<string>& formals, string actual)
+{
+	assert((formals.size() == 1) || (formals.size() == 3));
+	_actual_to_formal_port_map[actual] = formals;
+
+	hierSystem* base_sys = this->_base_thread->Get_Parent();
+
+	string formal_obj = ((formals.size() == 1) ? formals[0] : formals[1]);
+	rtlObject* obj = this->_base_thread->Find_Object(formal_obj);
+
+	if(obj == NULL)
+	{
+		base_sys->Report_Error(" formal " + formals[0] + " not found for string port map for instance " + this->Get_Id());
+	}
+	else 
+	{
+		if(obj->Is_InPort())
+		{
+			base_sys->Set_Driving_Pipe(actual);
+		}
+		else if(obj->Is_OutPort())
+		{
+			base_sys->Set_Driven_Pipe(actual);
+		}
+		else
+		{
+			base_sys->Report_Error(" formal " + formals[0] + " not found for string port map for instance " + this->Get_Id());
+		}
+	}
+}
 
 void rtlString::Print(ostream& ofile)
 {
 	ofile << "$string " << this->Get_Id() << ":"  << _base_thread->Get_Id() << " ";
-	for(map<string,string>::iterator piter = _port_map.begin(), fpiter = _port_map.end();
+	ofile << endl;
+	for(map<string,vector<string> >::iterator piter = _actual_to_formal_port_map.begin(), fpiter = _actual_to_formal_port_map.end();
 			piter != fpiter; piter++)
 	{
-		ofile << "  " << (*piter).first << " => " << (*piter).second << endl;
+		ofile << "  (";
+		for(int I = 0, fI = (*piter).second.size(); I < fI; I++)
+		{
+			ofile << (*piter).second[I] << " ";
+		}
+		ofile << ") => ";
+		ofile <<  (*piter).first << endl;
 	}
 }
 

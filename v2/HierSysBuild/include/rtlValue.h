@@ -23,6 +23,33 @@ class rtlValue:public hierRoot
 	virtual void Set_Bit(int bit_index, bool bit_val) {assert(0);}
 
 	virtual rtlValue* Copy() {assert(0);}
+	virtual rtlValue* Resize(int w) {assert(0);}
+
+	virtual void Not() {assert(0);}
+	virtual void And(rtlValue* other) {assert(0);}
+	virtual void Or(rtlValue* other)  {assert(0);}
+	virtual void Xor(rtlValue* other) {assert(0);}
+	virtual void Nand(rtlValue* other) {assert(0);}
+	virtual void Nor(rtlValue* other)  {assert(0);}
+	virtual void Xnor(rtlValue* other) {assert(0);}
+
+	virtual void Shl(rtlValue* other) {assert(0);}
+	virtual void Shr(rtlValue* other) {assert(0);}
+	virtual void Rol(rtlValue* other) {assert(0);}
+	virtual void Ror(rtlValue* other) {assert(0);}
+	 
+	virtual void Plus(rtlValue* other) {assert(0);}
+	virtual void Minus(rtlValue* other) {assert(0);}
+	virtual void Mul(rtlValue* other) {assert(0);}
+
+	virtual bool Greater(rtlValue* other) {assert(0);}
+	virtual bool Less(rtlValue* other) {assert(0);}
+	virtual bool Equal(rtlValue* other) {assert(0);}
+	virtual bool GreaterEqual(rtlValue* other) {return(!this->Less(other));}
+	virtual bool LessEqual(rtlValue* other) {return(!this->Greater(other));}
+	virtual bool NotEqual(rtlValue* other) {return(!this->Equal(other));}
+
+	virtual void Concat(rtlValue* other) {assert(0);}
 };
 
 
@@ -33,16 +60,39 @@ class rtlIntegerValue: public rtlValue
 
 	public:
 	rtlIntegerValue(rtlType* t, int v):rtlValue(t) {_value = v;}
-	int Get_Value() {return(_value);}
+
 	virtual void Print(ostream& ofile);
 	virtual int  To_Integer() {return(_value);}
+
 	virtual rtlValue* Copy();
+
+	virtual void Not() {_value = ~_value;}
+	virtual void And(rtlValue* other) {_value = _value & other->To_Integer();}
+	virtual void Or(rtlValue* other)  {_value = _value | other->To_Integer();}
+	virtual void Xor(rtlValue* other) {_value = _value ^ other->To_Integer();}
+	virtual void Nand(rtlValue* other) {_value = ~(_value & other->To_Integer());}
+	virtual void Nor(rtlValue* other)  {_value = ~(_value | other->To_Integer());}
+	virtual void Xnor(rtlValue* other) {_value = ~(_value ^ other->To_Integer());}
+
+	virtual void Shl(rtlValue* other) {_value = _value << other->To_Integer();}
+	virtual void Shr(rtlValue* other) {_value = _value >> other->To_Integer();}
+	 
+	virtual void Plus(rtlValue* other) {_value = _value + other->To_Integer();}
+	virtual void Minus(rtlValue* other) {_value = _value + other->To_Integer();}
+	virtual void Mul(rtlValue* other) {_value = _value + other->To_Integer();}
+
+	virtual bool Greater(rtlValue* other) { return(_value > other->To_Integer());}
+	virtual bool Less(rtlValue* other) { return(_value < other->To_Integer());}
+	virtual bool Equal(rtlValue* other) { return(_value == other->To_Integer());}
+
 };
 
 
 
 class rtlUnsignedValue: public rtlValue
 {
+
+	protected:
 	Value* _value;
 
 	public:
@@ -54,6 +104,30 @@ class rtlUnsignedValue: public rtlValue
 	virtual rtlValue* Copy();
 
 	virtual Value* Get_Value() {return(_value);}
+	virtual rtlValue* Resize(int w);
+
+	virtual void Not();
+	virtual void And(rtlValue* other);
+	virtual void Or(rtlValue* other);
+	virtual void Xor(rtlValue* other);
+	virtual void Nand(rtlValue* other);
+	virtual void Nor(rtlValue* other);
+	virtual void Xnor(rtlValue* other);
+
+	virtual void Shl(rtlValue* other);
+	virtual void Shr(rtlValue* other);
+	virtual void Rol(rtlValue* other);
+	virtual void Ror(rtlValue* other);
+	 
+	virtual void Plus(rtlValue* other);
+	virtual void Minus(rtlValue* other);
+	virtual void Mul(rtlValue* other);
+
+	virtual bool Greater(rtlValue* other);
+	virtual bool Less(rtlValue* other);
+	virtual bool Equal(rtlValue* other);
+
+	virtual void Concat(rtlValue* other);
 };
 
 
@@ -65,6 +139,16 @@ class rtlSignedValue: public rtlUnsignedValue
 	virtual void Print(ostream& ofile);
 	virtual int  To_Integer();		
 	virtual rtlValue* Copy();
+	virtual rtlValue* Resize(int w);
+
+	virtual void Shr(rtlValue* other);
+	 
+	virtual void Plus(rtlValue* other);
+	virtual void Minus(rtlValue* other);
+	virtual void Mul(rtlValue* other);
+
+	virtual bool Greater(rtlValue* other);
+	virtual bool Less(rtlValue* other);
 };
 
 class rtlArrayValue: public rtlValue
@@ -87,6 +171,7 @@ class rtlArrayValue: public rtlValue
 	rtlValue* Get_Value(vector<int>& indices);
 	virtual void Print(ostream& ofile);
 	virtual rtlValue* Copy();
+
 };
 
 

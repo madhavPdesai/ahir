@@ -56,3 +56,21 @@ void rtlSignal::Print(ostream& ofile)
 	_type->Print(ofile);
 	ofile << endl;
 }
+
+// Print declaration.
+void rtlInPort::Print(ostream& ofile)
+{
+	ofile << " $in " << this->Get_Id();
+	ofile << " : ";
+	_type->Print(ofile);
+	ofile << endl;
+}
+
+// Print declaration.
+void rtlOutPort::Print(ostream& ofile)
+{
+	ofile << " $out " << this->Get_Id();
+	ofile << " : ";
+	_type->Print(ofile);
+	ofile << endl;
+}

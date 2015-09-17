@@ -326,31 +326,38 @@ rtl_Thread[hierSystem* sys] returns [rtlThread* t]
 rtl_String[hierSystem* sys] returns [rtlString* ti]
 {
 	ti = NULL;
-	vector<pair<string,string> > pmap;
+
+	string actual;
+	vector<string> formals;
+
 }:
         STRING 
 		inst_name_id: SIMPLE_IDENTIFIER
 		COLON
 		thread_name_id: SIMPLE_IDENTIFIER
-
-		( formal_id: SIMPLE_IDENTIFIER IMPLIES actual_id:SIMPLE_IDENTIFIER 
+        	{ 
+			rtlThread* bt = sys->Find_Thread(thread_name_id->getText());
+            		if (bt == NULL)
 			{
-				pmap.push_back(pair<string,string> (formal_id->getText(), actual_id->getText()));
+                    		sys->Report_Error("Error: could not find base thread " + 
+                                      thread_name_id->getText() + " in system " + sys->Get_Id());
+			
+			}
+			else
+			{
+                    		ti = new rtlString(inst_name_id->getText(), bt);
+			}
+		}
+
+		( LPAREN (formal_id: SIMPLE_IDENTIFIER {formals.push_back(formal_id->getText());})+ RPAREN
+			IMPLIES actual_id:SIMPLE_IDENTIFIER 
+			{
+				actual = actual_id->getText();
+				if(ti != NULL)
+					ti->Add_Port_Map_Entry(formals, actual);
+				formals.clear();
 			}
 		)*
-        {
-            rtlThread* bt = sys->Find_Thread(thread_name_id->getText());
-            if (bt != NULL)
-                {
-                    ti = new rtlString(inst_name_id->getText(), bt, pmap);
-                    sys->Add_String(ti);
-                }
-            else
-                {
-                    sys->Report_Error("Error: could not find base thread " + 
-                                      thread_name_id->getText() + " in system " + sys->Get_Id());
-                }
-        }	
     ;
 
 
@@ -360,49 +367,61 @@ rtl_ObjectDeclaration[rtlThread* t]
 	bool variable_flag = false;
 	bool constant_flag = false;
 	bool signal_flag = false;
+	bool in_flag = false;
+	bool out_flag = false;
 	rtlObject* obj = NULL;
 	rtlType* type = NULL;
 	vector<string> names;
 	vector<string> init_values;
+	rtlExpression* init_expr = NULL;
+	rtlValue* init_value = NULL;
 }:
         (
             (VARIABLE {variable_flag  = true;}) |
 		(CONSTANT {constant_flag  = true;}) |
-		(SIGNAL   {signal_flag    = true;}) 
+		(SIGNAL   {signal_flag    = true;})  |
+		(IN  {in_flag = true;}) |
+		(OUT {out_flag = true;})
 	)
 	( sid: SIMPLE_IDENTIFIER {names.push_back(sid->getText());} )+
         COLON
         (type = rtl_Type_Declaration[t])
-        (ASSIGNEQUAL 
-            (	
-                (ibs: UINTEGER  {init_values.push_back(ibs->getText());})  |
-        (bbs: BINARY  {init_values.push_back(bbs->getText());})  |
-        (hbs: HEXADECIMAL  {init_values.push_back(hbs->getText());}) 
-    )*)
+        (ASSIGNEQUAL init_expr=rtl_Expression[t,type] {init_expr->Evaluate(t); init_value = init_expr->Get_Value();})?
 
-    {
-        for(int I = 0, fI = names.size(); I < fI; I++)
+{
+	for(int I = 0, fI = names.size(); I < fI; I++)
+	{
+		string obj_name = names[I];
+		obj = NULL;
+		if(variable_flag) 
 		{
-			string obj_name = names[I];
-            obj = NULL;
-			if(variable_flag) 
-                {
-                    obj = new rtlVariable(obj_name, type); 
-                }
-            else if(signal_flag)
-                {
-                    obj = new rtlSignal(obj_name, type); 
-                }
-            else if(constant_flag)
-                {
-                    rtlValue* val = Make_Rtl_Value(type, init_values);	
-                    obj = new rtlConstant(obj_name, type, val);
-                }
-            t->Add_Object(obj);
-        }
+			obj = new rtlVariable(obj_name, type); 
+		}
+		else if(signal_flag)
+		{
+			obj = new rtlSignal(obj_name, type); 
+		}
+		else if(in_flag)
+		{
+			obj = new rtlInPort(obj_name, type); 
+		}
+		else if(out_flag)
+		{
+			obj = new rtlOutPort(obj_name, type); 
+		}
+		else if(constant_flag)
+		{
+			if(init_value == NULL)
+				t->Get_Parent()->Report_Error("initial value of constant " + obj_name + " could not be evaluated ");
+			else
+				obj = new rtlConstant(obj_name, type, init_value);
+		}
+		if(obj != NULL)
+			t->Add_Object(obj);
 	}
+}
 
-    ;
+;
 
 
 
@@ -410,12 +429,12 @@ rtl_ObjectDeclaration[rtlThread* t]
 // rtl-statement
 rtl_SimpleStatement[rtlThread* t] returns [rtlStatement* stmt]
 :
-	( (stmt=rtl_AssignStatement[t]) |
-		(stmt=rtl_EmitStatement[t]) |
-		  (stmt=rtl_NullStatement[t]) |
-		    (stmt=rtl_GotoStatement[t])  |
-			(stmt=rtl_IfStatement[t]) )
-			
+( (stmt=rtl_AssignStatement[t]) |
+  (stmt=rtl_EmitStatement[t]) |
+  (stmt=rtl_NullStatement[t]) |
+  (stmt=rtl_GotoStatement[t])  |
+  (stmt=rtl_IfStatement[t]) )
+
 ;
 
 
@@ -424,50 +443,50 @@ rtl_AssignStatement[rtlThread* t] returns [rtlStatement* stmt]
 {
 	rtlExpression* tgt = NULL;
 	rtlExpression* src = NULL;
-    bool volatile_flag = false;
+	bool volatile_flag = false;
 }:
-        (VOLATILE {volatile_flag = true;})?
-	(tgt = rtl_Expression[t])
-        ASSIGNEQUAL
-	(src = rtl_Expression[t])
-	{
-            tgt->Set_Is_Target(true);
-            stmt = new rtlAssignStatement(t,volatile_flag, tgt, src);
-	}
+(VOLATILE {volatile_flag = true;})?
+(tgt = rtl_Expression[t,NULL])
+	ASSIGNEQUAL
+(src = rtl_Expression[t,NULL])
+{
+	tgt->Set_Is_Target(true);
+	stmt = new rtlAssignStatement(t,volatile_flag, tgt, src);
+}
 ;
 
-		
+
 rtl_EmitStatement[rtlThread* t]  returns [rtlStatement* stmt]
 {
 	rtlObject* emittee = NULL;
 }:
-	EMIT sid:SIMPLE_IDENTIFIER
-		{
-			emittee = t->Find_Object(sid->getText());
-			assert(emittee != NULL);
+EMIT sid:SIMPLE_IDENTIFIER
+{
+	emittee = t->Find_Object(sid->getText());
+	assert(emittee != NULL);
 
-			stmt = new rtlEmitStatement(t, emittee);
-		}
+	stmt = new rtlEmitStatement(t, emittee);
+}
 ;
 
 rtl_NullStatement[rtlThread* t]  returns [rtlStatement* stmt]
 {
 }:
-	NuLL 
-		{
-			stmt = new rtlNullStatement(t);
-		}
+NuLL 
+{
+	stmt = new rtlNullStatement(t);
+}
 ;
 
 rtl_GotoStatement[rtlThread* t] returns [rtlStatement* stmt]
 {
 	string lbl;
 }:
-	GOTO sid: SIMPLE_IDENTIFIER 
-	{
-		lbl = sid->getText();
-		stmt  = new rtlGotoStatement(t, lbl);
-	}
+GOTO sid: SIMPLE_IDENTIFIER 
+{
+	lbl = sid->getText();
+	stmt  = new rtlGotoStatement(t, lbl);
+}
 ;
 
 rtl_BlockStatement[rtlThread* t] returns [rtlBlockStatement* stmt]
@@ -475,11 +494,11 @@ rtl_BlockStatement[rtlThread* t] returns [rtlBlockStatement* stmt]
 	rtlStatement* astmt = NULL;
 	vector<rtlStatement*> stmts;
 }:
-	LBRACE
-		( astmt = rtl_SimpleStatement[t] {stmts.push_back(astmt); astmt = NULL;})+
-	RBRACE
-	{
-		stmt = new rtlBlockStatement(t, stmts);
+LBRACE
+( astmt = rtl_SimpleStatement[t] {stmts.push_back(astmt); astmt = NULL;})+
+RBRACE
+{
+	stmt = new rtlBlockStatement(t, stmts);
 	}
 ;
 
@@ -490,7 +509,7 @@ rtl_IfStatement[rtlThread* t] returns [rtlStatement* stmt]
 	rtlBlockStatement* else_block = NULL;
 }
 :
-	IF (test_expr = rtl_Expression[t])  
+	IF (test_expr = rtl_Expression[t,NULL])  
         if_block  = rtl_BlockStatement[t]
 	(ELSE 
             else_block = rtl_BlockStatement[t]
@@ -507,8 +526,7 @@ rtl_LabeledBlockStatement[rtlThread* t]
 	vector<rtlStatement*> stmts;
 	string lbl;
 }:
-	lbl = rtl_Label
-
+	lbl  = rtl_Label
 	LBRACE
 		( astmt = rtl_SimpleStatement[t] {stmts.push_back(astmt); astmt = NULL;})+
 	RBRACE
@@ -518,12 +536,12 @@ rtl_LabeledBlockStatement[rtlThread* t]
 	}
 ;
 
-rtl_Expression[rtlThread* t] returns [rtlExpression* expr]
+rtl_Expression[rtlThread* t, rtlType* type] returns [rtlExpression* expr]
 {
 	expr = NULL;
 }
 :
-	( (expr = rtl_Constant_Literal_Expression[t]) |
+	( (expr = rtl_Constant_Literal_Expression[t,type]) |
 		(expr = rtl_Object_Reference[t]) | 
 		   (expr = rtl_Slice_Expression[t]) | 
 			(expr = rtl_Unary_Expression[t]) |
@@ -536,12 +554,12 @@ rtl_Expression[rtlThread* t] returns [rtlExpression* expr]
 // ($signed<5>) _b11010
 // ($array[2][2] $of $integer) 0 1 2 3
 //
-rtl_Constant_Literal_Expression[rtlThread* thrd] returns [rtlExpression* expr]
+rtl_Constant_Literal_Expression[rtlThread* thrd,rtlType* itype] returns [rtlExpression* expr]
 {
 	vector<string> init_values;
 	rtlType* t = NULL;
 }:
-	LPAREN t = rtl_Type_Declaration[thrd] RPAREN
+	LPAREN t = rtl_Type_Declaration[thrd] {assert((itype == NULL) || (t == itype));}  RPAREN
 	( (iid: UINTEGER {init_values.push_back(iid->getText());}) |
 		(bid: BINARY {init_values.push_back(bid->getText());}) |
 			(hid : HEXADECIMAL {init_values.push_back(hid->getText());}))
@@ -563,7 +581,7 @@ rtl_Object_Reference[rtlThread* t] returns [rtlExpression* expr]
 	rtlExpression* iexpr = NULL;
 }:
 	sid: SIMPLE_IDENTIFIER {obj_name = sid->getText();}
-	( LBRACKET iexpr = rtl_Expression[t] RBRACKET {array_flag = true; indices.push_back(iexpr); iexpr = NULL;} )*
+	(LBRACKET ( iexpr = rtl_Expression[t,NULL] {array_flag = true; indices.push_back(iexpr); iexpr = NULL;} )+ RBRACKET)?
 	{
 		rtlObject* obj = t->Find_Object(obj_name);
 		assert(obj != NULL);
@@ -582,7 +600,7 @@ rtl_Slice_Expression[rtlThread* t] returns [rtlExpression* expr]
 	int low_index;
 }:
 	LPAREN 
-		SLICE base_expr = rtl_Expression[t]
+		SLICE base_expr = rtl_Expression[t,NULL]
 			hid: UINTEGER {high_index = atoi(hid->getText().c_str());}
 			lid: UINTEGER {low_index = atoi(lid->getText().c_str());}
 	RPAREN
@@ -598,7 +616,7 @@ rtl_Unary_Expression[rtlThread* t] returns [rtlExpression* expr]
 }:
 	LPAREN
 		op = rtl_Unary_Operation 
-		rest  = rtl_Expression[t]
+		rest  = rtl_Expression[t,NULL]
 	RPAREN
 	{
 		expr = new rtlUnaryExpression(op, rest);
@@ -612,9 +630,9 @@ rtl_Binary_Expression[rtlThread* t] returns [rtlExpression* expr]
 	rtlOperation op;
 }:
 	LPAREN
-		first = rtl_Expression[t]
+		first = rtl_Expression[t,NULL]
 		op = rtl_Binary_Operation
-		second = rtl_Expression[t]
+		second = rtl_Expression[t,NULL]
 	RPAREN	
 	{
 		expr = new rtlBinaryExpression(op, first, second);
@@ -629,9 +647,9 @@ rtl_Ternary_Expression[rtlThread* t] returns [rtlExpression* expr]
 }:
 	LPAREN
 		MUX
-		test_expr = rtl_Expression[t]
-		if_true = rtl_Expression[t]
-		if_false = rtl_Expression[t]
+		test_expr = rtl_Expression[t,NULL]
+		if_true = rtl_Expression[t,NULL]
+		if_false = rtl_Expression[t,NULL]
 	RPAREN
 	{
 		expr = new rtlTernaryExpression(test_expr, if_true, if_false);
@@ -677,7 +695,7 @@ rtl_Binary_Operation returns [rtlOperation op]
 
 rtl_Label returns [string label]
 :
-	LBRACKET sid: SIMPLE_IDENTIFIER {label = sid->getText();} RBRACKET
+	LESS sid: SIMPLE_IDENTIFIER {label = sid->getText();} GREATER
 ;
 
 
@@ -820,6 +838,10 @@ UNSIGNED: "$unsigned";
 SIGNED: "$signed";
 ARRAY:"$array";
 OF:"$of";
+IF:"$if";
+ELSE:"$else";
+VOLATILE:"$volatile";
+
 
 
 

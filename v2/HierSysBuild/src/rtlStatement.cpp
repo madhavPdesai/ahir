@@ -76,7 +76,7 @@ void rtlBlockStatement::Print(ostream& ofile)
 
 void rtlLabeledBlockStatement::Print(ostream& ofile)
 {
-	ofile << "[" << _label << "] ";
+	ofile << "<" << _label << "> ";
 	this->rtlBlockStatement::Print(ofile);
 }
 

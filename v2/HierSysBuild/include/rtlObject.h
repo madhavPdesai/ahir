@@ -18,10 +18,9 @@ class rtlObject: public hierRoot
 	virtual bool Is_Variable() {return(false);}
 	virtual bool Is_Signal()   {return(false);}
 	virtual bool Is_Constant() {return(false);}
+	virtual bool Is_InPort()   {return(false);}
+	virtual bool Is_OutPort()  {return(false);}
 
-	virtual bool Get_Is_Input() {return(false);}
-	virtual bool Get_Is_Output() {return(false);}
-	virtual bool Get_Is_Internal() {return(false);}
 
 	virtual rtlValue* Get_Value() {return(NULL);}
 
@@ -36,7 +35,6 @@ class rtlConstant: public rtlObject
 
 	rtlConstant(string name, rtlType* t, rtlValue* v); 
 
-	virtual bool Get_Is_Internal() {return(true);}
 	virtual bool Is_Constant() {return(true);}
 	virtual rtlValue* Get_Value() {return(_value);}
 	virtual void Print(ostream& ofile);
@@ -47,7 +45,7 @@ class rtlVariable: public rtlObject
 	public:
 
 	rtlVariable(string name, rtlType* t);
-	virtual bool Get_Is_Internal() {return(true);}
+	virtual bool Is_Variable() {return(true);}
 	virtual void Print(ostream& ofile);
 
 };
@@ -62,4 +60,21 @@ class rtlSignal: public rtlObject
 	virtual void Print(ostream& ofile);
 };
 
+class rtlInPort: public rtlSignal
+{
+	public:
+	rtlInPort(string name, rtlType* t) : rtlSignal(name,t) {}
+	virtual bool Is_InPort() {return(true);}
+	virtual void Print(ostream& ofile);
+
+};
+
+class rtlOutPort: public rtlSignal
+{
+	public:
+	rtlOutPort(string name, rtlType* t) : rtlSignal(name,t) {}
+	virtual bool Is_OutPort() {return(true);}
+	virtual void Print(ostream& ofile);
+
+};
 #endif
