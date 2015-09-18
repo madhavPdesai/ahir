@@ -380,6 +380,63 @@ public:
 			return(NULL);
 	}
 
+	void List_Threads(vector<rtlThread*>& thread_vec)
+	{
+		for(map<string,rtlThread*>::iterator iter = _thread_map.begin(),
+				fiter = _thread_map.end(); iter != fiter; iter++)
+		{
+			thread_vec.push_back((*iter).second);
+		}
+	}
+
+	void List_Strings(vector<rtlString*>& string_vec)
+	{
+		
+		for(int I = 0, fI = _rtl_strings.size(); I < fI; I++)
+		{
+			string_vec.push_back(_rtl_strings[I]);
+		}
+	}	
+
+	
+	int Number_Of_Strings() {return(_rtl_strings.size());}
+
+
+	// C string ticker!
+	//   - print two functions for each 
+	//     thread
+	//         - run
+	//         - tick.
+	// these functions will be declared in the
+	// header and defined in the source file.
+	// 
+	// For each string, declare a data structure
+	// which encodes the string state (in the header file).
+	//
+	// Declare a ticker thread and define it in the
+	// source
+	//    - creates the string data structures
+	//    - runs an infinite loop
+	//         run-all-strings
+	//         tick-all-strings
+	//
+	// For each pipe mapped to an input of a string
+	//  - create an Aa2Rtl matcher structure and thread.
+	// 
+	// For each pipe mapped to an output of a string
+	// -  create an Rtl2Aa matcher structure.
+	//
+	// For each signal mapped to an input of a string
+	//  - create an Aa2Rtl matcher structure and thread.
+	// 
+	// For each signal mapped to an output of a string
+	// -  create an Rtl2Aa matcher structure.
+	//
+	// in start daemons, start the ticker and the individual
+	// threads for Rtl<->Aa matchers.
+	//
+	void Print_C_String_Ticker(ostream& header_file, ostream& src_file);
+
 	// return true if error found.
 	bool Check_For_Errors();
 

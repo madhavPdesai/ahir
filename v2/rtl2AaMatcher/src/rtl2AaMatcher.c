@@ -2,6 +2,7 @@
 #include <pthreadUtils.h>
 #include <string.h>
 
+////////////////////////////////////////// Pipe matching ///////////////////////////////////////////////////
 
 PipeMatcherRec* makePipeMatcher(const char* pipe_name, int pipe_width)
 {
@@ -99,7 +100,7 @@ void Aa2RTLPipeTransferMatcher(void* vmrec)
 			//fprintf(stderr,"Aa2RTL: got request.\n");
 			setRequest(mrec, 0);
 			//fprintf(stderr,"Aa2RTL: cleared request.\n");
-			read_bit_vector_from_pipe(mrec->_pipe_name, mrec->_value);	
+			fetchFromPipe(mrec);
 			//fprintf(stderr,"Aa2RTL: received data.\n");
 			setAck(mrec,1);
 			//fprintf(stderr,"Aa2RTL: set ack.\n");
@@ -126,11 +127,88 @@ void RTL2AaPipeTransferMatcher(void* vmrec)
 			//fprintf(stderr,"RTL2Aa: got request.\n");
 			setRequest(mrec, 0);
 			//fprintf(stderr,"RTL2Aa: cleared request.\n");
-			write_bit_vector_to_pipe(mrec->_pipe_name, mrec->_value);	
+			sendToPipe(mrec);
 			//fprintf(stderr,"RTL2Aa: wrote data.\n");
 			setAck(mrec,1);
 			//fprintf(stderr,"RTL2Aa: set ack.\n");
 		}
+		pthread_yield(NULL);
+	}
+}
+
+
+/////////////////////////////////////////////////// Signal matching ///////////////////////////////////////////////////
+SignalMatcherRec* SignalMatcher(const char* signal_name, int signal_width)
+{
+	SignalMatcherRec* ret_val;
+	ret_val = (SignalMatcherRec*) calloc(1,sizeof(SignalMatcherRec));
+	__allocate_bit_vector( ret_val->_value,signal_width);
+
+	ret_val->_signal_name  = strdup(signal_name);
+	pthread_mutex_init(&(ret_val->_lock_mutex), NULL);
+	
+	ret_val->_next = NULL;
+}
+
+void setNextSignal(SignalMatcherRec* mrec, SignalMatcherRec* next)
+{
+	mrec->_next = next;
+}
+
+SignalMatcherRec* getNextSignal(SignalMatcherRec* mrec)
+{
+	return(mrec->_next);
+}
+
+void assignSignalValue(SignalMatcherRec* mrec, bit_vector* v)
+{
+	MUTEX_LOCK(mrec->_lock_mutex);
+	bit_vector_bitcast_to_bit_vector(mrec->_value, v);
+	MUTEX_UNLOCK(mrec->_lock_mutex);	
+}
+
+bit_vector* getSignalValue(SignalMatcherRec* mrec)
+{
+	return(mrec->_value);
+}
+
+void fetchFromSignal(SignalMatcherRec* mrec)
+{
+	MUTEX_LOCK(mrec->_lock_mutex);
+	read_bit_vector_from_pipe(mrec->_signal_name, mrec->_value);
+	MUTEX_UNLOCK(mrec->_lock_mutex);
+}
+
+void sendToSignal(SignalMatcherRec* mrec)
+{
+	write_bit_vector_to_pipe(mrec->_signal_name, mrec->_value);
+}
+
+char* getSignalName(SignalMatcherRec* mrec)
+{
+	return(mrec->_signal_name);
+}
+
+
+// signal to be communicated..
+void Aa2RTLSignalTransferMatcher(void* sig_val)
+{
+	SignalMatcherRec* mrec = (SignalMatcherRec*) sig_val;
+
+	while(1)
+	{
+		read_bit_vector_from_pipe(mrec->_signal_name, mrec->_value);
+		pthread_yield(NULL);
+	}
+}
+
+void RTL2AaSignalTransferMatcher(void* sig_val)
+{
+	SignalMatcherRec* mrec = (SignalMatcherRec*) sig_val;
+
+	while(1)
+	{
+		write_bit_vector_to_pipe(mrec->_signal_name, mrec->_value);
 		pthread_yield(NULL);
 	}
 }

@@ -219,6 +219,12 @@ int main(int argc, char* argv[])
 			source_file << " set_pipe_is_read_from(" << q_pname << ");" << endl;
 			source_file << " set_pipe_is_written_into(" << q_pname << ");" << endl;
 		}
+
+		if(sys->Number_Of_Strings() > 0)
+		{
+			sys->Print_C_String_Ticker(header_file, source_file);
+		}
+
 	}
 	source_file << "}" << endl;
 	source_file << "void " << c_prefix << "_stop_daemons() {" << endl;
