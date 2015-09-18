@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <BitVectors.h>
 #include <string.h>
+#include <pipeHandler.h>
 
 #define __nbytes(x) ((x % 8 == 0) ? x/8 : (x/8) + 1)
 // ---------------  local functions --------------------------------------
@@ -1080,3 +1081,55 @@ uint8_t fp64_unordered(float a, float b)
 	return(!isNormalFp64(a) || !isNormalFp64(b));
 }
 	
+
+void write_bit_vector_to_pipe(char* pipe_name, bit_vector* bv)
+{
+	switch(bv->width)
+	{
+		case 8:
+			write_uint8(pipe_name, (uint8_t) bit_vector_to_uint64(0,bv));
+			break;
+		case 16:
+			write_uint16(pipe_name, (uint16_t) bit_vector_to_uint64(0,bv));
+			break;
+		case 32:
+			write_uint32(pipe_name, (uint32_t) bit_vector_to_uint64(0,bv));
+			break;
+		case 64:
+			write_uint64(pipe_name, (uint64_t) bit_vector_to_uint64(0,bv));
+			break;
+		default:
+			write_uint8_n(pipe_name, bv->val.byte_array, bv->val.array_size);	
+			break;
+	}
+}
+
+
+void read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv)
+{
+	uint64_t val;
+	switch(bv->width)
+	{
+		case 8:
+			val = read_uint8(pipe_name);
+			bit_vector_assign_uint64(0,bv,val);
+			break;
+		case 16:
+			val = read_uint16(pipe_name);
+			bit_vector_assign_uint64(0,bv,val);
+			break;
+		case 32:
+			val = read_uint32(pipe_name);
+			bit_vector_assign_uint64(0,bv,val);
+			break;
+		case 64:
+			val = read_uint64(pipe_name);
+			bit_vector_assign_uint64(0,bv,val);
+			break;
+		default:
+			read_uint8_n(pipe_name, bv->val.byte_array, bv->val.array_size);	
+			break;
+	}
+}
+
+

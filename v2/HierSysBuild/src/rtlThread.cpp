@@ -73,6 +73,21 @@ void rtlString::Add_Port_Map_Entry(vector<string>& formals, string actual)
 			base_sys->Report_Error(" formal " + formals[0] + " not found for string port map for instance " + this->Get_Id());
 		}
 	}
+
+	if(formals.size() == 1)
+	{
+		if(!base_sys->Is_Signal(actual))
+		{
+			base_sys->Report_Error(" actual " + actual + " mapped to single-port in instance " + this->Get_Id() + " is not a signal");
+		}
+	}
+	else
+	{
+		if(base_sys->Is_Signal(actual))
+		{
+			base_sys->Report_Error(" actual " + actual + " mapped to 3-port-tuple in instance " + this->Get_Id() + " is not a pipe");
+		}
+	}
 }
 
 void rtlString::Print(ostream& ofile)
