@@ -35,6 +35,12 @@ class rtlThread: public hierRoot
 
 	// replica print.
 	void Print(ostream& ofile);
+
+
+	void Print_C_Struct_Declaration(ostream& header_file);
+	void Print_C_Run_Function(ostream& source_file);
+	void Print_C_Tick_Function(ostream& source_file);
+
 	friend class hierSystem;
 };
 
@@ -52,6 +58,16 @@ class rtlString: public hierRoot
 	void Add_Port_Map_Entry(vector<string>& formals, string actual);
 	void Print(ostream& ofile);
 
+	rtlThread* Get_Base_Thread() {return(_base_thread);}
+
+	void Print_C_State_Structure_Declaration(ostream& source_file);
+	void Print_C_State_Structure_Allocator(ostream& source_file);
+	void Print_C_State_Structure_Allocator_Call(ostream& source_file);
+	void Print_C_RTL_AA_Matcher_Structure_Declarations(ostream& source_file);
+	void Print_C_RTL_AA_Ack_Transfers(ostream& source_file);
+	void Print_C_Run_Function_Call(ostream& source_file);
+	void Print_C_RTL_AA_Req_Transfers(ostream& source_file);
+	void Print_C_Tick_Function_Call(ostream& source_file);
 };
 
 #endif

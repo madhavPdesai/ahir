@@ -29,17 +29,21 @@ PipeMatcherRec* getNext(PipeMatcherRec* mrec)
 	return(mrec->_next);
 }
 
+// set if v=1, ignore if v=0.
 void setRequest(PipeMatcherRec* mrec, char v)
 {
 	MUTEX_LOCK(mrec->_lock_mutex);
-	mrec->_request = v;
+	if(v)
+		mrec->_request = 1;
 	MUTEX_UNLOCK(mrec->_lock_mutex);	
 }
 
+// set if v=1, ignore if v=0.
 void setAck(PipeMatcherRec* mrec, char v)
 {
 	MUTEX_LOCK(mrec->_lock_mutex);
-	mrec->_ack = v;
+	if(v)
+		mrec->_ack = v;
 	MUTEX_UNLOCK(mrec->_lock_mutex);	
 }
 
@@ -50,14 +54,22 @@ void assignValue(PipeMatcherRec* mrec, bit_vector* v)
 	MUTEX_UNLOCK(mrec->_lock_mutex);	
 }
 
-int  getRequest(PipeMatcherRec* mrec)
+int  getAndClearRequest(PipeMatcherRec* mrec)
 {
+	MUTEX_LOCK(mrec->_lock_mutex);
 	int ret_val = mrec->_request;
+	if(ret_val)
+		mrec->_request = 0;
+	MUTEX_UNLOCK(mrec->_lock_mutex);	
 	return(ret_val);
 }
-int  getAck(PipeMatcherRec* mrec)
+int  getAndClearAck(PipeMatcherRec* mrec)
 {
+	MUTEX_LOCK(mrec->_lock_mutex);
 	int ret_val = mrec->_ack;
+	if(ret_val)
+		mrec->_ack = 0;
+	MUTEX_UNLOCK(mrec->_lock_mutex);	
 	return(ret_val);
 }
 
@@ -95,10 +107,8 @@ void Aa2RTLPipeTransferMatcher(void* vmrec)
 	PipeMatcherRec* mrec = (PipeMatcherRec*) vmrec;
 	while(1)
 	{
-		if(getRequest(mrec))
+		if(getAndClearRequest(mrec))
 		{
-			//fprintf(stderr,"Aa2RTL: got request.\n");
-			setRequest(mrec, 0);
 			//fprintf(stderr,"Aa2RTL: cleared request.\n");
 			fetchFromPipe(mrec);
 			//fprintf(stderr,"Aa2RTL: received data.\n");
@@ -122,10 +132,8 @@ void RTL2AaPipeTransferMatcher(void* vmrec)
 	PipeMatcherRec* mrec = (PipeMatcherRec*) vmrec;
 	while(1)
 	{
-		if(getRequest(mrec))
+		if(getAndClearRequest(mrec))
 		{
-			//fprintf(stderr,"RTL2Aa: got request.\n");
-			setRequest(mrec, 0);
 			//fprintf(stderr,"RTL2Aa: cleared request.\n");
 			sendToPipe(mrec);
 			//fprintf(stderr,"RTL2Aa: wrote data.\n");

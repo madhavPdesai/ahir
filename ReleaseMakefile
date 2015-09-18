@@ -9,6 +9,7 @@ CTESTBENCH=./v2/CtestBench/
 BITVECTORS=./v2/BitVectors/
 PTHREADUTILS=./v2/pthreadUtils
 GNUPTHUTILS=./v2/GnuPthUtils
+RTL2AAMATCHER=./v2/rtl2AaMatcher
 VHDL=./vhdl/
 FUNCTIONLIB=./v2/functionLibrary
 SCRIPTS=./v2/Scripts
@@ -50,6 +51,9 @@ Release:
 	cp $(BITVECTORS)/include/*.h $(RELEASE)/include/
 	cp $(BITVECTORS)/lib/* $(RELEASE)/BitVectors/lib/
 	cp $(BITVECTORS)/lib/* $(RELEASE)/lib/
+	# copy RTL2AAMATCHER
+	cp $(RTL2AAMATCHER)/include/*.h $(RELEASE)/include/
+	cp $(RTL2AAMATCHER)/lib/*.so $(RELEASE)/lib/
 	# copy the pthreadUtils.
 	cp $(PTHREADUTILS)/include/*.h $(RELEASE)/pthreadUtils/include/
 	cp $(PTHREADUTILS)/include/*.h $(RELEASE)/include/

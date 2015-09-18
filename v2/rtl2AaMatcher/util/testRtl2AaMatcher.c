@@ -10,6 +10,8 @@ static int counter=0;
 typedef struct RtlThreadState_ RtlThreadState;
 struct RtlThreadState_
 {
+	char req;
+	char ack;
 	int _state;
 	int _next_state;
 };
@@ -19,6 +21,8 @@ void writer_thread_run(RtlThreadState* s)
 	static int first_time = 1;
 	static bit_vector counter_bv;
 
+	s->req = 0;
+
 	if(first_time)
 	{
 		init_bit_vector(&counter_bv, 32);
@@ -26,25 +30,27 @@ void writer_thread_run(RtlThreadState* s)
 		first_time =0;
 	}
 
+
 	if(s->_state)
 	{
-		if(getAck(write_matcher))
+		
+		if(s->ack)
 		{
-			setAck(write_matcher,0);
 			s->_next_state = 0;
 		}
 	}
 	else
 	{
 		assignValue(write_matcher,&counter_bv);
-		setRequest(write_matcher,1);
-		fprintf(stderr,"Thread 1: wrote %d to pipe %s.\n", 
+		s->req = 1;
+		fprintf(stderr,"Thread 1: wrote %llu to pipe %s.\n", 
 				bit_vector_to_uint64(0, &counter_bv),
 				getPipeName(write_matcher));
 
 		bit_vector_increment(&counter_bv);
 		s->_next_state = 1;
 	}
+		
 }
 
 
@@ -54,6 +60,10 @@ int reader_thread_run(RtlThreadState* s)
 	static int first_time = 1;
 	int ret_val = 0;
 
+
+
+	s->req = 0;
+
 	if(first_time)
 	{
 		init_bit_vector(&counter_bv, 32);
@@ -62,25 +72,27 @@ int reader_thread_run(RtlThreadState* s)
 	}
 
 
+
 	ret_val = 0;
 	if(s->_state)
 	{
-		if(getAck(read_matcher))
+		if(s->ack)
 		{
-			fprintf(stderr,"Thread 2: read %d from pipe %s.\n",
+			fprintf(stderr,"Thread 2: read %llu from pipe %s.\n",
 					bit_vector_to_uint64(0,getValue(read_matcher)),
 					getPipeName(read_matcher));
 
-			setAck(read_matcher,0);
 			s->_next_state = 0;
 			ret_val = 1;
 		}
 	}
 	else
 	{
-		setRequest(read_matcher,1);
+		s->req = 1;
 		s->_next_state = 1;
 	}
+		
+
 	return(ret_val);
 }
 
@@ -98,10 +110,15 @@ void Ticker()
 
 	while(1)
 	{
+		t1->ack = getAndClearAck(write_matcher);
 		writer_thread_run(t1);
+		setRequest(write_matcher,t1->req);
 
+		
+		t2->ack = getAndClearAck(read_matcher);
 		int u = reader_thread_run(t2);
 		counter += u;
+		setRequest(read_matcher,t2->req);
 
 		rtl_thread_tick(t1);
 		rtl_thread_tick(t2);
