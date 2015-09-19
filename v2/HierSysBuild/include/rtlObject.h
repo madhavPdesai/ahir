@@ -23,8 +23,11 @@ class rtlObject: public hierRoot
 
 
 	virtual rtlValue* Get_Value() {return(NULL);}
+	rtlType* Get_Type() {return(_type);}
 
 	virtual void Print(ostream& ofile) {assert(0);}
+		
+	virtual void Print_C_Struct_Field_Initialization(string obj_name, ostream& source_file);
 	
 };
 
@@ -38,6 +41,8 @@ class rtlConstant: public rtlObject
 	virtual bool Is_Constant() {return(true);}
 	virtual rtlValue* Get_Value() {return(_value);}
 	virtual void Print(ostream& ofile);
+
+	virtual void Print_C_Struct_Field_Initialization(string obj_name,  ostream& source_file);
 };
 
 class rtlVariable: public rtlObject

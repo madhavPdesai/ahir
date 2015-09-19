@@ -1,6 +1,7 @@
 #ifndef _rtl_Type__
 #define _rtl_Type__
 
+class rtlValue;
 class hierRoot;
 
 //
@@ -17,6 +18,7 @@ class rtlType: public hierRoot
   virtual int Size() {assert(0);}
 
   virtual string Get_Name() {assert(0);}
+  virtual string Get_C_Name() {assert(0);}
 
   virtual rtlType* Get_Element_Type(int idx) 
   {
@@ -31,6 +33,7 @@ class rtlType: public hierRoot
   virtual void Print(ofstream& ofile);
   virtual void Print(string& ostring);
 
+  virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile) {assert(0);}
 };
 
 
@@ -45,6 +48,7 @@ class rtlIntegerType: public rtlType
 	rtlIntegerType(int low, int high);
 	string Kind() {return("rtlInteger");}
   	virtual void Print(ostream& ofile);
+  	virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile);
 };
 
 
@@ -65,6 +69,7 @@ class rtlUnsignedType: public rtlType
    
   virtual int Size() {return(this->_width);}
   virtual void Print(ostream& ofile);
+  virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile);
 };
 
 
@@ -80,8 +85,7 @@ class rtlSignedType: public rtlUnsignedType
   rtlSignedType(int width):rtlUnsignedType(width) {}
   void Print(ostream& ofile);
   virtual string Kind() {return("rtlSignedType");}
-
-  virtual string Get_Name() {return("$int<" + IntToStr(_width) + ">");}
+  virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile);
 };
 
 //
@@ -151,6 +155,7 @@ class rtlArrayType: public rtlType
   }
 
   virtual void Print(ostream& ofile);
+  virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile);
 
 };
 

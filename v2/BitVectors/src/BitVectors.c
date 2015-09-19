@@ -1108,6 +1108,7 @@ void write_bit_vector_to_pipe(char* pipe_name, bit_vector* bv)
 void read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv)
 {
 	uint64_t val;
+	bit_vector_clear(bv);
 	switch(bv->width)
 	{
 		case 8:

@@ -13,6 +13,8 @@ class rtlStatement: public hierRoot
 
 	rtlStatement(rtlThread* p);
 	virtual void Print(ostream& ofile) {assert(0);}
+	virtual string Get_Label() {assert(0);}
+	virtual void Print_C(ostream& source_file) {assert(0);}
 };
 
 class rtlAssignStatement: public rtlStatement
@@ -103,6 +105,7 @@ class rtlLabeledBlockStatement: public rtlBlockStatement
 	}
 
 	virtual void Print(ostream& ofile);
+	virtual string Get_Label() {return(_label);}
 };
 
 

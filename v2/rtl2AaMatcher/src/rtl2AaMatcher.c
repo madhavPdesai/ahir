@@ -95,50 +95,50 @@ char* getPipeName(PipeMatcherRec* mrec)
 	return(mrec->_pipe_name);
 }
 
-// Transfer information from Aa to RTL
-// This is done assuming that the RTL
+// Transfer information from Aa to Rtl
+// This is done assuming that the Rtl
 // side initiates the read from Aa.
 // If req is observed, then a blocking-read from
 // the pipe is started (the req is cleared).  
 // When the blocking-read has the ack is set 
-// (to be cleared by RTL side).
-void Aa2RTLPipeTransferMatcher(void* vmrec)
+// (to be cleared by Rtl side).
+void Aa2RtlPipeTransferMatcher(void* vmrec)
 {
 	PipeMatcherRec* mrec = (PipeMatcherRec*) vmrec;
 	while(1)
 	{
 		if(getAndClearRequest(mrec))
 		{
-			//fprintf(stderr,"Aa2RTL: cleared request.\n");
+			//fprintf(stderr,"Aa2Rtl: cleared request.\n");
 			fetchFromPipe(mrec);
-			//fprintf(stderr,"Aa2RTL: received data.\n");
+			//fprintf(stderr,"Aa2Rtl: received data.\n");
 			setAck(mrec,1);
-			//fprintf(stderr,"Aa2RTL: set ack.\n");
+			//fprintf(stderr,"Aa2Rtl: set ack.\n");
 		}
 		pthread_yield(NULL);
 	}
 }
 
 //
-// When RTL wants to write, it updates the mrec->_value
+// When Rtl wants to write, it updates the mrec->_value
 // field and sets the req flag.
 // The matcher tests the req flag.  If true, it resets
 // the req flag, attempts to write to the pipe and
 // on completion, sets the ack flag.  The ack flag
-// must be cleared by the RTL side.
+// must be cleared by the Rtl side.
 //
-void RTL2AaPipeTransferMatcher(void* vmrec)
+void Rtl2AaPipeTransferMatcher(void* vmrec)
 {
 	PipeMatcherRec* mrec = (PipeMatcherRec*) vmrec;
 	while(1)
 	{
 		if(getAndClearRequest(mrec))
 		{
-			//fprintf(stderr,"RTL2Aa: cleared request.\n");
+			//fprintf(stderr,"Rtl2Aa: cleared request.\n");
 			sendToPipe(mrec);
-			//fprintf(stderr,"RTL2Aa: wrote data.\n");
+			//fprintf(stderr,"Rtl2Aa: wrote data.\n");
 			setAck(mrec,1);
-			//fprintf(stderr,"RTL2Aa: set ack.\n");
+			//fprintf(stderr,"Rtl2Aa: set ack.\n");
 		}
 		pthread_yield(NULL);
 	}
@@ -199,7 +199,7 @@ char* getSignalName(SignalMatcherRec* mrec)
 
 
 // signal to be communicated..
-void Aa2RTLSignalTransferMatcher(void* sig_val)
+void Aa2RtlSignalTransferMatcher(void* sig_val)
 {
 	SignalMatcherRec* mrec = (SignalMatcherRec*) sig_val;
 
@@ -210,7 +210,7 @@ void Aa2RTLSignalTransferMatcher(void* sig_val)
 	}
 }
 
-void RTL2AaSignalTransferMatcher(void* sig_val)
+void Rtl2AaSignalTransferMatcher(void* sig_val)
 {
 	SignalMatcherRec* mrec = (SignalMatcherRec*) sig_val;
 

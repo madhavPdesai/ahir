@@ -96,7 +96,8 @@ void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_fil
 	
 		s->Print_C_State_Structure_Declaration(source_file);
 		s->Print_C_State_Structure_Allocator(source_file);
-		s->Print_C_RTL_AA_Matcher_Structure_Declarations(source_file);
+		s->Print_C_Rtl_Aa_Matcher_Allocator(source_file);
+		s->Print_C_Rtl_Aa_Matcher_Structure_Declarations(source_file);
 
 	}
 
@@ -113,9 +114,9 @@ void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_fil
 	for(int I = 0, fI = _rtl_strings.size();  I < fI; I++)
 	{
 		rtlString* s = _rtl_strings[I];
-		s->Print_C_RTL_AA_Ack_Transfers(source_file);
+		s->Print_C_Rtl_Aa_Ack_Transfers(source_file);
 		s->Print_C_Run_Function_Call(source_file);
-		s->Print_C_RTL_AA_Req_Transfers(source_file);
+		s->Print_C_Rtl_Aa_Req_Transfers(source_file);
 	}
 
 	for(int I = 0, fI = _rtl_strings.size();  I < fI; I++)

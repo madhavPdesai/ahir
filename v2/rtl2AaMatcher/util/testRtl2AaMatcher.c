@@ -132,8 +132,8 @@ void Ticker()
 
 	
 DEFINE_THREAD(Ticker);
-DEFINE_THREAD_WITH_ARG(RTL2AaPipeTransferMatcher, wm);
-DEFINE_THREAD_WITH_ARG(Aa2RTLPipeTransferMatcher, rm);
+DEFINE_THREAD_WITH_ARG(Rtl2AaPipeTransferMatcher, wm);
+DEFINE_THREAD_WITH_ARG(Aa2RtlPipeTransferMatcher, rm);
 
 
 int main(int argc, char* argv[])
@@ -145,12 +145,12 @@ int main(int argc, char* argv[])
 
 	init_pipe_handler();
 	PTHREAD_DECL(Ticker);
-	PTHREAD_DECL(RTL2AaPipeTransferMatcher);
-	PTHREAD_DECL(Aa2RTLPipeTransferMatcher);
+	PTHREAD_DECL(Rtl2AaPipeTransferMatcher);
+	PTHREAD_DECL(Aa2RtlPipeTransferMatcher);
 
 	PTHREAD_CREATE(Ticker);
-	PTHREAD_CREATE_WITH_ARG(RTL2AaPipeTransferMatcher, write_matcher);
-	PTHREAD_CREATE_WITH_ARG(Aa2RTLPipeTransferMatcher, read_matcher);
+	PTHREAD_CREATE_WITH_ARG(Rtl2AaPipeTransferMatcher, write_matcher);
+	PTHREAD_CREATE_WITH_ARG(Aa2RtlPipeTransferMatcher, read_matcher);
 
 	PTHREAD_JOIN(Ticker);
 	close_pipe_handler();

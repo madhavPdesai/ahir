@@ -45,8 +45,8 @@ void fetchFromPipe(PipeMatcherRec* mrec);
 void sendToPipe(PipeMatcherRec* mrec);
 char* getPipeName(PipeMatcherRec* mrec);
 
-void Aa2RTLPipeTransferMatcher(void* mrec);
-void RTL2AaPipeTransferMatcher(void* mrec);
+void Aa2RtlPipeTransferMatcher(void* mrec);
+void Rtl2AaPipeTransferMatcher(void* mrec);
 
 void setNextSignal(SignalMatcherRec* mrec, SignalMatcherRec* next);
 SignalMatcherRec* getNextSignal(SignalMatcherRec* mrec);
@@ -56,8 +56,8 @@ void fetchFromSignal(SignalMatcherRec* mrec);
 void sendToSignal(SignalMatcherRec* mrec);
 char* getSignalName(SignalMatcherRec* mrec);
 
-void Aa2RTLSignalTransferMatcher(void* sig_val);
-void RTL2AaSignalTransferMatcher(void* sig_val);
+void Aa2RtlSignalTransferMatcher(void* sig_val);
+void Rtl2AaSignalTransferMatcher(void* sig_val);
 
 
 #endif

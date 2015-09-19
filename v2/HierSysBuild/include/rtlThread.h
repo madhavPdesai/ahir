@@ -23,7 +23,13 @@ class rtlThread: public hierRoot
 
 
 	void Add_Statement(rtlStatement* stmt) {_statements.push_back(stmt);}
-
+	rtlStatement* Get_Statement(int idx)
+	{
+		if((idx >= 0) && (idx < _statements.size()))
+			return(_statements[idx]);
+		else
+			return(NULL);
+	}
 	void Add_Object(rtlObject* obj);
 	rtlObject* Find_Object(string obj_name)
 	{
@@ -31,6 +37,24 @@ class rtlThread: public hierRoot
 			return(_objects[obj_name]);
 		else
 			return(NULL);
+	}
+	void Lookup_Objects(vector<string> obj_names, vector<rtlObject*>& object_vector)
+	{
+		for(int I = 0, fI = obj_names.size(); I < fI; I++)
+		{
+			rtlObject* obj  = this->Find_Object(obj_names[I]);
+			assert(obj != NULL);
+			object_vector.push_back(obj);
+		}
+	}
+	void List_Objects(vector<rtlObject*>& object_vector)
+	{
+		for(map<string, rtlObject*>::iterator iter = _objects.begin(), fiter = _objects.end();
+			iter != fiter;
+			iter++)
+		{
+			object_vector.push_back((*iter).second);
+		}
 	}
 
 	// replica print.
@@ -63,10 +87,11 @@ class rtlString: public hierRoot
 	void Print_C_State_Structure_Declaration(ostream& source_file);
 	void Print_C_State_Structure_Allocator(ostream& source_file);
 	void Print_C_State_Structure_Allocator_Call(ostream& source_file);
-	void Print_C_RTL_AA_Matcher_Structure_Declarations(ostream& source_file);
-	void Print_C_RTL_AA_Ack_Transfers(ostream& source_file);
+	void Print_C_Rtl_Aa_Matcher_Structure_Declarations(ostream& source_file);
+	void Print_C_Rtl_Aa_Matcher_Allocator(ostream& source_file);
+	void Print_C_Rtl_Aa_Ack_Transfers(ostream& source_file);
 	void Print_C_Run_Function_Call(ostream& source_file);
-	void Print_C_RTL_AA_Req_Transfers(ostream& source_file);
+	void Print_C_Rtl_Aa_Req_Transfers(ostream& source_file);
 	void Print_C_Tick_Function_Call(ostream& source_file);
 };
 
