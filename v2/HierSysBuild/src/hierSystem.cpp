@@ -2,6 +2,8 @@
 #include <ostream>
 #include <assert.h>
 #include <hierSystem.h>
+#include <rtlEnums.h>
+#include <rtlType.h>
 #include <rtlThread.h>
 
 int root_object_counter = 0;

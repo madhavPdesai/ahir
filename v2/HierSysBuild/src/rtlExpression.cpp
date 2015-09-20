@@ -28,6 +28,32 @@ rtlExpression::rtlExpression(): hierRoot("anon_expr_" + IntToStr(e_counter))
 	_value = NULL;
 	_is_target = false;
 }
+	
+string rtlExpression::Get_C_Name()
+{
+	string ret_val = "__expr_";
+	ret_val += IntToStr(this->Get_Index());
+}
+	
+string rtlExpression::C_Int_Reference()
+{
+	rtlType* tt = this->Get_Type();
+	if(tt->Is("rtlIntegerType"))
+	{
+		return(this->Get_C_Name());
+	}
+	else if(tt->Is("rtlUnsignedType"))
+	{
+		return(string("bit_vector_to_uint64(0, &(") +  this->Get_C_Name() + "));");
+	}
+	else if(tt->Is("rtlSignedType"))
+	{
+		return(string("bit_vector_to_uint64(1, &(") +  this->Get_C_Name() + "));");
+	}
+	else
+		assert(0);
+}
+
 
 rtlSimpleObjectReference::rtlSimpleObjectReference(rtlObject* obj): rtlObjectReference(obj->Get_Id(),obj) 
 {
@@ -45,6 +71,14 @@ void rtlConstantLiteralExpression::Print(ostream& ofile)
 	ofile << ") ";
 	this->Get_Value()->Print(ofile);
 }
+
+void rtlConstantLiteralExpression::Print_C(ostream& ofile)
+{
+	ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << ";" << endl;
+	if(_value != NULL)
+		this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), this->_value, ofile);
+}
+
 void rtlSimpleObjectReference::Print(ostream& ofile) 
 {
 	if(_value != NULL)
@@ -59,11 +93,71 @@ void rtlSimpleObjectReference::Print(ostream& ofile)
 	ofile << " " << _object->Get_Id() << " ";
 }
 	
+
+	
+string rtlSimpleObjectReference::Get_C_Name() 
+{
+	return(_object->Get_C_Name());
+}
+
+
+void rtlSimpleObjectReference::Print_C(ostream& ofile) 
+{
+	if(this->Get_Is_Target())
+	{
+		// do nothing.
+	}
+	else
+	{
+		ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << ";" << endl;
+		if(_value != NULL)
+			this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), this->_value, ofile);
+		else
+		{
+			Print_C_Assignment(this->Get_C_Name(), this->Get_Object()->Get_C_Name(), this->Get_Type(), ofile);
+		}
+	}
+}
 	
 rtlArrayObjectReference::rtlArrayObjectReference(rtlObject* obj, vector<rtlExpression*>& indices)
 	: rtlObjectReference(obj->Get_Id() + "_array_ref", obj)
 {
 	_indices = indices;
+}
+
+string rtlArrayObjectReference::Get_C_Name() 
+{
+	string ret_val = _object->Get_C_Name();
+	for(int I = 0, fI = _indices.size(); I < fI; I++)
+		ret_val += "[" + _indices[I]->Get_C_Name() + "]";
+	
+	return(ret_val);
+}
+
+void rtlArrayObjectReference::Print_C(ostream& ofile)
+{
+	for(int I = 0, fI = _indices.size(); I < fI; I++)
+		_indices[I]->Print_C(ofile);
+
+	if(this->Get_Is_Target())
+	{
+		// do nothing.
+	}
+	else
+	{
+		ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << ";" << endl;
+		if(_value != NULL)
+			this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), this->_value, ofile);
+		else
+		{
+			string obj_ref_string = this->Get_Object()->Get_C_Name();
+			for(int I = 0, fI = _indices.size(); I < fI; I++)
+			{
+				obj_ref_string += "[" + _indices[I]->C_Int_Reference() + "]";
+			}
+			Print_C_Assignment(this->Get_C_Name(), obj_ref_string, this->Get_Type(), ofile);
+		}
+	}
 }
 
 void rtlArrayObjectReference::Print(ostream& ofile)
@@ -88,7 +182,20 @@ void rtlArrayObjectReference::Print(ostream& ofile)
 	ofile << " ";
 }
 
-	
+void rtlSliceExpression::Print_C(ostream& ofile)
+{
+	_base->Print_C(ofile);
+	ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << ";" << endl;
+	if(_value != NULL)
+		this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), this->_value, ofile);
+	else
+	{
+		rtlType* tt = this->Get_Type();
+		assert(tt->Is("rtlUnsignedType") || tt->Is("rtlSignedType"));
+		ofile << "bit_vector_slice(&(" << _base->Get_C_Name() << "), &(" << this->Get_C_Name() << "), " << _low << ");" << endl;
+	}	
+}
+
 void rtlSliceExpression::Print(ostream& ofile)
 {
 	if(_value != NULL)
@@ -100,21 +207,36 @@ void rtlSliceExpression::Print(ostream& ofile)
 		_value->Print(ofile);
 		return;
 	}
-	
+
 	ofile << "($slice ";
 	_base->Print(ofile);
 	ofile << " " << _high << " " << _low << ") ";
 
 }
 
-	
+
 rtlUnaryExpression::rtlUnaryExpression(rtlOperation op, rtlExpression* rest):
 	rtlExpression("("+rtlOp_To_String(op) + rest->Get_Id() + ")")
 {
 	_op = op;
 	_rest = rest;	
 }
-	
+
+void rtlUnaryExpression::Print_C(ostream& ofile)
+{
+	if(_value != NULL)
+		this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), this->_value, ofile);
+	else
+	{
+		_rest->Print_C(ofile);
+		ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << ";" << endl;
+
+		rtlType* tt = this->Get_Type();
+		assert(tt->Is("rtlUnsignedType") || tt->Is("rtlSignedType"));
+		ofile << "bit_vector_not(&(" << _rest->Get_C_Name() << "), &(" << this->Get_C_Name() << ")); " << endl;
+	}	
+}
+
 void rtlUnaryExpression::Print(ostream& ofile)
 {
 	if(this->_value)
@@ -139,6 +261,20 @@ rtlBinaryExpression::rtlBinaryExpression(rtlOperation op, rtlExpression* first, 
 	_op = op;
 	_first = first;
 	_second = second;
+}
+
+void rtlBinaryExpression::Print_C(ostream& ofile)
+{
+	if(_value != NULL)
+		this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), this->_value, ofile);
+	else
+	{
+		_first->Print_C(ofile);
+		_second->Print_C(ofile);
+
+		ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << ";" << endl;
+		Print_C_Binary_Operation(this->Get_C_Name(), _first->Get_C_Name(), _second->Get_C_Name(), this->Get_Type(),  _op, ofile);
+	}	
 }
 
 void rtlBinaryExpression::Print(ostream& ofile)
@@ -310,3 +446,25 @@ void rtlTernaryExpression::Evaluate(rtlThread* t)
 	else 
 		_value = NULL;
 }
+
+void rtlTernaryExpression::Print_C(ostream& ofile)
+{
+	if(_value != NULL)
+		this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), this->_value, ofile);
+	else
+	{
+		_test->Print_C(ofile);
+		_if_true->Print_C(ofile);
+		_if_false->Print_C(ofile);
+
+		ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << ";" << endl;
+		ofile << "if (" << _test->C_Int_Reference() << ") {" << endl;
+		Print_C_Assignment(this->Get_C_Name(), _if_true->Get_C_Name(), this->Get_Type(), ofile);
+		ofile << "}" << endl;
+		ofile << " else {" << endl;
+		Print_C_Assignment(this->Get_C_Name(), _if_false->Get_C_Name(), this->Get_Type(), ofile);
+		ofile << "}" << endl;
+	}	
+}
+
+		

@@ -45,6 +45,11 @@ class rtlExpression: public hierRoot
 	virtual void Print(ostream& ofile) {assert(0);}
 
 	virtual rtlValue* Get_Value() {return(_value);}
+
+	virtual string Get_C_Name();
+	virtual string C_Int_Reference();
+
+	virtual void Print_C(ostream& ofile) {assert(0);}
 };
 
 class rtlConstantLiteralExpression: public rtlExpression
@@ -63,6 +68,7 @@ class rtlConstantLiteralExpression: public rtlExpression
 	virtual void Evaluate(rtlThread* t);
 
 	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& ofile);
 };
 
 class rtlObjectReference: public rtlExpression
@@ -91,7 +97,9 @@ class rtlSimpleObjectReference: public rtlObjectReference
 	string Kind() {return("rtlSimpleObjectReference");}
 
 	virtual void Evaluate(rtlThread* t);
+	virtual string Get_C_Name();
 	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& ofile);
 };
 
 class rtlArrayObjectReference: public rtlObjectReference
@@ -105,8 +113,10 @@ class rtlArrayObjectReference: public rtlObjectReference
 	rtlArrayObjectReference(rtlObject* obj, vector<rtlExpression*>& indices);
 	string Kind() {return("rtlArrayObjectReference");}
 
+	virtual string Get_C_Name();
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& ofile);
 };
 
 class rtlSliceExpression: public rtlExpression
@@ -130,6 +140,7 @@ class rtlSliceExpression: public rtlExpression
 
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& ofile);
 };
 
 class rtlUnaryExpression: public rtlExpression
@@ -144,6 +155,7 @@ class rtlUnaryExpression: public rtlExpression
 
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& ofile);
 };
 
 class rtlBinaryExpression: public rtlExpression
@@ -161,6 +173,7 @@ class rtlBinaryExpression: public rtlExpression
 
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& ofile);
 };
 
 class rtlTernaryExpression: public rtlExpression
@@ -176,6 +189,9 @@ class rtlTernaryExpression: public rtlExpression
 
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& ofile);
 };
+
+void Print_C_Test_Condition(rtlExpression* expr, ostream& ofile);
 
 #endif

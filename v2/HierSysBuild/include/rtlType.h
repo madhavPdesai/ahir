@@ -49,6 +49,7 @@ class rtlIntegerType: public rtlType
 	string Kind() {return("rtlInteger");}
   	virtual void Print(ostream& ofile);
   	virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile);
+  	virtual string Get_C_Name() {return("integer");}
 };
 
 
@@ -70,6 +71,7 @@ class rtlUnsignedType: public rtlType
   virtual int Size() {return(this->_width);}
   virtual void Print(ostream& ofile);
   virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile);
+  virtual string Get_C_Name() {return("bit_vector");}
 };
 
 
@@ -85,7 +87,6 @@ class rtlSignedType: public rtlUnsignedType
   rtlSignedType(int width):rtlUnsignedType(width) {}
   void Print(ostream& ofile);
   virtual string Kind() {return("rtlSignedType");}
-  virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile);
 };
 
 //
@@ -156,6 +157,15 @@ class rtlArrayType: public rtlType
 
   virtual void Print(ostream& ofile);
   virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile);
+  virtual string Get_C_Name() 
+  {
+	string ret_val = _element_type->Get_C_Name();
+	for(int I = 0, fI = _dimensions.size(); I < fI ; I++)
+	{
+		ret_val += "[" + IntToStr(_dimensions[I]) + "]" ;
+	}
+	return(ret_val);
+  }
 
 };
 

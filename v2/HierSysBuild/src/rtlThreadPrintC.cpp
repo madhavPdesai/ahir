@@ -383,3 +383,115 @@ void rtlString::Print_C_Tick_Function_Call(ostream& source_file)
 	source_file << fn_name << "(" << arg_name << ");" << endl;
 }
 
+void Print_C_Binary_Operation(string tgt_name, string first_op, string second_op, rtlType* tgt_type, rtlOperation opcode , ostream& ofile)
+{
+	if(tgt_type->Is("rtlIntegerType"))
+	{
+		switch(opcode)
+		{
+			case __OR: 
+				ofile << tgt_name << "(" << first_op <<  " | " << second_op << ");" << endl;	 break;
+			case __AND:
+				ofile << tgt_name << "(" << first_op <<  " & " << second_op << ");" << endl;	 break;
+			case __XOR:
+				ofile << tgt_name << "(" << first_op <<  " ^ " << second_op << ");" << endl;	 break;
+			case __NOR:
+				ofile << tgt_name << "~(" << first_op <<  " | " << second_op << ");" << endl;	 break;
+			case __NAND:
+				ofile << tgt_name << "~(" << first_op <<  " & " << second_op << ");" << endl;	 break;
+			case __XNOR:
+				ofile << tgt_name << "~(" << first_op <<  " ^ " << second_op << ");" << endl;	 break;
+			case __SHL:
+				ofile << tgt_name << "(" << first_op <<  " << " << second_op << ");" << endl;	 break;
+			case __SHR:
+				ofile << tgt_name << "(" << first_op <<  " >> " << second_op << ");" << endl;	 break;
+			case __EQUAL:
+				ofile << tgt_name << "(" << first_op <<  " == " << second_op << ");" << endl;	 break;
+			case __NOTEQUAL:
+				ofile << tgt_name << "(" << first_op <<  " != " << second_op << ");" << endl;	 break;
+			case __LESS:
+				ofile << tgt_name << "(" << first_op <<  " < " << second_op << ");" << endl;	 break;
+			case __LESSEQUAL:
+				ofile << tgt_name << "(" << first_op <<  " <= " << second_op << ");" << endl;	 break;
+			case __GREATER:
+				ofile << tgt_name << "(" << first_op <<  " > " << second_op << ");" << endl;	 break;
+			case __GREATEREQUAL:
+				ofile << tgt_name << "(" << first_op <<  " >= " << second_op << ");" << endl;	 break;
+			case __PLUS:
+				ofile << tgt_name << "(" << first_op <<  " + " << second_op << ");" << endl;	 break;
+			case __MINUS:
+				ofile << tgt_name << "(" << first_op <<  " - " << second_op << ");" << endl;	 break;
+			case __MUL:
+				ofile << tgt_name << "(" << first_op <<  " * " << second_op << ");" << endl;	 break;
+			case __DIV:
+				ofile << tgt_name << "(" << first_op <<  " / " << second_op << ");" << endl;	 break;
+			default: assert(0); break;
+		}
+	}
+	else if(tgt_type->Is("rtlUnsignedType") || tgt_type->Is("rtlSignedType"))
+	{
+		int signed_flag = tgt_type->Is("rtlSignedType");
+		switch(opcode)	
+		{
+			case __OR: 
+				ofile << "bit_vector_or(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __AND:
+				ofile << "bit_vector_and(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __XOR:
+				ofile << "bit_vector_xor(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __NOR:
+				ofile << "bit_vector_nor(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __NAND:
+				ofile << "bit_vector_nand(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __XNOR:
+				ofile << "bit_vector_xnor(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __SHL:
+				ofile << "bit_vector_shl(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __SHR:
+				ofile << "bit_vector_shr(" << signed_flag << ", &(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __ROR:
+				ofile << "bit_vector_ror(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __ROL:
+				ofile << "bit_vector_rol(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __EQUAL:
+				ofile << "bit_vector_equal(" << signed_flag << ", &(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __NOTEQUAL:
+				ofile << "bit_vector_not_equal(" << signed_flag << ", &(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __LESS:
+				ofile << "bit_vector_less(" << signed_flag << ", &(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __LESSEQUAL:
+				ofile << "bit_vector_less_equal(" << signed_flag << ", &(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __GREATER:
+				ofile << "bit_vector_greater(" << signed_flag << ", &(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __GREATEREQUAL:
+				ofile << "bit_vector_greater_equal(" << signed_flag << ", &(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __PLUS:
+				ofile << "bit_vector_plus(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __MINUS:
+				ofile << "bit_vector_minus(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __MUL:
+				ofile << "bit_vector_mul(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __DIV:
+				ofile << "bit_vector_div(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+			case __CONCAT:
+				ofile << "bit_vector_concat(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+
+			default: assert(0); break;
+		}
+	}
+	else
+		assert(0);
+}
+
+void Print_C_Assignment(string tgt, string src, rtlType* tt, ostream& ofile)
+{
+	if(tt->Is("rtlIntegerType"))
+	{
+		ofile << tgt << " = " << src << ";" << endl;
+	}
+	else
+	{
+		ofile << "bit_vector_bitcast_to_bit_vector(&(" << tgt << "), &(" << src << "));" << endl;
+	}
+}
+

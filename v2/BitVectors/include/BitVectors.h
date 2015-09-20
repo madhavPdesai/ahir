@@ -74,6 +74,7 @@ double    bit_vector_to_double(uint8_t signed_flag, bit_vector* t);
 void bit_vector_assign_uint64(uint8_t signed_flag, bit_vector* dest, uint64_t src);
 void bit_vector_assign_float(uint8_t signed_flag, bit_vector* dest, float src);
 void bit_vector_assign_double(uint8_t signed_flag, bit_vector* dest, double src);
+void bit_vector_assign_string(bit_vector* dest, char* init_string);
 
 
 // ------          standard  casts, bitcasts  ------------------------------------- //
@@ -104,6 +105,7 @@ void bit_vector_set(bit_vector* s);   // set all bits to 1.
 
 
 //  --------------  bitwise operations -----------------------------------
+// (r op s) = t.
 void bit_vector_or(bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_nor(bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_and(bit_vector* r, bit_vector* s, bit_vector* t);

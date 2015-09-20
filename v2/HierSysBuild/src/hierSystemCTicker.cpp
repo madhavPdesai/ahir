@@ -2,7 +2,10 @@
 #include <ostream>
 #include <assert.h>
 #include <hierSystem.h>
+#include <rtlEnums.h>
+#include <rtlType.h>
 #include <rtlThread.h>
+
 
 // C string ticker!
 //   - print two functions for each 

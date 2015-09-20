@@ -18,12 +18,14 @@ class rtlValue:public hierRoot
 	virtual void Print(ostream& ofile) {assert(0);}
 
 	virtual int  To_Integer() {assert(0);}
+	virtual string  To_Bit_Vector_String() {assert(0);}
 
 	virtual bool Get_Bit(int bit_index) {assert(0);}
 	virtual void Set_Bit(int bit_index, bool bit_val) {assert(0);}
 
 	virtual rtlValue* Copy() {assert(0);}
 	virtual rtlValue* Resize(int w) {assert(0);}
+	virtual rtlValue* Get_Value(int index) {assert(0);}
 
 	virtual void Not() {assert(0);}
 	virtual void And(rtlValue* other) {assert(0);}
@@ -128,6 +130,8 @@ class rtlUnsignedValue: public rtlValue
 	virtual bool Equal(rtlValue* other);
 
 	virtual void Concat(rtlValue* other);
+
+	virtual string  To_Bit_Vector_String() ;
 };
 
 
@@ -161,7 +165,7 @@ class rtlArrayValue: public rtlValue
 		_values = vals;
 	}
 
-	rtlValue* Get_Value(int index) 
+	virtual rtlValue* Get_Value(int index) 
 	{
 		if((index >= 0)	 && (index < _values.size()))
 		  return(_values[index]);

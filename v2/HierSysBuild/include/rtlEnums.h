@@ -49,6 +49,7 @@ enum rtlOperation {
 	__PLUS,
 	__MINUS,
 	__MUL,
+	__DIV,
 	__CONCAT
 };
 

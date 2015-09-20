@@ -684,6 +684,7 @@ rtl_Binary_Operation returns [rtlOperation op]
         ( id_plus:PLUS { op = __PLUS;}) | 
         ( id_minus:MINUS { op = __MINUS;}) | 
         ( id_mul:MUL { op = __MUL;}) | 
+        ( id_div:DIV { op = __DIV;}) | 
         ( id_EQUAL:EQUAL { op = __EQUAL;}) | 
         ( id_notequal:NOTEQUAL { op = __NOTEQUAL;}) | 
         ( id_less:LESS { op = __LESS;}) | 
@@ -806,6 +807,7 @@ CONCAT           : "&&" ; // concatenation
 PLUS             : '+' ; // plus
 MINUS            : '-' ; // minus
 MUL              : '*' ; // multiply
+DIV              : '/' ; // multiply
 
 // logical operators
 NOT              : '~'     ;

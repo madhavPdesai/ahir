@@ -38,6 +38,13 @@ int  rtlUnsignedValue::To_Integer()
 {
 	return(_value->To_Integer());
 }		
+
+string rtlUnsignedValue::To_Bit_Vector_String()
+{
+	return(_value->To_String());
+}
+
+
 bool rtlUnsignedValue::Get_Bit(int bi)
 {
 	return(((Unsigned*)this->Get_Value())->Get_Bit(bi));

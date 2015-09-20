@@ -27,6 +27,7 @@ class rtlObject: public hierRoot
 
 	virtual void Print(ostream& ofile) {assert(0);}
 		
+	virtual string Get_C_Name() {return("__sstate->" + this->_name);}
 	virtual void Print_C_Struct_Field_Initialization(string obj_name, ostream& source_file);
 	
 };

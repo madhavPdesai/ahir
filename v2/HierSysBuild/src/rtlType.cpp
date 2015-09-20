@@ -2,8 +2,11 @@
 #include <ostream>
 #include <assert.h>
 #include <hierSystem.h>
-#include <rtlThread.h>
+#include <rtlEnums.h>
+#include <Value.hpp>
+#include <rtlValue.h>
 #include <rtlType.h>
+#include <rtlThread.h>
 
 map <rtlType*, string> type_to_identifier_map;
 map <string, rtlType*> identifier_to_type_map;
@@ -43,7 +46,7 @@ rtlIntegerType::rtlIntegerType(int low, int high): rtlType()
   
 void rtlIntegerType::Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile)
 {
-	// TODO.
+	ofile << prefix << " = " << ((v != NULL) ? v->To_Integer() : 0);
 }
 
 void rtlIntegerType::Print(ostream& ofile)
@@ -54,16 +57,18 @@ void rtlIntegerType::Print(ostream& ofile)
 void rtlUnsignedType::Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile)
 {
 	// TODO.
+	ofile << "init_bit_vector(&(" << prefix << "), " << this->Size() << ");" << endl;
+	ofile << "bit_vector_clear(&(" << prefix << "));" << endl;
+	if(v != NULL)
+	{
+		string init_string =  v->To_Bit_Vector_String();
+		ofile << "bit_vector_assign_string(&(" << prefix << "),\"" << init_string << "\");" << endl;
+	}
 }
 
 void rtlUnsignedType::Print(ostream& ofile)
 {
 	ofile << " $unsigned<" << _width << ">" << endl;
-}
-
-void rtlSignedType::Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile)
-{
-	// TODO.
 }
 
 void rtlSignedType::Print(ostream& ofile)
@@ -79,7 +84,17 @@ rtlArrayType::rtlArrayType( rtlType* element_type, vector<int>& dimensions): rtl
 
 void rtlArrayType::Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile) 
 {
-	// TODO.
+	string ele_type = this->Get_Element_Type()->Get_C_Name();
+	ofile << "{" << endl;
+	ofile << ele_type << "* __tmp_ptr = &(" << prefix << ");" << endl;
+	
+	for(int I = 0, fI = this->Number_Of_Elements(); I < fI; I++)
+	{
+		string eprefix = "*(__tmp_ptr + " + IntToStr(I) + ")";
+		rtlValue* ev = ((v != NULL) ?  v->Get_Value(I) : NULL);
+		_element_type->Print_C_Struct_Field_Initialization(eprefix, ev, ofile);
+	}
+	ofile << "}" << endl;
 }
 void rtlArrayType::Print(ostream& ofile)
 {

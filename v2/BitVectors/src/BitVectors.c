@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <BitVectors.h>
 #include <string.h>
+#include <inttypes.h>
 #include <pipeHandler.h>
 
 #define __nbytes(x) ((x % 8 == 0) ? x/8 : (x/8) + 1)
@@ -334,6 +335,23 @@ void bit_vector_assign_float(uint8_t signed_flag, bit_vector* dest, float src)
 void bit_vector_assign_double(uint8_t signed_flag, bit_vector* dest, double src)
 {
 	double_cast_to_bit_vector(signed_flag, dest, &src);
+}
+
+void bit_vector_assign_string(bit_vector* dest, char* init_string)
+{
+	bit_vector_clear(dest);
+	if(strlen(init_string) == dest->width)
+	{
+		int I, fI;
+		for(I = 0, fI = dest->width; I < fI; I++)
+		{
+			bit_vector_set_bit(dest, (dest->width-I)-1, (init_string[I] == '1'));
+		}
+	}
+	else
+	{
+		fprintf(stderr,"Error: init string %s not of correct size (%d).\n", init_string, dest->width);
+	}
 }
 
 // ----------   casts, bit-casts ---------------------------------------------------------
@@ -671,7 +689,7 @@ void bit_vector_div(bit_vector* r, bit_vector* s, bit_vector* t)
 		result = op1/op2;
 	else
 	{
-		fprintf(stderr,"Error: divide by 0... %lld/%lld for bit-width %d.\n", op1,op2,r->width);
+		fprintf(stderr,"Error: divide by 0... % " PRId64 "/%" PRId64 "for bit-width %d.\n", op1,op2,r->width);
 	}
 
 	pack_uint64_into_bit_vector(0,result,t);

@@ -31,6 +31,7 @@ class rtlAssignStatement: public rtlStatement
 	bool Get_Volatile() {return(_volatile);}
 
 	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& source_file);
 };
 
 class rtlEmitStatement: public rtlStatement
@@ -44,6 +45,7 @@ class rtlEmitStatement: public rtlStatement
 	}
 
 	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& source_file);
 };
 
 class rtlGotoStatement: public rtlStatement
@@ -54,7 +56,7 @@ class rtlGotoStatement: public rtlStatement
 	rtlGotoStatement(rtlThread* p, string lbl):rtlStatement(p) { _label = lbl;}
 
 	virtual void Print(ostream& ofile);
-
+	virtual void Print_C(ostream& source_file);
 };
 
 class rtlBlockStatement;
@@ -76,7 +78,7 @@ class rtlIfStatement: public rtlStatement
 	
 
 	virtual void Print(ostream& ofile);
-
+	virtual void Print_C(ostream& source_file);
 };
 
 
@@ -91,7 +93,7 @@ class rtlBlockStatement: public rtlStatement
 	}
 
 	virtual void Print(ostream& ofile);
-
+	virtual void Print_C(ostream& source_file);
 };
 
 class rtlLabeledBlockStatement: public rtlBlockStatement
@@ -105,6 +107,7 @@ class rtlLabeledBlockStatement: public rtlBlockStatement
 	}
 
 	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& source_file);
 	virtual string Get_Label() {return(_label);}
 };
 
@@ -115,6 +118,7 @@ class rtlNullStatement: public rtlStatement
 	public:
 	rtlNullStatement(rtlThread* p);
 	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& source_file) {source_file << endl << ";" << endl;}
 };
 
 #endif
