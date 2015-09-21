@@ -20,11 +20,7 @@ class rtlType: public hierRoot
   virtual string Get_Name() {assert(0);}
   virtual string Get_C_Name() {assert(0);}
 
-  virtual rtlType* Get_Element_Type(int idx) 
-  {
-    assert(0);
-  }
-  virtual rtlType* Get_Element_Type(int start_idx, vector<int>& indices) 
+  virtual rtlType* Get_Element_Type()
   {
     assert(0);
   }
@@ -117,7 +113,6 @@ class rtlArrayType: public rtlType
 	}
 
   virtual rtlType* Get_Element_Type() {return(this->_element_type);}
-  virtual rtlType* Get_Element_Type(int idx) {return(this->_element_type);} 
 
   rtlArrayType(rtlType* element_type, vector<int>& dimensions);
 

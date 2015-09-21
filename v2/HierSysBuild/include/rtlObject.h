@@ -7,7 +7,6 @@ class rtlObject: public hierRoot
 {
 	protected:
 
-	string _name;
 	rtlType* _type;
 
         public:
@@ -27,9 +26,21 @@ class rtlObject: public hierRoot
 
 	virtual void Print(ostream& ofile) {assert(0);}
 		
-	virtual string Get_C_Name() {return("__sstate->" + this->_name);}
+	virtual string Get_C_Name() {return("__sstate->" + this->Get_Id());}
+	virtual string Get_C_Target_Name() 
+	{
+		if(this->Needs_Next())
+			return("__sstate->__next__" + this->Get_Id());
+	}
 	virtual void Print_C_Struct_Field_Initialization(string obj_name, ostream& source_file);
 	
+	virtual void Set_Is_Emitted(bool v) {}
+	virtual bool Get_Is_Emitted(bool v) {return(false);}
+
+	virtual void Set_Is_Volatile(bool v) {}
+	virtual bool Get_Is_Volatile() {return(false);}
+
+	virtual bool Needs_Next() {return(false);}
 };
 
 class rtlConstant: public rtlObject
@@ -59,11 +70,15 @@ class rtlVariable: public rtlObject
 
 class rtlSignal: public rtlObject
 {
+	bool _is_volatile;
 	public:
 	rtlSignal(string name, rtlType* t);
 
 	virtual bool Is_Signal() {return(true);}
 	virtual void Print(ostream& ofile);
+	virtual void Set_Is_Volatile(bool v) {_is_volatile = v;}
+	virtual bool Get_Is_Volatile() {return(_is_volatile);}
+	virtual bool Needs_Next() {return(this->Get_Is_Volatile());}
 };
 
 class rtlInPort: public rtlSignal
@@ -77,10 +92,15 @@ class rtlInPort: public rtlSignal
 
 class rtlOutPort: public rtlSignal
 {
+	bool _is_emitted;
 	public:
-	rtlOutPort(string name, rtlType* t) : rtlSignal(name,t) {}
+	rtlOutPort(string name, rtlType* t) : rtlSignal(name,t) {_is_emitted = false;}
 	virtual bool Is_OutPort() {return(true);}
 	virtual void Print(ostream& ofile);
+
+	virtual void Set_Is_Emitted(bool v) {_is_emitted = v;}
+	virtual bool Get_Is_Emitted() {return(_is_emitted);}
+	virtual bool Needs_Next() {return(!(this->Get_Is_Volatile() || this->Get_Is_Emitted()));}
 
 };
 #endif

@@ -51,7 +51,7 @@ void rtlIntegerType::Print_C_Struct_Field_Initialization(string prefix, rtlValue
 
 void rtlIntegerType::Print(ostream& ofile)
 {
-	ofile << " $integer " << _low << " to " << _high << " " << endl;
+	ofile << " $integer " << _low << " to " << _high << " " ;
 }
 
 void rtlUnsignedType::Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile)
@@ -68,12 +68,12 @@ void rtlUnsignedType::Print_C_Struct_Field_Initialization(string prefix, rtlValu
 
 void rtlUnsignedType::Print(ostream& ofile)
 {
-	ofile << " $unsigned<" << _width << ">" << endl;
+	ofile << " $unsigned<" << _width << "> ";
 }
 
 void rtlSignedType::Print(ostream& ofile)
 {
-	ofile << " $signed<" << _width << ">" << endl;
+	ofile << " $signed<" << _width << "> ";
 }
 
 rtlArrayType::rtlArrayType( rtlType* element_type, vector<int>& dimensions): rtlType()

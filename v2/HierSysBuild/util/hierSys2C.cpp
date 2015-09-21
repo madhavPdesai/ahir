@@ -150,11 +150,20 @@ int main(int argc, char* argv[])
 	source_file << "#include <pipeHandler.h>"  << endl;
 	source_file << "#include <" << base_header_file_name << ">" << endl;
 
-	source_file << "void " << c_prefix << "_start_daemons(FILE* fp) {" << endl;
 	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
 	{
 		hierSystem* sys = sys_vec[I];
+		if(sys->Number_Of_Strings() > 0)
+		{
+			sys->Print_C_String_Ticker(header_file, source_file);
+		}
+	}
 
+	source_file << "void " << c_prefix << "_start_daemons(FILE* fp) {" << endl;
+	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
+	{
+
+		hierSystem* sys = sys_vec[I];
 		if(sys->Is_Leaf())
 		{
 			string lib = sys->Get_Library();
@@ -220,10 +229,6 @@ int main(int argc, char* argv[])
 			source_file << " set_pipe_is_written_into(" << q_pname << ");" << endl;
 		}
 
-		if(sys->Number_Of_Strings() > 0)
-		{
-			sys->Print_C_String_Ticker(header_file, source_file);
-		}
 
 	}
 	source_file << "}" << endl;

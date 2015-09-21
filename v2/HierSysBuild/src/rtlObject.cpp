@@ -56,6 +56,7 @@ void rtlVariable::Print(ostream& ofile)
 
 rtlSignal::rtlSignal(string name, rtlType* t):rtlObject(name, t)
 {
+	_is_volatile = false;
 }
 
 // Print declaration.

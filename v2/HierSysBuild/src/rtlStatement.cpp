@@ -44,6 +44,9 @@ void rtlAssignStatement::Print(ostream& ofile)
 	
 void rtlAssignStatement::Print_C(ostream& source_file)
 {
+	source_file << "//";
+	this->Print(source_file); 
+
 	rtlType* tt = _target->Get_Type();
 	if(tt->Is("rtlIntegerType"))
 	{
@@ -72,6 +75,8 @@ void rtlEmitStatement::Print(ostream& ofile)
 
 void rtlEmitStatement::Print_C(ostream& source_file)
 {
+	source_file << "//";
+	this->Print(source_file); 
 	rtlType* tt = _object->Get_Type();
 	if(tt->Is("rtlIntegerType"))
 	{
@@ -93,6 +98,8 @@ void rtlGotoStatement::Print(ostream& ofile)
 
 void rtlGotoStatement::Print_C(ostream& source_file)
 {
+	source_file << "//";
+	this->Print(source_file); 
 	source_file << "__sstate->_next_state = " << stateEnum(_label) << ";" << endl;
 }
 
@@ -109,12 +116,16 @@ void rtlIfStatement::Print(ostream& ofile)
 
 void rtlIfStatement::Print_C(ostream& source_file)
 {
-	source_file << "if (";
 	_test->Print_C(source_file);
-	source_file << ") ";
+	source_file << "// if ";
+	_test->Print(source_file);
+	source_file << endl;
+
+	source_file << "if (" << _test->Get_C_Name() << ")";
 	_if_block->Print_C(source_file);
 	if(_else_block != NULL)
 	{
+		source_file << "// else" << endl;
 		source_file << "else " << endl;
 		_else_block->Print_C(source_file);
 	}
@@ -148,8 +159,7 @@ void rtlLabeledBlockStatement::Print(ostream& ofile)
 
 void rtlLabeledBlockStatement::Print_C(ostream& source_file)
 {
-	source_file << endl;
-	source_file << _label << ": ";
+	// no label... 
 	this->rtlBlockStatement::Print_C(source_file);
 }
 

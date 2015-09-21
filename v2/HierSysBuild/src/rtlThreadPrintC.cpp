@@ -54,9 +54,9 @@ void rtlThread::Print_C_Struct_Declaration(ostream& header_file)
 	{
 		rtlObject* obj = (*iter).second;
 		header_file << obj->Get_Type()->Get_C_Name() << " " << obj->Get_Id() << ";" << endl;
-		if(obj->Is_Signal() && !(obj->Is_InPort()))
+		if(obj->Needs_Next())
 		{
-			header_file << obj->Get_Type()->Get_C_Name() << " __next__" << obj->Get_Id() << ";" << endl;
+			header_file << obj->Get_Type()->Get_C_Name() << " __next__" << obj->Get_Id() <<  ";" << endl;
 		}
 	}
 
@@ -68,18 +68,24 @@ void rtlThread::Print_C_Run_Function(ostream& source_file)
 	string fn_name = threadRunFunctionName(this);
 	string struct_type_name = threadStructTypeName(this);
 
-	source_file << "void " << fn_name << "(" << struct_type_name << "* state)" << endl;
+	source_file << "void " << fn_name << "(" << struct_type_name << "* incoming_state)" << endl;
 	source_file << "{" << endl;
-	source_file << " switch(state) " << endl;
-	source_file << "{" << endl;
+	source_file << struct_type_name << "* __sstate = incoming_state;" << endl;
+		
 	for(int I = 0, fI = _statements.size(); I < fI; I++)
 	{
-		source_file << stateEnum(_statements[I]->Get_Label()) << ":" << endl;;
+		if(I > 0)
+			source_file << "else" << endl;
+		source_file << "if(__sstate->_state == " <<  stateEnum(_statements[I]->Get_Label()) << ")" << endl;
+		source_file << "{" << endl;
+		source_file << "// default next-state " << endl;
+		source_file << "__sstate->_next_state = "
+			<< ((I < (fI-1)) ? stateEnum(_statements[I+1]->Get_Label()) : stateEnum(_statements[I]->Get_Label()))
+			<< ";" << endl;
+		source_file << "// label: " << _statements[I]->Get_Label() << endl;
 		_statements[I]->Print_C(source_file);
-		source_file << "break;" << endl;
+		source_file << "}" << endl;
 	}
-	source_file << " default: assert(0);" << endl;
-	source_file << "}" << endl;
 	source_file << "}" << endl;
 }
 
@@ -88,19 +94,20 @@ void rtlThread::Print_C_Tick_Function(ostream& source_file)
 	string fn_name = threadTickFunctionName(this);
 	string struct_type_name = threadStructTypeName(this);
 
-	source_file << "void " << fn_name << "(" << struct_type_name << "* state)" << endl;
+	source_file << "void " << fn_name << "(" << struct_type_name << "* incoming_state)" << endl;
 	source_file << "{" << endl;
-	source_file << "state->_state = state->_next_state;" << endl;
+
+	source_file << struct_type_name << "* __sstate = incoming_state;" << endl;
+	source_file << "__sstate->_state = __sstate->_next_state;" << endl;
+
 	for(map<string, rtlObject*>::iterator iter = this->_objects.begin(), fiter = this->_objects.end();
 		iter != fiter;
 		iter++)
 	{
 		rtlObject* obj = (*iter).second;
-		string obj_name = obj->Get_Id();
-		if(obj->Is_Signal() && !(obj->Is_InPort()))
+		if(obj->Needs_Next())
 		{
-			string next_obj_name = obj_name + "__next__";
-			source_file << "state->" << obj_name << " = state->" << next_obj_name << ";" << endl;
+			source_file << obj->Get_C_Name() << " = " << obj->Get_C_Target_Name() << ";" << endl;
 		}
 	}
 	source_file << "}" << endl;
@@ -131,11 +138,11 @@ void rtlString::Print_C_State_Structure_Allocator(ostream& source_file)
 	for(int I = 0, fI = t_objs.size(); I < fI; I++)
 	{
 		rtlObject* obj = t_objs[I];
-		string obj_name = obj->Get_Id();
+		string obj_name = obj->Get_C_Name();
 		obj->Print_C_Struct_Field_Initialization(obj_name, source_file);
-		if(obj->Is_Signal() && !(obj->Is_InPort()))
+		if(obj->Needs_Next())
 		{
-			string next_obj_name = obj_name + "__next__";
+			string next_obj_name = obj->Get_C_Target_Name();
 			obj->Print_C_Struct_Field_Initialization(next_obj_name, source_file);
 		}
 	}

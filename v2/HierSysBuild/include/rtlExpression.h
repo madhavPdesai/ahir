@@ -30,12 +30,16 @@ class rtlExpression: public hierRoot
 	string Kind() {return("rtlExpression");}
 
 	// is a target expression?
-	void Set_Is_Target(bool v) {_is_target = v;}
+	virtual void Set_Is_Target(bool v) {_is_target = v;}
+	virtual void Set_Is_Emitted(bool v) {}
+	virtual void Set_Is_Volatile(bool v) {}
+
  	bool Get_Is_Target() {return(_is_target);}
 
 
 	void Set_Type(rtlType* t) {_type = t;}
 	rtlType* Get_Type() {return(_type);}
+
 
 
 
@@ -83,6 +87,10 @@ class rtlObjectReference: public rtlExpression
 	string Kind() {return("rtlObjectReference");}
 	
 	virtual rtlObject* Get_Object() {return(_object);}
+
+	// passed to objects.
+	virtual void Set_Is_Emitted(bool v);
+	virtual void Set_Is_Volatile(bool v);
 };
 
 
@@ -174,6 +182,8 @@ class rtlBinaryExpression: public rtlExpression
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& ofile);
+
+	void Infer_And_Set_Type();
 };
 
 class rtlTernaryExpression: public rtlExpression
@@ -190,6 +200,7 @@ class rtlTernaryExpression: public rtlExpression
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& ofile);
+
 };
 
 void Print_C_Test_Condition(rtlExpression* expr, ostream& ofile);

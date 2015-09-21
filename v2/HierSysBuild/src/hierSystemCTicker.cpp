@@ -101,7 +101,6 @@ void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_fil
 		s->Print_C_State_Structure_Allocator(source_file);
 		s->Print_C_Rtl_Aa_Matcher_Allocator(source_file);
 		s->Print_C_Rtl_Aa_Matcher_Structure_Declarations(source_file);
-
 	}
 
 	source_file << "void " << this->Get_Id() << "_String_Ticker();" << endl;

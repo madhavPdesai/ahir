@@ -33,6 +33,7 @@ string rtlExpression::Get_C_Name()
 {
 	string ret_val = "__expr_";
 	ret_val += IntToStr(this->Get_Index());
+	return(ret_val);
 }
 	
 string rtlExpression::C_Int_Reference()
@@ -61,6 +62,7 @@ rtlSimpleObjectReference::rtlSimpleObjectReference(rtlObject* obj): rtlObjectRef
 	{
 		_value = obj->Get_Value();
 	}
+	_type = obj->Get_Type();
 }
 
 
@@ -95,6 +97,16 @@ void rtlSimpleObjectReference::Print(ostream& ofile)
 	
 
 	
+void rtlObjectReference::Set_Is_Emitted(bool v)
+{
+	_object->Set_Is_Emitted(v);
+}
+void rtlObjectReference::Set_Is_Volatile(bool v)
+{
+	_object->Set_Is_Volatile(v);
+}
+
+	
 string rtlSimpleObjectReference::Get_C_Name() 
 {
 	return(_object->Get_C_Name());
@@ -103,26 +115,20 @@ string rtlSimpleObjectReference::Get_C_Name()
 
 void rtlSimpleObjectReference::Print_C(ostream& ofile) 
 {
-	if(this->Get_Is_Target())
-	{
-		// do nothing.
-	}
-	else
-	{
-		ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << ";" << endl;
-		if(_value != NULL)
-			this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), this->_value, ofile);
-		else
-		{
-			Print_C_Assignment(this->Get_C_Name(), this->Get_Object()->Get_C_Name(), this->Get_Type(), ofile);
-		}
-	}
+	// nothing.  objects will be in string struct.
 }
 	
 rtlArrayObjectReference::rtlArrayObjectReference(rtlObject* obj, vector<rtlExpression*>& indices)
 	: rtlObjectReference(obj->Get_Id() + "_array_ref", obj)
 {
 	_indices = indices;
+	rtlType* otype = obj->Get_Type();
+	assert(otype->Is("rtlArrayType"));
+	rtlArrayType* at = (rtlArrayType*) otype;
+	assert(at->Get_Number_Of_Dimensions() == indices.size());
+
+	rtlType* ele_type = at->Get_Element_Type();
+	_type = ele_type;
 }
 
 string rtlArrayObjectReference::Get_C_Name() 
@@ -220,6 +226,7 @@ rtlUnaryExpression::rtlUnaryExpression(rtlOperation op, rtlExpression* rest):
 {
 	_op = op;
 	_rest = rest;	
+	_type = rest->Get_Type();
 }
 
 void rtlUnaryExpression::Print_C(ostream& ofile)
@@ -261,6 +268,54 @@ rtlBinaryExpression::rtlBinaryExpression(rtlOperation op, rtlExpression* first, 
 	_op = op;
 	_first = first;
 	_second = second;
+	this->Infer_And_Set_Type();
+}
+
+
+void rtlBinaryExpression::Infer_And_Set_Type()
+{
+	switch(_op)
+	{
+		case __OR: 
+		case __AND:
+		case __XOR:
+		case __NOR:
+		case __NAND:
+		case __XNOR:
+		case __PLUS:
+		case __MINUS:
+		case __MUL:
+		case __DIV:
+			assert(_first->Get_Type() == _second->Get_Type());
+			_type = _first->Get_Type();
+			break;
+		case __SHL:
+		case __SHR:
+		case __ROR:
+		case __ROL:
+			_type = _first->Get_Type();
+			break;
+		case __EQUAL:
+		case __NOTEQUAL:
+		case __LESS:
+		case __LESSEQUAL:
+		case __GREATER:
+		case __GREATEREQUAL:
+			assert(_first->Get_Type() == _second->Get_Type());
+			_type = Find_Or_Make_Unsigned_Type(1);
+			break;
+		case __CONCAT:
+			assert(_first->Get_Type()->Kind() == _second->Get_Type()->Kind());
+			if(_first->Get_Type()->Is("rtlUnsignedType"))
+				_type = Find_Or_Make_Unsigned_Type(_first->Get_Type()->Size() + _second->Get_Type()->Size());
+			else if(_first->Get_Type()->Is("rtlSignedType"))
+				_type = Find_Or_Make_Signed_Type(_first->Get_Type()->Size() + _second->Get_Type()->Size());
+			else
+				assert(0);
+			break;
+		default:
+			assert(0);
+	}
 }
 
 void rtlBinaryExpression::Print_C(ostream& ofile)
@@ -296,13 +351,16 @@ void rtlBinaryExpression::Print(ostream& ofile)
 	_second->Print(ofile);
 	ofile << ") ";
 }
-	
+
 rtlTernaryExpression::rtlTernaryExpression(rtlExpression* test, rtlExpression* if_true, rtlExpression* if_false)
-  : rtlExpression(string("(") + test->Get_Id() + " ? " + if_true->Get_Id() + " : " + if_false->Get_Id())
+	: rtlExpression(string("(") + test->Get_Id() + " ? " + if_true->Get_Id() + " : " + if_false->Get_Id())
 {
+	assert(_if_true->Get_Type() == _if_false->Get_Type());
 	_test = test;
 	_if_true = if_true;
 	_if_false = if_false;
+	_type = if_true->Get_Type();
+
 }
 
 
