@@ -148,15 +148,20 @@ int main(int argc, char* argv[])
 	header_file << "void " << c_prefix << "_stop_daemons();" << endl;
 
 	source_file << "#include <pipeHandler.h>"  << endl;
+	source_file << "#include <pthreadUtils.h>"  << endl;
+	source_file << "#include <rtl2AaMatcher.h>"  << endl;
 	source_file << "#include <" << base_header_file_name << ">" << endl;
 
+	map<hierSystem*, vector<string> >  match_daemon_map;
 	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
 	{
 		hierSystem* sys = sys_vec[I];
+		vector<string> match_daemons;
 		if(sys->Number_Of_Strings() > 0)
 		{
-			sys->Print_C_String_Ticker(header_file, source_file);
+			sys->Print_C_String_Ticker(header_file, source_file, match_daemons);
 		}
+		match_daemon_map[sys] = match_daemons;
 	}
 
 	source_file << "void " << c_prefix << "_start_daemons(FILE* fp) {" << endl;
@@ -164,6 +169,15 @@ int main(int argc, char* argv[])
 	{
 
 		hierSystem* sys = sys_vec[I];
+
+		source_file << "// match daemons for system " << sys->Get_Id() << endl;
+		for (int J = 0, fJ = match_daemon_map[sys].size(); J < fJ; J++)
+		{
+			string match_daemon = match_daemon_map[sys][J];
+			source_file << "PTHREAD_DECLARE(" << match_daemon << ");" << endl;
+			source_file << "PTHREAD_CREATE(" << match_daemon << ");" << endl;
+		}
+
 		if(sys->Is_Leaf())
 		{
 			string lib = sys->Get_Library();
@@ -228,6 +242,7 @@ int main(int argc, char* argv[])
 			source_file << " set_pipe_is_read_from(" << q_pname << ");" << endl;
 			source_file << " set_pipe_is_written_into(" << q_pname << ");" << endl;
 		}
+
 
 
 	}

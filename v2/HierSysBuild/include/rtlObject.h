@@ -13,6 +13,7 @@ class rtlObject: public hierRoot
 
 	rtlObject(string name, rtlType* t);
 
+	virtual string Kind() {return("rtlObject");}
 
 	virtual bool Is_Variable() {return(false);}
 	virtual bool Is_Signal()   {return(false);}
@@ -49,6 +50,7 @@ class rtlConstant: public rtlObject
 	public:
 
 	rtlConstant(string name, rtlType* t, rtlValue* v); 
+	virtual string Kind() {return("rtlConstant");}
 
 	virtual bool Is_Constant() {return(true);}
 	virtual rtlValue* Get_Value() {return(_value);}
@@ -62,6 +64,7 @@ class rtlVariable: public rtlObject
 	public:
 
 	rtlVariable(string name, rtlType* t);
+	virtual string Kind() {return("rtlVariable");}
 	virtual bool Is_Variable() {return(true);}
 	virtual void Print(ostream& ofile);
 
@@ -73,20 +76,25 @@ class rtlSignal: public rtlObject
 	bool _is_volatile;
 	public:
 	rtlSignal(string name, rtlType* t);
+	virtual string Kind() {return("rtlSignal");}
 
 	virtual bool Is_Signal() {return(true);}
 	virtual void Print(ostream& ofile);
 	virtual void Set_Is_Volatile(bool v) {_is_volatile = v;}
 	virtual bool Get_Is_Volatile() {return(_is_volatile);}
-	virtual bool Needs_Next() {return(this->Get_Is_Volatile());}
+	virtual bool Needs_Next() {return(!this->Get_Is_Volatile());}
 };
 
 class rtlInPort: public rtlSignal
 {
 	public:
 	rtlInPort(string name, rtlType* t) : rtlSignal(name,t) {}
+	virtual string Kind() {return("rtlInPort");}
 	virtual bool Is_InPort() {return(true);}
 	virtual void Print(ostream& ofile);
+
+	// in-port does not need registering.
+	virtual bool Needs_Next() {return(false);}
 
 };
 
@@ -95,6 +103,8 @@ class rtlOutPort: public rtlSignal
 	bool _is_emitted;
 	public:
 	rtlOutPort(string name, rtlType* t) : rtlSignal(name,t) {_is_emitted = false;}
+	virtual string Kind() {return("rtlOutPort");}
+
 	virtual bool Is_OutPort() {return(true);}
 	virtual void Print(ostream& ofile);
 

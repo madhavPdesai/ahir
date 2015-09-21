@@ -20,6 +20,10 @@ string stringStructAllocatorFunctionName(rtlString* s) {return(string("__") + s-
 string stringMatcherAllocatorFunctionName(rtlString* s) {return(string("__") + s->Get_Id() + "__matcher_allocator");}
 string stringToPipeMatcherObjName(rtlString* s, string pipe_name) {return(string("__") + s->Get_Id() + "__to__" + pipe_name);}
 string pipeToStringMatcherObjName(rtlString* s, string pipe_name) {return(string("__") + pipe_name + "__to__" + s->Get_Id());}
+string pipeToStringMatcherThreadName(rtlString* s, string pipe_name) 
+	{return(string("__") + pipe_name + "__to__" + s->Get_Id() + "__match_daemon");}
+string stringToPipeMatcherThreadName(rtlString* s, string pipe_name)
+	{return(string("__") + s->Get_Id() + "__to__" + pipe_name + "__match_daemon");}
 
 
 
@@ -390,6 +394,74 @@ void rtlString::Print_C_Tick_Function_Call(ostream& source_file)
 	source_file << fn_name << "(" << arg_name << ");" << endl;
 }
 
+void rtlString::Print_C_Matcher_Start_Daemons(ostream& source_file, vector<string>& match_daemons)
+{
+	rtlThread* bt = this->Get_Base_Thread();
+	hierSystem* sys = bt->Get_Parent();
+	
+	string string_struct_name =  stringStructObjName(this);
+
+	// iterate over the string port map.	
+	for(map<string, vector<string> >::iterator iter = _actual_to_formal_port_map.begin(),
+			fiter = _actual_to_formal_port_map.end(); iter != fiter; iter++)
+	{
+		string port_name = (*iter).first;
+		int pipe_width = sys->Get_Pipe_Width(port_name);
+
+		vector<rtlObject*> obj_vector;
+
+		bt->Lookup_Objects((*iter).second, obj_vector);
+
+		rtlObject* dobj = NULL;;
+		rtlObject* req_obj = NULL;
+		rtlObject* ack_obj = NULL;
+		if(obj_vector.size() == 1)
+		{
+			dobj = obj_vector[0];
+		}
+		else if(obj_vector.size() == 3)
+		{
+			req_obj = obj_vector[0];
+			dobj = obj_vector[1];
+			ack_obj = obj_vector[2];
+		}
+		else
+			assert(0);
+
+		string matcher_struct_name = (dobj->Is_InPort() ?
+							pipeToStringMatcherObjName(this,port_name) :
+							stringToPipeMatcherObjName(this,port_name));
+
+		if(dobj->Is_OutPort())
+		{
+			string daemon_fn_name = stringToPipeMatcherThreadName(this, port_name);
+			string inner_fn_name  = 
+					(sys->Is_Signal(port_name) ?  "rtl2AaSignalTransferMatcher" : "rtl2AaPipeTransferMatcher");
+			string match_rec_name = stringToPipeMatcherObjName(this, port_name);
+			source_file << "void " << daemon_fn_name << "() " << endl;
+			source_file << "{" << endl;
+			source_file << inner_fn_name << "((void*) " << match_rec_name << ");" << endl;
+			source_file << "}" << endl;
+			source_file << "DEFINE_THREAD(" << daemon_fn_name << ");" << endl;
+			match_daemons.push_back(daemon_fn_name);
+		}
+		else
+		{
+			string daemon_fn_name = pipeToStringMatcherThreadName(this, port_name);
+			string inner_fn_name  = 
+					(sys->Is_Signal(port_name) ?  "Aa2RtlSignalTransferMatcher" : "Aa2RtlPipeTransferMatcher");
+			string match_rec_name = pipeToStringMatcherObjName(this, port_name);
+			source_file << "void " << daemon_fn_name << "() " << endl;
+			source_file << "{" << endl;
+			source_file << inner_fn_name << "((void*) " << match_rec_name << ");" << endl;
+			source_file << "}" << endl;
+			source_file << "DEFINE_THREAD(" << daemon_fn_name << ");" << endl;
+			match_daemons.push_back(daemon_fn_name);
+		}
+	}
+}
+
+
 void Print_C_Binary_Operation(string tgt_name, string first_op, string second_op, rtlType* tgt_type, rtlOperation opcode , ostream& ofile)
 {
 	if(tgt_type->Is("rtlIntegerType"))
@@ -501,4 +573,5 @@ void Print_C_Assignment(string tgt, string src, rtlType* tt, ostream& ofile)
 		ofile << "bit_vector_bitcast_to_bit_vector(&(" << tgt << "), &(" << src << "));" << endl;
 	}
 }
+
 

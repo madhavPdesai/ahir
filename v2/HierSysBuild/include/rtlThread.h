@@ -93,6 +93,8 @@ class rtlString: public hierRoot
 	void Print_C_Run_Function_Call(ostream& source_file);
 	void Print_C_Rtl_Aa_Req_Transfers(ostream& source_file);
 	void Print_C_Tick_Function_Call(ostream& source_file);
+	void Print_C_Matcher_Start_Daemons(ostream& source_file, vector<string>& match_daemons);
+
 };
 
 string threadStructTypeName(rtlThread* t);
@@ -103,8 +105,12 @@ string threadTickFunctionName(rtlThread* t);
 string stringStructObjName(rtlString* s);
 string stringStructAllocatorFunctionName(rtlString* s);
 string stringMatcherAllocatorFunctionName(rtlString* s);
+
 string stringToPipeMatcherObjName(rtlString* s, string pipe_name);
 string pipeToStringMatcherObjName(rtlString* s, string pipe_name);
+
+string pipeToStringMatcherThreadName(rtlString* s, string pipe_name);
+string stringToPipeMatcherThreadName(rtlString* s, string pipe_name);
 
 void Print_C_Binary_Operation(string tgt_name, string first_op, string second_op, rtlType* tgt_type, rtlOperation opcode , ostream& ofile);
 void Print_C_Assignment(string tgt, string src, rtlType* tt, ostream& ofile);

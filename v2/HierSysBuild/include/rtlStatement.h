@@ -39,10 +39,7 @@ class rtlEmitStatement: public rtlStatement
 	rtlObject* _object;
 
 	public:
-	rtlEmitStatement(rtlThread* p, rtlObject* emittee):rtlStatement(p)
-	{
-		_object = emittee;
-	}
+	rtlEmitStatement(rtlThread* p, rtlObject* emittee);
 
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& source_file);

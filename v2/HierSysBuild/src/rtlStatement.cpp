@@ -25,6 +25,7 @@ rtlAssignStatement::rtlAssignStatement(rtlThread* p,bool volatile_flag,  rtlExpr
 
 	_source = src;
 	_volatile = volatile_flag;
+	tgt->Set_Is_Volatile(volatile_flag);
 }
 
 
@@ -66,6 +67,13 @@ void rtlAssignStatement::Print_C(ostream& source_file)
 	}
 	else
 		assert(0);
+}
+
+	
+rtlEmitStatement::rtlEmitStatement(rtlThread* p, rtlObject* emittee):rtlStatement(p)
+{
+	_object = emittee;
+	_object->Set_Is_Emitted(true);
 }
 
 void rtlEmitStatement::Print(ostream& ofile)

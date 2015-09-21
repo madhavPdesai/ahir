@@ -435,7 +435,7 @@ public:
 	// in start daemons, start the ticker and the individual
 	// threads for Rtl<->Aa matchers.
 	//
-	void Print_C_String_Ticker(ostream& header_file, ostream& src_file);
+	void Print_C_String_Ticker(ostream& header_file, ostream& src_file, vector<string>& match_daemons);
 
 	// return true if error found.
 	bool Check_For_Errors();

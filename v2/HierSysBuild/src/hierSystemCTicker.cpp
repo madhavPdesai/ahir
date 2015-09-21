@@ -40,7 +40,8 @@
 // in start daemons, start the ticker and the individual
 // threads for Rtl<->Aa matchers.
 //
-void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_file)
+void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_file,
+						vector<string>& match_daemons)
 {
 	// 
 	/*
@@ -99,8 +100,8 @@ void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_fil
 	
 		s->Print_C_State_Structure_Declaration(source_file);
 		s->Print_C_State_Structure_Allocator(source_file);
-		s->Print_C_Rtl_Aa_Matcher_Allocator(source_file);
 		s->Print_C_Rtl_Aa_Matcher_Structure_Declarations(source_file);
+		s->Print_C_Rtl_Aa_Matcher_Allocator(source_file);
 	}
 
 	source_file << "void " << this->Get_Id() << "_String_Ticker();" << endl;
@@ -128,6 +129,12 @@ void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_fil
 	}
 	source_file << "}" << endl;
 	source_file << "}" << endl;
+
+	for(int I = 0, fI = _rtl_strings.size();  I < fI; I++)
+	{
+		rtlString* s = _rtl_strings[I];
+		s->Print_C_Matcher_Start_Daemons(source_file, match_daemons);
+	}
 }
 
 
