@@ -29,12 +29,21 @@ PipeMatcherRec* getNext(PipeMatcherRec* mrec)
 	return(mrec->_next);
 }
 
-// set if v=1, ignore if v=0.
 void setRequest(PipeMatcherRec* mrec, char v)
 {
 	MUTEX_LOCK(mrec->_lock_mutex);
+	mrec->_request = v;
+	MUTEX_UNLOCK(mrec->_lock_mutex);	
+}
+
+void setRequestAndAssignValue(PipeMatcherRec* mrec, char v, bit_vector* val)
+{
+	MUTEX_LOCK(mrec->_lock_mutex);
+	mrec->_request = v;
 	if(v)
-		mrec->_request = 1;
+	{
+		bit_vector_bitcast_to_bit_vector(mrec->_value, val);
+	}
 	MUTEX_UNLOCK(mrec->_lock_mutex);	
 }
 
@@ -47,6 +56,11 @@ void setAck(PipeMatcherRec* mrec, char v)
 	MUTEX_UNLOCK(mrec->_lock_mutex);	
 }
 
+int getAck(PipeMatcherRec* mrec)
+{
+	return(mrec->_ack);
+}
+
 void assignValue(PipeMatcherRec* mrec, bit_vector* v)
 {
 	MUTEX_LOCK(mrec->_lock_mutex);
@@ -54,7 +68,7 @@ void assignValue(PipeMatcherRec* mrec, bit_vector* v)
 	MUTEX_UNLOCK(mrec->_lock_mutex);	
 }
 
-int  getAndClearRequest(PipeMatcherRec* mrec)
+int  testAndClearRequest(PipeMatcherRec* mrec)
 {
 	MUTEX_LOCK(mrec->_lock_mutex);
 	int ret_val = mrec->_request;
@@ -63,7 +77,7 @@ int  getAndClearRequest(PipeMatcherRec* mrec)
 	MUTEX_UNLOCK(mrec->_lock_mutex);	
 	return(ret_val);
 }
-int  getAndClearAck(PipeMatcherRec* mrec)
+int  testAndClearAck(PipeMatcherRec* mrec)
 {
 	MUTEX_LOCK(mrec->_lock_mutex);
 	int ret_val = mrec->_ack;
@@ -73,6 +87,20 @@ int  getAndClearAck(PipeMatcherRec* mrec)
 	return(ret_val);
 }
 
+int  testAndClearAckAndUpdateData(PipeMatcherRec* mrec, bit_vector* v)
+{
+	MUTEX_LOCK(mrec->_lock_mutex);
+	int ret_val = mrec->_ack;
+	if(ret_val)
+	{
+		mrec->_ack = 0;
+		bit_vector_bitcast_to_bit_vector(v,mrec->_value);
+	}
+	MUTEX_UNLOCK(mrec->_lock_mutex);	
+	return(ret_val);
+}
+
+
 bit_vector* getValue(PipeMatcherRec* mrec)
 {
 	return(mrec->_value);
@@ -80,9 +108,7 @@ bit_vector* getValue(PipeMatcherRec* mrec)
 
 void fetchFromPipe(PipeMatcherRec* mrec)
 {
-	MUTEX_LOCK(mrec->_lock_mutex);
 	read_bit_vector_from_pipe(mrec->_pipe_name, mrec->_value);
-	MUTEX_UNLOCK(mrec->_lock_mutex);
 }
 
 void sendToPipe(PipeMatcherRec* mrec)
@@ -95,25 +121,41 @@ char* getPipeName(PipeMatcherRec* mrec)
 	return(mrec->_pipe_name);
 }
 
-// Transfer information from Aa to Rtl
-// This is done assuming that the Rtl
-// side initiates the read from Aa.
-// If req is observed, then a blocking-read from
-// the pipe is started (the req is cleared).  
-// When the blocking-read has the ack is set 
-// (to be cleared by Rtl side).
+//
+//  When the RTL side wants to read, it sets the req.
+//
+//  The matcher checks the req and if asserted,
+//  the pipe is accessed, and the ack is set
+//  by the matcher.  The matcher then waits
+//  until the ack is cleared before checking
+//  the req once again.
+//
+//  Thus, the matcher will not start a new transfer until
+//  the current transfer has completed.
+//
 void Aa2RtlPipeTransferMatcher(void* vmrec)
 {
 	PipeMatcherRec* mrec = (PipeMatcherRec*) vmrec;
+	fprintf(stderr,"Aa->RTL matcher for pipe %s started.\n", mrec->_pipe_name);
 	while(1)
 	{
-		if(getAndClearRequest(mrec))
+		if(testAndClearRequest(mrec))
 		{
-			//fprintf(stderr,"Aa2Rtl: cleared request.\n");
+			fprintf(stderr,"read-request to pipe %s started.\n", mrec->_pipe_name);
 			fetchFromPipe(mrec);
-			//fprintf(stderr,"Aa2Rtl: received data.\n");
+			fprintf(stderr,"read-request to pipe %s done (data = %s).\n", mrec->_pipe_name,
+					to_string(mrec->_value));
 			setAck(mrec,1);
-			//fprintf(stderr,"Aa2Rtl: set ack.\n");
+			
+			// wait until Ack goes low.
+			while(1)
+			{
+				if(getAck(mrec) == 0)
+					break;
+				else
+					pthread_yield(NULL);
+			}
+			fprintf(stderr,"read-request to pipe %s cycle completed.\n", mrec->_pipe_name);
 		}
 		pthread_yield(NULL);
 	}
@@ -122,23 +164,38 @@ void Aa2RtlPipeTransferMatcher(void* vmrec)
 //
 // When Rtl wants to write, it updates the mrec->_value
 // field and sets the req flag.
-// The matcher tests the req flag.  If true, it resets
-// the req flag, attempts to write to the pipe and
+// The matcher tests the req flag.  If true, 
+// it attempts to write to the pipe and
 // on completion, sets the ack flag.  The ack flag
-// must be cleared by the Rtl side.
+// must be cleared by the Rtl side in order
+// to restart the cycle.
+//
+// (Note: this ensures that even if the Rtl side
+//        maintains the req to high, the matcher
+//        will not initiate a new pipe request until
+//        the entire pipe access cycle has completed).
 //
 void Rtl2AaPipeTransferMatcher(void* vmrec)
 {
 	PipeMatcherRec* mrec = (PipeMatcherRec*) vmrec;
+	fprintf(stderr,"RTL->Aa matcher for pipe %s started.\n", mrec->_pipe_name);
 	while(1)
 	{
-		if(getAndClearRequest(mrec))
+		if(testAndClearRequest(mrec))
 		{
-			//fprintf(stderr,"Rtl2Aa: cleared request.\n");
+			fprintf(stderr,"write-request to pipe %s started (data = %s).\n", mrec->_pipe_name,to_string(mrec->_value));
 			sendToPipe(mrec);
-			//fprintf(stderr,"Rtl2Aa: wrote data.\n");
+			fprintf(stderr,"write-request to pipe %s done.\n", mrec->_pipe_name);
 			setAck(mrec,1);
-			//fprintf(stderr,"Rtl2Aa: set ack.\n");
+
+			while(1)
+			{
+				if(getAck(mrec) == 0)
+					break;
+				else
+					pthread_yield(NULL);
+			}
+			fprintf(stderr,"write-request to pipe %s cycle completed.\n", mrec->_pipe_name);
 		}
 		pthread_yield(NULL);
 	}

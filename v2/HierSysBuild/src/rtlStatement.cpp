@@ -62,7 +62,7 @@ void rtlAssignStatement::Print_C(ostream& source_file)
 						//  In this case, the printing is only of rvalues in
 						// the expression (e.g. array index expressions).
 		_source->Print_C(source_file);
-		source_file  << "bit_vector_bit_cast_bit_vector(&(" << _target->Get_C_Name() << "), &(" 
+		source_file  << "bit_vector_bitcast_to_bit_vector(&(" << _target->Get_C_Name() << "), &(" 
 				<< _source->Get_C_Name() << "));" << endl;
 	}
 	else
@@ -92,16 +92,26 @@ void rtlEmitStatement::Print_C(ostream& source_file)
 	}
 	else if(tt->Is("rtlUnsignedType") || tt->Is("rtlSignedType"))
 	{
-		source_file << "bit_vector_set(&(" << _object->Get_Id() << "));" << endl;
+		source_file << "bit_vector_set(&(" << _object->Get_C_Name() << "));" << endl;
 	}
 	else
 		assert(0);
 	
 }
+	
+rtlGotoStatement::rtlGotoStatement(rtlThread* p, string lbl):rtlStatement(p) 
+{ 
+	_label = lbl;
+}
 
 void rtlGotoStatement::Print(ostream& ofile)
 {
 	ofile << " $goto " << _label << endl;
+	if(_parent_thread->Get_Statement(_label) == NULL)
+	{
+		_parent_thread->Get_Parent()->Report_Error("goto " + _label + " : no statement with this label in thread "
+				+ _parent_thread->Get_Id());
+	}
 }
 
 void rtlGotoStatement::Print_C(ostream& source_file)
@@ -129,7 +139,7 @@ void rtlIfStatement::Print_C(ostream& source_file)
 	_test->Print(source_file);
 	source_file << endl;
 
-	source_file << "if (" << _test->Get_C_Name() << ")";
+	source_file << "if (" << _test->C_Int_Reference() << ")";
 	_if_block->Print_C(source_file);
 	if(_else_block != NULL)
 	{

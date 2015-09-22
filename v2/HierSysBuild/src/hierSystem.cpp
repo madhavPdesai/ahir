@@ -4,6 +4,7 @@
 #include <hierSystem.h>
 #include <rtlEnums.h>
 #include <rtlType.h>
+#include <rtlStatement.h>
 #include <rtlThread.h>
 
 int root_object_counter = 0;

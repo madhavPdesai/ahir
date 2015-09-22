@@ -7,6 +7,9 @@ class rtlThread;
 class rtlStatement: public hierRoot
 {
 
+
+	protected:
+
 	rtlThread* _parent_thread;
 
 	public:
@@ -50,7 +53,7 @@ class rtlGotoStatement: public rtlStatement
 	string _label;
 
 	public:
-	rtlGotoStatement(rtlThread* p, string lbl):rtlStatement(p) { _label = lbl;}
+	rtlGotoStatement(rtlThread* p, string lbl);
 
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& source_file);

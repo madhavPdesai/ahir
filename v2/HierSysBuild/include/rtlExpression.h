@@ -54,6 +54,7 @@ class rtlExpression: public hierRoot
 	virtual string C_Int_Reference();
 
 	virtual void Print_C(ostream& ofile) {assert(0);}
+	virtual void Print_C_Declaration(rtlValue* v, ostream& ofile);
 };
 
 class rtlConstantLiteralExpression: public rtlExpression

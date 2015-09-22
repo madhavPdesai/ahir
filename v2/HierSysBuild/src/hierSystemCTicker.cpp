@@ -4,6 +4,7 @@
 #include <hierSystem.h>
 #include <rtlEnums.h>
 #include <rtlType.h>
+#include <rtlStatement.h>
 #include <rtlThread.h>
 
 
@@ -104,7 +105,7 @@ void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_fil
 		s->Print_C_Rtl_Aa_Matcher_Allocator(source_file);
 	}
 
-	source_file << "void " << this->Get_Id() << "_String_Ticker();" << endl;
+	source_file << "void " << this->Get_Id() << "_String_Ticker()" << endl;
 	source_file << "{" << endl;
 
 	for(int I = 0, fI = _rtl_strings.size();  I < fI; I++)
@@ -129,6 +130,9 @@ void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_fil
 	}
 	source_file << "}" << endl;
 	source_file << "}" << endl;
+
+
+	source_file << "DEFINE_THREAD(" << this->Get_Id() << "_String_Ticker);" << endl;
 
 	for(int I = 0, fI = _rtl_strings.size();  I < fI; I++)
 	{

@@ -36,7 +36,7 @@ class rtlObject: public hierRoot
 	virtual void Print_C_Struct_Field_Initialization(string obj_name, ostream& source_file);
 	
 	virtual void Set_Is_Emitted(bool v) {}
-	virtual bool Get_Is_Emitted(bool v) {return(false);}
+	virtual bool Get_Is_Emitted() {return(false);}
 
 	virtual void Set_Is_Volatile(bool v) {}
 	virtual bool Get_Is_Volatile() {return(false);}

@@ -36,10 +36,15 @@ SignalMatcherRec* makeSignalMatcher(const char* signal_name, int signal_width);
 void setNext(PipeMatcherRec* mrec, PipeMatcherRec* next);
 PipeMatcherRec* getNext(PipeMatcherRec* mrec);
 void setRequest(PipeMatcherRec* mrec, char v);
+void setRequestAndAssignValue(PipeMatcherRec* mrec, char v, bit_vector* val);
 void setAck(PipeMatcherRec* mrec, char v);
+int  getAck(PipeMatcherRec* mrec);
 void assignValue(PipeMatcherRec* mrec, bit_vector* v);
-int  getAndClearRequest(PipeMatcherRec* mrec);
-int  getAndClearAck(PipeMatcherRec* mrec);
+
+int  testAndClearRequest(PipeMatcherRec* mrec);
+int  testAndClearAck(PipeMatcherRec* mrec);
+int  testAndClearAckAndUpdateData(PipeMatcherRec* mrec, bit_vector* v);
+
 bit_vector* getValue(PipeMatcherRec* mrec);
 void fetchFromPipe(PipeMatcherRec* mrec);
 void sendToPipe(PipeMatcherRec* mrec);

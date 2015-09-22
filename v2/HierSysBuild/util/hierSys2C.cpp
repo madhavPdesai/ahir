@@ -3,6 +3,7 @@
 #include <hierSystem.h>
 #include <hierSysParser.hpp>
 #include <hierSysLexer.hpp>
+#include <rtlThread.h>
 
 using namespace std;
 
@@ -170,15 +171,29 @@ int main(int argc, char* argv[])
 
 		hierSystem* sys = sys_vec[I];
 
-		source_file << "// match daemons for system " << sys->Get_Id() << endl;
-		for (int J = 0, fJ = match_daemon_map[sys].size(); J < fJ; J++)
+		if(sys->Number_Of_Strings() > 0)
 		{
-			string match_daemon = match_daemon_map[sys][J];
-			source_file << "PTHREAD_DECLARE(" << match_daemon << ");" << endl;
-			source_file << "PTHREAD_CREATE(" << match_daemon << ");" << endl;
+			source_file << "// allocate match structs for system " << sys->Get_Id() << endl;
+			for(int J = 0, fJ = sys->Number_Of_Strings(); J < fJ; J++)
+			{
+				rtlString* s = sys->Get_Rtl_String(J);
+				source_file << stringMatcherAllocatorFunctionName(s) << "();" << endl;
+			}
+
+			source_file << "// match daemons for system " << sys->Get_Id() << endl;
+			for (int J = 0, fJ = match_daemon_map[sys].size(); J < fJ; J++)
+			{
+				string match_daemon = match_daemon_map[sys][J];
+				source_file << "PTHREAD_DECL(" << match_daemon << ");" << endl;
+				source_file << "PTHREAD_CREATE(" << match_daemon << ");" << endl;
+			}
+
+			string ticker_name = sys->Get_Id() + "_String_Ticker";
+			source_file  << "PTHREAD_DECL(" << ticker_name << ");" << endl;
+			source_file  << "PTHREAD_CREATE("  << ticker_name << ");" << endl;
 		}
 
-		if(sys->Is_Leaf())
+		if(sys->Is_Leaf() && (I < (fI-1)))
 		{
 			string lib = sys->Get_Library();
 			string id  = sys->Get_Id();
@@ -252,7 +267,7 @@ int main(int argc, char* argv[])
 	{
 		hierSystem* sys = sys_vec[I];
 
-		if(sys->Is_Leaf())
+		if(sys->Is_Leaf() && (I < (fI-1)))
 		{
 			if(sys->Get_Instance_Count() > 1)
 			{

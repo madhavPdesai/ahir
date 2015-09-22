@@ -69,7 +69,7 @@ $system Top
 				$volatile wdata := data_reg
 				$if(wack == O1)
 				{
-					$goto reset_state
+					$goto reset
 				}
 				$else
 				{

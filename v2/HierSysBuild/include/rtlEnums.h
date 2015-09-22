@@ -53,6 +53,13 @@ enum rtlOperation {
 	__CONCAT
 };
 
+enum rtlPipeSignalAccessType {
+	_NOT_ACCESSED, 
+	_READ_FROM,
+	_WRITTEN_TO,
+	_READ_FROM_AND_WRITTEN_TO
+};
+
 string rtlOp_To_String(rtlOperation op);
 
 #endif

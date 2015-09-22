@@ -400,6 +400,13 @@ public:
 
 	
 	int Number_Of_Strings() {return(_rtl_strings.size());}
+	rtlString* Get_Rtl_String(int idx)
+	{
+		if((idx >= 0) && (idx < _rtl_strings.size()))
+			return(_rtl_strings[idx]);
+		else
+			return(NULL);
+	}
 
 
 	// C string ticker!

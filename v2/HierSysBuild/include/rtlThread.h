@@ -14,6 +14,7 @@ class rtlThread: public hierRoot
   hierSystem* _parent;
   
 	vector<rtlStatement*> _statements;
+	map<string, rtlStatement*> _statement_map;
 	map<string, rtlObject*> _objects;
 
 	public:
@@ -22,11 +23,19 @@ class rtlThread: public hierRoot
 	hierSystem* Get_Parent() {return(_parent);}
 
 
-	void Add_Statement(rtlStatement* stmt) {_statements.push_back(stmt);}
+	void Add_Statement(rtlStatement* stmt);
+
 	rtlStatement* Get_Statement(int idx)
 	{
 		if((idx >= 0) && (idx < _statements.size()))
 			return(_statements[idx]);
+		else
+			return(NULL);
+	}
+	rtlStatement* Get_Statement(string label)
+	{
+		if(_statement_map.find(label) != _statement_map.end())
+			return(_statement_map[label]);
 		else
 			return(NULL);
 	}
@@ -75,6 +84,14 @@ class rtlString: public hierRoot
 	rtlThread* _base_thread;
 	map<string,vector<string> >  _actual_to_formal_port_map;
 
+	// record of pipe accesses.
+	map<string,rtlPipeSignalAccessType> _pipe_access_type_map;
+
+	vector<string> _pipes_written_into;
+	vector<string> _pipes_read_from;
+	vector<string> _signals_written_into;
+	vector<string> _signals_read_from;
+
 
 	public:
 	
@@ -95,6 +112,34 @@ class rtlString: public hierRoot
 	void Print_C_Tick_Function_Call(ostream& source_file);
 	void Print_C_Matcher_Start_Daemons(ostream& source_file, vector<string>& match_daemons);
 
+
+	rtlPipeSignalAccessType Get_Access_Type(string pipe_name)
+	{
+		if(_pipe_access_type_map.find(pipe_name) != _pipe_access_type_map.end())
+		{
+			return(_pipe_access_type_map[pipe_name]);
+		}
+		else
+			return(_NOT_ACCESSED);
+	}
+
+	void Set_PipeXSignal_Is_Read_From(string pipe_name)
+	{
+		rtlPipeSignalAccessType at = this->Get_Access_Type(pipe_name);
+		if(at == _NOT_ACCESSED)
+			_pipe_access_type_map[pipe_name] = _READ_FROM;
+		else if(at == _WRITTEN_TO)
+			_pipe_access_type_map[pipe_name] = _READ_FROM_AND_WRITTEN_TO;
+	}
+
+	void Set_PipeXSignal_Is_Written_Into(string pipe_name)
+	{
+		rtlPipeSignalAccessType at = this->Get_Access_Type(pipe_name);
+		if(at == _NOT_ACCESSED)
+			_pipe_access_type_map[pipe_name] = _WRITTEN_TO;
+		else if(at == _WRITTEN_TO)
+			_pipe_access_type_map[pipe_name] = _READ_FROM_AND_WRITTEN_TO;
+	}
 };
 
 string threadStructTypeName(rtlThread* t);
