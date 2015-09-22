@@ -2,12 +2,14 @@
 #define _rtl_Object_h__
 
 class rtlType;
+class rtlInterfaceGroup;
 
 class rtlObject: public hierRoot
 {
 	protected:
 
 	rtlType* _type;
+	rtlInterfaceGroup* _group;
 
         public:
 
@@ -21,6 +23,9 @@ class rtlObject: public hierRoot
 	virtual bool Is_InPort()   {return(false);}
 	virtual bool Is_OutPort()  {return(false);}
 
+
+	virtual void Set_Group(rtlInterfaceGroup* g) {_group = g;}
+	rtlInterfaceGroup* Get_Group() {return(_group);}
 
 	virtual rtlValue* Get_Value() {return(NULL);}
 	rtlType* Get_Type() {return(_type);}

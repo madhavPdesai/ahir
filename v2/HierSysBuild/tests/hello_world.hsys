@@ -44,6 +44,9 @@ $system Top
 		$signal data_reg : $unsigned<16>
 		$constant O1: $unsigned<1> := ($unsigned<1>) _b1
 
+		$group $in $pipe RPIPE (rreq rdata rack)
+		$group $out $pipe WPIPE (wreq wdata wack)
+
 		<reset>  {
 			$emit rreq
 			$if (rack == O1)
@@ -79,12 +82,12 @@ $system Top
 
 	
 	$string tt0:REPEATER
-		(rreq rdata rack) => tmp1
-		(wreq wdata wack) => tmp2
+		RPIPE => tmp1
+		WPIPE => tmp2
 
 	$string tt1:REPEATER
-		(rreq rdata rack) => tmp2
-		(wreq wdata wack) => tmp3
+		RPIPE => tmp2
+		WPIPE => tmp3
 
         $instance i1  RLIB:Right  TMPsig => tmp_sig TMP => tmp3 B => b Bsig => bsig
 }

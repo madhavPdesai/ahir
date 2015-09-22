@@ -2,18 +2,24 @@
 #define rtl2AaMatcher_h__
 #include <BitVectors.h>
 
+typedef enum
+{
+	_IDLE,
+	_ACCESS,
+	_DONE
+} PipeMatcherState;;
+
 typedef struct _PipeMatcherRec PipeMatcherRec;
 struct _PipeMatcherRec
 {
 	
-	char	   _request;
 	bit_vector* _value;
-	char	   _ack;
-	
 
 	char*  _pipe_name;
 	pthread_mutex_t _lock_mutex;
 
+
+	PipeMatcherState  _state;
 
 	PipeMatcherRec* _next;
 };
@@ -35,15 +41,34 @@ SignalMatcherRec* makeSignalMatcher(const char* signal_name, int signal_width);
 
 void setNext(PipeMatcherRec* mrec, PipeMatcherRec* next);
 PipeMatcherRec* getNext(PipeMatcherRec* mrec);
-void setRequest(PipeMatcherRec* mrec, char v);
-void setRequestAndAssignValue(PipeMatcherRec* mrec, char v, bit_vector* val);
-void setAck(PipeMatcherRec* mrec, char v);
-int  getAck(PipeMatcherRec* mrec);
+
+
+//   if(state == IDLE)
+//   {
+//      if(req == 1) 
+//      {
+//          ack = false. 
+//          set state = BUSY  (pipe-access started with write-data).
+//      }
+//   }
+//   else if(state == BUSY)
+//   {
+//      ack = false
+//   }
+//     (set state = DONE when pipe-access finished).
+//   else if(state == DONE)
+//   {
+//      ack = true;
+//      state = IDLE.
+//   }  
+void probeMatcher(PipeMatcherRec* mrec, char write_flag, char req, char* ack, bit_vector* write_val);
+
+
+void setState(PipeMatcherRec* mrec, PipeMatcherState s);
+PipeMatcherState getState(PipeMatcherRec* mrec);
+
 void assignValue(PipeMatcherRec* mrec, bit_vector* v);
 
-int  testAndClearRequest(PipeMatcherRec* mrec);
-int  testAndClearAck(PipeMatcherRec* mrec);
-int  testAndClearAckAndUpdateData(PipeMatcherRec* mrec, bit_vector* v);
 
 bit_vector* getValue(PipeMatcherRec* mrec);
 void fetchFromPipe(PipeMatcherRec* mrec);

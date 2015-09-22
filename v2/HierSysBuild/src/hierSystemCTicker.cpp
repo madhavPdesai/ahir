@@ -118,9 +118,7 @@ void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_fil
 	for(int I = 0, fI = _rtl_strings.size();  I < fI; I++)
 	{
 		rtlString* s = _rtl_strings[I];
-		s->Print_C_Rtl_Aa_Ack_Transfers(source_file);
 		s->Print_C_Run_Function_Call(source_file);
-		s->Print_C_Rtl_Aa_Req_Transfers(source_file);
 	}
 
 	for(int I = 0, fI = _rtl_strings.size();  I < fI; I++)

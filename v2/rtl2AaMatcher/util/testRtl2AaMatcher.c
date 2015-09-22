@@ -17,13 +17,12 @@ struct RtlThreadState_
 	int _next_state;
 };
 
-void writer_thread_run(RtlThreadState* s)
+void writer_thread_run(RtlThreadState* s, PipeMatcherRec* mrec)
 {
 	static int first_time = 1;
 	static bit_vector counter_bv;
 	
 
-	s->req = 0;
 	s->_next_state = s->_state;
 
 	if(first_time)
@@ -39,6 +38,7 @@ void writer_thread_run(RtlThreadState* s)
 	if(s->_state)
 	{
 		s->req = 1;
+		probeMatcher(mrec, 1, 1, &(s->ack), s->value);
 		if(s->ack)
 		{
 			fprintf(stderr,"Thread 1: wrote %llu to pipe %s.\n", 
@@ -53,11 +53,10 @@ void writer_thread_run(RtlThreadState* s)
 		bit_vector_increment(&counter_bv);
 		s->_next_state = 1;
 	}
-		
 }
 
 
-int reader_thread_run(RtlThreadState* s)
+int reader_thread_run(RtlThreadState* s, PipeMatcherRec* mrec)
 {
 	static bit_vector counter_bv;
 	static int first_time = 1;
@@ -85,6 +84,7 @@ int reader_thread_run(RtlThreadState* s)
 	if(s->_state)
 	{
 		s->req = 1;
+		probeMatcher(mrec, 0, 1, &(s->ack), s->value);
 		if(s->ack)
 		{
 			fprintf(stderr,"Thread 2: read %llu from pipe %s.\n",
@@ -119,18 +119,9 @@ void Ticker()
 
 	while(1)
 	{
-		// This wont work!
-		t1->ack = testAndClearAck(write_matcher);
-		setRequestAndAssignValue(write_matcher,t1->req, t1->value);
-
-		
-		// this wont work.
-		t2->ack = testAndClearAckAndUpdateData(read_matcher, t2->value);
-		setRequest(read_matcher,t2->req);
-
-		int u = reader_thread_run(t2);
+		int u = reader_thread_run(t2, read_matcher);
 		counter += u;
-		writer_thread_run(t1);
+		writer_thread_run(t1, write_matcher);
 
 		rtl_thread_tick(t1);
 		rtl_thread_tick(t2);

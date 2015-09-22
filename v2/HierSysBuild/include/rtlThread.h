@@ -5,17 +5,33 @@ using namespace std;
 class hierRoot;
 class hierSystem;
 class rtlStatement;
+class rtlObject;
 
+class rtlInterfaceGroup: public hierRoot
+{
+	public: 
+
+	bool _is_pipe_access;
+	bool _is_input;
+
+	rtlObject* _req;
+	rtlObject* _ack;
+	rtlObject*  _data;
+
+	rtlInterfaceGroup(string id, vector<rtlObject*>& gvec, bool is_input);
+};
 //
 //  rtl threads..
 // 
 class rtlThread: public hierRoot
 {
+	protected:
   hierSystem* _parent;
   
 	vector<rtlStatement*> _statements;
 	map<string, rtlStatement*> _statement_map;
 	map<string, rtlObject*> _objects;
+	map<string, rtlInterfaceGroup*> _interface_group_map;
 
 	public:
 
@@ -47,6 +63,16 @@ class rtlThread: public hierRoot
 		else
 			return(NULL);
 	}
+
+	void Add_Interface_Group(string gname, vector<string>& gvec, bool is_input);
+	rtlInterfaceGroup* Find_Interface_Group(string grp_name)
+	{
+		if(_interface_group_map.find(grp_name) != _interface_group_map.end())
+			return(_interface_group_map[grp_name]);
+		else
+			return(NULL);
+	}
+
 	void Lookup_Objects(vector<string> obj_names, vector<rtlObject*>& object_vector)
 	{
 		for(int I = 0, fI = obj_names.size(); I < fI; I++)
@@ -75,6 +101,7 @@ class rtlThread: public hierRoot
 	void Print_C_Tick_Function(ostream& source_file);
 
 	friend class hierSystem;
+	friend class rtlString;
 };
 
 
@@ -82,21 +109,21 @@ class rtlString: public hierRoot
 {
 
 	rtlThread* _base_thread;
-	map<string,vector<string> >  _actual_to_formal_port_map;
 
 	// record of pipe accesses.
 	map<string,rtlPipeSignalAccessType> _pipe_access_type_map;
 
-	vector<string> _pipes_written_into;
-	vector<string> _pipes_read_from;
-	vector<string> _signals_written_into;
-	vector<string> _signals_read_from;
+
+	// formal group to actual port map
+	map<string,string>  _formal_group_to_actual_map;
+
+
 
 
 	public:
 	
 	rtlString(string inst_name, rtlThread* base);
-	void Add_Port_Map_Entry(vector<string>& formals, string actual);
+	void Add_Port_Map_Entry(string formal_group, string actual);
 	void Print(ostream& ofile);
 
 	rtlThread* Get_Base_Thread() {return(_base_thread);}
@@ -106,9 +133,7 @@ class rtlString: public hierRoot
 	void Print_C_State_Structure_Allocator_Call(ostream& source_file);
 	void Print_C_Rtl_Aa_Matcher_Structure_Declarations(ostream& source_file);
 	void Print_C_Rtl_Aa_Matcher_Allocator(ostream& source_file);
-	void Print_C_Rtl_Aa_Ack_Transfers(ostream& source_file);
 	void Print_C_Run_Function_Call(ostream& source_file);
-	void Print_C_Rtl_Aa_Req_Transfers(ostream& source_file);
 	void Print_C_Tick_Function_Call(ostream& source_file);
 	void Print_C_Matcher_Start_Daemons(ostream& source_file, vector<string>& match_daemons);
 

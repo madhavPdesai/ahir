@@ -64,6 +64,21 @@ void rtlThread::Print_C_Struct_Declaration(ostream& header_file)
 		}
 	}
 
+	// matcher recs for this string.
+	for(map<string, rtlInterfaceGroup*>::iterator iter = this->_interface_group_map.begin(),
+				fiter = this->_interface_group_map.end(); iter != fiter; iter++)
+	{
+		rtlInterfaceGroup* ng = (*iter).second;
+		if(ng->_is_pipe_access)
+		{
+			header_file << "PipeMatcherRec* __" << ng->Get_Id() << ";"  << endl;
+		}
+		else
+		{
+			header_file << "SignalMatcherRec* __" << ng->Get_Id() << ";"  << endl;
+		}
+	}
+
 	header_file << "};" << endl;
 }
 
@@ -161,6 +176,21 @@ void rtlString::Print_C_State_Structure_Allocator(ostream& source_file)
 		{
 			string next_obj_name = obj->Get_C_Target_Name();
 			obj->Print_C_Struct_Field_Initialization(next_obj_name, source_file);
+		}
+	}
+	// connect to matcher recs for this string.
+	for(map<string, rtlInterfaceGroup*>::iterator iter = this->Get_Base_Thread()->_interface_group_map.begin(),
+				fiter = this->Get_Base_Thread()->_interface_group_map.end(); iter != fiter; iter++)
+	{
+		rtlInterfaceGroup* ng = (*iter).second;
+		string pipe_name = _formal_group_to_actual_map[ng->Get_Id()];
+		if(ng->_is_input)
+		{
+			source_file << "__sstate->__" << ng->Get_Id() << " = " << pipeToStringMatcherObjName(this, pipe_name) << ";"  << endl;
+		}
+		else
+		{
+			source_file << "__sstate->__" << ng->Get_Id() << " = " << stringToPipeMatcherObjName(this, pipe_name) << ";"  << endl;
 		}
 	}
 	source_file << "}" << endl;
@@ -269,73 +299,6 @@ void rtlString::Print_C_Rtl_Aa_Matcher_Allocator(ostream& source_file)
 	source_file << "}" << endl;
 }
 
-void rtlString::Print_C_Rtl_Aa_Ack_Transfers(ostream& source_file)
-{
-	rtlThread* bt = this->Get_Base_Thread();
-	hierSystem* sys = bt->Get_Parent();
-
-	string string_struct_name =  stringStructObjName(this);
-
-	// iterate over the string port map.	
-	for(map<string, vector<string> >::iterator iter = _actual_to_formal_port_map.begin(),
-			fiter = _actual_to_formal_port_map.end(); iter != fiter; iter++)
-	{
-		string port_name = (*iter).first;
-		int pipe_width = sys->Get_Pipe_Width(port_name);
-
-		vector<rtlObject*> obj_vector;
-
-		bt->Lookup_Objects((*iter).second, obj_vector);
-
-		rtlObject* dobj = NULL;;
-		rtlObject* req_obj = NULL;
-		rtlObject* ack_obj = NULL;
-		if(obj_vector.size() == 1)
-		{
-			dobj = obj_vector[0];
-		}
-		else if(obj_vector.size() == 3)
-		{
-			req_obj = obj_vector[0];
-			dobj = obj_vector[1];
-			ack_obj = obj_vector[2];
-		}
-		else
-			assert(0);
-
-		string matcher_struct_name = (dobj->Is_InPort() ?
-				pipeToStringMatcherObjName(this,port_name) :
-				stringToPipeMatcherObjName(this,port_name));
-		if(!sys->Is_Signal(port_name))
-		{
-
-			if(dobj->Is_InPort())
-			{
-				source_file << "{" << endl;
-				source_file << "int ack_status = testAndClearAckAndUpdateData(" << matcher_struct_name 
-						<< ", &(" << string_struct_name << "->" << dobj->Get_Id() << "));" << endl;
-				source_file << "bit_vector_assign_uint64(0,&(" << string_struct_name << "->" << ack_obj->Get_Id() << "), "
-					<< "(uint64_t) ack_status);" << endl;
-				source_file << "}" << endl;
-			}
-			else
-			{
-				source_file << "{" << endl;
-				source_file << "int ack_status = testAndClearAck(" << matcher_struct_name << ");" << endl;
-				source_file << "bit_vector_assign_uint64(0,&(" << string_struct_name << "->" << ack_obj->Get_Id() << "), "
-					<< "(uint64_t) ack_status);" << endl;
-				source_file << "}" << endl;
-			}
-		}
-		else
-		{
-			source_file << "bit_vector_bitcast_to_bit_vector(&(" 
-				<< string_struct_name << "->" << dobj->Get_Id() 
-				<< "), getSignalValue(" 
-				<< matcher_struct_name << "));" << endl;
-		}
-	}
-}
 
 void rtlString::Print_C_Run_Function_Call(ostream& source_file)
 {
@@ -344,66 +307,6 @@ void rtlString::Print_C_Run_Function_Call(ostream& source_file)
 	source_file << fn_name << "(" << arg_name << ");" << endl;
 }
 
-void rtlString::Print_C_Rtl_Aa_Req_Transfers(ostream& source_file)
-{
-	rtlThread* bt = this->Get_Base_Thread();
-	hierSystem* sys = bt->Get_Parent();
-
-	string string_struct_name =  stringStructObjName(this);
-
-	// iterate over the string port map.	
-	for(map<string, vector<string> >::iterator iter = _actual_to_formal_port_map.begin(),
-			fiter = _actual_to_formal_port_map.end(); iter != fiter; iter++)
-	{
-		string port_name = (*iter).first;
-		int pipe_width = sys->Get_Pipe_Width(port_name);
-
-		vector<rtlObject*> obj_vector;
-
-		bt->Lookup_Objects((*iter).second, obj_vector);
-
-		rtlObject* dobj;
-		rtlObject* req_obj = NULL;
-		if(obj_vector.size() == 1)
-			dobj = obj_vector[0];
-		else if(obj_vector.size() == 3)
-		{
-			req_obj = obj_vector[0];
-			dobj = obj_vector[1];
-		}
-		else
-			assert(0);
-
-		string matcher_struct_name = (dobj->Is_InPort() ?
-				pipeToStringMatcherObjName(this,port_name) :
-				stringToPipeMatcherObjName(this,port_name));
-
-			
-		string dobj_name = string_struct_name + "->" + dobj->Get_Id();
-		if(!sys->Is_Signal(port_name))
-		{
-			string req_name = string_struct_name + "->" + req_obj->Get_Id();
-			// Aa2RtlSignalTransferMatcher
-			if(dobj->Is_OutPort())
-			{
-				source_file << "setRequestAndAssignValue(" << matcher_struct_name << ", bit_vector_to_uint64(0, &(";
-				source_file << req_name << ")), &("
-						<<  dobj_name << "));" << endl;
-			}
-			else
-			{
-				source_file << "setRequest(" << matcher_struct_name << ", bit_vector_to_uint64(0, &(";
-				source_file << req_name << ")));" << endl;
-			}
-		}
-		else
-		{
-			source_file << "assignValue(" << matcher_struct_name << ", &("
-				<< dobj_name
-				<< "));" << endl;
-		}
-	}
-}
 
 void rtlString::Print_C_Tick_Function_Call(ostream& source_file)
 {
@@ -420,35 +323,23 @@ void rtlString::Print_C_Matcher_Start_Daemons(ostream& source_file, vector<strin
 	string string_struct_name =  stringStructObjName(this);
 
 	// iterate over the string port map.	
-	for(map<string, vector<string> >::iterator iter = _actual_to_formal_port_map.begin(),
-			fiter = _actual_to_formal_port_map.end(); iter != fiter; iter++)
+	for(map<string, string >::iterator iter = _formal_group_to_actual_map.begin(),
+			fiter = _formal_group_to_actual_map.end(); iter != fiter; iter++)
 	{
-		string port_name = (*iter).first;
+		string grp_name = (*iter).first;
+		string port_name = (*iter).second;
 		int pipe_width = sys->Get_Pipe_Width(port_name);
 
-		vector<rtlObject*> obj_vector;
+		rtlInterfaceGroup* ng = this->Get_Base_Thread()->Find_Interface_Group(grp_name);
+		assert(ng != NULL);
 
-		bt->Lookup_Objects((*iter).second, obj_vector);
 
-		rtlObject* dobj = NULL;;
-		rtlObject* req_obj = NULL;
-		rtlObject* ack_obj = NULL;
-		if(obj_vector.size() == 1)
-		{
-			dobj = obj_vector[0];
-		}
-		else if(obj_vector.size() == 3)
-		{
-			req_obj = obj_vector[0];
-			dobj = obj_vector[1];
-			ack_obj = obj_vector[2];
-		}
-		else
-			assert(0);
+		rtlObject* dobj = ng->_data;
+		rtlObject* req_obj = ng->_req;
+		rtlObject* ack_obj = ng->_ack;
 
-		string matcher_struct_name = (dobj->Is_InPort() ?
-				pipeToStringMatcherObjName(this,port_name) :
-				stringToPipeMatcherObjName(this,port_name));
+		string matcher_struct_name = (ng->_is_input ?  pipeToStringMatcherObjName(this,port_name) : 
+									stringToPipeMatcherObjName(this,port_name));
 
 		if(dobj->Is_OutPort())
 		{

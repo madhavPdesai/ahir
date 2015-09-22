@@ -12,6 +12,7 @@
 rtlObject::rtlObject(string name, rtlType* t):hierRoot(name)
 {
 	_type = t;
+	_group = NULL;
 }
 
 	

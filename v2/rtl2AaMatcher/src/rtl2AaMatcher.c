@@ -8,13 +8,12 @@ PipeMatcherRec* makePipeMatcher(const char* pipe_name, int pipe_width)
 {
 	PipeMatcherRec* ret_val;
 	ret_val = (PipeMatcherRec*) calloc(1,sizeof(PipeMatcherRec));
-	ret_val->_request = 0;
 	__allocate_bit_vector( ret_val->_value,pipe_width);
-	ret_val->_ack = 0;
 
 	ret_val->_pipe_name  = strdup(pipe_name);
 	pthread_mutex_init(&(ret_val->_lock_mutex), NULL);
 	
+	ret_val->_state = _IDLE;
 	ret_val->_next = NULL;
 }
 
@@ -29,36 +28,17 @@ PipeMatcherRec* getNext(PipeMatcherRec* mrec)
 	return(mrec->_next);
 }
 
-void setRequest(PipeMatcherRec* mrec, char v)
+
+void setState(PipeMatcherRec* mrec, PipeMatcherState s)
 {
 	MUTEX_LOCK(mrec->_lock_mutex);
-	mrec->_request = v;
+	mrec->_state = s;
 	MUTEX_UNLOCK(mrec->_lock_mutex);	
 }
 
-void setRequestAndAssignValue(PipeMatcherRec* mrec, char v, bit_vector* val)
+PipeMatcherState getState(PipeMatcherRec* mrec)
 {
-	MUTEX_LOCK(mrec->_lock_mutex);
-	mrec->_request = v;
-	if(v)
-	{
-		bit_vector_bitcast_to_bit_vector(mrec->_value, val);
-	}
-	MUTEX_UNLOCK(mrec->_lock_mutex);	
-}
-
-// set if v=1, ignore if v=0.
-void setAck(PipeMatcherRec* mrec, char v)
-{
-	MUTEX_LOCK(mrec->_lock_mutex);
-	if(v)
-		mrec->_ack = v;
-	MUTEX_UNLOCK(mrec->_lock_mutex);	
-}
-
-int getAck(PipeMatcherRec* mrec)
-{
-	return(mrec->_ack);
+	return(mrec->_state);
 }
 
 void assignValue(PipeMatcherRec* mrec, bit_vector* v)
@@ -68,37 +48,6 @@ void assignValue(PipeMatcherRec* mrec, bit_vector* v)
 	MUTEX_UNLOCK(mrec->_lock_mutex);	
 }
 
-int  testAndClearRequest(PipeMatcherRec* mrec)
-{
-	MUTEX_LOCK(mrec->_lock_mutex);
-	int ret_val = mrec->_request;
-	if(ret_val)
-		mrec->_request = 0;
-	MUTEX_UNLOCK(mrec->_lock_mutex);	
-	return(ret_val);
-}
-int  testAndClearAck(PipeMatcherRec* mrec)
-{
-	MUTEX_LOCK(mrec->_lock_mutex);
-	int ret_val = mrec->_ack;
-	if(ret_val)
-		mrec->_ack = 0;
-	MUTEX_UNLOCK(mrec->_lock_mutex);	
-	return(ret_val);
-}
-
-int  testAndClearAckAndUpdateData(PipeMatcherRec* mrec, bit_vector* v)
-{
-	MUTEX_LOCK(mrec->_lock_mutex);
-	int ret_val = mrec->_ack;
-	if(ret_val)
-	{
-		mrec->_ack = 0;
-		bit_vector_bitcast_to_bit_vector(v,mrec->_value);
-	}
-	MUTEX_UNLOCK(mrec->_lock_mutex);	
-	return(ret_val);
-}
 
 
 bit_vector* getValue(PipeMatcherRec* mrec)
@@ -121,86 +70,67 @@ char* getPipeName(PipeMatcherRec* mrec)
 	return(mrec->_pipe_name);
 }
 
-//
-//  When the RTL side wants to read, it sets the req.
-//
-//  The matcher checks the req and if asserted,
-//  the pipe is accessed, and the ack is set
-//  by the matcher.  The matcher then waits
-//  until the ack is cleared before checking
-//  the req once again.
-//
-//  Thus, the matcher will not start a new transfer until
-//  the current transfer has completed.
-//
 void Aa2RtlPipeTransferMatcher(void* vmrec)
 {
 	PipeMatcherRec* mrec = (PipeMatcherRec*) vmrec;
 	fprintf(stderr,"Aa->RTL matcher for pipe %s started.\n", mrec->_pipe_name);
 	while(1)
 	{
-		if(testAndClearRequest(mrec))
+		PipeMatcherState s = getState(mrec);
+		if(s == _ACCESS)
 		{
-			fprintf(stderr,"read-request to pipe %s started.\n", mrec->_pipe_name);
 			fetchFromPipe(mrec);
-			fprintf(stderr,"read-request to pipe %s done (data = %s).\n", mrec->_pipe_name,
-					to_string(mrec->_value));
-			setAck(mrec,1);
-			
-			// wait until Ack goes low.
-			while(1)
-			{
-				if(getAck(mrec) == 0)
-					break;
-				else
-					pthread_yield(NULL);
-			}
-			fprintf(stderr,"read-request to pipe %s cycle completed.\n", mrec->_pipe_name);
+			setState(mrec, _DONE);
 		}
 		pthread_yield(NULL);
 	}
 }
 
-//
-// When Rtl wants to write, it updates the mrec->_value
-// field and sets the req flag.
-// The matcher tests the req flag.  If true, 
-// it attempts to write to the pipe and
-// on completion, sets the ack flag.  The ack flag
-// must be cleared by the Rtl side in order
-// to restart the cycle.
-//
-// (Note: this ensures that even if the Rtl side
-//        maintains the req to high, the matcher
-//        will not initiate a new pipe request until
-//        the entire pipe access cycle has completed).
-//
 void Rtl2AaPipeTransferMatcher(void* vmrec)
 {
 	PipeMatcherRec* mrec = (PipeMatcherRec*) vmrec;
 	fprintf(stderr,"RTL->Aa matcher for pipe %s started.\n", mrec->_pipe_name);
 	while(1)
 	{
-		if(testAndClearRequest(mrec))
+		PipeMatcherState s = getState(mrec);
+		if(s == _ACCESS)
 		{
-			fprintf(stderr,"write-request to pipe %s started (data = %s).\n", mrec->_pipe_name,to_string(mrec->_value));
 			sendToPipe(mrec);
-			fprintf(stderr,"write-request to pipe %s done.\n", mrec->_pipe_name);
-			setAck(mrec,1);
-
-			while(1)
-			{
-				if(getAck(mrec) == 0)
-					break;
-				else
-					pthread_yield(NULL);
-			}
-			fprintf(stderr,"write-request to pipe %s cycle completed.\n", mrec->_pipe_name);
+			setState(mrec, _DONE);
 		}
 		pthread_yield(NULL);
 	}
 }
 
+
+void probeMatcher(PipeMatcherRec* mrec, char write_flag, char req, char* ack, bit_vector* access_val)
+{
+	PipeMatcherState s = getState(mrec);
+	if(s == _DONE)
+	{
+		if(req)
+		{
+			*ack = 1;	
+			if(!write_flag)
+				bit_vector_bitcast_to_bit_vector(access_val, getValue(mrec));
+			setState(mrec, _IDLE);
+		}
+	}
+	else if(s == _ACCESS)
+	{
+		*ack = 0;
+	}
+	else if(s == _IDLE)
+	{
+		if(req)
+		{
+			*ack = 0;
+			if(write_flag)
+				assignValue(mrec, access_val);
+			setState(mrec, _ACCESS);	
+		}
+	}
+}
 
 /////////////////////////////////////////////////// Signal matching ///////////////////////////////////////////////////
 SignalMatcherRec* SignalMatcher(const char* signal_name, int signal_width)
@@ -211,7 +141,7 @@ SignalMatcherRec* SignalMatcher(const char* signal_name, int signal_width)
 
 	ret_val->_signal_name  = strdup(signal_name);
 	pthread_mutex_init(&(ret_val->_lock_mutex), NULL);
-	
+
 	ret_val->_next = NULL;
 }
 

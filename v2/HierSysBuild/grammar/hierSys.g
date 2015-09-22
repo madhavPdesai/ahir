@@ -320,15 +320,46 @@ rtl_Thread[hierSystem* sys] returns [rtlThread* t]
 }:
         THREAD tname:SIMPLE_IDENTIFIER {t = new rtlThread(sys, tname->getText());}
         (rtl_ObjectDeclaration[t])*
+	(rtl_InterfaceGroup[t])*
         (rtl_LabeledBlockStatement[t])+
     ;
+
+
+rtl_InterfaceGroup[rtlThread* t] 
+{
+	bool in_group = false;
+	bool out_group = false;
+	string group_id;
+	vector<string> group_vec;
+}:
+	(( ( (GROUP IN PIPE{ in_group = true;}) | (GROUP OUT PIPE {out_group = true;}))  gid: SIMPLE_IDENTIFIER
+		LPAREN reqid: SIMPLE_IDENTIFIER dataid: SIMPLE_IDENTIFIER ackid: SIMPLE_IDENTIFIER RPAREN
+			{
+				group_id  = gid->getText();
+				group_vec.push_back(reqid->getText());
+				group_vec.push_back(dataid->getText());
+				group_vec.push_back(ackid->getText());
+			}
+	)
+	|
+	( ( (GROUP IN SIGNAL {in_group = true;} )| (GROUP OUT SIGNAL { out_group = true;}))  sgid: SIMPLE_IDENTIFIER
+		LPAREN sdataid: SIMPLE_IDENTIFIER  RPAREN
+		{
+			group_id = sgid->getText();
+			group_vec.push_back(sdataid->getText());
+		}
+	))
+	{
+		t->Add_Interface_Group(group_id, group_vec, in_group);
+	}
+;
 
 rtl_String[hierSystem* sys] returns [rtlString* ti]
 {
 	ti = NULL;
 
 	string actual;
-	vector<string> formals;
+	string formal_group;
 
 }:
         STRING 
@@ -349,13 +380,13 @@ rtl_String[hierSystem* sys] returns [rtlString* ti]
 			}
 		}
 
-		( LPAREN (formal_id: SIMPLE_IDENTIFIER {formals.push_back(formal_id->getText());})+ RPAREN
+		(
+		formal_id: SIMPLE_IDENTIFIER { formal_group = formal_id->getText();}
 			IMPLIES actual_id:SIMPLE_IDENTIFIER 
 			{
 				actual = actual_id->getText();
 				if(ti != NULL)
-					ti->Add_Port_Map_Entry(formals, actual);
-				formals.clear();
+					ti->Add_Port_Map_Entry(formal_group, actual);
 			}
 		)*
     ;
@@ -827,6 +858,7 @@ OUT: "$out";
 PIPE: "$pipe";
 LIFO: "$lifo";
 SIGNAL: "$signal";
+GROUP: "$group";
 INSTANCE: "$instance";
 LIBRARY: "$library";
 DEPTH: "$depth";
