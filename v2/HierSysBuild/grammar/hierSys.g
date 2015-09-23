@@ -321,9 +321,19 @@ rtl_Thread[hierSystem* sys] returns [rtlThread* t]
         THREAD tname:SIMPLE_IDENTIFIER {t = new rtlThread(sys, tname->getText());}
         (rtl_ObjectDeclaration[t])*
 	(rtl_InterfaceGroup[t])*
+	rtl_DefaultStatementBlock[t]
         (rtl_LabeledBlockStatement[t])+
     ;
 
+
+
+rtl_DefaultStatementBlock[rtlThread* t] 
+{
+	rtlStatement* stmt = NULL;
+}:
+	DEFAULT
+		(stmt = rtl_AssignStatement[t] { t->Add_Default_Assignment((rtlAssignStatement*)stmt); } )*
+;
 
 rtl_InterfaceGroup[rtlThread* t] 
 {
@@ -461,7 +471,6 @@ rtl_ObjectDeclaration[rtlThread* t]
 rtl_SimpleStatement[rtlThread* t] returns [rtlStatement* stmt]
 :
 ( (stmt=rtl_AssignStatement[t]) |
-  (stmt=rtl_EmitStatement[t]) |
   (stmt=rtl_NullStatement[t]) |
   (stmt=rtl_GotoStatement[t])  |
   (stmt=rtl_IfStatement[t]) )
@@ -476,27 +485,13 @@ rtl_AssignStatement[rtlThread* t] returns [rtlStatement* stmt]
 	rtlExpression* src = NULL;
 	bool volatile_flag = false;
 }:
-(VOLATILE {volatile_flag = true;})?
+(NOW {volatile_flag = true;})?
 (tgt = rtl_Expression[t,NULL])
 	ASSIGNEQUAL
 (src = rtl_Expression[t,NULL])
 {
 	tgt->Set_Is_Target(true);
 	stmt = new rtlAssignStatement(t,volatile_flag, tgt, src);
-}
-;
-
-
-rtl_EmitStatement[rtlThread* t]  returns [rtlStatement* stmt]
-{
-	rtlObject* emittee = NULL;
-}:
-EMIT sid:SIMPLE_IDENTIFIER
-{
-	emittee = t->Find_Object(sid->getText());
-	assert(emittee != NULL);
-
-	stmt = new rtlEmitStatement(t, emittee);
 }
 ;
 
@@ -874,7 +869,8 @@ ARRAY:"$array";
 OF:"$of";
 IF:"$if";
 ELSE:"$else";
-VOLATILE:"$volatile";
+NOW:"$now";
+DEFAULT:"$default";
 
 
 

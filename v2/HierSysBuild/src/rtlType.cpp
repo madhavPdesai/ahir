@@ -15,7 +15,6 @@ rtlType::rtlType():hierRoot()
 {
 }
 
-
 void rtlType::Print(ostream& ofile)
 {
 	assert(0);
@@ -35,6 +34,13 @@ void rtlType::Print(string& ostring)
 }
 
 	
+string rtlType::Get_Name()
+{
+	string ret_val;	
+	this->Print(ret_val);
+	return(ret_val);
+}
+
 rtlIntegerType::rtlIntegerType(int low, int high): rtlType()
 {
 	assert (_low <= _high);
@@ -66,10 +72,13 @@ void rtlUnsignedType::Print_C_Struct_Field_Initialization(string prefix, rtlValu
 	}
 }
 
+
+
 void rtlUnsignedType::Print(ostream& ofile)
 {
 	ofile << " $unsigned<" << _width << "> ";
 }
+
 
 void rtlSignedType::Print(ostream& ofile)
 {
@@ -79,6 +88,7 @@ void rtlSignedType::Print(ostream& ofile)
 rtlArrayType::rtlArrayType( rtlType* element_type, vector<int>& dimensions): rtlType()
 {
 	_element_type = element_type;
+	assert(_element_type->Is_Scalar_Type());
 	_dimensions = dimensions;
 }
 
@@ -86,7 +96,7 @@ void rtlArrayType::Print_C_Struct_Field_Initialization(string prefix, rtlValue* 
 {
 	string ele_type = this->Get_Element_Type()->Get_C_Name();
 	ofile << "{" << endl;
-	ofile << ele_type << "* __tmp_ptr = &(" << prefix << ");" << endl;
+	ofile << ele_type << "* __tmp_ptr = (" << ele_type << "*) &(" << prefix << ");" << endl;
 	
 	for(int I = 0, fI = this->Number_Of_Elements(); I < fI; I++)
 	{
@@ -96,6 +106,24 @@ void rtlArrayType::Print_C_Struct_Field_Initialization(string prefix, rtlValue* 
 	}
 	ofile << "}" << endl;
 }
+
+  
+void rtlArrayType::Print_C_Assignment_To_File(string dest, string src, ostream& ofile)
+{
+	string ele_type = this->Get_Element_Type()->Get_C_Name();
+	ofile << "{" << endl;
+	ofile << ele_type << "* __dest_ptr = (" << ele_type << "*) &(" << dest << ");" << endl;
+	ofile << ele_type << "* __src_ptr  = (" << ele_type << "*) &(" << src << ");" << endl;
+	
+	for(int I = 0, fI = this->Number_Of_Elements(); I < fI; I++)
+	{
+		string dest_prefix = "*(__dest_ptr + " + IntToStr(I) + ")";
+		string src_prefix  = "*(__src_ptr + " + IntToStr(I) + ")";
+		Print_C_Assignment(dest_prefix, src_prefix, _element_type, ofile);
+	}
+	ofile << "}" << endl;
+}
+
 void rtlArrayType::Print(ostream& ofile)
 {
 	string ret_name =  string( "$array");

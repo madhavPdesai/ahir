@@ -5,6 +5,7 @@ using namespace std;
 class hierRoot;
 class hierSystem;
 class rtlStatement;
+class rtlAssignStatement;
 class rtlObject;
 
 class rtlInterfaceGroup: public hierRoot
@@ -33,6 +34,7 @@ class rtlThread: public hierRoot
 	map<string, rtlObject*> _objects;
 	map<string, rtlInterfaceGroup*> _interface_group_map;
 
+	vector<rtlAssignStatement*> _default_assignments;
 	public:
 
 	rtlThread(hierSystem* p, string id);
@@ -40,6 +42,7 @@ class rtlThread: public hierRoot
 
 
 	void Add_Statement(rtlStatement* stmt);
+	void Add_Default_Assignment(rtlAssignStatement* stmt) {_default_assignments.push_back(stmt);}
 
 	rtlStatement* Get_Statement(int idx)
 	{

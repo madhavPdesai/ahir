@@ -1,0 +1,174 @@
+
+$system store_and_forward 
+	$in 
+		$pipe in_data 32 
+        $out 
+		$pipe out_data 32
+
+{
+        $signal mem_wr     1
+        $signal mem_rd 	   1
+        $signal mem_wr_ack 1
+        $signal mem_rd_ack 1
+	
+	$signal mem_wr_data 32
+	$signal mem_rd_data 32
+	$signal mem_addr    32
+
+	$thread MEMORY
+		$constant One_1: $unsigned<1> := ($unsigned<1>) _b1
+
+		$in wr_mem rd_mem : $unsigned<1>
+		$out wr_ack rd_ack: $unsigned<1>
+
+
+		$in wr_data addr: $unsigned<32>
+		$out rd_data : $unsigned<32>
+
+		$signal mem_array: $array [4] $of $unsigned<32>
+		$group $in WRMEM (wr_mem)
+		$group $in RDMEM (rd_mem)
+
+		$group $out WRACK (wr_ack)
+		$group $out RDACK (rd_ack)
+
+
+		$group $in WRDATA (wr_data)
+		$group $in ADDR (addr)
+		$group $out RDDATA (rd_data)
+
+		<run> {
+			rd_ack := ($unsigned<1>) 0
+			$if(wr_mem == One_1)
+			{
+				mem_array[addr] := wr_data
+				$emit wr_ack
+			}
+			$else $if(rd_mem == One_1)
+			{
+				rd_data := mem_array[addr]
+				rd_ack  := One_1
+			}
+		}
+
+
+	$thread   MANAGER
+		$in     wack rack  mem_rd_ack mem_wr_ack: $unsigned<1>
+		$out    wrec rrec  mem_rd     mem_wr : $unsigned<1>
+
+		$in     rdata mem_rd_data : $unsigned<32>
+		$out    wdata mem_wr_data : $unsigned<32>
+
+		$out    mem_addr : $unsigned<32>
+
+		$signal data_reg : $unsigned<32>
+
+		$signal counter: $unsigned<32>
+		$constant One_1: $unsigned<1> := ($unsigned<1>) _b1
+
+		$group $in  $pipe READP   (rreq rdata rack)
+		$group $out $pipe WRITEP  (wreq wdata wack)
+
+
+		$group $out $signal WRMEM     (mem_wr)
+		$group $out $signal MEMADDR   (mem_addr)
+		$group $out $signal WRMEMDATA (mem_wr_data)
+		$group $out $signal RDMEMDATA (mem_rd_data)
+		$group $in  $signal WRMEMACK  (mem_wr_ack)
+		$group $in  $signal RDMEMACK  (mem_rd_ack)
+
+
+		<init>  {
+				counter     := ($unsigned<32>)  0
+			}
+		<run>  {
+			$emit rreq
+			$if (rack == One_1)
+			{
+				// note: wdata must be updated before emitting wreq.
+				$volatile mem_data := rdata
+				$emit mem_wr
+				$if (mem_wr_ack == One_1) 
+				{
+				    	counter := (counter + ($unsigned<32>) 1)
+				}
+				$else
+				{
+				    $goto wait_state	
+				    data_reg := rdata
+				}
+			}
+			$else {
+				$goto run
+			}
+		}
+		<wait_state>  {
+				$volatile mem_addr := counter
+				$volatile mem_data := data_reg
+				$emit mem_wr
+				$if(mem_wr_ack == One_1)
+				{
+					$goto run
+				}
+				$else
+				{
+					$goto wait_state
+				}
+		}
+		<wait_for_unload> {
+				$if(counter != ($unsigned<32>) 0)
+				{
+					$volatile mem_addr := counter
+					$emit mem_rd
+					$if(mem_rd_ack == One_1)
+					{
+						$volatile wdata := mem_rd_data
+						$emit wreq
+						$if (wack == One_1)
+						{
+							counter := (counter - ($unsigned<32>) 1)
+						}
+						$else
+						{
+							data_reg := mem_rd_data
+							$goto writepipe
+						}
+					}
+				} 
+				$else
+				{
+					$goto run
+				}
+		}
+		<writepipe> {
+				$volatile wdata := data_reg
+				$emit wreq
+				$if (wack == One_1)
+				{
+				     counter := (counter - ($unsigned<32>) 1)
+				     $goto wait_for_unload
+				}
+		}
+
+	
+	$string mem:MEMORY
+		WRMEM => mem_wr
+		RDMEM => mem_rd
+		WRACK => mem_wr_ack
+		RDACK => mem_rd_ack
+		WRDATA => mem_wr_data
+		RDDATA => mem_rd_data
+		ADDR  => mem_addr
+
+
+	string mgr: MANAGER
+		READP => in_data
+		WRITEP => out_data
+		WRMEM  => mem_wr
+		MEMADDR => mem_addr
+		WRMEMDATA => mem_wr_data
+		RDMEMDATA => mem_rd_data
+		WRMEMACK => mem_wr_ack
+		RDMEMACK => mem_rd_ack
+
+}

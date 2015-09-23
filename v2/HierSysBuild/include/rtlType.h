@@ -17,8 +17,9 @@ class rtlType: public hierRoot
   virtual string Kind() {return("rtlType");}
   virtual int Size() {assert(0);}
 
-  virtual string Get_Name() {assert(0);}
+  virtual string Get_Name();
   virtual string Get_C_Name() {assert(0);}
+  virtual string Get_C_Dimension_String() {return("");}
 
   virtual rtlType* Get_Element_Type()
   {
@@ -30,6 +31,9 @@ class rtlType: public hierRoot
   virtual void Print(string& ostring);
 
   virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile) {assert(0);}
+  virtual void Print_C_Assignment_To_File(string dest, string src, ostream& ofile) {assert(0);}
+
+  virtual bool Is_Scalar_Type() {return(false);}
 };
 
 
@@ -46,6 +50,7 @@ class rtlIntegerType: public rtlType
   	virtual void Print(ostream& ofile);
   	virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile);
   	virtual string Get_C_Name() {return("integer");}
+  	virtual bool Is_Scalar_Type() {return(true);}
 };
 
 
@@ -68,6 +73,7 @@ class rtlUnsignedType: public rtlType
   virtual void Print(ostream& ofile);
   virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile);
   virtual string Get_C_Name() {return("bit_vector");}
+  virtual bool Is_Scalar_Type() {return(true);}
 };
 
 
@@ -152,9 +158,16 @@ class rtlArrayType: public rtlType
 
   virtual void Print(ostream& ofile);
   virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile);
+
   virtual string Get_C_Name() 
   {
 	string ret_val = _element_type->Get_C_Name();
+	return(ret_val);
+  }
+
+  virtual string Get_C_Dimension_String()
+  {
+	string ret_val;
 	for(int I = 0, fI = _dimensions.size(); I < fI ; I++)
 	{
 		ret_val += "[" + IntToStr(_dimensions[I]) + "]" ;
@@ -162,6 +175,7 @@ class rtlArrayType: public rtlType
 	return(ret_val);
   }
 
+  virtual void Print_C_Assignment_To_File(string dest, string src, ostream& ofile);
 };
 
 //

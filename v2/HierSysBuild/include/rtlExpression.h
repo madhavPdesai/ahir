@@ -51,6 +51,7 @@ class rtlExpression: public hierRoot
 	virtual rtlValue* Get_Value() {return(_value);}
 
 	virtual string Get_C_Name();
+	virtual string Get_C_Target_Name() {return(this->Get_C_Name());}
 	virtual string C_Int_Reference();
 
 	virtual void Print_C(ostream& ofile) {assert(0);}
@@ -107,6 +108,7 @@ class rtlSimpleObjectReference: public rtlObjectReference
 
 	virtual void Evaluate(rtlThread* t);
 	virtual string Get_C_Name();
+	virtual string Get_C_Target_Name();
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& ofile);
 };
@@ -122,7 +124,7 @@ class rtlArrayObjectReference: public rtlObjectReference
 	rtlArrayObjectReference(rtlObject* obj, vector<rtlExpression*>& indices);
 	string Kind() {return("rtlArrayObjectReference");}
 
-	virtual string Get_C_Name();
+	virtual string Get_C_Target_Name();
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& ofile);

@@ -57,10 +57,10 @@ void rtlThread::Print_C_Struct_Declaration(ostream& header_file)
 			iter++)
 	{
 		rtlObject* obj = (*iter).second;
-		header_file << obj->Get_Type()->Get_C_Name() << " " << obj->Get_Id() << ";" << endl;
+		header_file << obj->Get_Type()->Get_C_Name() << " " << obj->Get_Id() << obj->Get_Type()->Get_C_Dimension_String() << ";" << endl;
 		if(obj->Needs_Next())
 		{
-			header_file << obj->Get_Type()->Get_C_Name() << " __next__" << obj->Get_Id() <<  ";" << endl;
+			header_file << obj->Get_Type()->Get_C_Name() << " __next__" << obj->Get_Id() << obj->Get_Type()->Get_C_Dimension_String() <<  ";" << endl;
 		}
 	}
 
@@ -91,17 +91,11 @@ void rtlThread::Print_C_Run_Function(ostream& source_file)
 	source_file << "{" << endl;
 	source_file << struct_type_name << "* __sstate = incoming_state;" << endl;
 
-	source_file << "// clear objects that need to be emitted " << endl;
-	for(map<string, rtlObject*>::iterator oiter = _objects.begin(), foiter = _objects.end();
-		oiter != foiter; oiter++)
-	{
-		rtlObject* obj = (*oiter).second;
-		if(obj->Get_Is_Volatile() || obj->Get_Is_Emitted())
-		{
-			source_file << "bit_vector_clear(&(" << obj->Get_C_Name() << "));" << endl;	
-		}
-	}
+	source_file << "// default assignments; " << endl;
+	for(int I = 0, fI = _default_assignments.size(); I < fI; I++)
+		_default_assignments[I]->Print_C(source_file);
 
+	source_file << endl;
 	for(int I = 0, fI = _statements.size(); I < fI; I++)
 	{
 		if(I > 0)
@@ -137,7 +131,8 @@ void rtlThread::Print_C_Tick_Function(ostream& source_file)
 		rtlObject* obj = (*iter).second;
 		if(obj->Needs_Next())
 		{
-			source_file << obj->Get_C_Name() << " = " << obj->Get_C_Target_Name() << ";" << endl;
+			Print_C_Assignment(obj->Get_C_Name(), obj->Get_C_Target_Name(), obj->Get_Type(),  source_file);
+			obj->Print_C_Probe_Matcher(source_file);
 		}
 	}
 	source_file << "}" << endl;
@@ -178,6 +173,7 @@ void rtlString::Print_C_State_Structure_Allocator(ostream& source_file)
 			obj->Print_C_Struct_Field_Initialization(next_obj_name, source_file);
 		}
 	}
+
 	// connect to matcher recs for this string.
 	for(map<string, rtlInterfaceGroup*>::iterator iter = this->Get_Base_Thread()->_interface_group_map.begin(),
 				fiter = this->Get_Base_Thread()->_interface_group_map.end(); iter != fiter; iter++)
@@ -477,9 +473,15 @@ void Print_C_Assignment(string tgt, string src, rtlType* tt, ostream& ofile)
 	{
 		ofile << tgt << " = " << src << ";" << endl;
 	}
-	else
+	else if(tt->Is("rtlSignedType") || tt->Is("rtlUnsignedType"))
 	{
 		ofile << "bit_vector_bitcast_to_bit_vector(&(" << tgt << "), &(" << src << "));" << endl;
+	}
+	else
+	{
+		// array type.
+		assert(tt->Is("rtlArrayType"));
+		tt->Print_C_Assignment_To_File(tgt, src, ofile);	
 	}
 }
 

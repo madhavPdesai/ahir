@@ -99,6 +99,11 @@ void rtlThread::Print(ostream& ofile)
 			<< ")" << endl;
 	}
 
+	ofile << "$default " << endl;
+	for(int I = 0, fI = _default_assignments.size(); I < fI; I++)
+		_default_assignments[I]->Print(ofile);
+
+	ofile << endl;
 	for(int I = 0, fI = _statements.size(); I < fI; I++)
 	{
 		_statements[I]->Print(ofile);

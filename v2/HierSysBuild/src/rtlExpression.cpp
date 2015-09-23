@@ -58,7 +58,7 @@ string rtlExpression::C_Int_Reference()
 
 void rtlExpression::Print_C_Declaration(rtlValue* v, ostream& ofile)
 {
-	ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << ";" << endl;
+	ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << this->Get_Type()->Get_C_Dimension_String() << ";" << endl;
 	this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), v, ofile);
 }
 
@@ -116,6 +116,10 @@ string rtlSimpleObjectReference::Get_C_Name()
 	return(_object->Get_C_Name());
 }
 
+string rtlSimpleObjectReference::Get_C_Target_Name() 
+{
+	return(_object->Get_C_Target_Name());
+}
 
 void rtlSimpleObjectReference::Print_C(ostream& ofile) 
 {
@@ -135,11 +139,11 @@ rtlArrayObjectReference::rtlArrayObjectReference(rtlObject* obj, vector<rtlExpre
 	_type = ele_type;
 }
 
-string rtlArrayObjectReference::Get_C_Name() 
+string rtlArrayObjectReference::Get_C_Target_Name() 
 {
-	string ret_val = _object->Get_C_Name();
+	string ret_val = _object->Get_C_Target_Name();
 	for(int I = 0, fI = _indices.size(); I < fI; I++)
-		ret_val += "[" + _indices[I]->Get_C_Name() + "]";
+		ret_val += "[" + _indices[I]->C_Int_Reference() + "]";
 	
 	return(ret_val);
 }
@@ -155,10 +159,8 @@ void rtlArrayObjectReference::Print_C(ostream& ofile)
 	}
 	else
 	{
-		ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << ";" << endl;
-		if(_value != NULL)
-			this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), this->_value, ofile);
-		else
+		this->Print_C_Declaration(_value,ofile);
+		if(_value == NULL)
 		{
 			string obj_ref_string = this->Get_Object()->Get_C_Name();
 			for(int I = 0, fI = _indices.size(); I < fI; I++)
