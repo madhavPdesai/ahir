@@ -1,0 +1,65 @@
+
+$system shift_register 
+	$in 
+		$pipe in_data 32 
+        $out 
+		$pipe out_data 32
+
+{
+        $pipe tmp 32
+
+	$thread   REPEATER
+		$in     rack wack: $unsigned<1>
+		$out    rreq wreq : $unsigned<1>
+		$in     rdata : $unsigned<32>
+		$out    wdata : $unsigned<32>
+		$signal data_reg : $unsigned<32>
+		$constant O1: $unsigned<1> := ($unsigned<1>) _b1
+
+		$group $in  $pipe READP  (rreq rdata rack)
+		$group $out $pipe WRITEP (wreq wdata wack)
+
+		<reset>  {
+			$emit rreq
+			$if (rack == O1)
+			{
+				// note: wdata must be updated before emitting wreq.
+				$volatile wdata := rdata
+				$emit wreq
+				$if (wack == O1) 
+				{
+					$goto reset
+				}
+				$else
+				{
+				    $goto wait_state	
+				    data_reg := rdata
+				}
+			}
+			$else {
+				$goto reset
+			}
+		}
+		<wait_state>  {
+				$volatile wdata := data_reg
+				$emit wreq
+				$if(wack == O1)
+				{
+					$goto reset
+				}
+				$else
+				{
+					$goto wait_state
+				}
+		}
+
+	
+	$string stage_0:REPEATER
+		READP => in_data
+		WRITEP => tmp
+
+	$string stage_1:REPEATER
+		READP => tmp
+		WRITEP => out_data
+
+}

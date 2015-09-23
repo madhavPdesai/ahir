@@ -99,7 +99,7 @@ void rtlEmitStatement::Print_C(ostream& source_file)
 				   <<   (ng->_is_input ? "0" : "1") << ","
 				   <<   "1, &__ack_flag, &(" 
 				   <<    ng->_data->Get_C_Name() << "));" << endl;
-			source_file << "bit_vector_assign_uint64(0, &(" << ng->_req->Get_C_Name() << "), __ack_flag);" << endl;
+			source_file << "bit_vector_assign_uint64(0, &(" << ng->_ack->Get_C_Name() << "), __ack_flag);" << endl;
 			source_file << "}" << endl;
 		}
 		else
