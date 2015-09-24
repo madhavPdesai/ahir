@@ -22,9 +22,7 @@ void rtlObject::Print_C_Struct_Field_Initialization(string obj_name, ostream& so
 	_type->Print_C_Struct_Field_Initialization(obj_name, NULL, source_file);
 }
 
-void rtlObject::Print_C_Probe_Matcher(ostream& source_file, string ret_val,  
-				bool pipe_flag, bool signal_flag, 
-				bool output_flag, bool input_flag)
+void rtlObject::Print_C_Probe_Matcher(ostream& source_file)
 {
 	rtlType* tt = this->Get_Type();
 	rtlInterfaceGroup* ng = this->Get_Group();
@@ -33,7 +31,7 @@ void rtlObject::Print_C_Probe_Matcher(ostream& source_file, string ret_val,
 
 	if(ng != NULL)
 	{
-		if(ng->_is_pipe_access && pipe_flag)
+		if(ng->_is_pipe_access)
 		{
 			if(ng->_req == this)
 			{ // req triggers the probe.
@@ -54,49 +52,28 @@ void rtlObject::Print_C_Probe_Matcher(ostream& source_file, string ret_val,
 				source_file << "}" << endl;
 			}
 		}
-		else if(!ng->_is_pipe_access && signal_flag)
+		else if(!ng->_is_pipe_access)
 		{
-			if(ng->_is_input && input_flag)
+			if(ng->_is_input)
 			{
-
 				source_file  << "{" << endl;
 				source_file << "// signal-access probe triggered by " << this->Get_Id() << endl;
 				source_file  << "bit_vector* sig_val = getSignalValue(__sstate->__" + ng->Get_Id() + ");" << endl;
 				source_file << "char not_equal = bit_vector_not_equal(0, sig_val, &(" <<  ng->_data->Get_C_Name() <<"));" << endl;
 				source_file << "bit_vector_bitcast_to_bit_vector(&(" << ng->_data->Get_C_Name() << "),sig_val);" << endl;
-				if(ret_val != "")
-					source_file << ret_val << " = (ret_val ||  not_equal);" << endl;
 				source_file << "}" << endl;
 			}
-			else if(output_flag)
+			else 
 			{
 				source_file << "{" << endl;
 				source_file << "// signal-access probe triggered by " << this->Get_Id() << endl;
 				source_file << "bit_vector* sig_val = getSignalValue(__sstate->__" + ng->Get_Id() + ");" << endl;
-				source_file << "char not_equal = bit_vector_not_equal(0, sig_val, &(" <<  ng->_data->Get_C_Name() <<"));" << endl;
 				source_file << "assignSignalValue(__sstate->__" << ng->Get_Id() << ", &(" 
 					<< ng->_data->Get_C_Name() << "));" << endl;
-				if(ret_val != "")
-					source_file << ret_val << " = (ret_val ||  not_equal);" << endl;
 				source_file << "}" << endl;
 			}
 		}
 	}
-}
-
-void rtlObject::Print_C_Pipe_Probe_Matcher(ostream& source_file)
-{
-	this->Print_C_Probe_Matcher(source_file, "", true, false, false, false);
-}
-
-void rtlObject::Print_C_Output_Signal_Probe_Matcher(string ret_val, ostream& source_file)
-{
-	this->Print_C_Probe_Matcher(source_file, ret_val,  false, true, true, false);
-}
-
-void rtlObject::Print_C_Input_Signal_Probe_Matcher(string ret_val, ostream& source_file)
-{
-	this->Print_C_Probe_Matcher(source_file, ret_val, false, true, false, true);
 }
 
 rtlConstant::rtlConstant(string name, rtlType* t, rtlValue* v):rtlObject(name, t)

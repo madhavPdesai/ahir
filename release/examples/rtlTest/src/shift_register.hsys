@@ -31,6 +31,9 @@ $system shift_register
 			$now rreq := One_1
 			$if (rack == One_1)
 			{
+				// hack.
+				$now rreq := ($unsigned<1>) 0
+
 				// note: wdata must be updated before emitting wreq.
 				$now wdata := rdata
 				$now wreq := One_1

@@ -10,7 +10,7 @@
 #include <rtl2AaMatcher.h>
 #include <_shift_register.h>
 
-#define ORDER 2
+#define ORDER 16
 
 void Exit(int sig)
 {

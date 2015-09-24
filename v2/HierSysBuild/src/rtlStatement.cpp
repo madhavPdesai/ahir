@@ -68,12 +68,12 @@ void rtlAssignStatement::Print_C(ostream& source_file)
 	else
 		assert(0);
 
-	//if(_target->Is("rtlSimpleObjectReference"))
-	//{
-		//rtlObject* obj = ((rtlSimpleObjectReference*)_target)->Get_Object();
-		//if(!obj->Needs_Next())
-			//obj->Print_C_Probe_Matcher(source_file);
-	//}
+	if(_target->Is("rtlSimpleObjectReference"))
+	{
+		rtlObject* obj = ((rtlSimpleObjectReference*)_target)->Get_Object();
+		if(!obj->Needs_Next())
+			obj->Print_C_Probe_Matcher(source_file);
+	}
 }
 
 	
