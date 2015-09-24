@@ -41,8 +41,7 @@
 // in start daemons, start the ticker and the individual
 // threads for Rtl<->Aa matchers.
 //
-void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_file,
-						vector<string>& match_daemons)
+void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_file, vector<string>& match_daemons)
 {
 	// 
 	/*

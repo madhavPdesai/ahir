@@ -61,6 +61,12 @@ void rtlThread::Print_C_Struct_Declaration(ostream& header_file)
 	{
 		rtlObject* obj = (*iter).second;
 		header_file << obj->Get_Type()->Get_C_Name() << " " << obj->Get_Id() << obj->Get_Type()->Get_C_Dimension_String() << ";" << endl;
+		if(obj->Is_Pipe())
+		{
+			header_file << "bit_vector " << obj->Get_Id() << "__req;" << endl;
+			header_file << "bit_vector " << obj->Get_Id() << "__ack;" << endl;
+		}
+		
 		if(obj->Needs_Next())
 		{
 			header_file << obj->Get_Type()->Get_C_Name() << " __next__" << obj->Get_Id() << obj->Get_Type()->Get_C_Dimension_String() <<  ";" << endl;
@@ -68,17 +74,17 @@ void rtlThread::Print_C_Struct_Declaration(ostream& header_file)
 	}
 
 	// matcher recs for this string.
-	for(map<string, rtlInterfaceGroup*>::iterator iter = this->_interface_group_map.begin(),
-				fiter = this->_interface_group_map.end(); iter != fiter; iter++)
+	for(map<string, rtlObject*>::iterator iter = this->_objects.begin(),
+				fiter = this->_objects.end(); iter != fiter; iter++)
 	{
-		rtlInterfaceGroup* ng = (*iter).second;
-		if(ng->_is_pipe_access)
+		rtlObject* ng = (*iter).second;
+		if(ng->Is_Pipe())
 		{
-			header_file << "PipeMatcherRec* __" << ng->Get_Id() << ";"  << endl;
+			header_file << "PipeMatcherRec* __matcher_" << ng->Get_Id() << ";"  << endl;
 		}
 		else
 		{
-			header_file << "SignalMatcherRec* __" << ng->Get_Id() << ";"  << endl;
+			header_file << "SignalMatcherRec* __matcher_" << ng->Get_Id() << ";"  << endl;
 		}
 	}
 
@@ -92,13 +98,19 @@ void rtlThread::Print_C_Log_Function(ostream& source_file)
 	source_file << "{" << endl;
 	source_file << threadStructTypeName(this) << "* __sstate = incoming_state;" << endl;
 	source_file << "fprintf(stderr, \"log: ------------------------------------ string %s  ---------------------------\\n\", __sstate->_string_name);" << endl;
-	source_file << "fprintf(stderr,\"log: %d>  %s  %d  %d\\n\", __sstate->_tick_count, __sstate->_string_name, __sstate->_state, __sstate->_next_state);" << endl;
+	source_file << "fprintf(stderr,\"log:%s:[%d]  %d  %d\\n\", __sstate->_string_name, __sstate->_tick_count, __sstate->_state, __sstate->_next_state);" << endl;
 	for(map<string, rtlObject*>::iterator iter = this->_objects.begin(), fiter = this->_objects.end();
 			iter != fiter;
 			iter++)
 	{
 		rtlObject* obj = (*iter).second;
-		source_file << "fprintf(stderr, \"log: %s = %s\\n\", \"" << obj->Get_Id() << "\",to_string(&(" << obj->Get_C_Name() << ")));" << endl;
+		source_file << "fprintf(stderr, \"log:%s:  %s = %s\\n\", __sstate->_string_name, \"" << obj->Get_Id() << "\",to_string(&(" << obj->Get_C_Name() << ")));" << endl;
+
+		if(obj->Is_Pipe())
+		{
+			source_file << "fprintf(stderr, \"log:%s:  %s = %s\\n\", __sstate->_string_name, \"" << obj->Get_Id() << "__req" << "\",to_string(&(" << obj->Get_C_Req_Name() << ")));" << endl;
+			source_file << "fprintf(stderr, \"log:%s:  %s = %s\\n\", __sstate->_string_name, \"" << obj->Get_Id() << "__ack" << "\",to_string(&(" << obj->Get_C_Ack_Name() << ")));" << endl;
+		}
 	}
 	source_file << "fprintf(stderr, \"log: ------------------------------------ end-log-entry ---------------------------\\n\");" << endl;
 	source_file << "}" << endl;
@@ -192,6 +204,15 @@ void rtlString::Print_C_State_Structure_Allocator(ostream& source_file)
 		rtlObject* obj = t_objs[I];
 		string obj_name = obj->Get_C_Name();
 		obj->Print_C_Struct_Field_Initialization(obj_name, source_file);
+
+		if(obj->Is_Pipe())
+		{
+			source_file << "init_bit_vector(&(" << obj->Get_C_Req_Name() << "),1);" << endl;
+			source_file << "bit_vector_clear(&(" << obj->Get_C_Req_Name() << "));" << endl;
+			source_file << "init_bit_vector(&(" << obj->Get_C_Ack_Name() << "),1);" << endl;
+			source_file << "bit_vector_clear(&(" << obj->Get_C_Ack_Name() << "));" << endl;
+		}
+
 		if(obj->Needs_Next())
 		{
 			string next_obj_name = obj->Get_C_Target_Name();
@@ -200,18 +221,16 @@ void rtlString::Print_C_State_Structure_Allocator(ostream& source_file)
 	}
 
 	// connect to matcher recs for this string.
-	for(map<string, rtlInterfaceGroup*>::iterator iter = this->Get_Base_Thread()->_interface_group_map.begin(),
-				fiter = this->Get_Base_Thread()->_interface_group_map.end(); iter != fiter; iter++)
+	for(map<string, rtlObject*>::iterator iter = this->Get_Base_Thread()->_objects.begin(),
+				fiter = this->Get_Base_Thread()->_objects.end(); iter != fiter; iter++)
 	{
-		rtlInterfaceGroup* ng = (*iter).second;
-		string pipe_name = _formal_group_to_actual_map[ng->Get_Id()];
-		if(ng->_is_input)
+		rtlObject* ng = (*iter).second;
+		if(_formal_to_actual_map.find(ng->Get_Id()) != _formal_to_actual_map.end())
 		{
-			source_file << "__sstate->__" << ng->Get_Id() << " = " << pipeToStringMatcherObjName(this, pipe_name) << ";"  << endl;
-		}
-		else
-		{
-			source_file << "__sstate->__" << ng->Get_Id() << " = " << stringToPipeMatcherObjName(this, pipe_name) << ";"  << endl;
+			string pipe_name = _formal_to_actual_map[ng->Get_Id()];
+			string pmatcher = (ng->Is_InPort() ? pipeToStringMatcherObjName(this,pipe_name) : 
+									stringToPipeMatcherObjName(this,pipe_name));	
+			source_file << "__sstate->__matcher_" << ng->Get_Id() << " = " << pmatcher << ";"  << endl;
 		}
 	}
 	source_file << "}" << endl;
@@ -344,25 +363,21 @@ void rtlString::Print_C_Matcher_Start_Daemons(ostream& source_file, vector<strin
 	string string_struct_name =  stringStructObjName(this);
 
 	// iterate over the string port map.	
-	for(map<string, string >::iterator iter = _formal_group_to_actual_map.begin(),
-			fiter = _formal_group_to_actual_map.end(); iter != fiter; iter++)
+	for(map<string, string >::iterator iter = this->_formal_to_actual_map.begin(),
+			fiter = this->_formal_to_actual_map.end(); iter != fiter; iter++)
 	{
-		string grp_name = (*iter).first;
-		string port_name = (*iter).second;
+		string formal_name = (*iter).first;
+		string port_name   = (*iter).second;
 
 		assert(port_name != "");
 
 		int pipe_width = sys->Get_Pipe_Width(port_name);
 
-		rtlInterfaceGroup* ng = this->Get_Base_Thread()->Find_Interface_Group(grp_name);
-		assert(ng != NULL);
 
+		rtlObject* dobj = bt->Find_Object(formal_name);
+		assert(dobj != NULL);
 
-		rtlObject* dobj = ng->_data;
-		rtlObject* req_obj = ng->_req;
-		rtlObject* ack_obj = ng->_ack;
-
-		string matcher_struct_name = (ng->_is_input ?  pipeToStringMatcherObjName(this,port_name) : 
+		string matcher_struct_name = (dobj->Is_InPort() ?  pipeToStringMatcherObjName(this,port_name) : 
 									stringToPipeMatcherObjName(this,port_name));
 
 		if(dobj->Is_OutPort())
@@ -486,7 +501,7 @@ void Print_C_Binary_Operation(string tgt_name, string first_op, string second_op
 			case __DIV:
 				ofile << "bit_vector_div(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
 			case __CONCAT:
-				ofile << "bit_vector_concat(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
+				ofile << "bit_vector_concatenate(&(" << first_op << "), &(" << second_op << "), &(" << tgt_name << "));" << endl; break;
 
 			default: assert(0); break;
 		}

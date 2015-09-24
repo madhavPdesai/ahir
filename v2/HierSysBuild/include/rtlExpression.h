@@ -99,13 +99,18 @@ class rtlObjectReference: public rtlExpression
 class rtlSimpleObjectReference: public rtlObjectReference
 {
 
+	bool _req_flag;
+	bool _ack_flag;
 	public:
 
 	// type extracted from object.
 	rtlSimpleObjectReference(rtlObject* obj);
+	rtlSimpleObjectReference(rtlObject* obj, bool req_flag, bool ack_flag);
 
 	string Kind() {return("rtlSimpleObjectReference");}
 
+	bool Get_Req_Flag() {return(_req_flag);}
+	bool Get_Ack_Flag() {return(_ack_flag);}
 	virtual void Evaluate(rtlThread* t);
 	virtual string Get_C_Name();
 	virtual string Get_C_Target_Name();

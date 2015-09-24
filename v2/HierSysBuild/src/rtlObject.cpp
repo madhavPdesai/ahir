@@ -13,7 +13,6 @@
 rtlObject::rtlObject(string name, rtlType* t):hierRoot(name)
 {
 	_type = t;
-	_group = NULL;
 }
 
 	
@@ -25,53 +24,38 @@ void rtlObject::Print_C_Struct_Field_Initialization(string obj_name, ostream& so
 void rtlObject::Print_C_Probe_Matcher(ostream& source_file)
 {
 	rtlType* tt = this->Get_Type();
-	rtlInterfaceGroup* ng = this->Get_Group();
-
-	
-
-	if(ng != NULL)
+	if(this->Is_Pipe())
 	{
-		if(ng->_is_pipe_access)
+		source_file << "// pipe-access probe triggered by " << this->Get_Id() << endl;
+		source_file << "{" << endl;
+		source_file  << "char __req_flag = ";
+		source_file << "bit_vector_to_uint64(0, &(" << this->Get_C_Req_Name() << "));" << endl;
+		source_file << "char __ack_flag = 0;" << endl;
+		source_file << "probeMatcher("
+			<< 	"__sstate->__matcher_" << this->Get_Id() << ","
+			<<   (this->Is_InPort() ? "0" : "1") << ","
+			<<   "__req_flag, &__ack_flag, &(" 
+			<<    (this->Is_InPort() ? this->Get_C_Target_Name() : this->Get_C_Name())  << "));" << endl;
+		source_file << "bit_vector_assign_uint64(0, &(" << this->Get_C_Ack_Name() << "), __ack_flag);" << endl;
+		source_file << "}" << endl;
+	}
+	else 
+	{
+		if(this->Is_InPort())
 		{
-			if(ng->_req == this)
-			{ // req triggers the probe.
-				source_file << "// pipe-access probe triggered by " << this->Get_Id() << endl;
-				source_file << "{" << endl;
-				source_file  << "char __req_flag = ";
-				if(ng->_req->Get_Type()->Is("rtlIntegerType"))
-					source_file << ng->_req->Get_C_Name() << ";" << endl;
-				else
-					source_file << "bit_vector_to_uint64(0, &(" << ng->_req->Get_C_Name() << "));" << endl;
-				source_file << "char __ack_flag = 0;" << endl;
-				source_file << "probeMatcher("
-					<< 	"__sstate->__" << ng->Get_Id() << ","
-					<<   (ng->_is_input ? "0" : "1") << ","
-					<<   "__req_flag, &__ack_flag, &(" 
-					<<    ng->_data->Get_C_Name() << "));" << endl;
-				source_file << "bit_vector_assign_uint64(0, &(" << ng->_ack->Get_C_Name() << "), __ack_flag);" << endl;
-				source_file << "}" << endl;
-			}
+			source_file  << "{" << endl;
+			source_file << "// signal-access probe triggered by " << this->Get_Id() << endl;
+			source_file << "bit_vector* sig_val = getSignalValue(__sstate->__matcher_" + this->Get_Id() + ");" << endl;
+			source_file << "bit_vector_bitcast_to_bit_vector(&(" << this->Get_C_Target_Name() << "),sig_val);" << endl;
+			source_file << "}" << endl;
 		}
-		else if(!ng->_is_pipe_access)
+		else if(this->Is_OutPort())
 		{
-			if(ng->_is_input)
-			{
-				source_file  << "{" << endl;
-				source_file << "// signal-access probe triggered by " << this->Get_Id() << endl;
-				source_file  << "bit_vector* sig_val = getSignalValue(__sstate->__" + ng->Get_Id() + ");" << endl;
-				source_file << "char not_equal = bit_vector_not_equal(0, sig_val, &(" <<  ng->_data->Get_C_Name() <<"));" << endl;
-				source_file << "bit_vector_bitcast_to_bit_vector(&(" << ng->_data->Get_C_Name() << "),sig_val);" << endl;
-				source_file << "}" << endl;
-			}
-			else 
-			{
-				source_file << "{" << endl;
-				source_file << "// signal-access probe triggered by " << this->Get_Id() << endl;
-				source_file << "bit_vector* sig_val = getSignalValue(__sstate->__" + ng->Get_Id() + ");" << endl;
-				source_file << "assignSignalValue(__sstate->__" << ng->Get_Id() << ", &(" 
-					<< ng->_data->Get_C_Name() << "));" << endl;
-				source_file << "}" << endl;
-			}
+			source_file << "{" << endl;
+			source_file << "// signal-access probe triggered by " << this->Get_Id() << endl;
+			source_file << "assignSignalValue(__sstate->__matcher_" << this->Get_Id() << ", &(" 
+						<< this->Get_C_Name() << "));" << endl;
+			source_file << "}" << endl;
 		}
 	}
 }
@@ -112,6 +96,13 @@ void rtlVariable::Print(ostream& ofile)
 
 rtlSignal::rtlSignal(string name, rtlType* t):rtlObject(name, t)
 {
+	_is_pipe = false;
+	_is_volatile = false;
+}
+
+rtlSignal::rtlSignal(bool is_pipe, string name, rtlType* t):rtlObject(name, t)
+{
+	_is_pipe = is_pipe;
 	_is_volatile = false;
 }
 
@@ -127,7 +118,7 @@ void rtlSignal::Print(ostream& ofile)
 // Print declaration.
 void rtlInPort::Print(ostream& ofile)
 {
-	ofile << " $in " << this->Get_Id();
+	ofile << " $in " << (this->Is_Pipe() ? "$pipe " : "")  << this->Get_Id();
 	ofile << " : ";
 	_type->Print(ofile);
 	ofile << endl;
@@ -136,7 +127,7 @@ void rtlInPort::Print(ostream& ofile)
 // Print declaration.
 void rtlOutPort::Print(ostream& ofile)
 {
-	ofile << " $out " << this->Get_Id();
+	ofile << " $out " << (this->Is_Pipe() ? "$pipe " : "")  << this->Get_Id();
 	ofile << " : ";
 	_type->Print(ofile);
 	ofile << endl;

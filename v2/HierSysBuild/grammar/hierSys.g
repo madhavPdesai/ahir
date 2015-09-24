@@ -321,7 +321,6 @@ rtl_Thread[hierSystem* sys] returns [rtlThread* t]
 }:
         THREAD tname:SIMPLE_IDENTIFIER {t = new rtlThread(sys, tname->getText());}
         (rtl_ObjectDeclaration[t])*
-	(rtl_InterfaceGroup[t])*
 	rtl_DefaultStatementBlock[t]
         (rtl_LabeledBlockStatement[t])+
     ;
@@ -336,34 +335,6 @@ rtl_DefaultStatementBlock[rtlThread* t]
 		(stmt = rtl_AssignStatement[t] { t->Add_Default_Assignment((rtlAssignStatement*)stmt); } )*
 ;
 
-rtl_InterfaceGroup[rtlThread* t] 
-{
-	bool in_group = false;
-	bool out_group = false;
-	string group_id;
-	vector<string> group_vec;
-}:
-	(( ( (GROUP IN PIPE{ in_group = true;}) | (GROUP OUT PIPE {out_group = true;}))  gid: SIMPLE_IDENTIFIER
-		LPAREN reqid: SIMPLE_IDENTIFIER dataid: SIMPLE_IDENTIFIER ackid: SIMPLE_IDENTIFIER RPAREN
-			{
-				group_id  = gid->getText();
-				group_vec.push_back(reqid->getText());
-				group_vec.push_back(dataid->getText());
-				group_vec.push_back(ackid->getText());
-			}
-	)
-	|
-	( ( (GROUP IN SIGNAL {in_group = true;} )| (GROUP OUT SIGNAL { out_group = true;}))  sgid: SIMPLE_IDENTIFIER
-		LPAREN sdataid: SIMPLE_IDENTIFIER  RPAREN
-		{
-			group_id = sgid->getText();
-			group_vec.push_back(sdataid->getText());
-		}
-	))
-	{
-		t->Add_Interface_Group(group_id, group_vec, in_group);
-	}
-;
 
 rtl_String[hierSystem* sys] returns [rtlString* ti]
 {
@@ -417,13 +388,14 @@ rtl_ObjectDeclaration[rtlThread* t]
 	vector<string> init_values;
 	rtlExpression* init_expr = NULL;
 	rtlValue* init_value = NULL;
+	bool pipe_flag = false;
 }:
         (
             (VARIABLE {variable_flag  = true;}) |
 		(CONSTANT {constant_flag  = true;}) |
 		(SIGNAL   {signal_flag    = true;})  |
-		(IN  {in_flag = true;}) |
-		(OUT {out_flag = true;})
+		(IN (PIPE {pipe_flag = true;})?  {in_flag = true;}) |
+		(OUT (PIPE {pipe_flag = true;})? {out_flag = true;})
 	)
 	( sid: SIMPLE_IDENTIFIER {names.push_back(sid->getText());} )+
         COLON
@@ -445,11 +417,11 @@ rtl_ObjectDeclaration[rtlThread* t]
 		}
 		else if(in_flag)
 		{
-			obj = new rtlInPort(obj_name, type); 
+			obj = new rtlInPort(pipe_flag, obj_name, type); 
 		}
 		else if(out_flag)
 		{
-			obj = new rtlOutPort(obj_name, type); 
+			obj = new rtlOutPort(pipe_flag, obj_name, type); 
 		}
 		else if(constant_flag)
 		{
@@ -611,17 +583,24 @@ rtl_Object_Reference[rtlThread* t] returns [rtlExpression* expr]
 	vector<rtlExpression*> indices;	
 	bool array_flag = false;
 	rtlExpression* iexpr = NULL;
+	bool req_flag = false;
+	bool ack_flag = false;
 }:
 	sid: SIMPLE_IDENTIFIER {obj_name = sid->getText();}
+
+	(( REQ {req_flag = true;}) | (ACK {ack_flag = true;}))?
+
 	(LBRACKET ( iexpr = rtl_Expression[t,NULL] {array_flag = true; indices.push_back(iexpr); iexpr = NULL;} )+ RBRACKET)?
 	{
 		rtlObject* obj = t->Find_Object(obj_name);
-		assert(obj != NULL);
+		if(obj == NULL)
+			t->Report_Error("object " + obj_name + " not found in thread " + t->Get_Id());
+		
 
 		if(array_flag)
 			expr = new rtlArrayObjectReference(obj, indices);
 		else
-			expr = new rtlSimpleObjectReference(obj);
+			expr = new rtlSimpleObjectReference(obj,req_flag, ack_flag);
 
 		_sLine_(expr, sid);
 	}
@@ -883,8 +862,9 @@ IF:"$if";
 ELSE:"$else";
 NOW:"$now";
 DEFAULT:"$default";
-
-
+REQ: "$req";
+ACK: "$ack";
+SLICE: "$slice";
 
 
 BINARY : "_b"  ('0' | '1')+ ;

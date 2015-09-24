@@ -64,13 +64,34 @@ void rtlExpression::Print_C_Declaration(rtlValue* v, ostream& ofile)
 
 rtlSimpleObjectReference::rtlSimpleObjectReference(rtlObject* obj): rtlObjectReference(obj->Get_Id(),obj) 
 {
+	_req_flag = false;
+	_ack_flag = false;
+
 	if(obj->Is_Constant())
 	{
 		_value = obj->Get_Value();
 	}
+
 	_type = obj->Get_Type();
 }
 
+rtlSimpleObjectReference::rtlSimpleObjectReference(rtlObject* obj, bool req_flag, bool ack_flag): rtlObjectReference(obj->Get_Id(),obj) 
+{
+	_req_flag  = req_flag;
+	_ack_flag  = ack_flag;
+
+	if(_req_flag | _ack_flag)
+	{
+		if(!obj->Is_Pipe())
+		{
+			this->Report_Error("non-pipe object " + obj->Get_Id() + " in req/ack object reference");
+			assert(0);
+		}
+		_type = Find_Or_Make_Unsigned_Type(1);
+	}
+	else
+		_type = obj->Get_Type();
+}
 
 void rtlConstantLiteralExpression::Print(ostream& ofile)
 {
@@ -96,7 +117,28 @@ void rtlSimpleObjectReference::Print(ostream& ofile)
 		_value->Print(ofile);
 		return;
 	}
-	ofile << " " << _object->Get_Id() << " ";
+	ofile << " " << _object->Get_Id();
+	if(_req_flag)
+		ofile << "$req ";
+	else if(_ack_flag)
+		ofile << "$ack ";
+	
+	if(this->_req_flag && !this->Get_Is_Target())
+	{
+		this->Report_Error("req-flag cannot be read for object " + _object->Get_Id());
+	}
+	if(this->_ack_flag && this->Get_Is_Target())
+	{
+		this->Report_Error("ack-flag cannot be written for object " + _object->Get_Id());
+	}
+	if(_object->Is_InPort() && (!_req_flag) && (!_ack_flag) && this->Get_Is_Target())
+	{
+		this->Report_Error("inport  object " + _object->Get_Id() + " cannot be a target");
+	}
+	if(_object->Is_OutPort() && (!_req_flag) && (!_ack_flag) && !this->Get_Is_Target())
+	{
+		this->Report_Error("outport  object " + _object->Get_Id() + " cannot be a source");
+	}
 }
 	
 
@@ -113,17 +155,38 @@ void rtlObjectReference::Set_Is_Volatile(bool v)
 	
 string rtlSimpleObjectReference::Get_C_Name() 
 {
-	return(_object->Get_C_Name());
+	if(_req_flag)
+	{
+		this->Report_Error("req-flag cannot be read for object " + _object->Get_Id());
+		return("");
+	}
+	else if(_ack_flag)
+		return(_object->Get_C_Ack_Name());
+	else
+		return(_object->Get_C_Name());
 }
 
 string rtlSimpleObjectReference::Get_C_Target_Name() 
 {
+
+	if(_ack_flag)
+	{
+		this->Report_Error("ack-flag cannot be written for object " + _object->Get_Id());
+		return("");
+	}
+	else if(_req_flag)
+		return(_object->Get_C_Req_Name());
+
 	return(_object->Get_C_Target_Name());
 }
 
 void rtlSimpleObjectReference::Print_C(ostream& ofile) 
 {
 	// nothing.  objects will be in string struct.
+	if(this->_req_flag && !this->Get_Is_Target())
+	{
+		this->Report_Error("req-flag cannot be read for object " + _object->Get_Id());
+	}
 }
 	
 rtlArrayObjectReference::rtlArrayObjectReference(rtlObject* obj, vector<rtlExpression*>& indices)

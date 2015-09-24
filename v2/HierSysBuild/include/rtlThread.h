@@ -8,31 +8,17 @@ class rtlStatement;
 class rtlAssignStatement;
 class rtlObject;
 
-class rtlInterfaceGroup: public hierRoot
-{
-	public: 
-
-	bool _is_pipe_access;
-	bool _is_input;
-
-	rtlObject* _req;
-	rtlObject* _ack;
-	rtlObject*  _data;
-
-	rtlInterfaceGroup(string id, vector<rtlObject*>& gvec, bool is_input);
-};
 //
 //  rtl threads..
 // 
 class rtlThread: public hierRoot
 {
 	protected:
-  hierSystem* _parent;
+  	hierSystem* _parent;
   
 	vector<rtlStatement*> _statements;
 	map<string, rtlStatement*> _statement_map;
 	map<string, rtlObject*> _objects;
-	map<string, rtlInterfaceGroup*> _interface_group_map;
 
 	vector<rtlAssignStatement*> _default_assignments;
 	public:
@@ -63,15 +49,6 @@ class rtlThread: public hierRoot
 	{
 		if(_objects.find(obj_name) != _objects.end())
 			return(_objects[obj_name]);
-		else
-			return(NULL);
-	}
-
-	void Add_Interface_Group(string gname, vector<string>& gvec, bool is_input);
-	rtlInterfaceGroup* Find_Interface_Group(string grp_name)
-	{
-		if(_interface_group_map.find(grp_name) != _interface_group_map.end())
-			return(_interface_group_map[grp_name]);
 		else
 			return(NULL);
 	}
@@ -119,15 +96,12 @@ class rtlString: public hierRoot
 
 
 	// formal group to actual port map
-	map<string,string>  _formal_group_to_actual_map;
-
-
-
+	map<string,string>  _formal_to_actual_map;
 
 	public:
 	
 	rtlString(string inst_name, rtlThread* base);
-	void Add_Port_Map_Entry(string formal_group, string actual);
+	void Add_Port_Map_Entry(string formal_obj, string actual);
 	void Print(ostream& ofile);
 
 	rtlThread* Get_Base_Thread() {return(_base_thread);}

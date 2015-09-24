@@ -9,35 +9,30 @@ $system shift_register
         $pipe tmp 32
 
 	$thread   REPEATER
-		$in     rack wack: $unsigned<1>
-		$out    rreq wreq : $unsigned<1>
-		$in     rdata : $unsigned<32>
-		$out    wdata : $unsigned<32>
+		$in $pipe    rdata : $unsigned<32>
+		$out $pipe    wdata : $unsigned<32>
+
 		$signal data_reg : $unsigned<32>
 		$constant One_1: $unsigned<1> := ($unsigned<1>) _b1
 		$constant Z1: $unsigned<1> := ($unsigned<1>) _b0
 
-		$group $in  $pipe READP  (rreq rdata rack)
-		$group $out $pipe WRITEP (wreq wdata wack)
 
 		$default 
-			$now rreq := Z1
-			$now wreq := Z1
+			$now rdata$req := Z1
+			$now wdata$req := Z1
 
 		<init>  {
 				data_reg := ($unsigned<32>) 0 
 			}
 		<reset>  {
-			$now rreq := One_1
-			$if (rack == One_1)
+			$now rdata$req := One_1
+			$if (rdata$ack == One_1)
 			{
-				// hack.
-				$now rreq := ($unsigned<1>) 0
 
 				// note: wdata must be updated before emitting wreq.
 				$now wdata := rdata
-				$now wreq := One_1
-				$if (wack == One_1) 
+				$now wdata $req := One_1
+				$if (wdata $ack == One_1) 
 				{
 					$goto reset
 				}
@@ -53,8 +48,8 @@ $system shift_register
 		}
 		<wait_state>  {
 				$now wdata := data_reg
-				$now wreq := One_1
-				$if(wack == One_1)
+				$now wdata $req := One_1
+				$if(wdata $ack == One_1)
 				{
 					$goto reset
 				}
@@ -66,10 +61,10 @@ $system shift_register
 
 	
 	$string stage_0:REPEATER
-		READP => in_data
-		WRITEP => tmp
+		rdata => in_data
+		wdata => tmp
 
 	$string stage_1:REPEATER
-		READP => tmp
-		WRITEP => out_data
+		rdata => tmp
+		wdata => out_data
 }

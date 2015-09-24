@@ -70,9 +70,24 @@ void rtlAssignStatement::Print_C(ostream& source_file)
 
 	if(_target->Is("rtlSimpleObjectReference"))
 	{
-		rtlObject* obj = ((rtlSimpleObjectReference*)_target)->Get_Object();
-		if(!obj->Needs_Next())
+		rtlSimpleObjectReference* sor = ((rtlSimpleObjectReference*) _target);
+		rtlObject* obj = sor->Get_Object();
+		if(sor->Get_Req_Flag())
 			obj->Print_C_Probe_Matcher(source_file);
+
+		if(sor->Get_Req_Flag())
+		{
+			if(!this->Get_Volatile())
+			{
+				this->Get_Parent_Thread()->Report_Error("req interface must be driven by volatile statement (for pipe"
+								+ obj->Get_Id() + ").\n");
+			}	
+		}
+		if(sor->Get_Ack_Flag())
+		{
+			this->Get_Parent_Thread()->Report_Error("ack interface cannot be driven (for pipe"
+								+ obj->Get_Id() + ").\n");
+		}
 	}
 }
 

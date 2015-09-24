@@ -6,8 +6,6 @@ class rtlThread;
 
 class rtlStatement: public hierRoot
 {
-
-
 	protected:
 
 	rtlThread* _parent_thread;
@@ -18,6 +16,7 @@ class rtlStatement: public hierRoot
 	virtual void Print(ostream& ofile) {assert(0);}
 	virtual string Get_Label() {assert(0);}
 	virtual void Print_C(ostream& source_file) {assert(0);}
+	rtlThread* Get_Parent_Thread() {return(_parent_thread);}
 };
 
 class rtlAssignStatement: public rtlStatement

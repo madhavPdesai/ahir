@@ -9,7 +9,6 @@ class rtlObject: public hierRoot
 	protected:
 
 	rtlType* _type;
-	rtlInterfaceGroup* _group;
 
         public:
 
@@ -22,10 +21,9 @@ class rtlObject: public hierRoot
 	virtual bool Is_Constant() {return(false);}
 	virtual bool Is_InPort()   {return(false);}
 	virtual bool Is_OutPort()  {return(false);}
+	virtual bool Is_Pipe()     {return(false);}
 
 
-	virtual void Set_Group(rtlInterfaceGroup* g) {_group = g;}
-	rtlInterfaceGroup* Get_Group() {return(_group);}
 
 	virtual rtlValue* Get_Value() {return(NULL);}
 	rtlType* Get_Type() {return(_type);}
@@ -33,6 +31,9 @@ class rtlObject: public hierRoot
 	virtual void Print(ostream& ofile) {assert(0);}
 		
 	virtual string Get_C_Name() {return("__sstate->" + this->Get_Id());}
+	virtual string Get_C_Req_Name() {return("__sstate->" + this->Get_Id() + "__req");}
+	virtual string Get_C_Ack_Name() {return("__sstate->" + this->Get_Id() + "__ack");}
+
 	virtual string Get_C_Target_Name() 
 	{
 		if(this->Needs_Next())
@@ -81,12 +82,17 @@ class rtlVariable: public rtlObject
 
 class rtlSignal: public rtlObject
 {
+	bool _is_pipe;
 	bool _is_volatile;
+
 	public:
 	rtlSignal(string name, rtlType* t);
+	rtlSignal(bool is_pipe, string name, rtlType* t);
+
 	virtual string Kind() {return("rtlSignal");}
 
 	virtual bool Is_Signal() {return(true);}
+	virtual bool Is_Pipe() {return(_is_pipe);}
 	virtual void Print(ostream& ofile);
 	virtual void Set_Is_Volatile(bool v) {_is_volatile = v;}
 	virtual bool Get_Is_Volatile() {return(_is_volatile);}
@@ -96,7 +102,7 @@ class rtlSignal: public rtlObject
 class rtlInPort: public rtlSignal
 {
 	public:
-	rtlInPort(string name, rtlType* t) : rtlSignal(name,t) {}
+	rtlInPort(bool is_pipe, string name, rtlType* t) : rtlSignal(is_pipe, name,t) {}
 	virtual string Kind() {return("rtlInPort");}
 	virtual bool Is_InPort() {return(true);}
 	virtual void Print(ostream& ofile);
@@ -110,7 +116,7 @@ class rtlOutPort: public rtlSignal
 {
 	bool _is_emitted;
 	public:
-	rtlOutPort(string name, rtlType* t) : rtlSignal(name,t) {_is_emitted = false;}
+	rtlOutPort(bool is_pipe, string name, rtlType* t) : rtlSignal(is_pipe, name,t) {_is_emitted = false;}
 	virtual string Kind() {return("rtlOutPort");}
 
 	virtual bool Is_OutPort() {return(true);}
