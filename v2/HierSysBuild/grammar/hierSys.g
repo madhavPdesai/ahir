@@ -26,7 +26,7 @@ header "post_include_hpp" {
 	ANTLR_USING_NAMESPACE(antlr)
 #include <map>
 #include <set>
-
+#define _sLine_(u,v) {if(u != NULL) ((hierRoot*) u)->Set_Line_Number(v->getLine());}
 
 }
 
@@ -86,6 +86,7 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 		(LIBRARY libid: SIMPLE_IDENTIFIER {lib_id = libid->getText();})? 
 		{
 			sys = new hierSystem(sysid->getText());
+			_sLine_(sys,sysid);
 			sys->Set_Library(lib_id);
 		}
 	)
@@ -485,13 +486,15 @@ rtl_AssignStatement[rtlThread* t] returns [rtlStatement* stmt]
 	rtlExpression* src = NULL;
 	bool volatile_flag = false;
 }:
+
 (NOW {volatile_flag = true;})?
 (tgt = rtl_Expression[t,NULL])
-	ASSIGNEQUAL
+	aid: ASSIGNEQUAL
 (src = rtl_Expression[t,NULL])
 {
 	tgt->Set_Is_Target(true);
 	stmt = new rtlAssignStatement(t,volatile_flag, tgt, src);
+	_sLine_(stmt,aid);
 }
 ;
 
@@ -501,6 +504,7 @@ rtl_NullStatement[rtlThread* t]  returns [rtlStatement* stmt]
 NuLL 
 {
 	stmt = new rtlNullStatement(t);
+	//_sLine_(stmt, nid);
 }
 ;
 
@@ -512,6 +516,7 @@ GOTO sid: SIMPLE_IDENTIFIER
 {
 	lbl = sid->getText();
 	stmt  = new rtlGotoStatement(t, lbl);
+	_sLine_(stmt, sid);
 }
 ;
 
@@ -585,7 +590,7 @@ rtl_Constant_Literal_Expression[rtlThread* thrd,rtlType* itype] returns [rtlExpr
 	vector<string> init_values;
 	rtlType* t = NULL;
 }:
-	LPAREN t = rtl_Type_Declaration[thrd] {assert((itype == NULL) || (t == itype));}  RPAREN
+	lpid:LPAREN t = rtl_Type_Declaration[thrd] {assert((itype == NULL) || (t == itype));}  RPAREN
 	( (iid: UINTEGER {init_values.push_back(iid->getText());}) |
 		(bid: BINARY {init_values.push_back(bid->getText());}) |
 			(hid : HEXADECIMAL {init_values.push_back(hid->getText());}))
@@ -595,6 +600,7 @@ rtl_Constant_Literal_Expression[rtlThread* thrd,rtlType* itype] returns [rtlExpr
 	{
 		rtlValue* v = Make_Rtl_Value(t, init_values);
 		expr = new rtlConstantLiteralExpression(t, v);
+		_sLine_(expr, lpid);
 	}	
 ;
 
@@ -616,6 +622,8 @@ rtl_Object_Reference[rtlThread* t] returns [rtlExpression* expr]
 			expr = new rtlArrayObjectReference(obj, indices);
 		else
 			expr = new rtlSimpleObjectReference(obj);
+
+		_sLine_(expr, sid);
 	}
 ;
 
@@ -625,13 +633,14 @@ rtl_Slice_Expression[rtlThread* t] returns [rtlExpression* expr]
 	int high_index;
 	int low_index;
 }:
-	LPAREN 
+	lpid: LPAREN 
 		SLICE base_expr = rtl_Expression[t,NULL]
 			hid: UINTEGER {high_index = atoi(hid->getText().c_str());}
 			lid: UINTEGER {low_index = atoi(lid->getText().c_str());}
 	RPAREN
 	{
 		expr = new rtlSliceExpression(base_expr, high_index, low_index);
+		_sLine_(expr, lpid);
 	}
 ;
 
@@ -640,12 +649,13 @@ rtl_Unary_Expression[rtlThread* t] returns [rtlExpression* expr]
 	rtlOperation  op;
 	rtlExpression* rest;
 }:
-	LPAREN
+	lpid: LPAREN
 		op = rtl_Unary_Operation 
 		rest  = rtl_Expression[t,NULL]
 	RPAREN
 	{
 		expr = new rtlUnaryExpression(op, rest);
+		_sLine_(expr, lpid);
 	}
 ;
 
@@ -655,13 +665,14 @@ rtl_Binary_Expression[rtlThread* t] returns [rtlExpression* expr]
 	rtlExpression* second = NULL;
 	rtlOperation op;
 }:
-	LPAREN
+	lpid: LPAREN
 		first = rtl_Expression[t,NULL]
 		op = rtl_Binary_Operation
 		second = rtl_Expression[t,NULL]
 	RPAREN	
 	{
 		expr = new rtlBinaryExpression(op, first, second);
+		_sLine_(expr, lpid);
 	}
 ;
 
@@ -671,7 +682,7 @@ rtl_Ternary_Expression[rtlThread* t] returns [rtlExpression* expr]
 	rtlExpression* if_true = NULL;
 	rtlExpression* if_false = NULL;
 }:
-	LPAREN
+	lpid: LPAREN
 		MUX
 		test_expr = rtl_Expression[t,NULL]
 		if_true = rtl_Expression[t,NULL]
@@ -679,6 +690,7 @@ rtl_Ternary_Expression[rtlThread* t] returns [rtlExpression* expr]
 	RPAREN
 	{
 		expr = new rtlTernaryExpression(test_expr, if_true, if_false);
+		_sLine_(expr, lpid);
 	}
 ;
 

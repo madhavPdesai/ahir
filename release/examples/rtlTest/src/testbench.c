@@ -10,7 +10,7 @@
 #include <rtl2AaMatcher.h>
 #include <_shift_register.h>
 
-#define ORDER 16
+#define ORDER 2
 
 void Exit(int sig)
 {
@@ -24,7 +24,7 @@ void Sender()
 	uint32_t idx;
 	for(idx = 0; idx < ORDER; idx++)
 	{
-		write_uint32("in_data",idx);
+		write_uint32("in_data",idx+1);
 	}
 }
 
@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
 	uint32_t idx;
 	for(idx = 0; idx < ORDER; idx++)
 	{
-		fprintf(stdout,"Result = %u, expected = %u.\n", result[idx],idx);
+		fprintf(stdout,"Result = %u, expected = %u.\n", result[idx],idx+1);
 	}
 	PTHREAD_CANCEL(Sender);
 #ifdef SW

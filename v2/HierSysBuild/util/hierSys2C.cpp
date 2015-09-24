@@ -148,6 +148,7 @@ int main(int argc, char* argv[])
 	header_file << "void " << c_prefix << "_start_daemons(FILE* fp);" << endl;
 	header_file << "void " << c_prefix << "_stop_daemons();" << endl;
 
+	source_file << "#include <string.h>"  << endl;
 	source_file << "#include <pipeHandler.h>"  << endl;
 	source_file << "#include <pthreadUtils.h>"  << endl;
 	source_file << "#include <rtl2AaMatcher.h>"  << endl;
@@ -170,38 +171,6 @@ int main(int argc, char* argv[])
 	{
 
 		hierSystem* sys = sys_vec[I];
-
-		if(sys->Number_Of_Strings() > 0)
-		{
-			source_file << "// allocate match structs for system " << sys->Get_Id() << endl;
-			for(int J = 0, fJ = sys->Number_Of_Strings(); J < fJ; J++)
-			{
-				rtlString* s = sys->Get_Rtl_String(J);
-				source_file << stringMatcherAllocatorFunctionName(s) << "();" << endl;
-			}
-
-			source_file << "// match daemons for system " << sys->Get_Id() << endl;
-			for (int J = 0, fJ = match_daemon_map[sys].size(); J < fJ; J++)
-			{
-				string match_daemon = match_daemon_map[sys][J];
-				source_file << "PTHREAD_DECL(" << match_daemon << ");" << endl;
-				source_file << "PTHREAD_CREATE(" << match_daemon << ");" << endl;
-			}
-
-			string ticker_name = sys->Get_Id() + "_String_Ticker";
-			source_file  << "PTHREAD_DECL(" << ticker_name << ");" << endl;
-			source_file  << "PTHREAD_CREATE("  << ticker_name << ");" << endl;
-		}
-
-		if(sys->Is_Leaf() && (I < (fI-1)))
-		{
-			string lib = sys->Get_Library();
-			string id  = sys->Get_Id();
-
-			string init_fn_name = lib + "_start_daemons";
-			header_file << "void " << init_fn_name << "(FILE* fp );" << endl;
-			source_file << init_fn_name << "(fp);" << endl;
-		}	
 
 		// register all input/output pipes and set written-into/read-from
 		// status.
@@ -257,6 +226,45 @@ int main(int argc, char* argv[])
 			source_file << " set_pipe_is_read_from(" << q_pname << ");" << endl;
 			source_file << " set_pipe_is_written_into(" << q_pname << ");" << endl;
 		}
+	}
+	
+	// print daemons etc.
+	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
+	{
+
+		hierSystem* sys = sys_vec[I];
+
+		if(sys->Number_Of_Strings() > 0)
+		{
+			source_file << "// allocate match structs for system " << sys->Get_Id() << endl;
+			for(int J = 0, fJ = sys->Number_Of_Strings(); J < fJ; J++)
+			{
+				rtlString* s = sys->Get_Rtl_String(J);
+				source_file << stringMatcherAllocatorFunctionName(s) << "();" << endl;
+			}
+
+			source_file << "// match daemons for system " << sys->Get_Id() << endl;
+			for (int J = 0, fJ = match_daemon_map[sys].size(); J < fJ; J++)
+			{
+				string match_daemon = match_daemon_map[sys][J];
+				source_file << "PTHREAD_DECL(" << match_daemon << ");" << endl;
+				source_file << "PTHREAD_CREATE(" << match_daemon << ");" << endl;
+			}
+
+			string ticker_name = sys->Get_Id() + "_String_Ticker";
+			source_file  << "PTHREAD_DECL(" << ticker_name << ");" << endl;
+			source_file  << "PTHREAD_CREATE("  << ticker_name << ");" << endl;
+		}
+
+		if(sys->Is_Leaf() && (I < (fI-1)))
+		{
+			string lib = sys->Get_Library();
+			string id  = sys->Get_Id();
+
+			string init_fn_name = lib + "_start_daemons";
+			header_file << "void " << init_fn_name << "(FILE* fp );" << endl;
+			source_file << init_fn_name << "(fp);" << endl;
+		}	
 
 
 

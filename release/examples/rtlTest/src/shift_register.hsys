@@ -13,8 +13,7 @@ $system shift_register
 		$out    rreq wreq : $unsigned<1>
 		$in     rdata : $unsigned<32>
 		$out    wdata : $unsigned<32>
-		$signal data_reg : $array [2] $of $unsigned<32>
-		$signal counter: $unsigned<2>
+		$signal data_reg : $unsigned<32>
 		$constant One_1: $unsigned<1> := ($unsigned<1>) _b1
 		$constant Z1: $unsigned<1> := ($unsigned<1>) _b0
 
@@ -22,14 +21,11 @@ $system shift_register
 		$group $out $pipe WRITEP (wreq wdata wack)
 
 		$default 
-			rreq := Z1
-			wreq := Z1
-			counter := counter
+			$now rreq := Z1
+			$now wreq := Z1
 
 		<init>  {
-				data_reg[($unsigned<2>) 0] := ($unsigned<32>) 0 
-				data_reg[($unsigned<1>) 1] := ($unsigned<32>) 0
-				counter     := ($unsigned<2>)  0
+				data_reg := ($unsigned<32>) 0 
 			}
 		<reset>  {
 			$now rreq := One_1
@@ -45,8 +41,7 @@ $system shift_register
 				$else
 				{
 				    $goto wait_state	
-				    data_reg[counter] := rdata
-				    counter := (counter + ($unsigned<2>) 1)
+				    data_reg := rdata
 				}
 			}
 			$else {
@@ -54,7 +49,7 @@ $system shift_register
 			}
 		}
 		<wait_state>  {
-				$now wdata := data_reg[counter]
+				$now wdata := data_reg
 				$now wreq := One_1
 				$if(wack == One_1)
 				{

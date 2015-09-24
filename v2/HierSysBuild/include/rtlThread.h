@@ -102,6 +102,10 @@ class rtlThread: public hierRoot
 	void Print_C_Struct_Declaration(ostream& header_file);
 	void Print_C_Run_Function(ostream& source_file);
 	void Print_C_Tick_Function(ostream& source_file);
+	void Print_C_Output_Update_Function(ostream& source_file);
+	void Print_C_Input_Update_Function(ostream& source_file);
+	void Print_C_Pipe_Update_Function(ostream& source_file);
+	void Print_C_Log_Function(ostream& source_file);
 
 	friend class hierSystem;
 	friend class rtlString;
@@ -137,6 +141,9 @@ class rtlString: public hierRoot
 	void Print_C_Rtl_Aa_Matcher_Structure_Declarations(ostream& source_file);
 	void Print_C_Rtl_Aa_Matcher_Allocator(ostream& source_file);
 	void Print_C_Run_Function_Call(ostream& source_file);
+	void Print_C_Input_Update_Function_Call(string ret_val, ostream& source_file);
+	void Print_C_Output_Update_Function_Call(string ret_val, ostream& source_file);
+	void Print_C_Pipe_Update_Function_Call(ostream& source_file);
 	void Print_C_Tick_Function_Call(ostream& source_file);
 	void Print_C_Matcher_Start_Daemons(ostream& source_file, vector<string>& match_daemons);
 
@@ -184,6 +191,12 @@ string pipeToStringMatcherObjName(rtlString* s, string pipe_name);
 
 string pipeToStringMatcherThreadName(rtlString* s, string pipe_name);
 string stringToPipeMatcherThreadName(rtlString* s, string pipe_name);
+
+string threadInputUpdateFunctionName(rtlThread* t);
+string threadOutputUpdateFunctionName(rtlThread* t);
+string threadPipeUpdateFunctionName(rtlThread* t);
+
+string threadLogFunctionName(rtlThread* t);
 
 void Print_C_Binary_Operation(string tgt_name, string first_op, string second_op, rtlType* tgt_type, rtlOperation opcode , ostream& ofile);
 void Print_C_Assignment(string tgt, string src, rtlType* tt, ostream& ofile);

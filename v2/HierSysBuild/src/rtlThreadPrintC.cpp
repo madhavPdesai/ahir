@@ -15,6 +15,9 @@ string stateEnum(string state_label) {return("__" + state_label);}
 string threadStateEnumTypeName(rtlThread* t) {return(string("__") + t->Get_Id() + "StateEnum");}
 string threadRunFunctionName(rtlThread* t) {return(string("__") + t->Get_Id() + "__run__");}
 string threadTickFunctionName(rtlThread* t) {return(string("__") + t->Get_Id() + "__tick__");}
+string threadInputUpdateFunctionName(rtlThread* t) {return(string("__") + t->Get_Id() + "__i_update");}
+string threadOutputUpdateFunctionName(rtlThread* t) {return(string("__") + t->Get_Id() + "__o_update__");}
+string threadPipeUpdateFunctionName(rtlThread* t) {return(string("__") + t->Get_Id() + "__pipe_update__"); }
 string stringStructObjName(rtlString* s) {return(string("__") + s->Get_Id() + "__state");}
 string stringStructAllocatorFunctionName(rtlString* s) {return(string("__") + s->Get_Id() + "__struct_allocator");}
 string stringMatcherAllocatorFunctionName(rtlString* s) {return(string("__") + s->Get_Id() + "__matcher_allocator");}
@@ -25,6 +28,7 @@ string pipeToStringMatcherThreadName(rtlString* s, string pipe_name)
 string stringToPipeMatcherThreadName(rtlString* s, string pipe_name)
 {return(string("__") + s->Get_Id() + "__to__" + pipe_name + "__match_daemon");}
 
+string threadLogFunctionName(rtlThread* t) {return("__" + t->Get_Id() + "_log__");}
 
 
 
@@ -49,6 +53,8 @@ void rtlThread::Print_C_Struct_Declaration(ostream& header_file)
 	header_file << "typedef struct " + tname + "_ " + tname + ";" << endl;
 	header_file << "struct " + tname + "_ " << endl;
 	header_file << "{" << endl;
+	header_file << "int  _tick_count;" << endl;
+	header_file << "char* _string_name;" << endl;
 	header_file << ename << "  _state;" << endl;
 	header_file << ename << "  _next_state;" << endl;
 
@@ -82,6 +88,25 @@ void rtlThread::Print_C_Struct_Declaration(ostream& header_file)
 	header_file << "};" << endl;
 }
 
+void rtlThread::Print_C_Log_Function(ostream& source_file)
+{
+	string fn_name = threadLogFunctionName(this);
+	source_file << "void " << fn_name << "(" << threadStructTypeName(this) << "* incoming_state)" << endl;
+	source_file << "{" << endl;
+	source_file << threadStructTypeName(this) << "* __sstate = incoming_state;" << endl;
+	source_file << "fprintf(stderr, \"log: ------------------------------------ string %s  ---------------------------\\n\", __sstate->_string_name);" << endl;
+	source_file << "fprintf(stderr,\"log: %d>  %s  %d  %d\\n\", __sstate->_tick_count, __sstate->_string_name, __sstate->_state, __sstate->_next_state);" << endl;
+	for(map<string, rtlObject*>::iterator iter = this->_objects.begin(), fiter = this->_objects.end();
+			iter != fiter;
+			iter++)
+	{
+		rtlObject* obj = (*iter).second;
+		source_file << "fprintf(stderr, \"log: %s = %s\\n\", \"" << obj->Get_Id() << "\",to_string(&(" << obj->Get_C_Name() << ")));" << endl;
+	}
+	source_file << "fprintf(stderr, \"log: ------------------------------------ end-log-entry ---------------------------\\n\");" << endl;
+	source_file << "}" << endl;
+}
+
 void rtlThread::Print_C_Run_Function(ostream& source_file)
 {
 	string fn_name = threadRunFunctionName(this);
@@ -113,6 +138,58 @@ void rtlThread::Print_C_Run_Function(ostream& source_file)
 	source_file << "}" << endl;
 }
 
+void rtlThread::Print_C_Output_Update_Function(ostream& source_file)
+{
+	source_file << "int " << threadOutputUpdateFunctionName(this) << "(" 
+			<< threadStructTypeName(this) << "* incoming_state)" << endl;
+	source_file << "{" << endl;
+	source_file << threadStructTypeName(this) << "* __sstate = incoming_state; " << endl;
+	source_file << "int __ret_val__ = 0;" << endl;
+	for(map<string, rtlObject*>::iterator iter = this->_objects.begin(), fiter = this->_objects.end();
+			iter != fiter;
+			iter++)
+	{
+		rtlObject* obj = (*iter).second;
+		obj->Print_C_Output_Signal_Probe_Matcher("__ret_val__", source_file);
+	}
+	source_file << "return(__ret_val__);" << endl;
+	source_file << "}" << endl;
+}
+
+
+void rtlThread::Print_C_Input_Update_Function(ostream& source_file)
+{
+	source_file << "int " << threadInputUpdateFunctionName(this) << "(" 
+			<< threadStructTypeName(this) << "* incoming_state)" << endl;
+	source_file << "{" << endl;
+	source_file << threadStructTypeName(this) << "* __sstate = incoming_state; " << endl;
+	source_file << "int __ret_val__ = 0;" << endl;
+	for(map<string, rtlObject*>::iterator iter = this->_objects.begin(), fiter = this->_objects.end();
+			iter != fiter;
+			iter++)
+	{
+		rtlObject* obj = (*iter).second;
+		obj->Print_C_Input_Signal_Probe_Matcher("__ret_val__", source_file);
+	}
+	source_file << "return(__ret_val__);" << endl;
+	source_file << "}" << endl;
+}
+
+void rtlThread::Print_C_Pipe_Update_Function(ostream& source_file)
+{
+	source_file << "void " << threadPipeUpdateFunctionName(this) << "(" 
+			<< threadStructTypeName(this) << "* incoming_state)" << endl;
+	source_file << "{" << endl;
+	source_file << threadStructTypeName(this) << "* __sstate = incoming_state; " << endl;
+	for(map<string, rtlObject*>::iterator iter = this->_objects.begin(), fiter = this->_objects.end();
+			iter != fiter;
+			iter++)
+	{
+		rtlObject* obj = (*iter).second;
+		obj->Print_C_Pipe_Probe_Matcher(source_file);
+	}
+	source_file << "}" << endl;
+}
 void rtlThread::Print_C_Tick_Function(ostream& source_file)
 {
 	string fn_name = threadTickFunctionName(this);
@@ -122,6 +199,7 @@ void rtlThread::Print_C_Tick_Function(ostream& source_file)
 	source_file << "{" << endl;
 
 	source_file << struct_type_name << "* __sstate = incoming_state;" << endl;
+	source_file << "__sstate->_tick_count++;" << endl;
 	source_file << "__sstate->_state = __sstate->_next_state;" << endl;
 
 	for(map<string, rtlObject*>::iterator iter = this->_objects.begin(), fiter = this->_objects.end();
@@ -132,7 +210,7 @@ void rtlThread::Print_C_Tick_Function(ostream& source_file)
 		if(obj->Needs_Next())
 		{
 			Print_C_Assignment(obj->Get_C_Name(), obj->Get_C_Target_Name(), obj->Get_Type(),  source_file);
-			obj->Print_C_Probe_Matcher(source_file);
+			//obj->Print_C_Probe_Matcher(source_file);
 		}
 	}
 	source_file << "}" << endl;
@@ -156,6 +234,8 @@ void rtlString::Print_C_State_Structure_Allocator(ostream& source_file)
 	source_file << vname << " = (" << tname << "*) calloc(1,sizeof(" << tname << "));" << endl;
 	source_file << "// standard name __sstate." << endl;
 	source_file << tname << "* __sstate = " << vname << ";" << endl;
+	source_file << "__sstate->_tick_count = 0;" << endl;
+	source_file << "__sstate->_string_name = strdup(\"" << this->Get_Id() << "\");" << endl;
 	source_file << "__sstate->_state = " << 
 		stateEnum(this->Get_Base_Thread()->Get_Statement(0)->Get_Label()) << ";" << endl;
 	source_file <<  "__sstate->_next_state = " << 
@@ -304,6 +384,23 @@ void rtlString::Print_C_Run_Function_Call(ostream& source_file)
 }
 
 
+void rtlString::Print_C_Output_Update_Function_Call(string ret_val, ostream& source_file)
+{
+	source_file << ret_val <<  " = (" <<
+			threadOutputUpdateFunctionName(this->Get_Base_Thread()) 
+			<< "(" << stringStructObjName(this) << ") || " <<  ret_val << " ); " << endl;	
+}
+
+void rtlString::Print_C_Input_Update_Function_Call(string ret_val, ostream& source_file)
+{
+	source_file << ret_val <<  " = (" <<
+			threadInputUpdateFunctionName(this->Get_Base_Thread()) 
+			<< "(" << stringStructObjName(this) << ") || " << ret_val << " ); " << endl;	
+}
+void rtlString::Print_C_Pipe_Update_Function_Call(ostream& source_file)
+{
+	source_file << threadPipeUpdateFunctionName(this->Get_Base_Thread()) << "(" << stringStructObjName(this) << "); " << endl;	
+}
 void rtlString::Print_C_Tick_Function_Call(ostream& source_file)
 {
 	string fn_name = threadTickFunctionName(this->Get_Base_Thread());
@@ -324,6 +421,9 @@ void rtlString::Print_C_Matcher_Start_Daemons(ostream& source_file, vector<strin
 	{
 		string grp_name = (*iter).first;
 		string port_name = (*iter).second;
+
+		assert(port_name != "");
+
 		int pipe_width = sys->Get_Pipe_Width(port_name);
 
 		rtlInterfaceGroup* ng = this->Get_Base_Thread()->Find_Interface_Group(grp_name);

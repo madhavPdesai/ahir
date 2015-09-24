@@ -1,5 +1,4 @@
 #!/bin/bash
-AHIR_RELEASE=/home/madhav/AHIR/gitHub/ahir/release
 AHIR_INCLUDE=$(AHIR_RELEASE)/include
 AHIR_LIB=$(AHIR_RELEASE)/lib
 VHDL_LIB=$(AHIR_RELEASE)/vhdl

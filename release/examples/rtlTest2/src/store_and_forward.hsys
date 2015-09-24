@@ -17,6 +17,7 @@ $system store_and_forward
 
 	$thread MEMORY
 		$constant One_1: $unsigned<1> := ($unsigned<1>) _b1
+		$constant Z1: $unsigned<1> := ($unsigned<1>) _b0
 
 		$in wr_mem rd_mem : $unsigned<1>
 		$out wr_ack rd_ack: $unsigned<1>
@@ -26,35 +27,42 @@ $system store_and_forward
 		$out rd_data : $unsigned<32>
 
 		$signal mem_array: $array [4] $of $unsigned<32>
-		$group $in WRMEM (wr_mem)
-		$group $in RDMEM (rd_mem)
 
-		$group $out WRACK (wr_ack)
-		$group $out RDACK (rd_ack)
+		$group $in $signal  WRMEM (wr_mem)
+		$group $in $signal RDMEM (rd_mem)
+
+		$group $out $signal WRACK (wr_ack)
+		$group $out $signal RDACK (rd_ack)
 
 
-		$group $in WRDATA (wr_data)
-		$group $in ADDR (addr)
-		$group $out RDDATA (rd_data)
+		$group $in $signal WRDATA (wr_data)
+		$group $in $signal ADDR (addr)
+		$group $out $signal RDDATA (rd_data)
 
-		<run> {
-			rd_ack := ($unsigned<1>) 0
+		$default
+			$now wr_ack := Z1
+			rd_ack := Z1
+
+		<RUN> {
 			$if(wr_mem == One_1)
 			{
 				mem_array[addr] := wr_data
-				$emit wr_ack
+				$now wr_ack := One_1
 			}
-			$else $if(rd_mem == One_1)
+			$else 
 			{
-				rd_data := mem_array[addr]
-				rd_ack  := One_1
+				$if(rd_mem == One_1)
+				{
+					rd_data := mem_array[addr]
+					rd_ack  := One_1
+				}
 			}
 		}
 
 
 	$thread   MANAGER
 		$in     wack rack  mem_rd_ack mem_wr_ack: $unsigned<1>
-		$out    wrec rrec  mem_rd     mem_wr : $unsigned<1>
+		$out    wreq rreq  mem_rd     mem_wr : $unsigned<1>
 
 		$in     rdata mem_rd_data : $unsigned<32>
 		$out    wdata mem_wr_data : $unsigned<32>
@@ -65,29 +73,45 @@ $system store_and_forward
 
 		$signal counter: $unsigned<32>
 		$constant One_1: $unsigned<1> := ($unsigned<1>) _b1
+		$constant Z1: $unsigned<1> := ($unsigned<1>) _b0
 
 		$group $in  $pipe READP   (rreq rdata rack)
 		$group $out $pipe WRITEP  (wreq wdata wack)
 
 
 		$group $out $signal WRMEM     (mem_wr)
-		$group $out $signal MEMADDR   (mem_addr)
-		$group $out $signal WRMEMDATA (mem_wr_data)
-		$group $out $signal RDMEMDATA (mem_rd_data)
 		$group $in  $signal WRMEMACK  (mem_wr_ack)
+
+		$group $out $signal RDMEM     (mem_rd)
 		$group $in  $signal RDMEMACK  (mem_rd_ack)
 
+		$group $out $signal MEMADDR   (mem_addr)
+
+		$group $out $signal WRMEMDATA (mem_wr_data)
+		$group $in $signal RDMEMDATA (mem_rd_data)
+
+		$default
+			$now rreq := Z1
+			$now wreq := Z1
+			$now mem_wr := Z1
+			$now mem_rd := Z1
 
 		<init>  {
+				$now mem_wr := Z1
+				$now mem_rd := Z1
+
 				counter     := ($unsigned<32>)  0
 			}
 		<run>  {
-			$emit rreq
+
+			$now rreq := One_1
 			$if (rack == One_1)
 			{
 				// note: wdata must be updated before emitting wreq.
-				$volatile mem_data := rdata
-				$emit mem_wr
+				$now mem_wr_data := rdata
+				$now mem_addr := counter
+				$now mem_wr := One_1
+
 				$if (mem_wr_ack == One_1) 
 				{
 				    	counter := (counter + ($unsigned<32>) 1)
@@ -103,9 +127,10 @@ $system store_and_forward
 			}
 		}
 		<wait_state>  {
-				$volatile mem_addr := counter
-				$volatile mem_data := data_reg
-				$emit mem_wr
+				$now mem_addr := counter
+				$now mem_wr_data := data_reg
+				$now mem_wr := One_1
+
 				$if(mem_wr_ack == One_1)
 				{
 					$goto run
@@ -118,12 +143,12 @@ $system store_and_forward
 		<wait_for_unload> {
 				$if(counter != ($unsigned<32>) 0)
 				{
-					$volatile mem_addr := counter
-					$emit mem_rd
+					$now mem_addr := counter
+					$now mem_rd   := One_1
 					$if(mem_rd_ack == One_1)
 					{
-						$volatile wdata := mem_rd_data
-						$emit wreq
+						$now wdata := mem_rd_data
+						$now wreq := One_1
 						$if (wack == One_1)
 						{
 							counter := (counter - ($unsigned<32>) 1)
@@ -141,8 +166,8 @@ $system store_and_forward
 				}
 		}
 		<writepipe> {
-				$volatile wdata := data_reg
-				$emit wreq
+				$now wdata := data_reg
+				$now wreq := One_1
 				$if (wack == One_1)
 				{
 				     counter := (counter - ($unsigned<32>) 1)
@@ -151,6 +176,19 @@ $system store_and_forward
 		}
 
 	
+
+
+	$string mgr: MANAGER
+		READP => in_data
+		WRITEP => out_data
+		WRMEM  => mem_wr
+		RDMEM  => mem_rd
+		MEMADDR => mem_addr
+		WRMEMDATA => mem_wr_data
+		RDMEMDATA => mem_rd_data
+		WRMEMACK => mem_wr_ack
+		RDMEMACK => mem_rd_ack
+
 	$string mem:MEMORY
 		WRMEM => mem_wr
 		RDMEM => mem_rd
@@ -159,16 +197,4 @@ $system store_and_forward
 		WRDATA => mem_wr_data
 		RDDATA => mem_rd_data
 		ADDR  => mem_addr
-
-
-	string mgr: MANAGER
-		READP => in_data
-		WRITEP => out_data
-		WRMEM  => mem_wr
-		MEMADDR => mem_addr
-		WRMEMDATA => mem_wr_data
-		RDMEMDATA => mem_rd_data
-		WRMEMACK => mem_wr_ack
-		RDMEMACK => mem_rd_ack
-
 }

@@ -36,11 +36,15 @@ class hierRoot
 {
 	public:
 	int    _index;
+	int    _line_number;
 	string _id;
 	bool _error;
 	
 	hierRoot(string id);
 	hierRoot();
+
+	virtual void Set_Line_Number(int q) {_line_number = q;}
+	int Get_Line_Number() {return(_line_number);}
 
 	string Get_Id() {return(_id);}
 	int Get_Index() {return(_index);}
@@ -48,9 +52,18 @@ class hierRoot
 	void Set_Error(bool v) {_error = true;}
 	bool Get_Error() {return(_error);}
 
-	void Report_Info(string err_msg) { cerr << "Info: " << err_msg << endl;}
-	void Report_Warning(string err_msg) { cerr << "Warning: " << err_msg << endl;}
-	void Report_Error(string err_msg) { cerr << "Error: " << err_msg << endl; this->Set_Error(true); }
+	void Report_Info(string err_msg)
+	{ 
+		cerr << "Info: " << err_msg << endl;
+	}
+	void Report_Warning(string err_msg)
+	{ 
+		cerr << "Warning: " << err_msg  <<  endl;
+	}
+	void Report_Error(string err_msg)
+	{ 
+		cerr << "Error: " << err_msg <<  endl; this->Set_Error(true); 
+	}
 	
 	virtual string Kind() {return("hierRoot");}
 	bool Is(string K) {return(K==this->Kind());}

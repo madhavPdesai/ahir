@@ -8,9 +8,9 @@
 #include <pipeHandler.h>
 #include <BitVectors.h>
 #include <rtl2AaMatcher.h>
-#include <_shift_register.h>
+#include <_store_and_forward.h>
 
-#define ORDER 16
+#define ORDER 4
 
 void Exit(int sig)
 {

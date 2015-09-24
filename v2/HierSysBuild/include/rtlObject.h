@@ -41,7 +41,11 @@ class rtlObject: public hierRoot
 			return("__sstate->" + this->Get_Id());
 	}
 	virtual void Print_C_Struct_Field_Initialization(string obj_name, ostream& source_file);
-	virtual void Print_C_Probe_Matcher(ostream& source_file);
+	virtual void Print_C_Probe_Matcher(ostream& source_file, string ret_val, bool pipe_flag, bool signal_flag, 
+							bool input_flag, bool output_flag);
+	virtual void Print_C_Pipe_Probe_Matcher(ostream& source_file);
+	virtual void Print_C_Output_Signal_Probe_Matcher(string ret_val, ostream& source_file);
+	virtual void Print_C_Input_Signal_Probe_Matcher(string ret_val, ostream& source_file);
 	
 	virtual void Set_Is_Emitted(bool v) {}
 	virtual bool Get_Is_Emitted() {return(false);}

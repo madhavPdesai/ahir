@@ -94,8 +94,12 @@ void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_fil
 		if(printed_threads.find(pt) == printed_threads.end())
 		{
 			pt->Print_C_Struct_Declaration(header_file);
+			pt->Print_C_Log_Function(source_file);
 			pt->Print_C_Run_Function(source_file);
 			pt->Print_C_Tick_Function(source_file);
+			pt->Print_C_Input_Update_Function(source_file);
+			pt->Print_C_Output_Update_Function(source_file);
+			pt->Print_C_Pipe_Update_Function(source_file);
 			printed_threads.insert(pt);
 		}
 	
@@ -115,11 +119,30 @@ void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_fil
 		s->Print_C_State_Structure_Allocator_Call(source_file);
 	}
 	
-	source_file << "while(1) {" << endl;
+	source_file << "while(1) { // outer loop" << endl;
+	source_file << "int __ret_val__ = 0;" << endl;
+	source_file << "while(1) { // run till convergence " << endl;
+	string ret_val = "__ret_val__";
 	for(int I = 0, fI = _rtl_strings.size();  I < fI; I++)
 	{
 		rtlString* s = _rtl_strings[I];
 		s->Print_C_Run_Function_Call(source_file);
+	}
+	for(int I = 0, fI = _rtl_strings.size();  I < fI; I++)
+	{
+		rtlString* s = _rtl_strings[I];
+
+		s->Print_C_Input_Update_Function_Call(ret_val, source_file);
+		s->Print_C_Output_Update_Function_Call(ret_val, source_file);
+	}
+
+	source_file << " if(__ret_val__ == 0) break;" << endl;
+	source_file << "}" << endl;
+
+	for(int I = 0, fI = _rtl_strings.size();  I < fI; I++)
+	{
+		rtlString* s = _rtl_strings[I];
+		s->Print_C_Pipe_Update_Function_Call(source_file);
 	}
 
 	for(int I = 0, fI = _rtl_strings.size();  I < fI; I++)
@@ -127,6 +150,7 @@ void hierSystem::Print_C_String_Ticker(ostream& header_file, ostream& source_fil
 		rtlString* s = _rtl_strings[I];
 		s->Print_C_Tick_Function_Call(source_file);
 	}
+
 	source_file << "}" << endl;
 	source_file << "}" << endl;
 

@@ -1,5 +1,4 @@
 #!/bin/bash
-AHIR_RELEASE=/home/madhav/AHIR/gitHub/ahir/release
 AHIR_INCLUDE=$(AHIR_RELEASE)/include
 AHIR_LIB=$(AHIR_RELEASE)/lib
 VHDL_LIB=$(AHIR_RELEASE)/vhdl
@@ -12,20 +11,20 @@ all: toplevel cmodel
 
 
 # generate the integrated vhdl and C
-toplevel: src/shift_register.hsys
+toplevel: src/store_and_forward.hsys
 	#hierSys2Vhdl -s ghdl -o vhdl src/shift_register.hsys
 	#formatVhdlFiles.py  vhdl/
-	hierSys2C  -o aa2c src/shift_register.hsys
+	hierSys2C  -o aa2c src/store_and_forward.hsys
 	indent aa2c/*.c
 	indent aa2c/*.h
 
 # now build the C code.
-cmodel: src/shift_register.hsys src/testbench.c
+cmodel: src/store_and_forward.hsys src/testbench.c
 	rm -rf objsw
 	mkdir objsw
-	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./aa2c/ ./aa2c/_shift_register.c -o objsw/_shift_register.o
+	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./aa2c/ ./aa2c/_store_and_forward.c -o objsw/_store_and_forward.o
 	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./aa2c/ ./src/testbench.c -o objsw/testbench.o
-	gcc -g -o  ./bin/exec_sw objsw/_shift_register.o objsw/testbench.o -L $(AHIR_LIB) -lBitVectors  -lPipeHandlerDebug -lpthread -lRtl2AaMatcher
+	gcc -g -o  ./bin/exec_sw objsw/_store_and_forward.o objsw/testbench.o -L $(AHIR_LIB) -lBitVectors  -lPipeHandlerDebug -lpthread -lRtl2AaMatcher
 
 # the VHDL simulation.
 #vhdltb:  ./Stage1/stage1.aa ./Stage2/stage2.aa ./Testbench/testbench.c
