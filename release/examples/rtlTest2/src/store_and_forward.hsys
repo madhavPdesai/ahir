@@ -20,35 +20,78 @@ $system store_and_forward
 		$out $pipe rd_rsp: $unsigned<32>
 
 		$signal mem_array: $array [4] $of $unsigned<32>
-		$signal rd_addr rd_data wr_addr wr_data data_reg : $unsigned<32>
+		$signal rd_addr rd_data wr_addr wr_data rd_addr_reg data_reg : $unsigned<32>
+		$signal tmp_sig: $unsigned<32>
 
 		$default
 			$now rd_rsp$req := Z1
 			$now wr_cmd$req := Z1
 			$now rd_cmd$req := Z1
+			//$now tmp_sig    := mem_array[($unsigned<4>) 0]
+			//$log tmp_sig
+			//$now tmp_sig    := mem_array[($unsigned<4>) 1]
+			//$log tmp_sig
+			//$now tmp_sig    := mem_array[($unsigned<4>) 2]
+			//$log tmp_sig
+			//$now tmp_sig    := mem_array[($unsigned<4>) 3]
+			//$log tmp_sig
 
 		<RUN> {
+			// probe both pipes
 			$now wr_cmd$req := One_1
 			$now rd_cmd$req := One_1
 
-			$if wr_cmd$ack
-			{
+			// single-port memory.
+			$if wr_cmd$ack 
+			{ // write responds?
+				$log wr_cmd
+
 				$now wr_data := ($slice wr_cmd 31 0)
 				$now wr_addr := ($slice wr_cmd 63 32)
+				
+				$log wr_data
+				$log wr_addr
 
 				mem_array[wr_addr] := wr_data
+				$goto RUN
 			}
-			$else 
-			{
-				$if rd_cmd$ack 
+			$if rd_cmd$ack
+			{ 
+				$if (~wr_cmd$ack)
 				{
 					$now rd_addr  := rd_cmd
-					$now rd_data := mem_array[rd_addr]
-					$now rd_rsp     := rd_data
-					$now rd_rsp$req := One_1
-					$if (~rd_rsp$ack)
+					$log rd_cmd
+
+					rd_data := mem_array[rd_addr]
+					$goto rsp_wait
+				}
+				$else
+				{
+					rd_addr_reg := rd_cmd
+					$goto mem_rd_wait
+				}
+
+			}
+			$if (~(rd_cmd$ack | wr_cmd$ack))
+			{
+				$goto RUN
+			}
+		}
+		<mem_rd_wait>{
+		 		rd_data := mem_array[rd_addr_reg]
+				$goto rsp_wait
+		}
+		<rsp_wait> {
+
+				$now rd_rsp := rd_data
+				$now rd_rsp$req := One_1
+				$if rd_rsp$ack
+				{
+					$now rd_cmd$req := One_1
+					$if rd_cmd$ack	
 					{
-						data_reg := rd_data
+						$now rd_addr  := rd_cmd
+						rd_data := mem_array[rd_addr]
 						$goto rsp_wait
 					}
 					$else
@@ -56,15 +99,6 @@ $system store_and_forward
 						$goto RUN
 					}
 				}
-			}
-		}
-		<rsp_wait> {
-					$now rd_rsp := data_reg
-					$now rd_rsp$req := One_1
-					$if rd_rsp$ack
-					{
-						$goto RUN
-					}
 		}
 
 
@@ -94,7 +128,7 @@ $system store_and_forward
 			}
 		<run>  {
 
-			$if (counter   == ($unsigned<32>) 2) 
+			$if (counter   == ($unsigned<32>) 4) 
 			{
 				$goto rd_mem_state
 			}
@@ -112,6 +146,12 @@ $system store_and_forward
 					{
 						// increment counter.
 				    		counter := (counter + ($unsigned<32>) 1)
+
+						$log counter
+						$log rdata
+						$log mem_wr_cmd
+
+						$goto run
 					}
 					$else
 					{
@@ -132,6 +172,10 @@ $system store_and_forward
 				$now mem_wr_cmd$req := One_1
 				$if(mem_wr_cmd$ack == One_1)
 				{
+					$log counter
+					$log data_reg
+					$log mem_wr_cmd
+
 					// increment counter.
 				    	counter := (counter + ($unsigned<32>) 1)
 					$goto run
@@ -145,7 +189,7 @@ $system store_and_forward
 				$if(counter != ($unsigned<32>) 0)
 				{
 					// mem-rd -> wdata 
-					$now mem_rd_cmd := counter
+					$now mem_rd_cmd := (($unsigned<32>) 4 - counter)
 					$now mem_rd_cmd$req := One_1
 					$now mem_rd_rsp$req := One_1
 					$if(mem_rd_cmd$ack & mem_rd_rsp$ack)
@@ -167,11 +211,11 @@ $system store_and_forward
 					{
 						$if mem_rd_cmd$ack
 						{
-							$goto rd_mem_wait
+							$goto rd_mem_state
 						}
 						$else 
 						{
-							$goto rd_mem_state	
+							$goto rd_mem_wait	
 						}
 					}
 				} 
@@ -183,10 +227,14 @@ $system store_and_forward
 		<write_wait> {
 				$now wdata := data_reg
 				$now wdata$req := One_1
-				$if (wdata$ack == One_1)
+				$if wdata$ack
 				{
 				     counter := (counter - ($unsigned<32>) 1)
 				     $goto rd_mem_state
+				}
+				$else
+				{
+					$goto write_wait
 				}
 		}
 		<rd_mem_wait> {

@@ -70,7 +70,7 @@ PipeMatcherState getState(PipeMatcherRec* mrec);
 void assignValue(PipeMatcherRec* mrec, bit_vector* v);
 
 
-bit_vector* getValue(PipeMatcherRec* mrec);
+void getValue(PipeMatcherRec* mrec,bit_vector* dest);
 void fetchFromPipe(PipeMatcherRec* mrec);
 void sendToPipe(PipeMatcherRec* mrec);
 char* getPipeName(PipeMatcherRec* mrec);
@@ -81,9 +81,7 @@ void Rtl2AaPipeTransferMatcher(void* mrec);
 void setNextSignal(SignalMatcherRec* mrec, SignalMatcherRec* next);
 SignalMatcherRec* getNextSignal(SignalMatcherRec* mrec);
 void assignValueS(SignalMatcherRec* mrec, bit_vector* v);
-bit_vector* getSignalValue(SignalMatcherRec* mrec);
-void fetchFromSignal(SignalMatcherRec* mrec);
-void sendToSignal(SignalMatcherRec* mrec);
+void getSignalValue(SignalMatcherRec* mrec,bit_vector* dest);
 char* getSignalName(SignalMatcherRec* mrec);
 
 void Aa2RtlSignalTransferMatcher(void* sig_val);

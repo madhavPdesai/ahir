@@ -38,8 +38,8 @@ void rtlThread::Print(ostream& ofile)
 	}
 
 	ofile << "$default " << endl;
-	for(int I = 0, fI = _default_assignments.size(); I < fI; I++)
-		_default_assignments[I]->Print(ofile);
+	for(int I = 0, fI = _default_statements.size(); I < fI; I++)
+		_default_statements[I]->Print(ofile);
 
 	ofile << endl;
 	for(int I = 0, fI = _statements.size(); I < fI; I++)

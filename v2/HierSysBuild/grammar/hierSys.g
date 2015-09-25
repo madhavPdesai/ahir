@@ -332,7 +332,7 @@ rtl_DefaultStatementBlock[rtlThread* t]
 	rtlStatement* stmt = NULL;
 }:
 	DEFAULT
-		(stmt = rtl_AssignStatement[t] { t->Add_Default_Assignment((rtlAssignStatement*)stmt); } )*
+		(((stmt = rtl_AssignStatement[t]) | (stmt = rtl_LogStatement[t]))  { t->Add_Default_Statement(stmt); } )*
 ;
 
 
@@ -445,6 +445,7 @@ rtl_SimpleStatement[rtlThread* t] returns [rtlStatement* stmt]
 :
 ( (stmt=rtl_AssignStatement[t]) |
   (stmt=rtl_NullStatement[t]) |
+  (stmt=rtl_LogStatement[t]) |
   (stmt=rtl_GotoStatement[t])  |
   (stmt=rtl_IfStatement[t]) )
 
@@ -491,6 +492,18 @@ GOTO sid: SIMPLE_IDENTIFIER
 	_sLine_(stmt, sid);
 }
 ;
+
+rtl_LogStatement[rtlThread* t] returns [rtlStatement* stmt]
+{
+	string lbl;
+}:
+LOG sid:SIMPLE_IDENTIFIER 
+{
+	rtlObject* obj = t->Find_Object(sid->getText());
+	stmt  = new rtlLogStatement(t, obj);
+	_sLine_(stmt, sid);
+};
+
 
 rtl_BlockStatement[rtlThread* t] returns [rtlBlockStatement* stmt]
 {
@@ -853,6 +866,7 @@ STRING: "$string";
 NuLL: "$null";
 EMIT: "$emit";
 GOTO: "$goto";
+LOG: "$log";
 INTEGER: "$integer";
 UNSIGNED: "$unsigned";
 SIGNED: "$signed";

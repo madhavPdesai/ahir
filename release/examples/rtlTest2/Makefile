@@ -24,7 +24,7 @@ cmodel: src/store_and_forward.hsys src/testbench.c
 	mkdir objsw
 	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./aa2c/ ./aa2c/_store_and_forward.c -o objsw/_store_and_forward.o
 	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./aa2c/ ./src/testbench.c -o objsw/testbench.o
-	gcc -g -o  ./bin/exec_sw objsw/_store_and_forward.o objsw/testbench.o -L $(AHIR_LIB) -lBitVectors  -lPipeHandlerDebug -lpthread -lRtl2AaMatcher
+	gcc -g -o  ./bin/exec_sw objsw/_store_and_forward.o objsw/testbench.o -L $(AHIR_LIB) -lBitVectors  -lPipeHandler -lpthread -lRtl2AaMatcher
 
 # the VHDL simulation.
 #vhdltb:  ./Stage1/stage1.aa ./Stage2/stage2.aa ./Testbench/testbench.c

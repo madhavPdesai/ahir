@@ -2,7 +2,7 @@
 #include <BitVectors.h>
 #include <string.h>
 #include <inttypes.h>
-#include <pipeHandler.h>
+#include <Pipes.h>
 
 #define __nbytes(x) ((x % 8 == 0) ? x/8 : (x/8) + 1)
 // ---------------  local functions --------------------------------------

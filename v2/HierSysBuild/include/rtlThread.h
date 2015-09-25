@@ -20,7 +20,7 @@ class rtlThread: public hierRoot
 	map<string, rtlStatement*> _statement_map;
 	map<string, rtlObject*> _objects;
 
-	vector<rtlAssignStatement*> _default_assignments;
+	vector<rtlStatement*> _default_statements;
 	public:
 
 	rtlThread(hierSystem* p, string id);
@@ -28,8 +28,9 @@ class rtlThread: public hierRoot
 
 
 	void Add_Statement(rtlStatement* stmt);
-	void Add_Default_Assignment(rtlAssignStatement* stmt) {_default_assignments.push_back(stmt);}
+	void Add_Default_Statement(rtlStatement* stmt) {_default_statements.push_back(stmt);}
 
+	int Get_Number_Of_Statements() {return(_statements.size());}
 	rtlStatement* Get_Statement(int idx)
 	{
 		if((idx >= 0) && (idx < _statements.size()))

@@ -187,3 +187,44 @@ void rtlNullStatement::Print(ostream& ofile)
 	ofile << " $null " << endl;
 }
 
+
+void rtlLogStatement::Print(ostream& ofile)
+{
+	if(_object != NULL)
+		ofile << "$log " << _object->Get_Id();
+}
+
+void rtlLogStatement::Print_C(ostream& ofile)
+{
+	if(_object == NULL)
+		return;
+
+	if(_object->Get_Type()->Is("rtlIntegerType"))
+	{
+		ofile << "fprintf(stderr,\"log:%s:[%d]  %s = %d\\n\", __sstate->_string_name, __sstate->_tick_count, "
+			<< "\"" << _object->Get_Id() << "\", " << _object->Get_C_Name() << ");" << endl;
+		if(_object->Needs_Next())
+		{
+			ofile << "fprintf(stderr,\"log:%s:[%d]  %s = %d\\n\", __sstate->_string_name, __sstate->_tick_count, "
+				<< "\"__next_" << _object->Get_Id() << "\", " << _object->Get_C_Target_Name() << ");" << endl;
+		}
+	}
+	else if((_object->Get_Type()->Is("rtlUnsignedType")) || (_object->Get_Type()->Is("rtlSignedType")))
+	{
+		ofile << "fprintf(stderr,\"log:%s:[%d]  %s = %s\\n\", __sstate->_string_name, __sstate->_tick_count, "
+			<< "\"" << _object->Get_Id() << "\", to_string(&(" << _object->Get_C_Name() << ")));" << endl;
+		if(_object->Needs_Next())
+		{
+			ofile << "fprintf(stderr,\"log:%s:[%d]  %s = %s\\n\", __sstate->_string_name, __sstate->_tick_count, "
+				<< "\"__next_" << _object->Get_Id() << "\", to_string(&(" << _object->Get_C_Target_Name() << ")));" << endl;
+		}
+		if(_object->Is_Pipe())
+		{
+			ofile << "fprintf(stderr,\"log:%s:[%d]  %s = %s\\n\", __sstate->_string_name, __sstate->_tick_count, "
+				<< "\"" << _object->Get_Id() << "__req\", to_string(&(" << _object->Get_C_Req_Name() << ")));" << endl;
+			ofile << "fprintf(stderr,\"log:%s:[%d]  %s = %s\\n\", __sstate->_string_name, __sstate->_tick_count, "
+				<< "\"" << _object->Get_Id() << "__ack\", to_string(&(" << _object->Get_C_Ack_Name() << ")));" << endl;
+		}
+	}
+}
+

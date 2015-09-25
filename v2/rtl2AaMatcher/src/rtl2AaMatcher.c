@@ -7,6 +7,7 @@
 PipeMatcherRec* makePipeMatcher(const char* pipe_name, int pipe_width)
 {
 	PipeMatcherRec* ret_val;
+
 	ret_val = (PipeMatcherRec*) calloc(1,sizeof(PipeMatcherRec));
 	__allocate_bit_vector( ret_val->_value,pipe_width);
 
@@ -50,19 +51,29 @@ void assignValue(PipeMatcherRec* mrec, bit_vector* v)
 
 
 
-bit_vector* getValue(PipeMatcherRec* mrec)
+void getValue(PipeMatcherRec* mrec, bit_vector* dest)
 {
-	return(mrec->_value);
+	MUTEX_LOCK(mrec->_lock_mutex);
+	bit_vector_bitcast_to_bit_vector(dest, mrec->_value);
+	MUTEX_UNLOCK(mrec->_lock_mutex);	
 }
 
 void fetchFromPipe(PipeMatcherRec* mrec)
 {
-	read_bit_vector_from_pipe(mrec->_pipe_name, mrec->_value);
+	bit_vector tmp_val;
+	init_bit_vector(&tmp_val, mrec->_value->width);
+	
+	read_bit_vector_from_pipe(mrec->_pipe_name, &tmp_val);
+	assignValue(mrec, &tmp_val);
 }
 
 void sendToPipe(PipeMatcherRec* mrec)
 {
-	write_bit_vector_to_pipe(mrec->_pipe_name, mrec->_value);
+	bit_vector tmp_val;
+	init_bit_vector(&tmp_val, mrec->_value->width);
+
+	getValue(mrec, &tmp_val);
+	write_bit_vector_to_pipe(mrec->_pipe_name, &tmp_val);
 }
 
 char* getPipeName(PipeMatcherRec* mrec)
@@ -107,6 +118,7 @@ void Rtl2AaPipeTransferMatcher(void* vmrec)
 #ifdef DEBUG
 			fprintf(stderr,"Aa->RTL matcher for pipe %s write of %s completed.\n", mrec->_pipe_name, to_string(mrec->_value));
 #endif
+
 			setState(mrec, _DONE);
 		}
 		pthread_yield(NULL);
@@ -123,10 +135,10 @@ void probeMatcher(PipeMatcherRec* mrec, char write_flag, char req, char* ack, bi
 		{
 			*ack = 1;	
 			if(!write_flag)
-				bit_vector_bitcast_to_bit_vector(access_val, getValue(mrec));
+				getValue(mrec, access_val);
 #ifdef DEBUG
 			fprintf(stderr,"probeMatcher: finished pipe-access %s %s %s\n", (write_flag ? "write" : "read"), mrec->_pipe_name, 
-								(write_flag ? to_string(access_val) : to_string(getValue(mrec))));
+								(write_flag ? to_string(access_val) : to_string(mrec->_value)));
 #endif
 
 			setState(mrec, _IDLE);
@@ -181,21 +193,12 @@ void assignSignalValue(SignalMatcherRec* mrec, bit_vector* v)
 	MUTEX_UNLOCK(mrec->_lock_mutex);	
 }
 
-bit_vector* getSignalValue(SignalMatcherRec* mrec)
+void getSignalValue(SignalMatcherRec* mrec, bit_vector* dest)
 {
-	return(mrec->_value);
-}
-
-void fetchFromSignal(SignalMatcherRec* mrec)
-{
+	
 	MUTEX_LOCK(mrec->_lock_mutex);
-	read_bit_vector_from_pipe(mrec->_signal_name, mrec->_value);
-	MUTEX_UNLOCK(mrec->_lock_mutex);
-}
-
-void sendToSignal(SignalMatcherRec* mrec)
-{
-	write_bit_vector_to_pipe(mrec->_signal_name, mrec->_value);
+	bit_vector_bitcast_to_bit_vector(dest, mrec->_value);
+	MUTEX_UNLOCK(mrec->_lock_mutex);	
 }
 
 char* getSignalName(SignalMatcherRec* mrec)
@@ -208,10 +211,14 @@ char* getSignalName(SignalMatcherRec* mrec)
 void Aa2RtlSignalTransferMatcher(void* sig_val)
 {
 	SignalMatcherRec* mrec = (SignalMatcherRec*) sig_val;
+	bit_vector tmp_val;
+	init_bit_vector(&tmp_val, mrec->_value->width);
 
 	while(1)
 	{
-		read_bit_vector_from_pipe(mrec->_signal_name, mrec->_value);
+	
+		read_bit_vector_from_pipe(mrec->_signal_name, &tmp_val);
+		assignSignalValue(mrec, &tmp_val);
 		pthread_yield(NULL);
 	}
 }
@@ -219,10 +226,13 @@ void Aa2RtlSignalTransferMatcher(void* sig_val)
 void Rtl2AaSignalTransferMatcher(void* sig_val)
 {
 	SignalMatcherRec* mrec = (SignalMatcherRec*) sig_val;
+	bit_vector tmp_val;
+	init_bit_vector(&tmp_val, mrec->_value->width);
 
 	while(1)
 	{
-		write_bit_vector_to_pipe(mrec->_signal_name, mrec->_value);
+		getSignalValue(mrec, &tmp_val);
+		write_bit_vector_to_pipe(mrec->_signal_name, &tmp_val);
 		pthread_yield(NULL);
 	}
 }

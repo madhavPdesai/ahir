@@ -89,27 +89,43 @@ void rtlThread::Print_C_Struct_Declaration(ostream& header_file)
 	}
 
 	header_file << "};" << endl;
+
 }
 
 void rtlThread::Print_C_Log_Function(ostream& source_file)
 {
+	string state_names = this->Get_Id() + "__state_names";
+	source_file << "const char* " <<  state_names << "[] = {" << endl;
+	for(int I = 0, fI = this->Get_Number_Of_Statements(); I < fI; I++)
+	{
+		string label = _statements[I]->Get_Label();
+		source_file << "\"" << label << "\"";
+		if(I < (fI-1))
+			source_file << ",";
+		source_file << endl;
+	}
+	source_file << "};" << endl;
+
 	string fn_name = threadLogFunctionName(this);
 	source_file << "void " << fn_name << "(" << threadStructTypeName(this) << "* incoming_state)" << endl;
 	source_file << "{" << endl;
 	source_file << threadStructTypeName(this) << "* __sstate = incoming_state;" << endl;
 	source_file << "fprintf(stderr, \"log: ------------------------------------ string %s  ---------------------------\\n\", __sstate->_string_name);" << endl;
-	source_file << "fprintf(stderr,\"log:%s:[%d]  %d  %d\\n\", __sstate->_string_name, __sstate->_tick_count, __sstate->_state, __sstate->_next_state);" << endl;
+	source_file << "fprintf(stderr,\"log:%s:[%d]  _state =  %s\\n\", __sstate->_string_name, __sstate->_tick_count, "
+			<< state_names << "[__sstate->_state]);" << endl;
+	source_file << "fprintf(stderr,\"log:%s:[%d]  _next_state =  %s\\n\", __sstate->_string_name, __sstate->_tick_count, "
+			<< state_names << "[__sstate->_next_state]);" << endl;
 	for(map<string, rtlObject*>::iterator iter = this->_objects.begin(), fiter = this->_objects.end();
 			iter != fiter;
 			iter++)
 	{
 		rtlObject* obj = (*iter).second;
-		source_file << "fprintf(stderr, \"log:%s:  %s = %s\\n\", __sstate->_string_name, \"" << obj->Get_Id() << "\",to_string(&(" << obj->Get_C_Name() << ")));" << endl;
+		source_file << "fprintf(stderr, \"log:%s:[%d]  %s = %s\\n\", __sstate->_string_name, __sstate->_tick_count, \"" << obj->Get_Id() << "\",to_string(&(" << obj->Get_C_Name() << ")));" << endl;
 
 		if(obj->Is_Pipe())
 		{
-			source_file << "fprintf(stderr, \"log:%s:  %s = %s\\n\", __sstate->_string_name, \"" << obj->Get_Id() << "__req" << "\",to_string(&(" << obj->Get_C_Req_Name() << ")));" << endl;
-			source_file << "fprintf(stderr, \"log:%s:  %s = %s\\n\", __sstate->_string_name, \"" << obj->Get_Id() << "__ack" << "\",to_string(&(" << obj->Get_C_Ack_Name() << ")));" << endl;
+			source_file << "fprintf(stderr, \"log:%s:[%d]  %s = %s\\n\", __sstate->_string_name, __sstate->_tick_count,  \"" << obj->Get_Id() << "__req" << "\",to_string(&(" << obj->Get_C_Req_Name() << ")));" << endl;
+			source_file << "fprintf(stderr, \"log:%s:[%d]  %s = %s\\n\", __sstate->_string_name, __sstate->_tick_count,  \"" << obj->Get_Id() << "__ack" << "\",to_string(&(" << obj->Get_C_Ack_Name() << ")));" << endl;
 		}
 	}
 	source_file << "fprintf(stderr, \"log: ------------------------------------ end-log-entry ---------------------------\\n\");" << endl;
@@ -125,9 +141,9 @@ void rtlThread::Print_C_Run_Function(ostream& source_file)
 	source_file << "{" << endl;
 	source_file << struct_type_name << "* __sstate = incoming_state;" << endl;
 
-	source_file << "// default assignments; " << endl;
-	for(int I = 0, fI = _default_assignments.size(); I < fI; I++)
-		_default_assignments[I]->Print_C(source_file);
+	source_file << "// default statements; " << endl;
+	for(int I = 0, fI = _default_statements.size(); I < fI; I++)
+		_default_statements[I]->Print_C(source_file);
 
 	source_file << endl;
 	for(int I = 0, fI = _statements.size(); I < fI; I++)

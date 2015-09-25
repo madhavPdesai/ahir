@@ -110,4 +110,17 @@ class rtlNullStatement: public rtlStatement
 	virtual void Print_C(ostream& source_file) {source_file << endl << ";" << endl;}
 };
 
+
+class rtlLogStatement:public rtlStatement
+{
+	rtlObject* _object;	
+	public:
+	rtlLogStatement(rtlThread* p, rtlObject* obj): rtlStatement(p)
+	{
+		_object = obj;
+	}
+
+	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& source_file);
+};
 #endif
