@@ -7,8 +7,26 @@
 #include <Value.hpp>
 #include <rtlValue.h>
 #include <rtlObject.h>
+#include <rtlExpression.h>
 #include <rtlStatement.h>
 #include <rtlThread.h>
+
+bool Check_If_Assignment_To_Signal(rtlThread* t, rtlStatement* stmt)
+{
+	bool ret_val = true;
+	set<rtlObject*> tgt_objs;
+	stmt->Collect_Target_Objects(tgt_objs);
+	for(set<rtlObject*>::iterator iter = tgt_objs.begin(), fiter = tgt_objs.end(); iter != fiter; iter++)
+	{
+		rtlObject* obj = *iter;
+		if(!obj->Is_Signal())
+		{	
+			t->Report_Error("Immediate/Tick block statement targets must be signals: in thread " + t->Get_Id());
+			ret_val = false;
+		}
+	}
+	return(ret_val);
+}
 
 rtlThread::rtlThread(hierSystem* sys, string id): hierRoot(id)
 {
@@ -19,6 +37,20 @@ void rtlThread::Add_Statement(rtlStatement* stmt)
 {
 	_statements.push_back(stmt); 
 	_statement_map[stmt->Get_Label()] = stmt;
+}
+
+void rtlThread::Add_Immediate_Statement(rtlStatement* stmt) 
+{
+	bool check_status = Check_If_Assignment_To_Signal(this, stmt);	
+	if(check_status)
+		_immediate_statements.push_back(stmt);
+}
+
+void rtlThread::Add_Tick_Statement(rtlStatement* stmt) 
+{
+	bool check_status = Check_If_Assignment_To_Signal(this, stmt);	
+	if(check_status)
+		_tick_statements.push_back(stmt);
 }
 
 void rtlThread::Add_Object(rtlObject* obj)

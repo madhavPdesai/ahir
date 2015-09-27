@@ -30,6 +30,17 @@ rtlAssignStatement::rtlAssignStatement(rtlThread* p,bool volatile_flag,  rtlExpr
 
 
 
+	
+void rtlAssignStatement::Collect_Target_Objects(set<rtlObject*> obj_set)
+{
+	_target->Collect_Target_Objects(obj_set);
+}
+	
+void rtlAssignStatement::Collect_Source_Objects(set<rtlObject*> obj_set)
+{
+	_source->Collect_Target_Objects(obj_set);
+}
+
 
 	
 void rtlAssignStatement::Print(ostream& ofile)

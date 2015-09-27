@@ -90,6 +90,8 @@ $system store_and_forward
 					$goto RUN
 				}
 		}
+	$now
+	$tick
 
 
 	$thread   MANAGER
@@ -235,6 +237,8 @@ $system store_and_forward
 						$goto write_wait
 					}
 		}
+	$now
+	$tick
 
 	
 

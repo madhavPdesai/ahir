@@ -160,6 +160,10 @@ void rtlThread::Print_C_Run_Function(ostream& source_file)
 		_statements[I]->Print_C(source_file);
 		source_file << "}" << endl;
 	}
+	for(int I = 0, fI = _immediate_statements.size(); I < fI; I++)
+	{
+		_immediate_statements[I]->Print_C(source_file);
+	}
 	source_file << "}" << endl;
 }
 
@@ -175,6 +179,7 @@ void rtlThread::Print_C_Tick_Function(ostream& source_file)
 	source_file << "__sstate->_tick_count++;" << endl;
 	source_file << "__sstate->_state = __sstate->_next_state;" << endl;
 
+
 	for(map<string, rtlObject*>::iterator iter = this->_objects.begin(), fiter = this->_objects.end();
 			iter != fiter;
 			iter++)
@@ -185,6 +190,11 @@ void rtlThread::Print_C_Tick_Function(ostream& source_file)
 			Print_C_Assignment(obj->Get_C_Name(), obj->Get_C_Target_Name(), obj->Get_Type(),  source_file);
 			obj->Print_C_Probe_Matcher(source_file);
 		}
+	}
+
+	for(int I = 0, fI = _tick_statements.size(); I < fI; I++)
+	{
+		_tick_statements[I]->Print_C(source_file);
 	}
 	source_file << "}" << endl;
 }

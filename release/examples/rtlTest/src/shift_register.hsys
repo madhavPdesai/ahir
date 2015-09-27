@@ -58,6 +58,8 @@ $system shift_register
 					$goto wait_state
 				}
 		}
+	$now
+	$tick
 
 	
 	$string stage_0:REPEATER

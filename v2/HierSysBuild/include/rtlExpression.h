@@ -56,6 +56,9 @@ class rtlExpression: public hierRoot
 
 	virtual void Print_C(ostream& ofile) {assert(0);}
 	virtual void Print_C_Declaration(rtlValue* v, ostream& ofile);
+
+	virtual void Collect_Target_Objects(set<rtlObject*> obj_set) {};
+	virtual void Collect_Source_Objects(set<rtlObject*> obj_set) {};
 };
 
 class rtlConstantLiteralExpression: public rtlExpression
@@ -93,6 +96,17 @@ class rtlObjectReference: public rtlExpression
 	// passed to objects.
 	virtual void Set_Is_Emitted(bool v);
 	virtual void Set_Is_Volatile(bool v);
+
+	virtual void Collect_Target_Objects(set<rtlObject*> obj_set) 
+	{
+		if(this->_is_target)
+			obj_set.insert(_object);
+	};
+	virtual void Collect_Source_Objects(set<rtlObject*> obj_set)
+	{
+		if(!this->_is_target)
+			obj_set.insert(_object);
+	}
 };
 
 

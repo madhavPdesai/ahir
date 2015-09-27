@@ -323,6 +323,10 @@ rtl_Thread[hierSystem* sys] returns [rtlThread* t]
         (rtl_ObjectDeclaration[t])*
 	rtl_DefaultStatementBlock[t]
         (rtl_LabeledBlockStatement[t])+
+
+	rtl_ImmediateStatementBlock[t]
+	rtl_TickStatementBlock[t]
+
     ;
 
 
@@ -335,6 +339,22 @@ rtl_DefaultStatementBlock[rtlThread* t]
 		(((stmt = rtl_AssignStatement[t]) | (stmt = rtl_LogStatement[t]))  { t->Add_Default_Statement(stmt); } )*
 ;
 
+
+rtl_ImmediateStatementBlock[rtlThread* t] 
+{
+	rtlStatement* stmt = NULL;
+}:
+	NOW
+		(((stmt = rtl_AssignStatement[t]) | (stmt = rtl_LogStatement[t]))  { t->Add_Immediate_Statement(stmt); } )*
+;
+
+rtl_TickStatementBlock[rtlThread* t] 
+{
+	rtlStatement* stmt = NULL;
+}:
+	TICK
+		(((stmt = rtl_AssignStatement[t]) | (stmt = rtl_LogStatement[t]) | (stmt = rtl_IfStatement[t]))  { t->Add_Tick_Statement(stmt); } )*
+;
 
 rtl_String[hierSystem* sys] returns [rtlString* ti]
 {
@@ -875,6 +895,7 @@ OF:"$of";
 IF:"$if";
 ELSE:"$else";
 NOW:"$now";
+TICK:"$tick";
 DEFAULT:"$default";
 REQ: "$req";
 ACK: "$ack";

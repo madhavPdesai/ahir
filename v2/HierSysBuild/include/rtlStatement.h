@@ -17,6 +17,8 @@ class rtlStatement: public hierRoot
 	virtual string Get_Label() {assert(0);}
 	virtual void Print_C(ostream& source_file) {assert(0);}
 	rtlThread* Get_Parent_Thread() {return(_parent_thread);}
+	virtual void Collect_Target_Objects(set<rtlObject*> obj_set) {};
+	virtual void Collect_Source_Objects(set<rtlObject*> obj_set) {};
 };
 
 class rtlAssignStatement: public rtlStatement
@@ -31,9 +33,15 @@ class rtlAssignStatement: public rtlStatement
 	rtlAssignStatement(rtlThread* p,bool volatile_flag,  rtlExpression* tgt, rtlExpression* src);
 
 	bool Get_Volatile() {return(_volatile);}
+	rtlExpression* Get_Target() {return(_target);}
+	rtlExpression* Get_Source() {return(_source);}
+
 
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& source_file);
+
+	virtual void Collect_Target_Objects(set<rtlObject*> obj_set);
+	virtual void Collect_Source_Objects(set<rtlObject*> obj_set);
 };
 
 
@@ -48,7 +56,30 @@ class rtlGotoStatement: public rtlStatement
 	virtual void Print_C(ostream& source_file);
 };
 
-class rtlBlockStatement;
+class rtlBlockStatement: public rtlStatement
+{
+	vector<rtlStatement*> _statement_block;
+
+	public:
+	rtlBlockStatement(rtlThread* p, vector<rtlStatement*>& sblock): rtlStatement(p)
+	{
+		_statement_block = sblock;
+	}
+
+	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& source_file);
+	virtual void Collect_Target_Objects(set<rtlObject*> obj_set)
+	{
+		for(int I = 0, fI = _statement_block.size(); I < fI; I++)
+			_statement_block[I]->Collect_Target_Objects(obj_set);
+	}
+	virtual void Collect_Source_Objects(set<rtlObject*> obj_set)
+	{
+		for(int I = 0, fI = _statement_block.size(); I < fI; I++)
+			_statement_block[I]->Collect_Source_Objects(obj_set);
+	}
+};
+
 class rtlIfStatement: public rtlStatement
 {
 	rtlExpression* _test;
@@ -68,22 +99,23 @@ class rtlIfStatement: public rtlStatement
 
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& source_file);
-};
-
-
-class rtlBlockStatement: public rtlStatement
-{
-	vector<rtlStatement*> _statement_block;
-
-	public:
-	rtlBlockStatement(rtlThread* p, vector<rtlStatement*>& sblock): rtlStatement(p)
+	virtual void Collect_Target_Objects(set<rtlObject*> obj_set)
 	{
-		_statement_block = sblock;
+		if(_if_block)	
+			_if_block->Collect_Target_Objects(obj_set);
+		if(_else_block)	
+			_else_block->Collect_Target_Objects(obj_set);
 	}
-
-	virtual void Print(ostream& ofile);
-	virtual void Print_C(ostream& source_file);
+	virtual void Collect_Source_Objects(set<rtlObject*> obj_set)
+	{
+		if(_if_block)	
+			_if_block->Collect_Source_Objects(obj_set);
+		if(_else_block)	
+			_else_block->Collect_Source_Objects(obj_set);
+	}
 };
+
+
 
 class rtlLabeledBlockStatement: public rtlBlockStatement
 {

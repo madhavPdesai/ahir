@@ -21,6 +21,11 @@ class rtlThread: public hierRoot
 	map<string, rtlObject*> _objects;
 
 	vector<rtlStatement*> _default_statements;
+
+        vector<rtlStatement*> _immediate_statements;
+	vector<rtlStatement*> _tick_statements;
+
+
 	public:
 
 	rtlThread(hierSystem* p, string id);
@@ -29,6 +34,8 @@ class rtlThread: public hierRoot
 
 	void Add_Statement(rtlStatement* stmt);
 	void Add_Default_Statement(rtlStatement* stmt) {_default_statements.push_back(stmt);}
+	void Add_Immediate_Statement(rtlStatement* stmt);
+	void Add_Tick_Statement(rtlStatement* stmt);
 
 	int Get_Number_Of_Statements() {return(_statements.size());}
 	rtlStatement* Get_Statement(int idx)
