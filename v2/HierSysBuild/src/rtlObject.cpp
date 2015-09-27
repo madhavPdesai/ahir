@@ -98,12 +98,28 @@ rtlSignal::rtlSignal(string name, rtlType* t):rtlObject(name, t)
 {
 	_is_pipe = false;
 	_is_volatile = false;
+	_tick = false;
 }
 
 rtlSignal::rtlSignal(bool is_pipe, string name, rtlType* t):rtlObject(name, t)
 {
 	_is_pipe = is_pipe;
 	_is_volatile = false;
+}
+
+void rtlSignal::Set_Tick(bool v) 
+{
+	if(v && _is_volatile)
+		this->Report_Error("signal " + this->Get_Id() + " is simultaneously volatile and ticked");
+
+	_tick = v;
+}
+void rtlSignal::Set_Is_Volatile(bool v)
+{
+	if(v && _tick)
+		this->Report_Error("signal " + this->Get_Id() + " is simultaneously volatile and ticked");
+
+	_is_volatile = v;
 }
 
 // Print declaration.

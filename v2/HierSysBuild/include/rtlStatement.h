@@ -19,6 +19,9 @@ class rtlStatement: public hierRoot
 	rtlThread* Get_Parent_Thread() {return(_parent_thread);}
 	virtual void Collect_Target_Objects(set<rtlObject*> obj_set) {};
 	virtual void Collect_Source_Objects(set<rtlObject*> obj_set) {};
+
+	virtual void Set_Tick(bool v) {}
+	virtual bool Get_Tick() {return(false);}
 };
 
 class rtlAssignStatement: public rtlStatement
@@ -27,12 +30,17 @@ class rtlAssignStatement: public rtlStatement
 	rtlExpression* _target;
 	rtlExpression* _source; 
 	bool _volatile;
+	bool _tick;
 
 	public:
 
 	rtlAssignStatement(rtlThread* p,bool volatile_flag,  rtlExpression* tgt, rtlExpression* src);
 
-	bool Get_Volatile() {return(_volatile);}
+	bool Get_Volatile() {return(_volatile);}	
+
+	virtual void Set_Tick(bool v);
+	virtual bool Get_Tick() {return(_tick);}
+
 	rtlExpression* Get_Target() {return(_target);}
 	rtlExpression* Get_Source() {return(_source);}
 
@@ -68,15 +76,23 @@ class rtlBlockStatement: public rtlStatement
 
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& source_file);
+
 	virtual void Collect_Target_Objects(set<rtlObject*> obj_set)
 	{
 		for(int I = 0, fI = _statement_block.size(); I < fI; I++)
 			_statement_block[I]->Collect_Target_Objects(obj_set);
 	}
+
 	virtual void Collect_Source_Objects(set<rtlObject*> obj_set)
 	{
 		for(int I = 0, fI = _statement_block.size(); I < fI; I++)
 			_statement_block[I]->Collect_Source_Objects(obj_set);
+	}
+
+	virtual void Set_Tick(bool v)
+	{
+		for(int I = 0, fI = _statement_block.size(); I < fI; I++)
+			_statement_block[I]->Set_Tick(v);
 	}
 };
 
@@ -112,6 +128,13 @@ class rtlIfStatement: public rtlStatement
 			_if_block->Collect_Source_Objects(obj_set);
 		if(_else_block)	
 			_else_block->Collect_Source_Objects(obj_set);
+	}
+	virtual void Set_Tick(bool v)
+	{
+		if(_if_block)	
+			_if_block->Set_Tick(v);
+		if(_else_block)	
+			_else_block->Set_Tick(v);
 	}
 };
 

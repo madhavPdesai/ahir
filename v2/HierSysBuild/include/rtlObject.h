@@ -15,6 +15,9 @@ class rtlObject: public hierRoot
 	rtlObject(string name, rtlType* t);
 
 	virtual string Kind() {return("rtlObject");}
+	virtual void Set_Tick(bool v) {}
+	virtual bool Get_Tick() {return(false);}
+
 
 	virtual bool Is_Variable() {return(false);}
 	virtual bool Is_Signal()   {return(false);}
@@ -84,17 +87,21 @@ class rtlSignal: public rtlObject
 {
 	bool _is_pipe;
 	bool _is_volatile;
+	bool _tick;
 
 	public:
+
 	rtlSignal(string name, rtlType* t);
 	rtlSignal(bool is_pipe, string name, rtlType* t);
 
 	virtual string Kind() {return("rtlSignal");}
 
+	virtual void Set_Tick(bool v);
+	virtual bool Get_Tick() {return(_tick);}
 	virtual bool Is_Signal() {return(true);}
 	virtual bool Is_Pipe() {return(_is_pipe);}
 	virtual void Print(ostream& ofile);
-	virtual void Set_Is_Volatile(bool v) {_is_volatile = v;}
+	virtual void Set_Is_Volatile(bool v);
 	virtual bool Get_Is_Volatile() {return(_is_volatile);}
 	virtual bool Needs_Next() {return(!this->Get_Is_Volatile());}
 };

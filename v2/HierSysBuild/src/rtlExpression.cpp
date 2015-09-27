@@ -19,6 +19,7 @@ rtlExpression::rtlExpression(string id): hierRoot(id)
 	_type = NULL;
 	_value = NULL;
 	_is_target = false;
+	_tick = false;
 }
 
 rtlExpression::rtlExpression(): hierRoot("anon_expr_" + IntToStr(e_counter))
@@ -27,6 +28,7 @@ rtlExpression::rtlExpression(): hierRoot("anon_expr_" + IntToStr(e_counter))
 	_type = NULL;
 	_value = NULL;
 	_is_target = false;
+	_tick = false;
 }
 	
 string rtlExpression::Get_C_Name()
@@ -60,6 +62,12 @@ void rtlExpression::Print_C_Declaration(rtlValue* v, ostream& ofile)
 {
 	ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << this->Get_Type()->Get_C_Dimension_String() << ";" << endl;
 	this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), v, ofile);
+}
+
+void rtlObjectReference::Set_Tick(bool v) 
+{
+	_tick = v;
+	_object->Set_Tick(v);
 }
 
 rtlSimpleObjectReference::rtlSimpleObjectReference(rtlObject* obj): rtlObjectReference(obj->Get_Id(),obj) 
@@ -177,7 +185,10 @@ string rtlSimpleObjectReference::Get_C_Target_Name()
 	else if(_req_flag)
 		return(_object->Get_C_Req_Name());
 
-	return(_object->Get_C_Target_Name());
+	if(!this->Get_Tick())
+		return(_object->Get_C_Target_Name());
+	else
+		return(_object->Get_C_Name());
 }
 
 void rtlSimpleObjectReference::Print_C(ostream& ofile) 

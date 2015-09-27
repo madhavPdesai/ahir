@@ -29,6 +29,10 @@ rtlAssignStatement::rtlAssignStatement(rtlThread* p,bool volatile_flag,  rtlExpr
 }
 
 
+void rtlAssignStatement::Set_Tick(bool v)
+{
+	this->_target->Set_Tick(v);
+}
 
 	
 void rtlAssignStatement::Collect_Target_Objects(set<rtlObject*> obj_set)

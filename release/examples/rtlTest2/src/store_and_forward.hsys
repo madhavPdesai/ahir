@@ -23,10 +23,22 @@ $system store_and_forward
 		$signal rd_addr rd_data wr_addr wr_data rd_addr_reg data_reg : $unsigned<32>
 		$signal tmp_sig: $unsigned<32>
 
+		$variable rd_mem_flag_1 rd_mem_flag_2 wr_mem_flag: $unsigned<1>
 		$default
 			$now rd_rsp$req := Z1
 			$now wr_cmd$req := Z1
 			$now rd_cmd$req := Z1
+			
+			$now wr_mem_flag     := Z1
+			$now rd_mem_flag_1     := Z1
+			$now rd_mem_flag_2     := Z1
+
+			$now wr_data         := ($unsigned<32>) 0
+			$now wr_addr 	     := ($unsigned<32>) 0
+
+			$now rd_data         := ($unsigned<32>) 0
+			$now rd_addr 	     := ($unsigned<32>) 0
+
 			//$now tmp_sig    := mem_array[($unsigned<4>) 0]
 			//$log tmp_sig
 			//$now tmp_sig    := mem_array[($unsigned<4>) 1]
@@ -49,10 +61,7 @@ $system store_and_forward
 				$now wr_data := ($slice wr_cmd 31 0)
 				$now wr_addr := ($slice wr_cmd 63 32)
 				
-				$log wr_data
-				$log wr_addr
-
-				mem_array[wr_addr] := wr_data
+				$now wr_mem_flag   := One_1
 				$goto RUN
 			}
 			$if rd_cmd$ack
@@ -60,9 +69,7 @@ $system store_and_forward
 				$if (~wr_cmd$ack)
 				{
 					$now rd_addr  := rd_cmd
-					$log rd_cmd
-
-					rd_data := mem_array[rd_addr]
+					$now rd_mem_flag_1 := One_1				
 					$goto rsp_wait
 				}
 				$else
@@ -78,7 +85,7 @@ $system store_and_forward
 			}
 		}
 		<mem_rd_wait>{
-		 		rd_data := mem_array[rd_addr_reg]
+				$now rd_mem_flag_2 := One_1				
 				$goto rsp_wait
 		}
 		<rsp_wait> {
@@ -92,6 +99,30 @@ $system store_and_forward
 		}
 	$now
 	$tick
+		$if wr_mem_flag
+		{
+			$log wr_mem_flag
+			$log wr_data
+			$log wr_addr
+
+			mem_array[wr_addr] := wr_data
+		}
+		$if rd_mem_flag_1
+		{
+			$log rd_mem_flag_1
+			$log rd_data
+			$log rd_addr
+
+			rd_data := mem_array[rd_addr]
+		}
+		$if rd_mem_flag_2
+		{
+			$log rd_mem_flag_2
+			$log rd_data
+			$log rd_addr
+
+			rd_data := mem_array[rd_addr_reg]
+		}
 
 
 	$thread   MANAGER

@@ -49,6 +49,7 @@ void rtlThread::Add_Immediate_Statement(rtlStatement* stmt)
 void rtlThread::Add_Tick_Statement(rtlStatement* stmt) 
 {
 	bool check_status = Check_If_Assignment_To_Signal(this, stmt);	
+	stmt->Set_Tick(true);
 	if(check_status)
 		_tick_statements.push_back(stmt);
 }
@@ -78,7 +79,16 @@ void rtlThread::Print(ostream& ofile)
 	{
 		_statements[I]->Print(ofile);
 	}
+
+	ofile << "$now " << endl;
+	for(int I = 0, fI = _immediate_statements.size(); I < fI; I++)
+		_immediate_statements[I]->Print(ofile);
+
+	ofile << "$tick " << endl;
+	for(int I = 0, fI = _tick_statements.size(); I < fI; I++)
+		_tick_statements[I]->Print(ofile);
 }
+
 
 rtlString::rtlString(string inst_name, rtlThread* base):hierRoot(inst_name)
 {

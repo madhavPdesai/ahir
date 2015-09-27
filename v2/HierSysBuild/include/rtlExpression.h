@@ -21,6 +21,7 @@ class rtlExpression: public hierRoot
 	rtlType* _type;
 	rtlValue* _value;
 	bool      _is_target;
+	bool      _tick;
 
 	public:
 	
@@ -59,6 +60,10 @@ class rtlExpression: public hierRoot
 
 	virtual void Collect_Target_Objects(set<rtlObject*> obj_set) {};
 	virtual void Collect_Source_Objects(set<rtlObject*> obj_set) {};
+
+	virtual void Set_Tick(bool v) {_tick = v;}
+	virtual bool Get_Tick() {return(_tick);}
+
 };
 
 class rtlConstantLiteralExpression: public rtlExpression
@@ -107,6 +112,7 @@ class rtlObjectReference: public rtlExpression
 		if(!this->_is_target)
 			obj_set.insert(_object);
 	}
+	virtual void Set_Tick(bool v);
 };
 
 

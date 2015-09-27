@@ -160,6 +160,7 @@ void rtlThread::Print_C_Run_Function(ostream& source_file)
 		_statements[I]->Print_C(source_file);
 		source_file << "}" << endl;
 	}
+	source_file << "// immediate assignments " << endl;
 	for(int I = 0, fI = _immediate_statements.size(); I < fI; I++)
 	{
 		_immediate_statements[I]->Print_C(source_file);
@@ -192,6 +193,7 @@ void rtlThread::Print_C_Tick_Function(ostream& source_file)
 		}
 	}
 
+	source_file << "// tick assignments " << endl;
 	for(int I = 0, fI = _tick_statements.size(); I < fI; I++)
 	{
 		_tick_statements[I]->Print_C(source_file);
