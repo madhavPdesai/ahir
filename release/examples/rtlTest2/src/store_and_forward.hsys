@@ -87,17 +87,7 @@ $system store_and_forward
 				$now rd_rsp$req := One_1
 				$if rd_rsp$ack
 				{
-					$now rd_cmd$req := One_1
-					$if rd_cmd$ack	
-					{
-						$now rd_addr  := rd_cmd
-						rd_data := mem_array[rd_addr]
-						$goto rsp_wait
-					}
-					$else
-					{
-						$goto RUN
-					}
+					$goto RUN
 				}
 		}
 
