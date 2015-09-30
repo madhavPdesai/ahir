@@ -16,6 +16,7 @@ class AaStatement;
 class AaAssignmentStatement;
 class AaDoWhileStatement;
 class AaSimpleObjectReference;
+class AaModule;
 class AaExpression: public AaRoot
 {
 	// the containing scope of this expression
@@ -84,6 +85,7 @@ class AaExpression: public AaRoot
 
 
 	virtual AaScope* Get_Scope() { return(this->_scope);}
+	virtual AaModule* Get_Module();
 
 	AaExpression(AaScope* scope_tpr);
 	~AaExpression();
@@ -730,6 +732,7 @@ class AaSimpleObjectReference: public AaObjectReference
 		leaf_expression_set.insert(this);
 	}
 
+	virtual void Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile);
 
 	virtual bool Is_Implicit_Variable_Reference();
 	virtual bool Is_Interface_Object_Reference();

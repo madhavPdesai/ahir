@@ -2,8 +2,65 @@
 #include <ostream>
 #include <assert.h>
 #include <hierSystem.h>
+#include <rtlEnums.h>
+#include <rtlType.h>
+#include <rtlStatement.h>
+#include <rtlThread.h>
 
+int root_object_counter = 0;
 	
+hierRoot::hierRoot(string id)
+{
+	_id = id;
+	_error = false;
+
+	root_object_counter++;
+	_index = root_object_counter;	
+}
+
+hierRoot::hierRoot()
+{
+	_error = false;
+
+	root_object_counter++;
+	_index = root_object_counter;	
+	_id = "anon_" + IntToStr(root_object_counter);
+}
+	
+void hierRoot::Print(ofstream& ofile)
+{
+  ostream *outstr = &ofile;
+  this->Print(*outstr);
+}
+	
+void hierRoot::Print(string& ostring)
+{
+  ostringstream string_stream(ostringstream::out);
+  this->Print(string_stream);
+  ostring += string_stream.str();
+}
+
+void hierSystem::Add_Thread(rtlThread* t)
+{
+  assert(_thread_map.find(t->Get_Id()) == _thread_map.end());
+  _thread_map[t->Get_Id()]  = t;
+}
+
+void hierSystem::Add_String(rtlString* t)
+{
+
+	string tname  = t->Get_Id();
+	if(_rtl_string_map.find(tname) != _rtl_string_map.end())
+	{
+		this->Report_Error("multiple thread instances with instance name " + tname);
+		return;
+	}
+	_rtl_string_map[tname] = t;
+  	_rtl_strings.push_back(t);
+
+  // do nothing else for now.	
+}
+
 void hierSystem::List_In_Pipe_Names(vector<string>& pvec)
 {
 	listPipeMap(_in_pipes,pvec);
@@ -26,23 +83,23 @@ hierSystemInstance::hierSystemInstance(hierSystem* parent, hierSystem* base_sys,
 }
 
 bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
-						map<string, pair<int,int> >& global_pipe_map,
-						set<string>& global_signals)
+		map<string, pair<int,int> >& global_pipe_map,
+		set<string>& global_signals)
 {
 	// check if actual exists?  If not check if it exists in the
 	// visible pipes
 	hierSystem* parent = this->_parent;
-	
+
 	if(parent->Get_Pipe_Width(actual) <= 0)
 	{
 		int w, d;
 		bool is_sig;
 		bool err = getPipeInfoFromGlobals(actual, global_pipe_map, global_signals,
-						w, d, is_sig);	
+				w, d, is_sig);	
 		if(err)
 		{
 			this->Report_Error("Instance " + this->Get_Id() + " in " + parent->Get_Id() + 
-							".. did not find actual " + actual);
+					".. did not find actual " + actual);
 			return(true);
 		} 
 		else
@@ -69,11 +126,11 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 	bool actual_is_output = (parent->Get_Output_Pipe_Width(actual) > 0);
 
 	bool conn_error = ((formal_is_input && actual_is_output) || 
-				(formal_is_output && actual_is_input));
+			(formal_is_output && actual_is_input));
 	if(conn_error)
 	{
 		hierRoot::Report_Error("connection mismatch: instance " + this->Get_Id() + " in " 
-						+ parent->Get_Id() + " for " + formal  + " => " + actual);
+				+ parent->Get_Id() + " for " + formal  + " => " + actual);
 		return(true);
 	}
 
@@ -81,7 +138,7 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 		parent->Set_Driving_Pipe(actual);
 	if(formal_is_output)
 		parent->Set_Driven_Pipe(actual);
-	
+
 	if(_base_system->Has_Port(formal))
 	{
 		if(_port_map.find(formal) != _port_map.end())
@@ -240,6 +297,20 @@ void hierSystem::Print(ostream& ofile)
 	{
 		(*iter).second->Print(ofile);
 	}
+
+	// print threads.
+	for(map<string, rtlThread*>::iterator titer = _thread_map.begin(), ftiter = _thread_map.end();
+		titer != ftiter; titer++)
+	{
+		(*titer).second->Print(ofile);
+	}
+
+	// print thread instances.
+	for(int iT=0, fiT = _rtl_strings.size(); iT < fiT; iT++)
+	{
+		_rtl_strings[iT]->Print(ofile);
+	}
+
 	ofile << "}" << endl;
 }
 

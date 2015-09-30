@@ -37,6 +37,18 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
 
 AaExpression::~AaExpression() {};
 
+AaModule* AaExpression::Get_Module()
+{
+	AaStatement* stmt = this->Get_Associated_Statement();
+	if(stmt != NULL)
+	{
+		return(stmt->Get_Module());
+	}
+	else
+		return(NULL);
+}
+	
+
 void AaExpression::Print_Buffering(ostream& ofile)
 {
   int bb  = this->Get_Buffering();
@@ -87,7 +99,9 @@ bool AaExpression::Is_Part_Of_Extreme_Pipeline()
 
 void AaExpression::PrintC_Declaration(ofstream& ofile)
 {
-  Print_C_Declaration(this->C_Reference_String(), this->Get_Type(), ofile);
+  AaModule* m = this->Get_Module();
+  bool static_flag = ((m != NULL) && m->Static_Flag_In_C());
+  Print_C_Declaration(this->C_Reference_String(), static_flag,  this->Get_Type(), ofile);
 }
 
 string AaExpression::Get_VC_Guard_String()
@@ -826,7 +840,9 @@ void AaSimpleObjectReference::PrintC_Declaration(ofstream& ofile)
 	}
 	else if(this->Get_Object()->Is_Pipe_Object())
 	{
-		Print_C_Declaration(this->C_Reference_String(), this->Get_Type(),ofile);
+  		AaModule* m = this->Get_Module();
+  		bool static_flag = ((m != NULL) && m->Static_Flag_In_C());
+		Print_C_Declaration(this->C_Reference_String(),static_flag, this->Get_Type(),ofile);
 	}
 	//else
 	//{
@@ -1155,7 +1171,12 @@ bool AaSimpleObjectReference::Update_Protocol_Has_Delay(set<AaRoot*>& visited_el
 			return(true);
 
 		if(this->_object->Is("AaPipeObject"))
-			return(true);
+		{
+			if(!this->Get_Is_Target())
+				return(true);
+			else
+				return(false);
+		}
 
 		if(this->_object->Is_Interface_Object())
 		{

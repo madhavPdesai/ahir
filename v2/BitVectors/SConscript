@@ -1,8 +1,8 @@
 import os
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
-env.Append(CPPPATH = './src/:./include/')
+env.Append(CPPPATH = './src/:./include/:../pipeHandler/include')
 env.Library('lib/libBitVectors', Glob('src/*.c'), CCFLAGS='-g ')
-env.Program('bin/test_bit_vectors','util/test_bit_vectors.c',CCFLAGS='-g',LINKFLAGS='-g', LIBS=['BitVectors'], LIBPATH=['./lib'])
+env.Program('bin/test_bit_vectors','util/test_bit_vectors.c',CCFLAGS='-g',LINKFLAGS='-g', LIBS=['BitVectors', 'PipeHandler', 'pthread' ], LIBPATH=['./lib', '../pipeHandler/lib' ])
 
 
 

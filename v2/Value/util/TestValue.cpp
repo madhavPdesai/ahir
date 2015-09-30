@@ -122,12 +122,14 @@ int main()
    cout << "slice " << ug.To_String() << "[31:24] = " << sug.To_String() << endl;
 
 
-   Unsigned psug(8);
+   
+   Unsigned ssug(8, "_b10000000");
+   Unsigned pssug(8);
    vector<pair<int,int> > tp;
    tp.push_back(pair<int,int>(7,0));
    tp.push_back(pair<int,int>(0,7));
-   psug.Bitmap(sug,tp);
-   cout << "permute 7 <-> 0 " << sug.To_String() << " = " << psug.To_String() << endl;
+   pssug.Bitmap(ssug,tp);
+   cout << "permute 7 <-> 0 " << ssug.To_String() << " = " << pssug.To_String() << endl;
 
   return(1);
 }

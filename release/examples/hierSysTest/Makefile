@@ -1,13 +1,7 @@
 #!/bin/bash
 AHIR_RELEASE=/home/madhav/AHIR/gitHub/ahir/release
-SOCKETLIB_INCLUDE=$(AHIR_RELEASE)/CtestBench/include
-SOCKETLIB_LIB=$(AHIR_RELEASE)/CtestBench/lib
-PIPEHANDLER_INCLUDE=$(AHIR_RELEASE)/pipeHandler/include
-PIPEHANDLER_LIB=$(AHIR_RELEASE)/pipeHandler/lib
-PTHREADUTILS_INCLUDE=$(AHIR_RELEASE)/pthreadUtils/include
-GNUPTHUTILS_INCLUDE=$(AHIR_RELEASE)/GnuPthUtils/include
-BITVECTOR_INCLUDE=$(AHIR_RELEASE)/BitVectors/include
-BITVECTOR_LIB=$(AHIR_RELEASE)/BitVectors/lib
+AHIR_INCLUDE=$(AHIR_RELEASE)/include
+AHIR_LIB=$(AHIR_RELEASE)/lib
 VHDL_LIB=$(AHIR_RELEASE)/vhdl
 VHDL_VHPI_LIB=$(AHIR_RELEASE)/CtestBench/vhdl
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
@@ -30,18 +24,18 @@ toplevel: hello_world.hsys
 cmodel:
 	rm -rf objsw
 	mkdir objsw
-	gcc -g -c -DSW  -I$(PIPEHANDLER_INCLUDE) -I$(PTHREADUTILS_INCLUDE) -I$(BITVECTOR_INCLUDE)  -I./Stage1/aa2c/ ./Stage1/aa2c/S1_aa_c_model.c -o objsw/S1_aa_c_model.o
-	gcc -g -c -DSW  -I$(PIPEHANDLER_INCLUDE) -I$(PTHREADUTILS_INCLUDE) -I$(BITVECTOR_INCLUDE)  -I./Stage2/aa2c/  ./Stage2/aa2c/S2_aa_c_model.c -o objsw/S2_aa_c_model.o
-	gcc -g -c -DSW  -I$(PIPEHANDLER_INCLUDE) -I$(PTHREADUTILS_INCLUDE) -I$(BITVECTOR_INCLUDE)  -I./aa2c/ ./aa2c/_Top.c -o objsw/_Top.o
-	gcc -g -c -DSW  -I$(PIPEHANDLER_INCLUDE) -I$(PTHREADUTILS_INCLUDE) -I./aa2c/ ./Testbench/testbench.c -o objsw/testbench.o
-	gcc -g -o  ./bin/TopSW objsw/S1_aa_c_model.o objsw/S2_aa_c_model.o objsw/_Top.o objsw/testbench.o -L $(PIPEHANDLER_LIB) -L$(BITVECTOR_LIB) -lBitVectors  -lPipeHandler -lpthread
+	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./Stage1/aa2c/ ./Stage1/aa2c/S1_aa_c_model.c -o objsw/S1_aa_c_model.o
+	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./Stage2/aa2c/  ./Stage2/aa2c/S2_aa_c_model.c -o objsw/S2_aa_c_model.o
+	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./aa2c/ ./aa2c/_Top.c -o objsw/_Top.o
+	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./aa2c/ ./Testbench/testbench.c -o objsw/testbench.o
+	gcc -g -o  ./bin/TopSW objsw/S1_aa_c_model.o objsw/S2_aa_c_model.o objsw/_Top.o objsw/testbench.o -L $(AHIR_LIB) -lBitVectors  -lPipeHandler -lpthread
 
 # the VHDL simulation.
 vhdltb:  ./Stage1/stage1.aa ./Stage2/stage2.aa ./Testbench/testbench.c
 	rm -rf objhw
 	mkdir objhw
-	gcc -c ./Testbench/testbench.c -I$(PTHREADUTILS_INCLUDE) -I./Testbench -I./aa2c/ -I$(SOCKETLIB_INCLUDE) -o objhw/testbench.o
-	gcc -o ./bin/TopHW  ./objhw/testbench.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
+	gcc -c ./Testbench/testbench.c -I$(AHIR_INCLUDE) -I./Testbench -I./aa2c/ -o objhw/testbench.o
+	gcc -o ./bin/TopHW  ./objhw/testbench.o  -L$(AHIR_LIB) -lSocketLib -lpthread
 
 vhdlsim:
 	ghdl --clean
@@ -53,7 +47,7 @@ vhdlsim:
 	ghdl -i --work=S2 Stage2/vhdl/S2/Stage2.vhdl
 	ghdl -i --work=TopLib vhdl/TopLib/Top.vhdl
 	ghdl -i --work=work vhdl/work/Top_test_bench.vhdl
-	ghdl -m --work=work -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi Top_test_bench 
+	ghdl -m --work=work -Wl,-L$(AHIR_LIB) -Wl,-lVhpi Top_test_bench 
 
 clean: 
 	rm -rf Stage1/vhdl/* Stage1/aa2c/* Stage2/vhdl/* Stage2/aa2c/* objhw/ objsw/ ./bin/* vhdl/* *.o *.cf *.log top_test_bench *.ghw

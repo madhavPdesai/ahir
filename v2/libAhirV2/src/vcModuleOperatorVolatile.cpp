@@ -52,6 +52,7 @@ void vcModule::Print_VHDL_Operator_Entity(ostream& ofile)
 void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 {
 	this->vcModule::Print_VHDL_Architecture(ofile);
+	return;
 }
 
 void vcModule::Print_VHDL_Operator_Component(ostream& ofile)
@@ -63,6 +64,14 @@ void vcModule::Print_VHDL_Operator_Component(ostream& ofile)
 	ofile << "  update_req: in boolean;" << endl;
 	ofile << "  update_ack: out boolean;" << endl;
 	string sc = this->Print_VHDL_Argument_Ports("", ofile);
+	if(this->_data_path != NULL)
+	{
+		// these are checks.  if ports are found, an error will be flagged
+		sc = this->_data_path->Print_VHDL_Memory_Interface_Ports(sc, ofile);
+		sc = this->_data_path->Print_VHDL_IO_Interface_Ports(sc, ofile);
+		sc = this->_data_path->Print_VHDL_Call_Interface_Ports(sc, ofile);
+	}
+	ofile << "  clk, reset: in std_logic;" << endl;
 	ofile << "-- } " << endl << ");" << endl;
 	ofile << "-- }" << endl << "end component;" << endl;
 

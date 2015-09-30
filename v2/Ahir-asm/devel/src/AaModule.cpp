@@ -276,6 +276,73 @@ void AaModule::Write_C_Source(ofstream& srcfile, ofstream& headerfile)
   if(this->Get_Foreign_Flag())
     return;
 
+  bool static_flag = this->Static_Flag_In_C();
+
+  // inner wrap function.
+  srcfile << "void " 
+	<< this->Get_C_Inner_Wrap_Function_Name() 
+	<< "(";
+  bool first_one = true;
+  for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+    {
+      if(!first_one)
+	srcfile << ", ";
+      first_one = false;
+      srcfile << this->_input_args[i]->Get_Type()->C_Name();
+      srcfile << "* __p" << this->_input_args[i]->Get_Name();
+    }
+  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+    {
+      if(!first_one)
+	srcfile << ", ";
+      first_one = false;
+      srcfile << this->_output_args[i]->Get_Type()->C_Name();
+      srcfile << "* ";
+      srcfile << " __p" << this->_output_args[i]->Get_Name();
+    }
+  srcfile << ")" << endl;
+  srcfile << "{" << endl;
+  //
+  // pointer-interface <-> declare i/o objects
+  // print input side conversions.
+  //
+  srcfile << "MUTEX_DECL(" << this->Get_C_Mutex_Name()  << ");" << endl; 
+  srcfile << "MUTEX_LOCK(" << this->Get_C_Mutex_Name()  << ");" << endl; 
+  headerfile << "\n#define " << this->Get_C_Inner_Input_Args_Prepare_Macro() << " ";
+  for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+    {
+	string o_name =  this->_input_args[i]->Get_C_Name();
+	string n_name = "__p" + o_name;
+
+	Print_C_Declaration(o_name, static_flag,  this->_input_args[i]->Get_Type(), headerfile);
+	Print_C_Assignment(o_name, "(*" + n_name + ")", this->_input_args[i]->Get_Type(), headerfile);
+    }
+  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+    {
+	string o_name =  this->_output_args[i]->Get_C_Name();
+	string n_name = "__p" + o_name;
+	Print_C_Declaration(o_name, static_flag,  this->_output_args[i]->Get_Type(), headerfile);
+    }
+
+  this->Write_C_Object_Declarations(headerfile);
+  this->_statement_sequence->PrintC_Implicit_Declarations(headerfile);
+  srcfile <<  this->Get_C_Inner_Input_Args_Prepare_Macro() << "; " << endl;
+
+  this->_statement_sequence->PrintC(srcfile, headerfile);
+
+  // TODO pointer interface <-> output side conversions
+  headerfile << "\n#define " << this->Get_C_Inner_Output_Args_Prepare_Macro() << " ";
+  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+    {
+	string o_name =  this->_output_args[i]->Get_C_Name();
+	string n_name = "__p" + o_name;
+	Print_C_Assignment("(*" + n_name + ")", o_name,  this->_output_args[i]->Get_Type(), headerfile);
+    }
+  headerfile << ";" <<endl;
+  srcfile << this->Get_C_Inner_Output_Args_Prepare_Macro() << "; " << endl;
+
+  srcfile << "MUTEX_UNLOCK(" << this->Get_C_Mutex_Name()  << ");" << endl; 
+  srcfile << "}" << endl;
 
   // outer wrap function if all argument types are "native"
   bool all_types_native = this->Can_Have_Native_C_Interface();
@@ -405,71 +472,6 @@ void AaModule::Write_C_Source(ofstream& srcfile, ofstream& headerfile)
       srcfile << endl << endl;
     }
 
-
-  // inner wrap function.
-  srcfile << "void " 
-	<< this->Get_C_Inner_Wrap_Function_Name() 
-	<< "(";
-  bool first_one = true;
-  for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
-    {
-      if(!first_one)
-	srcfile << ", ";
-      first_one = false;
-      srcfile << this->_input_args[i]->Get_Type()->C_Name();
-      srcfile << "* __p" << this->_input_args[i]->Get_Name();
-    }
-  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
-    {
-      if(!first_one)
-	srcfile << ", ";
-      first_one = false;
-      srcfile << this->_output_args[i]->Get_Type()->C_Name();
-      srcfile << "* ";
-      srcfile << " __p" << this->_output_args[i]->Get_Name();
-    }
-  srcfile << ")" << endl;
-  srcfile << "{" << endl;
-  //
-  // pointer-interface <-> declare i/o objects
-  // print input side conversions.
-  //
-  srcfile << "MUTEX_DECL(" << this->Get_C_Mutex_Name()  << ");" << endl; 
-  srcfile << "MUTEX_LOCK(" << this->Get_C_Mutex_Name()  << ");" << endl; 
-  headerfile << "\n#define " << this->Get_C_Inner_Input_Args_Prepare_Macro() << " ";
-  for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
-    {
-	string o_name =  this->_input_args[i]->Get_C_Name();
-	string n_name = "__p" + o_name;
-	Print_C_Declaration(o_name, this->_input_args[i]->Get_Type(), headerfile);
-	Print_C_Assignment(o_name, "(*" + n_name + ")", this->_input_args[i]->Get_Type(), headerfile);
-    }
-  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
-    {
-	string o_name =  this->_output_args[i]->Get_C_Name();
-	string n_name = "__p" + o_name;
-	Print_C_Declaration(o_name, this->_output_args[i]->Get_Type(), headerfile);
-    }
-
-  this->Write_C_Object_Declarations(headerfile);
-  this->_statement_sequence->PrintC_Implicit_Declarations(headerfile);
-  srcfile <<  this->Get_C_Inner_Input_Args_Prepare_Macro() << "; " << endl;
-
-  this->_statement_sequence->PrintC(srcfile, headerfile);
-
-  // TODO pointer interface <-> output side conversions
-  headerfile << "\n#define " << this->Get_C_Inner_Output_Args_Prepare_Macro() << " ";
-  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
-    {
-	string o_name =  this->_output_args[i]->Get_C_Name();
-	string n_name = "__p" + o_name;
-	Print_C_Assignment("(*" + n_name + ")", o_name,  this->_output_args[i]->Get_Type(), headerfile);
-    }
-  headerfile << ";" <<endl;
-  srcfile << this->Get_C_Inner_Output_Args_Prepare_Macro() << "; " << endl;
-
-  srcfile << "MUTEX_UNLOCK(" << this->Get_C_Mutex_Name()  << ");" << endl; 
-  srcfile << "}" << endl;
 }
 
 void AaModule::Propagate_Constants()

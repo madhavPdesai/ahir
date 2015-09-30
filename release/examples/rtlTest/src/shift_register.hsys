@@ -1,0 +1,72 @@
+
+$system shift_register 
+	$in 
+		$pipe in_data 32 
+        $out 
+		$pipe out_data 32
+
+{
+        $pipe tmp 32
+
+	$thread   REPEATER
+		$in $pipe    rdata : $unsigned<32>
+		$out $pipe    wdata : $unsigned<32>
+
+		$signal data_reg : $unsigned<32>
+		$constant One_1: $unsigned<1> := ($unsigned<1>) _b1
+		$constant Z1: $unsigned<1> := ($unsigned<1>) _b0
+
+
+		$default 
+			$now rdata$req := Z1
+			$now wdata$req := Z1
+
+		<init>  {
+				data_reg := ($unsigned<32>) 0 
+			}
+		<reset>  {
+			$now rdata$req := One_1
+			$if (rdata$ack == One_1)
+			{
+
+				// note: wdata must be updated before emitting wreq.
+				$now wdata := rdata
+				$now wdata $req := One_1
+				$if (wdata $ack == One_1) 
+				{
+					$goto reset
+				}
+				$else
+				{
+				    $goto wait_state	
+				    data_reg := rdata
+				}
+			}
+			$else {
+				$goto reset
+			}
+		}
+		<wait_state>  {
+				$now wdata := data_reg
+				$now wdata $req := One_1
+				$if(wdata $ack == One_1)
+				{
+					$goto reset
+				}
+				$else
+				{
+					$goto wait_state
+				}
+		}
+	$now
+	$tick
+
+	
+	$string stage_0:REPEATER
+		rdata => in_data
+		wdata => tmp
+
+	$string stage_1:REPEATER
+		rdata => tmp
+		wdata => out_data
+}

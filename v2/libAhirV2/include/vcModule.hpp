@@ -235,12 +235,11 @@ class vcModule: public vcRoot
 	else 
 		return(this->Get_VHDL_Id());	
   }
-
   string Get_VHDL_Call_Interface_Port_Name(string pid);
   string Get_VHDL_Call_Interface_Port_Section(vcModule* m,
-					      string call_or_return,
-					      string pid,
-					      int idx);
+		  string call_or_return,
+		  string pid,
+		  int idx);
 
   string Print_VHDL_Tag_Interface_Ports(string semi_colon,ostream& ofile);
   void Print_VHDL_Argument_Signals(ostream& ofile);

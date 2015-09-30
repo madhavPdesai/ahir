@@ -9,7 +9,7 @@
 #define DECLARE_THREAD(x)  void* __##x();
 
 #define DEFINE_THREAD(x)  void* __##x() {  x(); }
-#define DEFINE_THREAD_WITH_ARG(x)  void* __##x(void* arg) {  x(arg); }
+#define DEFINE_THREAD_WITH_ARG(x,arg)  void* __##x(void* arg) {  x(arg); }
 
 #define PTHREAD_DECL(x)  pthread_t  __thread_##x;
 

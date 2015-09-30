@@ -27,27 +27,55 @@ using namespace std;
 #include <assert.h>
 #include <stdint.h>
 
+
+class rtlObject;
+class rtlThread;
+class rtlString;
+
 class hierRoot
 {
 	public:
+	int    _index;
+	int    _line_number;
 	string _id;
 	bool _error;
 	
-	hierRoot(string id) {_id = id; _error = false;}
+	hierRoot(string id);
+	hierRoot();
+
+	virtual void Set_Line_Number(int q) {_line_number = q;}
+	int Get_Line_Number() {return(_line_number);}
 
 	string Get_Id() {return(_id);}
+	int Get_Index() {return(_index);}
+
 	void Set_Error(bool v) {_error = true;}
 	bool Get_Error() {return(_error);}
 
-	void Report_Info(string err_msg) { cerr << "Info: " << err_msg << endl;}
-	void Report_Warning(string err_msg) { cerr << "Warning: " << err_msg << endl;}
-	void Report_Error(string err_msg) { cerr << "Error: " << err_msg << endl; this->Set_Error(true); }
+	void Report_Info(string err_msg)
+	{ 
+		cerr << "Info: " << err_msg << endl;
+	}
+	void Report_Warning(string err_msg)
+	{ 
+		cerr << "Warning: " << err_msg  <<  endl;
+	}
+	void Report_Error(string err_msg)
+	{ 
+		cerr << "Error: " << err_msg <<  endl; this->Set_Error(true); 
+	}
+	
+	virtual string Kind() {return("hierRoot");}
+	bool Is(string K) {return(K==this->Kind());}
+
+
+	virtual void Print(ostream& ofile) {assert(0);}
+	void Print(ofstream& ofile);
+	void Print(string& ostring);
 	
 };
 
-
 class hierSystem;
-
 class hierSystemInstance: public hierRoot
 {
 	public:
@@ -90,7 +118,7 @@ class hierSystemInstance: public hierRoot
 	}
 
 
-	void Print(ostream& ofile);
+	virtual void Print(ostream& ofile);
 	void Print_Vhdl(ostream& ofile);
 };
 
@@ -112,6 +140,15 @@ class hierSystem: public hierRoot
 	// pipes that are driven
 	set<string> _driven_pipes;
 	set<string> _driving_pipes;
+
+	map<string, rtlThread*> _thread_map;
+
+	//
+	// order is important (for generating C model).
+	//
+	map<string, rtlString*> _rtl_string_map;
+	vector<rtlString*> _rtl_strings;
+
 
 public:
 
@@ -141,6 +178,7 @@ public:
 	void List_Internal_Pipe_Names(vector<string>& pvec);
 	
 	
+
 
 	void Add_Signal(string pname)
 	{
@@ -333,11 +371,97 @@ public:
 		_child_map[child_id] = child;
 	}
 
+	//
+	// threads and thread-objects.
+	//
+	void Add_Thread(rtlThread* t);
+	void Add_String(rtlString* ti);
+
+	rtlThread* Find_Thread(string tname)
+	{
+		if(_thread_map.find(tname) != _thread_map.end())
+			return(_thread_map[tname]);
+		else
+			return(NULL);
+	}
+
+	rtlString* Find_String(string sname)
+	{
+		if(_rtl_string_map.find(sname) != _rtl_string_map.end())
+			return(_rtl_string_map[sname]);
+		else
+			return(NULL);
+	}
+
+	void List_Threads(vector<rtlThread*>& thread_vec)
+	{
+		for(map<string,rtlThread*>::iterator iter = _thread_map.begin(),
+				fiter = _thread_map.end(); iter != fiter; iter++)
+		{
+			thread_vec.push_back((*iter).second);
+		}
+	}
+
+	void List_Strings(vector<rtlString*>& string_vec)
+	{
+		
+		for(int I = 0, fI = _rtl_strings.size(); I < fI; I++)
+		{
+			string_vec.push_back(_rtl_strings[I]);
+		}
+	}	
+
+	
+	int Number_Of_Strings() {return(_rtl_strings.size());}
+	rtlString* Get_Rtl_String(int idx)
+	{
+		if((idx >= 0) && (idx < _rtl_strings.size()))
+			return(_rtl_strings[idx]);
+		else
+			return(NULL);
+	}
+
+
+	// C string ticker!
+	//   - print two functions for each 
+	//     thread
+	//         - run
+	//         - tick.
+	// these functions will be declared in the
+	// header and defined in the source file.
+	// 
+	// For each string, declare a data structure
+	// which encodes the string state (in the header file).
+	//
+	// Declare a ticker thread and define it in the
+	// source
+	//    - creates the string data structures
+	//    - runs an infinite loop
+	//         run-all-strings
+	//         tick-all-strings
+	//
+	// For each pipe mapped to an input of a string
+	//  - create an Aa2Rtl matcher structure and thread.
+	// 
+	// For each pipe mapped to an output of a string
+	// -  create an Rtl2Aa matcher structure.
+	//
+	// For each signal mapped to an input of a string
+	//  - create an Aa2Rtl matcher structure and thread.
+	// 
+	// For each signal mapped to an output of a string
+	// -  create an Rtl2Aa matcher structure.
+	//
+	// in start daemons, start the ticker and the individual
+	// threads for Rtl<->Aa matchers.
+	//
+	void Print_C_String_Ticker(ostream& header_file, ostream& src_file, vector<string>& match_daemons);
+
 	// return true if error found.
 	bool Check_For_Errors();
 
 	// print function.. reproduce description.
-	void Print(ostream& ofile);
+	virtual void Print(ostream& ofile);
 
 	// print VHDL
 	void Print_Vhdl_Port_Declarations(ostream& ofile);
@@ -356,4 +480,7 @@ bool getPipeInfoFromGlobals(string pname, map<string, pair<int,int> >& pmap, set
 
 void addPipeToGlobalMaps(string oname, map<string, pair<int,int> >& pipe_map, 
 				set<string>& signals, int pipe_width, int pipe_depth, bool is_signal);
+
+
+string IntToStr(int u);
 #endif

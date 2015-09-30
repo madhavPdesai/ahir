@@ -1,7 +1,7 @@
 $pipe in_data  : $uint<32> $depth 2
 $pipe out_data : $uint<32> $depth 2
 
-$module [tNot] $in (a: $uint<32>) $out (b: $uint<32>) $is
+$volatile $module [tNot] $in (a: $uint<32>) $out (b: $uint<32>) $is
 {
 	b := (~a)
 }
@@ -34,7 +34,7 @@ $module [volatile_check_daemon] $in() $out () $is
 			Y := ($concat X_L X_H)
 		out_data := Y
 
-		$call tNot (Y) (Z)
+		$volatile $call tNot (Y) (Z)
 
 		$while 1
 	}

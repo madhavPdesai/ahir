@@ -1,6 +1,7 @@
 #include <AaType.h>
 #include <AaValue.h>
 #include <AaObject.h>
+#include <AaModule.h>
 #include <AaExpression.h>
 #include <AaProgram.h>
 #include <Aa2C.h>
@@ -43,13 +44,20 @@ void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, 
 	}
 }
 
-void Print_C_Declaration(string obj_name, AaType* t, ofstream& ofile)
+void Print_C_Declaration(string obj_name, bool static_flag, AaType* t, ofstream& ofile)
 {
 	if(!t->Is_Pointer_Type())
 	{
 		if(t->Is_Integer_Type())
 		{
-			ofile << "__declare_bit_vector(" << obj_name << "," << t->Size() << ");" << __endl__;
+			if(static_flag)
+			{
+				ofile << "__declare_static_bit_vector(" << obj_name << "," << t->Size() << ");" << __endl__;
+			}
+			else
+			{
+				ofile << "__declare_bit_vector(" << obj_name << "," << t->Size() << ");" << __endl__;
+			}
 		}
 		else 
 		{
@@ -764,13 +772,18 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 			}
 			if(src1_type->Size() == 32)
 			{
-				ofile << "bit_vector_set_bit(&(" << tgt << "),0, fp32_unordered(" << src1 << "," << src2 << "));" 
+				ofile << "if(fp32_unordered(" << src1 << "," << src2 << ")) bit_vector_set(&(" << tgt << "));" 
+					<< " else bit_vector_clear(&(" << tgt << "));"
 					<< __endl__;
+				//ofile << "bit_vector_set_bit(&(" << tgt << "),0, fp32_unordered(" << src1 << "," << src2 << "));" 
+					//<< __endl__;
 			}
 			else if(src1_type->Size() == 64)
 			{
-				ofile << "bit_vector_set_bit(&(" << tgt << "),0, fp64_unordered(" << src1 << "," << src2 << "));" 
-					<< __endl__;
+				ofile << "if(fp64_unordered(" << src1 << "," << src2 << ")) bit_vector_set(&(" << tgt << "));" 
+					<< " else bit_vector_clear(&(" << tgt<< "));" << __endl__;
+				//ofile << "bit_vector_set_bit(&(" << tgt << "),0, fp64_unordered(" << src1 << "," << src2 << "));" 
+					//<< __endl__;
 			}
 			else
 			{

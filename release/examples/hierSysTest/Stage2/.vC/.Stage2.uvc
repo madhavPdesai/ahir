@@ -195,13 +195,19 @@ $delay MUL_u32_u32_17_inst 1
 +[ADD_u32_u32_19_inst] (MUL_u32_u32_17_wire konst_18_wire_constant) (ADD_u32_u32_19_wire) 
 $delay ADD_u32_u32_19_inst 1
 &/ [array_obj_ref_20_index_0_resize] (ADD_u32_u32_19_wire) (ADD_u32_u32_19_resized) 
+ $flowthrough 
 &/ [array_obj_ref_20_index_0_rename] (ADD_u32_u32_19_resized) (ADD_u32_u32_19_scaled) 
+ $flowthrough 
 &/ [array_obj_ref_20_index_offset] (ADD_u32_u32_19_scaled) (array_obj_ref_20_final_offset) 
+ $flowthrough 
 &/ [array_obj_ref_20_root_address_inst] (array_obj_ref_20_final_offset) (array_obj_ref_20_root_address) 
+ $flowthrough 
 &/ [array_obj_ref_20_addr_0] (array_obj_ref_20_root_address) (array_obj_ref_20_word_address_0) 
+ $flowthrough 
 $load [array_obj_ref_20_load_0] $from memory_space_1 (array_obj_ref_20_word_address_0) (array_obj_ref_20_data_0) 
 $delay array_obj_ref_20_load_0 2
 &/ [array_obj_ref_20_gather_scatter] (array_obj_ref_20_data_0) (data) 
+ $flowthrough 
 } // end data-path
 // 	data := default_mem_pool[((address * 1 ) + 0 )]
 
@@ -387,13 +393,19 @@ $delay MUL_u32_u32_28_inst 1
 +[ADD_u32_u32_30_inst] (MUL_u32_u32_28_wire konst_29_wire_constant) (ADD_u32_u32_30_wire) 
 $delay ADD_u32_u32_30_inst 1
 &/ [array_obj_ref_31_index_0_resize] (ADD_u32_u32_30_wire) (ADD_u32_u32_30_resized) 
+ $flowthrough 
 &/ [array_obj_ref_31_index_0_rename] (ADD_u32_u32_30_resized) (ADD_u32_u32_30_scaled) 
+ $flowthrough 
 &/ [array_obj_ref_31_index_offset] (ADD_u32_u32_30_scaled) (array_obj_ref_31_final_offset) 
+ $flowthrough 
 &/ [array_obj_ref_31_root_address_inst] (array_obj_ref_31_final_offset) (array_obj_ref_31_root_address) 
+ $flowthrough 
 &/ [array_obj_ref_31_addr_0] (array_obj_ref_31_root_address) (array_obj_ref_31_word_address_0) 
+ $flowthrough 
 $store [array_obj_ref_31_store_0] $to memory_space_1 (array_obj_ref_31_word_address_0 array_obj_ref_31_data_0) 
 $delay array_obj_ref_31_store_0 2
 &/ [array_obj_ref_31_gather_scatter] (data) (array_obj_ref_31_data_0) 
+ $flowthrough 
 } // end data-path
 // 	default_mem_pool[((address * 1 ) + 0 )] := data
 
@@ -451,7 +463,7 @@ $T [cr] $T [ca]
 }
 RPIPE_TMP_39_sample_start_ &-> (RPIPE_TMP_39_Sample)
 RPIPE_TMP_39_sample_completed_ <-& (RPIPE_TMP_39_Sample)
-RPIPE_TMP_39_sample_completed_ &-> ($null)
+RPIPE_TMP_39_update_start_ <-& (RPIPE_TMP_39_sample_completed_)
 RPIPE_TMP_39_update_start_ &-> (RPIPE_TMP_39_Update)
 RPIPE_TMP_39_update_completed_ <-& (RPIPE_TMP_39_Update)
 // Target expression
@@ -462,6 +474,8 @@ RPIPE_TMP_39_update_completed_ <-& (RPIPE_TMP_39_Update)
 
 // load-store dependencies..
 // pipe read/write dependencies for pipe TMP
+// read-dependencies for pipe TMP
+// write-dependencies for pipe TMP
 }
 assign_stmt_40__entry__ |-> (assign_stmt_40)
 assign_stmt_40__exit__ <-| (assign_stmt_40)
@@ -494,7 +508,7 @@ $T [req] $T [ack]
 }
 WPIPE_B_41_sample_start_ &-> (WPIPE_B_41_Sample)
 WPIPE_B_41_sample_completed_ <-& (WPIPE_B_41_Sample)
-WPIPE_B_41_sample_completed_ &-> ($null)
+WPIPE_B_41_update_start_ <-& (WPIPE_B_41_sample_completed_)
 WPIPE_B_41_update_start_ &-> (WPIPE_B_41_Update)
 WPIPE_B_41_update_completed_ <-& (WPIPE_B_41_Update)
 WPIPE_B_41_sample_start_ <-& (R_x_42_update_completed_)
@@ -502,6 +516,8 @@ WPIPE_B_41_sample_start_ <-& (R_x_42_update_completed_)
 
 // load-store dependencies..
 // pipe read/write dependencies for pipe B
+// read-dependencies for pipe B
+// write-dependencies for pipe B
 }
 assign_stmt_43__entry__ |-> (assign_stmt_43)
 assign_stmt_43__exit__ <-| (assign_stmt_43)
@@ -566,7 +582,6 @@ $ioport $in [RPIPE_TMP_39_inst] (TMP) (x_40)
 //  file ./.Aa//linked.opt.aa, line 38
 // B
 $ioport $out [WPIPE_B_41_inst]  (x_40) (B) 
- $buffering $in WPIPE_B_41_inst x_40 1
 } // end data-path
 // CP-DP links for merge  
 //  file ./.Aa//linked.opt.aa, line 35

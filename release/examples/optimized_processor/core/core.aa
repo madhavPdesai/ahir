@@ -1,0 +1,267 @@
+$volatile $module [is_branch] $in (instr: $uint<16>) $out (is_branch_instr: $uint<1>) $is
+{
+	$volatile op := ($slice instr 15 12)
+	$volatile op_8 := (op == 8)
+	$volatile op_9 := (op == 9)
+	$volatile op_10 := (op == 10)
+	is_branch_instr := ($reduce | op_8 op_9 op_10)
+}
+
+
+// fetch and fetch and fetch and fetch
+$module [fetch_daemon] $in () $out () $is
+{
+  start_pc := env_to_processor_start_pc
+  $report (fetch_daemon fetch_daemon_start__  start_pc start_pc)
+  $branchblock [body] 
+  {
+	$dopipeline $depth 8 $buffering 2 $fullrate 
+		$merge $entry $loopback 
+			$phi pc := start_pc $on $entry npc $on $loopback
+			$phi use_branch_pc := Z1 $on $entry next_use_branch_pc $on $loopback
+			$phi i_count := O16 $on $entry next_i_count $on $loopback
+		$endmerge 
+
+		$guard (use_branch_pc)  branch_pc := writeback_to_fetch
+		
+		fetch_pc := ($mux use_branch_pc branch_pc pc)
+
+		// 
+		$report (fetch_daemon fetch_pc  fetch_pc fetch_pc use_branch_pc use_branch_pc branch_pc branch_pc pc pc)
+
+		// fetch 4 
+		cpu_to_mem_instr_access_command :=  fetch_pc
+		cpu_to_mem_instr_access_command :=  (fetch_pc+1)
+		cpu_to_mem_instr_access_command :=  (fetch_pc+2)
+		cpu_to_mem_instr_access_command :=  (fetch_pc+3)
+
+		I0 := mem_to_cpu_instr_access_response
+		I1 := mem_to_cpu_instr_access_response
+		I2 := mem_to_cpu_instr_access_response
+		I3 := mem_to_cpu_instr_access_response
+
+		$report (fetch_daemon fetched_instructions  I0 I0 I1 I1 I2 I2 I3 I3)
+
+		$volatile $call is_branch (I0) (i0_branch)
+		$volatile $call is_branch (I1) (i1_branch)
+		$volatile $call is_branch (I2) (i2_branch)
+		$volatile $call is_branch (I3) (i3_branch)
+	
+		fetch_to_decode := 	($concat i_count fetch_pc I0)
+		$guard (~i0_branch) 
+			fetch_to_decode := 	($concat (i_count+1) (fetch_pc+1) I1)
+		issue_i2 := ((~i0_branch) & (~i1_branch))
+		$guard (issue_i2)
+			fetch_to_decode := 	($concat (i_count+2) (fetch_pc+2) I2)
+		issue_i3 := ($reduce & (~i0_branch)  (~i1_branch) (~i2_branch))
+		$guard (issue_i3)
+			fetch_to_decode := 	($concat (i_count+3) (fetch_pc+3) I3)
+
+			
+		$volatile npc := (fetch_pc + 
+					($prioritymux
+							issue_i3	4
+							issue_i2 	3
+							(~i0_branch)	2
+							$default	1))
+		$volatile next_i_count := (i_count + 
+						($prioritymux
+							issue_i3	4
+							issue_i2 	3
+							(~i0_branch)	2
+							$default	1))
+
+		$volatile next_use_branch_pc := ($reduce |  i0_branch i1_branch i2_branch i3_branch)
+
+	$while 1
+  }
+}
+
+$module [decode_daemon] $in () $out () 
+$is 
+{
+   $branchblock[lOoP] {
+		$dopipeline $depth 8 $buffering 2 $fullrate
+
+		$merge $entry $loopback $endmerge
+
+		cmd := fetch_to_decode
+		$split (cmd 16 16 16) (i_count pc instr)
+
+		$report (decode_daemon from_fetch i_count i_count pc pc instr instr)
+
+   		$volatile op := ($slice instr 15 12)
+   		$volatile r1 := ($slice instr 11 8) 
+   		$volatile r2 := ($slice instr 7 4) 
+   		$volatile r3 := ($slice instr 3 0)
+   		$volatile imm := (instr & 255)
+   		$volatile offs := ($mux (imm > 127)  (128 - imm) imm)
+
+    		$volatile op_0 := (op == 0)
+    		$volatile op_1 := (op == 1)
+    		$volatile op_2 := (op == 2)
+    		$volatile op_3 := (op == 3)
+    		$volatile op_4 := (op == 4)
+    		$volatile op_5 := (op == 5)
+    		$volatile op_6 := (op == 6)
+    		$volatile op_7 := (op == 7)
+    		$volatile op_8 := (op == 8)
+    		$volatile op_9 := (op == 9)
+    		$volatile op_10 := (op == 10)
+    		$volatile op_14 := (op == 14)
+
+    		$volatile rr1 := ($reduce | op_4 op_5 op_6 op_9 op_10 op_14)
+    		$volatile rr2 := ($reduce | op_1 op_2  op_3  op_4  op_7)
+    		$volatile rr3 := ($reduce | op_1 op_2 op_3 op_4)
+    		$volatile wr1 := ($reduce | op_1 op_2 op_3  op_5 op_6 op_7)
+    	
+		// read-a-reg
+        	$volatile read_or_lock_reg_flag := ($reduce | rr1 rr2 rr3 wr1)
+		$volatile rcmd := ($concat i_count r1 rr1 wr1 r2 rr2 r3 rr3)
+		$guard (read_or_lock_reg_flag) 
+			reg_read_access_command := rcmd
+
+		decode_to_exec := ($concat
+					i_count 
+					read_or_lock_reg_flag
+					pc
+					op_0 op_1 op_2 op_3 op_4 op_5 op_6 op_7 op_8 op_9 op_10 op_14
+					r1 r2 r3 imm offs)
+
+		$while 1
+   }
+}
+
+$module [execute_daemon] $in () $out () $is
+{
+    $branchblock [lOoP] {
+
+      $dopipeline $depth 16 $buffering 2 $fullrate
+	$merge $entry $loopback $endmerge
+
+
+	iinfo := decode_to_exec
+        $volatile $split 
+		(iinfo  16
+			1 16
+			1 1 1 1   1 1 1 1   1 1 1 1
+			4 4 4 16 16 )
+		( i_count
+		  read_or_lock_reg_flag pc
+		  op_0 op_1 op_2 op_3 op_4 op_5 op_6 op_7 op_8 op_9 op_10 op_14 
+				r1 r2 r3 imm offs)
+
+
+	$report (execute_daemon from_decode 
+				i_count i_count
+				read_regs read_or_lock_reg_flag
+				pc pc 
+				op_0  op_0
+				op_1  op_1
+				op_2  op_2
+				op_3  op_3
+				op_4  op_4
+				op_5  op_5 
+				op_6  op_6
+				op_7  op_7 
+				op_8  op_8
+				op_9  op_9  
+				op_10 op_10 
+				op_14 op_14
+				r1    r1
+				r2    r2
+				r3    r3
+				imm   imm
+				offs  offs
+		)
+
+    	$volatile wr1 := ($reduce | op_1 op_2 op_3  op_5 op_6 op_7)
+
+    	$volatile wr_mem := op_4
+    	$volatile rd_mem := ($reduce | op_3 op_8)
+	
+	$guard (read_or_lock_reg_flag) 
+		rrsp := reg_read_access_response
+
+	$volatile $split (rrsp 16 16 16 16) (r_i_count r1_val r2_val r3_val)
+	$guard (read_or_lock_reg_flag)
+		$report (execute_daemon reg_read_response r_i_count r_i_count r1_val r1_val r2_val r2_val r3_val r3_val)
+
+    	$guard (op_3) mem_address_1 := (r2_val + r3_val)
+    	$guard (op_8) mem_address_2 := (pc + 1)
+
+    	$volatile mem_address := ($excmux (op_3 | op_4) mem_address_1 op_8 mem_address_2)
+    	$volatile mem_write_data := r1_val
+    	$volatile amem := (wr_mem | rd_mem)
+
+    	$guard (amem) cpu_to_mem_data_access_command := ($concat rd_mem mem_address mem_write_data)
+	
+    	$guard (op_0) processor_to_env_halt := 1
+
+    	$volatile alu_val 
+		:= ($mux ($reduce | op_1 op_2 op_5 op_6 op_7)
+			($excmux 
+				op_1   (r1_val + r3_val)
+				op_2   (r2_val - r3_val) 
+				op_5   ((r1_val & _b1111111100000000) | imm)
+				op_6   ((r1_val & _b0000000011111111) | (imm << 8))
+				op_7   r2_val
+		    	)  r1_val)
+
+	exec_to_writeback  := ($concat i_count rd_mem wr1 r1 alu_val op_3 op_8 op_9 op_10 op_14 pc offs)
+
+	$while 1
+      }
+}
+
+
+$module [writeback_daemon] $in () $out () $is
+{
+    $branchblock[lOoP] {
+
+	$dopipeline $depth 16 $buffering 2 $fullrate
+
+	$merge $entry $loopback $endmerge 
+	cmd := exec_to_writeback
+	$volatile $split (cmd 16 1 1 4 16 1 1 1 1 1 16 16)
+			(i_count rd_mem wr1 r1 alu_val op_3 op_8 op_9 op_10 op_14 pc offs)
+
+	$report (writeback_daemon from_exec 
+				i_count i_count
+				rd_mem rd_mem
+				wr1 	wr1
+				r1      r1
+				alu_val alu_val
+				op_3    op_3
+				op_8    op_8
+				op_9    op_9
+				op_10   op_10
+				op_14   op_14
+				pc 	pc
+				offs    offs)
+
+	$guard (rd_mem) mem_read_data := mem_to_cpu_data_access_response
+	$guard (rd_mem) $report (writeback_daemon mem_read_response mem_read_data mem_read_data)
+
+	$volatile skip_mem := (wr1 & (~rd_mem))
+	$guard (skip_mem) reg_write_access_command := ($concat i_count r1 alu_val)
+	$guard (op_3)     reg_write_access_command := ($concat i_count r1 mem_read_data)
+
+
+    	$volatile npc := ($mux 
+			   ($reduce | op_8 op_9 op_10) 
+				($excmux 
+					op_8 mem_read_data 
+					op_9 ((pc  + offs) + alu_val)
+					op_10 ($mux (alu_val == 0) (pc + offs)  (pc + 1)))
+			   (pc + 1)
+			 )
+
+	$volatile is_branch_instr := ($reduce | op_8 op_9 op_10)
+
+	$guard (is_branch_instr) writeback_to_fetch := npc
+
+    	$guard (op_14) out_port := alu_val
+     $while 1
+   }
+}

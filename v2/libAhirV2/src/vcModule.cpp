@@ -724,6 +724,8 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		ofile << "signal " << cp_exit_symbol << ": Boolean;" << endl;
 	}
 
+
+
 	ofile << "-- volatile/operator module components. " << endl;
 	for(set<vcModule*>::iterator mciter = _called_modules.begin(), fmciter = _called_modules.end();
 			mciter != fmciter; mciter++)
@@ -745,10 +747,11 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 
 		if(mc->Get_Volatile_Flag() || mc->Get_Operator_Flag())
 			mc->Print_VHDL_Component(ofile);
-
 	}
 
 	// print link signals between CP and DP
+	if(!volatile_form)
+	{
 	ofile << "-- links between control-path and data-path" << endl;
 	for(set<vcTransition*>::iterator iter = _linked_transition_set.begin();
 			iter != _linked_transition_set.end();
@@ -760,6 +763,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 			ofile << "signal " << (*iter)->Get_CP_To_DP_Symbol() << " : boolean;" << endl;
 	}
 	ofile << endl;
+	}
 
 
 	// print link signals between DP and Memories within the module

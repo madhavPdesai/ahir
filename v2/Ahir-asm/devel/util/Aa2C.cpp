@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 
   if(argc < 2)
     {
-      cerr << "Usage: Aa2C [-I ext-storage-object] [-T top-module]* [-P c-fn-prefix]  <filename> (<filename>) ... " << endl;
+      cerr << "Usage: Aa2C [-I ext-storage-object] [-T top-module]* [-P c-fn-prefix] [-o <output-directory>]  <filename> (<filename>) ... " << endl;
       exit(1);
     }
 

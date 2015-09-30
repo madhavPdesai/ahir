@@ -182,6 +182,7 @@ void AaExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* se
 	}
 }
 
+
 void AaExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {
@@ -447,7 +448,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			ofile << "$T [cr] $T [ca] " << endl;
 			ofile << "}" << endl;
 
-			__ConnectSplitProtocolPattern;
+			__ConnectChainedSplitProtocolPattern;
 
 			// record the pipe!  Introduce pipe related dependencies 
 			// later. 
@@ -456,10 +457,12 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			if(pipeline_flag)
 			{
 				//
-				// SelfRelease (only the UST part).
+				// SelfRelease (only the UST part is needed..).
 				// the sample part does not need to be reenabled.
-				//
-  				__MJ(__UST(this),__UCT(this),true);
+				// __MJ(__UST(this),__UCT(this),true);
+				// however other logic depends on strict reenabling.
+				// 
+				__SelfReleaseSplitProtocolPattern
 			}
 		}
 
@@ -556,13 +559,44 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 
 		if(pipeline_flag)
 		{
-			// only the sample pair.
-  			__MJ(__SST(this),__SCT(this),false);
+			//
+			// only the sample pair is needed..
+  			// __MJ(__SST(this),__SCT(this),false);
+			// However, both are released to guarantee
+			// correct sequencing to guard logic.
+			//
+			__SelfReleaseSplitProtocolPattern
 		}
 
 
 		pipe_map[this->_object->Get_VC_Name()].push_back(this);
 	}
+}
+
+void AaSimpleObjectReference::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
+		set<AaRoot*>& visited_elements, ostream& ofile)
+{
+		
+	this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
+	/*  Not necessary..  split release will take care of this..
+	if(this->_object->Is("AaPipeObject"))
+	{
+		if(this->Get_Is_Target())
+		{
+			// update from sample complete.
+			expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+		}
+		else
+		{
+			// update complete has delay, so bypass reenable if possible..
+			expr->Write_VC_Update_Reenables(__UCT(this), true, visited_elements, ofile);
+		}
+	}
+	else
+	{
+		this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
+	}
+	*/
 }
 
 // AaArrayObjectReference

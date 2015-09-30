@@ -12,12 +12,21 @@ header "post_include_cpp" {
 }
 
 header "post_include_hpp" {
+#include <limits.h>
 #include <hierSystem.h>
+#include <rtlEnums.h>
+#include <rtlType.h>
+#include <rtlExpression.h>
+#include <rtlObject.h>
+#include <Value.hpp>
+#include <rtlValue.h>
+#include <rtlStatement.h>
+#include <rtlThread.h>
 #include <antlr/RecognitionException.hpp>
 	ANTLR_USING_NAMESPACE(antlr)
 #include <map>
 #include <set>
-
+#define _sLine_(u,v) {if(u != NULL) ((hierRoot*) u)->Set_Line_Number(v->getLine());}
 
 }
 
@@ -61,7 +70,11 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 
 { 
 	sys =  NULL;
-	hierSystemInstance* subsys = NULL;
+
+	hierSystemInstance* subsys    = NULL;
+	rtlThread*   subthread = NULL;
+	rtlString*   ti = NULL;
+
 	bool signal_flag = false;
 	string lib_id = "work";
 	int depth = 1;
@@ -73,6 +86,7 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 		(LIBRARY libid: SIMPLE_IDENTIFIER {lib_id = libid->getText();})? 
 		{
 			sys = new hierSystem(sysid->getText());
+			_sLine_(sys,sysid);
 			sys->Set_Library(lib_id);
 		}
 	)
@@ -168,19 +182,48 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 
 	(
 
-		subsys = hier_System_Instance[sys, sys_vector, global_pipe_map, global_pipe_signals] 
-		{
-			if(subsys != NULL)
-				sys->Add_Child(subsys);
-			else
+		(
+
+			subsys = hier_System_Instance[sys, sys_vector, global_pipe_map, global_pipe_signals] 
 			{
-				sys->Report_Error("null subsystem instance ");
+				if(subsys != NULL)
+					sys->Add_Child(subsys);
+				else
+				{
+					sys->Report_Error("null subsystem instance ");
+				}
+				subsys = NULL;
 			}
-		}
+		) |
+		(   
+			subthread = rtl_Thread[sys]
+			{
+				if(subthread != NULL)
+					sys->Add_Thread(subthread);
+				else
+				{
+					sys->Report_Error("null subsystem thread ");
+				}
+
+				subthread = NULL;
+			}
+		) |
+		(
+			ti = rtl_String[sys]
+			{
+				if(ti != NULL)
+					sys->Add_String(ti);
+				else
+				{
+					sys->Report_Error("null thread instance ");
+				}
+			}
+		)
 	)*
 
 	RBRACE
 ;
+
 
 
 hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<string, pair<int,int> >& global_pipe_map,
@@ -240,35 +283,532 @@ hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<strin
 
 hier_system_Pipe_Declaration[map<string, pair<int,int> >& pipe_map, set<string>& signals] 
 {
-            vector<string> oname_list;
-            int pipe_depth = 1;
-	    int pipe_width = 0;
+    vector<string> oname_list;
+    int pipe_depth = 1;
+    int pipe_width = 0;
 
-	    bool lifo_flag = false;
-	    bool in_mode = false;
-	    bool out_mode = false;
-	    bool is_port = false;
-	    bool is_signal = false;
-	    bool is_synch  = false;
- }
-        :       (lid:LIFO { std::cerr << "Warning: lifo flag ignored.. line number " << lid->getLine() << endl; })? 
+    bool lifo_flag = false;
+    bool in_mode = false;
+    bool out_mode = false;
+    bool is_port = false;
+    bool is_signal = false;
+    bool is_synch  = false;
+}
+    :       (lid:LIFO { std::cerr << "Warning: lifo flag ignored.. line number " << lid->getLine() << endl; })? 
 		PIPE 
 		(psid:SIMPLE_IDENTIFIER {oname_list.push_back(psid->getText());})+
-		COLON UINT LESS_THAN wid:UINTEGER GREATER_THAN  
-			{pipe_width = atoi(wid->getText().c_str());} 
-        	(DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
+		COLON UINT LESS wid:UINTEGER GREATER  
+        {pipe_width = atoi(wid->getText().c_str());} 
+        (DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
 		(SIGNAL {is_signal = true;})?
         {
-	    for(int I = 0, fI = oname_list.size(); I < fI; I++)
-	    {
-		string oname = oname_list[I];
+            for(int I = 0, fI = oname_list.size(); I < fI; I++)
+                {
+                    string oname = oname_list[I];
+                    
+                    addPipeToGlobalMaps(oname, pipe_map, signals,  pipe_width, pipe_depth, is_signal);
+
+                }
+
+        }
+    ;
+
+// thread.
+rtl_Thread[hierSystem* sys] returns [rtlThread* t]
+{
+	t = NULL;
+	vector<pair<string,int> > def_params;
+}:
+        THREAD tname:SIMPLE_IDENTIFIER {t = new rtlThread(sys, tname->getText());}
+        (rtl_ObjectDeclaration[t])*
+	rtl_DefaultStatementBlock[t]
+        (rtl_LabeledBlockStatement[t])+
+
+	rtl_ImmediateStatementBlock[t]
+	rtl_TickStatementBlock[t]
+
+    ;
+
+
+
+rtl_DefaultStatementBlock[rtlThread* t] 
+{
+	rtlStatement* stmt = NULL;
+}:
+	DEFAULT
+		(((stmt = rtl_AssignStatement[t]) | (stmt = rtl_LogStatement[t]))  { t->Add_Default_Statement(stmt); } )*
+;
+
+
+rtl_ImmediateStatementBlock[rtlThread* t] 
+{
+	rtlStatement* stmt = NULL;
+}:
+	NOW
+		(((stmt = rtl_AssignStatement[t]) | (stmt = rtl_LogStatement[t]))  { t->Add_Immediate_Statement(stmt); } )*
+;
+
+rtl_TickStatementBlock[rtlThread* t] 
+{
+	rtlStatement* stmt = NULL;
+}:
+	TICK
+		(((stmt = rtl_AssignStatement[t]) | (stmt = rtl_LogStatement[t]) | (stmt = rtl_IfStatement[t]))  { t->Add_Tick_Statement(stmt); } )*
+;
+
+rtl_String[hierSystem* sys] returns [rtlString* ti]
+{
+	ti = NULL;
+
+	string actual;
+	string formal_group;
+
+}:
+        STRING 
+		inst_name_id: SIMPLE_IDENTIFIER
+		COLON
+		thread_name_id: SIMPLE_IDENTIFIER
+        	{ 
+			rtlThread* bt = sys->Find_Thread(thread_name_id->getText());
+            		if (bt == NULL)
+			{
+                    		sys->Report_Error("Error: could not find base thread " + 
+                                      thread_name_id->getText() + " in system " + sys->Get_Id());
 			
-		addPipeToGlobalMaps(oname, pipe_map, signals,  pipe_width, pipe_depth, is_signal);
+			}
+			else
+			{
+                    		ti = new rtlString(inst_name_id->getText(), bt);
+			}
+		}
 
-	   }
+		(
+		formal_id: SIMPLE_IDENTIFIER { formal_group = formal_id->getText();}
+			IMPLIES actual_id:SIMPLE_IDENTIFIER 
+			{
+				actual = actual_id->getText();
+				if(ti != NULL)
+					ti->Add_Port_Map_Entry(formal_group, actual);
+			}
+		)*
+    ;
 
+
+// rtl-object declaration
+rtl_ObjectDeclaration[rtlThread* t]
+{
+	bool variable_flag = false;
+	bool constant_flag = false;
+	bool signal_flag = false;
+	bool in_flag = false;
+	bool out_flag = false;
+	rtlObject* obj = NULL;
+	rtlType* type = NULL;
+	vector<string> names;
+	vector<string> init_values;
+	rtlExpression* init_expr = NULL;
+	rtlValue* init_value = NULL;
+	bool pipe_flag = false;
+}:
+        (
+            (VARIABLE {variable_flag  = true;}) |
+		(CONSTANT {constant_flag  = true;}) |
+		(SIGNAL   {signal_flag    = true;})  |
+		(IN (PIPE {pipe_flag = true;})?  {in_flag = true;}) |
+		(OUT (PIPE {pipe_flag = true;})? {out_flag = true;})
+	)
+	( sid: SIMPLE_IDENTIFIER {names.push_back(sid->getText());} )+
+        COLON
+        (type = rtl_Type_Declaration[t])
+        (ASSIGNEQUAL init_expr=rtl_Expression[t,type] {init_expr->Evaluate(t); init_value = init_expr->Get_Value();})?
+
+{
+	for(int I = 0, fI = names.size(); I < fI; I++)
+	{
+		string obj_name = names[I];
+		obj = NULL;
+		if(variable_flag) 
+		{
+			obj = new rtlVariable(obj_name, type); 
+		}
+		else if(signal_flag)
+		{
+			obj = new rtlSignal(obj_name, type); 
+		}
+		else if(in_flag)
+		{
+			obj = new rtlInPort(pipe_flag, obj_name, type); 
+		}
+		else if(out_flag)
+		{
+			obj = new rtlOutPort(pipe_flag, obj_name, type); 
+		}
+		else if(constant_flag)
+		{
+			if(init_value == NULL)
+				t->Get_Parent()->Report_Error("initial value of constant " + obj_name + " could not be evaluated ");
+			else
+				obj = new rtlConstant(obj_name, type, init_value);
+		}
+		if(obj != NULL)
+			t->Add_Object(obj);
 	}
-        ;
+}
+
+;
+
+
+
+
+// rtl-statement
+rtl_SimpleStatement[rtlThread* t] returns [rtlStatement* stmt]
+:
+( (stmt=rtl_AssignStatement[t]) |
+  (stmt=rtl_NullStatement[t]) |
+  (stmt=rtl_LogStatement[t]) |
+  (stmt=rtl_GotoStatement[t])  |
+  (stmt=rtl_IfStatement[t]) )
+
+;
+
+
+// assignment statement
+rtl_AssignStatement[rtlThread* t] returns [rtlStatement* stmt]
+{
+	rtlExpression* tgt = NULL;
+	rtlExpression* src = NULL;
+	bool volatile_flag = false;
+}:
+
+(NOW {volatile_flag = true;})?
+(tgt = rtl_Expression[t,NULL])
+	aid: ASSIGNEQUAL
+(src = rtl_Expression[t,NULL])
+{
+	tgt->Set_Is_Target(true);
+	stmt = new rtlAssignStatement(t,volatile_flag, tgt, src);
+	_sLine_(stmt,aid);
+}
+;
+
+rtl_NullStatement[rtlThread* t]  returns [rtlStatement* stmt]
+{
+}:
+NuLL 
+{
+	stmt = new rtlNullStatement(t);
+	//_sLine_(stmt, nid);
+}
+;
+
+rtl_GotoStatement[rtlThread* t] returns [rtlStatement* stmt]
+{
+	string lbl;
+}:
+GOTO sid: SIMPLE_IDENTIFIER 
+{
+	lbl = sid->getText();
+	stmt  = new rtlGotoStatement(t, lbl);
+	_sLine_(stmt, sid);
+}
+;
+
+rtl_LogStatement[rtlThread* t] returns [rtlStatement* stmt]
+{
+	string lbl;
+}:
+LOG sid:SIMPLE_IDENTIFIER 
+{
+	rtlObject* obj = t->Find_Object(sid->getText());
+	stmt  = new rtlLogStatement(t, obj);
+	_sLine_(stmt, sid);
+};
+
+
+rtl_BlockStatement[rtlThread* t] returns [rtlBlockStatement* stmt]
+{
+	rtlStatement* astmt = NULL;
+	vector<rtlStatement*> stmts;
+}:
+LBRACE
+( astmt = rtl_SimpleStatement[t] {stmts.push_back(astmt); astmt = NULL;})+
+RBRACE
+{
+	stmt = new rtlBlockStatement(t, stmts);
+	}
+;
+
+rtl_IfStatement[rtlThread* t] returns [rtlStatement* stmt]
+{
+	rtlExpression* test_expr = NULL;
+	rtlBlockStatement* if_block = NULL;
+	rtlBlockStatement* else_block = NULL;
+}
+:
+	IF (test_expr = rtl_Expression[t,NULL])  
+        if_block  = rtl_BlockStatement[t]
+	(ELSE 
+            else_block = rtl_BlockStatement[t]
+        )?
+	{ 
+		stmt = (rtlStatement*) new rtlIfStatement(t, test_expr, if_block, else_block);
+	}
+;
+
+rtl_LabeledBlockStatement[rtlThread* t]
+{
+	rtlStatement* astmt = NULL;
+	rtlLabeledBlockStatement* bstmt = NULL;
+	vector<rtlStatement*> stmts;
+	string lbl;
+}:
+	lbl  = rtl_Label
+	LBRACE
+		( astmt = rtl_SimpleStatement[t] {stmts.push_back(astmt); astmt = NULL;})+
+	RBRACE
+	{
+		bstmt = new rtlLabeledBlockStatement(t, lbl, stmts);
+		t->Add_Statement(bstmt);
+	}
+;
+
+rtl_Expression[rtlThread* t, rtlType* type] returns [rtlExpression* expr]
+{
+	expr = NULL;
+}
+:
+	( (expr = rtl_Constant_Literal_Expression[t,type]) |
+		(expr = rtl_Object_Reference[t]) | 
+		   (expr = rtl_Slice_Expression[t]) | 
+			(expr = rtl_Unary_Expression[t]) |
+				(expr = rtl_Binary_Expression[t]) |
+					(expr = rtl_Ternary_Expression[t]) )
+;
+
+
+//
+// ($signed<5>) _b11010
+// ($array[2][2] $of $integer) 0 1 2 3
+//
+rtl_Constant_Literal_Expression[rtlThread* thrd,rtlType* itype] returns [rtlExpression* expr]
+{
+	vector<string> init_values;
+	rtlType* t = NULL;
+}:
+	lpid:LPAREN t = rtl_Type_Declaration[thrd] {assert((itype == NULL) || (t == itype));}  RPAREN
+	( (iid: UINTEGER {init_values.push_back(iid->getText());}) |
+		(bid: BINARY {init_values.push_back(bid->getText());}) |
+			(hid : HEXADECIMAL {init_values.push_back(hid->getText());}))
+	(COMMA ( (iidn: UINTEGER {init_values.push_back(iidn->getText());}) |
+		(bidn: BINARY {init_values.push_back(bidn->getText());}) |
+			(hidn : HEXADECIMAL {init_values.push_back(hidn->getText());})))*
+	{
+		rtlValue* v = Make_Rtl_Value(t, init_values);
+		expr = new rtlConstantLiteralExpression(t, v);
+		_sLine_(expr, lpid);
+	}	
+;
+
+
+rtl_Object_Reference[rtlThread* t] returns [rtlExpression* expr]
+{
+	string obj_name;
+	vector<rtlExpression*> indices;	
+	bool array_flag = false;
+	rtlExpression* iexpr = NULL;
+	bool req_flag = false;
+	bool ack_flag = false;
+}:
+	sid: SIMPLE_IDENTIFIER {obj_name = sid->getText();}
+
+	(( REQ {req_flag = true;}) | (ACK {ack_flag = true;}))?
+
+	(LBRACKET ( iexpr = rtl_Expression[t,NULL] {array_flag = true; indices.push_back(iexpr); iexpr = NULL;} )+ RBRACKET)?
+	{
+		rtlObject* obj = t->Find_Object(obj_name);
+		if(obj == NULL)
+			t->Report_Error("object " + obj_name + " not found in thread " + t->Get_Id());
+		
+
+		if(array_flag)
+			expr = new rtlArrayObjectReference(obj, indices);
+		else
+			expr = new rtlSimpleObjectReference(obj,req_flag, ack_flag);
+
+		_sLine_(expr, sid);
+	}
+;
+
+rtl_Slice_Expression[rtlThread* t] returns [rtlExpression* expr]
+{
+	rtlExpression* base_expr;
+	int high_index;
+	int low_index;
+}:
+	lpid: LPAREN 
+		SLICE base_expr = rtl_Expression[t,NULL]
+			hid: UINTEGER {high_index = atoi(hid->getText().c_str());}
+			lid: UINTEGER {low_index = atoi(lid->getText().c_str());}
+	RPAREN
+	{
+		expr = new rtlSliceExpression(base_expr, high_index, low_index);
+		_sLine_(expr, lpid);
+	}
+;
+
+rtl_Unary_Expression[rtlThread* t] returns [rtlExpression* expr]
+{
+	rtlOperation  op;
+	rtlExpression* rest;
+}:
+	lpid: LPAREN
+		op = rtl_Unary_Operation 
+		rest  = rtl_Expression[t,NULL]
+	RPAREN
+	{
+		expr = new rtlUnaryExpression(op, rest);
+		_sLine_(expr, lpid);
+	}
+;
+
+rtl_Binary_Expression[rtlThread* t] returns [rtlExpression* expr]
+{
+	rtlExpression* first = NULL;
+	rtlExpression* second = NULL;
+	rtlOperation op;
+}:
+	lpid: LPAREN
+		first = rtl_Expression[t,NULL]
+		op = rtl_Binary_Operation
+		second = rtl_Expression[t,NULL]
+	RPAREN	
+	{
+		expr = new rtlBinaryExpression(op, first, second);
+		_sLine_(expr, lpid);
+	}
+;
+
+rtl_Ternary_Expression[rtlThread* t] returns [rtlExpression* expr]
+{
+	rtlExpression* test_expr = NULL;
+	rtlExpression* if_true = NULL;
+	rtlExpression* if_false = NULL;
+}:
+	lpid: LPAREN
+		MUX
+		test_expr = rtl_Expression[t,NULL]
+		if_true = rtl_Expression[t,NULL]
+		if_false = rtl_Expression[t,NULL]
+	RPAREN
+	{
+		expr = new rtlTernaryExpression(test_expr, if_true, if_false);
+		_sLine_(expr, lpid);
+	}
+;
+
+
+rtl_Operation returns [rtlOperation op]
+:
+	(op = rtl_Unary_Operation) | (op = rtl_Binary_Operation)
+;
+
+
+rtl_Unary_Operation returns [rtlOperation op]
+:
+	NOT {op = __NOT;}
+;
+
+rtl_Binary_Operation returns [rtlOperation op]
+{
+}:
+        ( id_or:OR {op = __OR;}) |
+        ( id_and:AND {op = __AND;}) | 
+        ( id_nor:NOR { op = __NOR;}) | 
+        ( id_nand:NAND { op = __NAND;}) | 
+        ( id_xor:XOR { op = __XOR;}) | 
+        ( id_xnor:XNOR { op = __XNOR;}) | 
+        ( id_shl:SHL { op = __SHL;}) |
+        ( id_shr:SHR { op = __SHR;}) | 
+        ( id_rol:ROL { op = __ROL;}) | 
+        ( id_ror:ROR { op = __ROR;}) | 
+        ( id_plus:PLUS { op = __PLUS;}) | 
+        ( id_minus:MINUS { op = __MINUS;}) | 
+        ( id_mul:MUL { op = __MUL;}) | 
+        ( id_div:DIV { op = __DIV;}) | 
+        ( id_EQUAL:EQUAL { op = __EQUAL;}) | 
+        ( id_notequal:NOTEQUAL { op = __NOTEQUAL;}) | 
+        ( id_less:LESS { op = __LESS;}) | 
+        ( id_lessequal:LESSEQUAL { op = __LESSEQUAL;}) | 
+        ( id_greater:GREATER { op = __GREATER;}) | 
+        ( id_greaterequal:GREATEREQUAL { op = __GREATEREQUAL;}) | 
+        ( id_concat:CONCAT { op = __CONCAT;})  
+;
+
+rtl_Label returns [string label]
+:
+	LESS sid: SIMPLE_IDENTIFIER {label = sid->getText();} GREATER
+;
+
+
+rtl_Type_Declaration[rtlThread* thrd] returns [rtlType* t]
+{
+	t  = NULL;
+}:
+	((t = rtl_IntegerType_Declaration[thrd]) |
+		(t = rtl_UnsignedType_Declaration[thrd]) |
+			(t = rtl_SignedType_Declaration[thrd]) |
+				(t = rtl_ArrayType_Declaration[thrd]))
+;
+
+rtl_IntegerType_Declaration[rtlThread* thrd] returns [rtlType* t]
+{
+	int L = INT_MIN;
+	bool neg_L = false;
+	int H = INT_MAX;
+	bool neg_H = false;
+}:
+	INTEGER (MINUS {neg_L = true;})? lid:UINTEGER  (MINUS {neg_H = true;})? hid: UINTEGER
+	{
+		L = (neg_L ? - atoi(lid->getText().c_str()) : atoi (lid->getText().c_str()));
+		H = (neg_H ? - atoi(hid->getText().c_str()) : atoi (hid->getText().c_str()));
+		t = Find_Or_Make_Integer_Type(L,H);
+	}
+;
+
+		
+rtl_UnsignedType_Declaration[rtlThread* thrd] returns [rtlType* t]
+{
+	int width;
+}:
+	UNSIGNED LESS wid:UINTEGER GREATER 
+	{
+		t = Find_Or_Make_Unsigned_Type(atoi(wid->getText().c_str()));
+	}
+;
+
+rtl_SignedType_Declaration[rtlThread* thrd] returns [rtlType* t]
+{
+	int width;
+}:
+	SIGNED LESS wid:UINTEGER GREATER 
+	{
+		t = Find_Or_Make_Signed_Type(atoi(wid->getText().c_str()));
+	}
+;
+
+rtl_ArrayType_Declaration[rtlThread* thrd] returns [rtlType* t]
+{
+	vector<int> dims;
+	rtlType* ele_type = NULL;
+}:
+	ARRAY 
+	( LBRACKET did:UINTEGER RBRACKET {dims.push_back(atoi(did->getText().c_str()));} )+
+	OF
+	ele_type = rtl_Type_Declaration[thrd]
+	{
+		t = Find_Or_Make_Array_Type(dims, ele_type);
+	}
+;
 
 // lexer rules
 class hierSysLexer extends Lexer;
@@ -286,11 +826,49 @@ LPAREN : '(';
 RPAREN : ')';
 IMPLIES: "=>";
 COLON: ":";
-LESS_THAN: "<";
-GREATER_THAN: ">";
 UINT: "$uint";
-PORT: "$port";
-SYNCH: "$synch";
+LBRACKET:"[";
+RBRACKET:"]";
+MUX:"$mux";
+VARIABLE:"$variable";
+CONSTANT:"$constant";
+
+ASSIGNEQUAL      : ":=" ; // assignment
+
+// comparisons
+EQUAL            : "=="; // equality 
+NOTEQUAL         : "!="; // not equal
+LESS             : '<' ; // less-than
+LESSEQUAL        : "<="; // less-than-or-equal
+GREATER          : ">" ; // greater-than
+GREATEREQUAL     : ">="; // greater-than-or-equal
+
+// shifts
+SHL              : "<<"; // shift-left
+SHR              : ">>"; // shift-right
+ROL              : "<o<" ; // rotate-left.
+ROR              : ">o>" ;  // rotate-right
+
+// concatenate
+CONCAT           : "&&" ; // concatenation
+
+
+// arithmetic operators
+PLUS             : '+' ; // plus
+MINUS            : '-' ; // minus
+MUL              : '*' ; // multiply
+DIV              : '/' ; // multiply
+
+// logical operators
+NOT              : '~'     ;
+OR               : '|'     ;
+AND              : '&'     ;
+XOR              : '^'     ;
+NOR              : "~|"    ;
+NAND             : "~&"    ;
+XNOR             : "~^"    ;
+
+
 
 
 SYSTEM: "$system";
@@ -299,10 +877,33 @@ OUT: "$out";
 PIPE: "$pipe";
 LIFO: "$lifo";
 SIGNAL: "$signal";
+GROUP: "$group";
 INSTANCE: "$instance";
 LIBRARY: "$library";
 DEPTH: "$depth";
+THREAD: "$thread";
+STRING: "$string";
+NuLL: "$null";
+EMIT: "$emit";
+GOTO: "$goto";
+LOG: "$log";
+INTEGER: "$integer";
+UNSIGNED: "$unsigned";
+SIGNED: "$signed";
+ARRAY:"$array";
+OF:"$of";
+IF:"$if";
+ELSE:"$else";
+NOW:"$now";
+TICK:"$tick";
+DEFAULT:"$default";
+REQ: "$req";
+ACK: "$ack";
+SLICE: "$slice";
 
+
+BINARY : "_b"  ('0' | '1')+ ;
+HEXADECIMAL: "_h" (DIGIT | ('a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' ))+ ;
 
 // language keywords (all start with $)
 UINTEGER          : DIGIT (DIGIT)*;

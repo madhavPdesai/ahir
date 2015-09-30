@@ -33,8 +33,10 @@ typedef struct _bit_vector_ {
 } bit_vector;
 
 
-#define __declare_bit_vector(x,w) bit_vector x; init_bit_vector(&x,w);
-#define __declare_bit_vector(x,w)  bit_vector x; init_bit_vector(&x,w);
+#define __declare_bit_vector(x,w) bit_vector x =  {.width = 0}; init_bit_vector(&x,w);
+#define __declare_static_bit_vector(x,w) static bit_vector x = {.width = 0}; init_static_bit_vector(&x,w);
+#define __allocate_bit_vector(x,w) {x = (bit_vector*) calloc(1, sizeof(bit_vector)); init_bit_vector( x , w);}
+
 uint32_t  __array_size(bit_vector* x);
 void      __set_byte(bit_vector* x, uint32_t byte_index, uint8_t v);
 uint8_t   __get_byte(bit_vector* x, uint32_t byte_index);
@@ -43,6 +45,7 @@ uint8_t   __get_undefined_byte(bit_vector* x, uint32_t byte_index);
 uint8_t   __sign_bit(bit_vector* x);
 
 void init_bit_vector(bit_vector* t, uint32_t width);
+void init_static_bit_vector(bit_vector* t, uint32_t width);
 void free_bit_vector(bit_vector* t);
 void print_bit_vector(bit_vector* t, FILE* ofile);
 void printf_bit_vector(bit_vector* t);
@@ -71,6 +74,7 @@ double    bit_vector_to_double(uint8_t signed_flag, bit_vector* t);
 void bit_vector_assign_uint64(uint8_t signed_flag, bit_vector* dest, uint64_t src);
 void bit_vector_assign_float(uint8_t signed_flag, bit_vector* dest, float src);
 void bit_vector_assign_double(uint8_t signed_flag, bit_vector* dest, double src);
+void bit_vector_assign_string(bit_vector* dest, char* init_string);
 
 
 // ------          standard  casts, bitcasts  ------------------------------------- //
@@ -101,6 +105,7 @@ void bit_vector_set(bit_vector* s);   // set all bits to 1.
 
 
 //  --------------  bitwise operations -----------------------------------
+// (r op s) = t.
 void bit_vector_or(bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_nor(bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_and(bit_vector* r, bit_vector* s, bit_vector* t);
@@ -161,4 +166,8 @@ void bit_vector_greater_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s,
 uint8_t fp32_unordered(float a, float b);
 uint8_t fp64_unordered(float a, float b);
 
+
+// pipe accesses.
+void write_bit_vector_to_pipe(char* pipe_name, bit_vector* bv);
+void read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv);
 #endif

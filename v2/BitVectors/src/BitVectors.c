@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <BitVectors.h>
 #include <string.h>
+#include <inttypes.h>
+#include <Pipes.h>
 
 #define __nbytes(x) ((x % 8 == 0) ? x/8 : (x/8) + 1)
 // ---------------  local functions --------------------------------------
@@ -105,6 +107,14 @@ void init_bit_vector(bit_vector* t, uint32_t width)
 	t->width = width;
 }
 
+void init_static_bit_vector(bit_vector* t, uint32_t width)
+{
+	if(t->width == 0)
+	{
+		allocate_sized_u8_array(&(t->val), __nbytes(width));;
+		t->width = width;
+	}
+}
 
 void free_bit_vector(bit_vector* t)
 {
@@ -325,6 +335,23 @@ void bit_vector_assign_float(uint8_t signed_flag, bit_vector* dest, float src)
 void bit_vector_assign_double(uint8_t signed_flag, bit_vector* dest, double src)
 {
 	double_cast_to_bit_vector(signed_flag, dest, &src);
+}
+
+void bit_vector_assign_string(bit_vector* dest, char* init_string)
+{
+	bit_vector_clear(dest);
+	if(strlen(init_string) == dest->width)
+	{
+		int I, fI;
+		for(I = 0, fI = dest->width; I < fI; I++)
+		{
+			bit_vector_set_bit(dest, (dest->width-I)-1, (init_string[I] == '1'));
+		}
+	}
+	else
+	{
+		fprintf(stderr,"Error: init string %s not of correct size (%d).\n", init_string, dest->width);
+	}
 }
 
 // ----------   casts, bit-casts ---------------------------------------------------------
@@ -662,7 +689,7 @@ void bit_vector_div(bit_vector* r, bit_vector* s, bit_vector* t)
 		result = op1/op2;
 	else
 	{
-		fprintf(stderr,"Error: divide by 0... %lld/%lld for bit-width %d.\n", op1,op2,r->width);
+		fprintf(stderr,"Error: divide by 0... % " PRId64 "/%" PRId64 "for bit-width %d.\n", op1,op2,r->width);
 	}
 
 	pack_uint64_into_bit_vector(0,result,t);
@@ -1072,3 +1099,56 @@ uint8_t fp64_unordered(float a, float b)
 	return(!isNormalFp64(a) || !isNormalFp64(b));
 }
 	
+
+void write_bit_vector_to_pipe(char* pipe_name, bit_vector* bv)
+{
+	switch(bv->width)
+	{
+		case 8:
+			write_uint8(pipe_name, (uint8_t) bit_vector_to_uint64(0,bv));
+			break;
+		case 16:
+			write_uint16(pipe_name, (uint16_t) bit_vector_to_uint64(0,bv));
+			break;
+		case 32:
+			write_uint32(pipe_name, (uint32_t) bit_vector_to_uint64(0,bv));
+			break;
+		case 64:
+			write_uint64(pipe_name, (uint64_t) bit_vector_to_uint64(0,bv));
+			break;
+		default:
+			write_uint8_n(pipe_name, bv->val.byte_array, bv->val.array_size);	
+			break;
+	}
+}
+
+
+void read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv)
+{
+	uint64_t val;
+	bit_vector_clear(bv);
+	switch(bv->width)
+	{
+		case 8:
+			val = read_uint8(pipe_name);
+			bit_vector_assign_uint64(0,bv,val);
+			break;
+		case 16:
+			val = read_uint16(pipe_name);
+			bit_vector_assign_uint64(0,bv,val);
+			break;
+		case 32:
+			val = read_uint32(pipe_name);
+			bit_vector_assign_uint64(0,bv,val);
+			break;
+		case 64:
+			val = read_uint64(pipe_name);
+			bit_vector_assign_uint64(0,bv,val);
+			break;
+		default:
+			read_uint8_n(pipe_name, bv->val.byte_array, bv->val.array_size);	
+			break;
+	}
+}
+
+

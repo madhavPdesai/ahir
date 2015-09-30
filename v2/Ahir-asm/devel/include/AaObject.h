@@ -9,6 +9,7 @@
 #include <AaValue.h>
 #include <AaExpression.h>
 
+class AaModule;
 
 /*****************************************  OBJECT  ****************************/
 // base object
@@ -30,6 +31,7 @@ class AaObject: public AaRoot
  public:
 
   AaType* Get_Type() {return(this->_type);}
+  virtual AaModule* Get_Module();
 
   AaConstantLiteralReference* Get_Value() {return(this->_value);}
   void Set_Value(AaConstantLiteralReference* v);
