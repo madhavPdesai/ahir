@@ -294,20 +294,8 @@ void vcModule::Print_VHDL(ostream& ofile)
   if(!this->_foreign_flag)
     {
       vcSystem::Print_VHDL_Inclusions(ofile);
-	if(this->Get_Volatile_Flag())
-	{
-      		this->Print_VHDL_Volatile_Entity(ofile);
-      		this->Print_VHDL_Volatile_Architecture(ofile);
-	}
-	else if(this->Get_Operator_Flag())
-	{
-		assert(0); // in progress..
-	}
-	else
-	{
-      		this->Print_VHDL_Entity(ofile);
-      		this->Print_VHDL_Architecture(ofile);
-	}
+      this->Print_VHDL_Entity(ofile);
+      this->Print_VHDL_Architecture(ofile);
     }
 }
 
@@ -569,7 +557,7 @@ void vcModule::Print_VHDL_Component(ostream& ofile)
   if(this->Get_Volatile_Flag())
 	this->Print_VHDL_Volatile_Component(ofile);
   else if(this->Get_Operator_Flag())
-	assert(0); // in progress
+	this->Print_VHDL_Operator_Component(ofile);
   else
   {
 	  ofile << "component " << this->Get_VHDL_Id() << " is -- {" << endl;
@@ -579,13 +567,19 @@ void vcModule::Print_VHDL_Component(ostream& ofile)
   }
 }
 
-
 void vcModule::Print_VHDL_Entity(ostream& ofile)
 {
-  ofile << "entity " << this->Get_VHDL_Id() << " is -- {" << endl;
-  ofile << " generic (tag_length : integer); " << endl;
-  this->Print_VHDL_Ports(ofile);
-  ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Id() << ";" << endl;
+	if(this->Get_Volatile_Flag())
+		this->Print_VHDL_Volatile_Entity(ofile);
+	else if(this->Get_Operator_Flag())
+		this->Print_VHDL_Operator_Entity(ofile);
+	else
+	{
+		ofile << "entity " << this->Get_VHDL_Id() << " is -- {" << endl;
+		ofile << " generic (tag_length : integer); " << endl;
+		this->Print_VHDL_Ports(ofile);
+		ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Id() << ";" << endl;
+	}
 }
 
 void vcModule::Print_VHDL_Architecture(ostream& ofile)
@@ -611,7 +605,10 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	if(operator_form)
 		ofile << "signal sample_ack_symbol, update_ack_symbol: Boolean;" << endl;
 
-	ofile << "signal in_buffer_data_in, in_buffer_data_out: std_logic_vector((tag_length + " << this->Get_In_Arg_Width() << ")-1 downto 0);" << endl;
+	if(!operator_form)
+		ofile << "signal in_buffer_data_in, in_buffer_data_out: std_logic_vector((tag_length + " << this->Get_In_Arg_Width() << ")-1 downto 0);" << endl;
+	else
+		ofile << "signal in_buffer_data_in, in_buffer_data_out: std_logic_vector(" << this->Get_In_Arg_Width() << "-1 downto 0);" << endl;
 
 	if(!operator_form)
 	{
@@ -624,7 +621,10 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	ofile << "signal in_buffer_unload_req_symbol: Boolean;" << endl;
 	ofile << "signal in_buffer_unload_ack_symbol: Boolean;" << endl;
 
-	ofile << "signal out_buffer_data_in, out_buffer_data_out: std_logic_vector((tag_length + " << this->Get_Out_Arg_Width() << ")-1 downto 0);" << endl;
+	if(!operator_form)
+		ofile << "signal out_buffer_data_in, out_buffer_data_out: std_logic_vector((tag_length + " << this->Get_Out_Arg_Width() << ")-1 downto 0);" << endl;
+	else
+		ofile << "signal out_buffer_data_in, out_buffer_data_out: std_logic_vector(" << this->Get_Out_Arg_Width() << "-1 downto 0);" << endl;
 	if(!operator_form)
 	{
 		// 
@@ -649,7 +649,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 
 	// vectors for printing joins etc.
 	vector<string> unload_ack_symbols;
-	
+
 	if(!operator_form)
 		unload_ack_symbols.push_back("tag_unload_ack_symbol");
 
@@ -722,21 +722,20 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 				mc->Print_VHDL_Component(ofile);
 		}
 
-		// print link signals between CP and DP
-		ofile << "-- links between control-path and data-path" << endl;
-		for(set<vcTransition*>::iterator iter = _linked_transition_set.begin();
-				iter != _linked_transition_set.end();
-				iter++)
-		{
-			if((*iter)->Get_Is_Input())
-				ofile << "signal " << (*iter)->Get_DP_To_CP_Symbol() << " : boolean;" << endl;
-			else if((*iter)->Get_Is_Output()) 
-				ofile << "signal " << (*iter)->Get_CP_To_DP_Symbol() << " : boolean;" << endl;
-		}
-		ofile << endl;
-
-
 	}
+
+	// print link signals between CP and DP
+	ofile << "-- links between control-path and data-path" << endl;
+	for(set<vcTransition*>::iterator iter = _linked_transition_set.begin();
+			iter != _linked_transition_set.end();
+			iter++)
+	{
+		if((*iter)->Get_Is_Input())
+			ofile << "signal " << (*iter)->Get_DP_To_CP_Symbol() << " : boolean;" << endl;
+		else if((*iter)->Get_Is_Output()) 
+			ofile << "signal " << (*iter)->Get_CP_To_DP_Symbol() << " : boolean;" << endl;
+	}
+	ofile << endl;
 
 	// print link signals between DP and Memories within the module
 	// note: operators can also have internal memory spaces.
@@ -787,8 +786,8 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 			ofile << " port map(write_req => sample_req, -- { " << endl
 				<< " write_ack => sample_ack, " << endl
 				<< " write_data => in_buffer_data_in," << endl
-				<< " unload_req => in_buffer_unload_req_symbol, " << endl
-				<< " unload_ack => in_buffer_unload_ack_symbol, " << endl
+				<< " read_req => in_buffer_unload_req_symbol, " << endl
+				<< " read_ack => in_buffer_unload_ack_symbol, " << endl
 				<< " read_data => in_buffer_data_out," << endl
 				<< " clk => clk, reset => reset); -- }}" << endl;
 		}

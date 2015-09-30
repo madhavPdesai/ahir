@@ -2777,512 +2777,541 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 		vector<vcWire*> inwires;
 		vector<int> inwire_buffering;
 
-      vector<vcTransition*> reqL;
-      vector<vcTransition*> ackL;
-      vector<vcTransition*> reqR;
-      vector<vcTransition*> ackR;
+		vector<vcTransition*> reqL;
+		vector<vcTransition*> ackL;
+		vector<vcTransition*> reqR;
+		vector<vcTransition*> ackR;
 
-      vector<vcWire*> outwires;
-      vector<int> outwire_buffering;
+		vector<vcWire*> outwires;
+		vector<int> outwire_buffering;
 
-      vector<vcWire*> guard_wires;
-      vector<bool> guard_complements;
+		vector<vcWire*> guard_wires;
+		vector<bool> guard_complements;
 
-      // to keep track of the ids of the operators in this group.
-      vector<string> elements;
-      vector<vcDatapathElement*> dpe_elements;
+		// to keep track of the ids of the operators in this group.
+		vector<string> elements;
+		vector<vcDatapathElement*> dpe_elements;
 
-      vcModule* called_module = NULL;
+		vcModule* called_module = NULL;
 
-      bool skip_because_volatile = false;
+		bool skip_because_volatile = false;
+		bool skip_because_operator = false;
 
-      // ok. collect all the information..
-      for(set<vcDatapathElement*>::iterator iter = _compatible_call_groups[idx].begin();
-	  iter != _compatible_call_groups[idx].end();
-	  iter++)
-	{
+		// ok. collect all the information..
+		for(set<vcDatapathElement*>::iterator iter = _compatible_call_groups[idx].begin();
+				iter != _compatible_call_groups[idx].end();
+				iter++)
+		{
 
-	  assert((*iter)->Is("vcCall"));
-	  vcCall* so = (vcCall*) (*iter);
-	  if(vcSystem::_enable_logging)
-	  	so->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
+			assert((*iter)->Is("vcCall"));
+			vcCall* so = (vcCall*) (*iter);
+			if(vcSystem::_enable_logging)
+				so->vcSplitOperator::Print_VHDL_Logger(parent_name, ofile);
 
-	  if(called_module == NULL)
-	    called_module = so->Get_Called_Module();
-	  else
-	    assert(called_module == so->Get_Called_Module());
-
-	  if(so->Get_Flow_Through() || called_module->Get_Volatile_Flag())
-	  {
-		so->Print_Flow_Through_VHDL(ofile);
-		skip_because_volatile = true;
-		break;
-	  }
-	  else if(this->Get_Parent()->Get_Volatile_Flag())
-	  {
-		vcSystem::Error("call to a non-volatile module " + called_module->Get_VHDL_Id() +
-					" from a volatile module " + this->Get_Parent()->Get_VHDL_Id());
-		continue;
-          }
+			if(called_module == NULL)
+				called_module = so->Get_Called_Module();
+			else
+				assert(called_module == so->Get_Called_Module());
 
 
-	  elements.push_back(so->Get_VHDL_Id());
-	  dpe_elements.push_back(so);
+			if((this->Get_Parent()->Get_Volatile_Flag() || so->Get_Flow_Through()) &&
+						!called_module->Get_Volatile_Flag())
+			{
+				vcSystem::Error("call to a non-volatile module " + called_module->Get_VHDL_Id() +
+						" from a volatile module/call-point in " + this->Get_Parent()->Get_VHDL_Id());
+				continue;
+			}
 
-	  so->Append_Inwires(inwires);
-          so->Append_Inwire_Buffering(inwire_buffering);
+			if(this->Get_Parent()->Get_Operator_Flag() &&
+						!(called_module->Get_Volatile_Flag() || called_module->Get_Operator_Flag()))
+			{
+				vcSystem::Error("call to a non-volatile/non-operator module " + called_module->Get_VHDL_Id() +
+						" from an operator module " + this->Get_Parent()->Get_VHDL_Id());
+				continue;
+			}
 
-	  so->Append_Outwires(outwires);
-          so->Append_Outwire_Buffering(outwire_buffering);
 
-	  reqL.push_back(so->Get_Req(0));
-	  ackL.push_back(so->Get_Ack(0));
-	  reqR.push_back(so->Get_Req(1));
-	  ackR.push_back(so->Get_Ack(1));
+			if(so->Get_Flow_Through() || called_module->Get_Volatile_Flag())
+			{
+				so->Print_Flow_Through_VHDL(ofile);
+				skip_because_volatile = true;
+			}
+			else if(called_module->Get_Operator_Flag())
+			{
+				so->Print_Operator_VHDL(ofile);
+				skip_because_operator = true;
+			}
 
-	  so->Append_Guard(guard_wires,guard_complements);
+			if(skip_because_volatile || skip_because_operator)
+			{
+				// group cannot have more than one member.
+				if(_compatible_call_groups[idx].size() > 1)
+				{
+					vcSystem::Error(
+					"FATAL: call-group to  non-volatile/non-operator module  has more than one member in caller module "  
+						+ this->Get_Parent()->Get_VHDL_Id());
+				}
+				break;
+			}
+
+
+			elements.push_back(so->Get_VHDL_Id());
+			dpe_elements.push_back(so);
+
+			so->Append_Inwires(inwires);
+			so->Append_Inwire_Buffering(inwire_buffering);
+
+			so->Append_Outwires(outwires);
+			so->Append_Outwire_Buffering(outwire_buffering);
+
+			reqL.push_back(so->Get_Req(0));
+			ackL.push_back(so->Get_Ack(0));
+			reqR.push_back(so->Get_Req(1));
+			ackR.push_back(so->Get_Ack(1));
+
+			so->Append_Guard(guard_wires,guard_complements);
+		}
+		assert(called_module != NULL);
+
+
+		if(skip_because_volatile || skip_because_operator)
+			continue;
+
+		string input_buffering_string;
+		int max_inbuf = this->Generate_Buffering_String("inBUFs", inwire_buffering, input_buffering_string);
+
+		bool use_out_buffering = ((called_module->Get_Out_Arg_Width() > 0) ? true : false);
+		string output_buffering_string;
+		int max_outbuf;
+
+		// special case.. hack alert.
+		if(use_out_buffering)
+			max_outbuf  = this->Generate_Buffering_String("outBUFs", outwire_buffering, output_buffering_string);
+		else
+			output_buffering_string =  "constant outBUFs: IntegerArray(" + IntToStr(num_reqs-1) + " downto 0) := (others => 1);";
+
+
+		string guard_flags;
+		string guard_buffering;
+		Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guard_wires);
+
+		int tag_length = called_module->Get_Caller_Tag_Length();
+
+		// total in-width 
+		int in_width = 0;
+		for(int u = 0; u < inwires.size(); u++)
+		{
+			in_width += inwires[u]->Get_Size();
+		}
+		assert(in_width == called_module->Get_In_Arg_Width() * num_reqs);
+
+		// total out-width..
+		int out_width = 0;
+		for(int u = 0; u < outwires.size(); u++)
+		{
+			out_width += outwires[u]->Get_Size();
+		}
+		assert(out_width == called_module->Get_Out_Arg_Width() * num_reqs);
+
+		// VHDL code for this shared group
+		ofile << "-- shared call operator group (" << idx << ") : " ;
+		for(int u = 0; u < elements.size(); u++)
+			ofile << elements[u] << " ";
+		ofile << endl;
+
+
+		// make a block
+		string group_name = called_module->Get_VHDL_Id() + "_call_group_" + IntToStr(idx);
+		ofile << group_name << ": Block -- {" << endl;
+		// in and out data.
+		if(called_module->Get_In_Arg_Width() > 0)
+			ofile << "signal data_in: std_logic_vector(" << in_width-1 << " downto 0);" << endl;
+		if(called_module->Get_Out_Arg_Width() > 0)
+			ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
+		// in and out acks.
+		ofile << "signal reqR, ackR, reqL, ackL : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+		ofile << "signal reqR_unguarded, ackR_unguarded, reqL_unguarded, ackL_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+		ofile << "signal reqL_unregulated, ackL_unregulated : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+		ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
+
+		// ofile << buffering_string << endl;
+		ofile << input_buffering_string << endl;
+		ofile << output_buffering_string << endl;
+		ofile << guard_flags << endl;
+		ofile << guard_buffering << endl;
+		ofile << "-- }\n begin -- {" << endl;
+
+		Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
+		Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
+		Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
+		Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
+
+		// prepare guard vector.
+		Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
+
+
+		this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements,  ofile);
+
+		/*
+		   this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL_unregulated", "ackL_unregulated",
+		   false, ofile);
+		   this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
+		 */
+		Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+				"reqL_unguarded", "ackL_unguarded",
+				"reqL_unregulated", "ackL_unregulated",
+				"reqR_unguarded", "ackR_unguarded",
+				"reqR", "ackR", ofile);
+
+		// concatenate data_in
+		if(called_module->Get_In_Arg_Width() > 0)
+			Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
+
+		// disconcatenate data_out
+		if(called_module->Get_Out_Arg_Width() > 0)
+			Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
+
+		vcModule* m = this->Get_Parent();
+		// now the operator instances 
+		string imux_name = ((called_module->Get_In_Arg_Width() > 0) ?
+				"InputMuxWithBuffering" : "InputMuxBaseNoData");
+		bool use_in_buffering =( (called_module->Get_In_Arg_Width() > 0) ? true : false);
+
+		ofile << "CallReq: " << imux_name << " -- {" << endl;
+		ofile << "generic map ( ";
+
+		if(called_module->Get_In_Arg_Width() > 0)
+		{
+			ofile << " iwidth => " << in_width << "," << endl
+				<< " owidth => " << in_width/num_reqs << "," << endl;
+		}
+
+		if(use_in_buffering)
+		{
+			ofile << " name => " << '"' << imux_name << '"' << ","  << endl;
+			ofile << " buffering => inBUFs,"  << endl;
+		}
+
+		ofile << " twidth => " << tag_length << "," << endl
+			<< " nreqs => " << num_reqs << "," << endl;
+
+
+		if(called_module->Get_In_Arg_Width() > 0)
+			ofile << " registered_output => "
+				<< (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl;
+
+
+		ofile   << "  no_arbitration => " << no_arb_string << ")" << endl;
+		ofile << "port map ( -- { \n reqL => reqL " << ", " <<  endl
+			<< "    ackL => ackL " << ", " <<  endl;
+
+		if(called_module->Get_In_Arg_Width() > 0)
+			ofile << "    dataL => data_in, " << endl;
+
+		ofile << "    reqR => " 
+			<< called_module->Get_VHDL_Call_Interface_Port_Section(m,"call", "call_reqs", idx)  << "," << endl
+			<< "    ackR => " 
+			<< called_module->Get_VHDL_Call_Interface_Port_Section(m, "call", "call_acks", idx)  << "," << endl;
+
+		if(called_module->Get_In_Arg_Width() > 0)
+			ofile << "    dataR => " 
+				<< called_module->Get_VHDL_Call_Interface_Port_Section(m, "call", "call_data",idx) << "," << endl;
+
+
+		ofile << "    tagR => "  
+			<< called_module->Get_VHDL_Call_Interface_Port_Section(m , "call", "call_tag",idx) 
+			<< "," << endl;
+
+		ofile << "  clk => clk, reset => reset -- }\n); -- }" << endl;
+
+
+		string omux_name = ((called_module->Get_Out_Arg_Width() > 0) ?
+				"OutputDemuxBaseWithBuffering" : "OutputDemuxBaseNoData");
+
+		ofile << "CallComplete: " << omux_name << " -- {" << endl;
+		ofile << "generic map ( -- {" << endl;
+		if(called_module->Get_Out_Arg_Width() > 0)
+		{
+			ofile << "iwidth => " << out_width/num_reqs << "," << endl
+				<< " owidth => " << out_width << "," << endl; 
+		}
+		ofile << " detailed_buffering_per_output => outBUFs, " << endl;
+
+		ofile << " twidth => " << tag_length << "," << endl
+			<< " name => " << '"' << omux_name << '"' << "," << endl
+			<< " nreqs => " << num_reqs << ") -- }" << endl;
+		ofile << "port map ( -- {\n reqR => reqR " << ", " <<  endl
+			<< "    ackR => ackR " << ", " <<  endl;
+
+		if(called_module->Get_Out_Arg_Width() > 0)
+			ofile << "    dataR => data_out, " << endl;
+
+		ofile << "    reqL => " 
+			<< called_module->Get_VHDL_Call_Interface_Port_Section(m,"return", "return_acks", idx)  << ", -- cross-over" << endl
+			<< "    ackL => " 
+			<< called_module->Get_VHDL_Call_Interface_Port_Section(m,"return", "return_reqs", idx)  << ", -- cross-over" << endl;
+
+		if(called_module->Get_Out_Arg_Width() > 0)
+		{
+			ofile << "    dataL => " 
+				<< called_module->Get_VHDL_Call_Interface_Port_Section(m,"return", "return_data", idx)  << "," << endl;
+		}
+
+		ofile << "    tagL => "  
+			<< called_module->Get_VHDL_Call_Interface_Port_Section(m, "return", "return_tag", idx)  << "," << endl
+			<< "  clk => clk," << endl
+			<< " reset => reset -- }\n); -- }" << endl;
+		ofile << "-- }\n end Block; -- call group " << idx << endl; // thats it..
 	}
-      assert(called_module != NULL);
-
-
-      if(skip_because_volatile)
-	continue;
-
-      string input_buffering_string;
-      int max_inbuf = this->Generate_Buffering_String("inBUFs", inwire_buffering, input_buffering_string);
-
-      bool use_out_buffering = ((called_module->Get_Out_Arg_Width() > 0) ? true : false);
-      string output_buffering_string;
-      int max_outbuf;
-
-	// special case.. hack alert.
-      if(use_out_buffering)
-      	max_outbuf  = this->Generate_Buffering_String("outBUFs", outwire_buffering, output_buffering_string);
-      else
-	output_buffering_string =  "constant outBUFs: IntegerArray(" + IntToStr(num_reqs-1) + " downto 0) := (others => 1);";
-
-
-      string guard_flags;
-      string guard_buffering;
-      Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guard_wires);
-
-      int tag_length = called_module->Get_Caller_Tag_Length();
-
-      // total in-width 
-      int in_width = 0;
-      for(int u = 0; u < inwires.size(); u++)
-	{
-	  in_width += inwires[u]->Get_Size();
-	}
-      assert(in_width == called_module->Get_In_Arg_Width() * num_reqs);
-
-      // total out-width..
-      int out_width = 0;
-      for(int u = 0; u < outwires.size(); u++)
-	{
-	  out_width += outwires[u]->Get_Size();
-	}
-      assert(out_width == called_module->Get_Out_Arg_Width() * num_reqs);
-
-      // VHDL code for this shared group
-      ofile << "-- shared call operator group (" << idx << ") : " ;
-      for(int u = 0; u < elements.size(); u++)
-	ofile << elements[u] << " ";
-      ofile << endl;
-
-
-      // make a block
-      string group_name = called_module->Get_VHDL_Id() + "_call_group_" + IntToStr(idx);
-      ofile << group_name << ": Block -- {" << endl;
-      // in and out data.
-      if(called_module->Get_In_Arg_Width() > 0)
-	ofile << "signal data_in: std_logic_vector(" << in_width-1 << " downto 0);" << endl;
-      if(called_module->Get_Out_Arg_Width() > 0)
-	ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
-      // in and out acks.
-      ofile << "signal reqR, ackR, reqL, ackL : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
-      ofile << "signal reqR_unguarded, ackR_unguarded, reqL_unguarded, ackL_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
-      ofile << "signal reqL_unregulated, ackL_unregulated : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
-      ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
-
-      // ofile << buffering_string << endl;
-      ofile << input_buffering_string << endl;
-      ofile << output_buffering_string << endl;
-      ofile << guard_flags << endl;
-      ofile << guard_buffering << endl;
-      ofile << "-- }\n begin -- {" << endl;
-
-      Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
-      Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
-      Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
-      Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
-	
-      // prepare guard vector.
-      Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
-
-
-      this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements,  ofile);
-
-	/*
-      this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL_unregulated", "ackL_unregulated",
-			false, ofile);
-      this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
-	*/
-      Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
-		      "reqL_unguarded", "ackL_unguarded",
-		      "reqL_unregulated", "ackL_unregulated",
-		      "reqR_unguarded", "ackR_unguarded",
-		      "reqR", "ackR", ofile);
-
-      // concatenate data_in
-      if(called_module->Get_In_Arg_Width() > 0)
-	Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
-
-      // disconcatenate data_out
-      if(called_module->Get_Out_Arg_Width() > 0)
-	Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
-
-      vcModule* m = this->Get_Parent();
-      // now the operator instances 
-      string imux_name = ((called_module->Get_In_Arg_Width() > 0) ?
-			  "InputMuxWithBuffering" : "InputMuxBaseNoData");
-      bool use_in_buffering =( (called_module->Get_In_Arg_Width() > 0) ? true : false);
-
-      ofile << "CallReq: " << imux_name << " -- {" << endl;
-      ofile << "generic map ( ";
-
-      if(called_module->Get_In_Arg_Width() > 0)
-	{
-	  ofile << " iwidth => " << in_width << "," << endl
-		<< " owidth => " << in_width/num_reqs << "," << endl;
-	}
-
-      if(use_in_buffering)
-      {
-	  ofile << " name => " << '"' << imux_name << '"' << ","  << endl;
-	  ofile << " buffering => inBUFs,"  << endl;
-      }
-	
-      ofile << " twidth => " << tag_length << "," << endl
-	    << " nreqs => " << num_reqs << "," << endl;
-
-
-      if(called_module->Get_In_Arg_Width() > 0)
-        ofile << " registered_output => "
-	      << (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl;
-
- 
-      ofile   << "  no_arbitration => " << no_arb_string << ")" << endl;
-      ofile << "port map ( -- { \n reqL => reqL " << ", " <<  endl
-	    << "    ackL => ackL " << ", " <<  endl;
-
-      if(called_module->Get_In_Arg_Width() > 0)
-	ofile << "    dataL => data_in, " << endl;
-
-      ofile << "    reqR => " 
-	    << called_module->Get_VHDL_Call_Interface_Port_Section(m,"call", "call_reqs", idx)  << "," << endl
-	    << "    ackR => " 
-	    << called_module->Get_VHDL_Call_Interface_Port_Section(m, "call", "call_acks", idx)  << "," << endl;
-
-      if(called_module->Get_In_Arg_Width() > 0)
-	ofile << "    dataR => " 
-	      << called_module->Get_VHDL_Call_Interface_Port_Section(m, "call", "call_data",idx) << "," << endl;
-
-      
-      ofile << "    tagR => "  
-	    << called_module->Get_VHDL_Call_Interface_Port_Section(m , "call", "call_tag",idx) 
-	    << "," << endl;
-
-      ofile << "  clk => clk, reset => reset -- }\n); -- }" << endl;
-
-
-      string omux_name = ((called_module->Get_Out_Arg_Width() > 0) ?
-			  "OutputDemuxBaseWithBuffering" : "OutputDemuxBaseNoData");
-
-      ofile << "CallComplete: " << omux_name << " -- {" << endl;
-      ofile << "generic map ( -- {" << endl;
-      if(called_module->Get_Out_Arg_Width() > 0)
-	{
-	  ofile << "iwidth => " << out_width/num_reqs << "," << endl
-		<< " owidth => " << out_width << "," << endl; 
-	}
-      ofile << " detailed_buffering_per_output => outBUFs, " << endl;
-
-      ofile << " twidth => " << tag_length << "," << endl
-	    << " name => " << '"' << omux_name << '"' << "," << endl
-	    << " nreqs => " << num_reqs << ") -- }" << endl;
-      ofile << "port map ( -- {\n reqR => reqR " << ", " <<  endl
-	    << "    ackR => ackR " << ", " <<  endl;
-
-      if(called_module->Get_Out_Arg_Width() > 0)
-	ofile << "    dataR => data_out, " << endl;
-
-      ofile << "    reqL => " 
-	    << called_module->Get_VHDL_Call_Interface_Port_Section(m,"return", "return_acks", idx)  << ", -- cross-over" << endl
-	    << "    ackL => " 
-	    << called_module->Get_VHDL_Call_Interface_Port_Section(m,"return", "return_reqs", idx)  << ", -- cross-over" << endl;
-
-      if(called_module->Get_Out_Arg_Width() > 0)
-	{
-	  ofile << "    dataL => " 
-		<< called_module->Get_VHDL_Call_Interface_Port_Section(m,"return", "return_data", idx)  << "," << endl;
-	}
-
-      ofile << "    tagL => "  
-	    << called_module->Get_VHDL_Call_Interface_Port_Section(m, "return", "return_tag", idx)  << "," << endl
-	    << "  clk => clk," << endl
-	    << " reset => reset -- }\n); -- }" << endl;
-      ofile << "-- }\n end Block; -- call group " << idx << endl; // thats it..
-    }
 }
 
 
 string vcDataPath::Print_VHDL_Memory_Interface_Port_Map(string comma, ostream& ofile)
 {
 
-  // in progress
-  set<vcMemorySpace*,vcRoot_Compare> ms_set;
-  vcMemorySpace* ms;
-  vcModule* parent_module = this->Get_Parent();
+	// in progress
+	set<vcMemorySpace*,vcRoot_Compare> ms_set;
+	vcMemorySpace* ms;
+	vcModule* parent_module = this->Get_Parent();
 
-  // first the loads
-  for(int idx = 0; idx < _compatible_load_groups.size(); idx++)
-    {
-      ms = ((vcLoad*) (*(_compatible_load_groups[idx].begin())))->Get_Memory_Space();
-      ms_set.insert(ms);
-    }
-
-  for(set<vcMemorySpace*,vcRoot_Compare>::iterator iter = ms_set.begin();
-      iter != ms_set.end();
-      iter++)
-    {
-      ms = (*iter);
-
-      if(ms->Get_Scope() == NULL) // only if ms is at the system level
+	// first the loads
+	for(int idx = 0; idx < _compatible_load_groups.size(); idx++)
 	{
-	  // if ms is not inside this module, then print a port map..
-	  int hindex, lindex;
-	  if(ms->Get_Caller_Module_Section(parent_module,"load",hindex,lindex))
-	    {
-	      ofile << comma << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_req") << " => " <<
-		ms->Get_Aggregate_Section("lr_req", hindex, lindex) << "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_ack") << " => " <<
-		ms->Get_Aggregate_Section("lr_ack", hindex, lindex) << "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_addr") << " => " << 
-		ms->Get_Aggregate_Section("lr_addr", hindex, lindex) << "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_tag") << " => " << 
-		ms->Get_Aggregate_Section("lr_tag", hindex, lindex) << "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_req") << " => " << 
-		ms->Get_Aggregate_Section("lc_req", hindex, lindex)<< "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_ack") << " => " << 
-		ms->Get_Aggregate_Section("lc_ack", hindex, lindex)<< "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_data") << " => " << 
-		ms->Get_Aggregate_Section("lc_data", hindex, lindex)<< "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_tag") << " => " << 
-		ms->Get_Aggregate_Section("lc_tag", hindex, lindex);
-	      comma = ",";
-	    }
+		ms = ((vcLoad*) (*(_compatible_load_groups[idx].begin())))->Get_Memory_Space();
+		ms_set.insert(ms);
 	}
-    }
-  
 
-  ms_set.clear();
-
-  // now the stores
-  for(int idx = 0; idx < _compatible_store_groups.size(); idx++)
-    {
-      ms = ((vcLoad*) (*(_compatible_store_groups[idx].begin())))->Get_Memory_Space();
-      ms_set.insert(ms);
-    }
-
-  for(set<vcMemorySpace*,vcRoot_Compare>::iterator iter = ms_set.begin();
-      iter != ms_set.end();
-      iter++)
-    {
-      ms = (*iter);
-
-      if(ms->Get_Scope() == NULL) // only if ms is at the system level
+	for(set<vcMemorySpace*,vcRoot_Compare>::iterator iter = ms_set.begin();
+			iter != ms_set.end();
+			iter++)
 	{
-	  int hindex, lindex;
-	  if(ms->Get_Caller_Module_Section(parent_module,"store",hindex,lindex))
-	    {
-	      ofile << comma << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_req") << " => " <<
-		ms->Get_Aggregate_Section("sr_req", hindex, lindex) << "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_ack") << " => " <<
-		ms->Get_Aggregate_Section("sr_ack", hindex, lindex) << "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_addr") << " => " << 
-		ms->Get_Aggregate_Section("sr_addr", hindex, lindex) << "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_data") << " => " << 
-		ms->Get_Aggregate_Section("sr_data", hindex, lindex)<< "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_tag") << " => " << 
-		ms->Get_Aggregate_Section("sr_tag", hindex, lindex) << "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_req") << " => " << 
-		ms->Get_Aggregate_Section("sc_req", hindex, lindex)<< "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_ack") << " => " << 
-		ms->Get_Aggregate_Section("sc_ack", hindex, lindex)<< "," << endl;
-	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_tag") << " => " << 
-		ms->Get_Aggregate_Section("sc_tag", hindex, lindex);
-	      comma = ",";
-	    }
+		ms = (*iter);
+
+		if(ms->Get_Scope() == NULL) // only if ms is at the system level
+		{
+			// if ms is not inside this module, then print a port map..
+			int hindex, lindex;
+			if(ms->Get_Caller_Module_Section(parent_module,"load",hindex,lindex))
+			{
+				ofile << comma << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_req") << " => " <<
+					ms->Get_Aggregate_Section("lr_req", hindex, lindex) << "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_ack") << " => " <<
+					ms->Get_Aggregate_Section("lr_ack", hindex, lindex) << "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_addr") << " => " << 
+					ms->Get_Aggregate_Section("lr_addr", hindex, lindex) << "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_tag") << " => " << 
+					ms->Get_Aggregate_Section("lr_tag", hindex, lindex) << "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_req") << " => " << 
+					ms->Get_Aggregate_Section("lc_req", hindex, lindex)<< "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_ack") << " => " << 
+					ms->Get_Aggregate_Section("lc_ack", hindex, lindex)<< "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_data") << " => " << 
+					ms->Get_Aggregate_Section("lc_data", hindex, lindex)<< "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_tag") << " => " << 
+					ms->Get_Aggregate_Section("lc_tag", hindex, lindex);
+				comma = ",";
+			}
+		}
 	}
-    }
-  return(comma);
+
+
+	ms_set.clear();
+
+	// now the stores
+	for(int idx = 0; idx < _compatible_store_groups.size(); idx++)
+	{
+		ms = ((vcLoad*) (*(_compatible_store_groups[idx].begin())))->Get_Memory_Space();
+		ms_set.insert(ms);
+	}
+
+	for(set<vcMemorySpace*,vcRoot_Compare>::iterator iter = ms_set.begin();
+			iter != ms_set.end();
+			iter++)
+	{
+		ms = (*iter);
+
+		if(ms->Get_Scope() == NULL) // only if ms is at the system level
+		{
+			int hindex, lindex;
+			if(ms->Get_Caller_Module_Section(parent_module,"store",hindex,lindex))
+			{
+				ofile << comma << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_req") << " => " <<
+					ms->Get_Aggregate_Section("sr_req", hindex, lindex) << "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_ack") << " => " <<
+					ms->Get_Aggregate_Section("sr_ack", hindex, lindex) << "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_addr") << " => " << 
+					ms->Get_Aggregate_Section("sr_addr", hindex, lindex) << "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_data") << " => " << 
+					ms->Get_Aggregate_Section("sr_data", hindex, lindex)<< "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_tag") << " => " << 
+					ms->Get_Aggregate_Section("sr_tag", hindex, lindex) << "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_req") << " => " << 
+					ms->Get_Aggregate_Section("sc_req", hindex, lindex)<< "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_ack") << " => " << 
+					ms->Get_Aggregate_Section("sc_ack", hindex, lindex)<< "," << endl;
+				ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_tag") << " => " << 
+					ms->Get_Aggregate_Section("sc_tag", hindex, lindex);
+				comma = ",";
+			}
+		}
+	}
+	return(comma);
 }
 
 string vcDataPath::Print_VHDL_IO_Interface_Port_Map(string comma, ostream& ofile)
 {
-  set<vcPipe*> pipe_set;
-  string pipe_id;
-  vcModule* parent_module = this->Get_Parent();
+	set<vcPipe*> pipe_set;
+	string pipe_id;
+	vcModule* parent_module = this->Get_Parent();
 
-  for(int idx = 0; idx < _compatible_inport_groups.size(); idx++)
-    {
-      vcPipe* p = ((vcInport*) (*(_compatible_inport_groups[idx].begin())))->Get_Pipe();
-      pipe_set.insert(p);
-    }
-
-  for(set<vcPipe*>::iterator iter = pipe_set.begin();
-      iter != pipe_set.end();
-      iter++)
-    {
-      vcPipe* p = (*iter);
-
-      if(p->Get_Parent() == NULL)
+	for(int idx = 0; idx < _compatible_inport_groups.size(); idx++)
 	{
-	  
-	  int hindex, lindex;
-	  if(p->Get_Pipe_Module_Section(parent_module,"read", hindex,lindex))
-	    {
-	      ofile << comma << endl;
-	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("read_req") 
-		    << " => " 
-		    << p->Get_Pipe_Aggregate_Section("read_req", 
-						     hindex, 
-						     lindex) 
-		    << "," << endl;
-	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("read_ack") 
-		    << " => " 
-		    << p->Get_Pipe_Aggregate_Section( "read_ack", 
-						      hindex, 
-						      lindex) 
-		    << "," << endl;
-	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("read_data") 
-		    << " => " 
-		    << p->Get_Pipe_Aggregate_Section("read_data", 
-						     hindex, 
-						     lindex);
-	      comma = ",";
-	    }
+		vcPipe* p = ((vcInport*) (*(_compatible_inport_groups[idx].begin())))->Get_Pipe();
+		pipe_set.insert(p);
 	}
-    }
 
-  pipe_set.clear();
-  for(int idx = 0; idx < _compatible_outport_groups.size(); idx++)
-    {
-      vcPipe* p = ((vcOutport*) (*(_compatible_outport_groups[idx].begin())))->Get_Pipe();
-      pipe_set.insert(p);
-    }
-
-  for(set<vcPipe*>::iterator iter = pipe_set.begin();
-      iter != pipe_set.end();
-      iter++)
-    {
-      vcPipe* p = *iter;
-
-      if(p->Get_Parent() == NULL)
+	for(set<vcPipe*>::iterator iter = pipe_set.begin();
+			iter != pipe_set.end();
+			iter++)
 	{
-	  int hindex, lindex;
-	  if(p->Get_Pipe_Module_Section(parent_module,"write",hindex,lindex))
-	    {
-	      ofile << comma << endl;
-	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("write_req") 
-		    << " => " 
-		    << p->Get_Pipe_Aggregate_Section( "write_req", 
-						      hindex, 
-						      lindex) 
-		    << "," << endl;
-	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("write_ack") 
-		    << " => " 
-		    << p->Get_Pipe_Aggregate_Section("write_ack", 
-						     hindex, 
-						     lindex) 
-		    << "," << endl;
-	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("write_data") 
-		    << " => " 
-		    << p->Get_Pipe_Aggregate_Section("write_data", 
-						     hindex, 
-						     lindex);
-	      
-	      comma = ",";
-	    }
-	}
-    }
+		vcPipe* p = (*iter);
 
-  return(comma);
+		if(p->Get_Parent() == NULL)
+		{
+
+			int hindex, lindex;
+			if(p->Get_Pipe_Module_Section(parent_module,"read", hindex,lindex))
+			{
+				ofile << comma << endl;
+				ofile << p->Get_VHDL_Pipe_Interface_Port_Name("read_req") 
+					<< " => " 
+					<< p->Get_Pipe_Aggregate_Section("read_req", 
+							hindex, 
+							lindex) 
+					<< "," << endl;
+				ofile << p->Get_VHDL_Pipe_Interface_Port_Name("read_ack") 
+					<< " => " 
+					<< p->Get_Pipe_Aggregate_Section( "read_ack", 
+							hindex, 
+							lindex) 
+					<< "," << endl;
+				ofile << p->Get_VHDL_Pipe_Interface_Port_Name("read_data") 
+					<< " => " 
+					<< p->Get_Pipe_Aggregate_Section("read_data", 
+							hindex, 
+							lindex);
+				comma = ",";
+			}
+		}
+	}
+
+	pipe_set.clear();
+	for(int idx = 0; idx < _compatible_outport_groups.size(); idx++)
+	{
+		vcPipe* p = ((vcOutport*) (*(_compatible_outport_groups[idx].begin())))->Get_Pipe();
+		pipe_set.insert(p);
+	}
+
+	for(set<vcPipe*>::iterator iter = pipe_set.begin();
+			iter != pipe_set.end();
+			iter++)
+	{
+		vcPipe* p = *iter;
+
+		if(p->Get_Parent() == NULL)
+		{
+			int hindex, lindex;
+			if(p->Get_Pipe_Module_Section(parent_module,"write",hindex,lindex))
+			{
+				ofile << comma << endl;
+				ofile << p->Get_VHDL_Pipe_Interface_Port_Name("write_req") 
+					<< " => " 
+					<< p->Get_Pipe_Aggregate_Section( "write_req", 
+							hindex, 
+							lindex) 
+					<< "," << endl;
+				ofile << p->Get_VHDL_Pipe_Interface_Port_Name("write_ack") 
+					<< " => " 
+					<< p->Get_Pipe_Aggregate_Section("write_ack", 
+							hindex, 
+							lindex) 
+					<< "," << endl;
+				ofile << p->Get_VHDL_Pipe_Interface_Port_Name("write_data") 
+					<< " => " 
+					<< p->Get_Pipe_Aggregate_Section("write_data", 
+							hindex, 
+							lindex);
+
+				comma = ",";
+			}
+		}
+	}
+
+	return(comma);
 }
 
 string vcDataPath::Print_VHDL_Call_Interface_Port_Map(string comma, ostream& ofile)
 {
-  set<vcModule*,vcRoot_Compare> called_module_set;
-  vcModule* called_module;
-  vcModule* parent_module = this->Get_Parent();
+	set<vcModule*,vcRoot_Compare> called_module_set;
+	vcModule* called_module;
+	vcModule* parent_module = this->Get_Parent();
 
-  for(int idx = 0; idx < _compatible_call_groups.size(); idx++)
-    {
-      called_module = ((vcCall*) (*(_compatible_call_groups[idx].begin())))->Get_Called_Module();
-      if(!(called_module->Get_Operator_Flag() || called_module->Get_Volatile_Flag()))
-      	called_module_set.insert(called_module);
-    }
-
-  for(set<vcModule*,vcRoot_Compare>::iterator iter = called_module_set.begin();
-      iter != called_module_set.end();
-      iter++)
-    {
-      called_module = (*iter);
-
-      int hindex, lindex;
-      if(called_module->Get_Caller_Module_Section(parent_module,hindex,lindex))
+	for(int idx = 0; idx < _compatible_call_groups.size(); idx++)
 	{
-	  ofile << comma << endl;
-	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_reqs") << " => " <<
-	    called_module->Get_Aggregate_Section("call_reqs", hindex, lindex) << "," << endl;
-	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_acks") << " => " <<
-	    called_module->Get_Aggregate_Section("call_acks", hindex, lindex) << "," << endl;
-
-	  if(called_module->Get_In_Arg_Width() > 0)
-	    {
-	      ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_data") << " => " << 
-		called_module->Get_Aggregate_Section("call_data", hindex, lindex) << "," << endl;
-	    }
-
-	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_tag") << " => " << 
-	    called_module->Get_Aggregate_Section("call_tag", hindex, lindex) << "," << endl;
-	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_reqs") << " => " << 
-	    called_module->Get_Aggregate_Section("return_reqs", hindex, lindex)<< "," << endl;
-	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_acks") << " => " << 
-	    called_module->Get_Aggregate_Section("return_acks", hindex, lindex)<< "," << endl;
-
-	  if(called_module->Get_Out_Arg_Width() > 0)
-	    {
-	      ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_data") << " => " << 
-		called_module->Get_Aggregate_Section("return_data", hindex, lindex)<< "," << endl;
-	    }
-
-
-	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_tag") << " => " << 
-	    called_module->Get_Aggregate_Section("return_tag", hindex, lindex);
-	  comma = ",";
+		called_module = ((vcCall*) (*(_compatible_call_groups[idx].begin())))->Get_Called_Module();
+		if(!(called_module->Get_Operator_Flag() || called_module->Get_Volatile_Flag()))
+			called_module_set.insert(called_module);
 	}
-    }
-  return(comma);
+
+	for(set<vcModule*,vcRoot_Compare>::iterator iter = called_module_set.begin();
+			iter != called_module_set.end();
+			iter++)
+	{
+		called_module = (*iter);
+
+		int hindex, lindex;
+		if(called_module->Get_Caller_Module_Section(parent_module,hindex,lindex))
+		{
+			ofile << comma << endl;
+			ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_reqs") << " => " <<
+				called_module->Get_Aggregate_Section("call_reqs", hindex, lindex) << "," << endl;
+			ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_acks") << " => " <<
+				called_module->Get_Aggregate_Section("call_acks", hindex, lindex) << "," << endl;
+
+			if(called_module->Get_In_Arg_Width() > 0)
+			{
+				ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_data") << " => " << 
+					called_module->Get_Aggregate_Section("call_data", hindex, lindex) << "," << endl;
+			}
+
+			ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_tag") << " => " << 
+				called_module->Get_Aggregate_Section("call_tag", hindex, lindex) << "," << endl;
+			ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_reqs") << " => " << 
+				called_module->Get_Aggregate_Section("return_reqs", hindex, lindex)<< "," << endl;
+			ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_acks") << " => " << 
+				called_module->Get_Aggregate_Section("return_acks", hindex, lindex)<< "," << endl;
+
+			if(called_module->Get_Out_Arg_Width() > 0)
+			{
+				ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_data") << " => " << 
+					called_module->Get_Aggregate_Section("return_data", hindex, lindex)<< "," << endl;
+			}
+
+
+			ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_tag") << " => " << 
+				called_module->Get_Aggregate_Section("return_tag", hindex, lindex);
+			comma = ",";
+		}
+	}
+	return(comma);
 }
 
 /////////////////////////////////////////  miscellaneous utility functions ///////////////////////////////////////////
 
 void Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,
-				 vector<vcDatapathElement*>& ops, vector<vcWire*>& guard_wires)
+		vector<vcDatapathElement*>& ops, vector<vcWire*>& guard_wires)
 {
 	assert(guard_wires.size() == ops.size());
 	int num_reqs = guard_wires.size();
@@ -3326,51 +3355,51 @@ void Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,
 
 void Print_VHDL_Concatenate_Req(string req_id, vector<vcTransition*>& reqs,  ostream& ofile)
 {
-	
-  for(int rI = 0; rI < reqs.size(); rI++)
-    {
-      ofile << req_id <<  "(" << (reqs.size()-1)-rI << ") <= " 
-	    << reqs[rI]->Get_CP_To_DP_Symbol() << ";" << endl;
-    }
+
+	for(int rI = 0; rI < reqs.size(); rI++)
+	{
+		ofile << req_id <<  "(" << (reqs.size()-1)-rI << ") <= " 
+			<< reqs[rI]->Get_CP_To_DP_Symbol() << ";" << endl;
+	}
 }
 
 
 void Print_VHDL_Disconcatenate_Ack(string ack_id, vector<vcTransition*>& acks,  ostream& ofile)
 {
-  // disconcatenate ackL
-  for(int aI = 0; aI < acks.size(); aI++)
-    {
-      if(acks[aI] != NULL)
-	ofile << acks[aI]->Get_DP_To_CP_Symbol() << " <= "
-	      << ack_id << "(" << (acks.size()-1) - aI << ");" << endl;
-    }
+	// disconcatenate ackL
+	for(int aI = 0; aI < acks.size(); aI++)
+	{
+		if(acks[aI] != NULL)
+			ofile << acks[aI]->Get_DP_To_CP_Symbol() << " <= "
+				<< ack_id << "(" << (acks.size()-1) - aI << ");" << endl;
+	}
 }
 
 
 
 void Print_VHDL_Concatenation(string target, vector<vcWire*> wires, ostream& ofile)
 {
-  ofile << target << " <= ";
-  for(int u = 0; u < wires.size(); u++)
-    {
-      if(u > 0)
-	ofile << " & ";
-      ofile << wires[u]->Get_VHDL_Signal_Id();
-    }
-  ofile << ";" << endl;
+	ofile << target << " <= ";
+	for(int u = 0; u < wires.size(); u++)
+	{
+		if(u > 0)
+			ofile << " & ";
+		ofile << wires[u]->Get_VHDL_Signal_Id();
+	}
+	ofile << ";" << endl;
 }
 
 
 
 void Print_VHDL_Disconcatenation(string source, int total_width, vector<vcWire*> wires, ostream& ofile)
 {
-  int lindex = total_width-1;
-  for(int u = 0; u < wires.size(); u++)
-    {
-      ofile << wires[u]->Get_VHDL_Signal_Id() << " <= " << source << "(";
-      ofile << lindex << " downto " << (lindex - (wires[u]->Get_Size()-1)) << ");" << endl;
-      lindex -= wires[u]->Get_Size();
-    }
+	int lindex = total_width-1;
+	for(int u = 0; u < wires.size(); u++)
+	{
+		ofile << wires[u]->Get_VHDL_Signal_Id() << " <= " << source << "(";
+		ofile << lindex << " downto " << (lindex - (wires[u]->Get_Size()-1)) << ");" << endl;
+		lindex -= wires[u]->Get_Size();
+	}
 }
 
 void Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vcWire*>& guard_wires, vector<bool>& guard_complements, ostream& ofile)
@@ -3387,7 +3416,7 @@ void Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vc
 				ofile << guard_vector << "(" << lidx << ")  <= " << guard_wires[idx]->Get_VHDL_Signal_Id() << "(0);" << endl;
 		}
 		else
-				ofile << guard_vector << "(" << lidx << ")  <=  '1';" << endl;
+			ofile << guard_vector << "(" << lidx << ")  <=  '1';" << endl;
 
 	}
 }
@@ -3407,21 +3436,21 @@ void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, strin
 }
 
 void Print_VHDL_Guard_Instance(string inst_id, int num_reqs, string buffering, string guard_flags, string guards, 
-			string sr_in, string sa_out,  string sr_out, string sa_in,
-			string cr_in, string ca_out,  string cr_out, string ca_in, ostream& ofile)
+		string sr_in, string sa_out,  string sr_out, string sa_in,
+		string cr_in, string ca_out,  string cr_out, string ca_in, ostream& ofile)
 {
 	ofile << inst_id << ": SplitGuardInterface generic map(nreqs => " << num_reqs
-			<< ", buffering => " << buffering << ", use_guards => " << guard_flags
-			<< ") -- {" << endl
-			<< "port map(clk => clk, reset => reset," << endl
-			<< "sr_in => " << sr_in << "," << endl
-			<< "sr_out => " << sr_out << "," << endl
-			<< "sa_in => " << sa_in << "," << endl
-			<< "sa_out => " << sa_out << "," << endl
-			<< "cr_in => " << cr_in << "," << endl
-			<< "cr_out => " << cr_out << "," << endl
-			<< "ca_in => " << ca_in << "," << endl
-			<< "ca_out => " << ca_out << "," << endl
-			<< "guards => " << guards << "); -- }" << endl;
+		<< ", buffering => " << buffering << ", use_guards => " << guard_flags
+		<< ") -- {" << endl
+		<< "port map(clk => clk, reset => reset," << endl
+		<< "sr_in => " << sr_in << "," << endl
+		<< "sr_out => " << sr_out << "," << endl
+		<< "sa_in => " << sa_in << "," << endl
+		<< "sa_out => " << sa_out << "," << endl
+		<< "cr_in => " << cr_in << "," << endl
+		<< "cr_out => " << cr_out << "," << endl
+		<< "ca_in => " << ca_in << "," << endl
+		<< "ca_out => " << ca_out << "," << endl
+		<< "guards => " << guards << "); -- }" << endl;
 }
 

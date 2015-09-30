@@ -201,21 +201,20 @@ class vcModule: public vcRoot
 
   // VHDL related stuff..
   virtual void Print_VHDL(ostream& ofile);
-  virtual void Print_VHDL_Operator_Form(ostream& ofile);
-  virtual void Print_VHDL_Volatile_Form(ostream& ofile);
 
   void Print_VHDL_Ports(ostream& ofile);
   string Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile);
   string Print_VHDL_Control_Ports(string semi_colon, ostream& ofile);
+
   void Print_VHDL_Component(ostream& ofile);
-  void Print_VHDL_Operator_Component(ostream& ofile);
-  void Print_VHDL_Volatile_Component(ostream& ofile);
   void Print_VHDL_Entity(ostream& ofile);
   void Print_VHDL_Architecture(ostream& ofile);
+
+  void Print_VHDL_Operator_Component(ostream& ofile);
   void Print_VHDL_Operator_Entity(ostream& ofile);
-  void Print_VHDL_Operator_Architecture(ostream& ofile);
+
+  void Print_VHDL_Volatile_Component(ostream& ofile);
   void Print_VHDL_Volatile_Entity(ostream& ofile);
-  void Print_VHDL_Volatile_Architecture(ostream& ofile);
 
   string Get_VHDL_Architecture_Name()
   {
