@@ -81,7 +81,9 @@ void vcModule::Print_VHDL_Volatile_Architecture(ostream& ofile)
 {
 
 	this->vcModule::Print_VHDL_Volatile_Architecture(ofile);
+	return;
 
+	// this is absorbed into the vcModule method.
 	string arch_name = this->Get_VHDL_Id() + "_Volatile_arch";
 
 	ofile << "architecture " << arch_name << " of " << this->Get_VHDL_Id() << "_Volatile is -- {" << endl;

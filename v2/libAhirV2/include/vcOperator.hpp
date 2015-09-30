@@ -103,6 +103,9 @@ public:
   // combinational operator..
   virtual void Print_Flow_Through_VHDL(ostream& ofile);
 
+  // simple (guarded) operator
+  virtual void Print_Operator_VHDL(ostream& ofile);
+
   // operator instance..
   virtual void Print_Operator_Instantiation_VHDL(ostream& ofile) {assert(0);}; // TODO.
 

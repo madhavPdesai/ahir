@@ -545,6 +545,9 @@ int vcCall::Get_Delay()
 	if(this->_called_module->Get_Volatile_Flag())
 		return(0);
 
+	if(this->_called_module->Get_Operator_Flag())
+		return(_called_module->Get_Delay());
+
 	if(is_lib_mod)
 		return(_called_module->Get_Delay());
 	else
@@ -609,7 +612,7 @@ void vcCall::Print_Flow_Through_VHDL(ostream& ofile)
 	assert(this->_called_module->Get_Volatile_Flag());
 
 	ofile << "call_inst_" << this->Get_Root_Index() << ": ";
-	ofile << this->_called_module->Get_VHDL_Id() << "_Volatile port map(";
+	ofile << this->_called_module->Get_VHDL_Entity_Name() << " port map(";
 	bool first_one = true;
 	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Input_Arguments(); idx < fidx; idx++)
 	{
@@ -628,6 +631,84 @@ void vcCall::Print_Flow_Through_VHDL(ostream& ofile)
 			ofile << ", ";
 		}
 		first_one = false;
+		ofile << this->_called_module->Get_Output_Argument(idx) << " => "
+			<< this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
+	}
+	ofile << "); " << endl;
+}
+
+void vcCall::Print_Operator_VHDL(ostream& ofile)
+{
+	assert(this->_called_module->Get_Operator_Flag());
+
+        string inst_name = this->Get_VHDL_Id();
+	string block_name = inst_name + "_block"; 
+        string name = '"' + inst_name + '"';
+
+	ofile << block_name << " : block -- { " << endl;
+	ofile << "signal sample_req, sample_ack, update_req, update_ack: BooleanArray(0 downto 0); " << endl;
+	if(this->_guard_wire != NULL)
+	{
+		ofile << " signal sample_req_ug, sample_ack_ug, update_req_ug, update_ack_ug: BooleanArray(0 downto 0); " << endl;
+		ofile << " signal guard_vector : std_logic_vector(0 downto 0); " << endl;
+
+		string buf_const;
+		string gflags;
+		vector<vcDatapathElement*> ops;
+		vector<vcWire*> gwires;	
+		
+		ops.push_back(this);
+		gwires.push_back(this->_guard_wire);
+		Generate_Guard_Constants(buf_const, gflags, ops, gwires);
+
+		ofile << buf_const << endl;
+		ofile << gflags << endl;
+	}
+      ofile << " -- } " << endl;
+
+      ofile << "begin -- { " << endl;
+ 
+
+      if(this->Get_Guard_Wire() != NULL)
+      {
+        	ofile << " sample_req_ug(0) <= "   << this->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+        	ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= sample_ack_ug(0);" << endl;
+        	ofile << " update_req_ug(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
+        	ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= update_ack_ug(0);" << endl;
+		ofile << " guard_vector(0) <= " << (this->_guard_complement ? " not " : " ") << 
+			this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
+      }
+      else
+      {
+        	ofile << " sample_req(0) <= "   << this->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+        	ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= sample_ack(0);" << endl;
+        	ofile << " update_req(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
+        	ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= update_ack(0);" << endl;
+      }
+
+      if(this->_guard_wire != NULL)
+      {
+	      string guards = "guard_vector";
+	      vector<vcWire*> gwires;
+	      gwires.push_back(this->_guard_wire);
+	      Print_VHDL_Guard_Instance("gI", 1, "guardBuffering", "guardFlags", "guard_vector",
+			      "sample_req_ug", "sample_ack_ug", "sample_req", "sample_ack",
+			      "update_req_ug", "update_ack_ug", "update_req", "update_ack", ofile);
+      }
+
+	ofile << "call_inst_" << this->Get_Root_Index() << ": ";
+	ofile << this->_called_module->Get_VHDL_Entity_Name() << " port map(";
+	ofile << "sample_req => sample_req, sample_ack => sample_ack, update_req => update_req, update_ack => update_ack," 
+		<< " clk => clk, reset => reset " ;
+	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Input_Arguments(); idx < fidx; idx++)
+	{
+		ofile << ", ";
+		ofile << this->_called_module->Get_Input_Argument(idx) << " => "
+			<< this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
+	}
+	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Output_Arguments(); idx < fidx; idx++)
+	{
+		ofile << ", ";
 		ofile << this->_called_module->Get_Output_Argument(idx) << " => "
 			<< this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
 	}

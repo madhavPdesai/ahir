@@ -800,7 +800,8 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	ofile << "-- input handling ------------------------------------------------" << endl;
 	{
 
-		int input_buffering  = (this->_pipeline_flag ? 2 : 1);
+		//int input_buffering  = (this->_pipeline_flag ? 2 : 1);
+		int input_buffering  = 1;
 		if(operator_form)
 		{
 			ofile << "in_buffer: InterlockBuffer -- { " << endl;
@@ -921,7 +922,6 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 
 	{
 		int output_buffering = (this->_pipeline_flag ? 2 : 1);
-
 		if(operator_form)
 		{
 			// instantiate receive-buffer for each input.
