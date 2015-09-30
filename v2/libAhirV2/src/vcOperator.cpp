@@ -9,12 +9,25 @@
 #include <vcModule.hpp>
 #include <vcSystem.hpp>
 
+// utilities.
+string StdLogicToFloatConversion(string sig_id, vcType* t)
+{
+	assert(t->Is("vcFloatType"));
+
+	vcFloatType* ft = (vcFloatType*) t;
+	int x_char_width = ft->Get_Characteristic_Width();
+	int x_mantissa_width = ft->Get_Mantissa_Width();
+
+	string ret_string = string("To_Float(") + sig_id  + ", " + IntToStr(x_char_width) + "," + IntToStr(x_mantissa_width) + ")";
+	return(ret_string);
+}
+
+// useful stuff.
 vcEquivalence::vcEquivalence(string id, 
 			     vector<vcWire*>& inwires, 
 			     vector<vcWire*>& outwires):
   vcOperator(id)
 {
-  _flow_through = true;
   this->Set_Input_Wires(inwires);
   this->Set_Output_Wires(outwires);
   if(_in_width != _out_width)
@@ -68,6 +81,7 @@ void vcEquivalence::Print_Flow_Through_VHDL(ostream& ofile)
 	ofile << "variable ov : std_logic_vector(" << oW-1 << " downto 0);" << endl;
 	ofile << "-- }" << endl;
 	ofile << "begin -- {" << endl;
+	ofile << "ov := (others => '0');" << endl;
 	ofile << "iv := ";
   	for(int idx = 0; idx < _input_wires.size(); idx++)
 	{
@@ -695,12 +709,21 @@ void vcUnarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_bufferi
 
 void vcUnarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
 {
+	string X;
+	if(this->Get_X()->Get_Type()->Is("vcFloatType"))
+	{
+		X = StdLogicToFloatConversion(this->Get_X()->Get_VHDL_Signal_Id(), this->Get_X()->Get_Type());
+
+	}
+	else
+		X = this->Get_X()->Get_VHDL_Signal_Id();
+
 	ofile << "-- unary operator " << this->Get_VHDL_Id() << endl;
 	ofile << "process(" << this->Get_X()->Get_VHDL_Signal_Id() << ") -- {" << endl;
 	ofile << "variable tmp_var : " << this->Get_Output_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
 	ofile << "begin -- { " << endl;
 	string vhdl_op_id  = Get_VHDL_Op_Id(this->_op_id, this->Get_Input_Type(), this->Get_Output_Type(), false);
-	ofile << vhdl_op_id << "_proc(" << this->Get_X()->Get_VHDL_Signal_Id() << ", tmp_var);" << endl;
+	ofile << vhdl_op_id << "_proc(" << X << ", tmp_var);" << endl;
 	ofile << this->Get_Z()->Get_VHDL_Signal_Id() << " <= tmp_var; -- }" << endl;
 	ofile << "end process;" << endl; 
 }
@@ -876,8 +899,28 @@ void vcBinarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
 	ofile << "variable tmp_var : " << this->Get_Output_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
 	ofile << "begin -- { " << endl;
 	string vhdl_op_id  = Get_VHDL_Op_Id(this->_op_id, this->Get_Input_Type(), this->Get_Output_Type(), false);
-	ofile << vhdl_op_id << "_proc(" << this->Get_X()->Get_VHDL_Signal_Id() << ", "
-					<< this->Get_Y()->Get_VHDL_Signal_Id() << ", tmp_var);" << endl;
+
+	string X;
+	if(this->Get_X()->Get_Type()->Is("vcFloatType"))
+	{
+		X = StdLogicToFloatConversion(this->Get_X()->Get_VHDL_Signal_Id(), this->Get_X()->Get_Type());
+
+	}
+	else
+		X = this->Get_X()->Get_VHDL_Signal_Id();
+
+	string Y;
+	if(this->Get_Y()->Get_Type()->Is("vcFloatType"))
+	{
+		Y = StdLogicToFloatConversion(this->Get_Y()->Get_VHDL_Signal_Id(), this->Get_Y()->Get_Type());
+
+	}
+	else
+		Y = this->Get_Y()->Get_VHDL_Signal_Id();
+
+
+	ofile << vhdl_op_id << "_proc(" << X << ", "
+					<< Y << ", tmp_var);" << endl;
 	ofile << this->Get_Z()->Get_VHDL_Signal_Id()  << " <= tmp_var; -- }" << endl;
 	ofile << "end process;" << endl; 
 }

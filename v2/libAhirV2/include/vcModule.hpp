@@ -217,6 +217,25 @@ class vcModule: public vcRoot
   void Print_VHDL_Volatile_Entity(ostream& ofile);
   void Print_VHDL_Volatile_Architecture(ostream& ofile);
 
+  string Get_VHDL_Architecture_Name()
+  {
+	if(this->Get_Volatile_Flag())
+		return(this->Get_VHDL_Id() + "_Volatile_arch");	
+	else if(this->Get_Operator_Flag())
+		return(this->Get_VHDL_Id() + "_Operator_arch");	
+	else 
+		return(this->Get_VHDL_Id() + "_arch");	
+  }
+  string Get_VHDL_Entity_Name()
+  {
+	if(this->Get_Volatile_Flag())
+		return(this->Get_VHDL_Id() + "_Volatile");	
+	else if(this->Get_Operator_Flag())
+		return(this->Get_VHDL_Id() + "_Operator");	
+	else 
+		return(this->Get_VHDL_Id());	
+  }
+
   string Get_VHDL_Call_Interface_Port_Name(string pid);
   string Get_VHDL_Call_Interface_Port_Section(vcModule* m,
 					      string call_or_return,

@@ -21,8 +21,8 @@ TOVHDL:TOVC vc2vhdl
 LLVM2AAOPTS=-extract_do_while=true --storageinit=true -pipedepths=pipedepths.txt
 
 #program defs: no unrolling
-#PROGDEFS=-DPIPELINE 
-PROGDEFS=-DPIPELINE -DALT
+PROGDEFS=-DPIPELINE 
+#PROGDEFS=-DPIPELINE -DALT
 #PROGDEFS=-DUNROLL
 
 TOPMODULES=-T vectorSum 

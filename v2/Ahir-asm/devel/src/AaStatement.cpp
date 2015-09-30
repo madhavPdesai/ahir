@@ -1313,7 +1313,7 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				int bufval = this->Get_Buffering();
 				if(bufval > 1)
 				{
-					ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " 2" << endl;
+					ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << bufval << endl;
 				}
 			}
 			else
