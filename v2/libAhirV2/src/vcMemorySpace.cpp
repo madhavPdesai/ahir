@@ -105,8 +105,15 @@ void vcMemorySpace::Print_VHDL_Interface_Signal_Declarations(ostream& ofile)
   int addr_width = this->_address_width;
   int data_width = this->_word_size;
 
+  vcModule* scope = this->Get_Scope();
+
   if(num_load_reqs > 0)
     {
+      if(scope != NULL && scope->Get_Volatile_Flag())
+	{
+		vcSystem::Error("volatile module " + scope->Get_Label() + " reads from memory space " + this->Get_VHDL_Id());
+	}
+ 
       ofile << "signal " << this->Get_VHDL_Memory_Interface_Port_Name("lr_req") 
 	    << " :  std_logic_vector(" << num_load_reqs-1  << " downto 0);" << endl;
       ofile << "signal " << this->Get_VHDL_Memory_Interface_Port_Name("lr_ack") 
@@ -128,6 +135,12 @@ void vcMemorySpace::Print_VHDL_Interface_Signal_Declarations(ostream& ofile)
 
   if(num_store_reqs > 0)
     {
+
+      if(scope != NULL && scope->Get_Volatile_Flag())
+	{
+		vcSystem::Error("volatile module " + scope->Get_Label() + " writes to memory space " + this->Get_VHDL_Id());
+	}
+
       ofile << "signal " << this->Get_VHDL_Memory_Interface_Port_Name("sr_req") 
 	    << " :  std_logic_vector(" << num_store_reqs-1  << " downto 0);" << endl;
       ofile << "signal " << this->Get_VHDL_Memory_Interface_Port_Name("sr_ack") 

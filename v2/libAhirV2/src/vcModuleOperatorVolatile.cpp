@@ -29,28 +29,59 @@ void vcModule::Print_VHDL_Volatile_Form(ostream& ofile)
   
 void vcModule::Print_VHDL_Operator_Entity(ostream& ofile)
 {
+  ofile << "entity " << this->Get_VHDL_Id() << "_Operator is -- {" << endl;
+  ofile << "port ( -- {" << endl;
+  ofile << "  sample_req: in boolean;" << endl;
+  ofile << "  sample_ack: out boolean;" << endl;
+  ofile << "  update_req: in boolean;" << endl;
+  ofile << "  update_ack: out boolean;" << endl;
+  string sc = this->Print_VHDL_Argument_Ports("", ofile);
+  if(this->_data_path != NULL)
+  {
+	// these are checks.  if ports are found, an error will be flagged
+  	sc = this->_data_path->Print_VHDL_Memory_Interface_Ports(sc, ofile);
+        sc = this->_data_path->Print_VHDL_IO_Interface_Ports(sc, ofile);
+        sc = this->_data_path->Print_VHDL_Call_Interface_Ports(sc, ofile);
+  }
+  ofile << sc << endl;
+  ofile << "clk, reset: in std_logic" << endl;
+  ofile << "-- } " << endl << ");" << endl;
+  ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Id() << "_Volatile;" << endl;
 }
 
 void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 {
+	this->vcModule::Print_VHDL_Architecture(ofile);
 }
 
 void vcModule::Print_VHDL_Operator_Component(ostream& ofile)
 {
+	ofile << "component " << this->Get_VHDL_Id() << "_Operator is -- {" << endl;
+	ofile << "port ( -- {" << endl;
+	ofile << "  sample_req: in boolean;" << endl;
+	ofile << "  sample_ack: out boolean;" << endl;
+	ofile << "  update_req: in boolean;" << endl;
+	ofile << "  update_ack: out boolean;" << endl;
+	string sc = this->Print_VHDL_Argument_Ports("", ofile);
+	ofile << "-- } " << endl << ");" << endl;
+	ofile << "-- }" << endl << "end component;" << endl;
 
 }
 
 void vcModule::Print_VHDL_Volatile_Entity(ostream& ofile)
 {
-  ofile << "entity " << this->Get_VHDL_Id() << "_Volatile is -- {" << endl;
-  ofile << "port ( -- {" << endl;
-  string sc = this->Print_VHDL_Argument_Ports("", ofile);
-  ofile << "-- } " << endl << ");" << endl;
-  ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Id() << "_Volatile;" << endl;
+	ofile << "entity " << this->Get_VHDL_Id() << "_Volatile is -- {" << endl;
+	ofile << "port ( -- {" << endl;
+	string sc = this->Print_VHDL_Argument_Ports("", ofile);
+	ofile << "-- } " << endl << ");" << endl;
+	ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Id() << "_Volatile;" << endl;
 }
 
 void vcModule::Print_VHDL_Volatile_Architecture(ostream& ofile)
 {
+
+	this->vcModule::Print_VHDL_Volatile_Architecture(ofile);
+
 	string arch_name = this->Get_VHDL_Id() + "_Volatile_arch";
 
 	ofile << "architecture " << arch_name << " of " << this->Get_VHDL_Id() << "_Volatile is -- {" << endl;
@@ -126,9 +157,13 @@ void vcModule::Print_VHDL_Volatile_Architecture(ostream& ofile)
 
 void vcModule::Print_VHDL_Volatile_Component(ostream& ofile)
 {
-  ofile << "component " << this->Get_VHDL_Id() << "_Volatile is -- {" << endl;
-  ofile << "port ( -- {" << endl;
-  string sc = this->Print_VHDL_Argument_Ports("", ofile);
-  ofile << "-- } " << endl << ");" << endl;
-  ofile << "-- }" << endl << "end component; " << endl;
+	ofile << "component " << this->Get_VHDL_Id() << "_Volatile is -- {" << endl;
+	ofile << "port ( -- {" << endl;
+	string sc = this->Print_VHDL_Argument_Ports("", ofile);
+	// these are checks.  if ports are found, an error will be flagged
+	sc = this->_data_path->Print_VHDL_Memory_Interface_Ports(sc, ofile);
+	sc = this->_data_path->Print_VHDL_IO_Interface_Ports(sc, ofile);
+	sc = this->_data_path->Print_VHDL_Call_Interface_Ports(sc, ofile);
+	ofile << "-- } " << endl << ");" << endl;
+	ofile << "-- }" << endl << "end component; " << endl;
 }

@@ -3064,6 +3064,18 @@ string vcDataPath::Print_VHDL_Memory_Interface_Port_Map(string comma, ostream& o
 	  int hindex, lindex;
 	  if(ms->Get_Caller_Module_Section(parent_module,"load",hindex,lindex))
 	    {
+
+	      if(parent_module->Get_Volatile_Flag())
+		{
+			vcSystem::Error("volatile module " + parent_module->Get_Label() + " loads from memory space " + ms->Get_VHDL_Id());
+			continue;
+		}
+	      else if(parent_module->Get_Operator_Flag())
+		{
+			vcSystem::Error("operator module " + parent_module->Get_Label() + " loads from external memory space " + ms->Get_VHDL_Id());
+			continue;
+		}
+
 	      ofile << comma << endl;
 	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_req") << " => " <<
 		ms->Get_Aggregate_Section("lr_req", hindex, lindex) << "," << endl;
@@ -3107,6 +3119,17 @@ string vcDataPath::Print_VHDL_Memory_Interface_Port_Map(string comma, ostream& o
 	  int hindex, lindex;
 	  if(ms->Get_Caller_Module_Section(parent_module,"store",hindex,lindex))
 	    {
+	      if(parent_module->Get_Volatile_Flag())
+		{
+			vcSystem::Error("volatile module " + parent_module->Get_Label() + " stores to memory space " + ms->Get_VHDL_Id());
+			continue;
+		}
+	      else if(parent_module->Get_Operator_Flag())
+		{
+			vcSystem::Error("operator module " + parent_module->Get_Label() + " stores to external memory space " + ms->Get_VHDL_Id());
+			continue;
+		}
+
 	      ofile << comma << endl;
 	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_req") << " => " <<
 		ms->Get_Aggregate_Section("sr_req", hindex, lindex) << "," << endl;
@@ -3155,6 +3178,17 @@ string vcDataPath::Print_VHDL_IO_Interface_Port_Map(string comma, ostream& ofile
 	  int hindex, lindex;
 	  if(p->Get_Pipe_Module_Section(parent_module,"read", hindex,lindex))
 	    {
+	      if(parent_module->Get_Volatile_Flag())
+		{
+			vcSystem::Error("volatile module " + parent_module->Get_Label() + " reads from pipe " + p->Get_Id());
+			continue;
+		}
+	      else if (parent_module->Get_Volatile_Flag())
+		{
+			vcSystem::Error("operator module " + parent_module->Get_Label() + " reads from pipe " + p->Get_Id());
+			continue;
+		}
+
 	      ofile << comma << endl;
 	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("read_req") 
 		    << " => " 
@@ -3196,6 +3230,16 @@ string vcDataPath::Print_VHDL_IO_Interface_Port_Map(string comma, ostream& ofile
 	  int hindex, lindex;
 	  if(p->Get_Pipe_Module_Section(parent_module,"write",hindex,lindex))
 	    {
+	      if(parent_module->Get_Volatile_Flag())
+		{
+			vcSystem::Error("volatile module " + parent_module->Get_Label() + " writes to pipe " + p->Get_Id());
+			continue;
+		}
+	      else if (parent_module->Get_Volatile_Flag())
+		{
+			vcSystem::Error("operator module " + parent_module->Get_Label() + " writes to pipe " + p->Get_Id());
+			continue;
+		}
 	      ofile << comma << endl;
 	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("write_req") 
 		    << " => " 
@@ -3245,6 +3289,18 @@ string vcDataPath::Print_VHDL_Call_Interface_Port_Map(string comma, ostream& ofi
       int hindex, lindex;
       if(called_module->Get_Caller_Module_Section(parent_module,hindex,lindex))
 	{
+
+		if(parent_module->Get_Volatile_Flag() && !called_module->Get_Volatile_Flag())
+		{
+			vcSystem::Error("volatile module " + parent_module->Get_Label() + " calls non-volatile module  " + called_module->Get_Label());
+			continue;
+		}
+		else if (parent_module->Get_Volatile_Flag() && !(called_module->Get_Volatile_Flag() || called_module->Get_Operator_Flag()))
+		{
+			vcSystem::Error("operator module " + parent_module->Get_Label() + " calls non-operator/non-volatile module " + called_module->Get_Label());
+			continue;
+		}
+
 	  ofile << comma << endl;
 	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_reqs") << " => " <<
 	    called_module->Get_Aggregate_Section("call_reqs", hindex, lindex) << "," << endl;
