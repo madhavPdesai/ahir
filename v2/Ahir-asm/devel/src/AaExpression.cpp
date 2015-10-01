@@ -243,6 +243,14 @@ bool AaExpression::Is_Part_Of_Pipelined_Module()
 	return(false);
 }
 
+bool AaExpression::Is_Part_Of_Operator_Module()
+{
+	AaStatement* s = this->Get_Associated_Statement();
+	if(s->Get_Scope() && s->Get_Scope()->Is("AaModule") && ((AaModule*) s->Get_Scope())->Get_Operator_Flag())
+		return(true);
+	return(false);
+}
+
 string AaExpression::Get_VC_Name()
 {
 	string ret_string = "expr_" + Int64ToStr(this->Get_Index());
@@ -1073,6 +1081,35 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 		// you should never get here.
 		assert(0 && "unknown variety of simple-object-reference");
 	}
+}
+
+//
+//  Very specific function to be called only
+//  when parent module is pipelined and an operator,
+//  and _object is an input interface object!
+//
+//  asserts all over the place as a fence.
+//
+string AaSimpleObjectReference::Get_VC_Unmarked_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
+{
+	if(this->_object->Is_Interface_Object())
+	{
+		AaInterfaceObject* obj = ((AaInterfaceObject*)(this->_object));
+		if(obj->Get_Mode() == "in")
+		{
+			bool pm = this->Is_Part_Of_Pipelined_Module() && this->Is_Part_Of_Operator_Module();
+			if(pm)
+			{
+				return(this->_object->Get_VC_Name() + "_update_enable_unmarked");
+			}
+			else
+				assert(0);
+		}
+		else 
+			assert(0);
+	}
+	else
+		assert(0);
 }
 
 // return the name of the transition which triggers the sampling of

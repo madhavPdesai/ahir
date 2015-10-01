@@ -2813,32 +2813,47 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 			else
 				assert(called_module == so->Get_Called_Module());
 
-			if(this->Get_Parent()->Get_Volatile_Flag() && !called_module->Get_Volatile_Flag())
+
+			if((this->Get_Parent()->Get_Volatile_Flag() || so->Get_Flow_Through()) &&
+						!called_module->Get_Volatile_Flag())
 			{
 				vcSystem::Error("call to a non-volatile module " + called_module->Get_VHDL_Id() +
-						" from a volatile module " + this->Get_Parent()->Get_VHDL_Id());
+						" from a volatile module/call-point in " + this->Get_Parent()->Get_VHDL_Id());
 				continue;
 			}
-			if(this->Get_Parent()->Get_Operator_Flag() && 
-					!(called_module->Get_Operator_Flag() || called_module->Get_Volatile_Flag()))
+
+			if(this->Get_Parent()->Get_Operator_Flag() &&
+						!(called_module->Get_Volatile_Flag() || called_module->Get_Operator_Flag()))
 			{
-				vcSystem::Error("call to a non-operator/volatile module " + called_module->Get_VHDL_Id() +
+				vcSystem::Error("call to a non-volatile/non-operator module " + called_module->Get_VHDL_Id() +
 						" from an operator module " + this->Get_Parent()->Get_VHDL_Id());
 				continue;
 			}
+
 
 			if(so->Get_Flow_Through() || called_module->Get_Volatile_Flag())
 			{
 				so->Print_Flow_Through_VHDL(ofile);
 				skip_because_volatile = true;
-				break;
 			}
 			else if(called_module->Get_Operator_Flag())
 			{
 				so->Print_Operator_VHDL(ofile);
 				skip_because_operator = true;
+			}
+
+			if(skip_because_volatile || skip_because_operator)
+			{
+				// group cannot have more than one member.
+				if(_compatible_call_groups[idx].size() > 1)
+				{
+					vcSystem::Error(
+					"FATAL: call-group to  non-volatile/non-operator module  has more than one member in caller module "  
+						+ this->Get_Parent()->Get_VHDL_Id());
+				}
 				break;
 			}
+
 
 			elements.push_back(so->Get_VHDL_Id());
 			dpe_elements.push_back(so);
@@ -2941,7 +2956,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 		   this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL_unregulated", "ackL_unregulated",
 		   false, ofile);
 		   this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
-		   */
+		 */
 		Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 				"reqL_unguarded", "ackL_unguarded",
 				"reqL_unregulated", "ackL_unregulated",
@@ -3339,7 +3354,6 @@ string vcDataPath::Print_VHDL_Call_Interface_Port_Map(string comma, ostream& ofi
 				ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_data") << " => " << 
 					called_module->Get_Aggregate_Section("return_data", hindex, lindex)<< "," << endl;
 			}
-
 
 			ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_tag") << " => " << 
 				called_module->Get_Aggregate_Section("return_tag", hindex, lindex);

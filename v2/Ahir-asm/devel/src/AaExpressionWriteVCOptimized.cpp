@@ -36,6 +36,24 @@ void AaExpression::Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,
 		
 		if(visited_elements.find(producer) != visited_elements.end())
 			__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, bypass);
+
+		// 
+		// if producer is part of operator module, and if producer is
+		// a simple-object-reference to an input interface object, then 
+		// we create an unmarked link to an update-enable.
+		// 
+		if(this->Is_Part_Of_Operator_Module() && producer->Is("AaSimpleObjectReference"))
+		{
+			AaSimpleObjectReference* sor = (AaSimpleObjectReference*) producer;
+			if(sor->Get_Object() && sor->Get_Object()->Is_Interface_Object())
+			{
+				AaInterfaceObject* iobj = (AaInterfaceObject*) (sor->Get_Object());
+				if(iobj->Get_Mode() == "in")
+				{
+					__J(sor->Get_VC_Unmarked_Reenable_Update_Transition_Name(visited_elements), ctrans);
+				}
+			}
+		}
 	}
 }
 

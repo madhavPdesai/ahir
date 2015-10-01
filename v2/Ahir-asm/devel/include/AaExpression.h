@@ -315,6 +315,7 @@ class AaExpression: public AaRoot
 
 	virtual bool Is_Part_Of_Pipeline() {return(this->_pipeline_parent != NULL);}
 	virtual bool Is_Part_Of_Extreme_Pipeline();
+	virtual bool Is_Part_Of_Operator_Module();
 
 	virtual void Collect_Root_Sources(set<AaExpression*>& root_set) {if(!this->Is_Constant()) root_set.insert(this);}
 	virtual void Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,  set<AaRoot*>& visited_elements, ostream& ofile);
@@ -790,6 +791,7 @@ class AaSimpleObjectReference: public AaObjectReference
 	}
 
 	virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
+	virtual string Get_VC_Unmarked_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
 	virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements);
 
 	virtual string Get_VC_Sample_Start_Transition_Name();

@@ -1,0 +1,24 @@
+$pipe in_data  : $uint<32> $depth 4
+$pipe out_data : $uint<32> $depth 4
+
+$pipeline $depth 2 $buffering 2 $operator $module [xor_operator] $in (a b: $uint<32>) $out (c: $uint<32>) $is
+{
+	c := (a ^ b)
+}
+
+$module [operator_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 4 
+		$fullrate
+		$merge $entry $loopback 
+			$phi accumulated_value := 0 $on $entry next_accumulated_value $on $loopback
+		$endmerge
+		X := in_data
+		$volatile t1 := (X ^ accumulated_value)
+		$volatile t2 := (t1 ^ accumulated_value)
+		$call xor_operator (t2 accumulated_value) (next_accumulated_value)
+		out_data := accumulated_value
+		$while 1
+	}
+}

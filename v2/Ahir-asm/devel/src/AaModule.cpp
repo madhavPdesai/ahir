@@ -960,6 +960,18 @@ void AaModule::Write_VC_Control_Path_Optimized_Base(ostream& ofile)
 	  trans_decls += tname + " &-> (" + tname + "_out)\n";
 	  trans_decls += "$null &-> (" + tname + ")\n";
 	  binding_string += "$bind " + tname + " <= " + region_name + " : " + tname + "_out\n"; 
+	  if(this->Get_Operator_Flag())
+	  {
+	  	string tname_u = inobj->Get_VC_Name() + "_update_enable_unmarked";
+	  	exported_outputs += " " + tname_u + "_out";
+	  	place_decls += "$P [" + tname_u + "] \n";
+	  	trans_decls += "$T [" + tname_u + "] ";
+	  	trans_decls += "\n";
+	  	trans_decls += "$T [" + tname_u  + "_out] \n";
+	  	trans_decls += tname_u + " &-> (" + tname_u + "_out)\n";
+	  	trans_decls += "$null &-> (" + tname_u + ")\n";
+	  	binding_string += "$bind " + tname_u + " <= " + region_name + " : " + tname_u + "_out\n"; 
+	  }
 	}
 
       for(int idx = 0,  fidx = this->Get_Number_Of_Output_Arguments(); 

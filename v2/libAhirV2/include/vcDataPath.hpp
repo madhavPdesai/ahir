@@ -185,6 +185,7 @@ public:
   int Get_Size();
   virtual bool Is_Constant() {return(false);}
   int Get_Number_Of_Receivers() {return(this->_receivers.size());}
+  int Get_Number_Of_Drivers() {return((this->_driver != NULL) ? 1 : 0);}
 };
 
 class vcIntermediateWire: public vcWire

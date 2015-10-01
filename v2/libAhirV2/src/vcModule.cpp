@@ -12,580 +12,574 @@
 
 vcModule::vcModule(vcSystem* sys, string module_name):vcRoot(module_name)
 {
-  this->_parent = sys;
-  this->_control_path = NULL;
-  this->_data_path = NULL;
-  this->_num_calls = 0;
-  this->_max_number_of_caller_tags_needed = 0;
-  this->_foreign_flag = false;
-  this->_pipeline_flag = false;
-  this->_operator_flag = false;
-  this->_volatile_flag = false;
-  this->_pipeline_depth = 1;
-  this->_is_function_library_module = false;
-  this->_delay = 2;
+	this->_parent = sys;
+	this->_control_path = NULL;
+	this->_data_path = NULL;
+	this->_num_calls = 0;
+	this->_max_number_of_caller_tags_needed = 0;
+	this->_foreign_flag = false;
+	this->_pipeline_flag = false;
+	this->_operator_flag = false;
+	this->_volatile_flag = false;
+	this->_pipeline_depth = 1;
+	this->_is_function_library_module = false;
+	this->_delay = 2;
 }
 
 void vcModule::Set_Data_Path(vcDataPath* dp)
 {
-  assert(dp != NULL);
-  assert(this->_data_path == NULL);
-  this->_data_path = dp;
+	assert(dp != NULL);
+	assert(this->_data_path == NULL);
+	this->_data_path = dp;
 }
 
 
 void vcModule::Print(ostream& ofile)
 {
-  if(this->_foreign_flag)
-    ofile << vcLexerKeywords[__FOREIGN] << " ";
-  if(this->_pipeline_flag)
-    ofile << vcLexerKeywords[__PIPELINE] << " ";
-  if(this->_operator_flag)
-    ofile << vcLexerKeywords[__OPERATOR] << " ";
-  if(this->_volatile_flag)
-    ofile << vcLexerKeywords[__VOLATILE] << " ";
+	if(this->_foreign_flag)
+		ofile << vcLexerKeywords[__FOREIGN] << " ";
+	if(this->_pipeline_flag)
+		ofile << vcLexerKeywords[__PIPELINE] << " ";
+	if(this->_operator_flag)
+		ofile << vcLexerKeywords[__OPERATOR] << " ";
+	if(this->_volatile_flag)
+		ofile << vcLexerKeywords[__VOLATILE] << " ";
 
-  ofile << vcLexerKeywords[__MODULE] << " " <<  this->Get_Label() << " {" << endl;
-  if(this->_input_arguments.size() > 0)
-    {
-      ofile << vcLexerKeywords[__IN] << " ";
-      for(map<string,vcWire*>::iterator iter = this->_input_arguments.begin();
-	  iter != this->_input_arguments.end();
-	  iter++)
+	ofile << vcLexerKeywords[__MODULE] << " " <<  this->Get_Label() << " {" << endl;
+	if(this->_input_arguments.size() > 0)
 	{
-	  ofile << (*iter).first << vcLexerKeywords[__COLON];
-	  (*iter).second->Get_Type()->Print(ofile);
-	  ofile << " ";
+		ofile << vcLexerKeywords[__IN] << " ";
+		for(map<string,vcWire*>::iterator iter = this->_input_arguments.begin();
+				iter != this->_input_arguments.end();
+				iter++)
+		{
+			ofile << (*iter).first << vcLexerKeywords[__COLON];
+			(*iter).second->Get_Type()->Print(ofile);
+			ofile << " ";
+		}
+		ofile << endl;
 	}
-      ofile << endl;
-    }
-  if(this->_output_arguments.size() > 0)
-    {
-      ofile << vcLexerKeywords[__OUT] << " ";
-      for(map<string,vcWire*>::iterator iter = this->_output_arguments.begin();
-	  iter != this->_output_arguments.end();
-	  iter++)
+	if(this->_output_arguments.size() > 0)
 	{
-	  ofile << (*iter).first << vcLexerKeywords[__COLON];
-	  (*iter).second->Get_Type()->Print(ofile);
-	  ofile << " ";
+		ofile << vcLexerKeywords[__OUT] << " ";
+		for(map<string,vcWire*>::iterator iter = this->_output_arguments.begin();
+				iter != this->_output_arguments.end();
+				iter++)
+		{
+			ofile << (*iter).first << vcLexerKeywords[__COLON];
+			(*iter).second->Get_Type()->Print(ofile);
+			ofile << " ";
+		}
+		ofile << endl;
 	}
-      ofile << endl;
-    }
 
-  if(this->_memory_space_map.size() > 0)
-    {
-      for(map<string,vcMemorySpace*>::iterator iter = this->_memory_space_map.begin();
-	  iter != this->_memory_space_map.end();
-	  iter++)
+	if(this->_memory_space_map.size() > 0)
 	{
-	  (*iter).second->Print(ofile);
+		for(map<string,vcMemorySpace*>::iterator iter = this->_memory_space_map.begin();
+				iter != this->_memory_space_map.end();
+				iter++)
+		{
+			(*iter).second->Print(ofile);
+		}
 	}
-    }
 
-  if(this->_control_path != NULL)
-    this->_control_path->Print(ofile);
+	if(this->_control_path != NULL)
+		this->_control_path->Print(ofile);
 
-  if(this->_data_path != NULL)
-    this->_data_path->Print(ofile);
+	if(this->_data_path != NULL)
+		this->_data_path->Print(ofile);
 
 
-  if(this->_linked_dpe_set.size() > 0)
-    {
-      for(set<vcDatapathElement*>::iterator iter = this->_linked_dpe_set.begin();
-	  iter != this->_linked_dpe_set.end();
-	  iter++)
+	if(this->_linked_dpe_set.size() > 0)
 	{
-	  vcDatapathElement* dpe = (*iter);
-	  ofile << dpe->Get_Id() << " ";
-	  ofile << vcLexerKeywords[__EQUIVALENT] << " ";
+		for(set<vcDatapathElement*>::iterator iter = this->_linked_dpe_set.begin();
+				iter != this->_linked_dpe_set.end();
+				iter++)
+		{
+			vcDatapathElement* dpe = (*iter);
+			ofile << dpe->Get_Id() << " ";
+			ofile << vcLexerKeywords[__EQUIVALENT] << " ";
 
-	  ofile << vcLexerKeywords[__LPAREN];
-	  for(int idx = 0; idx < dpe->Get_Number_Of_Reqs(); idx++)
-	    ofile << dpe->Get_Req(idx)->Get_Hierarchical_Id() << " ";
-	  ofile << vcLexerKeywords[__RPAREN];
-	  ofile << " ";
-	  ofile << vcLexerKeywords[__LPAREN];
-	  for(int idx = 0; idx < dpe->Get_Number_Of_Acks(); idx++)
-	    {
-	      if(dpe->Get_Ack(idx) != NULL)
-		ofile << dpe->Get_Ack(idx)->Get_Hierarchical_Id() << " ";
-	      else
-		ofile << vcLexerKeywords[__OPEN] << " ";
-	    }
-	  ofile << vcLexerKeywords[__RPAREN];
+			ofile << vcLexerKeywords[__LPAREN];
+			for(int idx = 0; idx < dpe->Get_Number_Of_Reqs(); idx++)
+				ofile << dpe->Get_Req(idx)->Get_Hierarchical_Id() << " ";
+			ofile << vcLexerKeywords[__RPAREN];
+			ofile << " ";
+			ofile << vcLexerKeywords[__LPAREN];
+			for(int idx = 0; idx < dpe->Get_Number_Of_Acks(); idx++)
+			{
+				if(dpe->Get_Ack(idx) != NULL)
+					ofile << dpe->Get_Ack(idx)->Get_Hierarchical_Id() << " ";
+				else
+					ofile << vcLexerKeywords[__OPEN] << " ";
+			}
+			ofile << vcLexerKeywords[__RPAREN];
 
-	  ofile << endl;
+			ofile << endl;
+		}
 	}
-    }
 
-  this->Print_Attributes(ofile);
-  ofile << "}" << endl;
+	this->Print_Attributes(ofile);
+	ofile << "}" << endl;
 }
 
 void vcModule::Add_Link(vcDatapathElement* dpe, vector<vcTransition*>& reqs, vector<vcTransition*>& acks)
 {
-  if(this->_linked_dpe_set.find(dpe) != this->_linked_dpe_set.end())
-    {
-      vcSystem::Error("multiple links to DPE " + dpe->Get_Id() + " in module " + this->Get_Id());
-      return;
-    }
-
-  if(dpe->Get_Flow_Through())
-  {
-      vcSystem::Warning("control-path links to flow-through DPE " + dpe->Get_Id() + " ignored,  in module " + this->Get_Id());
-      return;
-  }
-
-  this->_linked_dpe_set.insert(dpe);
-
-  dpe->Add_Reqs(reqs);
-  for(int idx=0; idx < reqs.size(); idx++)
-    {
-      reqs[idx]->Add_DP_Link(dpe,_OUT_TRANSITION);
-      this->_linked_transition_set.insert(reqs[idx]);
-    }
-
-  dpe->Add_Acks(acks);
-  for(int idx=0; idx < acks.size(); idx++)
-    {
-      if(acks[idx] != NULL)
+	if(this->_linked_dpe_set.find(dpe) != this->_linked_dpe_set.end())
 	{
-	  acks[idx]->Add_DP_Link(dpe,_IN_TRANSITION);
-	  this->_linked_transition_set.insert(acks[idx]);
+		vcSystem::Error("multiple links to DPE " + dpe->Get_Id() + " in module " + this->Get_Id());
+		return;
 	}
-    }
+
+	if(dpe->Get_Flow_Through())
+	{
+		vcSystem::Warning("control-path links to flow-through DPE " + dpe->Get_Id() + " ignored,  in module " + this->Get_Id());
+		return;
+	}
+
+	this->_linked_dpe_set.insert(dpe);
+
+	dpe->Add_Reqs(reqs);
+	for(int idx=0; idx < reqs.size(); idx++)
+	{
+		reqs[idx]->Add_DP_Link(dpe,_OUT_TRANSITION);
+		this->_linked_transition_set.insert(reqs[idx]);
+	}
+
+	dpe->Add_Acks(acks);
+	for(int idx=0; idx < acks.size(); idx++)
+	{
+		if(acks[idx] != NULL)
+		{
+			acks[idx]->Add_DP_Link(dpe,_IN_TRANSITION);
+			this->_linked_transition_set.insert(acks[idx]);
+		}
+	}
 }
 
 void vcModule::Add_Memory_Space(vcMemorySpace* ms)
 {
-  assert(ms != NULL && (this->_memory_space_map.find(ms->Get_Id())  == this->_memory_space_map.end()));
-  this->_memory_space_map[ms->Get_Id()] = ms;
+	assert(ms != NULL && (this->_memory_space_map.find(ms->Get_Id())  == this->_memory_space_map.end()));
+	this->_memory_space_map[ms->Get_Id()] = ms;
 }
 
 vcMemorySpace* vcModule::Find_Memory_Space(string ms_name)
 {
-  map<string, vcMemorySpace*>::iterator iter = this->_memory_space_map.find(ms_name);
-  if(iter != this->_memory_space_map.end())
-    return((*iter).second);
-  else
-    return(NULL);
+	map<string, vcMemorySpace*>::iterator iter = this->_memory_space_map.find(ms_name);
+	if(iter != this->_memory_space_map.end())
+		return((*iter).second);
+	else
+		return(NULL);
 }
 
 vcType* vcModule::Get_Argument_Type(string arg_name, string mode /* "in" or "out" */)
 {
-  vcType* ret_type = NULL;
-  map<string,vcWire*>::iterator iter;
-  if(mode == "in")
-    {
-      iter = this->_input_arguments.find(arg_name);
-      if(iter != this->_input_arguments.end())
-	ret_type = (*iter).second->Get_Type();
-    }
-  else
-    {
-      iter = this->_output_arguments.find(arg_name);
-      if(iter != this->_output_arguments.end())
-	ret_type = (*iter).second->Get_Type();
-    }
-  return(ret_type);
+	vcType* ret_type = NULL;
+	map<string,vcWire*>::iterator iter;
+	if(mode == "in")
+	{
+		iter = this->_input_arguments.find(arg_name);
+		if(iter != this->_input_arguments.end())
+			ret_type = (*iter).second->Get_Type();
+	}
+	else
+	{
+		iter = this->_output_arguments.find(arg_name);
+		if(iter != this->_output_arguments.end())
+			ret_type = (*iter).second->Get_Type();
+	}
+	return(ret_type);
 }
 
 void vcModule::Add_Argument(string arg_name, string mode, vcType* t, vcValue* v)
 {
-  if(mode == "in")
-    {
-      this->_ordered_input_arguments.push_back(arg_name);
-      this->_input_arguments[arg_name] = new vcInputWire(arg_name,t);
-    }
-  else
-    {
-      this->_ordered_output_arguments.push_back(arg_name);
-      vcOutputWire* w = new vcOutputWire(arg_name,t);
-      this->_output_arguments[arg_name] = w;
-      w->Set_Value(v);
-    }
+	if(mode == "in")
+	{
+		this->_ordered_input_arguments.push_back(arg_name);
+		this->_input_arguments[arg_name] = new vcInputWire(arg_name,t);
+	}
+	else
+	{
+		this->_ordered_output_arguments.push_back(arg_name);
+		vcOutputWire* w = new vcOutputWire(arg_name,t);
+		this->_output_arguments[arg_name] = w;
+		w->Set_Value(v);
+	}
 }
 
 vcWire* vcModule::Get_Argument(string arg_name, string mode)
 {
-  vcWire* ret_wire = NULL;
-  map<string,vcWire*>::iterator iter;
-  if(mode == "in")
-    {
-      iter = this->_input_arguments.find(arg_name);
-      if(iter != this->_input_arguments.end())
+	vcWire* ret_wire = NULL;
+	map<string,vcWire*>::iterator iter;
+	if(mode == "in")
 	{
-	  ret_wire = ((*iter).second);
+		iter = this->_input_arguments.find(arg_name);
+		if(iter != this->_input_arguments.end())
+		{
+			ret_wire = ((*iter).second);
+		}
 	}
-    }
-  else 
-    {
-      iter = this->_output_arguments.find(arg_name);
-      if(iter != this->_output_arguments.end())
+	else 
 	{
-	  ret_wire = ((*iter).second);
+		iter = this->_output_arguments.find(arg_name);
+		if(iter != this->_output_arguments.end())
+		{
+			ret_wire = ((*iter).second);
+		}
 	}
-    }
-  return(ret_wire);
+	return(ret_wire);
 }
 
 
 int vcModule::Get_In_Arg_Width()
 {
-  int ret_val = 0;
-  for(map<string,vcWire*>::iterator iter = _input_arguments.begin();
-      iter != _input_arguments.end();
-      iter++)
-    {
-      ret_val += (*iter).second->Get_Type()->Size();
-    }
-  return(ret_val);
+	int ret_val = 0;
+	for(map<string,vcWire*>::iterator iter = _input_arguments.begin();
+			iter != _input_arguments.end();
+			iter++)
+	{
+		ret_val += (*iter).second->Get_Type()->Size();
+	}
+	return(ret_val);
 }
 
 int vcModule::Get_Out_Arg_Width()
 {
-  int ret_val = 0;
-  for(map<string,vcWire*>::iterator iter = _output_arguments.begin();
-      iter != _output_arguments.end();
-      iter++)
-    {
-	ret_val += (*iter).second->Get_Type()->Size();
-    }
-  return(ret_val);
+	int ret_val = 0;
+	for(map<string,vcWire*>::iterator iter = _output_arguments.begin();
+			iter != _output_arguments.end();
+			iter++)
+	{
+		ret_val += (*iter).second->Get_Type()->Size();
+	}
+	return(ret_val);
 }
 
 
 void vcModule::Check_Control_Structure()
 {
-  if(this->_control_path)
-    this->_control_path->Check_Structure();
+	if(this->_control_path)
+		this->_control_path->Check_Structure();
 }
 void vcModule::Compute_Maximal_Groups()
 {
-  if(this->_data_path)
-    this->_data_path->Compute_Maximal_Groups(this->_control_path);
+	if(this->_data_path)
+		this->_data_path->Compute_Maximal_Groups(this->_control_path);
 }
 void vcModule::Compute_Compatibility_Labels()
 {
-  if(this->_control_path)
-    this->_control_path->Compute_Compatibility_Labels();
+	if(this->_control_path)
+		this->_control_path->Compute_Compatibility_Labels();
 }
 void vcModule::Print_Control_Structure(ostream& ofile)
 {
-  if(this->_control_path)
-    {
-      this->_control_path->Print_Structure(ofile);
-      this->_control_path->Print_Groups(ofile);
-      this->_control_path->Print_Compatibility_Labels(ofile);
-      this->_control_path->Print_Compatibility_Map(ofile);
-      this->Print_Compatible_Operator_Groups(ofile);
-    }
+	if(this->_control_path)
+	{
+		this->_control_path->Print_Structure(ofile);
+		this->_control_path->Print_Groups(ofile);
+		this->_control_path->Print_Compatibility_Labels(ofile);
+		this->_control_path->Print_Compatibility_Map(ofile);
+		this->Print_Compatible_Operator_Groups(ofile);
+	}
 }
 
 void vcModule::Print_Compatible_Operator_Groups(ostream& ofile)
 {
-  if(this->_data_path)
-    this->_data_path->Print_Compatible_Operator_Groups(ofile);
+	if(this->_data_path)
+		this->_data_path->Print_Compatible_Operator_Groups(ofile);
 }
 
 void vcModule::Print_VHDL(ostream& ofile)
 {
-  if(!this->_foreign_flag)
-    {
-      vcSystem::Print_VHDL_Inclusions(ofile);
-	if(this->Get_Volatile_Flag())
+	if(!this->_foreign_flag)
 	{
-      		this->Print_VHDL_Volatile_Entity(ofile);
-      		this->Print_VHDL_Volatile_Architecture(ofile);
+		vcSystem::Print_VHDL_Inclusions(ofile);
+		this->Print_VHDL_Entity(ofile);
+		this->Print_VHDL_Architecture(ofile);
 	}
-	else if(this->Get_Operator_Flag())
-	{
-		assert(0); // in progress..
-	}
-	else
-	{
-      		this->Print_VHDL_Entity(ofile);
-      		this->Print_VHDL_Architecture(ofile);
-	}
-    }
 }
 
 void vcModule::Print_VHDL_Caller_Aggregate_Signals(ostream& ofile)
 {
-  if(this->_num_calls > 0)
-    {
-      string prefix = this->Get_VHDL_Id() + "_";
-      // _num_calls is the total number of caller groups..
-      ofile << "signal " << prefix << "call_reqs: std_logic_vector(" << _num_calls-1 << " downto 0);" << endl;
-      ofile << "signal " << prefix << "call_acks: std_logic_vector(" << _num_calls-1 << " downto 0);" << endl;
-      ofile << "signal " << prefix << "return_reqs: std_logic_vector(" << _num_calls-1 << " downto 0);" << endl;
-      ofile << "signal " << prefix << "return_acks: std_logic_vector(" << _num_calls-1 << " downto 0);" << endl;
+	if(this->_num_calls > 0)
+	{
+		string prefix = this->Get_VHDL_Id() + "_";
+		// _num_calls is the total number of caller groups..
+		ofile << "signal " << prefix << "call_reqs: std_logic_vector(" << _num_calls-1 << " downto 0);" << endl;
+		ofile << "signal " << prefix << "call_acks: std_logic_vector(" << _num_calls-1 << " downto 0);" << endl;
+		ofile << "signal " << prefix << "return_reqs: std_logic_vector(" << _num_calls-1 << " downto 0);" << endl;
+		ofile << "signal " << prefix << "return_acks: std_logic_vector(" << _num_calls-1 << " downto 0);" << endl;
 
-      if(this->Get_In_Arg_Width() > 0)
-	ofile << "signal " << prefix << "call_data: std_logic_vector(" << (this->Get_In_Arg_Width()*_num_calls)-1 << " downto 0);" << endl;
-      ofile << "signal " << prefix << "call_tag: std_logic_vector(" << (this->Get_Caller_Tag_Length()*_num_calls)-1 << " downto 0);" << endl;
-      
-      if(this->Get_Out_Arg_Width() > 0)
-	ofile << "signal " << prefix << "return_data: std_logic_vector(" << (this->Get_Out_Arg_Width()*_num_calls)-1 << " downto 0);" 
-	    << endl;          
+		if(this->Get_In_Arg_Width() > 0)
+			ofile << "signal " << prefix << "call_data: std_logic_vector(" << (this->Get_In_Arg_Width()*_num_calls)-1 << " downto 0);" << endl;
+		ofile << "signal " << prefix << "call_tag: std_logic_vector(" << (this->Get_Caller_Tag_Length()*_num_calls)-1 << " downto 0);" << endl;
 
-      ofile << "signal " << prefix << "return_tag: std_logic_vector(" << (this->Get_Caller_Tag_Length()*_num_calls)-1 << " downto 0);" << endl;
-    }
+		if(this->Get_Out_Arg_Width() > 0)
+			ofile << "signal " << prefix << "return_data: std_logic_vector(" << (this->Get_Out_Arg_Width()*_num_calls)-1 << " downto 0);" 
+				<< endl;          
+
+		ofile << "signal " << prefix << "return_tag: std_logic_vector(" << (this->Get_Caller_Tag_Length()*_num_calls)-1 << " downto 0);" << endl;
+	}
 }
 
 void vcModule::Print_VHDL_Argument_Signals(ostream& ofile)
 {
-  string prefix  = this->Get_VHDL_Id() + "_";
+	string prefix  = this->Get_VHDL_Id() + "_";
 
-  for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
-    {
-      vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
-      assert(w != NULL);
+	for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
+	{
+		vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
+		assert(w != NULL);
 
-      ofile << "signal " << prefix << w->Get_VHDL_Id() << " : " ;
+		ofile << "signal " << prefix << w->Get_VHDL_Id() << " : " ;
 
-      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
-    }
+		ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
+	}
 
-  for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
-    {
-      vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
-      assert(w != NULL);
+	for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+	{
+		vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
+		assert(w != NULL);
 
-      ofile << "signal " <<  prefix << w->Get_VHDL_Id() << " : " ;
+		ofile << "signal " <<  prefix << w->Get_VHDL_Id() << " : " ;
 
-      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
-    }
+		ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
+	}
 
-  if(this->Get_In_Arg_Width() > 0)
-    ofile << "signal " <<  prefix << "in_args    : std_logic_vector(" << this->Get_In_Arg_Width()-1 << " downto 0);"  << endl;
+	if(this->Get_In_Arg_Width() > 0)
+		ofile << "signal " <<  prefix << "in_args    : std_logic_vector(" << this->Get_In_Arg_Width()-1 << " downto 0);"  << endl;
 
-  if(this->Get_Out_Arg_Width() > 0)
-    ofile <<  "signal " << prefix << "out_args   : std_logic_vector(" << this->Get_Out_Arg_Width()-1 << " downto 0);"  << endl;
+	if(this->Get_Out_Arg_Width() > 0)
+		ofile <<  "signal " << prefix << "out_args   : std_logic_vector(" << this->Get_Out_Arg_Width()-1 << " downto 0);"  << endl;
 
-  ofile <<  "signal " << prefix << "tag_in    : std_logic_vector(" << this->Get_Caller_Tag_Length()+ this->Get_Callee_Tag_Length()-1 << " downto 0) := (others => '0');"  << endl;
-  ofile <<  "signal " << prefix << "tag_out   : std_logic_vector(" << this->Get_Caller_Tag_Length() + this->Get_Callee_Tag_Length()-1 << " downto 0);"  << endl;
-  ofile <<  "signal " << prefix << "start_req : std_logic;"  << endl;
-  ofile <<  "signal " << prefix << "start_ack : std_logic;"  << endl;
-  ofile <<  "signal " << prefix << "fin_req   : std_logic;" << endl;
-  ofile <<  "signal " << prefix << "fin_ack : std_logic;"  << endl;
+	ofile <<  "signal " << prefix << "tag_in    : std_logic_vector(" << this->Get_Caller_Tag_Length()+ this->Get_Callee_Tag_Length()-1 << " downto 0) := (others => '0');"  << endl;
+	ofile <<  "signal " << prefix << "tag_out   : std_logic_vector(" << this->Get_Caller_Tag_Length() + this->Get_Callee_Tag_Length()-1 << " downto 0);"  << endl;
+	ofile <<  "signal " << prefix << "start_req : std_logic;"  << endl;
+	ofile <<  "signal " << prefix << "start_ack : std_logic;"  << endl;
+	ofile <<  "signal " << prefix << "fin_req   : std_logic;" << endl;
+	ofile <<  "signal " << prefix << "fin_ack : std_logic;"  << endl;
 }
 
 void  vcModule::Print_VHDL_System_Argument_Signals(ostream& ofile)
 {
-  string prefix = this->Get_VHDL_Id() +  "_";
-  for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
-    {
-      vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
-      assert(w != NULL);
+	string prefix = this->Get_VHDL_Id() +  "_";
+	for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
+	{
+		vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
+		assert(w != NULL);
 
-      ofile << "signal " << prefix << w->Get_VHDL_Id() << " : " ;
+		ofile << "signal " << prefix << w->Get_VHDL_Id() << " : " ;
 
-      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0) := (others => '0');" << endl;
-    }
+		ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0) := (others => '0');" << endl;
+	}
 
-  for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
-    {
-      vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
-      assert(w != NULL);
+	for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+	{
+		vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
+		assert(w != NULL);
 
-      ofile << "signal " << prefix << w->Get_VHDL_Id() << " :  " ;
+		ofile << "signal " << prefix << w->Get_VHDL_Id() << " :  " ;
 
-      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
-    }
+		ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
+	}
 
-  ofile << "signal " <<  prefix << "tag_in: std_logic_vector(" 
-	<< this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()-1 << " downto 0);" << endl;
-  ofile << "signal " << prefix << "tag_out: std_logic_vector(" 
-	<< this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()-1 << " downto 0);" << endl;
-  ofile << "signal " << prefix <<  "start_req : std_logic := '0';"  << endl;
-  ofile << "signal " << prefix <<  "start_ack : std_logic := '0';"  << endl;
-  ofile << "signal " << prefix <<  "fin_req   : std_logic := '0';" << endl;
-  ofile << "signal " << prefix <<  "fin_ack   : std_logic := '0';" << endl;
+	ofile << "signal " <<  prefix << "tag_in: std_logic_vector(" 
+		<< this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()-1 << " downto 0);" << endl;
+	ofile << "signal " << prefix << "tag_out: std_logic_vector(" 
+		<< this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()-1 << " downto 0);" << endl;
+	ofile << "signal " << prefix <<  "start_req : std_logic := '0';"  << endl;
+	ofile << "signal " << prefix <<  "start_ack : std_logic := '0';"  << endl;
+	ofile << "signal " << prefix <<  "fin_req   : std_logic := '0';" << endl;
+	ofile << "signal " << prefix <<  "fin_ack   : std_logic := '0';" << endl;
 
 }
 
 string vcModule::Print_VHDL_System_Argument_Ports(string semi_colon,ostream& ofile)
 {
-  string prefix = this->Get_VHDL_Id() +  "_";
-  for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
-    {
-      ofile << semi_colon << endl;
-      vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
-      assert(w != NULL);
+	string prefix = this->Get_VHDL_Id() +  "_";
+	for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
+	{
+		ofile << semi_colon << endl;
+		vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
+		assert(w != NULL);
 
-      ofile << prefix << w->Get_VHDL_Id() << " : in " ;
+		ofile << prefix << w->Get_VHDL_Id() << " : in " ;
 
-      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
-      semi_colon = ";";
-    }
+		ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
+		semi_colon = ";";
+	}
 
-  for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
-    {
-      ofile << semi_colon << endl;
+	for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+	{
+		ofile << semi_colon << endl;
 
-      vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
-      assert(w != NULL);
+		vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
+		assert(w != NULL);
 
-      ofile << prefix << w->Get_VHDL_Id() << " : out " ;
+		ofile << prefix << w->Get_VHDL_Id() << " : out " ;
 
-      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
-      semi_colon = ";";
-    }
+		ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
+		semi_colon = ";";
+	}
 
-  ofile << semi_colon << endl;
+	ofile << semi_colon << endl;
 
-  // tag ports..
-  ofile << prefix << "tag_in: in std_logic_vector(" << this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()-1 << " downto 0);" << endl;
-  ofile << prefix << "tag_out: out std_logic_vector(" << this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()-1 << " downto 0);" << endl;
-  ofile << prefix <<  "start_req : in std_logic;"  << endl;
-  ofile << prefix <<  "start_ack : out std_logic;"  << endl;
-  ofile << prefix <<  "fin_req   : in std_logic;" << endl;
-  ofile << prefix <<  "fin_ack   : out std_logic";
-  semi_colon = ";";
-  return(semi_colon);
+	// tag ports..
+	ofile << prefix << "tag_in: in std_logic_vector(" << this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()-1 << " downto 0);" << endl;
+	ofile << prefix << "tag_out: out std_logic_vector(" << this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()-1 << " downto 0);" << endl;
+	ofile << prefix <<  "start_req : in std_logic;"  << endl;
+	ofile << prefix <<  "start_ack : out std_logic;"  << endl;
+	ofile << prefix <<  "fin_req   : in std_logic;" << endl;
+	ofile << prefix <<  "fin_ack   : out std_logic";
+	semi_colon = ";";
+	return(semi_colon);
 }
 
 string vcModule::Print_VHDL_System_Instance_Port_Map(string comma,ostream& ofile)
 {
-  string prefix = this->Get_VHDL_Id() +  "_";
-  for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
-    {
-      ofile << comma << endl;
-      ofile << prefix << To_VHDL(_ordered_input_arguments[idx]) 
-	    << " => "
-	    << prefix << To_VHDL(_ordered_input_arguments[idx]);
-      comma = ",";
-    }
+	string prefix = this->Get_VHDL_Id() +  "_";
+	for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
+	{
+		ofile << comma << endl;
+		ofile << prefix << To_VHDL(_ordered_input_arguments[idx]) 
+			<< " => "
+			<< prefix << To_VHDL(_ordered_input_arguments[idx]);
+		comma = ",";
+	}
 
-  for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
-    {
-      ofile << comma << endl;
-      ofile << prefix << To_VHDL(_ordered_output_arguments[idx]) 
-	    << " => " 
-	    << prefix << To_VHDL(_ordered_output_arguments[idx]) ;
-      comma = ",";
-    }
+	for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+	{
+		ofile << comma << endl;
+		ofile << prefix << To_VHDL(_ordered_output_arguments[idx]) 
+			<< " => " 
+			<< prefix << To_VHDL(_ordered_output_arguments[idx]) ;
+		comma = ",";
+	}
 
-  ofile << comma << endl;
-  // tag ports..
-  ofile << prefix <<  "tag_in => " << prefix << "tag_in," << endl;
-  ofile << prefix <<  "tag_out => " << prefix << "tag_out," << endl;
-  ofile << prefix <<  "start_req => " 	<< prefix <<  "start_req," 	<< endl;
-  ofile << prefix <<  "start_ack => " 	<< prefix <<  "start_ack," 	<< endl;
-  ofile << prefix <<  "fin_req  => " << prefix <<  "fin_req, " << endl;
-  ofile << prefix <<  "fin_ack  => " << prefix <<  "fin_ack ";
-  comma = ",";
-  return(comma);
+	ofile << comma << endl;
+	// tag ports..
+	ofile << prefix <<  "tag_in => " << prefix << "tag_in," << endl;
+	ofile << prefix <<  "tag_out => " << prefix << "tag_out," << endl;
+	ofile << prefix <<  "start_req => " 	<< prefix <<  "start_req," 	<< endl;
+	ofile << prefix <<  "start_ack => " 	<< prefix <<  "start_ack," 	<< endl;
+	ofile << prefix <<  "fin_req  => " << prefix <<  "fin_req, " << endl;
+	ofile << prefix <<  "fin_ack  => " << prefix <<  "fin_ack ";
+	comma = ",";
+	return(comma);
 }
 
 string vcModule::Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile)
 {
-  
-  for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
-    {
-      ofile << semi_colon << endl;
 
-      vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
-      assert(w != NULL);
+	for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
+	{
+		ofile << semi_colon << endl;
 
-      ofile << "     " << w->Get_VHDL_Id() << " : in " ;
-      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
-      semi_colon = ";";
-    }
+		vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
+		assert(w != NULL);
 
-  for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
-    {
-      ofile << semi_colon << endl;
-      vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
-      assert(w != NULL);
+		ofile << "     " << w->Get_VHDL_Id() << " : in " ;
+		ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
+		semi_colon = ";";
+	}
 
-      ofile << "     " << w->Get_VHDL_Id() << " : out " ;
+	for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+	{
+		ofile << semi_colon << endl;
+		vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
+		assert(w != NULL);
 
-      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
-      semi_colon = ";";
-    }
+		ofile << "     " << w->Get_VHDL_Id() << " : out " ;
 
-  return(semi_colon);
+		ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
+		semi_colon = ";";
+	}
+
+	return(semi_colon);
 }
 
 string vcModule::Print_VHDL_Control_Ports(string semi_colon, ostream& ofile)
 {
-  ofile << semi_colon << endl;
-  ofile <<  "clk : in std_logic;" << endl ;
-  ofile <<  "reset : in std_logic;"  << endl;
-  ofile <<  "start_req : in std_logic;"  << endl;
-  ofile <<  "start_ack : out std_logic;"  << endl;
-  ofile <<  "fin_req : in std_logic;"  << endl;
-  ofile <<  "fin_ack   : out std_logic";
-  semi_colon = ";";
-  return(semi_colon);
+	ofile << semi_colon << endl;
+	ofile <<  "clk : in std_logic;" << endl ;
+	ofile <<  "reset : in std_logic;"  << endl;
+	ofile <<  "start_req : in std_logic;"  << endl;
+	ofile <<  "start_ack : out std_logic;"  << endl;
+	ofile <<  "fin_req : in std_logic;"  << endl;
+	ofile <<  "fin_ack   : out std_logic";
+	semi_colon = ";";
+	return(semi_colon);
 }
 
 void vcModule::Print_VHDL_Ports(ostream& ofile)
 {
 
-  string semi_colon;
-  ofile << "port ( -- {" << endl;
+	string semi_colon;
+	ofile << "port ( -- {" << endl;
 
-  // arguments
-  semi_colon = this->Print_VHDL_Argument_Ports(semi_colon, ofile);
+	// arguments
+	semi_colon = this->Print_VHDL_Argument_Ports(semi_colon, ofile);
 
-  // print external load/store ports.
-  if(this->_data_path != NULL)
-    {
-      semi_colon = this->_data_path->Print_VHDL_Memory_Interface_Ports(semi_colon, ofile);
+	// print external load/store ports.
+	if(this->_data_path != NULL)
+	{
+		semi_colon = this->_data_path->Print_VHDL_Memory_Interface_Ports(semi_colon, ofile);
 
-      // print external IO ports.
-      semi_colon = this->_data_path->Print_VHDL_IO_Interface_Ports(semi_colon, ofile);
+		// print external IO ports.
+		semi_colon = this->_data_path->Print_VHDL_IO_Interface_Ports(semi_colon, ofile);
 
-      // print call interface ports
-      semi_colon = this->_data_path->Print_VHDL_Call_Interface_Ports(semi_colon, ofile);
-    }
+		// print call interface ports
+		semi_colon = this->_data_path->Print_VHDL_Call_Interface_Ports(semi_colon, ofile);
+	}
 
-  // input and output tag
-  semi_colon = this->Print_VHDL_Tag_Interface_Ports(semi_colon,ofile);
+	// input and output tag
+	semi_colon = this->Print_VHDL_Tag_Interface_Ports(semi_colon,ofile);
 
-  // clock, reset etc.
-  semi_colon = this->Print_VHDL_Control_Ports(semi_colon, ofile);
+	// clock, reset etc.
+	semi_colon = this->Print_VHDL_Control_Ports(semi_colon, ofile);
 
-  ofile << "-- } " << endl << ");" << endl;
+	ofile << "-- } " << endl << ");" << endl;
 }
 
 
 string vcModule::Print_VHDL_Tag_Interface_Ports(string semi_colon,ostream& ofile)
 {
-  ofile << semi_colon << endl;
-  semi_colon = ";";
-  ofile << "tag_in: in std_logic_vector(tag_length-1 downto 0);" << endl;
-  ofile << "tag_out: out std_logic_vector(tag_length-1 downto 0) ";
-  return(semi_colon);
+	ofile << semi_colon << endl;
+	semi_colon = ";";
+	ofile << "tag_in: in std_logic_vector(tag_length-1 downto 0);" << endl;
+	ofile << "tag_out: out std_logic_vector(tag_length-1 downto 0) ";
+	return(semi_colon);
 }
 
 
 void vcModule::Print_VHDL_Component(ostream& ofile)
 {
-  if(this->Get_Volatile_Flag())
-	this->Print_VHDL_Volatile_Component(ofile);
-  else if(this->Get_Operator_Flag())
-	assert(0); // in progress
-  else
-  {
-	  ofile << "component " << this->Get_VHDL_Id() << " is -- {" << endl;
-	  ofile << " generic (tag_length : integer); " << endl;
-	  this->Print_VHDL_Ports(ofile);
-	  ofile << "-- }" << endl << "end component;" << endl;
-  }
+	if(this->Get_Volatile_Flag())
+		this->Print_VHDL_Volatile_Component(ofile);
+	else if(this->Get_Operator_Flag())
+		this->Print_VHDL_Operator_Component(ofile);
+	else
+	{
+		ofile << "component " << this->Get_VHDL_Id() << " is -- {" << endl;
+		ofile << " generic (tag_length : integer); " << endl;
+		this->Print_VHDL_Ports(ofile);
+		ofile << "-- }" << endl << "end component;" << endl;
+	}
 }
-
 
 void vcModule::Print_VHDL_Entity(ostream& ofile)
 {
-	ofile << "entity " << this->Get_VHDL_Id() << " is -- {" << endl;
-	ofile << " generic (tag_length : integer); " << endl;
-	this->Print_VHDL_Ports(ofile);
-	ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Id() << ";" << endl;
+	if(this->Get_Volatile_Flag())
+		this->Print_VHDL_Volatile_Entity(ofile);
+	else if(this->Get_Operator_Flag())
+		this->Print_VHDL_Operator_Entity(ofile);
+	else
+	{
+		ofile << "entity " << this->Get_VHDL_Id() << " is -- {" << endl;
+		ofile << " generic (tag_length : integer); " << endl;
+		this->Print_VHDL_Ports(ofile);
+		ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Id() << ";" << endl;
+	}
 }
 
 void vcModule::Print_VHDL_Architecture(ostream& ofile)
@@ -594,8 +588,13 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	if(this->_foreign_flag)
 		return;
 
-	// operator form or normal form?
-	bool operator_form = this->Get_Operator_Flag();
+	// operator form?
+	if(this->Get_Operator_Flag())
+	{
+		this->Print_VHDL_Operator_Architecture(ofile);
+		return;
+	}
+
 	bool volatile_form = this->Get_Volatile_Flag();
 
 	assert(this->_control_path);
@@ -609,66 +608,40 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	ofile << "-- always true..." << endl;
 
 	ofile << "signal " << this->_control_path->Get_Always_True_Symbol() << ": Boolean;" << endl;
-	if(operator_form)
-		ofile << "signal sample_ack_symbol, update_ack_symbol: Boolean;" << endl;
 
-	ofile << "signal in_buffer_data_in, in_buffer_data_out: std_logic_vector((tag_length + " << this->Get_In_Arg_Width() << ")-1 downto 0);" << endl;
+	if(!volatile_form)
+		ofile << "signal in_buffer_data_in, in_buffer_data_out: std_logic_vector((tag_length + " << this->Get_In_Arg_Width() << ")-1 downto 0);" << endl;
+	else
+		ofile << "signal in_buffer_data_in, in_buffer_data_out: std_logic_vector(" << this->Get_In_Arg_Width() << "-1 downto 0);" << endl;
 
-	if(!(operator_form || volatile_form))
+
+	ofile << "signal default_zero_sig: std_logic;" << endl;
+
+	if(!volatile_form)
 	{
 		// 
 		// will use sample-req/ack in operator case.
 		//
 		ofile << "signal in_buffer_write_req: std_logic;" << endl;
 		ofile << "signal in_buffer_write_ack: std_logic;" << endl;
-	}
-	if(!volatile_form)
-	{
+
 		ofile << "signal in_buffer_unload_req_symbol: Boolean;" << endl;
 		ofile << "signal in_buffer_unload_ack_symbol: Boolean;" << endl;
 
 		ofile << "signal out_buffer_data_in, out_buffer_data_out: std_logic_vector((tag_length + " << this->Get_Out_Arg_Width() << ")-1 downto 0);" << endl;
-	}
 
-	if(!(operator_form || volatile_form))
-	{
-		// 
-		// will use update-req/ack in operator case.
-		//
 		ofile << "signal out_buffer_read_req: std_logic;" << endl;
 		ofile << "signal out_buffer_read_ack: std_logic;" << endl;
-	}
-	if(!volatile_form)
-	{
 		ofile << "signal out_buffer_write_req_symbol: Boolean;" << endl;
 		ofile << "signal out_buffer_write_ack_symbol: Boolean;" << endl;
-	}
 
-	ofile << "signal default_zero_sig: std_logic;" << endl;
-	if(!(operator_form || volatile_form))
-	{
 		ofile << "signal tag_ub_out, tag_ilock_out: std_logic_vector(tag_length-1 downto 0);" << endl;
 		ofile << "signal tag_push_req, tag_push_ack, tag_pop_req, tag_pop_ack: std_logic;" << endl;
 		ofile << "signal tag_unload_req_symbol, tag_unload_ack_symbol, tag_write_req_symbol, tag_write_ack_symbol: Boolean;" << endl;
 		ofile << "signal tag_ilock_write_req_symbol, tag_ilock_write_ack_symbol, tag_ilock_read_req_symbol, tag_ilock_read_ack_symbol: Boolean;" << endl;
 		ofile << "signal start_req_sig, fin_req_sig, start_ack_sig, fin_ack_sig: std_logic; " << endl;
-	}
-	if(!volatile_form)
 		ofile << "signal input_sample_reenable_symbol: Boolean;" << endl;
-
-	// vectors for printing joins etc.
-	vector<string> unload_ack_symbols;
-
-	if(!operator_form)
-		unload_ack_symbols.push_back("tag_unload_ack_symbol");
-
-	unload_ack_symbols.push_back("in_buffer_unload_ack_symbol");
-
-	vector<string> write_ack_symbols;
-	if(!operator_form)
-		write_ack_symbols.push_back("tag_write_ack_symbol");
-
-	write_ack_symbols.push_back("out_buffer_write_ack_symbol");
+	}
 
 	// input port buffer signals.
 	ofile << "-- input port buffer signals" << endl;
@@ -683,12 +656,15 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		ofile << "signal " << w->Get_VHDL_Signal_Id() << " : " 
 			<<  " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
 
+		if(!volatile_form)
+		{
 		// all inarg_reenable signals must be joined
 		// to produce input_sample_reenable!
 		// input-sample-reenable will unload from the
 		// input buffer.
 		string ue_sig =  w->Get_VHDL_Id() + "_update_enable";
 		ofile << "signal " << ue_sig << ": Boolean;" << endl;
+		}
 
 	}
 
@@ -703,11 +679,14 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		ofile << "signal " << w->Get_VHDL_Signal_Id() << " : " 
 			<<  " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
 
+		if(!volatile_form)
+		{
 		// exit of CP will trigger write to the output-buffer..
 		// TODO: completion of write to output-buffer must
 		//       be used to reenable all output updates in 
 		//       pipelined body.
 		ofile << "signal " << w->Get_VHDL_Id() << "_update_enable: Boolean;" << endl;
+		}
 
 	}
 
@@ -738,42 +717,34 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 			vcSystem::Error("module " + mc->Get_Label() + " called from volatile module " + this->Get_Label()
 					+ " is not volatile");
 		}
-		// if this is operator, mc must be either volatile or operator.
-		if(this->Get_Operator_Flag() && !(mc->Get_Volatile_Flag() || mc->Get_Operator_Flag()))
-		{
-			vcSystem::Error("module " + mc->Get_Label() + " called from operator module " + this->Get_Label()
-					+ " is not operator/volatile");
-		}
 
-		if(mc->Get_Volatile_Flag() || mc->Get_Operator_Flag())
-			mc->Print_VHDL_Component(ofile);
+		mc->Print_VHDL_Component(ofile);
 	}
 
 	// print link signals between CP and DP
 	if(!volatile_form)
 	{
-	ofile << "-- links between control-path and data-path" << endl;
-	for(set<vcTransition*>::iterator iter = _linked_transition_set.begin();
-			iter != _linked_transition_set.end();
-			iter++)
-	{
-		if((*iter)->Get_Is_Input())
-			ofile << "signal " << (*iter)->Get_DP_To_CP_Symbol() << " : boolean;" << endl;
-		else if((*iter)->Get_Is_Output()) 
-			ofile << "signal " << (*iter)->Get_CP_To_DP_Symbol() << " : boolean;" << endl;
-	}
-	ofile << endl;
-	}
+		ofile << "-- links between control-path and data-path" << endl;
+		for(set<vcTransition*>::iterator iter = _linked_transition_set.begin();
+				iter != _linked_transition_set.end();
+				iter++)
+		{
+			if((*iter)->Get_Is_Input())
+				ofile << "signal " << (*iter)->Get_DP_To_CP_Symbol() << " : boolean;" << endl;
+			else if((*iter)->Get_Is_Output()) 
+				ofile << "signal " << (*iter)->Get_CP_To_DP_Symbol() << " : boolean;" << endl;
+		}
+		ofile << endl;
 
-
-	// print link signals between DP and Memories within the module
-	// note: operators can also have internal memory spaces.
-	for(map<string, vcMemorySpace*>::iterator iter = _memory_space_map.begin();
-			iter != _memory_space_map.end();
-			iter++)
-	{
-		// error checking will happen here.
-		(*iter).second->Print_VHDL_Interface_Signal_Declarations(ofile);
+		// print link signals between DP and Memories within the module
+		// note: operators can also have internal memory spaces.
+		for(map<string, vcMemorySpace*>::iterator iter = _memory_space_map.begin();
+				iter != _memory_space_map.end();
+				iter++)
+		{
+			// error checking will happen here.
+			(*iter).second->Print_VHDL_Interface_Signal_Declarations(ofile);
+		}
 	}
 
 	if(vcSystem::_enable_logging && !volatile_form)
@@ -802,62 +773,38 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 
 
 	ofile << "-- input handling ------------------------------------------------" << endl;
+	if(!volatile_form)
 	{
-
 		//int input_buffering  = (this->_pipeline_flag ? 2 : 1);
 		int input_buffering  = 1;
-		if(operator_form)
-		{
-			ofile << "in_buffer: InterlockBuffer -- { " << endl;
-			ofile << " generic map(name => \"" << this->Get_VHDL_Id() << "_input_buffer\", -- {" << endl
-				<< " buffer_size => " << input_buffering << "," <<  endl 
-				<< " bypass_flag => true, " <<  endl 
-				<< " in_data_width => " << this->Get_In_Arg_Width() << ", " << endl;
-			ofile   << " out_data_width => " << this->Get_In_Arg_Width() << ") -- } " << endl;
-			ofile << " port map(write_req => sample_req, -- { " << endl
-				<< " write_ack => sample_ack, " << endl
-				<< " write_data => in_buffer_data_in," << endl
-				<< " unload_req => in_buffer_unload_req_symbol, " << endl
-				<< " unload_ack => in_buffer_unload_ack_symbol, " << endl
-				<< " read_data => in_buffer_data_out," << endl
-				<< " clk => clk, reset => reset); -- }}" << endl;
-		}
-		else if(!volatile_form)
-		{
-			ofile << "in_buffer: UnloadBuffer -- { " << endl;
-			ofile << " generic map(name => \"" << this->Get_VHDL_Id() << "_input_buffer\", -- {" << endl
-				<< " buffer_size => " << input_buffering << "," <<  endl 
-				<< " data_width => tag_length + " << this->Get_In_Arg_Width() << ") -- } " << endl;
-			ofile << " port map(write_req => in_buffer_write_req, -- { " << endl
-				<< " write_ack => in_buffer_write_ack, " << endl
-				<< " write_data => in_buffer_data_in," << endl
-				<< " unload_req => in_buffer_unload_req_symbol, " << endl
-				<< " unload_ack => in_buffer_unload_ack_symbol, " << endl
-				<< " read_data => in_buffer_data_out," << endl
-				<< " clk => clk, reset => reset); -- }}" << endl;
-		}
+		ofile << "in_buffer: UnloadBuffer -- { " << endl;
+		ofile << " generic map(name => \"" << this->Get_VHDL_Id() << "_input_buffer\", -- {" << endl
+			<< " buffer_size => " << input_buffering << "," <<  endl 
+			<< " data_width => tag_length + " << this->Get_In_Arg_Width() << ") -- } " << endl;
+		ofile << " port map(write_req => in_buffer_write_req, -- { " << endl
+			<< " write_ack => in_buffer_write_ack, " << endl
+			<< " write_data => in_buffer_data_in," << endl
+			<< " unload_req => in_buffer_unload_req_symbol, " << endl
+			<< " unload_ack => in_buffer_unload_ack_symbol, " << endl
+			<< " read_data => in_buffer_data_out," << endl
+			<< " clk => clk, reset => reset); -- }}" << endl;
 
 		int H=0;
-		if(!volatile_form)
+		for(int idx = 0, fidx = inarg_wires.size(); idx < fidx; idx++)
 		{
-			for(int idx = 0, fidx = inarg_wires.size(); idx < fidx; idx++)
-			{
-				vcWire* w = inarg_wires[idx];
-				int wsize = w->Get_Type()->Size();
-				ofile << "in_buffer_data_in(" << (H+wsize)-1 << " downto " << H << ") <= " << w->Get_VHDL_Id() << ";" << endl;
-				ofile << w->Get_VHDL_Signal_Id() << " <= in_buffer_data_out(" << (H+wsize)-1 << " downto " << H << ");" << endl;
-				H += wsize;
-			}
-			if(!operator_form)
-			{
-				string hindex = (H > 0 ? "tag_length + " + IntToStr(H-1) : "tag_length-1");
-				ofile << "in_buffer_data_in(" << hindex << " downto " << H << ") <= tag_in;" << endl;
-				ofile << "tag_ub_out <= in_buffer_data_out(" << hindex <<  " downto " << H << ");" << endl;
-
-				ofile << "in_buffer_write_req <= start_req;" << endl;
-				ofile << "start_ack <= in_buffer_write_ack;" << endl;
-			}
+			vcWire* w = inarg_wires[idx];
+			int wsize = w->Get_Type()->Size();
+			ofile << "in_buffer_data_in(" << (H+wsize)-1 << " downto " << H << ") <= " << w->Get_VHDL_Id() << ";" << endl;
+			ofile << w->Get_VHDL_Signal_Id() << " <= in_buffer_data_out(" << (H+wsize)-1 << " downto " << H << ");" << endl;
+			H += wsize;
 		}
+
+		string hindex = (H > 0 ? "tag_length + " + IntToStr(H-1) : "tag_length-1");
+		ofile << "in_buffer_data_in(" << hindex << " downto " << H << ") <= tag_in;" << endl;
+		ofile << "tag_ub_out <= in_buffer_data_out(" << hindex <<  " downto " << H << ");" << endl;
+
+		ofile << "in_buffer_write_req <= start_req;" << endl;
+		ofile << "start_ack <= in_buffer_write_ack;" << endl;
 
 		// In a non-volatile module, there are two distinct cases:
 		//    In the pipeline case, 
@@ -869,166 +816,133 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		//             the read_req_symbol is a join with the following predecessors
 		//                  -  marked predecessor: unload_ack_symbol (self-release, 0-delay)
 		//                  -  marked predecessor (with initial marking of 1) input_sample_reenable_symbol
-		if(!volatile_form)
+		vector<string> preds;
+		vector<int>    pred_markings;
+		vector<int>    pred_capacities;
+		vector<int>    pred_delays;
+
+		if(this->_pipeline_flag)
 		{
-			vector<string> preds;
-			vector<int>    pred_markings;
-			vector<int>    pred_capacities;
-			vector<int>    pred_delays;
-
-			if(this->_pipeline_flag)
+			for(int idx = 0, fidx = inarg_wires.size(); idx < fidx; idx++)
 			{
-				for(int idx = 0, fidx = inarg_wires.size(); idx < fidx; idx++)
-				{
-					vcWire* w = inarg_wires[idx];
+				vcWire* w = inarg_wires[idx];
 
-					// if wire is not used, then it is ignored.
-					// because it's update is  never enabled..
-					if(w->Get_Number_Of_Receivers() == 0) 
-						continue;
+				// if wire is not used, then it is ignored.
+				// because it's update is  never enabled..
+				if(w->Get_Number_Of_Receivers() == 0) 
+					continue;
 
-					preds.push_back(w->Get_VHDL_Id() + "_update_enable");
-					pred_capacities.push_back(this->Get_Pipeline_Depth());
-					pred_markings.push_back(0);
-					pred_delays.push_back(0); // revisit later..
-				}
+				preds.push_back(w->Get_VHDL_Id() + "_update_enable");
+				pred_capacities.push_back(this->Get_Pipeline_Depth());
+				pred_markings.push_back(0);
+				pred_delays.push_back(0); // revisit later..
 			}
-
-			preds.push_back("in_buffer_unload_ack_symbol");
-			pred_markings.push_back(1);
-			pred_capacities.push_back(1);
-			pred_delays.push_back(0);  // revisit later..
-
-			preds.push_back("input_sample_reenable_symbol");
-			pred_markings.push_back((this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1));
-			pred_capacities.push_back((this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1));
-			pred_delays.push_back(1);  // revisit later..
-
-			string joined_symbol = "in_buffer_unload_req_symbol";
-			Print_VHDL_Join(joined_symbol + "_join", 
-					preds,
-					pred_markings,
-					pred_capacities, 
-					pred_delays, 
-					joined_symbol,
-					ofile);
-
-			ofile << endl;
-
-
-			ofile << "-- join of all unload_ack_symbols.. used to trigger CP." << endl;
-			ofile << cp_entry_symbol << " <= in_buffer_unload_ack_symbol;" << endl;
-
 		}
+
+		preds.push_back("in_buffer_unload_ack_symbol");
+		pred_markings.push_back(1);
+		pred_capacities.push_back(1);
+		pred_delays.push_back(0);  // revisit later..
+
+		preds.push_back("input_sample_reenable_symbol");
+		pred_markings.push_back((this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1));
+		pred_capacities.push_back((this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1));
+		pred_delays.push_back(1);  // revisit later..
+
+		string joined_symbol = "in_buffer_unload_req_symbol";
+		Print_VHDL_Join(joined_symbol + "_join", 
+				preds,
+				pred_markings,
+				pred_capacities, 
+				pred_delays, 
+				joined_symbol,
+				ofile);
+
+		ofile << endl;
+
+
+		ofile << "-- join of all unload_ack_symbols.. used to trigger CP." << endl;
+		ofile << cp_entry_symbol << " <= in_buffer_unload_ack_symbol;" << endl;
+
 
 	}
-	ofile << "-- output handling  -------------------------------------------------------" << endl;
 
+	ofile << "-- output handling  -------------------------------------------------------" << endl;
+	if(!volatile_form)
 	{
 		int output_buffering = (this->_pipeline_flag ? 2 : 1);
-		if(operator_form)
-		{
-			// instantiate receive-buffer for each input.
-			ofile <<  "out_buffer: InterlockBuffer -- {" << endl
-				<< " generic map(name => \"" << this->Get_VHDL_Id() << "_out_buffer\", -- {" << endl
-				<< " buffer_size => " << output_buffering << "," << endl
-				<< " in_data_width => " << this->Get_Out_Arg_Width() << ", " << endl;
-			ofile   << " out_data_width => " << this->Get_Out_Arg_Width() << ") --} " << endl;
-			ofile << " port map(write_req => out_buffer_write_req_symbol, -- {" << endl
-				<< " write_ack => out_buffer_write_ack_symbol, " << endl
-				<< " write_data => out_buffer_data_in," << endl
-				<< " read_req => update_req, " << endl
-				<< " read_ack => update_ack, " << endl
-				<< " read_data => out_buffer_data_out," << endl
-				<< " clk => clk, reset => reset); -- }}" << endl;
-		}
-		else if(!volatile_form)
-		{
-			// instantiate receive-buffer for each input.
-			ofile <<  "out_buffer: ReceiveBuffer -- {" << endl
-				<< " generic map(name => \"" << this->Get_VHDL_Id() << "_out_buffer\", -- {" << endl
-				<< " buffer_size => " << output_buffering << "," << endl
-				<< " data_width => tag_length + " << this->Get_Out_Arg_Width() << ") --} " << endl;
-			ofile << " port map(write_req => out_buffer_write_req_symbol, -- {" << endl
-				<< " write_ack => out_buffer_write_ack_symbol, " << endl
-				<< " write_data => out_buffer_data_in," << endl
-				<< " read_req => out_buffer_read_req, " << endl
-				<< " read_ack => out_buffer_read_ack, " << endl
-				<< " read_data => out_buffer_data_out," << endl
-				<< " clk => clk, reset => reset); -- }}" << endl;
-		}
+		// instantiate receive-buffer for each input.
+		ofile <<  "out_buffer: ReceiveBuffer -- {" << endl
+			<< " generic map(name => \"" << this->Get_VHDL_Id() << "_out_buffer\", -- {" << endl
+			<< " buffer_size => " << output_buffering << "," << endl
+			<< " data_width => tag_length + " << this->Get_Out_Arg_Width() << ") --} " << endl;
+		ofile << " port map(write_req => out_buffer_write_req_symbol, -- {" << endl
+			<< " write_ack => out_buffer_write_ack_symbol, " << endl
+			<< " write_data => out_buffer_data_in," << endl
+			<< " read_req => out_buffer_read_req, " << endl
+			<< " read_ack => out_buffer_read_ack, " << endl
+			<< " read_data => out_buffer_data_out," << endl
+			<< " clk => clk, reset => reset); -- }}" << endl;
 
 
-		if(!volatile_form)
+		int H = 0;
+		for(int idx = 0, fidx = outarg_wires.size(); idx < fidx; idx++)
 		{
-			int H = 0;
-			for(int idx = 0, fidx = outarg_wires.size(); idx < fidx; idx++)
-			{
-				vcOutputWire* w = (vcOutputWire*) outarg_wires[idx];
-				int wsize  = w->Get_Type()->Size();
-				if(w->Is_Constant())
-					ofile << w->Get_VHDL_Signal_Id() << " <= " << w->Get_Value()->To_VHDL_String() << ";" << endl;
+			vcOutputWire* w = (vcOutputWire*) outarg_wires[idx];
+			int wsize  = w->Get_Type()->Size();
+			if(w->Is_Constant())
+				ofile << w->Get_VHDL_Signal_Id() << " <= " << w->Get_Value()->To_VHDL_String() << ";" << endl;
 
-				ofile << "out_buffer_data_in(" << (H+wsize)-1 << " downto " << H << ") <= " << w->Get_VHDL_Signal_Id() << ";" << endl;
-				ofile << w->Get_VHDL_Id() << " <= out_buffer_data_out(" << (H+wsize)-1 << " downto " << H << ");" << endl;
-				H += wsize;
-			}
-			if(!operator_form)
-			{
-				string hindex = (H > 0 ? "tag_length + " + IntToStr(H-1) : "tag_length-1");
-				ofile << "out_buffer_data_in(" << hindex << " downto " << H << ") <= tag_ilock_out;" << endl;
-				ofile << "tag_out <= out_buffer_data_out(" << hindex << " downto " << H << ");" << endl;
-			}
+			ofile << "out_buffer_data_in(" << (H+wsize)-1 << " downto " << H << ") <= " << w->Get_VHDL_Signal_Id() << ";" << endl;
+			ofile << w->Get_VHDL_Id() << " <= out_buffer_data_out(" << (H+wsize)-1 << " downto " << H << ");" << endl;
+			H += wsize;
 		}
+		string hindex = (H > 0 ? "tag_length + " + IntToStr(H-1) : "tag_length-1");
+		ofile << "out_buffer_data_in(" << hindex << " downto " << H << ") <= tag_ilock_out;" << endl;
+		ofile << "tag_out <= out_buffer_data_out(" << hindex << " downto " << H << ");" << endl;
 
 
 		// There are two distinct cases when the module is not volatile (as above)
-		if(!volatile_form)
+		vector<string> preds;
+		vector<int>    pred_markings;
+		vector<int>    pred_capacities;
+		vector<int>    pred_delays;
+
+		//     for each output, the write_req_symbol is a join with 
+		//      - marked predecessor: write_ack_symbol (self-release, 0-delay)
+		//      - unmarked predecessor: cp_exit_symbol
+		//     the write_ack-symbol is not used in any manner except to reenable
+		//     the write_req symbol.
+		preds.push_back(cp_exit_symbol);
+		pred_capacities.push_back(this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1);
+		pred_markings.push_back(0);
+		pred_delays.push_back(0); // revisit later..
+
+		preds.push_back("out_buffer_write_ack_symbol");
+		pred_markings.push_back(1);
+		pred_capacities.push_back(1);
+		pred_delays.push_back(1);  // delay=1, it is a sample-reenable. 
+
+		preds.push_back("tag_ilock_read_ack_symbol");
+		pred_markings.push_back(0);
+		pred_capacities.push_back(this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1);
+		pred_delays.push_back(0); // no need for delay, unmarked. 
+
+		string joined_symbol = "out_buffer_write_req_symbol";
+		Print_VHDL_Join(joined_symbol + "_join", 
+				preds,
+				pred_markings,
+				pred_capacities, 
+				pred_delays, 
+				joined_symbol,
+				ofile);
+
+		if(this->_pipeline_flag)
 		{
-			vector<string> preds;
-			vector<int>    pred_markings;
-			vector<int>    pred_capacities;
-			vector<int>    pred_delays;
-
-			//     for each output, the write_req_symbol is a join with 
-			//      - marked predecessor: write_ack_symbol (self-release, 0-delay)
-			//      - unmarked predecessor: cp_exit_symbol
-			//     the write_ack-symbol is not used in any manner except to reenable
-			//     the write_req symbol.
-			preds.push_back(cp_exit_symbol);
-			pred_capacities.push_back(this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1);
-			pred_markings.push_back(0);
-			pred_delays.push_back(0); // revisit later..
-
-			preds.push_back("out_buffer_write_ack_symbol");
-			pred_markings.push_back(1);
-			pred_capacities.push_back(1);
-			pred_delays.push_back(1);  // delay=1, it is a sample-reenable. 
-
-			if(!operator_form)
+			for(int idx = 0, fidx = outarg_wires.size(); idx < fidx; idx++)
 			{
-				preds.push_back("tag_ilock_read_ack_symbol");
-				pred_markings.push_back(0);
-				pred_capacities.push_back(this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1);
-				pred_delays.push_back(0); // no need for delay, unmarked. 
-			}
-
-			string joined_symbol = "out_buffer_write_req_symbol";
-			Print_VHDL_Join(joined_symbol + "_join", 
-					preds,
-					pred_markings,
-					pred_capacities, 
-					pred_delays, 
-					joined_symbol,
-					ofile);
-
-			if(this->_pipeline_flag)
-			{
-				for(int idx = 0, fidx = outarg_wires.size(); idx < fidx; idx++)
-				{
-					vcWire* w = outarg_wires[idx];
-					ofile << w->Get_VHDL_Id() + "_update_enable <= " << "out_buffer_write_ack_symbol;" << endl;
-				}
+				vcWire* w = outarg_wires[idx];
+				ofile << w->Get_VHDL_Id() + "_update_enable <= " << "out_buffer_write_ack_symbol;" << endl;
 			}
 		}
 	}
@@ -1040,7 +954,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		ofile << "input_sample_reenable_symbol <= out_buffer_write_ack_symbol;" << endl;
 	}
 
-	if(!(operator_form || volatile_form))
+	if(!volatile_form)
 	{
 		ofile << "-- fin-req/ack level protocol.." << endl;
 		ofile << "out_buffer_read_req <= fin_req;" << endl;
@@ -1108,6 +1022,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 
 	ofile << "-- }" << endl << "end " << arch_name << ";" << endl;
 }
+
 
 
 void vcModule::Print_VHDL_Tag_Logic(ostream& ofile)

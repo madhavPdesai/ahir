@@ -68,6 +68,7 @@ public:
   virtual void Print_VHDL_Logger(string& module_name, ostream& ofile);
 
   virtual void Print_Flow_Through_VHDL(ostream& ofile) {assert(0);}
+  virtual void Print_VHDL_Instantiation_Preamble(bool flow_through_flag, ostream& ofile);
   friend class vcDataPath;
 };
 
@@ -103,11 +104,8 @@ public:
   // combinational operator..
   virtual void Print_Flow_Through_VHDL(ostream& ofile);
 
-  // simple (guarded) operator
-  virtual void Print_Operator_VHDL(ostream& ofile);
-
   // operator instance..
-  virtual void Print_Operator_Instantiation_VHDL(ostream& ofile) {assert(0);}; // TODO.
+  virtual void Print_Operator_VHDL(ostream& ofile);
 
   friend class vcDataPath;
 };
