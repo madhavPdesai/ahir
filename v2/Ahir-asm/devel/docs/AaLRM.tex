@@ -1211,7 +1211,7 @@ This is done by the {\bf AaLinkExtMem} utility
 which is described in a separate document.
 
 
-\section{Inline and Macro Modules}
+\section{Module classes: pipeline, volatile, operator, inline, macro, foreign }
 
 By default, each distinct module in an \Aa program
 is eventually implemented as a separate VHDL entity
@@ -1221,9 +1221,78 @@ copies of this entity).
 
 However, in order to give the \Aa programmer
 more flexibility,  a module in \Aa may be marked
-to be inlined or substituted into the program
-at the point of the call.  The AhirV2 utility
-{\bf AaOpt} is responsible for this substitution.
+as belonging to a particular class.  These
+are described below.
+
+\subsection{Pipelined Modules}
+
+A module is marked as a pipeline-module if its
+hardware implementation is to be converted into 
+a pipeline.  This allows efficient use of the module
+resources.
+
+\begin{verbatim}
+$pipeline $module [foo] $in (...) $out (...) $is
+{
+...
+}
+\end{verbatim}
+
+A pipeline module {\bf must} have {\bf at least} one input
+and one output argument.  Further, at least one input argument
+must actually be sampled inside the module, and one output argument
+must actually be updated inside the module.
+
+
+\subsection{Operator Modules}
+
+A module is marked as an operator-module if it
+is to be substituted at every point where it
+is called (thus, multiple instances of the module
+will be generated).
+This allows low latency access to the module
+functionality in hardware.
+
+\begin{verbatim}
+$operator $module [foo] $in (...) $out (...) $is
+{
+...
+}
+\end{verbatim}
+
+An operator module {\bf must} have {\bf at least} one input
+and one output argument.  Further, at least one input argument
+must actually be sampled inside the module, and one output argument
+must actually be updated inside the module.
+
+An operator module may also be marked as pipelined.
+\begin{verbatim}
+$pipeline $operator $module [foo] $in (..) $out (..)
+\end{verbatim}
+
+\subsection{Volatile Modules}
+
+A module is marked as a volatile-module if 
+\begin{itemize}
+\item Its hardware implementation is to be 
+a combinational (memory-less) circuit.
+\item It is to be substituted at every point where it
+is called (thus, multiple instances of the module
+will be generated).
+\end{itemize}
+This allows low level implementation control
+to the programmer.
+
+\begin{verbatim}
+$volatile $module [foo] $in (...) $out (...) $is
+{
+...
+}
+\end{verbatim}
+
+A volatile module cannot make any memory accesses or 
+reads/writes to pipes.  Inside a volatile module, 
+a function call must be to volatile modules only.
 
 
 \subsection{Inlined Modules}
@@ -1285,7 +1354,9 @@ $is
 }
 \end{verbatim}
 The three step substitution of add into add\_check
-is clearly seen.
+is clearly seen.  
+There are no restrictions on the
+module that is being inlined.
 
 
 \subsection{Macro Modules}
@@ -1349,6 +1420,9 @@ argument to a call, a macro-module is permitted
 to violate the rule that there should
 be at most one write to an interface object
 within a module.
+
+There are no restrictions on the
+module that is being inlined.
 
 \section{Foreign Modules}
 

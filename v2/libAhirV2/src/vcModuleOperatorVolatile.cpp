@@ -343,7 +343,10 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 				ofile << w->Get_VHDL_Signal_Id() << " <= " << w->Get_Value()->To_VHDL_String() << ";" << endl;
 
 			ofile << w->Get_VHDL_Id() << " <= " << w->Get_VHDL_Signal_Id() << ";"  << endl;
+
+			// update req from the outside world is the consumer.
 			ofile << w->Get_VHDL_Id() << "_update_enable <= update_req;" << endl;
+
 		}
 		if(nouts == 0)
 		{
@@ -363,7 +366,7 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 		preds.push_back("update_req");
 		pred_capacities.push_back(this->Get_Pipeline_Depth());
 		pred_markings.push_back(0);
-		pred_delays.push_back(1);
+		pred_delays.push_back(1);  // must have unit delay!
 
 		string joined_symbol = "update_ack_symbol";
 		Print_VHDL_Join(joined_symbol + "_join", 

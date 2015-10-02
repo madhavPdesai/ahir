@@ -154,7 +154,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 					// expr can get a new value only after this has completed.
 					if(!this_is_volatile)
 					{
-						__MJ(__SST(expr), __UCT(pstmt), false); // No bypass
+						__MJ(__SST(expr), __UCT(pstmt), true); // bypass
 					}
 					else
 					{	

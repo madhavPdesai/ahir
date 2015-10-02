@@ -2912,14 +2912,12 @@ void vcCPPipelinedForkBlock::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map
 				vcCPElement* w = *niter;
 				int mw = u->Get_Marked_Predecessor_Delay(w);
 
-				assert(mv == mw);
-
-				if(distance_map[v][w] > 0)
+				if((distance_map[v][w] > 0) && (mv <= mw))
 				{
 					insert_v = false;
 					break;
 				}
-				if(distance_map[w][v] > 0)
+				if((distance_map[w][v] > 0) && (mw <= mv))
 					evict_w = true;
 
 				if(evict_w)

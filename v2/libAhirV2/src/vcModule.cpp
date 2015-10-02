@@ -773,7 +773,15 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 
 
 	ofile << "-- input handling ------------------------------------------------" << endl;
-	if(!volatile_form)
+	if(volatile_form)
+	{
+		for(int idx = 0, fidx = inarg_wires.size(); idx < fidx; idx++)
+		{
+			vcWire* w = inarg_wires[idx];
+			ofile << w->Get_VHDL_Signal_Id() << " <= " << w->Get_VHDL_Id() << ";" << endl;
+		}
+	}
+	else
 	{
 		//int input_buffering  = (this->_pipeline_flag ? 2 : 1);
 		int input_buffering  = 1;
@@ -868,7 +876,15 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	}
 
 	ofile << "-- output handling  -------------------------------------------------------" << endl;
-	if(!volatile_form)
+	if(volatile_form)
+	{
+		for(int idx = 0, fidx = outarg_wires.size(); idx < fidx; idx++)
+		{
+			vcWire* w = outarg_wires[idx];
+			ofile << w->Get_VHDL_Id() << " <= " << w->Get_VHDL_Signal_Id() << ";" << endl;
+		}
+	}
+	else
 	{
 		int output_buffering = (this->_pipeline_flag ? 2 : 1);
 		// instantiate receive-buffer for each input.
