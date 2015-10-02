@@ -4563,26 +4563,39 @@ void AaBinaryExpression::Update_Type()
 
 bool AaBinaryExpression::Is_Trivial()
 {
+	if((this->_operation == __MUL) || Is_Shift_Operation(this->_operation))
+	{
+		// lets say we can do up to 16-bit mul/shift operations in one cycle.
+		// even though they have quadratic complexity.
+		return (this->_first->Get_Type()->Size() <= 16);
+	}
+	else if(this->_first->Get_Type()->Size() <= 32)
+	{
+		// others with less than 32 bits are "trivial"..
+		// because they have linear complexity.
+		return (true);
+	}
+
 	if(this->_operation == __OR || this->_operation == __AND ||
 			this->_operation == __NOR || this->_operation == __NAND ||
 			this->_operation == __XOR || this->_operation == __XNOR || 
 			this->_operation == __CONCAT || this->_operation == __BITSEL ||
 			this->_operation == __EQUAL || this->_operation == __NOTEQUAL )
+	{
 		// some operations are obviously trivial.
 		// we can keep adding to this list based on certain rules..
 		return(true);
-	else
-	{
-		// shifts with constant-shift-amount are trivial.
-		if(((this->_operation == __SHL) || (this->_operation == __SHR)) && 
-				((this->_second != NULL) && this->_second->Is_Constant()))
-			return(true);
-		else if(((this->_operation == __ROL) || (this->_operation == __ROR)) && 
-				((this->_second != NULL) && this->_second->Is_Constant()))
-			return(true);
-		else
-			return(false);
 	}
+
+	// shifts with constant-shift-amount are trivial.
+	if(((this->_operation == __SHL) || (this->_operation == __SHR)) && 
+			((this->_second != NULL) && this->_second->Is_Constant()))
+		return(true);
+	else if(((this->_operation == __ROL) || (this->_operation == __ROR)) && 
+			((this->_second != NULL) && this->_second->Is_Constant()))
+		return(true);
+	else
+		return(false);
 }
 
 void AaBinaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)

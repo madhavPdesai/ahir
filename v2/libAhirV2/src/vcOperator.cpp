@@ -881,6 +881,11 @@ bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 	if(Is_Trivial_Op(this->_op_id))
 		return(false);
 
+	// flow-through? cannot be shared.
+	bool flow_through = (this->Get_Flow_Through() || other->Get_Flow_Through());
+	if(flow_through)
+		return(false);
+
 	// lets try not sharing integer adders at all..
 	if(this->Is_Int_Add_Op())
 		return(false);

@@ -919,6 +919,19 @@ AaAssignmentStatement::~AaAssignmentStatement() {};
 
 void AaAssignmentStatement::Set_Is_Volatile(bool v)
 {
+	AaScope* sc = this->Get_Root_Scope();
+	assert(sc && sc->Is("AaModule"));
+	AaModule* parent_module = (AaModule*) sc;
+	
+	if(v && parent_module->Get_Operator_Flag())
+	{
+		AaRoot* tobj = _target->Get_Object();
+		if(tobj->Is_Interface_Object())
+		{
+			AaRoot::Error("operator module has volatile update of interface object " + tobj->Get_Name(), this); 
+			return;
+		}
+	}
 	_is_volatile = v;
 	if(this->_source)
 		this->_source->Set_Is_Intermediate(v);
