@@ -34,35 +34,35 @@ Release:
 	cp $(HIERSYSBUILD)/bin/hierSys2Vhdl $(RELEASE)/bin/
 	cp $(HIERSYSBUILD)/bin/hierSys2C $(RELEASE)/bin/
 	# copy the IOLIB
-	cp $(IOLIB)/*.h $(RELEASE)/iolib/include/
+	#cp $(IOLIB)/*.h $(RELEASE)/iolib/include/
 	cp $(IOLIB)/*.h $(RELEASE)/include/
-	cp $(IOLIB)/libio.a $(RELEASE)/iolib/lib/
+	#cp $(IOLIB)/libio.a $(RELEASE)/iolib/lib/
 	cp $(IOLIB)/libio.a $(RELEASE)/lib/
-	cp $(IOLIB)/libio.so $(RELEASE)/iolib/lib/
+	#cp $(IOLIB)/libio.so $(RELEASE)/iolib/lib/
 	cp $(IOLIB)/libio.so $(RELEASE)/lib/
 	# copy the pipeHandler
-	cp $(PIPEHANDLER)/include/*.h $(RELEASE)/pipeHandler/include/
+	#cp $(PIPEHANDLER)/include/*.h $(RELEASE)/pipeHandler/include/
 	cp $(PIPEHANDLER)/include/*.h $(RELEASE)/include/
-	cp $(PIPEHANDLER)/lib/* $(RELEASE)/pipeHandler/lib/
+	#cp $(PIPEHANDLER)/lib/* $(RELEASE)/pipeHandler/lib/
 	cp $(PIPEHANDLER)/lib/* $(RELEASE)/lib/
-	cp $(PIPEHANDLER)/pipeHandlerTest/* $(RELEASE)/pipeHandler/examples/
+	#cp $(PIPEHANDLER)/pipeHandlerTest/* $(RELEASE)/pipeHandler/examples/
 	# copy the BitVectors
-	cp $(BITVECTORS)/include/*.h $(RELEASE)/BitVectors/include/
+	#cp $(BITVECTORS)/include/*.h $(RELEASE)/BitVectors/include/
 	cp $(BITVECTORS)/include/*.h $(RELEASE)/include/
-	cp $(BITVECTORS)/lib/* $(RELEASE)/BitVectors/lib/
+	#cp $(BITVECTORS)/lib/* $(RELEASE)/BitVectors/lib/
 	cp $(BITVECTORS)/lib/* $(RELEASE)/lib/
 	# copy RTL2AAMATCHER
 	cp $(RTL2AAMATCHER)/include/*.h $(RELEASE)/include/
 	cp $(RTL2AAMATCHER)/lib/*.so $(RELEASE)/lib/
 	# copy the pthreadUtils.
-	cp $(PTHREADUTILS)/include/*.h $(RELEASE)/pthreadUtils/include/
+	#cp $(PTHREADUTILS)/include/*.h $(RELEASE)/pthreadUtils/include/
 	cp $(PTHREADUTILS)/include/*.h $(RELEASE)/include/
-	cp $(GNUPTHUTILS)/include/*.h $(RELEASE)/GnuPthUtils/include/
+	#cp $(GNUPTHUTILS)/include/*.h $(RELEASE)/GnuPthUtils/include/
 	# copy the testbench
-	cp $(CTESTBENCH)/include/*.h $(RELEASE)/CtestBench/include/
+	#cp $(CTESTBENCH)/include/*.h $(RELEASE)/CtestBench/include/
 	cp $(CTESTBENCH)/include/SocketLib.h $(RELEASE)/include/
 	cp $(CTESTBENCH)/include/Vhpi.h $(RELEASE)/include/
-	cp $(CTESTBENCH)/lib/* $(RELEASE)/CtestBench/lib/
+	#cp $(CTESTBENCH)/lib/* $(RELEASE)/CtestBench/lib/
 	cp $(CTESTBENCH)/lib/* $(RELEASE)/lib/
 	# copy the VHDL files
 	cp $(VHDL)/release/*.vhdl $(RELEASE)/vhdl/
@@ -96,18 +96,18 @@ Clean:
 	rm -f $(RELEASE)/bin/llvm2aa
 	rm -f $(RELEASE)/bin/hierSys2Vhdl
 	# rm the IOLIB
-	rm -f $(RELEASE)/iolib/include/*.h
+	#rm -f $(RELEASE)/iolib/include/*.h
 	rm -f $(RELEASE)/iolib/lib/*.a
 	# rm the pipeHandler
-	rm -f $(RELEASE)/pipeHandler/include/*
-	rm -f $(RELEASE)/pipeHandler/lib/*
-	rm -f $(RELEASE)/pipeHandler/examples/*
+	#rm -f $(RELEASE)/pipeHandler/include/*
+	#rm -f $(RELEASE)/pipeHandler/lib/*
+	#rm -f $(RELEASE)/pipeHandler/examples/*
 	# rm the pthreadUtils.
-	rm -f $(RELEASE)/pthreadUtils/include/*
+	#rm -f $(RELEASE)/pthreadUtils/include/*
 	# rm the testbench
-	rm -f $(RELEASE)/CtestBench/include/*.h
-	rm -f $(RELEASE)/CtestBench/lib/*.so
-	rm -f $(RELEASE)/CtestBench/vhdl/*.vhd*
+	#rm -f $(RELEASE)/CtestBench/include/*.h
+	#rm -f $(RELEASE)/CtestBench/lib/*.so
+	#rm -f $(RELEASE)/CtestBench/vhdl/*.vhd*
 	# rm the VHDL files
 	rm -f $(RELEASE)/vhdl/*.vhd*
 	rm -f $(RELEASE)/vhdl/*.cf
