@@ -1,3 +1,0 @@
-pipeHandler provides pipe functionality to
-software in a form which is easier to debug
-than the use of named pipes or sockets.
