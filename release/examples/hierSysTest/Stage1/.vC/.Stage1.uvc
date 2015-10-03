@@ -103,6 +103,8 @@ ADD_u32_u32_19_sample_completed_ <-& (ADD_u32_u32_19_Sample)
 ADD_u32_u32_19_sample_completed_ &-> ($null)
 ADD_u32_u32_19_update_start_ &-> (ADD_u32_u32_19_Update)
 ADD_u32_u32_19_update_completed_ <-& (ADD_u32_u32_19_Update)
+// flow-through
+ADD_u32_u32_19_update_start_ <-& (ADD_u32_u32_19_sample_completed_)
 ;;[array_obj_ref_20_index_resize_0] {
 $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
 }
@@ -192,8 +194,8 @@ $W[array_obj_ref_20_data_0] : $int<8>
 *[MUL_u32_u32_17_inst] (address konst_16_wire_constant) (MUL_u32_u32_17_wire) 
 $delay MUL_u32_u32_17_inst 1
 // ((address * 1 ) + 0 )
-+[ADD_u32_u32_19_inst] (MUL_u32_u32_17_wire konst_18_wire_constant) (ADD_u32_u32_19_wire) 
-$delay ADD_u32_u32_19_inst 1
++[ADD_u32_u32_19_inst] (MUL_u32_u32_17_wire konst_18_wire_constant) (ADD_u32_u32_19_wire)  $flowthrough
+$delay ADD_u32_u32_19_inst 0
 &/ [array_obj_ref_20_index_0_resize] (ADD_u32_u32_19_wire) (ADD_u32_u32_19_resized) 
  $flowthrough 
 &/ [array_obj_ref_20_index_0_rename] (ADD_u32_u32_19_resized) (ADD_u32_u32_19_scaled) 
@@ -216,7 +218,6 @@ $delay array_obj_ref_20_load_0 2
 // ((address * 1 ) + 0 )
 // (address * 1 )
 MUL_u32_u32_17_inst <=> (assign_stmt_21/MUL_u32_u32_17_Sample/rr assign_stmt_21/MUL_u32_u32_17_Update/cr) (assign_stmt_21/MUL_u32_u32_17_Sample/ra assign_stmt_21/MUL_u32_u32_17_Update/ca)
-ADD_u32_u32_19_inst <=> (assign_stmt_21/ADD_u32_u32_19_Sample/rr assign_stmt_21/ADD_u32_u32_19_Update/cr) (assign_stmt_21/ADD_u32_u32_19_Sample/ra assign_stmt_21/ADD_u32_u32_19_Update/ca)
 array_obj_ref_20_index_0_resize <=> (assign_stmt_21/array_obj_ref_20_index_resize_0/index_resize_req) (assign_stmt_21/array_obj_ref_20_index_resize_0/index_resize_ack)
 array_obj_ref_20_index_0_rename <=> (assign_stmt_21/array_obj_ref_20_index_scale_0/scale_rename_req) (assign_stmt_21/array_obj_ref_20_index_scale_0/scale_rename_ack)
 array_obj_ref_20_index_offset <=> (assign_stmt_21/array_obj_ref_20_final_index_sum_regn/req) (assign_stmt_21/array_obj_ref_20_final_index_sum_regn/ack)
@@ -305,6 +306,8 @@ ADD_u32_u32_30_sample_completed_ <-& (ADD_u32_u32_30_Sample)
 ADD_u32_u32_30_sample_completed_ &-> ($null)
 ADD_u32_u32_30_update_start_ &-> (ADD_u32_u32_30_Update)
 ADD_u32_u32_30_update_completed_ <-& (ADD_u32_u32_30_Update)
+// flow-through
+ADD_u32_u32_30_update_start_ <-& (ADD_u32_u32_30_sample_completed_)
 ;;[array_obj_ref_31_index_resize_0] {
 $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
 }
@@ -390,8 +393,8 @@ $W[array_obj_ref_31_data_0] : $int<8>
 *[MUL_u32_u32_28_inst] (address konst_27_wire_constant) (MUL_u32_u32_28_wire) 
 $delay MUL_u32_u32_28_inst 1
 // ((address * 1 ) + 0 )
-+[ADD_u32_u32_30_inst] (MUL_u32_u32_28_wire konst_29_wire_constant) (ADD_u32_u32_30_wire) 
-$delay ADD_u32_u32_30_inst 1
++[ADD_u32_u32_30_inst] (MUL_u32_u32_28_wire konst_29_wire_constant) (ADD_u32_u32_30_wire)  $flowthrough
+$delay ADD_u32_u32_30_inst 0
 &/ [array_obj_ref_31_index_0_resize] (ADD_u32_u32_30_wire) (ADD_u32_u32_30_resized) 
  $flowthrough 
 &/ [array_obj_ref_31_index_0_rename] (ADD_u32_u32_30_resized) (ADD_u32_u32_30_scaled) 
@@ -413,7 +416,6 @@ $delay array_obj_ref_31_store_0 2
 // ((address * 1 ) + 0 )
 // (address * 1 )
 MUL_u32_u32_28_inst <=> (assign_stmt_33/MUL_u32_u32_28_Sample/rr assign_stmt_33/MUL_u32_u32_28_Update/cr) (assign_stmt_33/MUL_u32_u32_28_Sample/ra assign_stmt_33/MUL_u32_u32_28_Update/ca)
-ADD_u32_u32_30_inst <=> (assign_stmt_33/ADD_u32_u32_30_Sample/rr assign_stmt_33/ADD_u32_u32_30_Update/cr) (assign_stmt_33/ADD_u32_u32_30_Sample/ra assign_stmt_33/ADD_u32_u32_30_Update/ca)
 array_obj_ref_31_index_0_resize <=> (assign_stmt_33/array_obj_ref_31_index_resize_0/index_resize_req) (assign_stmt_33/array_obj_ref_31_index_resize_0/index_resize_ack)
 array_obj_ref_31_index_0_rename <=> (assign_stmt_33/array_obj_ref_31_index_scale_0/scale_rename_req) (assign_stmt_33/array_obj_ref_31_index_scale_0/scale_rename_ack)
 array_obj_ref_31_index_offset <=> (assign_stmt_33/array_obj_ref_31_final_index_sum_regn/req) (assign_stmt_33/array_obj_ref_31_final_index_sum_regn/ack)

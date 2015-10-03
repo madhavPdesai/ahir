@@ -365,6 +365,94 @@ void hierSystem::Print_Vhdl_Component_Declaration(ostream& ofile)
 	ofile << "--}" << endl << "end component;" << endl;
 }
 
+string hierSystem::Get_Pipe_VHDL_Write_Data_Name(string pipe_name)
+{
+	if(this->Get_Input_Pipe_Width(pipe_name) > 0)
+	{
+		this->Report_Error("write-data not possible to input pipe/signal " + pipe_name);
+	}
+
+	if(this->Is_Signal(pipe_name))
+	{
+		return(pipe_name);
+	}
+	else
+	{
+		return( pipe_name + "_pipe_write_data");
+	}
+}
+string hierSystem::Get_Pipe_VHDL_Write_Req_Name(string pipe_name)
+{
+	if(this->Get_Input_Pipe_Width(pipe_name) > 0)
+	{
+		this->Report_Error("write-request not possible to input pipe/signal " + pipe_name);
+	}
+
+	if(this->Is_Signal(pipe_name))
+	{
+		this->Report_Error("write-request not possible to signal " + pipe_name);
+	}
+
+	return( pipe_name + "_pipe_write_req");
+}
+
+string hierSystem::Get_Pipe_VHDL_Write_Ack_Name(string pipe_name)
+{
+	if(this->Get_Input_Pipe_Width(pipe_name) > 0)
+	{
+		this->Report_Error("write-request not possible to input pipe/signal " + pipe_name);
+	}
+	if(this->Is_Signal(pipe_name))
+	{
+		this->Report_Error("write-ack not possible from signal " + pipe_name);
+	}
+	return( pipe_name + "_pipe_write_ack");
+}
+
+string hierSystem::Get_Pipe_VHDL_Read_Data_Name(string pipe_name)
+{
+	if(this->Get_Output_Pipe_Width(pipe_name) > 0)
+	{
+		this->Report_Error("read-data not possible from output pipe/signal " + pipe_name);
+	}
+
+	if(this->Is_Signal(pipe_name))
+	{
+		return(pipe_name);
+	}
+	else
+	{
+		return( pipe_name + "_pipe_read_data");
+	}
+}
+string hierSystem::Get_Pipe_VHDL_Read_Req_Name(string pipe_name)
+{
+	if(this->Get_Output_Pipe_Width(pipe_name) > 0)
+	{
+		this->Report_Error("read-req not possible to output pipe/signal " + pipe_name);
+	}
+
+	if(this->Is_Signal(pipe_name))
+	{
+		this->Report_Error("read-req not possible to signal " + pipe_name);
+	}
+	return( pipe_name + "_pipe_read_req");
+}
+
+string hierSystem::Get_Pipe_VHDL_Read_Ack_Name(string pipe_name)
+{
+	if(this->Get_Output_Pipe_Width(pipe_name) > 0)
+	{
+		this->Report_Error("read-ack not possible from output pipe/signal " + pipe_name);
+	}
+
+	if(this->Is_Signal(pipe_name))
+	{
+		this->Report_Error("read-ack not possible from signal " + pipe_name);
+	}
+	return( pipe_name + "_pipe_read_ack");
+}
+
 void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile)
 {
         if(this->_child_map.size() == 0)
@@ -400,14 +488,23 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile)
 
 		if(!this->Is_Signal(pipe_name))
 		{
-			ofile << "signal " << pipe_name << "_pipe_write_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-			ofile << "signal " << pipe_name << "_pipe_write_req  : std_logic_vector(0  downto 0);" << endl;
-			ofile << "signal " << pipe_name << "_pipe_write_ack  : std_logic_vector(0  downto 0);" << endl;
+			if(this->Get_Input_Pipe_Width(pipe_name) == 0)
+			{
+				ofile << "signal " << this->Get_Pipe_VHDL_Write_Data_Name(pipe_name) 
+					<< ": std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+				ofile << "signal " << this->Get_Pipe_VHDL_Write_Req_Name(pipe_name) << " : std_logic_vector(0  downto 0);" << endl;
+				ofile << "signal " << this->Get_Pipe_VHDL_Write_Ack_Name(pipe_name) << " : std_logic_vector(0  downto 0);" << endl;
+			}
 
-			ofile << "signal " << pipe_name << "_pipe_read_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-			ofile << "signal " << pipe_name << "_pipe_read_req  : std_logic_vector(0  downto 0);" << endl;
-			ofile << "signal " << pipe_name << "_pipe_read_ack  : std_logic_vector(0  downto 0);" << endl;
-		}	
+
+			if(this->Get_Output_Pipe_Width(pipe_name) == 0)
+			{
+				ofile << "signal " << this->Get_Pipe_VHDL_Read_Data_Name(pipe_name) 
+					<< ": std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+				ofile << "signal " << this->Get_Pipe_VHDL_Read_Req_Name(pipe_name) << " : std_logic_vector(0  downto 0);" << endl;
+				ofile << "signal " << this->Get_Pipe_VHDL_Read_Ack_Name(pipe_name) << " : std_logic_vector(0  downto 0);" << endl;
+			}
+		}
 		else
 		{
 			ofile << "signal " << pipe_name << " : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
@@ -463,12 +560,12 @@ void hierSystem::Print_Vhdl_Pipe_Instance(string pipe_name, int pipe_width, int 
 	ofile << "signal_mode => false," << endl;
 	ofile << "depth => " << pipe_depth << " --}\n)" << endl;
 	ofile << "port map( -- { " << endl;
-	ofile << "read_req => " << pipe_name << "_pipe_read_req," << endl 
-		<< "read_ack => " << pipe_name << "_pipe_read_ack," << endl 
-		<< "read_data => "<< pipe_name << "_pipe_read_data," << endl 
-		<< "write_req => " << pipe_name << "_pipe_write_req," << endl 
-		<< "write_ack => " << pipe_name << "_pipe_write_ack," << endl 
-		<< "write_data => "<< pipe_name << "_pipe_write_data," << endl 
+	ofile << "read_req => " << this->Get_Pipe_VHDL_Read_Req_Name(pipe_name) << "," << endl 
+		<< "read_ack => " << this->Get_Pipe_VHDL_Read_Ack_Name(pipe_name) << "," << endl 
+		<< "read_data => "<< this->Get_Pipe_VHDL_Read_Data_Name(pipe_name) << "," << endl 
+		<< "write_req => " << this->Get_Pipe_VHDL_Write_Req_Name(pipe_name) << "," << endl 
+		<< "write_ack => " << this->Get_Pipe_VHDL_Write_Ack_Name(pipe_name) << "," << endl 
+		<< "write_data => "<< this->Get_Pipe_VHDL_Write_Data_Name(pipe_name) << "," << endl 
 		<< "clk => clk,"
 		<< "reset => reset -- }\n ); -- }" << endl;
 }

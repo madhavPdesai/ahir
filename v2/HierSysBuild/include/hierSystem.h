@@ -100,6 +100,7 @@ class hierSystemInstance: public hierRoot
 
 	bool Map_Unmapped_Ports_To_Defaults( map<string, pair<int,int> >& pmap, set<string>& signals);
 
+
 	string Get_Actual(string formal)
 	{
 		string ret_string = "";
@@ -470,6 +471,15 @@ public:
 	void Print_Vhdl_Test_Bench(string sim_link_lib, string sim_link_prefix, ostream& ofile); // in progress.
 	void Print_Vhdl_Instance_In_Testbench(string inst_name, ostream& ofile);
 	void Print_Vhdl_Pipe_Instance(string pipe_name, int pipe_width, int pipe_depth, ostream& ofile);
+
+	//  pipe access names.
+	string Get_Pipe_VHDL_Write_Data_Name(string pipe);
+	string Get_Pipe_VHDL_Write_Req_Name(string pipe);
+	string Get_Pipe_VHDL_Write_Ack_Name(string pipe);
+
+	string Get_Pipe_VHDL_Read_Data_Name(string pipe);
+	string Get_Pipe_VHDL_Read_Req_Name(string pipe);
+	string Get_Pipe_VHDL_Read_Ack_Name(string pipe);
 
 };
 
