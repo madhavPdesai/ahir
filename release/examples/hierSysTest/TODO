@@ -1,0 +1,12 @@
+Add the following concepts to rtl
+ -> subroutine call statements
+	just add the notion of a procedure that can
+        have signal inputs but can have only variable outputs.
+	these are all zero-delay!
+
+ -> concat, split, or/and/xor/nor/nand/xnor reduce expressions.
+ -> type conversions from scalar -> scalar.
+	bit-cast, cast.
+
+ -> vhdl generation...
+
