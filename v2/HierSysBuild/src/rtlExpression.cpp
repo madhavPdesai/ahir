@@ -101,6 +101,12 @@ rtlSimpleObjectReference::rtlSimpleObjectReference(rtlObject* obj, bool req_flag
 		_type = obj->Get_Type();
 }
 
+bool rtlSimpleObjectReference::Writes_To_Signal()
+{
+	return(this->Get_Is_Target() && this->_object->Is_Signal() && 
+			(this->_object->Get_Is_Volatile() || this->Get_Tick()));
+}
+
 void rtlConstantLiteralExpression::Print(ostream& ofile)
 {
 	ofile << " (";
@@ -112,6 +118,11 @@ void rtlConstantLiteralExpression::Print(ostream& ofile)
 void rtlConstantLiteralExpression::Print_C(ostream& ofile)
 {
 	this->Print_C_Declaration(_value, ofile);
+}
+
+string rtlConstantLiteralExpression::To_Vhdl_String()
+{
+	return(this->_value->To_Vhdl_String());	
 }
 
 void rtlSimpleObjectReference::Print(ostream& ofile) 
@@ -149,7 +160,32 @@ void rtlSimpleObjectReference::Print(ostream& ofile)
 	}
 }
 	
-
+string rtlSimpleObjectReference::To_Vhdl_String()
+{
+	if(this->_req_flag)
+	{
+		if(this->_object->Is_InPort())
+			return(this->_object->Get_Id() + "_pipe_read_req");
+		else
+			return(this->_object->Get_Id() + "_pipe_write_req");
+	}
+	else if(this->_ack_flag)
+	{
+		if(this->_object->Is_InPort())
+			return(this->_object->Get_Id() + "_pipe_read_ack");
+		else
+			return(this->_object->Get_Id() + "_pipe_write_ack");
+	}
+	else
+	{
+		if(this->Get_Is_Target() && this->_object->Needs_Next_Vhdl_Variable())
+		{
+			return(this->_object->Get_Variable_Id());
+		}
+		else
+			return(this->_object->Get_Id());
+	}
+}
 	
 void rtlObjectReference::Set_Is_Emitted(bool v)
 {
@@ -222,6 +258,12 @@ string rtlArrayObjectReference::Get_C_Target_Name()
 	return(ret_val);
 }
 
+bool rtlArrayObjectReference::Writes_To_Signal()
+{
+	return(this->Get_Is_Target() && this->_object->Is_Signal() && 
+			(this->_object->Get_Is_Volatile() || this->Get_Tick()));
+}
+
 void rtlArrayObjectReference::Print_C(ostream& ofile)
 {
 	for(int I = 0, fI = _indices.size(); I < fI; I++)
@@ -244,6 +286,29 @@ void rtlArrayObjectReference::Print_C(ostream& ofile)
 			Print_C_Assignment(this->Get_C_Name(), obj_ref_string, this->Get_Type(), ofile);
 		}
 	}
+}
+
+string rtlArrayObjectReference::To_Vhdl_String()
+{
+	string ret_string;
+	if(this->Get_Is_Target() && this->_object->Needs_Next_Vhdl_Variable())
+	{
+		ret_string += this->_object->Get_Variable_Id();
+	}
+	else
+		ret_string += this->_object->Get_Id();
+
+	for(int I = 0, fI = _indices.size(); I < fI; I++)
+	{
+		rtlExpression* idx = _indices[I];
+		if(idx->Get_Type()->Is("rtlIntegerType"))
+			ret_string += "(" + idx->To_Vhdl_String() + ")";
+		else if(idx->Get_Type()->Is("rtlUnsignedType"))
+			ret_string += string("(To_Integer(To_Unsigned(") + idx->To_Vhdl_String() + "), " + IntToStr(idx->Get_Type()->Size()) + "))";
+		else if(idx->Get_Type()->Is("rtlSignedType"))
+			ret_string += string("(To_Integer(To_Signed(") + idx->To_Vhdl_String() + "), " + IntToStr(idx->Get_Type()->Size()) + "))";
+	}
+	return(ret_string);
 }
 
 void rtlArrayObjectReference::Print(ostream& ofile)
@@ -279,6 +344,18 @@ void rtlSliceExpression::Print_C(ostream& ofile)
 		assert(tt->Is("rtlUnsignedType") || tt->Is("rtlSignedType"));
 		ofile << "bit_vector_slice(&(" << _base->Get_C_Name() << "), &(" << this->Get_C_Name() << "), " << _low << ");" << endl;
 	}	
+}
+bool rtlSliceExpression::Writes_To_Signal()
+{
+	return(this->_base->Writes_To_Signal());
+}
+
+string rtlSliceExpression::To_Vhdl_String()
+{
+	string ret_string;
+	ret_string += _base->To_Vhdl_String();
+	ret_string += "(" + IntToStr(_high) + " downto " + IntToStr(_low) + ")";
+	return(ret_string);
 }
 
 void rtlSliceExpression::Print(ostream& ofile)
@@ -343,6 +420,13 @@ void rtlUnaryExpression::Print(ostream& ofile)
 	_rest->Print(ofile);
 	ofile << ") ";
 }
+
+string rtlUnaryExpression::To_Vhdl_String()
+{
+	string ret_string = "( not " + _rest->To_Vhdl_String() + ")";
+	return(ret_string);
+}
+
 	
 rtlBinaryExpression::rtlBinaryExpression(rtlOperation op, rtlExpression* first, rtlExpression* second):
 	rtlExpression("("+ first->Get_Id() + " " + rtlOp_To_String(op) + second->Get_Id() + ")")
@@ -414,6 +498,125 @@ void rtlBinaryExpression::Print_C(ostream& ofile)
 	}	
 }
 
+string rtlBinaryExpression::To_Vhdl_String()
+{
+	string ret_string;
+	if(this->Get_Type()->Is("rtlIntegerType"))
+		ret_string += 
+			"(" + _first->To_Vhdl_String() + " " + rtlOp_To_Vhdl_String(_op) + " " + _second->To_Vhdl_String() + ")";
+	else  if(this->Get_Type()->Is("rtlUnsignedType") || this->Get_Type()->Is("rtlSignedType"))
+	{
+		switch(_op)
+		{
+
+			case __OR:
+				ret_string = "(" + _first->To_Vhdl_String() + " or " + _second->To_Vhdl_String() + ")";
+				break;
+			case __AND:
+				ret_string = "(" + _first->To_Vhdl_String() + " and " + _second->To_Vhdl_String() + ")";
+				break;
+			case __XOR:
+				ret_string = "(" + _first->To_Vhdl_String() + " xor " + _second->To_Vhdl_String() + ")";
+				break;
+			case __NOR:
+				ret_string = "(not (" + _first->To_Vhdl_String() + " or " + _second->To_Vhdl_String() + "))";
+				break;
+			case __NAND:
+				ret_string = "(not (" + _first->To_Vhdl_String() + " and " + _second->To_Vhdl_String() + "))";
+				break;
+			case __XNOR:
+				ret_string = "(not (" + _first->To_Vhdl_String() + " xor " + _second->To_Vhdl_String() + "))";
+				break;
+			case __SHL:
+				ret_string = "to_slv(shift_left(to_unsigned(" + _first->To_Vhdl_String() + ")," + 
+						"to_integer(to_unsigned(" + _second->To_Vhdl_String() + "," + 
+								 IntToStr(_first->Get_Type()->Size()) + "))));";
+				break;
+			case __SHR:
+				if(this->Get_Type()->Is("rtlUnsignedType"))
+					ret_string = "to_slv(shift_left(to_unsigned(" + _first->To_Vhdl_String() + ")," + 
+						"to_integer(to_unsigned(" + _second->To_Vhdl_String() + "," + 
+						IntToStr(_first->Get_Type()->Size()) + "))));";
+				else
+					ret_string = "to_slv(shift_left(to_signed(" + _first->To_Vhdl_String() + ")," + 
+						"to_integer(to_signed(" + _second->To_Vhdl_String() + "," + 
+						IntToStr(_first->Get_Type()->Size()) + "))));";
+				break;
+			case __ROR:
+				ret_string = "to_slv(rotate_right(to_unsigned(" + _first->To_Vhdl_String() + ")," + 
+					"to_integer(to_unsigned(" + _second->To_Vhdl_String() + "," + 
+					IntToStr(_first->Get_Type()->Size()) + "))));";
+				break;
+			case __ROL:
+				ret_string = "to_slv(rotate_left(to_unsigned(" + _first->To_Vhdl_String() + ")," + 
+					"to_integer(to_unsigned(" + _second->To_Vhdl_String() + "," + 
+					IntToStr(_first->Get_Type()->Size()) + "))));";
+				break;
+			case __EQUAL:
+				ret_string = "areEqual(" + _first->To_Vhdl_String() + " , " + _second->To_Vhdl_String() + ")";
+				break;
+			case __NOTEQUAL:
+				ret_string = "(not areEqual(" + _first->To_Vhdl_String() + " /= " + _second->To_Vhdl_String() + "))";
+				break;
+			case __LESS:
+				if(this->Get_Type()->Is("rtlUnsignedType"))
+					ret_string = "uLessThan(" + _first->To_Vhdl_String() + " = " + _second->To_Vhdl_String() + ")";
+				else
+					ret_string = "sLessThan(" + _first->To_Vhdl_String() + " = " + _second->To_Vhdl_String() + ")";
+				break;
+			case __LESSEQUAL:
+				if(this->Get_Type()->Is("rtlUnsignedType"))
+					ret_string = "uLessEqual(" + _first->To_Vhdl_String() + " = " + _second->To_Vhdl_String() + ")";
+				else
+					ret_string = "sLessEqual(" + _first->To_Vhdl_String() + " = " + _second->To_Vhdl_String() + ")";
+				break;
+			case __GREATER:
+				if(this->Get_Type()->Is("rtlUnsignedType"))
+					ret_string = "uGreaterThan(" + _first->To_Vhdl_String() + " = " + _second->To_Vhdl_String() + ")";
+				else
+					ret_string = "sGreaterThan(" + _first->To_Vhdl_String() + " = " + _second->To_Vhdl_String() + ")";
+				break;
+			case __GREATEREQUAL:
+				if(this->Get_Type()->Is("rtlUnsignedType"))
+					ret_string = "uGreaterEqual(" + _first->To_Vhdl_String() + " = " + _second->To_Vhdl_String() + ")";
+				else
+					ret_string = "sGreaterEqual(" + _first->To_Vhdl_String() + " = " + _second->To_Vhdl_String() + ")";
+				break;
+			case __PLUS:
+				if(this->Get_Type()->Is("rtlUnsignedType"))
+					ret_string = "to_slv(to_unsigned(" + _first->To_Vhdl_String() 
+							+ ") + to_unsigned(" + _second->To_Vhdl_String() + "))";
+				else
+					ret_string = "to_slv(to_signed(" + _first->To_Vhdl_String() 
+							+ ") + to_signed(" + _second->To_Vhdl_String() + "))";
+				break;
+			case __MINUS:
+				if(this->Get_Type()->Is("rtlUnsignedType"))
+					ret_string = "to_slv(to_unsigned(" + _first->To_Vhdl_String() 
+							+ ") - to_unsigned(" + _second->To_Vhdl_String() + "))";
+				else
+					ret_string = "to_slv(to_signed(" + _first->To_Vhdl_String() 
+							+ ") - to_signed(" + _second->To_Vhdl_String() + "))";
+				break;
+			case __MUL:
+				if(this->Get_Type()->Is("rtlUnsignedType"))
+					ret_string = "to_slv(to_unsigned(" + _first->To_Vhdl_String() 
+							+ ") * to_unsigned(" + _second->To_Vhdl_String() + "))";
+				else
+					ret_string = "to_slv(to_signed(" + _first->To_Vhdl_String() 
+							+ ") * to_signed(" + _second->To_Vhdl_String() + "))";
+				break;
+			case __CONCAT:
+				ret_string = "(" + _first->To_Vhdl_String() + " & " + _second->To_Vhdl_String() + ")";
+				break;
+			default:
+				assert(0);
+				break;
+		}
+	}
+	return(ret_string);
+}
+
 void rtlBinaryExpression::Print(ostream& ofile)
 {
 	if(this->_value)
@@ -466,7 +669,13 @@ void rtlTernaryExpression::Print(ostream& ofile)
 	ofile << ") ";
 
 }
-	
+
+string rtlTernaryExpression::To_Vhdl_String()
+{
+	return("Mux2To1(" + _test->To_Vhdl_String() + "," + _if_true->To_Vhdl_String() + "," + _if_false->To_Vhdl_String() + ")");
+}
+
+
 //               Evaluation functions..
 void rtlConstantLiteralExpression::Evaluate(rtlThread* t)
 {

@@ -500,8 +500,13 @@ void hierSystem::Print_Vhdl_Inclusions(ostream& ofile)
 {
 	ofile << "library ahir;" << endl;
 	ofile << "use ahir.BaseComponents.all;" << endl;
+	ofile << "use ahir.Utilities.all;" << endl;
+	ofile << "use ahir.Subprograms.all;" << endl;
+	ofile << "use ahir.OperatorPackage.all;" << endl;
+	ofile << "use ahir.BaseComponents.all;" << endl;
 	ofile << "library ieee;" << endl;
 	ofile << "use ieee.std_logic_1164.all;" << endl;
+	ofile << "use ieee.numeric_std.all;" << endl;
 	ofile << "library " << this->_library << ";" << endl;
 	ofile << "use " << this->_library << "." << this->Get_Id() << "_Type_Package.all;" << endl;
 }

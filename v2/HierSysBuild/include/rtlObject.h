@@ -116,7 +116,7 @@ class rtlSignal: public rtlObject
 					(!this->Get_Tick() || (this->Get_Number_Of_Drivers() > 1)));}
 	virtual string Get_Variable_Id()
 	{
-		return("next_" + this->Get_Id());
+		return("n_e_x_t_" + this->Get_Id());
 	}
 };
 

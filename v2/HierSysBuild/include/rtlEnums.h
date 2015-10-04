@@ -61,5 +61,6 @@ enum rtlPipeSignalAccessType {
 };
 
 string rtlOp_To_String(rtlOperation op);
+string rtlOp_To_Vhdl_String(rtlOperation op);
 
 #endif

@@ -46,6 +46,19 @@ package OperatorPackage is
   procedure TwoInputOperation(constant id    : in string; x, y : in std_logic_vector; result : out std_logic_vector);
   procedure SingleInputOperation(constant id : in string; x : in std_logic_vector; result : out std_logic_vector);
 
+  function isTrue(l: in std_logic_vector) return boolean;
+  function areEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function uGreaterThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function uGreaterEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function uLessThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function uLessEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function sGreaterThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function sGreaterEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function sLessThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function sLessEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function Mux2to1 (sel: std_logic_vector; x, y : std_logic_vector) return
+		std_logic_vector;
+
 end package OperatorPackage;
 
 package body OperatorPackage is
@@ -369,4 +382,132 @@ package body OperatorPackage is
     result := result_var;	
   end SingleInputOperation;	
 	
+  -----------------------------------------------------------------------------
+   -- useful function forms.	
+  -----------------------------------------------------------------------------	
+  function isTrue(l: in std_logic_vector) return boolean is
+	variable ret_val: boolean;
+        variable r_or : std_logic;
+	alias ll : std_logic_vector(1 to l'length) is l;
+  begin
+	
+	r_or := '0';
+	for I in 1 to l'length loop
+		r_or := (r_or or ll(I));
+	end loop;
+
+	if(r_or /= '0')  then
+		ret_val := true;
+	else
+		ret_val := false;
+	end if;
+	return(ret_val);
+  end function;
+
+  function areEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if (l = r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+	
+  function uGreaterThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_unsigned(l)  > to_unsigned(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+
+  function uGreaterEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_unsigned(l)  >= to_unsigned(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+  function uLessThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_unsigned(l)  < to_unsigned(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+  function uLessEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_unsigned(l)  <= to_unsigned(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+  function sGreaterThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_signed(l)  > to_signed(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+  function sGreaterEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_signed(l)  >= to_signed(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+  function sLessThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_signed(l)  < to_signed(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+  function sLessEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_signed(l)  <= to_signed(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+
+  function Mux2to1 (sel: std_logic_vector; x, y : std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(1 to x'length);
+	alias lsel: std_logic_vector(sel'length downto 1) is sel;
+  begin
+	assert(x'length = y'length) report "inputs to mux not of same width" severity error;
+	if(lsel(1) = '1') then
+		ret_var := x;
+	else
+		ret_var := y;
+	end if;
+	return(ret_var);
+  end Mux2to1;
+
 end package body OperatorPackage;	

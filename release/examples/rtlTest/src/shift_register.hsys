@@ -1,12 +1,12 @@
 
 $system shift_register 
 	$in 
-		$pipe in_data 32 
+		$pipe in_data 32 $depth 2
         $out 
-		$pipe out_data 32
+		$pipe out_data 32 $depth 2
 
 {
-        $pipe tmp 32
+        $pipe tmp 32 $depth 2
 
 	$thread   REPEATER
 		$in $pipe    rdata : $unsigned<32>
@@ -15,11 +15,13 @@ $system shift_register
 		$signal data_reg : $unsigned<32>
 		$constant One_1: $unsigned<1> := ($unsigned<1>) _b1
 		$constant Z1: $unsigned<1> := ($unsigned<1>) _b0
+		$constant Z32: $unsigned<32> := ($unsigned<32>) 0
 
 
 		$default 
 			$now rdata$req := Z1
 			$now wdata$req := Z1
+			$now wdata     := Z32
 
 		<init>  {
 				data_reg := ($unsigned<32>) 0 

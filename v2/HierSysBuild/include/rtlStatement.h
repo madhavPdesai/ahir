@@ -22,6 +22,7 @@ class rtlStatement: public hierRoot
 
 	virtual void Set_Tick(bool v) {}
 	virtual bool Get_Tick() {return(false);}
+	virtual void Print_Vhdl(ostream& ofile) {assert(0);}
 };
 
 class rtlAssignStatement: public rtlStatement
@@ -50,6 +51,7 @@ class rtlAssignStatement: public rtlStatement
 
 	virtual void Collect_Target_Objects(set<rtlObject*> obj_set);
 	virtual void Collect_Source_Objects(set<rtlObject*> obj_set);
+	virtual void Print_Vhdl(ostream& ofile);
 };
 
 
@@ -62,6 +64,7 @@ class rtlGotoStatement: public rtlStatement
 
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& source_file);
+	virtual void Print_Vhdl(ostream& ofile);
 };
 
 class rtlBlockStatement: public rtlStatement
@@ -76,6 +79,7 @@ class rtlBlockStatement: public rtlStatement
 
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& source_file);
+	virtual void Print_Vhdl(ostream& ofile);
 
 	virtual void Collect_Target_Objects(set<rtlObject*> obj_set)
 	{
@@ -115,6 +119,7 @@ class rtlIfStatement: public rtlStatement
 
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& source_file);
+	virtual void Print_Vhdl(ostream& ofile);
 	virtual void Collect_Target_Objects(set<rtlObject*> obj_set)
 	{
 		if(_if_block)	
@@ -152,6 +157,7 @@ class rtlLabeledBlockStatement: public rtlBlockStatement
 
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& source_file);
+	virtual void Print_Vhdl(ostream& ofile);
 	virtual string Get_Label() {return(_label);}
 };
 
@@ -163,6 +169,7 @@ class rtlNullStatement: public rtlStatement
 	rtlNullStatement(rtlThread* p);
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& source_file) {source_file << endl << ";" << endl;}
+	virtual void Print_Vhdl(ostream& ofile) {}
 };
 
 
@@ -177,5 +184,6 @@ class rtlLogStatement:public rtlStatement
 
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& source_file);
+	virtual void Print_Vhdl(ostream& ofile);
 };
 #endif

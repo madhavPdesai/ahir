@@ -7,7 +7,7 @@ FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 
 #all: toplevel  cmodel vhdltb vhdlsim
 
-all: toplevel cmodel
+all: toplevel cmodel vhdlmodel vhdltb vhdlsim
 
 
 # generate the integrated vhdl and C
@@ -35,26 +35,24 @@ vhdlmodel:
 	formatVhdlFiles.py ./
 
 # the VHDL simulation.
-#vhdltb:  ./Stage1/stage1.aa ./Stage2/stage2.aa ./Testbench/testbench.c
-	#rm -rf objhw
-	#mkdir objhw
-	#gcc -c ./src/testbench.c -I$(AHIR_INCLUDE) -I./src -I./aa2c/ -o objhw/testbench.o
-	#gcc -o ./bin/exec_hw  ./objhw/testbench.o  -L$(AHIR_LIB) -lSocketLib -lpthread
+vhdltb:  src/shift_register.hsys src/testbench.c
+	rm -rf objhw
+	mkdir objhw
+	gcc -c ./src/testbench.c -I$(AHIR_INCLUDE) -I./src  -o objhw/testbench.o
+	gcc -o ./bin/exec_hw  ./objhw/testbench.o  -L$(AHIR_LIB) -lSocketLib -lpthread
 
-#vhdlsim:
-	#ghdl --clean
-	#ghdl --remove
-	#ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl
-	#ghdl -i --work=aHiR_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
-	#ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
-	#ghdl -i --work=S1 Stage1/vhdl/S1/Stage1.vhdl
-	#ghdl -i --work=S2 Stage2/vhdl/S2/Stage2.vhdl
-	#ghdl -i --work=TopLib vhdl/TopLib/Top.vhdl
-	#ghdl -i --work=work vhdl/work/Top_test_bench.vhdl
-	#ghdl -m --work=work -Wl,-L$(AHIR_LIB) -Wl,-lVhpi Top_test_bench 
+vhdlsim:
+	ghdl --clean
+	ghdl --remove
+	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl
+	ghdl -i --work=aHiR_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
+	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
+	ghdl -i --work=work vhdl/work/shift_register.vhdl
+	ghdl -i --work=work vhdl/work/shift_register_test_bench.vhdl
+	ghdl -m --work=work -Wl,-L$(AHIR_LIB) -Wl,-lVhpi shift_register_test_bench 
 
 clean: 
-	rm -rf vhdl/* aa2c/* objhw/ objsw/ ./bin/* *.o *.cf *.log top_test_bench *.ghw
+	rm -rf vhdl/* aa2c/* objhw/ objsw/ ./bin/* *.o *.cf *.log top_test_bench *.ghw *_test_bench
 
 
 PHONY: all clean	

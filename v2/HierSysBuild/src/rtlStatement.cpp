@@ -34,6 +34,19 @@ void rtlAssignStatement::Set_Tick(bool v)
 	this->_target->Set_Tick(v);
 }
 
+void rtlAssignStatement::Print_Vhdl(ostream& ofile)
+{
+	ofile << "-- ";
+	this->Print(ofile);
+	ofile << endl;
+
+	string assign_type = " := ";
+	if(_target->Writes_To_Signal())
+	{
+		assign_type = " <= ";
+	}
+	ofile << _target->To_Vhdl_String()  << assign_type << _source->To_Vhdl_String() << ";" << endl;
+}
 	
 void rtlAssignStatement::Collect_Target_Objects(set<rtlObject*> obj_set)
 {
@@ -130,6 +143,11 @@ void rtlGotoStatement::Print_C(ostream& source_file)
 	source_file << "__sstate->_next_state = " << stateEnum(_label) << ";" << endl;
 }
 
+void rtlGotoStatement::Print_Vhdl(ostream& ofile)
+{
+	ofile << "next_thread_state := s_" << _label << ";" << endl;
+}
+
 void rtlIfStatement::Print(ostream& ofile)
 {
 	ofile << " $if ";
@@ -160,6 +178,24 @@ void rtlIfStatement::Print_C(ostream& source_file)
 		_else_block->Print_C(source_file);
 	}
 }
+void rtlIfStatement::Print_Vhdl(ostream& ofile)
+{
+	if(this->_test->Get_Type()->Is("rtlIntegerType"))
+		ofile << "if (" << _test->To_Vhdl_String() << " /= 0)";
+	else if(this->_test->Get_Type()->Is("rtlUnsignedType") || this->_test->Get_Type()->Is("rtlSignedType"))
+		ofile << "if (isTrue(" << _test->To_Vhdl_String() << "))" ;
+	ofile << " then  -- {" << endl;
+	_if_block->Print_Vhdl(ofile);
+	if(_else_block != NULL)
+	{
+		ofile << "--}" << endl;
+		ofile << "else -- {" << endl;
+		_else_block->Print_Vhdl(ofile);
+	}
+	ofile << "--}" << endl;
+	ofile << "end if;" << endl;
+	
+}
 
 void rtlBlockStatement::Print(ostream& ofile)
 {
@@ -181,6 +217,14 @@ void rtlBlockStatement::Print_C(ostream& source_file)
 	source_file << "}" << endl;
 }
 
+void rtlBlockStatement::Print_Vhdl(ostream& ofile)
+{
+	for(int I = 0, fI = _statement_block.size(); I < fI; I++)
+	{
+		_statement_block[I]->Print_Vhdl(ofile);
+	}
+}
+
 void rtlLabeledBlockStatement::Print(ostream& ofile)
 {
 	ofile << "<" << _label << "> ";
@@ -191,6 +235,11 @@ void rtlLabeledBlockStatement::Print_C(ostream& source_file)
 {
 	// no label... 
 	this->rtlBlockStatement::Print_C(source_file);
+}
+
+void rtlLabeledBlockStatement::Print_Vhdl(ostream& ofile)
+{
+	this->rtlBlockStatement::Print_Vhdl(ofile);
 }
 
 rtlNullStatement::rtlNullStatement(rtlThread* p): rtlStatement(p)
@@ -241,5 +290,11 @@ void rtlLogStatement::Print_C(ostream& ofile)
 				<< "\"" << _object->Get_Id() << "__ack\", to_string(&(" << _object->Get_C_Ack_Name() << ")));" << endl;
 		}
 	}
+}
+
+void rtlLogStatement::Print_Vhdl(ostream& ofile)
+{
+	ofile << "assert false report \"" << _object->Get_Id() << " = \" & Convert_To_String(" 
+				<< _object->Get_Id() << ") severity note;" << endl; 
 }
 

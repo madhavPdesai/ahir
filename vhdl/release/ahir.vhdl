@@ -38,6 +38,8 @@ package Utilities is
 
   function Digit_To_Char(val: integer) return character;
   function Convert_To_String(val : integer) return STRING; -- convert val to string.
+  function Convert_To_String(val : boolean) return STRING; -- convert val to string.
+  function Convert_To_String(val : std_logic_vector) return STRING; -- convert val to string.
   function Convert_Bool_To_String(val : boolean) return STRING; -- convert bool to string.
   function Convert_SLV_To_String(val : std_logic_vector) return STRING; -- convert val to string.
   function Convert_SLV_To_Hex_String(val : std_logic_vector) return STRING; -- convert val to string.  
@@ -115,6 +117,7 @@ package body Utilities is
 	return result((pos-1) downto 1);
   end Convert_To_String;
   
+
   function Convert_Bool_To_String(val : boolean) return STRING is
 	variable ret_var : string (1 to 5); -- convert bool to string.
   begin
@@ -122,7 +125,15 @@ package body Utilities is
     else ret_var := "false"; end if;
     return(ret_var);
   end Convert_Bool_To_String;
+
+  function Convert_To_String(val : boolean) return STRING is
+	variable ret_var : string (1 to 5); -- convert bool to string.
+  begin
+	ret_var := Convert_Bool_To_String(val);
+	return(ret_var);
+  end  Convert_To_String;
    
+
   function Convert_SLV_To_String(val : std_logic_vector) return STRING is
 	alias lval: std_logic_vector(1 to val'length) is val;
         variable ret_var: string( 1 to lval'length);
@@ -139,6 +150,13 @@ package body Utilities is
         return(ret_var);
    end Convert_SLV_To_String;
     
+  function Convert_To_String(val : std_logic_vector) return STRING is
+	alias lval: std_logic_vector(1 to val'length) is val;
+        variable ret_var: string( 1 to lval'length);
+  begin
+	ret_var := Convert_SLV_To_String(val);
+	return(ret_var);
+  end  Convert_To_String;
 
   function To_Hex_Char (constant val: std_logic_vector)   return character  is
     alias lval: std_logic_vector(1 to val'length) is val;
@@ -4188,6 +4206,19 @@ package OperatorPackage is
   procedure TwoInputOperation(constant id    : in string; x, y : in std_logic_vector; result : out std_logic_vector);
   procedure SingleInputOperation(constant id : in string; x : in std_logic_vector; result : out std_logic_vector);
 
+  function isTrue(l: in std_logic_vector) return boolean;
+  function areEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function uGreaterThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function uGreaterEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function uLessThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function uLessEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function sGreaterThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function sGreaterEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function sLessThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function sLessEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector;
+  function Mux2to1 (sel: std_logic_vector; x, y : std_logic_vector) return
+		std_logic_vector;
+
 end package OperatorPackage;
 
 package body OperatorPackage is
@@ -4511,6 +4542,134 @@ package body OperatorPackage is
     result := result_var;	
   end SingleInputOperation;	
 	
+  -----------------------------------------------------------------------------
+   -- useful function forms.	
+  -----------------------------------------------------------------------------	
+  function isTrue(l: in std_logic_vector) return boolean is
+	variable ret_val: boolean;
+        variable r_or : std_logic;
+	alias ll : std_logic_vector(1 to l'length) is l;
+  begin
+	
+	r_or := '0';
+	for I in 1 to l'length loop
+		r_or := (r_or or ll(I));
+	end loop;
+
+	if(r_or /= '0')  then
+		ret_val := true;
+	else
+		ret_val := false;
+	end if;
+	return(ret_val);
+  end function;
+
+  function areEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if (l = r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+	
+  function uGreaterThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_unsigned(l)  > to_unsigned(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+
+  function uGreaterEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_unsigned(l)  >= to_unsigned(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+  function uLessThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_unsigned(l)  < to_unsigned(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+  function uLessEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_unsigned(l)  <= to_unsigned(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+  function sGreaterThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_signed(l)  > to_signed(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+  function sGreaterEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_signed(l)  >= to_signed(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+  function sLessThan(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_signed(l)  < to_signed(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+  function sLessEqual(l: in std_logic_vector; r : in std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(0 downto 0);
+  begin
+    if to_signed(l)  <= to_signed(r) then
+      ret_var(0) := '1';
+    else
+      ret_var(0) := '0';
+    end if;
+    return(ret_var);
+  end function;
+
+  function Mux2to1 (sel: std_logic_vector; x, y : std_logic_vector) return std_logic_vector is
+	variable ret_var : std_logic_vector(1 to x'length);
+	alias lsel: std_logic_vector(sel'length downto 1) is sel;
+  begin
+	assert(x'length = y'length) report "inputs to mux not of same width" severity error;
+	if(lsel(1) = '1') then
+		ret_var := x;
+	else
+		ret_var := y;
+	end if;
+	return(ret_var);
+  end Mux2to1;
+
 end package body OperatorPackage;	
 library ieee;
 use ieee.std_logic_1164.all;
@@ -21378,51 +21537,6 @@ begin
         end generate;
 
 end Behave;
-library ieee;
-use ieee.std_logic_1164.all;
-
-library ahir;
-use ahir.Types.all;
-use ahir.Subprograms.all;
-use ahir.Utilities.all;
-use ahir.BaseComponents.all;
-
--- brief description:
---  as the name indicates, a squash-shift-register
---  provides an implementation of a pipeline.
-entity SquashShiftRegister is
-  generic (name : string;
-	   data_width: integer;
-           depth: integer := 1);
-  port (
-    read_req       : in  std_logic;
-    read_ack       : out std_logic;
-    read_data      : out std_logic_vector(data_width-1 downto 0);
-    write_req       : in  std_logic;
-    write_ack       : out std_logic;
-    write_data      : in std_logic_vector(data_width-1 downto 0);
-    clk, reset : in  std_logic);
-  
-end SquashShiftRegister;
-
-architecture default_arch of SquashShiftRegister is
-
-  signal stage_full: std_logic_vector(0 to depth);
-
-  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  signal stage_data : SSRArray(0 to depth);
-  
-begin  -- default_arch
-
-    -- shift-right if there is a bubble 
-    -- anywhere in the shift-register,
-    -- and if the write-signal is active.
-    --
-    -- stall stage I if I+1 is not ready to
-    -- accept.
-    -- etc.. etc..  TODO.
-
-end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

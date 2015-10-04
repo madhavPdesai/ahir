@@ -58,12 +58,15 @@ class rtlExpression: public hierRoot
 	virtual void Print_C(ostream& ofile) {assert(0);}
 	virtual void Print_C_Declaration(rtlValue* v, ostream& ofile);
 
+
 	virtual void Collect_Target_Objects(set<rtlObject*> obj_set) {};
 	virtual void Collect_Source_Objects(set<rtlObject*> obj_set) {};
 
 	virtual void Set_Tick(bool v) {_tick = v;}
 	virtual bool Get_Tick() {return(_tick);}
 
+	virtual string To_Vhdl_String()  {assert(0);};
+	virtual bool Writes_To_Signal() {return(false);}
 };
 
 class rtlConstantLiteralExpression: public rtlExpression
@@ -83,6 +86,8 @@ class rtlConstantLiteralExpression: public rtlExpression
 
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& ofile);
+
+	virtual string To_Vhdl_String();
 };
 
 class rtlObjectReference: public rtlExpression
@@ -136,6 +141,8 @@ class rtlSimpleObjectReference: public rtlObjectReference
 	virtual string Get_C_Target_Name();
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& ofile);
+	virtual string To_Vhdl_String();
+	virtual bool Writes_To_Signal();
 };
 
 class rtlArrayObjectReference: public rtlObjectReference
@@ -153,6 +160,8 @@ class rtlArrayObjectReference: public rtlObjectReference
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& ofile);
+	virtual string To_Vhdl_String();
+	virtual bool Writes_To_Signal();
 };
 
 class rtlSliceExpression: public rtlExpression
@@ -173,10 +182,17 @@ class rtlSliceExpression: public rtlExpression
 	}
 
 	string Kind() {return("rtlSliceExpression");}
+	virtual void Set_Is_Target(bool v) 
+	{
+		this->_base->Set_Is_Target(v);
+		this->_is_target = v;
+	}
 
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& ofile);
+	virtual string To_Vhdl_String();
+	virtual bool Writes_To_Signal();
 };
 
 class rtlUnaryExpression: public rtlExpression
@@ -189,9 +205,15 @@ class rtlUnaryExpression: public rtlExpression
 	rtlUnaryExpression(rtlOperation op, rtlExpression* rest);
 	string Kind() {return("rtlUnaryExpression");}
 
+	virtual void Set_Is_Target(bool v) 
+	{
+		cerr << "FATAL: unary expression cannot be a target" << endl;
+		assert(0);
+	}
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& ofile);
+	virtual string To_Vhdl_String();
 };
 
 class rtlBinaryExpression: public rtlExpression
@@ -207,11 +229,18 @@ class rtlBinaryExpression: public rtlExpression
 
 	string Kind() {return("rtlBinaryExpression");}
 
+	virtual void Set_Is_Target(bool v) 
+	{
+		cerr << "FATAL: binary expression cannot be a target" << endl;
+		assert(0);
+	}
+
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& ofile);
 
 	void Infer_And_Set_Type();
+	virtual string To_Vhdl_String();
 };
 
 class rtlTernaryExpression: public rtlExpression
@@ -225,10 +254,16 @@ class rtlTernaryExpression: public rtlExpression
 	rtlTernaryExpression(rtlExpression* test, rtlExpression* if_true, rtlExpression* if_false);
 	string Kind() {return("rtlTernaryExpression");}
 
+	virtual void Set_Is_Target(bool v) 
+	{
+		cerr << "FATAL: ternary expression cannot be a target" << endl;
+		assert(0);
+	}
+
 	virtual void Evaluate(rtlThread* t);
 	virtual void Print(ostream& ofile);
 	virtual void Print_C(ostream& ofile);
-
+	virtual string To_Vhdl_String();
 };
 
 void Print_C_Test_Condition(rtlExpression* expr, ostream& ofile);

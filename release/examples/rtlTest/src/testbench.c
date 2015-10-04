@@ -8,7 +8,9 @@
 #include <pipeHandler.h>
 #include <BitVectors.h>
 #include <rtl2AaMatcher.h>
+#ifdef SW
 #include <_shift_register.h>
+#endif
 
 #define ORDER 16
 
