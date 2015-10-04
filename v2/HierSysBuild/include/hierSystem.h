@@ -464,23 +464,26 @@ public:
 	// print function.. reproduce description.
 	virtual void Print(ostream& ofile);
 
-	// print VHDL
+	// print Vhdl
 	void Print_Vhdl_Port_Declarations(ostream& ofile);
 	void Print_Vhdl_Component_Declaration(ostream& ofile);
+	void Print_Vhdl_Inclusions(ostream& ofile);
+	void Print_Vhdl_Rtl_Threads(ostream& ofile);
 	void Print_Vhdl_Entity_Architecture(ostream& ofile);
 	void Print_Vhdl_Test_Bench(string sim_link_lib, string sim_link_prefix, ostream& ofile); // in progress.
 	void Print_Vhdl_Instance_In_Testbench(string inst_name, ostream& ofile);
 	void Print_Vhdl_Pipe_Instance(string pipe_name, int pipe_width, int pipe_depth, ostream& ofile);
 
 	//  pipe access names.
-	string Get_Pipe_VHDL_Write_Data_Name(string pipe);
-	string Get_Pipe_VHDL_Write_Req_Name(string pipe);
-	string Get_Pipe_VHDL_Write_Ack_Name(string pipe);
+	string Get_Pipe_Vhdl_Write_Data_Name(string pipe);
+	string Get_Pipe_Vhdl_Write_Req_Name(string pipe);
+	string Get_Pipe_Vhdl_Write_Ack_Name(string pipe);
 
-	string Get_Pipe_VHDL_Read_Data_Name(string pipe);
-	string Get_Pipe_VHDL_Read_Req_Name(string pipe);
-	string Get_Pipe_VHDL_Read_Ack_Name(string pipe);
+	string Get_Pipe_Vhdl_Read_Data_Name(string pipe);
+	string Get_Pipe_Vhdl_Read_Req_Name(string pipe);
+	string Get_Pipe_Vhdl_Read_Ack_Name(string pipe);
 
+	void Print_Vhdl_Rtl_Type_Package(ostream& ofile);
 };
 
 void listPipeMap(map<string, pair<int,int> >& pmap, vector<string>& pvec);

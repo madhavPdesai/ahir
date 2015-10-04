@@ -13,6 +13,7 @@
 rtlObject::rtlObject(string name, rtlType* t):hierRoot(name)
 {
 	_type = t;
+	_number_of_drivers = 0;
 }
 
 	
@@ -105,6 +106,7 @@ rtlSignal::rtlSignal(bool is_pipe, string name, rtlType* t):rtlObject(name, t)
 {
 	_is_pipe = is_pipe;
 	_is_volatile = false;
+	_tick = false;
 }
 
 void rtlSignal::Set_Tick(bool v) 

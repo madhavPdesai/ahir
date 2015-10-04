@@ -223,3 +223,49 @@ string   Get_Type_Identifier(rtlType* t)
 		ret_string = type_to_identifier_map[t];
 	return(ret_string);	
 }
+
+
+void Print_Vhdl_Type_Declarations(string prefix, ostream& ofile)
+{
+	for(map<rtlType*, string>::iterator iter = type_to_identifier_map.begin(), fiter = type_to_identifier_map.end();
+				iter != fiter; iter++)
+	{
+		rtlType* t = (*iter).first;
+		string type_id = (*iter).second;
+
+		if(t->Is("rtlIntegerType"))
+		{
+			rtlIntegerType* it = (rtlIntegerType*) t;
+			ofile << "subtype " << type_id << " is integer range ";
+			ofile << it->Get_Low() << " to " << it->Get_High() << ";" << endl;
+		}
+		else if(t->Is("rtlSignedType") || t->Is("rtlUnsignedType"))
+		{
+			rtlUnsignedType* ut = (rtlUnsignedType*) t;
+			ofile << "subtype " << type_id << " is std_logic_vector("
+							<< t->Size()-1 <<  " downto 0);" << endl;
+		}
+		else if(t->Is("rtlArrayType"))
+		{
+			rtlArrayType* at = (rtlArrayType*) t;
+			ofile << "type " << type_id << "_unconstrained is " 
+				<< "array (";
+			for(int I = 0, fI = at->Get_Number_Of_Dimensions(); I < fI; I++)
+			{
+				ofile << " natural range";
+				if(I < (fI -1))
+					ofile << ", ";
+			}
+			ofile << ") of " << Get_Type_Identifier(at->Get_Element_Type()) << ";" << endl;
+			ofile << "subtype " << type_id << " is " << type_id << " _unconstrained(";
+			for(int I = 0, fI = at->Get_Number_Of_Dimensions(); I < fI; I++)
+			{
+				ofile << at->Get_Dimension(I)-1 << " downto 0";
+				if(I < (fI -1))
+					ofile << ", ";
+			}
+			ofile << ");" << endl;
+		}
+	}
+}
+

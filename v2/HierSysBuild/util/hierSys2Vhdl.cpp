@@ -178,9 +178,7 @@ int main(int argc, char* argv[])
 			ofstream sys_vhdl_file;
 
 			sys_vhdl_file.open(sys_vhdl_file_name.c_str());
-			sys_vhdl_file << "library ieee;" << endl;
-			sys_vhdl_file << "use ieee.std_logic_1164.all;" << endl;
-
+			sys->Print_Vhdl_Rtl_Threads(sys_vhdl_file);
 			sys->Print_Vhdl_Entity_Architecture(sys_vhdl_file);
 			sys_vhdl_file.close();
 		}
@@ -193,8 +191,7 @@ int main(int argc, char* argv[])
 	ofstream top_vhdl_file;
 
 	top_vhdl_file.open(top_vhdl_file_name.c_str());
-	top_vhdl_file << "library ieee;" << endl;
-	top_vhdl_file << "use ieee.std_logic_1164.all;" << endl;
+	top_sys->Print_Vhdl_Rtl_Threads(top_vhdl_file);
 	top_sys->Print_Vhdl_Entity_Architecture(top_vhdl_file);
 	top_vhdl_file.close();
 

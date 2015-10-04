@@ -14,6 +14,8 @@ all: toplevel cmodel
 toplevel: src/shift_register.hsys
 	#hierSys2Vhdl -s ghdl -o vhdl src/shift_register.hsys
 	#formatVhdlFiles.py  vhdl/
+	rm -rf aa2c
+	mkdir aa2c
 	hierSys2C  -o aa2c src/shift_register.hsys
 	indent aa2c/*.c
 	indent aa2c/*.h
@@ -25,6 +27,12 @@ cmodel: src/shift_register.hsys src/testbench.c
 	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./aa2c/ ./aa2c/_shift_register.c -o objsw/_shift_register.o
 	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./aa2c/ ./src/testbench.c -o objsw/testbench.o
 	gcc -g -o  ./bin/exec_sw objsw/_shift_register.o objsw/testbench.o -L $(AHIR_LIB) -lBitVectors  -lPipeHandlerDebug -lpthread -lRtl2AaMatcher
+
+vhdlmodel:
+	rm -rf vhdl
+	mkdir vhdl
+	hierSys2Vhdl -o vhdl src/shift_register.hsys
+	formatVhdlFiles.py ./
 
 # the VHDL simulation.
 #vhdltb:  ./Stage1/stage1.aa ./Stage2/stage2.aa ./Testbench/testbench.c

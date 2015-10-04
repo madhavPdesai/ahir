@@ -9,6 +9,7 @@ class rtlObject: public hierRoot
 	protected:
 
 	rtlType* _type;
+	int      _number_of_drivers;
 
         public:
 
@@ -27,6 +28,8 @@ class rtlObject: public hierRoot
 	virtual bool Is_Pipe()     {return(false);}
 
 
+	void Increment_Number_Of_Drivers() {_number_of_drivers++;}
+	int Get_Number_Of_Drivers() {return(_number_of_drivers);}
 
 	virtual rtlValue* Get_Value() {return(NULL);}
 	rtlType* Get_Type() {return(_type);}
@@ -44,6 +47,10 @@ class rtlObject: public hierRoot
 		else
 			return("__sstate->" + this->Get_Id());
 	}
+	virtual string Get_Variable_Id()
+	{
+		return(this->Get_Id());
+	}
 	virtual void Print_C_Struct_Field_Initialization(string obj_name, ostream& source_file);
 	virtual void Print_C_Probe_Matcher(ostream& source_file);
 	
@@ -54,6 +61,7 @@ class rtlObject: public hierRoot
 	virtual bool Get_Is_Volatile() {return(false);}
 
 	virtual bool Needs_Next() {return(false);}
+	virtual bool Needs_Next_Vhdl_Variable() {return(false);}
 };
 
 class rtlConstant: public rtlObject
@@ -104,6 +112,12 @@ class rtlSignal: public rtlObject
 	virtual void Set_Is_Volatile(bool v);
 	virtual bool Get_Is_Volatile() {return(_is_volatile);}
 	virtual bool Needs_Next() {return(!this->Get_Is_Volatile());}
+	virtual bool Needs_Next_Vhdl_Variable() {return(!this->Get_Is_Volatile() && 
+					(!this->Get_Tick() || (this->Get_Number_Of_Drivers() > 1)));}
+	virtual string Get_Variable_Id()
+	{
+		return("next_" + this->Get_Id());
+	}
 };
 
 class rtlInPort: public rtlSignal

@@ -26,6 +26,9 @@ class rtlType: public hierRoot
     assert(0);
   }
 
+  virtual int Get_Number_Of_Dimensions() {assert(0);}
+  virtual int Get_Dimension(int I) {assert(0);}
+
   void Print(ostream& ofile);
   virtual void Print(ofstream& ofile);
   virtual void Print(string& ostring);
@@ -51,6 +54,8 @@ class rtlIntegerType: public rtlType
   	virtual void Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile);
   	virtual string Get_C_Name() {return("integer");}
   	virtual bool Is_Scalar_Type() {return(true);}
+	int Get_Low() {return(_low);}
+	int Get_High() {return(_high);}
 };
 
 
@@ -107,8 +112,8 @@ class rtlArrayType: public rtlType
 
   virtual string Kind() {return("rtlArrayType");}
 
-  int Get_Number_Of_Dimensions() {return(this->_dimensions.size());}
-  int Get_Dimension(int I)
+  virtual int Get_Number_Of_Dimensions() {return(this->_dimensions.size());}
+  virtual int Get_Dimension(int I)
 	{
 		if( (I >= 0) && (I < _dimensions.size()))
 		{
@@ -189,7 +194,7 @@ rtlType* Find_Or_Make_Array_Type(vector<int> dims, rtlType* element_type);
 // each type is assigned an identifier.
 string   Get_Type_Identifier(rtlType* t);
 
-// print VHDL type declarations.
-void     Print_VHDL_Type_Declarations(ostream& ofile);
+// print Vhdl type declarations.
+void     Print_Vhdl_Type_Declarations(string prefix, ostream& ofile);
 
 #endif

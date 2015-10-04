@@ -21380,6 +21380,51 @@ begin
 end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- brief description:
+--  as the name indicates, a squash-shift-register
+--  provides an implementation of a pipeline.
+entity SquashShiftRegister is
+  generic (name : string;
+	   data_width: integer;
+           depth: integer := 1);
+  port (
+    read_req       : in  std_logic;
+    read_ack       : out std_logic;
+    read_data      : out std_logic_vector(data_width-1 downto 0);
+    write_req       : in  std_logic;
+    write_ack       : out std_logic;
+    write_data      : in std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  
+end SquashShiftRegister;
+
+architecture default_arch of SquashShiftRegister is
+
+  signal stage_full: std_logic_vector(0 to depth);
+
+  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
+  signal stage_data : SSRArray(0 to depth);
+  
+begin  -- default_arch
+
+    -- shift-right if there is a bubble 
+    -- anywhere in the shift-register,
+    -- and if the write-signal is active.
+    --
+    -- stall stage I if I+1 is not ready to
+    -- accept.
+    -- etc.. etc..  TODO.
+
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;

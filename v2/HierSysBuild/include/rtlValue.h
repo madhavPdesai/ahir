@@ -52,6 +52,7 @@ class rtlValue:public hierRoot
 	virtual bool NotEqual(rtlValue* other) {return(!this->Equal(other));}
 
 	virtual void Concat(rtlValue* other) {assert(0);}
+	virtual string  To_Vhdl_String() {return(this->To_Bit_Vector_String());}
 };
 
 
@@ -86,7 +87,7 @@ class rtlIntegerValue: public rtlValue
 	virtual bool Greater(rtlValue* other) { return(_value > other->To_Integer());}
 	virtual bool Less(rtlValue* other) { return(_value < other->To_Integer());}
 	virtual bool Equal(rtlValue* other) { return(_value == other->To_Integer());}
-
+	virtual string  To_Vhdl_String();
 };
 
 
@@ -132,6 +133,7 @@ class rtlUnsignedValue: public rtlValue
 	virtual void Concat(rtlValue* other);
 
 	virtual string  To_Bit_Vector_String() ;
+	virtual string  To_Vhdl_String();
 };
 
 
@@ -175,7 +177,7 @@ class rtlArrayValue: public rtlValue
 	rtlValue* Get_Value(vector<int>& indices);
 	virtual void Print(ostream& ofile);
 	virtual rtlValue* Copy();
-
+	virtual string  To_Vhdl_String();
 };
 
 

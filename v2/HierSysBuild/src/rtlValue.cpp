@@ -16,6 +16,11 @@ void rtlIntegerValue::Print(ostream& ofile)
 	ofile << " " << _value << " ";
 }	
 
+string rtlIntegerValue::To_Vhdl_String()
+{
+	return(IntToStr(_value));
+}
+
 rtlValue* rtlIntegerValue::Copy()
 {
 	rtlValue* ret_val = new rtlIntegerValue(this->Get_Type(), this->To_Integer());
@@ -27,6 +32,7 @@ void rtlUnsignedValue::Print(ostream& ofile)
 {
 	ofile << " " << this->Get_Value()->To_String() << " ";
 }
+
 
 rtlValue* rtlUnsignedValue::Copy()
 {
@@ -44,6 +50,10 @@ string rtlUnsignedValue::To_Bit_Vector_String()
 	return(_value->To_String());
 }
 
+string rtlUnsignedValue::To_Vhdl_String()
+{
+	return("\"" + _value->To_String() + "\"");
+}
 
 bool rtlUnsignedValue::Get_Bit(int bi)
 {
@@ -252,6 +262,33 @@ void rtlArrayValue::Print(ostream& ofile)
 		ofile << " ";
 	}
 }
+
+
+
+string rtlArrayValue::To_Vhdl_String()
+{
+	string ret_string;
+	vector<int> indices;
+
+
+	if(this->Get_Type()->Get_Number_Of_Dimensions() > 1)
+	{
+		this->Report_Error("For Vhdl, constant value printing is only allowed for 1D arrays");	
+		assert(0);
+	}
+
+	ret_string +=  "( ";
+	for(int I = 0, fI = this->_values.size(); I < fI; I++)
+	{
+		if(I > 0)
+			ret_string += ", ";
+		ret_string += _values[I]->To_Vhdl_String();
+		
+	}
+	ret_string += ") ";
+	return(ret_string);
+}
+
 
 rtlValue* rtlArrayValue::Get_Value(vector<int>& indices)
 {
