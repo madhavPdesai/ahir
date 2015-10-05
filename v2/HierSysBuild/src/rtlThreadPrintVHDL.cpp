@@ -112,7 +112,7 @@ void rtlThread::Print_Vhdl_Entity_Architecture(ostream& ofile)
 	this->Print_Vhdl_Object_Declarations(true, true, false, ofile);
 	ofile << "--} " << endl;
 	ofile << "begin -- { " << endl;
-	ofile << "process(clk, reset";
+	ofile << "process(clk, reset, current_thread_state ";
 	for(map<string,rtlObject*>::iterator iter = _objects.begin(), fiter = _objects.end(); iter != fiter; iter++)
 	{
 		rtlObject* obj = (*iter).second;

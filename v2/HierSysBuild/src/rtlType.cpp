@@ -10,6 +10,7 @@
 
 map <rtlType*, string> type_to_identifier_map;
 map <string, rtlType*> identifier_to_type_map;
+vector<rtlType*> type_vector;
 
 rtlType::rtlType():hierRoot()
 {
@@ -146,6 +147,7 @@ rtlType* Find_Or_Make_Integer_Type(int low_val, int high_val)
 		ret_type = new rtlIntegerType(low_val, high_val);
 		identifier_to_type_map[lookup_id] = ret_type;
 		type_to_identifier_map[ret_type] = lookup_id;
+		type_vector.push_back(ret_type);
 	}
 	else
 	{
@@ -164,6 +166,7 @@ rtlType* Find_Or_Make_Unsigned_Type(int width)
 		ret_type = new rtlUnsignedType(width);
 		identifier_to_type_map[lookup_id] = ret_type;
 		type_to_identifier_map[ret_type] = lookup_id;
+		type_vector.push_back(ret_type);
 	}
 	else
 	{
@@ -182,6 +185,7 @@ rtlType* Find_Or_Make_Signed_Type(int width)
 		ret_type = new rtlSignedType(width);
 		identifier_to_type_map[lookup_id] = ret_type;
 		type_to_identifier_map[ret_type] = lookup_id;
+		type_vector.push_back(ret_type);
 	}
 	else
 	{
@@ -207,6 +211,7 @@ rtlType* Find_Or_Make_Array_Type(vector<int> dims, rtlType* element_type)
 		ret_type = new rtlArrayType(element_type, dims);
 		identifier_to_type_map[lookup_id] = ret_type;
 		type_to_identifier_map[ret_type] = lookup_id;
+		type_vector.push_back(ret_type);
 	}
 	else
 	{
@@ -227,11 +232,10 @@ string   Get_Type_Identifier(rtlType* t)
 
 void Print_Vhdl_Type_Declarations(string prefix, ostream& ofile)
 {
-	for(map<rtlType*, string>::iterator iter = type_to_identifier_map.begin(), fiter = type_to_identifier_map.end();
-				iter != fiter; iter++)
+	for(int I = 0, fI = type_vector.size(); I < fI; I++)
 	{
-		rtlType* t = (*iter).first;
-		string type_id = (*iter).second;
+		rtlType* t = type_vector[I];
+		string type_id = type_to_identifier_map[t];
 
 		if(t->Is("rtlIntegerType"))
 		{
