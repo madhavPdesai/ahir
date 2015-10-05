@@ -32,8 +32,8 @@ class rtlExpression: public hierRoot
 
 	// is a target expression?
 	virtual void Set_Is_Target(bool v) {_is_target = v;}
-	virtual void Set_Is_Emitted(bool v) {}
 	virtual void Set_Is_Volatile(bool v) {}
+	virtual void Set_Is_Not_Volatile(bool v) {}
 
  	bool Get_Is_Target() {return(_is_target);}
 
@@ -104,8 +104,9 @@ class rtlObjectReference: public rtlExpression
 	virtual rtlObject* Get_Object() {return(_object);}
 
 	// passed to objects.
-	virtual void Set_Is_Emitted(bool v);
 	virtual void Set_Is_Volatile(bool v);
+	virtual void Set_Is_Not_Volatile(bool v);
+	virtual void Set_Tick(bool v);
 
 	virtual void Collect_Target_Objects(set<rtlObject*> obj_set) 
 	{
@@ -117,7 +118,6 @@ class rtlObjectReference: public rtlExpression
 		if(!this->_is_target)
 			obj_set.insert(_object);
 	}
-	virtual void Set_Tick(bool v);
 };
 
 
@@ -126,6 +126,9 @@ class rtlSimpleObjectReference: public rtlObjectReference
 
 	bool _req_flag;
 	bool _ack_flag;
+	bool _is_volatile;
+	bool _is_not_volatile;
+
 	public:
 
 	// type extracted from object.
@@ -143,6 +146,10 @@ class rtlSimpleObjectReference: public rtlObjectReference
 	virtual void Print_C(ostream& ofile);
 	virtual string To_Vhdl_String();
 	virtual bool Writes_To_Signal();
+
+	virtual void Set_Is_Volatile(bool v);
+	virtual void Set_Is_Not_Volatile(bool v);
+	virtual void Set_Tick(bool v);
 };
 
 class rtlArrayObjectReference: public rtlObjectReference

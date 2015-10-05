@@ -36,7 +36,6 @@ $system store_and_forward
 			$now wr_data         := ($unsigned<32>) 0
 			$now wr_addr 	     := ($unsigned<32>) 0
 
-			$now rd_data         := ($unsigned<32>) 0
 			$now rd_addr 	     := ($unsigned<32>) 0
 
 			//$now tmp_sig    := mem_array[($unsigned<4>) 0]

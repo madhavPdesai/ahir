@@ -7,6 +7,9 @@
 #include <rtlStatement.h>
 #include <rtlThread.h>
 
+int hierRoot::_error_count = 0;
+int hierRoot::_warning_count = 0;
+
 int root_object_counter = 0;
 	
 hierRoot::hierRoot(string id)

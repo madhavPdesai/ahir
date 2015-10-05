@@ -14,9 +14,48 @@ rtlObject::rtlObject(string name, rtlType* t):hierRoot(name)
 {
 	_type = t;
 	_number_of_drivers = 0;
+	_assigned_under_volatile = false;
+	_not_assigned_under_volatile = false;
+	_assigned_under_tick = false;
 }
 
 	
+void rtlObject::Set_Assigned_Under_Volatile(bool v)
+{
+	if(v && _not_assigned_under_volatile)
+	{
+		this->Report_Error("object " + this->Get_Id() + " assigned under volatile as well as non-volatile conditions.");
+		return;
+	}
+	_assigned_under_volatile = v;
+}
+
+void rtlObject::Set_Not_Assigned_Under_Volatile(bool v)
+{
+	if(v && _assigned_under_volatile)
+	{
+		this->Report_Error("object " + this->Get_Id() + " assigned under volatile as well as non-volatile conditions.");
+		return;
+	}
+	_not_assigned_under_volatile = v;
+}
+	
+void rtlObject::Set_Assigned_Under_Tick(bool v)
+{
+	if(v && _assigned_under_volatile)
+	{
+		this->Report_Error("object " + this->Get_Id() + " assigned under volatile as well as tick conditions.");
+		return;
+	}
+
+	if(v && _not_assigned_under_volatile)
+	{
+		this->Report_Error("object " + this->Get_Id() + " assigned under tick and non-tick conditions.");
+		return;
+	}
+
+	_assigned_under_tick = v;
+}
 void rtlObject::Print_C_Struct_Field_Initialization(string obj_name, ostream& source_file)
 {
 	_type->Print_C_Struct_Field_Initialization(obj_name, NULL, source_file);
@@ -98,31 +137,13 @@ void rtlVariable::Print(ostream& ofile)
 rtlSignal::rtlSignal(string name, rtlType* t):rtlObject(name, t)
 {
 	_is_pipe = false;
-	_is_volatile = false;
-	_tick = false;
 }
 
 rtlSignal::rtlSignal(bool is_pipe, string name, rtlType* t):rtlObject(name, t)
 {
 	_is_pipe = is_pipe;
-	_is_volatile = false;
-	_tick = false;
 }
 
-void rtlSignal::Set_Tick(bool v) 
-{
-	if(v && _is_volatile)
-		this->Report_Error("signal " + this->Get_Id() + " is simultaneously volatile and ticked");
-
-	_tick = v;
-}
-void rtlSignal::Set_Is_Volatile(bool v)
-{
-	if(v && _tick)
-		this->Report_Error("signal " + this->Get_Id() + " is simultaneously volatile and ticked");
-
-	_is_volatile = v;
-}
 
 // Print declaration.
 void rtlSignal::Print(ostream& ofile)

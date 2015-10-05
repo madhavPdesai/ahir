@@ -67,7 +67,7 @@ void rtlExpression::Print_C_Declaration(rtlValue* v, ostream& ofile)
 void rtlObjectReference::Set_Tick(bool v) 
 {
 	_tick = v;
-	_object->Set_Tick(v);
+	_object->Set_Assigned_Under_Tick(v);
 }
 
 rtlSimpleObjectReference::rtlSimpleObjectReference(rtlObject* obj): rtlObjectReference(obj->Get_Id(),obj) 
@@ -104,7 +104,7 @@ rtlSimpleObjectReference::rtlSimpleObjectReference(rtlObject* obj, bool req_flag
 bool rtlSimpleObjectReference::Writes_To_Signal()
 {
 	return(this->Get_Is_Target() && this->_object->Is_Signal() && 
-			(this->_object->Get_Is_Volatile() || this->Get_Tick()));
+			(this->_req_flag || (this->_object->Get_Assigned_Under_Volatile() || this->_object->Get_Assigned_Under_Tick())));
 }
 
 void rtlConstantLiteralExpression::Print(ostream& ofile)
@@ -187,16 +187,46 @@ string rtlSimpleObjectReference::To_Vhdl_String()
 	}
 }
 	
-void rtlObjectReference::Set_Is_Emitted(bool v)
-{
-	_object->Set_Is_Emitted(v);
-}
 void rtlObjectReference::Set_Is_Volatile(bool v)
 {
-	_object->Set_Is_Volatile(v);
+	_object->Set_Assigned_Under_Volatile(v);
 }
 
+void rtlObjectReference::Set_Is_Not_Volatile(bool v)
+{
+	_object->Set_Not_Assigned_Under_Volatile(v);
+}
 	
+void rtlSimpleObjectReference::Set_Is_Volatile(bool v)
+{
+	if(!(_req_flag || _ack_flag))
+		_object->Set_Assigned_Under_Volatile(v);
+}
+
+void rtlSimpleObjectReference::Set_Is_Not_Volatile(bool v)
+{
+	if(_req_flag && v)
+	{
+		this->Report_Error("pipe-req signal must always be a volatile assignment: " + this->To_String());
+		return;
+	}
+
+	if(!(_req_flag || _ack_flag))
+		_object->Set_Not_Assigned_Under_Volatile(v);
+}
+
+void rtlSimpleObjectReference::Set_Tick(bool v)
+{
+	if(_req_flag && v)
+	{
+		this->Report_Error("pipe-req signal cannot be a tick assignment: " + this->To_String());
+		return;
+	}
+
+	if(!(_req_flag || _ack_flag))
+		_object->Set_Assigned_Under_Tick(v);
+}
+
 string rtlSimpleObjectReference::Get_C_Name() 
 {
 	if(_req_flag)
@@ -212,7 +242,6 @@ string rtlSimpleObjectReference::Get_C_Name()
 
 string rtlSimpleObjectReference::Get_C_Target_Name() 
 {
-
 	if(_ack_flag)
 	{
 		this->Report_Error("ack-flag cannot be written for object " + _object->Get_Id());
@@ -261,7 +290,7 @@ string rtlArrayObjectReference::Get_C_Target_Name()
 bool rtlArrayObjectReference::Writes_To_Signal()
 {
 	return(this->Get_Is_Target() && this->_object->Is_Signal() && 
-			(this->_object->Get_Is_Volatile() || this->Get_Tick()));
+			(this->_object->Get_Assigned_Under_Volatile() || this->_object->Get_Assigned_Under_Tick()));
 }
 
 void rtlArrayObjectReference::Print_C(ostream& ofile)
@@ -304,9 +333,9 @@ string rtlArrayObjectReference::To_Vhdl_String()
 		if(idx->Get_Type()->Is("rtlIntegerType"))
 			ret_string += "(" + idx->To_Vhdl_String() + ")";
 		else if(idx->Get_Type()->Is("rtlUnsignedType"))
-			ret_string += string("(To_Integer(To_Unsigned(") + idx->To_Vhdl_String() + "), " + IntToStr(idx->Get_Type()->Size()) + "))";
+			ret_string += string("(To_Integer(To_Unsigned(") + idx->To_Vhdl_String() + ")))";
 		else if(idx->Get_Type()->Is("rtlSignedType"))
-			ret_string += string("(To_Integer(To_Signed(") + idx->To_Vhdl_String() + "), " + IntToStr(idx->Get_Type()->Size()) + "))";
+			ret_string += string("(To_Integer(To_Signed(") + idx->To_Vhdl_String() + ")))";
 	}
 	return(ret_string);
 }
@@ -553,10 +582,10 @@ string rtlBinaryExpression::To_Vhdl_String()
 					IntToStr(_first->Get_Type()->Size()) + "))));";
 				break;
 			case __EQUAL:
-				ret_string = "areEqual(" + _first->To_Vhdl_String() + " , " + _second->To_Vhdl_String() + ")";
+				ret_string = "areEqual(" + _first->To_Vhdl_String() + ", " + _second->To_Vhdl_String() + ")";
 				break;
 			case __NOTEQUAL:
-				ret_string = "(not areEqual(" + _first->To_Vhdl_String() + " /= " + _second->To_Vhdl_String() + "))";
+				ret_string = "(not areEqual(" + _first->To_Vhdl_String() + ", " + _second->To_Vhdl_String() + "))";
 				break;
 			case __LESS:
 				if(this->Get_Type()->Is("rtlUnsignedType"))

@@ -209,5 +209,10 @@ int main(int argc, char* argv[])
 	top_sys->Print_Vhdl_Test_Bench(sim_link_library, sim_link_prefix, vhdl_tb_file);
 	vhdl_tb_file.close();
   }
+  if(hierRoot::_error_count > 0) 
+  {
+	cerr << "Error: there were " << hierRoot::_error_count << " errors." << endl;
+	ret_val = 1;
+  }
   return(ret_val);
 }

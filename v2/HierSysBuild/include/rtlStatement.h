@@ -35,7 +35,7 @@ class rtlAssignStatement: public rtlStatement
 
 	public:
 
-	rtlAssignStatement(rtlThread* p,bool volatile_flag,  rtlExpression* tgt, rtlExpression* src);
+	rtlAssignStatement(rtlThread* p,bool volatile_flag, bool tick_flag, bool imm_flag,  rtlExpression* tgt, rtlExpression* src);
 
 	bool Get_Volatile() {return(_volatile);}	
 

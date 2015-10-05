@@ -336,7 +336,7 @@ rtl_DefaultStatementBlock[rtlThread* t]
 	rtlStatement* stmt = NULL;
 }:
 	DEFAULT
-		(((stmt = rtl_AssignStatement[t]) | (stmt = rtl_LogStatement[t]))  { t->Add_Default_Statement(stmt); } )*
+		(((stmt = rtl_AssignStatement[t,false,false]) | (stmt = rtl_LogStatement[t]))  { t->Add_Default_Statement(stmt); } )*
 ;
 
 
@@ -345,7 +345,7 @@ rtl_ImmediateStatementBlock[rtlThread* t]
 	rtlStatement* stmt = NULL;
 }:
 	NOW
-		(((stmt = rtl_AssignStatement[t]) | (stmt = rtl_LogStatement[t]))  { t->Add_Immediate_Statement(stmt); } )*
+		(((stmt = rtl_AssignStatement[t,false,true]) | (stmt = rtl_LogStatement[t]) | (stmt = rtl_IfStatement[t,false,true]))  { t->Add_Immediate_Statement(stmt); } )*
 ;
 
 rtl_TickStatementBlock[rtlThread* t] 
@@ -353,7 +353,7 @@ rtl_TickStatementBlock[rtlThread* t]
 	rtlStatement* stmt = NULL;
 }:
 	TICK
-		(((stmt = rtl_AssignStatement[t]) | (stmt = rtl_LogStatement[t]) | (stmt = rtl_IfStatement[t]))  { t->Add_Tick_Statement(stmt); } )*
+		(((stmt = rtl_AssignStatement[t, true, false]) | (stmt = rtl_LogStatement[t]) | (stmt = rtl_IfStatement[t,true,false]))  { t->Add_Tick_Statement(stmt); } )*
 ;
 
 rtl_String[hierSystem* sys] returns [rtlString* ti]
@@ -461,19 +461,19 @@ rtl_ObjectDeclaration[rtlThread* t]
 
 
 // rtl-statement
-rtl_SimpleStatement[rtlThread* t] returns [rtlStatement* stmt]
+rtl_SimpleStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlStatement* stmt]
 :
-( (stmt=rtl_AssignStatement[t]) |
+( (stmt=rtl_AssignStatement[t, tick_flag, imm_flag]) |
   (stmt=rtl_NullStatement[t]) |
   (stmt=rtl_LogStatement[t]) |
   (stmt=rtl_GotoStatement[t])  |
-  (stmt=rtl_IfStatement[t]) )
+  (stmt=rtl_IfStatement[t,tick_flag,imm_flag]) )
 
 ;
 
 
 // assignment statement
-rtl_AssignStatement[rtlThread* t] returns [rtlStatement* stmt]
+rtl_AssignStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlStatement* stmt]
 {
 	rtlExpression* tgt = NULL;
 	rtlExpression* src = NULL;
@@ -486,7 +486,7 @@ rtl_AssignStatement[rtlThread* t] returns [rtlStatement* stmt]
 (src = rtl_Expression[t,NULL])
 {
 	tgt->Set_Is_Target(true);
-	stmt = new rtlAssignStatement(t,volatile_flag, tgt, src);
+	stmt = new rtlAssignStatement(t, volatile_flag, tick_flag, imm_flag,  tgt, src);
 	_sLine_(stmt,aid);
 }
 ;
@@ -525,20 +525,20 @@ LOG sid:SIMPLE_IDENTIFIER
 };
 
 
-rtl_BlockStatement[rtlThread* t] returns [rtlBlockStatement* stmt]
+rtl_BlockStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlBlockStatement* stmt]
 {
 	rtlStatement* astmt = NULL;
 	vector<rtlStatement*> stmts;
 }:
 LBRACE
-( astmt = rtl_SimpleStatement[t] {stmts.push_back(astmt); astmt = NULL;})+
+( astmt = rtl_SimpleStatement[t, tick_flag, imm_flag] {stmts.push_back(astmt); astmt = NULL;})+
 RBRACE
 {
 	stmt = new rtlBlockStatement(t, stmts);
 	}
 ;
 
-rtl_IfStatement[rtlThread* t] returns [rtlStatement* stmt]
+rtl_IfStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlStatement* stmt]
 {
 	rtlExpression* test_expr = NULL;
 	rtlBlockStatement* if_block = NULL;
@@ -546,9 +546,9 @@ rtl_IfStatement[rtlThread* t] returns [rtlStatement* stmt]
 }
 :
 	IF (test_expr = rtl_Expression[t,NULL])  
-        if_block  = rtl_BlockStatement[t]
+        if_block  = rtl_BlockStatement[t,tick_flag, imm_flag]
 	(ELSE 
-            else_block = rtl_BlockStatement[t]
+            else_block = rtl_BlockStatement[t,tick_flag, imm_flag]
         )?
 	{ 
 		stmt = (rtlStatement*) new rtlIfStatement(t, test_expr, if_block, else_block);
@@ -564,7 +564,7 @@ rtl_LabeledBlockStatement[rtlThread* t]
 }:
 	lbl  = rtl_Label
 	LBRACE
-		( astmt = rtl_SimpleStatement[t] {stmts.push_back(astmt); astmt = NULL;})+
+		( astmt = rtl_SimpleStatement[t,false, false] {stmts.push_back(astmt); astmt = NULL;})+
 	RBRACE
 	{
 		bstmt = new rtlLabeledBlockStatement(t, lbl, stmts);

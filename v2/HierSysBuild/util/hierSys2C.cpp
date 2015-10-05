@@ -128,7 +128,8 @@ int main(int argc, char* argv[])
 		cerr << "Error: in building system " << sys->Get_Id() << endl;
 		ret_val = 1;	
 	}
-	else sys->Print(cerr);
+	else 
+		sys->Print(cerr);
   }
 
 
@@ -295,5 +296,10 @@ int main(int argc, char* argv[])
 	source_file.close();
   }
 
+  if(hierRoot::_error_count > 0)
+  {
+	cerr << "Error: there were " << hierRoot::_error_count << " errors. " << endl;
+	ret_val = 1;
+  }
   return(ret_val);
 }

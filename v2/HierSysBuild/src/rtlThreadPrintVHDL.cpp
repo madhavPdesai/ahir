@@ -141,7 +141,7 @@ void rtlThread::Print_Vhdl_Entity_Architecture(ostream& ofile)
 	for(map<string,rtlObject*>::iterator iter = _objects.begin(), fiter = _objects.end(); iter != fiter; iter++)
 	{
 		rtlObject* obj = (*iter).second;
-		if(obj->Needs_Next_Vhdl_Variable())
+		if(obj->Needs_Next_Vhdl_Variable() && !obj->Is_OutPort())
 		{
 			ofile << obj->Get_Variable_Id() << " := " << obj->Get_Id() << ";" << endl;
 		}

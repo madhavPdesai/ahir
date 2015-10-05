@@ -28,7 +28,7 @@ cmodel: src/shift_register.hsys src/testbench.c
 	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./aa2c/ ./src/testbench.c -o objsw/testbench.o
 	gcc -g -o  ./bin/exec_sw objsw/_shift_register.o objsw/testbench.o -L $(AHIR_LIB) -lBitVectors  -lPipeHandlerDebug -lpthread -lRtl2AaMatcher
 
-vhdlmodel:
+vhdlmodel: src/shift_register.hsys
 	rm -rf vhdl
 	mkdir vhdl
 	hierSys2Vhdl -o vhdl src/shift_register.hsys

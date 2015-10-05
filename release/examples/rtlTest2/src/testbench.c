@@ -8,7 +8,9 @@
 #include <pipeHandler.h>
 #include <BitVectors.h>
 #include <rtl2AaMatcher.h>
+#ifdef SW
 #include <_store_and_forward.h>
+#endif
 
 #define ORDER 4
 

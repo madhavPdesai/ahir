@@ -18,14 +18,18 @@ rtlStatement::rtlStatement(rtlThread* p):hierRoot()
 }
 
 	
-rtlAssignStatement::rtlAssignStatement(rtlThread* p,bool volatile_flag,  rtlExpression* tgt, rtlExpression* src):rtlStatement(p)
+rtlAssignStatement::rtlAssignStatement(rtlThread* p, bool volatile_flag, bool tick_flag, bool imm_flag, rtlExpression* tgt, rtlExpression* src):rtlStatement(p)
 {
 	_target = tgt;
 	tgt->Set_Is_Target(true);
 
 	_source = src;
-	_volatile = volatile_flag;
-	tgt->Set_Is_Volatile(volatile_flag);
+	_volatile = (volatile_flag || imm_flag);
+
+	tgt->Set_Is_Volatile(_volatile);
+	tgt->Set_Is_Not_Volatile(!_volatile && !tick_flag);
+	tgt->Set_Tick(tick_flag);
+
 }
 
 
@@ -294,7 +298,12 @@ void rtlLogStatement::Print_C(ostream& ofile)
 
 void rtlLogStatement::Print_Vhdl(ostream& ofile)
 {
-	ofile << "assert false report \"" << _object->Get_Id() << " = \" & Convert_To_String(" 
+	if(!_object->Is_OutPort())
+		ofile << "assert false report \"" << _object->Get_Id() << " = \" & Convert_To_String(" 
 				<< _object->Get_Id() << ") severity note;" << endl; 
+	else
+	{
+		this->Report_Warning("can not log value of output port " + _object->Get_Id());
+	}
 }
 

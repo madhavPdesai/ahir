@@ -40,6 +40,10 @@ class hierRoot
 	string _id;
 	bool _error;
 	
+
+	static int _error_count;
+	static int _warning_count;
+
 	hierRoot(string id);
 	hierRoot();
 
@@ -59,10 +63,12 @@ class hierRoot
 	void Report_Warning(string err_msg)
 	{ 
 		cerr << "Warning: " << err_msg  <<  endl;
+		hierRoot::_warning_count++;
 	}
 	void Report_Error(string err_msg)
 	{ 
 		cerr << "Error: " << err_msg <<  endl; this->Set_Error(true); 
+		hierRoot::_error_count++;
 	}
 	
 	virtual string Kind() {return("hierRoot");}
@@ -72,6 +78,12 @@ class hierRoot
 	virtual void Print(ostream& ofile) {assert(0);}
 	void Print(ofstream& ofile);
 	void Print(string& ostring);
+	virtual string To_String()
+	{
+		string ret_val;
+		this->Print(ret_val);
+		return(ret_val);
+	}
 	
 };
 

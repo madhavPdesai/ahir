@@ -49,7 +49,6 @@ void rtlThread::Add_Immediate_Statement(rtlStatement* stmt)
 void rtlThread::Add_Tick_Statement(rtlStatement* stmt) 
 {
 	bool check_status = Check_If_Assignment_To_Signal(this, stmt);	
-	stmt->Set_Tick(true);
 	if(check_status)
 		_tick_statements.push_back(stmt);
 }

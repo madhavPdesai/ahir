@@ -252,12 +252,12 @@ void Print_Vhdl_Type_Declarations(string prefix, ostream& ofile)
 				<< "array (";
 			for(int I = 0, fI = at->Get_Number_Of_Dimensions(); I < fI; I++)
 			{
-				ofile << " natural range";
+				ofile << " natural range <> ";
 				if(I < (fI -1))
 					ofile << ", ";
 			}
 			ofile << ") of " << Get_Type_Identifier(at->Get_Element_Type()) << ";" << endl;
-			ofile << "subtype " << type_id << " is " << type_id << " _unconstrained(";
+			ofile << "subtype " << type_id << " is " << type_id << "_unconstrained(";
 			for(int I = 0, fI = at->Get_Number_Of_Dimensions(); I < fI; I++)
 			{
 				ofile << at->Get_Dimension(I)-1 << " downto 0";
