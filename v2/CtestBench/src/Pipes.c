@@ -4,6 +4,7 @@
 #include <string.h>
 #include <assert.h>
 #include <SocketLib.h>
+#include <SockPipes.h>
 #include <Pipes.h>
 
 uint8_t register_pipe(const char* id, int pipe_depth, int pipe_width, int lifo_mode)

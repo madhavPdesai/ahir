@@ -11,6 +11,7 @@ env.Append(CPPPATH = './src/:./include:../pthreadUtils/include:/cad/modelsim/mod
 VariantDir('objModelsimFLI','src',duplicate=0)
 VariantDir('objVhpi','src',duplicate=0)
 VariantDir('objSocketLib','src',duplicate=0)
+VariantDir('objSockPipes','src',duplicate=0)
 
 VariantDir('objModelsimFLIdebug','src',duplicate=0)
 VariantDir('objVhpiDebug','src',duplicate=0)
@@ -18,6 +19,7 @@ VariantDir('objSocketLibDebug','src',duplicate=0)
 #env.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -m32 -DMODELSIM -DNDEBUG')
 env.SharedLibrary('lib/libVhpi', ['objVhpi/Vhpi.c','objVhpi/SocketLib.c'], CCFLAGS='-g -DNDEBUG')
 env.SharedLibrary('lib/libSocketLib', ['objSocketLib/SocketLib.c','objSocketLib/Pipes.c', 'objSocketLib/SockPipes.c', 'objSocketLib/pipeHandler.c'], CCFLAGS='-g -DNDEBUG')
+env.SharedLibrary('lib/libSockPipes', ['objSockPipes/SocketLib.c', 'objSockPipes/SockPipes.c'], CCFLAGS='-g -DNDEBUG')
 
 env.SharedLibrary('lib/libVhpiDebug', ['objVhpiDebug/Vhpi.c','objVhpiDebug/SocketLib.c'], CCFLAGS='-g -DDEBUG')
 env.SharedLibrary('lib/libSocketLibDebug', ['objSocketLibDebug/SocketLib.c','objSocketLibDebug/Pipes.c', 'objSocketLibDebug/SockPipes.c', 'objSocketLibDebug/pipeHandler.c'], CCFLAGS='-g -DDEBUG')

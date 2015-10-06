@@ -37,8 +37,8 @@ options {
 class hierSysParser extends Parser;
 
 options {
-	// go with LL(3) grammar
-	k=3;
+	// go with LL(6) grammar
+	k=6;
 	defaultErrorHandler=true;
 } 
 {
@@ -500,8 +500,9 @@ rtl_SplitStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlStat
 	bool volatile_flag = false;
 }
 :
+SPLIT 
 (NOW {volatile_flag = true;})?
-SPLIT LPAREN (src = rtl_Expression[t,NULL]) RPAREN
+LPAREN (src = rtl_Expression[t,NULL]) RPAREN
 LPAREN (tgt = rtl_Object_Reference[t] {targets.push_back(tgt);} )+ RPAREN
 	{
 		stmt = new rtlSplitStatement(t, volatile_flag, tick_flag, imm_flag, targets, src);

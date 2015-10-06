@@ -4,7 +4,7 @@
 #include <string.h>
 #include <assert.h>
 #include <SocketLib.h>
-#include <Pipes.h>
+#include <SockPipes.h>
 
 
 #define READ__(id,t,w)  sprintf(buffer, "piperead.single %s ", id);	\

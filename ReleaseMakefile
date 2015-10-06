@@ -60,6 +60,7 @@ Release:
 	#cp $(GNUPTHUTILS)/include/*.h $(RELEASE)/GnuPthUtils/include/
 	# copy the testbench
 	#cp $(CTESTBENCH)/include/*.h $(RELEASE)/CtestBench/include/
+	cp $(CTESTBENCH)/include/SockPipes.h $(RELEASE)/include/
 	cp $(CTESTBENCH)/include/SocketLib.h $(RELEASE)/include/
 	cp $(CTESTBENCH)/include/Vhpi.h $(RELEASE)/include/
 	#cp $(CTESTBENCH)/lib/* $(RELEASE)/CtestBench/lib/
