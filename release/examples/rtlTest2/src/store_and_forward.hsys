@@ -96,6 +96,7 @@ $system store_and_forward
 				$now rd_rsp$req := One_1
 				$if rd_rsp$ack
 				{
+					$log rd_rsp
 					$goto RUN
 				}
 		}
@@ -112,18 +113,16 @@ $system store_and_forward
 		$if rd_mem_flag_1
 		{
 			$log rd_mem_flag_1
-			$log rd_data
 			$log rd_addr
-
 			rd_data := mem_array[rd_addr]
+			$log rd_data
 		}
 		$if rd_mem_flag_2
 		{
 			$log rd_mem_flag_2
 			$log rd_data
-			$log rd_addr
-
 			rd_data := mem_array[rd_addr_reg]
+			$log rd_addr
 		}
 
 
@@ -226,6 +225,8 @@ $system store_and_forward
 					$now mem_rd_cmd$req := One_1
 
 					$if mem_rd_cmd$ack {
+						$log mem_rd_cmd
+						$log counter
 						counter := (counter - ($unsigned<32>) 1)
 					}
 			
@@ -236,6 +237,9 @@ $system store_and_forward
 					$now mem_rd_rsp$req := One_1
 					$if mem_rd_rsp$ack
 					{
+						$log mem_rd_rsp
+						$log read_counter
+
 						// try to write to pipe.
 						$now wdata := mem_rd_rsp
 						$now wdata$req := One_1

@@ -5,6 +5,10 @@ env = Environment(ENV = {'PATH' : os.environ['PATH']})
 env.Append(CPPPATH = './src/:./include:../pthreadUtils/include:../BitVectors/include:../pipeHandler/include')
 
 env.SharedLibrary('./lib/libRtl2AaMatcher', Glob('src/*.c'), CCFLAGS='-g ')
+
+VariantDir('objDebug','src',duplicate=0)
+env.SharedLibrary('./lib/libRtl2AaMatcherDebug', Glob('objDebug/*.c'), CCFLAGS='-g -DDEBUG ')
+
 env.Program('bin/Rtl2AaMatcherTest', 'util/testRtl2AaMatcher.c', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Rtl2AaMatcher', 'PipeHandlerDebug', 'BitVectors' , 'pthread'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../pipeHandler/lib/ ../BitVectors/lib/  '))
 
 

@@ -223,6 +223,7 @@ void rtlSimpleObjectReference::Set_Tick(bool v)
 		return;
 	}
 
+	_tick = v;
 	if(!(_req_flag || _ack_flag))
 		_object->Set_Assigned_Under_Tick(v);
 }

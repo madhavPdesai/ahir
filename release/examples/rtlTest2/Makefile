@@ -9,6 +9,8 @@ FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 
 all: toplevel cmodel vhdlmodel vhdltb vhdlsim
 
+sw: toplevel cmodel
+hw: vhdlmodule vhdltb vhdlsim
 
 # generate the integrated vhdl and C
 toplevel: src/store_and_forward.hsys
@@ -24,7 +26,7 @@ cmodel: src/store_and_forward.hsys src/testbench.c
 	mkdir objsw
 	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./aa2c/ ./aa2c/_store_and_forward.c -o objsw/_store_and_forward.o
 	gcc -g -c -DSW  -I$(AHIR_INCLUDE)  -I./aa2c/ ./src/testbench.c -o objsw/testbench.o
-	gcc -g -o  ./bin/exec_sw objsw/_store_and_forward.o objsw/testbench.o -L $(AHIR_LIB) -lBitVectors  -lPipeHandler -lpthread -lRtl2AaMatcher
+	gcc -g -o  ./bin/exec_sw objsw/_store_and_forward.o objsw/testbench.o -L$(AHIR_LIB) -lBitVectors  -lPipeHandler -lpthread -lRtl2AaMatcher
 
 vhdlmodel: src/store_and_forward.hsys
 	rm -rf vhdl
