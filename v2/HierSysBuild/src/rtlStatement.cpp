@@ -17,92 +17,65 @@ rtlStatement::rtlStatement(rtlThread* p):hierRoot()
 	_parent_thread = p;
 }
 
+void rtlAssignStatementBase::Collect_Target_Objects(set<rtlObject*> obj_set)
+{
+	for(int I = 0, fI = _targets.size(); I < fI; I++)
+		_targets[I]->Collect_Target_Objects(obj_set);
+}
 	
-rtlAssignStatement::rtlAssignStatement(rtlThread* p, bool volatile_flag, bool tick_flag, bool imm_flag, rtlExpression* tgt, rtlExpression* src):rtlStatement(p)
+void rtlAssignStatementBase::Collect_Source_Objects(set<rtlObject*> obj_set)
 {
-	_target = tgt;
-	tgt->Set_Is_Target(true);
-
-	_source = src;
-	_volatile = (volatile_flag || imm_flag);
-
-	tgt->Set_Is_Volatile(_volatile);
-	tgt->Set_Is_Not_Volatile(!_volatile && !tick_flag);
-	tgt->Set_Tick(tick_flag);
-
+	for(int I = 0, fI = _sources.size(); I < fI; I++)
+		_sources[I]->Collect_Source_Objects(obj_set);
 }
-
-
-void rtlAssignStatement::Set_Tick(bool v)
+	
+void rtlAssignStatementBase::Update_Target_Flags()
 {
-	this->_target->Set_Tick(v);
-}
-
-void rtlAssignStatement::Print_Vhdl(ostream& ofile)
-{
-	ofile << "-- ";
-	this->Print(ofile);
-	ofile << endl;
-
-	string assign_type = " := ";
-	if(_target->Writes_To_Signal())
+	for(int I = 0, fI = _targets.size(); I < fI; I++)
 	{
-		assign_type = " <= ";
+		rtlExpression* tgt = _targets[I];
+		tgt->Set_Is_Target(true);
+		tgt->Set_Is_Volatile(_volatile);
+		tgt->Set_Is_Not_Volatile(!_volatile && !_tick);
+		tgt->Set_Tick(_tick);
 	}
-	ofile << _target->To_Vhdl_String()  << assign_type << _source->To_Vhdl_String() << ";" << endl;
-}
-	
-void rtlAssignStatement::Collect_Target_Objects(set<rtlObject*> obj_set)
-{
-	_target->Collect_Target_Objects(obj_set);
-}
-	
-void rtlAssignStatement::Collect_Source_Objects(set<rtlObject*> obj_set)
-{
-	_source->Collect_Target_Objects(obj_set);
 }
 
-
-	
-void rtlAssignStatement::Print(ostream& ofile)
+void rtlAssignStatementBase::Print(ostream& ofile, rtlExpression* target, rtlExpression* source)
 {
 	if(_volatile)
 		ofile << " $now ";
-	_target->Print(ofile);
+	target->Print(ofile);
 	ofile << " := ";
-	_source->Print(ofile);
+	source->Print(ofile);
 	ofile << endl;
 }
 
-	
-void rtlAssignStatement::Print_C(ostream& source_file)
+void rtlAssignStatementBase::Print_C(ostream& source_file, rtlExpression* target, rtlExpression* source)
 {
-	source_file << "//";
-	this->Print(source_file); 
-
-	rtlType* tt = _target->Get_Type();
+	rtlType* tt = target->Get_Type();
 	if(tt->Is("rtlIntegerType"))
 	{
-		_target->Print_C(source_file);
+		target->Print_C(source_file);
 		source_file << " = " ;
-		_source->Print_C(source_file);
+		source->Print_C(source_file);
 		source_file << ";" << endl;
 	}
 	else if(tt->Is("rtlUnsignedType") || tt->Is("rtlSignedType"))
 	{
-		_target->Print_C(source_file); // TODO: object references as target handled differently.
+		target->Print_C(source_file); // TODO: object references as target handled differently.
 						//  In this case, the printing is only of rvalues in
 						// the expression (e.g. array index expressions).
-		_source->Print_C(source_file);
-		source_file  << "bit_vector_bitcast_to_bit_vector(&(" << _target->Get_C_Target_Name() << "), &(" 
-				<< _source->Get_C_Name() << "));" << endl;
+		source->Print_C(source_file);
+		source_file  << "bit_vector_bitcast_to_bit_vector(&(" << target->Get_C_Target_Name() << "), &(" 
+				<< source->Get_C_Name() << "));" << endl;
 	}
 	else
 		assert(0);
 
-	if(_target->Is("rtlSimpleObjectReference"))
+	if(target->Is("rtlSimpleObjectReference"))
 	{
-		rtlSimpleObjectReference* sor = ((rtlSimpleObjectReference*) _target);
+		rtlSimpleObjectReference* sor = ((rtlSimpleObjectReference*) target);
 		rtlObject* obj = sor->Get_Object();
 		if(sor->Get_Req_Flag())
 			obj->Print_C_Probe_Matcher(source_file);
@@ -122,8 +95,103 @@ void rtlAssignStatement::Print_C(ostream& source_file)
 		}
 	}
 }
+	
+void rtlAssignStatementBase::Print_Vhdl(ostream& ofile, rtlExpression* target, rtlExpression* src)
+{
+	string assign_type = " := ";
+	if(target->Writes_To_Signal())
+	{
+		assign_type = " <= ";
+	}
+	ofile << target->To_Vhdl_String()  << assign_type << src->To_Vhdl_String() << ";" << endl;
+}
+
+
+rtlAssignStatement::rtlAssignStatement(rtlThread* p, bool volatile_flag, bool tick_flag, bool imm_flag, rtlExpression* tgt, rtlExpression* src):
+		rtlAssignStatementBase(p, volatile_flag, tick_flag, imm_flag)
+{
+	_targets.push_back(tgt);
+	_sources.push_back(src);
+	_volatile = (volatile_flag || imm_flag);
+	_tick = tick_flag;
+	this->Update_Target_Flags();
+}
+
+void rtlAssignStatement::Print_Vhdl(ostream& ofile)
+{
+	ofile << "-- ";
+	this->Print(ofile);
+	ofile << endl;
+	this->rtlAssignStatementBase::Print_Vhdl(ofile, _targets[0], _sources[0]);
+
+}
+	
+	
+void rtlAssignStatement::Print(ostream& ofile)
+{
+	this->rtlAssignStatementBase::Print(ofile, _targets[0], _sources[0]);
+}
+
 
 	
+void rtlAssignStatement::Print_C(ostream& source_file)
+{
+	source_file << "//";
+	this->Print(source_file); 
+	source_file << endl;
+
+	this->rtlAssignStatementBase::Print_C(source_file, _targets[0], _sources[0]);
+}
+
+	
+rtlSplitStatement::rtlSplitStatement(rtlThread* p, bool volatile_flag, bool tick_flag, bool imm_flag,  
+						vector<rtlExpression*>& tgts, rtlExpression* src):rtlAssignStatementBase(p,volatile_flag, tick_flag, imm_flag)
+{
+	if(!src->Get_Type()->Is("rtlUnsignedType") && !src->Get_Type()->Is("rtlSignedType"))
+	{
+		this->Report_Error("split statement source must be unsigned/signed.");
+		return;
+	}
+	int H = src->Get_Type()->Size();
+	_targets = tgts;
+	for(int I = 0, fI = tgts.size(); I < fI; I++)
+	{
+		rtlExpression* expr = tgts[I];
+		int L = (H - expr->Get_Type()->Size()) + 1;	
+		rtlExpression* sI = new rtlSliceExpression(src, H, L);
+		_sources.push_back(sI);
+		H = L - 1;
+	}
+	this->Update_Target_Flags();
+}
+
+	
+void rtlSplitStatement::Print(ostream& ofile)
+{
+	assert(_sources.size() == _targets.size());
+	for(int I = 0, fI = _sources.size(); I < fI; I++)
+	{
+		this->rtlAssignStatementBase::Print(ofile, _targets[I], _sources[I]);
+	}
+}
+
+void rtlSplitStatement::Print_C(ostream& ofile)
+{
+	assert(_sources.size() == _targets.size());
+	for(int I = 0, fI = _sources.size(); I < fI; I++)
+	{
+		this->rtlAssignStatementBase::Print_C(ofile, _targets[I], _sources[I]);
+	}
+}
+
+void rtlSplitStatement::Print_Vhdl(ostream& ofile)
+{
+	assert(_sources.size() == _targets.size());
+	for(int I = 0, fI = _sources.size(); I < fI; I++)
+	{
+		this->rtlAssignStatementBase::Print_Vhdl(ofile, _targets[I], _sources[I]);
+	}
+}
 	
 rtlGotoStatement::rtlGotoStatement(rtlThread* p, string lbl):rtlStatement(p) 
 { 

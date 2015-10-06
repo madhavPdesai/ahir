@@ -336,7 +336,7 @@ rtl_DefaultStatementBlock[rtlThread* t]
 	rtlStatement* stmt = NULL;
 }:
 	DEFAULT
-		(((stmt = rtl_AssignStatement[t,false,false]) | (stmt = rtl_LogStatement[t]))  { t->Add_Default_Statement(stmt); } )*
+		(((stmt = rtl_SplitStatement[t,false,false]) | (stmt = rtl_AssignStatement[t,false,false]) | (stmt = rtl_LogStatement[t]))  { t->Add_Default_Statement(stmt); } )*
 ;
 
 
@@ -345,7 +345,7 @@ rtl_ImmediateStatementBlock[rtlThread* t]
 	rtlStatement* stmt = NULL;
 }:
 	NOW
-		(((stmt = rtl_AssignStatement[t,false,true]) | (stmt = rtl_LogStatement[t]) | (stmt = rtl_IfStatement[t,false,true]))  { t->Add_Immediate_Statement(stmt); } )*
+		(((stmt = rtl_SplitStatement[t,false, true]) | (stmt = rtl_AssignStatement[t,false,true]) | (stmt = rtl_LogStatement[t]) | (stmt = rtl_IfStatement[t,false,true]))  { t->Add_Immediate_Statement(stmt); } )*
 ;
 
 rtl_TickStatementBlock[rtlThread* t] 
@@ -353,7 +353,7 @@ rtl_TickStatementBlock[rtlThread* t]
 	rtlStatement* stmt = NULL;
 }:
 	TICK
-		(((stmt = rtl_AssignStatement[t, true, false]) | (stmt = rtl_LogStatement[t]) | (stmt = rtl_IfStatement[t,true,false]))  { t->Add_Tick_Statement(stmt); } )*
+		(((stmt = rtl_SplitStatement[t,true,false]) | (stmt = rtl_AssignStatement[t, true, false]) | (stmt = rtl_LogStatement[t]) | (stmt = rtl_IfStatement[t,true,false]))  { t->Add_Tick_Statement(stmt); } )*
 ;
 
 rtl_String[hierSystem* sys] returns [rtlString* ti]
@@ -464,6 +464,7 @@ rtl_ObjectDeclaration[rtlThread* t]
 rtl_SimpleStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlStatement* stmt]
 :
 ( (stmt=rtl_AssignStatement[t, tick_flag, imm_flag]) |
+  (stmt=rtl_SplitStatement[t, tick_flag, imm_flag]) |
   (stmt=rtl_NullStatement[t]) |
   (stmt=rtl_LogStatement[t]) |
   (stmt=rtl_GotoStatement[t])  |
@@ -490,6 +491,23 @@ rtl_AssignStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlSta
 	_sLine_(stmt,aid);
 }
 ;
+
+rtl_SplitStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlStatement* stmt]
+{
+	rtlExpression* src = NULL;
+	rtlExpression* tgt = NULL;
+	vector<rtlExpression*> targets;
+	bool volatile_flag = false;
+}
+:
+(NOW {volatile_flag = true;})?
+SPLIT LPAREN (src = rtl_Expression[t,NULL]) RPAREN
+LPAREN (tgt = rtl_Object_Reference[t] {targets.push_back(tgt);} )+ RPAREN
+	{
+		stmt = new rtlSplitStatement(t, volatile_flag, tick_flag, imm_flag, targets, src);
+	}
+;
+
 
 rtl_NullStatement[rtlThread* t]  returns [rtlStatement* stmt]
 {
@@ -895,6 +913,7 @@ OF:"$of";
 IF:"$if";
 ELSE:"$else";
 NOW:"$now";
+SPLIT:"$split";
 TICK:"$tick";
 DEFAULT:"$default";
 REQ: "$req";

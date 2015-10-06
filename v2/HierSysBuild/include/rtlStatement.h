@@ -20,40 +20,62 @@ class rtlStatement: public hierRoot
 	virtual void Collect_Target_Objects(set<rtlObject*> obj_set) {};
 	virtual void Collect_Source_Objects(set<rtlObject*> obj_set) {};
 
-	virtual void Set_Tick(bool v) {}
 	virtual bool Get_Tick() {return(false);}
 	virtual void Print_Vhdl(ostream& ofile) {assert(0);}
 };
 
-class rtlAssignStatement: public rtlStatement
+class rtlAssignStatementBase: public rtlStatement
 {
-
-	rtlExpression* _target;
-	rtlExpression* _source; 
+	protected:
+	vector<rtlExpression*>  _targets;
+	vector<rtlExpression*>  _sources; 
 	bool _volatile;
 	bool _tick;
 
 	public:
-
-	rtlAssignStatement(rtlThread* p,bool volatile_flag, bool tick_flag, bool imm_flag,  rtlExpression* tgt, rtlExpression* src);
+	rtlAssignStatementBase(rtlThread* p, bool volatile_flag, bool tick_flag, bool imm_flag):rtlStatement(p)
+	{
+		_volatile = (volatile_flag || imm_flag);
+		_tick     = tick_flag;
+	}
 
 	bool Get_Volatile() {return(_volatile);}	
-
-	virtual void Set_Tick(bool v);
 	virtual bool Get_Tick() {return(_tick);}
 
-	rtlExpression* Get_Target() {return(_target);}
-	rtlExpression* Get_Source() {return(_source);}
-
-
-	virtual void Print(ostream& ofile);
-	virtual void Print_C(ostream& source_file);
+	rtlExpression* Get_Target(int idx) {if((idx >= 0) && (idx < _targets.size())) return(_targets[idx]); else return(NULL);}
+	rtlExpression* Get_Source(int idx)  {if((idx >= 0) && (idx < _sources.size())) return(_sources[idx]); else return(NULL);}
+	rtlExpression* Get_Target() {return(this->Get_Target(0));}
+	rtlExpression* Get_Source() {return(this->Get_Source(0));}
 
 	virtual void Collect_Target_Objects(set<rtlObject*> obj_set);
 	virtual void Collect_Source_Objects(set<rtlObject*> obj_set);
+	virtual void Update_Target_Flags();
+
+	void Print(ostream& source_file, rtlExpression* target, rtlExpression* source);
+	void Print_C(ostream& source_file, rtlExpression* target, rtlExpression* source);
+	void Print_Vhdl(ostream& ofile, rtlExpression* target, rtlExpression* source);
+};
+
+class rtlAssignStatement: public rtlAssignStatementBase
+{
+	public:
+	rtlAssignStatement(rtlThread* p,bool volatile_flag, bool tick_flag, bool imm_flag,  rtlExpression* tgt, rtlExpression* src);
+
+	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& source_file);
 	virtual void Print_Vhdl(ostream& ofile);
 };
 
+class rtlSplitStatement: public rtlAssignStatementBase
+{
+	public:
+	rtlSplitStatement(rtlThread* p, bool volatile_flag, bool tick_flag, bool imm_flag,  
+						vector<rtlExpression*>& tgts, rtlExpression* src);
+
+	virtual void Print(ostream& ofile);
+	virtual void Print_C(ostream& source_file);
+	virtual void Print_Vhdl(ostream& ofile);
+};
 
 class rtlGotoStatement: public rtlStatement
 {
@@ -93,11 +115,6 @@ class rtlBlockStatement: public rtlStatement
 			_statement_block[I]->Collect_Source_Objects(obj_set);
 	}
 
-	virtual void Set_Tick(bool v)
-	{
-		for(int I = 0, fI = _statement_block.size(); I < fI; I++)
-			_statement_block[I]->Set_Tick(v);
-	}
 };
 
 class rtlIfStatement: public rtlStatement
@@ -133,13 +150,6 @@ class rtlIfStatement: public rtlStatement
 			_if_block->Collect_Source_Objects(obj_set);
 		if(_else_block)	
 			_else_block->Collect_Source_Objects(obj_set);
-	}
-	virtual void Set_Tick(bool v)
-	{
-		if(_if_block)	
-			_if_block->Set_Tick(v);
-		if(_else_block)	
-			_else_block->Set_Tick(v);
 	}
 };
 
