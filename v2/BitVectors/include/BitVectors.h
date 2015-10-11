@@ -164,7 +164,7 @@ void bit_vector_greater_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s,
 
 // unordered?
 uint8_t fp32_unordered(float a, float b);
-uint8_t fp64_unordered(float a, float b);
+uint8_t fp64_unordered(double a, double b);
 
 
 // pipe accesses.

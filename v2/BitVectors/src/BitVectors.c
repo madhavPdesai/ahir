@@ -1076,15 +1076,15 @@ uint8_t isNormalFp32(float a)
 	return(is_normal);	
 }
 
-uint8_t isNormalFp64(float a)
+uint8_t isNormalFp64(double a)
 {
-	float tA = a;
+	double tA = a;
 	uint64_t u64_1 = 1;
 	uint64_t u64_0x7ff = 0x7ff;
 
 	uint64_t ua = 	 *((uint64_t*) &tA);
 	uint64_t sign_ua = (ua & (u64_1 << 63));
-	uint64_t exp_ua  = (ua & (u64_0x7ff << 51));
+	uint64_t exp_ua  = (ua & (u64_0x7ff << 52));
 
 	uint8_t is_normal = ((exp_ua != 0) && (~exp_ua != 0));
 	return(is_normal);	
@@ -1094,7 +1094,7 @@ uint8_t fp32_unordered(float a, float b)
 	return(!isNormalFp32(a) || !isNormalFp32(b));
 
 }
-uint8_t fp64_unordered(float a, float b)
+uint8_t fp64_unordered(double a, double b)
 {
 	return(!isNormalFp64(a) || !isNormalFp64(b));
 }

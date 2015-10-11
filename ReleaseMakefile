@@ -57,7 +57,7 @@ Release:
 	# copy the pthreadUtils.
 	#cp $(PTHREADUTILS)/include/*.h $(RELEASE)/pthreadUtils/include/
 	cp $(PTHREADUTILS)/include/*.h $(RELEASE)/include/
-	#cp $(GNUPTHUTILS)/include/*.h $(RELEASE)/GnuPthUtils/include/
+	cp $(GNUPTHUTILS)/include/*.h $(RELEASE)/include/
 	# copy the testbench
 	#cp $(CTESTBENCH)/include/*.h $(RELEASE)/CtestBench/include/
 	cp $(CTESTBENCH)/include/SockPipes.h $(RELEASE)/include/
