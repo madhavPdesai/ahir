@@ -1,11 +1,10 @@
 # build software version of testbench (to check the "desired behaviour")
-SOCKETLIB_INCLUDE=../../CtestBench/include
-SOCKETLIB_LIB=../../CtestBench/lib
-PIPEHANDLER_INCLUDE=../../pipeHandler/include
-PIPEHANDLER_LIB=../../pipeHandler/lib
-VHDL_LIB=../../vhdl
-VHDL_VHPI_LIB=../../CtestBench/vhdl
-FUNCTIONLIB=../../../v2/functionLibrary/
+SOCKETLIB_INCLUDE=$(AHIR_RELEASE)/include
+SOCKETLIB_LIB=$(AHIR_RELEASE)/lib
+PIPEHANDLER_INCLUDE=$(AHIR_RELEASE)/include
+PIPEHANDLER_LIB=$(AHIR_RELEASE)/lib
+VHDL_LIB=$(AHIR_RELEASE)/vhdl/
+FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 #DEFS= -DADD -DMUL -DDOT -DCMP
 #DEFS= -DADD
 #DEFS= -DADD -DMUL -DSUB -DTOINT

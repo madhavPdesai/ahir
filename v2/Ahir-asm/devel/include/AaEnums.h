@@ -13,7 +13,6 @@ enum AaOperation
     __XNOR,
     __SHL,
     __SHR,
-    __ASHR,
     __ROR,
     __ROL,
     __PLUS,

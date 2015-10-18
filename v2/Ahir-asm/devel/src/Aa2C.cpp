@@ -598,17 +598,7 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 		case __SHR:
 			if(src1_is_int)
 			{
-				ofile << "bit_vector_shift_right(0, &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << __endl__;	
-			}
-			else
-			{
-				ofile << tgt << " = (" << src1 << " >> " << src2 << ");" << __endl__;
-			}
-			break;
-		case    __ASHR:
-			if(src1_is_int)
-			{
-				ofile << "bit_vector_shift_right(1, &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << __endl__;	
+				ofile << "bit_vector_shift_right(" << src1_is_signed << ", &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << __endl__;	
 			}
 			else
 			{

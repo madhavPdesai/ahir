@@ -281,7 +281,7 @@ uint64_t  bit_vector_to_uint64(uint8_t signed_flag, bit_vector* t)
 
 
 	// truncate high order bits if non-negative.
-	if(!signed_flag || __sign_bit(t))
+	if(!(signed_flag && __sign_bit(t)))
 	{
 		rv = truncate_uint64(rv, t->width);
 	}
@@ -302,6 +302,7 @@ float     bit_vector_to_float(uint8_t signed_flag, bit_vector* t)
       uint64_t v = bit_vector_to_uint64(signed_flag, t);
       rv =  v;
     }
+  return(rv);
 }
 
 double   bit_vector_to_double(uint8_t signed_flag, bit_vector* t)
@@ -317,6 +318,7 @@ double   bit_vector_to_double(uint8_t signed_flag, bit_vector* t)
       uint64_t v = bit_vector_to_uint64(signed_flag, t);
       rv =  v;
     }
+    return(rv);
 }
 
 

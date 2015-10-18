@@ -1060,6 +1060,11 @@ void AaProgram::Write_C_Model()
   source_file << "#include <" << header << ">" << endl;
 
   source_file << "FILE* " << AaProgram::Report_Log_File_Name() << " = NULL;" << endl;
+  header_file << "void " << AaProgram::_c_vhdl_module_prefix << "_set_trace_file(FILE* fp);" << endl;
+  source_file << "void " << AaProgram::_c_vhdl_module_prefix << "_set_trace_file(FILE* fp) {" << endl;
+  source_file << AaProgram::Report_Log_File_Name() << " = fp;" << endl;
+  source_file << "}" << endl;
+  
   for(std::map<string,AaType*,StringCompare>::iterator miter = AaProgram::_type_map.begin();
       miter != AaProgram::_type_map.end();
       miter++)

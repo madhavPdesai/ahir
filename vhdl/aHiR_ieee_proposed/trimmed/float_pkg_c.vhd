@@ -4301,11 +4301,14 @@ package body float_pkg is
   begin
     result (exponent_width-1 downto 0) := (others => '1');
     -- Exponent all "1"
-    result (-1) := '1';  -- MSB of Fraction "1"
+    result (-1) := '0';  -- MSB of Fraction "1"
     -- Note: From W. Khan "IEEE Standard 754 for Binary Floating Point"
     -- The difference between a signaling NAN and a quiet NAN is that
     -- the MSB of the Fraction is a "1" in a Signaling NAN, and is a
     -- "0" in a quiet NAN.
+    -- NO!  MSB is 1 in a quiet NAN, and 0 in a signaling NAN.
+    -- corrected by MPD.
+    result (-fraction_width)           := '1';  -- LSB of Fraction "1"
     return result;
   end function nanfp;
 
@@ -4318,8 +4321,8 @@ package body float_pkg is
   begin
     result (exponent_width-1 downto 0) := (others => '1');
     -- Exponent all "1"
-    result (-fraction_width)           := '1';  -- LSB of Fraction "1"
-    -- (Could have been any bit)
+    result (-1) := '1';  -- MSB of Fraction "1" for a qNAN
+    -- other bits of fraction can be 0.
     return result;
   end function qnanfp;
 
