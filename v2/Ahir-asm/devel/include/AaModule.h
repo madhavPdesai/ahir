@@ -249,6 +249,8 @@ class AaModule: public AaSeriesBlockStatement
    string Get_C_Outer_Output_Xfer_To_Outer_Macro_Name() ;
    string Get_C_Inner_Input_Args_Prepare_Macro();
    string Get_C_Inner_Output_Args_Prepare_Macro() ;
+
+   void Check_Statements();
 };
 
 #endif

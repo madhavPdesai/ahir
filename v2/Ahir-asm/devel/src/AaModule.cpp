@@ -708,6 +708,7 @@ void AaModule::Write_VC_Links(bool opt_flag, ostream& ofile)
 void AaModule::Write_VC_Control_Path(bool opt_flag, ostream& ofile)
 {
 
+  this->Check_Statements(); // check for errors.
   ofile << "$CP { // begin control-path " << endl;
   // for each statement, print a CP region.
   if(!opt_flag)
@@ -916,18 +917,7 @@ void AaModule::Set_Statement_Sequence(AaStatementSequence* statement_sequence)
 				}
 				else
 				{
-					AaCallStatement* as = (AaCallStatement*) s;
-					if(this->Get_Volatile_Flag() && !as->Get_Called_Module()->Get_Volatile_Flag())
-					{
-						AaRoot::Error("volatile module " + this->Get_Label() + " can call only volatile modules.", s);
-						err_flag = true;
-					}
-					else if(this->Get_Operator_Flag() && !(as->Get_Called_Module()->Get_Volatile_Flag() 
-										|| as->Get_Called_Module()->Get_Operator_Flag()))
-					{
-						AaRoot::Error("operator module  " + this->Get_Label() + " can call only volatile/operator modules.", s);
-						err_flag = true;
-					}
+					AaRoot::Warning("volatile/operator module " + this->Get_Label() + "  has call statement.", s);
 				}
 			}
 			else
@@ -944,9 +934,64 @@ void AaModule::Set_Statement_Sequence(AaStatementSequence* statement_sequence)
 	this->_statement_sequence = statement_sequence;
 }
 
+void AaModule::Check_Statements()
+{
+	if(_statement_sequence == NULL)
+		return;
+
+	bool err_flag = false;
+	for(int idx = 0, fidx = this->_statement_sequence->Get_Statement_Count(); idx < fidx; idx++)
+	{
+		AaStatement* s = this->_statement_sequence->Get_Statement(idx);
+		if(this->Is_Pipelined())
+		{
+			if(!(s->Is("AaAssignmentStatement") || s->Is("AaCallStatement") 
+					|| s->Is("AaReportStatement") || s->Is("AaNullStatement")))
+			{
+				AaRoot::Error("pipelined module can contain only call/assignment/null statements.", s);
+				err_flag = true;
+			}
+		}
+
+		if(this->Get_Operator_Flag() || this->Get_Volatile_Flag())
+		{
+			if(!(s->Is("AaAssignmentStatement") ||  s->Is("AaNullStatement")))
+			{
+				if(!s->Is("AaCallStatement"))
+				{
+					AaRoot::Error("operator/volatile module can contain only assignment/null statements.", s);
+					err_flag = true;
+				}
+				else
+				{
+					AaCallStatement* as = (AaCallStatement*) s;
+					if(this->Get_Volatile_Flag() && !as->Get_Called_Module()->Get_Volatile_Flag())
+					{
+						AaRoot::Error("volatile module " + this->Get_Label() + "  has non-volatile call statement.", s);
+						err_flag = true;
+					}
+					else if(this->Get_Operator_Flag() && !(as->Get_Called_Module()->Get_Volatile_Flag() 
+										|| as->Get_Called_Module()->Get_Operator_Flag()))
+					{
+						AaRoot::Error("operator module  " + this->Get_Label() + " can call only volatile/operator modules.", s);
+						err_flag = true;
+					}
+				}
+			}
+		}
+	}	
+
+	if(err_flag)
+	{
+		AaRoot::Error("Due to errors, module will not be pipelined.", this);
+		this->Set_Pipeline_Flag(false);
+	}
+}
+
 
 void AaModule::Write_VC_Control_Path_Optimized_Base(ostream& ofile)
 {
+  this->Check_Statements(); // check for errors.
   if(!this->Is_Pipelined())
     {
       this->AaSeriesBlockStatement::Write_VC_Control_Path_Optimized_Base(ofile);
