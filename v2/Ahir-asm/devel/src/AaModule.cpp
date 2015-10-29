@@ -909,8 +909,26 @@ void AaModule::Set_Statement_Sequence(AaStatementSequence* statement_sequence)
 		{
 			if(!(s->Is("AaAssignmentStatement") ||  s->Is("AaNullStatement")))
 			{
-				AaRoot::Error("operator/volatile module can contain only assignment/null statements.", s);
-				err_flag = true;
+				if(!s->Is("AaCallStatement"))
+				{
+					AaRoot::Error("operator/volatile module can contain only assignment/null statements.", s);
+					err_flag = true;
+				}
+				else
+				{
+					AaCallStatement* as = (AaCallStatement*) s;
+					if(this->Get_Volatile_Flag() && !as->Get_Called_Module()->Get_Volatile_Flag())
+					{
+						AaRoot::Error("volatile module " + this->Get_Label() + " can call only volatile modules.", s);
+						err_flag = true;
+					}
+					else if(this->Get_Operator_Flag() && !(as->Get_Called_Module()->Get_Volatile_Flag() 
+										|| as->Get_Called_Module()->Get_Operator_Flag()))
+					{
+						AaRoot::Error("operator module  " + this->Get_Label() + " can call only volatile/operator modules.", s);
+						err_flag = true;
+					}
+				}
 			}
 			else
 				s->Set_Pipeline_Parent(this);
