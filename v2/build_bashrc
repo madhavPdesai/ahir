@@ -3,3 +3,6 @@ if [ $(uname -m) == 'x86_64' ]; then
 else
   export ANTLR_PATH=$(pwd)/../antlr2/i386/
 fi
+export BOOST_VERSION=boost_1_58_0
+echo "setting boost version" to $BOOST_VERSION
+

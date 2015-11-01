@@ -3,10 +3,11 @@ SConscript(['grammar/SConscript'])
 
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
 ANTLR_PATH=os.environ['ANTLR_PATH']
+BOOST_VERSION=os.environ['BOOST_VERSION']
 ANTLR_LIB_PATH= ANTLR_PATH + '/lib/'
-env.Append(CPPPATH = './src/:../Value/include:./include:/usr/local/boost_1_58_0/:' + ANTLR_PATH)
+env.Append(CPPPATH = './src/:../Value/include:./include:/usr/local/' + BOOST_VERSION + '/:' + ANTLR_PATH)
 
 env.Library('lib/libHierSys', Glob('src/*.cpp'), CCFLAGS='-g ')
 env.Program('bin/hierSys2Vhdl', 'util/hierSys2Vhdl.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['HierSys', 'antlr',  'boost_system', 'boost_filesystem', 'Value' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ../Value/lib/ ' + ANTLR_LIB_PATH))
-env.Program('bin/hierSys2C', 'util/hierSys2C.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['HierSys', 'antlr' , 'Value' ], LIBPATH=Split('/usr/local/lib/ /usr/local/boost_1_58_0/ ./lib/ ../Value/lib/ ' + ANTLR_LIB_PATH))
-env.Program('bin/hierSysCheck', 'util/hierSysCheck.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['HierSys', 'antlr' , 'Value' ], LIBPATH=Split('/usr/local/lib/ /usr/local/boost_1_58_0/ ./lib/ ../Value/lib/ ' + ANTLR_LIB_PATH))
+env.Program('bin/hierSys2C', 'util/hierSys2C.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['HierSys', 'antlr' , 'Value' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ../Value/lib/ ' + ANTLR_LIB_PATH))
+env.Program('bin/hierSysCheck', 'util/hierSysCheck.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['HierSys', 'antlr' , 'Value' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ../Value/lib/ ' + ANTLR_LIB_PATH))

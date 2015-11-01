@@ -358,7 +358,8 @@ aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
    vector<pair<string,AaExpression*> > dpairs;
    AaReportStatement* new_stmt = NULL;
 }:
-	rdd:REPORT LPAREN 
+      (
+	(rdd:REPORT LPAREN 
                 tagid : SIMPLE_IDENTIFIER{tag = tagid->getText();}
 		qsid: SIMPLE_IDENTIFIER {synopsys = qsid->getText();}
 		(did: SIMPLE_IDENTIFIER expr=aA_Expression[scope] 
@@ -368,6 +369,19 @@ aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
 			}
 		)*
 	    RPAREN
+	) |
+	( rrdd:RREPORT LPAREN 
+                rtagid : SIMPLE_IDENTIFIER{tag = rtagid->getText();}
+		(rdid: SIMPLE_IDENTIFIER 
+			{ 
+				descr = rdid->getText(); 
+				expr=new AaSimpleObjectReference(scope, descr);
+				dpairs.push_back(pair<string,AaExpression*> (descr, expr));
+			}
+		)*
+	    RPAREN
+	)
+      )
 	{
 		new_stmt = new AaReportStatement(scope, tag, synopsys, dpairs);
             	new_stmt->Set_Line_Number(rdd->getLine());
@@ -2066,6 +2080,7 @@ SPLIT : "$split";
 
 // report-statement
 REPORT   : "$report";
+RREPORT   : "$rreport";
 
 
 

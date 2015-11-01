@@ -1,4 +1,6 @@
 #!/bin/bash
+export BOOST_VERSION=boost_1_58_0
+echo "setting boost version" to $BOOST_VERSION
 echo "Making vhdl release."
 cd vhdl/release
 . cat.sh

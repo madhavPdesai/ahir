@@ -4,3 +4,5 @@ export AHIR_RELEASE=$(pwd)
 export PATH=$AHIR_RELEASE/bin:$PATH
 # ld-library-paths
 export LD_LIBRARY_PATH=$AHIR_RELEASE/lib:$LD_LIBRARY_PATH
+# /usr/local/lib...
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH

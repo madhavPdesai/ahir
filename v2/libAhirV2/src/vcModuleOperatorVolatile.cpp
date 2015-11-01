@@ -264,6 +264,7 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 			pred_markings.push_back(0);
 			pred_delays.push_back(0); // revisit later..
 			
+			// non-pipeline case is like pipeline-depth = 1.
 			preds.push_back("update_ack_symbol");
 			pred_capacities.push_back(this->Get_Pipeline_Depth());
 			pred_markings.push_back(this->Get_Pipeline_Depth());
@@ -272,6 +273,8 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 			int ninputs = 0;
 			if(this->_pipeline_flag)
 			{
+				// in the pipeline case, need re-enable 
+				// after each input has been sampled.
 				for(int idx = 0, fidx = inarg_wires.size(); idx < fidx; idx++)
 				{
 					vcWire* w = inarg_wires[idx];
@@ -296,7 +299,7 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 					ipred_delays.push_back(0); // revisit later..
 				}
 
-				if(ninputs == 0)
+				if(this->_pipeline_flag && (ninputs == 0))
 				{
 					vcSystem::Error("in pipelined operator module " + this->Get_Id() + ", no input is actually used in the module");
 				}
@@ -348,7 +351,8 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 			ofile << w->Get_VHDL_Id() << "_update_enable <= update_req;" << endl;
 
 		}
-		if(nouts == 0)
+
+		if(this->_pipeline_flag && (nouts == 0))
 		{
 			vcSystem::Error("in pipelined operator module " + this->Get_Id() + ", no output is actually driven in the module");
 		}
@@ -357,7 +361,7 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 		vector<int>    pred_markings;
 		vector<int>    pred_capacities;
 		vector<int>    pred_delays;
-		
+
 		preds.push_back(cp_exit_symbol);
 		pred_capacities.push_back(this->Get_Pipeline_Depth());
 		pred_markings.push_back(0);
