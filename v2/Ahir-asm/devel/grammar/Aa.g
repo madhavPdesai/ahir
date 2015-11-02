@@ -357,9 +357,10 @@ aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
    AaExpression* expr = NULL;
    vector<pair<string,AaExpression*> > dpairs;
    AaReportStatement* new_stmt = NULL;
+   int line_number;
 }:
       (
-	(rdd:REPORT LPAREN 
+	(rdd:REPORT {line_number = rdd->getLine();}  LPAREN 
                 tagid : SIMPLE_IDENTIFIER{tag = tagid->getText();}
 		qsid: SIMPLE_IDENTIFIER {synopsys = qsid->getText();}
 		(did: SIMPLE_IDENTIFIER expr=aA_Expression[scope] 
@@ -370,12 +371,13 @@ aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
 		)*
 	    RPAREN
 	) |
-	( rrdd:RREPORT LPAREN 
+	( rrdd:RREPORT {line_number = rrdd->getLine();}  LPAREN 
                 rtagid : SIMPLE_IDENTIFIER{tag = rtagid->getText();}
+		rqsid: SIMPLE_IDENTIFIER {synopsys = rqsid->getText();}
 		(rdid: SIMPLE_IDENTIFIER 
 			{ 
 				descr = rdid->getText(); 
-				expr=new AaSimpleObjectReference(scope, descr);
+				expr = new AaSimpleObjectReference(scope, descr);
 				dpairs.push_back(pair<string,AaExpression*> (descr, expr));
 			}
 		)*
@@ -384,7 +386,7 @@ aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
       )
 	{
 		new_stmt = new AaReportStatement(scope, tag, synopsys, dpairs);
-            	new_stmt->Set_Line_Number(rdd->getLine());
+            	new_stmt->Set_Line_Number(line_number);
 		slist.push_back(new_stmt);
 	}
 ;
