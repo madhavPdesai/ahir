@@ -11,6 +11,7 @@
 #include <Aa2VC.h>
 #include <Aa2C.h>
 #include <AaProgram.h>
+#include <SocketLib.h>
 
 /***************************************** MODULE   ****************************/
 
@@ -835,7 +836,7 @@ void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
       ofile << "append_int(buffer," << this->Get_Output_Argument(idx)->Get_Type()->Size() << "); ADD_SPACE__(buffer);" << endl;
     }
   
-  ofile << "send_packet_and_wait_for_response(buffer,strlen(buffer)+1,\"localhost\",9999);" << endl;
+  ofile << "send_packet_and_wait_for_response(buffer,strlen(buffer)+1,\"localhost\"," << DEFAULT_SERVER_PORT << ");" << endl;
   
 
  if(this->Get_Number_Of_Output_Arguments() == 0)

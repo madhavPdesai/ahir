@@ -953,6 +953,14 @@ bool vcControlPath::Check_Group_Graph_Structure()
 				pg->Print(cerr);
 				ret_val = true;
 			}
+
+			if(g->Has_Predecessor(pg))
+			{
+				vcSystem::Error("malformed group graph: predecessor is both marked and unmarked. ");
+				g->Print(cerr);
+				pg->Print(cerr);
+				ret_val = true;
+			}
 		}
 	}
 	return(ret_val);

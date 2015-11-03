@@ -77,7 +77,7 @@ begin  -- default_arch
   			written_at_least_once <= '0';
 		else
 			if(pipe_req = '1') then
-				signal_data <= write_data;
+				signal_data <= pipe_data;
   				written_at_least_once <= '1';
 			end if;
 		end if;
