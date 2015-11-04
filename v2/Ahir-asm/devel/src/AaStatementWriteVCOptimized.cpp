@@ -553,7 +553,7 @@ void AaCallStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 }
 
 // AaBlockStatement
-void AaBlockStatement::Identify_Maximal_Sequences(AaStatementSequence* sseq,
+void AaBlockStatement::Identify_Maximal_Sequences( AaStatementSequence* sseq,
 		vector<AaStatementSequence*>& linear_segment_vector)
 {
 
@@ -586,11 +586,18 @@ void AaBlockStatement::Identify_Maximal_Sequences(AaStatementSequence* sseq,
 				continue;
 			}
 
+					
+			// barrier_due_to_side_effects.
+			bool barrier_due_to_side_effects = false;
+			if(stmt->Is("AaCallStatement"))
+			{
+				AaModule* cm =  ((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()));
+				if(!cm->Has_No_Side_Effects())
+					barrier_due_to_side_effects = true;
+			}
 			if( stmt->Is_Block_Statement()  || 
-					stmt->Is_Control_Flow_Statement() || 
-					(stmt->Is("AaCallStatement") && 
-					 !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
-					|| stmt->Can_Block(false))
+				stmt->Is_Control_Flow_Statement() || 
+					barrier_due_to_side_effects || stmt->Can_Block(false))
 			{
 				if(linear_segment.size() == 0)
 				{
@@ -700,10 +707,15 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			//      stmt is a block statement (it may modify memory/access a pipe)
 			//      stmt is a call which modifies memory or writes to a pipe.
 			// this can be made less restrictive. 
-			if(stmt->Is_Block_Statement() || 
-					(stmt->Is("AaCallStatement") && 
-					 !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
-					|| stmt->Can_Block(pipeline_flag))
+			bool barrier_due_to_side_effects = false;
+			if(stmt->Is("AaCallStatement"))
+			{
+				AaModule* cm =  ((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()));
+				if(!cm->Has_No_Side_Effects() && !pipeline_flag)
+					barrier_due_to_side_effects = true;
+			}
+
+			if(stmt->Is_Block_Statement() ||  barrier_due_to_side_effects || stmt->Can_Block(pipeline_flag))
 			{
 				trailing_barrier = stmt;
 				ofile << "// barrier: " << stmt->To_String() << endl;

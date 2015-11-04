@@ -224,22 +224,7 @@ public:
   void Set_Has_Null_Predecessor(bool v) {_has_null_predecessor = v;}
   bool Get_Has_Null_Predecessor() {return(_has_null_predecessor);}
 
-  // return true if some ancestral parent is a pipelined loop body..
-  void  Set_Pipeline_Parent()
-  {
-	this->_pipeline_parent = NULL;
-	vcCPElement* p = this->Get_Parent();
-	while(p != NULL)
-	{
-		if(p->Is("vcCPPipelinedLoopBody") || p->Is("vcCPPipelinedForkBlock") || p->Is("vcCPSimpleLoopBlock"))
-		{
-			this->_pipeline_parent = (vcCPBlock*) p;
-			break;
-		}
-		p = p->Get_Parent();
-	}
-  }
-
+  virtual void  Set_Pipeline_Parent(vcCPBlock* cpb) {if(_pipeline_parent == NULL) _pipeline_parent = cpb;}
   vcCPBlock* Get_Pipeline_Parent() {return(_pipeline_parent);}
 
   virtual void Print_VHDL_Bindings(vcControlPath* cp, ostream& ofile) {assert(0);}
@@ -406,6 +391,20 @@ protected:
 
 public:
   vcCPBlock(vcCPBlock* parent, string id);
+
+  virtual void Set_Pipeline_Parent(vcCPBlock* cpb)
+  {
+	  if(_pipeline_parent != NULL)
+		return;
+
+	  for(int I = 0, fI = _elements.size(); I < fI; I++)
+	  {
+		  _elements[I]->Set_Pipeline_Parent(cpb);
+	  }
+	  this->_entry->Set_Pipeline_Parent(cpb);
+	  this->_exit->Set_Pipeline_Parent(cpb);
+	  _pipeline_parent = cpb;
+  }
 
   virtual void Add_CPElement(vcCPElement* cpe);
   vcCPElement* Find_CPElement(string cname);
@@ -1049,7 +1048,7 @@ protected:
 
   map<vcCompatibilityLabel*, set<vcCompatibilityLabel*> > _label_descendent_map;
   map<vcCompatibilityLabel*, set<vcCompatibilityLabel*> > _compatible_label_map;
-
+  
 
    
   map<string, vcCompatibilityLabel*> _join_label_map;
@@ -1066,7 +1065,7 @@ public:
   vcControlPath(string id);
   virtual string Kind() {return("vcControlPath");}
 
-  void  Set_Parent_Module(vcModule* m) {_parent_module = m;}
+  void  Set_Parent_Module(vcModule* m);
   vcModule* Get_Parent_Module() {return(_parent_module);}
 
   vcTransition* Find_Transition(vector<string>& hier_ref);
@@ -1075,6 +1074,8 @@ public:
 
   void Set_Is_Pipelined(bool v) {_is_pipelined = v;}
   bool Get_Is_Pipelined() {return(_is_pipelined);}
+
+  virtual int Get_Max_Iterations_In_Flight() {return (_pipeline_depth);} 
 
   void Set_Pipeline_Depth(int d) {_pipeline_depth = d;}
   int  Get_Pipeline_Depth() {return(_pipeline_depth);}

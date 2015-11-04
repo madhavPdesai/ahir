@@ -178,6 +178,10 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
         (vc_Link[m] {assert(!foreign_flag);})*
         (vc_AttributeSpec[m])* 
     RBRACE
+    {
+	if(pipeline_flag)
+		m->Get_Control_Path()->Set_Pipeline_Parent(m->Get_Control_Path());
+    }
 ;
 
 
@@ -434,7 +438,7 @@ vc_CPSimpleLoopBlock[vcCPBlock* cp]
         (vc_CPBind[sb])+
         vc_CPLoopTerminate[sb]  
   RBRACE
-        { cp->Add_CPElement(sb);  sb->Set_Pipeline_Full_Rate_Flag(true);}
+         { cp->Add_CPElement(sb);  sb->Set_Pipeline_Full_Rate_Flag(true); sb->Set_Pipeline_Parent(sb); }
 ;
 
 //-----------------------------------------------------------------------------------------------
@@ -589,7 +593,7 @@ vc_CPPipelinedForkBlock[vcCPBlock* cp, vcModule* m]
  ( vc_CPMarkedJoin[fb] ) | 
  ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
         (vc_AttributeSpec[fb])  )* RBRACE
-{ cp->Add_CPElement(fb);}
+{ cp->Add_CPElement(fb); fb->Set_Pipeline_Parent(fb);}
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})* RPAREN ) 
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Output(internal_id);})* RPAREN ) 
 ;
@@ -615,7 +619,7 @@ vc_CPPipelinedLoopBody[vcCPBlock* cp]
             ( vc_CPPhiSequencer[fb]) |
             ( vc_CPTransitionMerge[fb]) |
             (vc_AttributeSpec[fb]) )* RBRACE
-{ cp->Add_CPElement(fb);}
+{ cp->Add_CPElement(fb); fb->Set_Pipeline_Parent(fb);}
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})+ RPAREN ) 
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Output(internal_id);})+ RPAREN ) 
 ;

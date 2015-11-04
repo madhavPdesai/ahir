@@ -263,8 +263,29 @@ vcCPElement::vcCPElement(vcCPElement* parent, string id):vcRoot(id)
 	_has_null_predecessor = false;
 
 	_is_left_open = false;
-	this->Set_Pipeline_Parent();
+	_pipeline_parent = NULL;
 }
+
+/*
+void  vcCPElement::Set_Pipeline_Parent()
+{
+	if(this->_pipeline_parent != NULL)
+		return;
+
+	vcCPElement* p = this->Get_Parent();
+	while(p != NULL)
+	{
+		if(p->Is("vcCPPipelinedLoopBody") || p->Is("vcCPPipelinedForkBlock") || p->Is("vcCPSimpleLoopBlock")
+				|| (p->Is("vcControlPath") && ((vcControlPath*)p)->Get_Is_Pipelined()) )
+		{
+			this->_pipeline_parent = (vcCPBlock*) p;
+			break;
+		}
+		p = p->Get_Parent();
+	}
+	this->_pipeline_parent = p;
+}
+*/
 
 void vcCPElement::Set_Associated_CP_Function(vcCPElement* c)
 {
@@ -958,7 +979,6 @@ vcCPBlock::vcCPBlock(vcCPBlock* parent, string id): vcCPElement((vcCPElement*)pa
 {
 	_entry = new vcTransition(this,vcLexerKeywords[__ENTRY]);
 	this->_entry->Set_Is_Entry_Transition(true);
-
 	_exit = new vcTransition(this,vcLexerKeywords[__EXIT]);
 }
 
@@ -3079,10 +3099,12 @@ void vcCPPipelinedForkBlock::Print_Exports(ostream& ofile)
 ////////////////////  pipelined loop-body.
 vcCPPipelinedLoopBody::vcCPPipelinedLoopBody(vcCPBlock* parent, string id):vcCPPipelinedForkBlock(parent,id)
 {
-	// for now, kee it user-defined.
-	// Aa2VC should figure it out (ideally)..
 	assert(_parent->Is("vcCPSimpleLoopBlock"));
+
+	// for now, keep it user-defined.
+	// Aa2VC should figure it out (ideally)..
 	_max_iterations_in_flight = ((vcCPSimpleLoopBlock*)parent)->Get_Pipeline_Depth();;
+
 }
 
 void vcCPPipelinedLoopBody::Print(ostream& ofile)
@@ -3296,6 +3318,11 @@ vcControlPath::vcControlPath(string id):vcCPSeriesBlock(NULL, id)
 	_parent_module = NULL;
 }
 
+  
+void  vcControlPath::Set_Parent_Module(vcModule* m) 
+{
+	_parent_module = m;
+}
 
 
 // some thought here.. named transitions must be unique.
