@@ -2219,7 +2219,7 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
 
-	int delay = (this->Get_Is_Volatile() ? 0 : ((AaModule*)_called_module)->Get_Longest_Path());
+	int delay = (this->Get_Is_Volatile() ? 0 : ((AaModule*)_called_module)->Get_Delay());
 
 	vector<pair<string,AaType*> > inargs, outargs;
 

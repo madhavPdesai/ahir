@@ -91,6 +91,8 @@ class AaExpression: public AaRoot
 	~AaExpression();
 	virtual string Kind() {return("AaExpression");}
 
+	virtual bool Has_No_Registered_Update() {return(false);}
+
 	virtual void Set_Associated_Statement(AaStatement* stmt)
 	{
 		_associated_statement = stmt;
@@ -101,6 +103,8 @@ class AaExpression: public AaRoot
 	}
 
 	virtual bool Is_Trivial() {return(false);}
+
+	virtual bool Is_Signal_Read() {return(false);}
 
 	virtual int Get_Delay()
 	{
@@ -724,7 +728,9 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC( ofstream& ofile);
 
+	virtual bool Has_No_Registered_Update();
 	virtual void Assign_Expression_Value(AaValue* expr_value);
+	virtual bool Is_Signal_Read();
 
 	virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
 

@@ -76,14 +76,13 @@ vc_Pipe[vcSystem* sys, vcModule* m]
   bool p2p_flag = false;
 }:  (LIFO {lifo_mode = true;})? PIPE lbl = vc_Label  wid:UINTEGER  (DEPTH did:UINTEGER {depth = atoi(did->getText().c_str()); })?
 	( IN {in_flag = true;} | OUT {out_flag = true;} )?
-	(PORT {port_flag = true;})?
 	(SIGNAL {signal_flag = true;})?
 	(P2P {p2p_flag = true;})?
         {
             if (sys) 
-                sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode, port_flag, in_flag, out_flag, signal_flag, p2p_flag);
+                sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode,  in_flag, out_flag, signal_flag, p2p_flag);
             else if(m)
-                m->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode, port_flag, in_flag, out_flag, signal_flag, p2p_flag);
+                m->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode,  in_flag, out_flag, signal_flag, p2p_flag);
         } 
 ;
 

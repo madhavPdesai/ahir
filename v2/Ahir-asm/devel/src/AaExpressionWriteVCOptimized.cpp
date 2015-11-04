@@ -72,7 +72,7 @@ void AaExpression::Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,
 // that reads from b must be reenabled only after
 // the write to b is finished.
 //
-// Here "this" is "b"
+// Here "this" is "b" in the target.
 //
 void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag, 
 		set<AaRoot*>& visited_elements,
@@ -81,20 +81,20 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 	if(!this->Is_Implicit_Variable_Reference())
 		return;
 
-	AaStatement* pstmt = this->Get_Associated_Statement();
-	assert(pstmt != NULL); // this is always a target..  so statement completion should retrigger read.
+	AaStatement* write_stmt = this->Get_Associated_Statement();
+	assert(write_stmt != NULL); // this is always a target..  so statement completion should retrigger read.
 
-	bool this_is_volatile = pstmt->Get_Is_Volatile();
+	bool this_is_volatile = write_stmt->Get_Is_Volatile();
 	bool err_flag = false;
 
 	// the transition that triggers the write.
 	string write_trigger_transition_name;
-	if(pstmt->Is("AaAssignmentStatement"))
+	if(write_stmt->Is("AaAssignmentStatement"))
 		write_trigger_transition_name = 
-			__SST(((AaAssignmentStatement*) pstmt));
+			__SST(((AaAssignmentStatement*) write_stmt));
 	else 
 		write_trigger_transition_name = 
-			__SST(((AaCallStatement*) pstmt));
+			__SST(((AaCallStatement*) write_stmt));
 
 	// root will be the statement b = (d+e) (or possibly a $call foo () (b))
 	AaRoot* root = this->Get_Root_Object();
@@ -118,9 +118,9 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 		if((*iter)->Is_Expression() && (visited_elements.find(*iter) != visited_elements.end()))
 		{
 			// "b" in (b+c) is found.
-			AaExpression* expr = (AaExpression*)(*iter);
+			AaExpression* read_expr = (AaExpression*)(*iter);
 
-			if(!expr->Is_Constant())
+			if(!read_expr->Is_Constant())
 			{
 				//
 				// the rhs source expression which is to be assigned to "this"
@@ -131,30 +131,30 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				// the target "b = (d+e)" can be triggered only after the
 				// statement a := (b+c) has used the value of b.
 				//
-				ofile << "// WAR dependency: Read: " << expr->To_String() << " before Write: " << pstmt->To_String() << endl;
-				AaStatement* e_stmt = expr->Get_Associated_Statement();
+				ofile << "// WAR dependency: Read: " << read_expr->To_String() << " before Write: " << write_stmt->To_String() << endl;
+				AaStatement* read_stmt = read_expr->Get_Associated_Statement();
 
 				// The target "b = (d+e)" cannot be updated until 
 				// the statement a := (b+c) has sampled b..  
 				// This is conservative.
-				__J(write_trigger_transition_name, __SCT(e_stmt));
+				__J(write_trigger_transition_name, __SCT(read_stmt));
 
 				// The completion of "b = (d+e)" reenables the
 				// evaluation of "a = (b+c)"
 				if(pipeline_flag)
 				{
-					ofile << "// WAR dependency: release  Read: " << expr->To_String() << " with Write: " << pstmt->To_String() << endl;
+					ofile << "// WAR dependency: release  Read: " << read_expr->To_String() << " with Write: " << write_stmt->To_String() << endl;
 
-					if(this_is_volatile && e_stmt->Get_Is_Volatile())
+					if(this_is_volatile && read_stmt->Get_Is_Volatile())
 					{
-						AaRoot::Error("WAR dependency cycle across volatile statements .. Write: ", e_stmt);
-						AaRoot::Error("WAR dependency cycle across volatile statements .. Read:", pstmt);
+						AaRoot::Error("WAR dependency cycle across volatile statements .. Reader: ", read_stmt);
+						AaRoot::Error("WAR dependency cycle across volatile statements .. Writer:", write_stmt);
 					}
 
-					// expr can get a new value only after this has completed.
+					// read-expr can get a new value only after this has completed.
 					if(!this_is_volatile)
 					{
-						__MJ(__SST(expr), __UCT(pstmt), true); // bypass
+						__MJ(__SST(read_expr), __UCT(write_stmt), true); // bypass
 					}
 					else
 					{	
@@ -167,10 +167,14 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						for(set<AaExpression*>::iterator rsiter = root_set.begin(), frsiter = root_set.end();
 								rsiter != frsiter; rsiter++)
 						{
-							AaExpression* root_expr = *rsiter;
-							if(visited_elements.find(root_expr) != visited_elements.end())
+							AaExpression* root_source_expr = *rsiter;
+							if(visited_elements.find(root_source_expr) != visited_elements.end())
 							{
-								__MJ(__SST(expr), __UCT(root_expr), true); // bypass from update-complete.
+								// careful.. dont create a cycle!
+								bool bypass_flag = 
+									(!root_source_expr->Update_Protocol_Has_Delay(visited_elements));
+								__MJ(__SST(read_expr), __UCT(root_source_expr), bypass_flag); 
+								__J(__UST(root_source_expr), __SCT(read_expr)); 
 							}
 						}
 					}
@@ -287,14 +291,17 @@ void AaSimpleObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& 
 		}
 		else if(this->_object->Is("AaPipeObject"))
 		{
-			string inst_name = this->Get_VC_Datapath_Instance_Name();
-			string sample_regn = this->Get_VC_Name() + "_Sample";
-			string update_regn = this->Get_VC_Name() + "_Update";
-			reqs.push_back(hier_id + "/" + sample_regn + "/rr");
-			reqs.push_back(hier_id + "/" + update_regn + "/cr");
-			acks.push_back(hier_id + "/" + sample_regn + "/ra");
-			acks.push_back(hier_id + "/" + update_regn + "/ca");
-			Write_VC_Link(inst_name, reqs,acks,ofile);
+			if(!this->Is_Signal_Read())
+			{
+				string inst_name = this->Get_VC_Datapath_Instance_Name();
+				string sample_regn = this->Get_VC_Name() + "_Sample";
+				string update_regn = this->Get_VC_Name() + "_Update";
+				reqs.push_back(hier_id + "/" + sample_regn + "/rr");
+				reqs.push_back(hier_id + "/" + update_regn + "/cr");
+				acks.push_back(hier_id + "/" + sample_regn + "/ra");
+				acks.push_back(hier_id + "/" + update_regn + "/ca");
+				Write_VC_Link(inst_name, reqs,acks,ofile);
+			}
 		}
 	}
 }
@@ -308,6 +315,7 @@ void AaSimpleObjectReference::Write_VC_Links_As_Target_Optimized(string hier_id,
 		ofile << "// " << this->To_String() << endl;
 		vector<string> reqs;
 		vector<string> acks;
+
 
 		if(this->_object->Is("AaStorageObject"))
 		{
@@ -340,7 +348,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 	{
 		ofile << "// " << this->To_String() << endl;
 
-		__DeclTransSplitProtocolPattern
+
+		__DeclTransSplitProtocolPattern;
+
 		// if this is a statement...
 		if(this->_object->Is_Interface_Object())
 		{
@@ -380,12 +390,13 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 				//
 				string sample_enable = "$entry";
 				__J(__SST(this), sample_enable); // no marking, since sample_enable
-								// will have marked joins.
+				// will have marked joins.
 			}
 		}
 		else if(this->Is_Implicit_Variable_Reference())
 		{
 			ofile << "// implicit reference" << endl;
+
 			if(barrier != NULL)
 			{
 				ofile << "// barrier " << endl;
@@ -472,7 +483,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			// later. 
 			pipe_map[this->_object->Get_VC_Name()].push_back(this);
 
-			if(pipeline_flag)
+			if(pipeline_flag && !this->_object->Is_Signal())
 			{
 				//
 				// SelfRelease (only the UST part is needed..).
@@ -496,24 +507,24 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 		AaRoot* barrier,
 		ostream& ofile)
 {
-		
-        ofile << "// (as target) " << this->To_String() << endl;
+
+	ofile << "// (as target) " << this->To_String() << endl;
 
 	if(this->Is_Implicit_Variable_Reference() || this->_object->Is_Interface_Object())
 	{
-	  if(!this->_object->Is_Interface_Object())
-	    ofile << "// " << this->To_String() << endl << "// implicit reference" << endl;
-	  else
-	    {
-	      ofile << "// " << this->To_String() << endl << "// write to interface object" << endl;
-	      bool pm = this->Is_Part_Of_Pipelined_Module();
-	      if(pm)
+		if(!this->_object->Is_Interface_Object())
+			ofile << "// " << this->To_String() << endl << "// implicit reference" << endl;
+		else
 		{
-		  string update_enable = this->_object->Get_VC_Name() + "_update_enable";
-		  __J(__UST(this), update_enable); // ... note: unmarked, since 
-							// transitions to update_enable will be marked.
+			ofile << "// " << this->To_String() << endl << "// write to interface object" << endl;
+			bool pm = this->Is_Part_Of_Pipelined_Module();
+			if(pm)
+			{
+				string update_enable = this->_object->Get_VC_Name() + "_update_enable";
+				__J(__UST(this), update_enable); // ... note: unmarked, since 
+				// transitions to update_enable will be marked.
+			}
 		}
-	    }
 	}
 	else if(this->_object->Is("AaStorageObject"))
 	{
@@ -579,7 +590,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 		{
 			//
 			// only the sample pair is needed..
-  			// __MJ(__SST(this),__SCT(this),false);
+			// __MJ(__SST(this),__SCT(this),false);
 			// However, both are released to guarantee
 			// correct sequencing to guard logic.
 			//
@@ -594,27 +605,27 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 void AaSimpleObjectReference::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {
-		
+
 	this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
 	/*  Not necessary..  split release will take care of this..
-	if(this->_object->Is("AaPipeObject"))
-	{
-		if(this->Get_Is_Target())
-		{
-			// update from sample complete.
-			expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
-		}
-		else
-		{
-			// update complete has delay, so bypass reenable if possible..
-			expr->Write_VC_Update_Reenables(__UCT(this), true, visited_elements, ofile);
-		}
+	    if(this->_object->Is("AaPipeObject"))
+	    {
+	    if(this->Get_Is_Target())
+	    {
+	// update from sample complete.
+	expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
 	}
 	else
 	{
-		this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
+	// update complete has delay, so bypass reenable if possible..
+	expr->Write_VC_Update_Reenables(__UCT(this), true, visited_elements, ofile);
 	}
-	*/
+	}
+	else
+	{
+	this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
+	}
+	 */
 }
 
 // AaArrayObjectReference
@@ -952,8 +963,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				// Note that the base address calculation reenable
 				// will be part of the active_reenable_points.
 				Write_VC_Reenable_Joins(active_reenable_points,
-							active_reenable_bypass_flags, 
-							ctrans,false, ofile); // do not force bypass, decide based on active bypass flags..
+						active_reenable_bypass_flags, 
+						ctrans,false, ofile); // do not force bypass, decide based on active bypass flags..
 
 				active_reenable_points.clear();
 				active_reenable_points.insert(__UST(this));
@@ -989,10 +1000,10 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
 
 			__ConnectSplitProtocolPattern
-			if(pipeline_flag)
-			{
-				__SelfReleaseSplitProtocolPattern
-			}
+				if(pipeline_flag)
+				{
+					__SelfReleaseSplitProtocolPattern
+				}
 		}
 		else
 			// neither storage object nor pointer.. must be
@@ -1023,8 +1034,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				__F(__UST(this),this->Get_VC_Complete_Region_Name());
 				__J(__UCT(this), this->Get_VC_Complete_Region_Name());
 
-      				bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
-                		if(flow_through)
+				bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+				if(flow_through)
 				{
 					ofile << "// flow-through" << endl;
 					__J(__UST(this), __SCT(this));
@@ -1036,8 +1047,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					// note: conservative
 					// __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __UCT(this), true); // bypass
 					expr->Write_VC_Update_Reenables(__UCT(this), 
-						(!flow_through),
-						visited_elements,ofile);
+							(!flow_through),
+							visited_elements,ofile);
 
 					if(!flow_through)
 						__MJ(__UST(this),__UCT(this), true); // bypass
@@ -1084,7 +1095,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pipe
 
 		__DeclTransSplitProtocolPattern
 
-		int word_size = ((AaStorageObject*)(this->_object))->Get_Word_Size();
+			int word_size = ((AaStorageObject*)(this->_object))->Get_Word_Size();
 		vector<int> scale_factors;
 		this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
@@ -1171,7 +1182,7 @@ bool AaPointerDereferenceExpression::Base_Address_Update_Protocol_Has_Delay(set<
 	assert(this->_reference_to_object != NULL);
 	bool ret_val = this->_reference_to_object->Update_Protocol_Has_Delay(visited_elements);
 	return(ret_val);
-	
+
 }
 
 void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,

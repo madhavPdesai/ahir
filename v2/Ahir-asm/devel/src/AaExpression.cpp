@@ -681,6 +681,32 @@ AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, AaAssignme
 	this->Set_Type(root_obj->Get_Target()->Get_Type());
 }
 
+// does the expression have a trivial update stage?
+bool AaSimpleObjectReference::Has_No_Registered_Update()
+{
+	return(this->Is_Signal_Read() || this->Is_Implicit_Variable_Reference() 
+			|| this->Is_Interface_Object_Reference()
+ 			|| (this->Is_Trivial() && this->Get_Is_Intermediate())
+			|| (this->Get_Is_Target() && this->_object->Is_Pipe_Object()));
+}
+
+// is it reading a signal?
+bool AaSimpleObjectReference::Is_Signal_Read()
+{
+	if(this->Get_Object() != NULL)
+	{	
+		if(this->Get_Object()->Is_Pipe_Object())
+		{
+			if(((AaPipeObject*)(this->Get_Object()))->Get_Signal())
+			{
+				if(!this->Get_Is_Target())
+					return(true);
+			}
+		}
+	}
+	return(false);
+}
+
 bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObject* obj)
 {
 	this->_addressed_objects.insert(obj);
@@ -695,7 +721,7 @@ bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObjec
 	}
 
 	//    }
-		
+
 	this->AaExpression::Set_Addressed_Object_Representative(obj);
 
 }
@@ -721,7 +747,7 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaExpression*>& root_set)
 				else
 					root_set.insert(this);
 			}	
-			else 
+			else  // what could this be?
 				root_set.insert(this);
 		}
 		else
@@ -743,7 +769,7 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaExpression*>& root_set)
 		else
 			root_set.insert(this);
 	}
-	else
+	else 
 	{
 		root_set.insert(this);
 	}
@@ -974,7 +1000,6 @@ void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
 	if(!this->Is_Constant())
 	{
 
-		// if this is a statement...
 		if(this->Is_Implicit_Variable_Reference())
 		{
 			// do nothing..
@@ -993,6 +1018,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
 		// chain for the inport operation
 		else if(this->_object->Is("AaPipeObject"))
 		{
+
 			// for pipe accesses, chained protocol.
 			ofile << "// " << this->To_String() << endl;
 			ofile << ";;[" << this->Get_VC_Name() << "] { // pipe read" << endl;
@@ -1012,7 +1038,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
 // this expression's value.
 string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
 {
-	if(this->Is_Constant())
+	if(this->Is_Constant() || this->Is_Signal_Read())
 	{
 		// in this case, there is no such transition which fits the bill.
 		// return null
@@ -1116,7 +1142,7 @@ string AaSimpleObjectReference::Get_VC_Unmarked_Reenable_Update_Transition_Name(
 // this expression's inputs.
 string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
 {
-	if(this->Is_Constant())
+	if(this->Is_Constant() || this->Is_Signal_Read())
 	{
 		// if it is a constant, there is no such transition.
 		return("$null");
@@ -1209,7 +1235,7 @@ bool AaSimpleObjectReference::Update_Protocol_Has_Delay(set<AaRoot*>& visited_el
 
 		if(this->_object->Is("AaPipeObject"))
 		{
-			if(!this->Get_Is_Target())
+			if(!this->Get_Is_Target() && !this->Is_Signal_Read())
 				return(true);
 			else
 				return(false);
@@ -1602,7 +1628,7 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances(AaExpression* target, 
 			string dpe_name = this->Get_VC_Datapath_Instance_Name();
 			string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
-			// io write.
+			// io read.
 			Write_VC_IO_Input_Port((AaPipeObject*) this->_object,
 					dpe_name,
 					tgt_name,
@@ -1633,12 +1659,16 @@ void AaSimpleObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
 		}
 		else if(this->_object->Is("AaPipeObject"))
 		{
-			string inst_name = this->Get_VC_Datapath_Instance_Name();
-			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Sample/req");
-			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Update/req");
-			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Sample/ack");
-			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Update/ack");
-			Write_VC_Link(inst_name, reqs,acks,ofile);
+			if(!this->Is_Signal_Read())
+			{
+				AaPipeObject* pobj = (AaPipeObject*) this->_object;
+				string inst_name = this->Get_VC_Datapath_Instance_Name();
+				reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Sample/req");
+				reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Update/req");
+				acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Sample/ack");
+				acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Update/ack");
+				Write_VC_Link(inst_name, reqs,acks,ofile);
+			}
 		}
 	}
 }

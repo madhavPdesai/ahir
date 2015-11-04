@@ -3814,6 +3814,18 @@ package BaseComponents is
 	 reset : in std_logic);
   end component;
  
+  component SignalBase is
+   generic (name : string;
+	    num_writes: integer;
+            data_width : integer); 
+   port (write_req : in std_logic_vector(num_writes-1 downto 0);
+         write_ack : out std_logic_vector(num_writes-1 downto 0);
+         write_data: in std_logic_vector((num_writes*data_width)-1 downto 0);
+         read_data  : out std_logic_vector(data_width-1 downto 0);
+	 clk : in std_logic;
+	 reset : in std_logic);
+  end component;
+
 end BaseComponents;
 -- all component declarations necessary for the
 -- vhdl generator
@@ -21133,6 +21145,77 @@ end arch;
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+--
+-- Last successful write wins.
+--
+entity SignalBase is
+   generic (name : string;
+	    num_writes: integer;
+            data_width : integer); 
+   port (write_req : in std_logic_vector(num_writes-1 downto 0);
+         write_ack : out std_logic_vector(num_writes-1 downto 0);
+         write_data: in std_logic_vector((num_writes*data_width)-1 downto 0);
+         read_data  : out std_logic_vector(data_width-1 downto 0);
+	 clk : in std_logic;
+	 reset : in std_logic);
+end entity;
+
+architecture Mixed of SignalBase is
+  	signal pipe_data, signal_data: std_logic_vector(data_width-1 downto 0);
+  	signal pipe_req, pipe_ack  : std_logic;
+begin
+
+  manyWriters: if (num_writes > 1) generate
+    wmux : OutputPortLevel generic map (
+      num_reqs       => num_writes,
+      data_width     => data_width,
+      no_arbitration => false)
+      port map (
+        req   => write_req,
+        ack   => write_ack,
+        data  => write_data,
+        oreq  => pipe_req,                -- no cross-over, drives req
+        oack  => pipe_ack,                -- no cross-over, receives ack
+        odata => pipe_data,
+        clk   => clk,
+        reset => reset);
+  end generate manyWriters;
+
+  singleWriter: if (num_writes = 1) generate
+    pipe_req <= write_req(0);
+    write_ack(0) <= pipe_ack;
+    pipe_data <= write_data;
+  end generate singleWriter;
+ 
+
+  -- write always succeeds.
+  pipe_ack <= '1';
+  process(clk,reset) 
+  begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			signal_data <= (others => '0');	
+		else
+			if(pipe_req = '1') then
+				signal_data <= pipe_data;
+			end if;
+		end if;
+	end if;
+  end process;
+
+  read_data <= signal_data;
+end Mixed;
+
+library ieee;
+use ieee.std_logic_1164.all;
 library ahir;
 use ahir.Types.all;
 use ahir.Utilities.all;
@@ -21537,51 +21620,6 @@ begin
         end generate;
 
 end Behave;
-library ieee;
-use ieee.std_logic_1164.all;
-
-library ahir;
-use ahir.Types.all;
-use ahir.Subprograms.all;
-use ahir.Utilities.all;
-use ahir.BaseComponents.all;
-
--- brief description:
---  as the name indicates, a squash-shift-register
---  provides an implementation of a pipeline.
-entity SquashShiftRegister is
-  generic (name : string;
-	   data_width: integer;
-           depth: integer := 1);
-  port (
-    read_req       : in  std_logic;
-    read_ack       : out std_logic;
-    read_data      : out std_logic_vector(data_width-1 downto 0);
-    write_req       : in  std_logic;
-    write_ack       : out std_logic;
-    write_data      : in std_logic_vector(data_width-1 downto 0);
-    clk, reset : in  std_logic);
-  
-end SquashShiftRegister;
-
-architecture default_arch of SquashShiftRegister is
-
-  signal stage_full: std_logic_vector(0 to depth);
-
-  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  signal stage_data : SSRArray(0 to depth);
-  
-begin  -- default_arch
-
-    -- shift-right if there is a bubble 
-    -- anywhere in the shift-register,
-    -- and if the write-signal is active.
-    --
-    -- stall stage I if I+1 is not ready to
-    -- accept.
-    -- etc.. etc..  TODO.
-
-end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

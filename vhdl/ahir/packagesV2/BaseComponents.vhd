@@ -2146,4 +2146,16 @@ package BaseComponents is
 	 reset : in std_logic);
   end component;
  
+  component SignalBase is
+   generic (name : string;
+	    num_writes: integer;
+            data_width : integer); 
+   port (write_req : in std_logic_vector(num_writes-1 downto 0);
+         write_ack : out std_logic_vector(num_writes-1 downto 0);
+         write_data: in std_logic_vector((num_writes*data_width)-1 downto 0);
+         read_data  : out std_logic_vector(data_width-1 downto 0);
+	 clk : in std_logic;
+	 reset : in std_logic);
+  end component;
+
 end BaseComponents;

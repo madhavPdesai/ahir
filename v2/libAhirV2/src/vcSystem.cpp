@@ -140,7 +140,7 @@ int vcSystem::Get_Pipe_Depth(string pipe_id)
   assert(_pipe_map.find(pipe_id) != _pipe_map.end());
   return(_pipe_map[pipe_id]->Get_Depth());
 }
-void vcSystem::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode,bool port_flag,  bool in_flag, bool out_flag, 
+void vcSystem::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bool in_flag, bool out_flag, 
 					bool signal_flag, bool p2p_flag) 
 {
   assert(_pipe_map.find(pipe_id) == _pipe_map.end());
@@ -149,7 +149,6 @@ void vcSystem::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode,boo
 
   vcPipe* np = new vcPipe(NULL, pipe_id, width, depth, lifo_mode);
   _pipe_map[pipe_id] = np;
-  np->Set_Port(port_flag);
   np->Set_In_Flag(in_flag);
   np->Set_Out_Flag(out_flag);
   np->Set_Signal(signal_flag);
@@ -639,7 +638,7 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 
       if(num_reads > 0 && num_writes ==  0)
       {
-	if(p->Get_Port() || p->Get_Signal())
+	if(p->Get_Signal())
 	{
 		ofile << pipe_id << "_pipe_write_ack(0) <= '1';" << endl;
 		ofile << "TruncateOrPad(" << pipe_id << "_pipe_write_data," << pipe_id << ");" << endl;	
@@ -647,7 +646,7 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
       }
       else if(num_writes > 0 && num_reads == 0)
       {
-	if(p->Get_Port() || p->Get_Signal())
+	if(p->Get_Signal())
 	{
 		ofile << pipe_id << "_pipe_read_ack(0) <= '1';" << endl;
 		ofile << "TruncateOrPad(" << pipe_id << ", " << pipe_id << "_pipe_read_data);" << endl;	
@@ -765,7 +764,7 @@ string vcSystem::Print_VHDL_System_Instance_Pipe_Port_Map(string comma, ostream&
 			// input pipe
 			ofile << comma << endl;
 			comma = ",";
-			if(!(p->Get_Port() || p->Get_Signal()))
+			if(!p->Get_Signal())
 			{
 				ofile << pipe_id << "_pipe_write_data " 
 					<< " => "
@@ -793,7 +792,7 @@ string vcSystem::Print_VHDL_System_Instance_Pipe_Port_Map(string comma, ostream&
 			// output
 			ofile << comma << endl;
 			comma = ",";
-			if(!(p->Get_Port() || p->Get_Signal()))
+			if(!p->Get_Signal())
 			{
 			ofile << pipe_id << "_pipe_read_data "
 				<< " => "
@@ -894,7 +893,7 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 	{
 	  // input pipe
 	  ofile << semi_colon << endl;
-	  if((p->Get_Port() && p->Get_In_Flag()) || p->Get_Signal())
+	  if(p->Get_Signal())
 	  {
 		  ofile << pipe_id << ": in std_logic_vector(" << pipe_width-1 << " downto 0)";
           }
@@ -912,7 +911,7 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 	{
 	  // output
 	  ofile << semi_colon << endl;
-	  if((p->Get_Port() && p->Get_Out_Flag()) || p->Get_Signal())
+	  if(p->Get_Signal())
 	  {
 		  ofile << pipe_id << ": out std_logic_vector(" << pipe_width-1 << " downto 0)";
           }
@@ -1242,7 +1241,7 @@ void vcSystem::Print_Hsys_File(string file_name)
 	for(int I = 0, fI = in_pipes.size(); I < fI; I++)
 	{
 		vcPipe* p = in_pipes[I];
-		bool is_signal = (p->Get_Signal() || p->Get_Port());
+		bool is_signal =  p->Get_Signal();
 		ofile << (is_signal ? "    $signal" : "    $pipe") << "  ";
 		ofile << p->Get_Id() << endl;
 	}      
@@ -1251,7 +1250,7 @@ void vcSystem::Print_Hsys_File(string file_name)
 	for(int J = 0, fJ = out_pipes.size(); J < fJ; J++)
 	{
 		vcPipe* p = out_pipes[J];
-		bool is_signal = (p->Get_Signal() || p->Get_Port());
+		bool is_signal = p->Get_Signal();
 		ofile << (is_signal ? "    $signal" : "    $pipe") <<  "  ";
 		ofile << p->Get_Id() << endl;
 	}      

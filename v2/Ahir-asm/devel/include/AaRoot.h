@@ -120,6 +120,7 @@ class AaRoot
   virtual bool Is_Object() {return(false); }
   virtual bool Is_Storage_Object() {return(false); }
   virtual bool Is_Pipe_Object() {return(false); }
+  virtual bool Is_Signal() {return(false); }
   virtual bool Is_Foreign_Storage_Object() {return(false); }
   virtual bool Is_Constant() {return(false);}
   virtual bool Is_Interface_Object() {return(false);}

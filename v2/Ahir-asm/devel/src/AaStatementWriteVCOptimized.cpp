@@ -192,7 +192,6 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		}
 
 
-
 		// if both are implicit, then declare an interlock.
 		bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
 		bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
@@ -215,35 +214,51 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		if(source_is_implicit && target_is_implicit)
 			// both are implicit.. introduce an interlock.
 		{
-			ofile << "// both source and target are implicit: use interlock " << endl;
-			ofile << "// Interlock " << endl;
+			if(source_is_implicit)
+			{
+				ofile << "// both source and target are implicit: use interlock " << endl;
+				ofile << "// Interlock " << endl;
 
-			ofile <<  ";;[" << this->Get_VC_Name() << "_Sample] { " << endl;
-			ofile << "$T [req] $T [ack] // interlock-sample." << endl;
-			ofile << "}" << endl;
+				ofile <<  ";;[" << this->Get_VC_Name() << "_Sample] { " << endl;
+				ofile << "$T [req] $T [ack] // interlock-sample." << endl;
+				ofile << "}" << endl;
 
-			ofile <<  ";;[" << this->Get_VC_Name() << "_Update] { " << endl;
-			ofile << "$T [req] $T [ack] // interlock-sample." << endl;
-			ofile << "}" << endl;
+				ofile <<  ";;[" << this->Get_VC_Name() << "_Update] { " << endl;
+				ofile << "$T [req] $T [ack] // interlock-sample." << endl;
+				ofile << "}" << endl;
 
+				__ConnectSplitProtocolPattern;
+			}
+			else
+			{
+				__J(__SST(this), __UCT(this->_source));
+				__FlowThroughConnectSplitProtocolPattern;
+			}
 
-			__ConnectSplitProtocolPattern;
 
 			if(this->_guard_expression)
 			{
 				if(!this->_guard_expression->Is_Constant())
 				{
-					ofile << "// Guard dependency" << endl;
-					__J(__SST(this), __UCT(this->_guard_expression));
-					if(pipeline_flag)
+					if(source_is_implicit)
 					{
-						this->_guard_expression->Write_VC_Update_Reenables(__SCT(this), false,
+						ofile << "// Guard dependency" << endl;
+						__J(__SST(this), __UCT(this->_guard_expression));
+						if(pipeline_flag)
+						{
+							this->_guard_expression->Write_VC_Update_Reenables(__SCT(this), false,
 								visited_elements, ofile);
+						}
+					}
+					else
+					// is signal-read.
+					{
+						ofile << "// Guard dependency" << endl;
+						__J(__SST(_source), __UCT(this->_guard_expression));
 					}
 				}
 
 			}
-
 
 			__J(__SST(this), __UCT(this->_source));
 			if(pipeline_flag)
@@ -278,6 +293,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				visited_elements.insert(root_obj);
 			}
 		}
+
 		this->Write_VC_Synch_Dependency(visited_elements, pipeline_flag, ofile);
 		visited_elements.insert(this);
 	}
@@ -310,7 +326,7 @@ void AaAssignmentStatement::Write_VC_Links_Optimized(string hier_id, ostream& of
 				acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/ack");
 				reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/req");
 				acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/ack");
-	
+
 				Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
 						reqs, acks, ofile);
 				reqs.clear();

@@ -203,7 +203,9 @@ aA_Module_Attribute[AaModule* m]
     string name, val;
 }
     :
-        ATTRIBUTE nameid:SIMPLE_IDENTIFIER (valid:SIMPLE_IDENTIFIER {val = valid->getText();})?
+        ATTRIBUTE nameid:SIMPLE_IDENTIFIER 
+		((valid:SIMPLE_IDENTIFIER {val = valid->getText();}) | 
+			(pid: UINTEGER {val = pid->getText();})) ?
         { 
             name = nameid->getText();
             m->Add_Attribute(name,val);
@@ -1514,7 +1516,6 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 		(st:PIPE aA_Object_Declaration_List_Base[scope,oname_list,otype,initial_value]) 
         (DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
 		(IN {in_mode = true;} | OUT {out_mode = true;})? 
-		(PORT  {is_port = true;})?
 		(SIGNAL {is_signal = true;})?
 		(SYNCH {is_synch = true;})?
 		(P2P {is_p2p = true;})?
@@ -1531,9 +1532,8 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 	    	((AaPipeObject*)obj)->Set_Lifo_Mode(lifo_flag);
 	    	((AaPipeObject*)obj)->Set_In_Mode(in_mode);
 	    	((AaPipeObject*)obj)->Set_Out_Mode(out_mode);
-	    	((AaPipeObject*)obj)->Set_Port(is_port);
-	    	((AaPipeObject*)obj)->Set_Synch(is_synch);
 	    	((AaPipeObject*)obj)->Set_Signal(is_signal);
+	    	((AaPipeObject*)obj)->Set_Synch(is_synch);
 	    	((AaPipeObject*)obj)->Set_P2P(is_p2p);
 
 		if(scope == NULL)

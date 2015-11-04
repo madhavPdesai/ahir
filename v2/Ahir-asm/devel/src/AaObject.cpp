@@ -477,7 +477,6 @@ void AaPipeObject::Write_VC_Model(ostream& ofile)
 			this->_type->Size(),
 			this->Get_Depth(),
 			this->Get_Lifo_Mode(),
-			this->Get_Port(),
 			this->Get_In_Mode(),
 			this->Get_Out_Mode(),
 			this->Get_Signal(),

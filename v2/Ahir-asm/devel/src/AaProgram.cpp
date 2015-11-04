@@ -331,7 +331,6 @@ void AaProgram::Add_Object(AaObject* obj)
 					pp->Set_In_Mode(po->Get_In_Mode());
 					pp->Set_Out_Mode(po->Get_Out_Mode());
 					pp->Set_Signal(po->Get_Signal());
-					pp->Set_Port(po->Get_Port());
 					pp->Set_Depth(po->Get_Depth());
 					
 				}

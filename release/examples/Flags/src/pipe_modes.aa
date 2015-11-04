@@ -1,6 +1,6 @@
-$pipe env_rx_req: $uint<8> $in $port
-$pipe env_tx_ack: $uint<8> $in $port
-$pipe rx_env_ack: $uint<8> $out $port
-$pipe tx_env_req: $uint<8> $out $port
+$pipe env_rx_req: $uint<8> $in $signal
+$pipe env_tx_ack: $uint<8> $in $signal
+$pipe rx_env_ack: $uint<8> $out $signal
+$pipe tx_env_req: $uint<8> $out $signal
 $pipe rx_tx_req: $uint<8> $signal
 $pipe tx_rx_ack: $uint<8> $signal

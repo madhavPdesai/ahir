@@ -300,18 +300,14 @@ class AaPipeObject: public AaObject
   void Set_Out_Mode(bool v) { _out_mode = v; }
   bool Get_Out_Mode() {return(_out_mode);}
 
-
   void Set_Signal(bool v) { _signal = v; }
   bool Get_Signal() {return(_signal);}
 
-  void Set_P2P(bool v) { _p2p = v; }
-  bool Get_P2P() {return(_p2p);}
-
-  void Set_Port(bool v) { _port = v; }
-  bool Get_Port() {return(_port);}
-
   void Set_Synch(bool v) { _synch = v; }
   bool Get_Synch() {return(_synch);}
+
+  void Set_P2P(bool v) { _p2p = v; }
+  bool Get_P2P() {return(_p2p);}
 
   virtual void Print(ostream& ofile);
 
@@ -344,6 +340,7 @@ class AaPipeObject: public AaObject
    void Add_Writer(AaModule* m);
 
    virtual bool Is_Pipe_Object() {return(true); }
+   virtual bool Is_Signal() {return(_signal); }
 
 };
 
