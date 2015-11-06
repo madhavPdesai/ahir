@@ -3588,7 +3588,7 @@ void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
   _merged_labels.insert(label);
 
   expr->Set_Associated_Statement(this);
-  expr->Set_Is_Intermediate(false);
+  expr->Set_Is_Intermediate(true);
   if(this->_target)
     {
       expr->Add_Target(this->_target);

@@ -880,14 +880,24 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> 
 
 		ofile << "// pipe read/write dependencies for pipe " << (*iter).first << endl;
 		AaExpression* last_expr = NULL;
+		string pipe_name = (*iter).first;
+		AaExpression* fe = (*iter).second[0];
+
+		AaRoot* obj = fe->Get_Object();
+		assert((obj != NULL) && (obj->Is_Pipe_Object()));
+		bool is_signal = obj->Is_Signal();
+	
 		AaExpression* first_expr = (*iter).second[0];
 		vector<AaExpression*> write_expr_vector;
 		vector<AaExpression*> read_expr_vector;
+		vector<AaExpression*> signal_access_vector;
 		for(int idx = 0, fidx = (*iter).second.size(); idx < fidx; idx++)
 		{
 
 			AaExpression* expr = (*iter).second[idx];
-			if(expr->Get_Is_Target())
+			if(is_signal)
+				signal_access_vector.push_back(expr);
+			else if(expr->Get_Is_Target())
 				write_expr_vector.push_back(expr);
 			else
 				read_expr_vector.push_back(expr);
@@ -937,6 +947,24 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> 
 					ofile << "// ring dependency in pipeline." << endl;
 					__MJ(__SST(first_expr), __SCT(last),  false); // no-bypass.
 				}
+			}
+
+		}
+		ofile << "// signal dependencies for " << pipe_name << endl;
+		if(signal_access_vector.size() > 1)
+		{
+			int SS = signal_access_vector.size();
+			AaExpression* first_expr = signal_access_vector[0];
+			AaExpression* last_expr = signal_access_vector[SS-1];
+
+			for(int I = 1; I < SS; I++)
+			{
+				__J(__SST(signal_access_vector[I]), __UCT(signal_access_vector[I-1]));
+			}
+			if(pipeline_flag)
+			{
+				ofile << "// ring dependency in pipeline." << endl;
+				__MJ(__SST(first_expr), __UCT(last_expr),  false); // no-bypass.
 			}
 		}
 	}

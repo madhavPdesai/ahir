@@ -935,9 +935,12 @@ string vcDataPath::Print_VHDL_IO_Interface_Ports(string semi_colon, ostream& ofi
   for(set<vcPipe*>::iterator iter = input_signal_set.begin(), fiter = input_signal_set.end(); iter != fiter; iter++)
   {
 	vcPipe* ip = *iter;
-	ofile << semi_colon << endl;
-	ofile << ip->Get_Id() << " : in std_logic_vector(" << ip->Get_Width() -1 << " downto 0)";
-	semi_colon = ";";
+	if(ip->Get_Parent() == NULL)
+	{
+		ofile << semi_colon << endl;
+		ofile << ip->Get_Id() << " : in std_logic_vector(" << ip->Get_Width() -1 << " downto 0)";
+		semi_colon = ";";
+	}
   }
 
   map<vcPipe*, vector<int> > pipe_to_outport_group_map;
