@@ -1,11 +1,10 @@
 # build software version of testbench (to check the "desired behaviour")
-SOCKETLIB_INCLUDE=$(AHIR_RELEASE)/CtestBench/include
-SOCKETLIB_LIB=$(AHIR_RELEASE)/CtestBench/lib
-PIPEHANDLER_INCLUDE=$(AHIR_RELEASE)/pipeHandler/include
-PIPEHANDLER_LIB=$(AHIR_RELEASE)/pipeHandler/lib
-PTHREADUTILS_INCLUDE=$(AHIR_RELEASE)/pthreadUtils/include
+SOCKETLIB_INCLUDE=$(AHIR_RELEASE)/include
+SOCKETLIB_LIB=$(AHIR_RELEASE)/lib
+PIPEHANDLER_INCLUDE=$(AHIR_RELEASE)/include
+PIPEHANDLER_LIB=$(AHIR_RELEASE)/lib
+PTHREADUTILS_INCLUDE=$(AHIR_RELEASE)/include
 VHDL_LIB=$(AHIR_RELEASE)/vhdl
-VHDL_VHPI_LIB=$(AHIR_RELEASE)/CtestBench/vhdl
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 SRC=./src
 all: SW HW 
@@ -49,8 +48,8 @@ llvmbc2aa:  prog.opt.o
 	llvm2aa $(LLVM2AAOPTS)  prog.opt.o | vcFormat >  prog.aa
 
 # Aa to vC
-aalink: $(SRC)/fir.Aa $(SRC)/summer.Aa
-	AaLinkExtMem $(SRC)/fir.Aa $(SRC)/summer.Aa | vcFormat > prog.linked.aa
+aalink: prog.aa
+	AaLinkExtMem prog.aa  | vcFormat > prog.linked.aa
 	AaOpt -B prog.linked.aa | vcFormat > prog.linked.opt.aa
 
 aa2vc: prog.linked.opt.aa
