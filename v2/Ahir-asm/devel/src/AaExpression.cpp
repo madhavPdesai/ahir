@@ -3705,7 +3705,7 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
 			        this->Get_VC_Guard_String(),
 				false,
 			        ofile);
-	// extreme pipelining.
+	// extreme pipelining case only...
 	if(this->Is_Part_Of_Extreme_Pipeline())
 	{
 		//ofile << "$buffering  $in " << dpe_name << " " << src_name << " 2" << endl;
@@ -4081,7 +4081,7 @@ void AaSliceExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 				  ofile);
 
 	  // extreme pipelining.
-	  if(this->Is_Part_Of_Extreme_Pipeline())
+	  if(this->Is_Part_Of_Extreme_Pipeline() && !flow_through )
 	  {
 		  //ofile << "$buffering  $in " << dpe_name << " " << src_name << " 2" << endl;
 		  ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering()  << endl;
@@ -4297,7 +4297,7 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 			flow_through,
 		      ofile);
       // extreme pipelining.
-      if(this->Is_Part_Of_Extreme_Pipeline())
+      if(this->Is_Part_Of_Extreme_Pipeline() && !flow_through)
       {
 	      //ofile << "$buffering  $in " << dpe_name << " " << src_name << " 2" << endl;
 	      ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering() << endl;
@@ -4397,7 +4397,7 @@ void AaBitmapExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 		      ofile);
 
       // extreme pipelining.
-      if(this->Is_Part_Of_Extreme_Pipeline())
+      if(this->Is_Part_Of_Extreme_Pipeline() && !flow_through)
       {
 	      //ofile << "$buffering  $in " << dpe_name << " " << src_name << " 2" << endl;
 	      ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering()  << endl;
@@ -4770,7 +4770,7 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 				ofile);
 
 		// extreme pipelining.
-		if(this->Is_Part_Of_Extreme_Pipeline())
+		if(this->Is_Part_Of_Extreme_Pipeline() && !flow_through)
 		{
 			//ofile << "$buffering  $in " << dpe_name << " " << src_1_name << " 2" << endl;
 			//ofile << "$buffering  $in " << dpe_name << " " << src_2_name << " 2" << endl;
@@ -5065,7 +5065,7 @@ void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostr
 				flow_through,
 				ofile);
 		// extreme pipelining.
-		if(this->Is_Part_Of_Extreme_Pipeline())
+		if(this->Is_Part_Of_Extreme_Pipeline() && !flow_through)
 		{
 			//ofile << "$buffering  $in " << dpe_name << " " << src_1_name << " 2" << endl;
 			//ofile << "$buffering  $in " << dpe_name << " " << src_2_name << " 2" << endl;

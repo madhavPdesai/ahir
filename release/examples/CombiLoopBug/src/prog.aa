@@ -1,0 +1,26 @@
+$pipe i_data_1: $uint<16> $depth 2
+$pipe i_data_2: $uint<16> $depth 2
+$pipe o_data  : $uint<32> $depth 4
+
+// aggregate control and data for release
+$module [release_aggregator_daemon] $in () $out () $is
+{
+	$branchblock[init]
+	{
+		$dopipeline $depth 16 $buffering 2  $fullrate
+		$merge $entry $loopback $endmerge
+
+		irc := i_data_1
+		irc_d :=  irc $buffering 2
+
+		$volatile ctrl := (irc [] 0)
+		$guard (ctrl) 
+			ird := i_data_2
+
+		$volatile cd := ($concat irc_d ird)
+		o_data := cd
+		
+		$while 1
+	}
+}
+

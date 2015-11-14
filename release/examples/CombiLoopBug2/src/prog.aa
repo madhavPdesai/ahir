@@ -1,0 +1,32 @@
+$pipe in_data: $uint<16> $depth 4
+$pipe out_data: $uint<16> $depth 4
+
+$pipe tsig: $uint<1> $signal
+
+$module [ifetch_main_daemon] $in () $out () $is
+{
+	tsig := 1
+	$branchblock[Main] {
+
+		$dopipeline $depth 16 $buffering 2 $fullrate
+
+		$merge $entry $loopback 
+			$phi db  := ($bitcast ($uint<1>) 0) $on $entry tt $on $loopback
+			$phi pc  :=  ($bitcast ($uint<16>) 0)  $on $entry next_pc $on $loopback
+		$endmerge
+		
+		$volatile tt := tsig
+
+		next_pc := in_data
+		$volatile uu := ($concat db ($slice pc 14 0))
+
+
+		ici := uu
+		out_data  := ici
+			
+		$while 1
+
+	}
+}
+
+

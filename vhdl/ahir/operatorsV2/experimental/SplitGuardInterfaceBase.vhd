@@ -168,18 +168,20 @@ begin
         --   Present-state  cr_in  pop_ack      qdata        ca_in    Nstate  cr_out  ca_out  pop
 	------------------------------------------------------------------------------------------
 	--   r_Idle          0        _           _            _      r_Idle
-	--   r_Idle          1        0           _            _      W-Queue
-	--   r_Idle          1        1           1            1      r_Idle    1      1       1
-	--   r_Idle          1        1           1            0      W-Ack-In  1              1
+	--   r_Idle          1        0           _            _      W-Queue                  1
+	--   r_Idle          1        1           1            _      W-Ack-In  1              1
 	--   r_Idle          1        1           0            _      r_Idle           1d      1
+	--      Note: ca_in is never expected to be asserted in the idle state.
 	------------------------------------------------------------------------------------------
         --   Present-state  cr_in  pop_ack      qdata        ca_in    Nstate  cr_out  ca_out  pop
 	------------------------------------------------------------------------------------------
-	--   W-Queue         _        0           _            _      W-Queue
-	--   W-Queue         _        1           1            0      W-Ack-In  1              1
-	--   W-Queue         _        1           1            1      r_Idle    1      1       1
-	--   W-Queue         0        1           0            _      r_Idle           1       1
+	--   W-Queue         _        0           _            _      W-Queue                  1
 	--   W-Queue         1        1           0            _      W-Queue          1       1
+	--   W-Queue         0        1           0            _      r-Idle           1       1
+	--   W-Queue         0        1           1            1      r_Idle    1      1       1
+	--   W-Queue         1        1           1            1      W_Queue   1      1       1
+	--   W-Queue         _        1           1            0      W-Ack-In  1              1
+	--      Note: cr_in will be asserted only if ca_out is asserted.
 	------------------------------------------------------------------------------------------
         --   Present-state  cr_in  pop_ack      qdata        ca_in    Nstate  cr_out  ca_out  pop
 	------------------------------------------------------------------------------------------
@@ -188,6 +190,9 @@ begin
 	--   W-Ack-In        1        1           0            1      r_Idle            1,1d   1
 	--   W-Ack-In        1        0           _            1      W-Queue           1
 	--   W-Ack-In        0        _           _            1      r_Idle            1  
+	--	Note: cr_in will be asserted only if ca_out is asserted.
+	--            ca_out-u will be asserted only on ca_in.
+	--            ca-out-d can depend on cr_in.
 	------------------------------------------------------------------------------------------
 	process(clk,cr_in,pop_ack,qdata,ca_in,rhs_state,reset)
 		variable nstate : RhsState;
@@ -205,20 +210,17 @@ begin
 		case rhs_state is
 			when r_Idle =>
 				if cr_in then
+					pop <= '1';
 					--
 					-- what happens if ca_in appears immediately?
+					-- not permitted in this state.
 					--	
 					if(pop_ack = '0') then
 						nstate := r_Wait_On_Queue;			
 					else
-						pop <= '1';
 						if(qdata(0) = '1') then
 							cr_out <= true;
-							if(ca_in) then	
-								ca_out_u_var := true;
-							else
-								nstate := r_Wait_On_Ack_In;
-							end if;
+							nstate := r_Wait_On_Ack_In;
 							next_c_counter := (next_c_counter + 1);
 						else
 							ca_out_d_var := true;
@@ -227,47 +229,49 @@ begin
 					end if;
 				end if;
 			when r_Wait_On_Queue =>
+				pop <= '1';
 				if(pop_ack = '1') then
-					pop <= '1';
-					if(qdata(0) = '1') then
-						cr_out <= true;
-
-						if(ca_in) then	
-							ca_out_u_var := true;
-							nstate := r_Idle;
-						else
-							nstate := r_Wait_On_Ack_In;
-						end if;
-					
-						nstate := r_Wait_On_Ack_In;
-						next_c_counter := (next_c_counter + 1);
-					else
+					if(qdata(0) = '0') then
 						ca_out_u_var := true;
 						if(cr_in) then
 							nstate := r_Wait_On_Queue;
 						else
 							nstate := r_Idle;
 						end if;
+					else 
+						cr_out <= true;
+						if(ca_in) then	
+							ca_out_u_var := true;
+						end if;
+
+						if(cr_in and ca_in) then
+							nstate := r_Wait_On_Queue;
+						elsif ((not cr_in) and ca_in)  then
+							nstate := r_Idle;
+						elsif (not ca_in) then
+							nstate := r_Wait_On_Ack_In;
+						end if;
+					
+						next_c_counter := (next_c_counter + 1);
 					end if;
 				end if;
 			when r_Wait_On_Ack_In =>
+				-- assumption: there is at least a unit delay from cr_out -> ca_in.
 				if(ca_in) then 
+					ca_out_u_var := true;
 					if(cr_in  and (pop_ack = '1') and (qdata(0) = '1')) then
-						ca_out_u_var := true;
 						pop <= '1';
 						cr_out <= true;
 						next_c_counter := (next_c_counter + 1);
 					elsif(cr_in and (pop_ack = '1') and (qdata(0) = '0')) then
 						nstate := r_Idle;
 						ca_out_d_var := true;
-						ca_out_u_var := true;
 						pop <= '1';
 					elsif(cr_in and (pop_ack = '0')) then
 						nstate := r_Wait_On_Queue;
-						ca_out_u_var := true;	
+						ca_out_d_var := true;	
 					elsif(not cr_in) then
 						nstate := r_Idle;
-						ca_out_u_var := true;
 					end if;
 				end if;
 		end case;

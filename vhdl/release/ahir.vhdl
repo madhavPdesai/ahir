@@ -20645,15 +20645,15 @@ use ahir.BaseComponents.all;
 -- gets the read/write cycle into synch.
 --   read_req -> read_ack 0-delay
 --   write_req -> write_ack 1-delay
---   write_req -> read_ack 0-delay.
+--   write_ack -> read_ack 0-delay.
 --     (note that the last dependency will increase the
---       combinational path lengths... handle with care).
+--       combinational path lengths... but will NOT create combinational loops).
 --
 -- In a 
 --   buf0 -> buf1 -> buf2 ...
 -- chain, the combinational paths in the CP will become
--- w-req-k -|-> read-ack-k -|-> write-req-k+1 -> read-req-k+1 -> 
---  etc..
+-- w-ack-k -|-> read-ack-k -|-> write-req-k+1 
+-- read-req-k ->  read-ack-k  etc.
 --
 --  To cut the long path we will have to use an InterlockBuffer
 -- periodically.
@@ -20677,27 +20677,38 @@ architecture default_arch of PipelineSynchBuffer is
   signal data_register : std_logic_vector(min_data_width-1 downto 0);
   signal joined_req : boolean;
 
+  constant pmarkings: IntegerArray(1 to 2) := (1 => 0, 2 => 1);
+  constant pcapacities : IntegerArray(1 to 2) := (1 => 1, 2 => 1);
+  constant pdelays : IntegerArray(1 to 2) := (1 => 0, 2 => 0);
+  signal preds : BooleanArray (1 to 2);
+  signal read_ack_buffer, read_ack_pre_buffer: boolean;
+  
 begin  -- default_arch
-  -- join.
-  reqJoin: join2
-		generic map(bypass => true, name => name & " req-join ")
-		port map(pred0 => read_req, pred1 => write_req, symbol_out => joined_req,
-				clk => clk, reset => reset);
+ 
+  preds(1) <= write_req;
+  preds(2) <= read_ack_buffer;
 
+  -- join.
+  reqJoin: generic_join
+		generic map (name => name & " synch-buf-join",  place_capacities => pcapacities, place_delays => pdelays,
+					place_markings => pmarkings)
+		port map(preds => preds, symbol_out => joined_req, clk => clk, reset => reset);
+
+  ackJoin: join2 generic map (name => name & " synch-buf-ack-join", bypass => true)
+			port map (pred0 => joined_req, pred1 => read_req, symbol_out => read_ack_pre_buffer,
+					clk => clk, reset => reset);
   -- 0-delay.
   write_ack <= joined_req;
+
+  -- ack.
+  read_ack <= read_ack_buffer;
 
   -- state machine.
   process(clk, reset, joined_req)
   begin
 	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			read_ack <= false;
-		else 
-			read_ack <= joined_req;
-		end if;
-
-		if(joined_req) then
+		read_ack_buffer <= (read_ack_pre_buffer and (reset = '0'));
+		if(read_ack_pre_buffer) then
 			data_register <= write_data(min_data_width-1 downto 0);	
 		end if;
 	end if;	
@@ -21449,18 +21460,20 @@ begin
         --   Present-state  cr_in  pop_ack      qdata        ca_in    Nstate  cr_out  ca_out  pop
 	------------------------------------------------------------------------------------------
 	--   r_Idle          0        _           _            _      r_Idle
-	--   r_Idle          1        0           _            _      W-Queue
-	--   r_Idle          1        1           1            1      r_Idle    1      1       1
-	--   r_Idle          1        1           1            0      W-Ack-In  1              1
+	--   r_Idle          1        0           _            _      W-Queue                  1
+	--   r_Idle          1        1           1            _      W-Ack-In  1              1
 	--   r_Idle          1        1           0            _      r_Idle           1d      1
+	--      Note: ca_in is never expected to be asserted in the idle state.
 	------------------------------------------------------------------------------------------
         --   Present-state  cr_in  pop_ack      qdata        ca_in    Nstate  cr_out  ca_out  pop
 	------------------------------------------------------------------------------------------
-	--   W-Queue         _        0           _            _      W-Queue
-	--   W-Queue         _        1           1            0      W-Ack-In  1              1
-	--   W-Queue         _        1           1            1      r_Idle    1      1       1
-	--   W-Queue         0        1           0            _      r_Idle           1       1
+	--   W-Queue         _        0           _            _      W-Queue                  1
 	--   W-Queue         1        1           0            _      W-Queue          1       1
+	--   W-Queue         0        1           0            _      r-Idle           1       1
+	--   W-Queue         0        1           1            1      r_Idle    1      1       1
+	--   W-Queue         1        1           1            1      W_Queue   1      1       1
+	--   W-Queue         _        1           1            0      W-Ack-In  1              1
+	--      Note: cr_in will be asserted only if ca_out is asserted.
 	------------------------------------------------------------------------------------------
         --   Present-state  cr_in  pop_ack      qdata        ca_in    Nstate  cr_out  ca_out  pop
 	------------------------------------------------------------------------------------------
@@ -21469,6 +21482,9 @@ begin
 	--   W-Ack-In        1        1           0            1      r_Idle            1,1d   1
 	--   W-Ack-In        1        0           _            1      W-Queue           1
 	--   W-Ack-In        0        _           _            1      r_Idle            1  
+	--	Note: cr_in will be asserted only if ca_out is asserted.
+	--            ca_out-u will be asserted only on ca_in.
+	--            ca-out-d can depend on cr_in.
 	------------------------------------------------------------------------------------------
 	process(clk,cr_in,pop_ack,qdata,ca_in,rhs_state,reset)
 		variable nstate : RhsState;
@@ -21486,20 +21502,17 @@ begin
 		case rhs_state is
 			when r_Idle =>
 				if cr_in then
+					pop <= '1';
 					--
 					-- what happens if ca_in appears immediately?
+					-- not permitted in this state.
 					--	
 					if(pop_ack = '0') then
 						nstate := r_Wait_On_Queue;			
 					else
-						pop <= '1';
 						if(qdata(0) = '1') then
 							cr_out <= true;
-							if(ca_in) then	
-								ca_out_u_var := true;
-							else
-								nstate := r_Wait_On_Ack_In;
-							end if;
+							nstate := r_Wait_On_Ack_In;
 							next_c_counter := (next_c_counter + 1);
 						else
 							ca_out_d_var := true;
@@ -21508,47 +21521,49 @@ begin
 					end if;
 				end if;
 			when r_Wait_On_Queue =>
+				pop <= '1';
 				if(pop_ack = '1') then
-					pop <= '1';
-					if(qdata(0) = '1') then
-						cr_out <= true;
-
-						if(ca_in) then	
-							ca_out_u_var := true;
-							nstate := r_Idle;
-						else
-							nstate := r_Wait_On_Ack_In;
-						end if;
-					
-						nstate := r_Wait_On_Ack_In;
-						next_c_counter := (next_c_counter + 1);
-					else
+					if(qdata(0) = '0') then
 						ca_out_u_var := true;
 						if(cr_in) then
 							nstate := r_Wait_On_Queue;
 						else
 							nstate := r_Idle;
 						end if;
+					else 
+						cr_out <= true;
+						if(ca_in) then	
+							ca_out_u_var := true;
+						end if;
+
+						if(cr_in and ca_in) then
+							nstate := r_Wait_On_Queue;
+						elsif ((not cr_in) and ca_in)  then
+							nstate := r_Idle;
+						elsif (not ca_in) then
+							nstate := r_Wait_On_Ack_In;
+						end if;
+					
+						next_c_counter := (next_c_counter + 1);
 					end if;
 				end if;
 			when r_Wait_On_Ack_In =>
+				-- assumption: there is at least a unit delay from cr_out -> ca_in.
 				if(ca_in) then 
+					ca_out_u_var := true;
 					if(cr_in  and (pop_ack = '1') and (qdata(0) = '1')) then
-						ca_out_u_var := true;
 						pop <= '1';
 						cr_out <= true;
 						next_c_counter := (next_c_counter + 1);
 					elsif(cr_in and (pop_ack = '1') and (qdata(0) = '0')) then
 						nstate := r_Idle;
 						ca_out_d_var := true;
-						ca_out_u_var := true;
 						pop <= '1';
 					elsif(cr_in and (pop_ack = '0')) then
 						nstate := r_Wait_On_Queue;
-						ca_out_u_var := true;	
+						ca_out_d_var := true;	
 					elsif(not cr_in) then
 						nstate := r_Idle;
-						ca_out_u_var := true;
 					end if;
 				end if;
 		end case;
@@ -21625,51 +21640,6 @@ begin
         end generate;
 
 end Behave;
-library ieee;
-use ieee.std_logic_1164.all;
-
-library ahir;
-use ahir.Types.all;
-use ahir.Subprograms.all;
-use ahir.Utilities.all;
-use ahir.BaseComponents.all;
-
--- brief description:
---  as the name indicates, a squash-shift-register
---  provides an implementation of a pipeline.
-entity SquashShiftRegister is
-  generic (name : string;
-	   data_width: integer;
-           depth: integer := 1);
-  port (
-    read_req       : in  std_logic;
-    read_ack       : out std_logic;
-    read_data      : out std_logic_vector(data_width-1 downto 0);
-    write_req       : in  std_logic;
-    write_ack       : out std_logic;
-    write_data      : in std_logic_vector(data_width-1 downto 0);
-    clk, reset : in  std_logic);
-  
-end SquashShiftRegister;
-
-architecture default_arch of SquashShiftRegister is
-
-  signal stage_full: std_logic_vector(0 to depth);
-
-  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  signal stage_data : SSRArray(0 to depth);
-  
-begin  -- default_arch
-
-    -- shift-right if there is a bubble 
-    -- anywhere in the shift-register,
-    -- and if the write-signal is active.
-    --
-    -- stall stage I if I+1 is not ready to
-    -- accept.
-    -- etc.. etc..  TODO.
-
-end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

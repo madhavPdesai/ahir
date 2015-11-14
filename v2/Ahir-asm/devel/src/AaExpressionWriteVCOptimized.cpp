@@ -172,7 +172,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 							{
 								// careful.. dont create a cycle!
 								bool bypass_flag = 
-									(!root_source_expr->Update_Protocol_Has_Delay(visited_elements));
+									root_source_expr->Update_Protocol_Has_Delay(visited_elements);
 								__MJ(__SST(read_expr), __UCT(root_source_expr), bypass_flag); 
 								__J(__UST(root_source_expr), __SCT(read_expr)); 
 							}
