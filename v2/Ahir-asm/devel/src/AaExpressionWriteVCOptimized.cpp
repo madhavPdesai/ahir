@@ -88,13 +88,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 	bool err_flag = false;
 
 	// the transition that triggers the write.
-	string write_trigger_transition_name;
-	if(write_stmt->Is("AaAssignmentStatement"))
-		write_trigger_transition_name = 
-			__SST(((AaAssignmentStatement*) write_stmt));
-	else 
-		write_trigger_transition_name = 
-			__SST(((AaCallStatement*) write_stmt));
+	string write_trigger_transition_name =  __UST(write_stmt);;
 
 	// root will be the statement b = (d+e) (or possibly a $call foo () (b))
 	AaRoot* root = this->Get_Root_Object();
@@ -124,7 +118,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 			{
 				//
 				// the rhs source expression which is to be assigned to "this"
-				// must be started only after expr has finished sampling its
+				// must be started only after read_expr has finished sampling its
 				// inputs..  We are currently using the activation transition
 				// of the associated statement of expr as the marker.
 				//
@@ -137,7 +131,8 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				// The target "b = (d+e)" cannot be updated until 
 				// the statement a := (b+c) has sampled b..  
 				// This is conservative.
-				__J(write_trigger_transition_name, __SCT(read_stmt));
+				if(read_stmt != write_stmt)
+					__J(__UST(write_stmt), __SCT(read_stmt));
 
 				// The completion of "b = (d+e)" reenables the
 				// evaluation of "a = (b+c)"
@@ -150,33 +145,10 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						AaRoot::Error("WAR dependency cycle across volatile statements .. Reader: ", read_stmt);
 						AaRoot::Error("WAR dependency cycle across volatile statements .. Writer:", write_stmt);
 					}
-
-					// read-expr can get a new value only after this has completed.
-					if(!this_is_volatile)
+					else 
 					{
-						__MJ(__SST(read_expr), __UCT(write_stmt), true); // bypass
-					}
-					else
-					{	
-						// this is volatile.. reenable expr from root-sources
-						// of this..
-						ofile << "// WAR read release  from volatile write.: " << endl;
-						// collect root sources for this.
-						set<AaExpression*> root_set;
-						this->Collect_Root_Sources(root_set);
-						for(set<AaExpression*>::iterator rsiter = root_set.begin(), frsiter = root_set.end();
-								rsiter != frsiter; rsiter++)
-						{
-							AaExpression* root_source_expr = *rsiter;
-							if(visited_elements.find(root_source_expr) != visited_elements.end())
-							{
-								// careful.. dont create a cycle!
-								bool bypass_flag = 
-									root_source_expr->Update_Protocol_Has_Delay(visited_elements);
-								__MJ(__SST(read_expr), __UCT(root_source_expr), bypass_flag); 
-								__J(__UST(root_source_expr), __SCT(read_expr)); 
-							}
-						}
+						if(read_stmt != write_stmt)
+							__MJ(__SST(read_expr), __UCT(write_stmt), !this_is_volatile); 
 					}
 				}
 			}
