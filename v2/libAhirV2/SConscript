@@ -8,7 +8,7 @@ SConscript(['grammar/SConscript'])
 
 #env.Append(CPPPATH=ANTLR_INCLUDE) 
 #env.Append(CPPPATH='./src/:./include:' + ANTLR_PATH)
-env.Append(CPPPATH = './src/:./include:../BGLWrap/include:/usr/local/boost_1_46_1/:' + ANTLR_PATH)
+env.Append(CPPPATH = './src/:./include:../BGLWrap/include:/usr/local/include/:' + ANTLR_PATH)
 
 
 VariantDir('obj','src',duplicate=0)

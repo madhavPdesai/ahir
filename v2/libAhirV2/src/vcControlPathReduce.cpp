@@ -4,6 +4,7 @@
 #include <vcDataPath.hpp>
 #include <vcSystem.hpp>
 #include <vcModule.hpp>
+#include <BGLWrap.hpp>
 
 
 void vcPlace::Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp)
@@ -139,6 +140,32 @@ int  vcCPElementGroup::Get_Marked_Predecessor_Delay(vcCPElementGroup* g)
 		return(_marked_predecessor_delays[g]);
 	else
 		return(-1);
+}
+
+bool vcCPElementGroup::Is_Pure_Transition_Group()
+{
+	if( _has_place ||
+		_has_input_transition ||
+		_has_output_transition ||
+		_has_dead_transition ||
+		_has_tied_high_transition ||
+		_has_left_open_transition ||
+		_is_delay_element ||
+		_is_bound_as_input_to_cp_function ||
+		_is_bound_as_output_from_cp_function ||
+		_is_bound_as_input_to_region ||
+		_is_bound_as_output_from_region ||
+		(_associated_cp_function != NULL) ||
+		(_associated_cp_region != NULL) ||
+		_is_left_open )
+		return(false);
+	if(_marked_predecessors.size() > 0)
+		return(false);
+	if(_marked_successors.size() > 0)
+		return(false);
+
+	return(_has_transition);
+	
 }
 
 // Can this absorb g (g is a successor of this)?
@@ -658,6 +685,19 @@ void vcControlPath::Construct_Reduced_Group_Graph()
 	}
 }
 
+void vcControlPath::Index_Groups()
+{
+	int idx = 0;
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
+			iter++)
+	{
+		(*iter)->Set_Group_Index(idx);
+		idx++;
+	}
+}
+
 //
 // TODO: change the algorithm.
 //   1. Identify nuclei: all elements without predecessors.
@@ -673,15 +713,7 @@ void vcControlPath::Reduce_CPElement_Group_Graph()
 	this->Eliminate_Dead_Groups();
 
 	// index the groups.
-	int idx = 0;
-	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
-			fiter = _cpelement_groups.end();
-			iter != fiter;
-			iter++)
-	{
-		(*iter)->Set_Group_Index(idx);
-		idx++;
-	}
+	this->Index_Groups();
 
 	set<vcCPElementGroup*> nucleii;
 	set<vcCPElementGroup*> absorbed_elements;
@@ -698,19 +730,135 @@ void vcControlPath::Reduce_CPElement_Group_Graph()
 
 
 	// index the groups.. again..
-	idx = 0;
+	this->Index_Groups();
+
+	this->Collapse_Pure_Transition_Components();
+
+	//finally, update the bypass entries.
+	this->Update_Group_Bypass_Flags();
+}
+
+  
+//
+// find connected components of pure transitions.
+// A transition is pure if
+//    it is not an input/output transition
+//    it has no marked predecessors.
+//    it has no marked successors.
+//    it is not bound as i/o transition to anything.
+//
+void vcControlPath::Collapse_Pure_Transition_Components()
+{
+	UGraphBase  t_graph;
+	
 	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
 			fiter = _cpelement_groups.end();
 			iter != fiter;
 			iter++)
 	{
-		(*iter)->Set_Group_Index(idx);
-		idx++;
+		vcCPElementGroup* g = *iter;
+		if(g->Is_Pure_Transition_Group())
+			t_graph.Add_Vertex ((void*) g);
 	}
 
-	//finally, update the bypass entries.
-	this->Update_Group_Bypass_Flags();
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
+			iter++)
+	{
+		vcCPElementGroup* g = *iter;
+		if(g->Is_Pure_Transition_Group())
+		{
+			for(set<vcCPElementGroup*>::iterator succ_iter = g->_successors.begin(), fsucc_iter = g->_successors.end();
+				succ_iter != fsucc_iter; succ_iter++)
+			{
+				vcCPElementGroup* s = *succ_iter;
+				if(s->Is_Pure_Transition_Group())
+				{
+					if(g->_pipeline_parent == s->_pipeline_parent)
+						t_graph.Add_Edge(g,s);	
+				}
+			}
+
+		}
+	}
+
+	map<int, set<void*> >  cc_map;
+	t_graph.Connected_Components(cc_map);
+
+	for(int idx = 0, fidx = cc_map.size(); idx < fidx; idx++)
+	{
+		this->Collapse_Pure_Transition_Set(cc_map[idx]);	
+	}
+
+	this->Index_Groups();
 }
+
+
+  
+void vcControlPath::Collapse_Pure_Transition_Set(set<void*>& tset)
+{
+	if(tset.size() > 1)
+	{
+
+		vcSystem::Info("collapsing pure transition set of size " + IntToStr(tset.size()));
+		vcCPElementGroup* cg = new vcCPElementGroup(this);
+		_cpelement_groups.insert(cg);
+
+		cg->_has_transition = true;	
+
+		set<vcCPElementGroup*> preds;
+		set<vcCPElementGroup*> succs;
+
+		for(set<void*>::iterator iter = tset.begin(), fiter = tset.end(); iter != fiter; iter++)
+		{
+			vcCPElementGroup* e = (vcCPElementGroup*) *iter;
+
+			if(cg->_pipeline_parent == NULL)
+				cg->_pipeline_parent = e->_pipeline_parent;
+			else
+				assert(cg->_pipeline_parent == e->_pipeline_parent);
+
+			// move all the elements of e into cg.
+			for(set<vcCPElement*>::iterator eiter = e->_elements.begin(), feiter = e->_elements.end();
+					eiter != feiter; eiter++)
+			{
+				this->_cpelement_to_group_map.erase(*eiter);
+				this->Add_To_Group(*eiter,cg);
+			}
+		
+			// disconnect e from all predecessors of e
+			// if the predecessor of e is not in tset,
+			// add it to the predecessor set.
+			for(set<vcCPElementGroup*>::iterator pred_iter = e->_predecessors.begin(), 
+					fpred_iter = e->_predecessors.end();
+						pred_iter != fpred_iter; pred_iter++)
+			{
+				vcCPElementGroup* pe = *pred_iter;
+				pe->_successors.erase(e);
+				if(tset.find((void*)pe) == tset.end())
+					this->Connect_Groups(pe,cg, false, 0); 
+			}
+
+			// disconnect e from all successors of e
+			// if the successor of e is not in tset,
+			// add it to the successor set.
+			for(set<vcCPElementGroup*>::iterator succ_iter = e->_successors.begin(), 
+					fsucc_iter = e->_successors.end();
+						succ_iter != fsucc_iter; succ_iter++)
+			{
+				vcCPElementGroup* se = *succ_iter;
+				se->_predecessors.erase(e);
+				if(tset.find((void*)se) == tset.end())
+					this->Connect_Groups(cg,se, false, 0);
+			}
+
+			// remove e from graph vertex set.
+			_cpelement_groups.erase(e);
+		}
+	}
+}
+
 
 
 void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole)
@@ -907,7 +1055,7 @@ bool vcControlPath::Check_Group_Graph_Structure()
 	{
 		vcCPElementGroup* g = *iter;
 		for(set<vcCPElementGroup*>::iterator succ_iter = g->_successors.begin(), fsucc_iter = g->_successors.end();
-			succ_iter != fsucc_iter; succ_iter++)
+				succ_iter != fsucc_iter; succ_iter++)
 		{
 			vcCPElementGroup* sg = *succ_iter;
 			if(!sg->Has_Predecessor(g))
@@ -919,7 +1067,7 @@ bool vcControlPath::Check_Group_Graph_Structure()
 			}
 		}
 		for(set<vcCPElementGroup*>::iterator pred_iter = g->_predecessors.begin(), fpred_iter = g->_predecessors.end();
-			pred_iter != fpred_iter; pred_iter++)
+				pred_iter != fpred_iter; pred_iter++)
 		{
 			vcCPElementGroup* pg = *pred_iter;
 			if(!pg->Has_Successor(g))
@@ -931,7 +1079,7 @@ bool vcControlPath::Check_Group_Graph_Structure()
 			}
 		}
 		for(set<vcCPElementGroup*>::iterator succ_iter = g->_marked_successors.begin(), fsucc_iter = g->_marked_successors.end();
-			succ_iter != fsucc_iter; succ_iter++)
+				succ_iter != fsucc_iter; succ_iter++)
 		{
 			vcCPElementGroup* sg = *succ_iter;
 			if(!sg->Has_Marked_Predecessor(g))
@@ -943,7 +1091,7 @@ bool vcControlPath::Check_Group_Graph_Structure()
 			}
 		}
 		for(set<vcCPElementGroup*>::iterator pred_iter = g->_marked_predecessors.begin(), fpred_iter = g->_marked_predecessors.end();
-			pred_iter != fpred_iter; pred_iter++)
+				pred_iter != fpred_iter; pred_iter++)
 		{
 			vcCPElementGroup* pg = *pred_iter;
 			if(!pg->Has_Marked_Successor(g))
@@ -1165,7 +1313,7 @@ void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
 		ofile << "-- unreachable exit of control-path" << endl;
 		ofile << this->Get_Exit_Symbol() << " <= false;" << endl;
 	}
-		
+
 
 	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
 			fiter = _cpelement_groups.end();
@@ -1398,8 +1546,8 @@ void vcControlPath::Identify_Nucleii(set<vcCPElementGroup*>& nucleii)
 			nucleii.insert(g);
 		}
 		else if(g->_has_dead_transition ||
-			g->_has_tied_high_transition || 
-			g->_has_left_open_transition)
+				g->_has_tied_high_transition || 
+				g->_has_left_open_transition)
 		{
 			nucleii.insert(g);
 		}
@@ -1565,7 +1713,7 @@ void vcControlPath::Eliminate_Dead_Groups()
 	{
 		vcCPElementGroup* top = dfs_queue.front();
 		int out_visit_count = ((out_visit_count_map.find(top) == out_visit_count_map.end()) ?
-						0	: out_visit_count_map[top]);
+				0	: out_visit_count_map[top]);
 
 		if(out_visit_count == top->_successors.size())
 		{

@@ -930,6 +930,8 @@ public:
   }
 
 
+  bool Is_Pure_Transition_Group();
+
   bool Has_Predecessor(vcCPElementGroup* g)
   {
 	return(_predecessors.find(g) != _predecessors.end());
@@ -1099,7 +1101,11 @@ public:
   void Reduce_From_Nucleus(vcCPElementGroup* nucleus, set<vcCPElementGroup*>& absorbed_elements,
 						set<vcCPElementGroup*>& unabsorbed_elements);
 
+  void Index_Groups();
+
   void Reduce_CPElement_Group_Graph();
+  void Collapse_Pure_Transition_Components();
+  void Collapse_Pure_Transition_Set(set<void*>& tset);
   void Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole);
 
   void Add_To_Group(vcCPElement* cpe, vcCPElementGroup* group);
