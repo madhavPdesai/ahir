@@ -139,7 +139,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		}
 
 		
-		bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
+		bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
 
 		// target has to be implicit..  but if source is also
 		// implicit, we will declare the transitions for
@@ -193,7 +193,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 
 		// if both are implicit, then declare an interlock.
-		bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
+		bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
 		bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
 
 		// declare explicitly if target and source are both implicit.
@@ -313,7 +313,7 @@ void AaAssignmentStatement::Write_VC_Links_Optimized(string hier_id, ostream& of
 				ofile);
 		this->_target->Write_VC_Links_As_Target_Optimized(hier_id,
 				ofile);
-		bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
+		bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
 		bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
 
 		if(source_is_implicit && target_is_implicit)

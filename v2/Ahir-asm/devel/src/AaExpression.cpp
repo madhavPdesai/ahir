@@ -769,8 +769,9 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaExpression*>& root_set)
 		else
 			root_set.insert(this);
 	}
-	else 
+	else if(!this->Is_Signal_Read())
 	{
+		// signal reads are ignored.
 		root_set.insert(this);
 	}
 }
@@ -1480,6 +1481,13 @@ void AaSimpleObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile
 void AaSimpleObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
 	if(!skip_immediate && !this->Is_Constant() && !this->Is_Implicit_Variable_Reference())
+	{
+		ofile << "// " << this->To_String() << endl;
+		Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
+				this->Get_Type(),
+				ofile);
+	}
+	else if(this->Is_Signal_Read())
 	{
 		ofile << "// " << this->To_String() << endl;
 		Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),

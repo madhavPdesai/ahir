@@ -138,17 +138,64 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				// evaluation of "a = (b+c)"
 				if(pipeline_flag)
 				{
-					ofile << "// WAR dependency: release  Read: " << read_expr->To_String() << " with Write: " << write_stmt->To_String() << endl;
 
 					if(this_is_volatile && read_stmt->Get_Is_Volatile())
 					{
 						AaRoot::Error("WAR dependency cycle across volatile statements .. Reader: ", read_stmt);
 						AaRoot::Error("WAR dependency cycle across volatile statements .. Writer:", write_stmt);
 					}
-					else 
+					else  if(!this_is_volatile)
 					{
+						ofile << "// WAR dependency: release  Read: " << read_expr->To_String() 
+							<< " with Write: " << write_stmt->To_String() << endl;
 						if(read_stmt != write_stmt)
-							__MJ(__SST(read_expr), __UCT(write_stmt), !this_is_volatile); 
+							__MJ(__SST(read_expr), __UCT(write_stmt), true);
+					}
+					else
+					{
+						ofile << "// WAR dependency: release  Read: " << read_expr->To_String() 
+							<< " with volatile-write: " << write_stmt->To_String() << endl;
+
+						// this is volatile..  read-stmt should enable the root sources of the write-stmt.
+						// and the root sources of the write-stmt should reenable read-stmt.
+						set<AaExpression*> root_set;
+						write_stmt->Collect_Root_Sources(root_set);
+
+						bool forward_dependency = false;
+						for(set<AaExpression*>::iterator iter = root_set.begin(), fiter = root_set.end();
+							iter != fiter; iter++)
+						{
+							AaExpression* root_write_expr = *iter;
+							AaRoot* root = root_write_expr->Get_Root_Object();
+
+							ofile << "// CHECK THIS." << endl;
+							ofile << "// WAR dependency writer: " << root_write_expr->To_String() 
+									<< ", reader " << read_expr->To_String() << endl;
+
+
+							bool root_is_stmt = ((root != NULL) && root->Is_Statement());
+							if (root_is_stmt && (visited_elements.find(root) != visited_elements.end()))
+							{
+								forward_dependency = true;
+
+								// root is a statement
+								if(root != ((AaRoot*) read_stmt))
+								{
+									// root statement and read statement have to be different!
+									// else there will be a big problem.
+									ofile << "// root-writer is " << root->To_String() << endl;
+									__J(__UST(root), __SCT(read_stmt));
+									__MJ(__SST(read_stmt), __UCT(root), true);
+								}
+							}
+
+							if(!forward_dependency)
+							{
+								AaRoot::Error("Bad WAR dependency... write expression " + this->To_String()
+										+ " depends on downstream source " + root_write_expr->To_String(),
+										this);
+							}
+						}
 					}
 				}
 			}
@@ -186,7 +233,7 @@ void AaExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
 	// With new SplitGuardInterface, this dependency is
 	// no longer necessary.
 	//__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-			//__UCT(this), true);  // bypass
+	//__UCT(this), true);  // bypass
 }
 
 void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& visited_elements, ostream& ofile)

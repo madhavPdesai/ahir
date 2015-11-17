@@ -163,6 +163,8 @@ bool vcCPElementGroup::Is_Pure_Transition_Group()
 		return(false);
 	if(_marked_successors.size() > 0)
 		return(false);
+	if(_successors.size() > 1)
+		return(false);
 
 	return(_has_transition);
 	
@@ -464,6 +466,7 @@ void vcCPElementGroup::Print_VHDL_Logger(ostream& ofile)
 void vcCPElementGroup::Print_VHDL(ostream& ofile)
 {
 
+  string module_name = this->_cp->Get_Parent_Module()->Get_VHDL_Id();
   string bypass_string = (this->_bypass_flag ?  "true" : "false");
   int bypass_delay = (this->_bypass_flag ? 0 : 1);
 
@@ -599,7 +602,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 		vector<int> pred_capacities;
 		vector<int> pred_delays;
 		string joined_symbol = this->Get_VHDL_Id();
-		string join_name = "cp_element_group_" + IntToStr(this->Get_Group_Index());
+		string join_name = module_name + "_cp_element_group_" + IntToStr(this->Get_Group_Index());
 	  
 		for(set<vcCPElementGroup*>::iterator iter = _predecessors.begin(),
 				fiter = _predecessors.end();

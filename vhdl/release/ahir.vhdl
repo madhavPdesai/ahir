@@ -10383,9 +10383,6 @@ begin  -- default_arch
   latch_token : process (clk, reset,incoming_token, backward_reset, token_latch, non_zero)
 	variable incr, decr: boolean;
   begin
-    
-
- 
 
     incr := incoming_token and (not backward_reset);
     decr := backward_reset and (not incoming_token);
@@ -10396,32 +10393,33 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif decr then
-       if((token_latch = capacity) and incr) then
-         assert false report "in place-with-bypass: " & name & " number of tokens "
-			 & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
-			 & Convert_To_String(capacity) severity error;
-       end if;
-       if((not non_zero) and decr) then
-         assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
-       end if;
 
         if(debug_flag) then
-           assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
-		 severity note;
+        	if((not non_zero) and decr and (not incr)) then
+          		assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
+        	end if;
+           	assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+		 	severity note;
 	end if;
-        token_latch <= token_latch - 1;
+
+	if(not incr) then
+        	token_latch <= token_latch - 1;
+	end if;
 
       elsif incr then
 
 	if(debug_flag) then
-           assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
-		  severity note;
+       		if(token_latch = capacity) then
+         		assert false report "in place-with-bypass: " & name & " number of tokens "
+			 	& Convert_To_String(token_latch+1) & " cannot exceed capacity " 
+			 	& Convert_To_String(capacity) severity error;
+       		end if;
+           	assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		  	severity note;
 	end if;
 
         token_latch <= token_latch + 1;
       end if;
-
-
     end if;
   end process latch_token;
 
@@ -21640,6 +21638,51 @@ begin
         end generate;
 
 end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- brief description:
+--  as the name indicates, a squash-shift-register
+--  provides an implementation of a pipeline.
+entity SquashShiftRegister is
+  generic (name : string;
+	   data_width: integer;
+           depth: integer := 1);
+  port (
+    read_req       : in  std_logic;
+    read_ack       : out std_logic;
+    read_data      : out std_logic_vector(data_width-1 downto 0);
+    write_req       : in  std_logic;
+    write_ack       : out std_logic;
+    write_data      : in std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  
+end SquashShiftRegister;
+
+architecture default_arch of SquashShiftRegister is
+
+  signal stage_full: std_logic_vector(0 to depth);
+
+  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
+  signal stage_data : SSRArray(0 to depth);
+  
+begin  -- default_arch
+
+    -- shift-right if there is a bubble 
+    -- anywhere in the shift-register,
+    -- and if the write-signal is active.
+    --
+    -- stall stage I if I+1 is not ready to
+    -- accept.
+    -- etc.. etc..  TODO.
+
+end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
