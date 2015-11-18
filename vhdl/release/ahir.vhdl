@@ -21478,7 +21478,7 @@ begin
 	--   W-Ack-In        _        _           _            0      W-Ack-In  
 	--   W-Ack-In        1        1           1            1      W-Ack-In  1       1      1
 	--   W-Ack-In        1        1           0            1      r_Idle            1,1d   1
-	--   W-Ack-In        1        0           _            1      W-Queue           1
+	--   W-Ack-In        1        0           _            1      W-Queue           1      1
 	--   W-Ack-In        0        _           _            1      r_Idle            1  
 	--	Note: cr_in will be asserted only if ca_out is asserted.
 	--            ca_out-u will be asserted only on ca_in.
@@ -21558,8 +21558,8 @@ begin
 						ca_out_d_var := true;
 						pop <= '1';
 					elsif(cr_in and (pop_ack = '0')) then
+						pop <= '1';
 						nstate := r_Wait_On_Queue;
-						ca_out_d_var := true;	
 					elsif(not cr_in) then
 						nstate := r_Idle;
 					end if;
