@@ -726,7 +726,14 @@ void Write_Signal_Interface_Assignments(int num_reads, int num_writes, string pi
 	if(num_reads > 0 && num_writes ==  0)
 	{
 		ofile << pipe_id << "_pipe_write_ack(0) <= '1';" << endl;
+		ofile << "process(clk) " << endl;
+		ofile << "begin -- {" << endl;
+		ofile << "if (clk'event and  (clk='1')) then -- {" << endl;
+		ofile << "if (" << pipe_id << "_pipe_write_req(0) = '1') then --{" << endl;
 		ofile << "TruncateOrPad(" << pipe_id << "_pipe_write_data," << pipe_id << ");" << endl;	
+		ofile << "--}" << endl << "end if; --}" << endl;
+		ofile << "--}" << endl << "end if; --}" << endl;
+		ofile << "end process;" << endl;
 	}
 	else if(num_writes > 0 && num_reads == 0)
 	{

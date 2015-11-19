@@ -155,10 +155,10 @@ void vcOperator::Print_VHDL_Logger(vcModule* parent_module, ostream& ofile)
 	{
 		string sens_list;
 		this->Generate_Flowthrough_Logger_Sensitivity_List(sens_list);
-		ofile  << "process(" << sens_list << ") -- {" << endl;
-		ofile <<  "--}" << endl << "begin -- {" << endl;
-		ofile << " LogRecordPrint(0,  " << print_message << ");" << endl;
-		ofile << "--} " << endl << "end process; " << endl;
+		ofile  << "process(" << sens_list << ")" << endl;
+		ofile <<  "begin -- {" << endl;
+		ofile <<  " LogRecordPrint(0,  " << print_message << ");" << endl;
+		ofile <<  "--} " << endl << "end process; " << endl;
 	}
 }
 
@@ -212,10 +212,10 @@ void vcSplitOperator::Print_VHDL_Logger(vcModule* parent_module, ostream& ofile)
 			+ '"' + " outputs:\" & " + output_string;
 		string sens_list;
 		this->Generate_Flowthrough_Logger_Sensitivity_List(sens_list);
-		ofile  << "process(" << sens_list << ") -- {" << endl;
-		ofile <<  "--}" << endl << "begin -- {" << endl;
-		ofile << " LogRecordPrint(0,  " << flow_through_print_message << ");" << endl;
-		ofile << "--} " << endl << "end process; " << endl;
+		ofile  << "process(" << sens_list << ")" << endl;
+		ofile <<  "begin -- {" << endl;
+		ofile <<  " LogRecordPrint(0,  " << flow_through_print_message << ");" << endl;
+		ofile <<  "--} " << endl << "end process; " << endl;
 	}
 }
 
