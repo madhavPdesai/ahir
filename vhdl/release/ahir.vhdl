@@ -10402,9 +10402,7 @@ begin  -- default_arch
 		 	severity note;
 	end if;
 
-	if(not incr) then
-        	token_latch <= token_latch - 1;
-	end if;
+       	token_latch <= token_latch - 1;
 
       elsif incr then
 
@@ -20602,11 +20600,11 @@ begin  -- default_arch
 			when Full =>
 				read_ack_v := '1';
 				if(read_req = '1') then
+					write_ack_v := '1';
 					if(write_req = '0') then
 						next_state := Empty;
 					else
 						latch_v := '1';
-						write_ack_v := '1';
 					end if;
 				end if;
 		end case;
@@ -20639,23 +20637,10 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 --
---
--- gets the read/write cycle into synch.
---   read_req -> read_ack 0-delay
---   write_req -> write_ack 1-delay
---   write_ack -> read_ack 0-delay.
---     (note that the last dependency will increase the
---       combinational path lengths... but will NOT create combinational loops).
---
--- In a 
---   buf0 -> buf1 -> buf2 ...
--- chain, the combinational paths in the CP will become
--- w-ack-k -|-> read-ack-k -|-> write-req-k+1 
--- read-req-k ->  read-ack-k  etc.
---
---  To cut the long path we will have to use an InterlockBuffer
--- periodically.
---
+--  A fast synch buffer.  Has  combinational paths from
+--     write-req -> write-ack
+--     read-req  -> write-ack
+--  handle with care..
 --
 entity PipelineSynchBuffer is
   generic (name : string; in_data_width: integer; out_data_width: integer);
@@ -20674,39 +20659,27 @@ architecture default_arch of PipelineSynchBuffer is
   constant min_data_width: integer := Minimum(in_data_width, out_data_width);
   signal data_register : std_logic_vector(min_data_width-1 downto 0);
   signal joined_req : boolean;
-
-  constant pmarkings: IntegerArray(1 to 2) := (1 => 0, 2 => 1);
-  constant pcapacities : IntegerArray(1 to 2) := (1 => 1, 2 => 1);
-  constant pdelays : IntegerArray(1 to 2) := (1 => 0, 2 => 0);
-  signal preds : BooleanArray (1 to 2);
-  signal read_ack_buffer, read_ack_pre_buffer: boolean;
   
 begin  -- default_arch
  
-  preds(1) <= write_req;
-  preds(2) <= read_ack_buffer;
 
   -- join.
-  reqJoin: generic_join
-		generic map (name => name & " synch-buf-join",  place_capacities => pcapacities, place_delays => pdelays,
-					place_markings => pmarkings)
-		port map(preds => preds, symbol_out => joined_req, clk => clk, reset => reset);
-
-  ackJoin: join2 generic map (name => name & " synch-buf-ack-join", bypass => true)
-			port map (pred0 => joined_req, pred1 => read_req, symbol_out => read_ack_pre_buffer,
+  reqJoin: join2 generic map (name => name & " synch-buf-req-join", bypass => true)
+			port map (pred0 => write_req, pred1 => read_req, symbol_out => joined_req,
 					clk => clk, reset => reset);
-  -- 0-delay.
+
   write_ack <= joined_req;
 
-  -- ack.
-  read_ack <= read_ack_buffer;
 
-  -- state machine.
   process(clk, reset, joined_req)
   begin
 	if(clk'event and clk = '1') then
-		read_ack_buffer <= (read_ack_pre_buffer and (reset = '0'));
-		if(read_ack_pre_buffer) then
+		if(reset = '1') then
+			read_ack <= false;
+		else
+			read_ack <= joined_req;
+		end if;
+		if(joined_req) then
 			data_register <= write_data(min_data_width-1 downto 0);	
 		end if;
 	end if;	
@@ -21650,6 +21623,7 @@ use ahir.BaseComponents.all;
 -- brief description:
 --  as the name indicates, a squash-shift-register
 --  provides an implementation of a pipeline.
+--
 entity SquashShiftRegister is
   generic (name : string;
 	   data_width: integer;
@@ -21667,20 +21641,48 @@ end SquashShiftRegister;
 
 architecture default_arch of SquashShiftRegister is
 
-  signal stage_full: std_logic_vector(0 to depth);
+  constant n_stages: integer := Ceil(depth, 2);
+  constant last_stage_depth : integer :=  (depth - ((n_stages-1)*2));
 
-  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  signal stage_data : SSRArray(0 to depth);
-  
+  signal int_write_reqs, int_write_acks, int_read_reqs, int_read_acks: std_logic_vector(1 to depth);
+
+  type DataArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
+  signal stage_data: DataArray(0 to depth); 
+
 begin  -- default_arch
+  int_write_reqs(1) <= write_req;
+  write_ack <= int_write_reqs(1);
 
-    -- shift-right if there is a bubble 
-    -- anywhere in the shift-register,
-    -- and if the write-signal is active.
-    --
-    -- stall stage I if I+1 is not ready to
-    -- accept.
-    -- etc.. etc..  TODO.
+  int_read_reqs(depth)  <= read_req;
+  read_ack <= int_read_acks(depth);
+
+  stage_data(0) <= write_data;
+  read_data <= stage_data(depth);
+
+  genArray: for I in 1 to depth-1 generate
+	-- depth 2 queues.. to reduce the combinational path delays
+	inst: QueueBase 
+		generic map(name => name & ":stage:" & Convert_To_String(I), data_width => data_width, queue_depth => 2)
+		port map(pop_req => int_read_reqs(I),
+			  pop_ack => int_read_acks(I),
+			  push_req => int_write_reqs(I),
+			  push_ack => int_write_acks(I),
+			  data_in => stage_data(I-1),
+			  data_out => stage_data(I), 
+			  clk => clk, 
+			  reset => reset);
+  end generate genArray;
+	
+   lastinst: PipelineRegister 
+	generic map(name => name & ":stage:" & Convert_To_String(depth), data_width => data_width)
+		port map(read_req => int_read_reqs(depth),
+			  read_ack => int_read_acks(depth),
+			  write_req => int_write_reqs(depth),
+			  write_ack => int_write_acks(depth),
+			  write_data => stage_data(depth-1),
+			  read_data => stage_data(depth), 
+			  clk => clk, 
+			  reset => reset);
 
 end default_arch;
 library ieee;

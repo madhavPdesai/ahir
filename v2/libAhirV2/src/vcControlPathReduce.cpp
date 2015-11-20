@@ -457,20 +457,18 @@ void vcCPElementGroup::Print_VHDL_Logger(ostream& ofile)
 	ofile << "process (clk) " << endl;
 	ofile << "begin --{" << endl;
 	ofile << " if (clk'event and (clk = '1') and (reset = '0') and " << this->Get_VHDL_Id() << ") then -- {" << endl;
-	ofile << " LogRecordPrint(global_clock_cycle_count,  \" " << logger_message << "\"); " << endl;
+	ofile << " LogRecordPrint(global_clock_cycle_count,  \" " << logger_message << "\"); -- } " << endl;
 	if(this->_input_transition)
 	{
 		string ip_logger_message = "logger:" + module_name + ":CP:" + this->_input_transition->Get_DP_To_CP_Symbol() + " fired.";
-		ofile << " LogRecordPrint(global_clock_cycle_count,  \" " << ip_logger_message << "\"); " << endl;
+		ofile << " LogRecordPrint(global_clock_cycle_count,  \" " << ip_logger_message << "\"); -- } " << endl;
 	}
   	for(int idx = 0, fidx = _output_transitions.size(); idx < fidx; idx++)
   	{
 		string ack_str = this->_output_transitions[idx]->Get_CP_To_DP_Symbol();
 		string op_logger_message = "logger:" + module_name + ":CP:" + ack_str + " fired.";
-		ofile << " LogRecordPrint(global_clock_cycle_count,  \" " << op_logger_message << "\"); " << endl;
+		ofile << " LogRecordPrint(global_clock_cycle_count,  \" " << op_logger_message << "\"); -- } " << endl;
   	}
-	ofile << "-- }" << endl;
-	ofile << " LogRecordPrint(global_clock_cycle_count,  \" " << logger_message << "\"); -- } " << endl;
 	ofile << " end if; --} " << endl;
         ofile << "end process; " << endl;
 }

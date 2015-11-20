@@ -641,14 +641,7 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 	if(p->Get_Signal())
 	{
 		ofile << pipe_id << "_pipe_write_ack(0) <= '1';" << endl;
-		ofile << "process(clk) " << endl;
-		ofile << "begin -- {" << endl;
-		ofile << "if (clk'event and  (clk='1')) then -- {" << endl;
-		ofile << "if (" << pipe_id << "_pipe_write_req(0) = '1') then --{" << endl;
 		ofile << "TruncateOrPad(" << pipe_id << "_pipe_write_data," << pipe_id << ");" << endl;	
-		ofile << "--}" << endl << "end if; --}" << endl;
-		ofile <<  "end if; --}" << endl;
-		ofile << "end process;" << endl;
 	}
       }
       else if(num_writes > 0 && num_reads == 0)

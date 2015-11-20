@@ -70,9 +70,7 @@ begin  -- default_arch
 		 	severity note;
 	end if;
 
-	if(not incr) then
-        	token_latch <= token_latch - 1;
-	end if;
+       	token_latch <= token_latch - 1;
 
       elsif incr then
 
