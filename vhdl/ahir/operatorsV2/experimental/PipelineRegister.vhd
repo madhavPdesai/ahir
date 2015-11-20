@@ -47,11 +47,11 @@ begin  -- default_arch
 			when Full =>
 				read_ack_v := '1';
 				if(read_req = '1') then
-					write_ack_v := '1';
 					if(write_req = '0') then
 						next_state := Empty;
 					else
 						latch_v := '1';
+						write_ack_v := '1';
 					end if;
 				end if;
 		end case;

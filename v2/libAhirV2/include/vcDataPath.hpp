@@ -244,7 +244,6 @@ class vcTransition;
 class vcCompatibilityLabel;
 class vcControlPath;
 class vcDataPath;
-class vcModule;
 class vcDatapathElement: public vcRoot
 {
 protected:
@@ -491,9 +490,8 @@ protected:
 
   void Generate_Input_Log_Strings(string& log_string);
   void Generate_Output_Log_Strings(string& log_string);
-  void Generate_Flowthrough_Logger_Sensitivity_List(string& log_string);
 
-  virtual void Print_VHDL_Logger(vcModule* parent_module, ostream& ofile);
+  virtual void Print_VHDL_Logger(string& module_name, ostream& ofile);
   friend class vcDataPath;
 
 };

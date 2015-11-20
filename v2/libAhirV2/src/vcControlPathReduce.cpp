@@ -470,6 +470,7 @@ void vcCPElementGroup::Print_VHDL_Logger(ostream& ofile)
 		ofile << " LogRecordPrint(global_clock_cycle_count,  \" " << op_logger_message << "\"); " << endl;
   	}
 	ofile << "-- }" << endl;
+	ofile << " LogRecordPrint(global_clock_cycle_count,  \" " << logger_message << "\"); -- } " << endl;
 	ofile << " end if; --} " << endl;
         ofile << "end process; " << endl;
 }
