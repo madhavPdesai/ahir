@@ -16,7 +16,11 @@ VariantDir('objSockPipes','src',duplicate=0)
 VariantDir('objModelsimFLIdebug','src',duplicate=0)
 VariantDir('objVhpiDebug','src',duplicate=0)
 VariantDir('objSocketLibDebug','src',duplicate=0)
+# if modelsim is present, then you should uncomment one of the following lines.
+# for 32-bit
 #env.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -m32 -DMODELSIM -DNDEBUG')
+# for 64-bit
+#env.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -DMODELSIM -DNDEBUG')
 env.SharedLibrary('lib/libVhpi', ['objVhpi/Vhpi.c','objVhpi/SocketLib.c'], CCFLAGS='-g -DNDEBUG')
 env.SharedLibrary('lib/libSocketLib', ['objSocketLib/SocketLib.c','objSocketLib/Pipes.c', 'objSocketLib/SockPipes.c', 'objSocketLib/pipeHandler.c'], CCFLAGS='-g -DNDEBUG')
 env.SharedLibrary('lib/libSockPipes', ['objSockPipes/SocketLib.c', 'objSockPipes/SockPipes.c'], CCFLAGS='-g -DNDEBUG')

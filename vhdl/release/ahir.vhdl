@@ -12719,11 +12719,6 @@ end entity QueueBase;
 architecture behave of QueueBase is
 
   type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
-
-  signal queue_array : QueueArray(queue_depth-1 downto 0);
-  signal read_pointer, write_pointer : integer range 0 to queue_depth-1;
-  signal queue_size : integer range 0 to queue_depth;
-
   function Incr(x: integer; M: integer) return integer is
   begin
     if(x < M) then
@@ -12735,7 +12730,6 @@ architecture behave of QueueBase is
 
 begin  -- SimModel
 
- assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
  --
  -- 0-depth queue is just a set of wires.
  --
@@ -12747,69 +12741,78 @@ begin  -- SimModel
 
 
  nontriv: if queue_depth > 0 generate 
-  push_ack <= '1' when (queue_size < queue_depth) else '0';
-  pop_ack  <= '1' when (queue_size > 0) else '0';
-
-  -- bottom pointer gives the data in FIFO mode..
-  data_out <= queue_array(read_pointer);
-  
-  -- single process
-  process(clk)
-    variable qsize : integer range 0 to queue_depth;
-    variable push,pop : boolean;
-    variable next_read_ptr,next_write_ptr : integer range 0 to queue_depth-1;
+  NTB: block 
+  	signal queue_array : QueueArray(queue_depth-1 downto 0);
+  	signal read_pointer, write_pointer : integer range 0 to queue_depth-1;
+  	signal queue_size : integer range 0 to queue_depth;
   begin
-    qsize := queue_size;
-    push  := false;
-    pop   := false;
-    next_read_ptr := read_pointer;
-    next_write_ptr := write_pointer;
-    
-    if(reset = '1') then
-      qsize := 0;
-      next_read_ptr := 0;
-      next_write_ptr := 0;
-    else
-      if((qsize < queue_depth) and push_req = '1') then
-        push := true;
+ 
+    assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
+
+    push_ack <= '1' when (queue_size < queue_depth) else '0';
+    pop_ack  <= '1' when (queue_size > 0) else '0';
+
+    -- bottom pointer gives the data in FIFO mode..
+    data_out <= queue_array(read_pointer);
+  
+    -- single process
+    process(clk)
+      variable qsize : integer range 0 to queue_depth;
+      variable push,pop : boolean;
+      variable next_read_ptr,next_write_ptr : integer range 0 to queue_depth-1;
+    begin
+      qsize := queue_size;
+      push  := false;
+      pop   := false;
+      next_read_ptr := read_pointer;
+      next_write_ptr := write_pointer;
+      
+      if(reset = '1') then
+        qsize := 0;
+        next_read_ptr := 0;
+        next_write_ptr := 0;
+      else
+        if((qsize < queue_depth) and push_req = '1') then
+          push := true;
+        end if;
+  
+        if((qsize > 0) and pop_req = '1') then
+          pop := true;
+        end if;
+  
+  
+        if(push) then
+          next_write_ptr := Incr(next_write_ptr,queue_depth-1);
+        end if;
+  
+        if(pop) then
+          next_read_ptr := Incr(next_read_ptr,queue_depth-1);
+        end if;
+  
+  
+        if(pop and (not push)) then
+          qsize := qsize - 1;
+        elsif(push and (not pop)) then
+          qsize := qsize + 1;
+        end if;
+        
       end if;
-
-      if((qsize > 0) and pop_req = '1') then
-        pop := true;
-      end if;
-
-
-      if(push) then
-        next_write_ptr := Incr(next_write_ptr,queue_depth-1);
-      end if;
-
-      if(pop) then
-        next_read_ptr := Incr(next_read_ptr,queue_depth-1);
-      end if;
-
-
-      if(pop and (not push)) then
-        qsize := qsize - 1;
-      elsif(push and (not pop)) then
-        qsize := qsize + 1;
+  
+      if(clk'event and clk = '1') then
+        
+        if(push) then
+          queue_array(write_pointer) <= data_in;
+        end if;
+        
+        queue_size <= qsize;
+        read_pointer <= next_read_ptr;
+        write_pointer <= next_write_ptr;
       end if;
       
-    end if;
-
-    if(clk'event and clk = '1') then
-      
-      if(push) then
-        queue_array(write_pointer) <= data_in;
-      end if;
-      
-      queue_size <= qsize;
-      read_pointer <= next_read_ptr;
-      write_pointer <= next_write_ptr;
-    end if;
-    
-  end process;
- end generate nontriv;
-
+    end process;
+   end block NTB;
+  end generate nontriv;
+  
 
 end behave;
 library ieee;
@@ -21644,22 +21647,23 @@ architecture default_arch of SquashShiftRegister is
   constant n_stages: integer := Ceil(depth, 2);
   constant last_stage_depth : integer :=  (depth - ((n_stages-1)*2));
 
-  signal int_write_reqs, int_write_acks, int_read_reqs, int_read_acks: std_logic_vector(1 to depth);
+  signal int_write_reqs, int_write_acks, int_read_reqs, int_read_acks: std_logic_vector(1 to n_stages);
 
   type DataArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  signal stage_data: DataArray(0 to depth); 
+  signal stage_data: DataArray(0 to n_stages); 
 
 begin  -- default_arch
   int_write_reqs(1) <= write_req;
   write_ack <= int_write_reqs(1);
 
-  int_read_reqs(depth)  <= read_req;
-  read_ack <= int_read_acks(depth);
+  int_read_reqs(n_stages)  <= read_req;
+  read_ack <= int_read_acks(n_stages);
 
   stage_data(0) <= write_data;
-  read_data <= stage_data(depth);
+  read_data <= stage_data(n_stages);
 
-  genArray: for I in 1 to depth-1 generate
+  ifGen1: if(n_stages > 1) generate
+     genArray: for I in 1 to n_stages-1 generate
 	-- depth 2 queues.. to reduce the combinational path delays
 	inst: QueueBase 
 		generic map(name => name & ":stage:" & Convert_To_String(I), data_width => data_width, queue_depth => 2)
@@ -21671,18 +21675,35 @@ begin  -- default_arch
 			  data_out => stage_data(I), 
 			  clk => clk, 
 			  reset => reset);
-  end generate genArray;
+    end generate genArray;
+  end generate ifGen1;
 	
-   lastinst: PipelineRegister 
-	generic map(name => name & ":stage:" & Convert_To_String(depth), data_width => data_width)
-		port map(read_req => int_read_reqs(depth),
-			  read_ack => int_read_acks(depth),
-			  write_req => int_write_reqs(depth),
-			  write_ack => int_write_acks(depth),
-			  write_data => stage_data(depth-1),
-			  read_data => stage_data(depth), 
+  ifSingleLast: if(last_stage_depth = 1) generate
+    lastinst: PipelineRegister 
+	generic map(name => name & ":stage:" & Convert_To_String(n_stages), data_width => data_width)
+		port map(read_req => int_read_reqs(n_stages),
+			  read_ack => int_read_acks(n_stages),
+			  write_req => int_write_reqs(n_stages),
+			  write_ack => int_write_acks(n_stages),
+			  write_data => stage_data(n_stages-1),
+			  read_data => stage_data(n_stages), 
 			  clk => clk, 
 			  reset => reset);
+  end generate ifSingleLast;
+
+  ifNotSingleLast: if(last_stage_depth > 1) generate
+	inst: QueueBase 
+		generic map(name => name & ":stage:" & Convert_To_String(n_stages), data_width => data_width, queue_depth => 2)
+		port map(pop_req => int_read_reqs(n_stages),
+			  pop_ack => int_read_acks(n_stages),
+			  push_req => int_write_reqs(n_stages),
+			  push_ack => int_write_acks(n_stages),
+			  data_in => stage_data(n_stages-1),
+			  data_out => stage_data(n_stages), 
+			  clk => clk, 
+			  reset => reset);
+  end generate ifNotSingleLast;
+
 
 end default_arch;
 library ieee;

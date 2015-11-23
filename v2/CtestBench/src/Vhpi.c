@@ -1029,7 +1029,7 @@ void String_To_Modelsim_FLI(mtiVariableIdT vsim_str, char* from_string)
 void Modelsim_FLI_Log(mtiVariableIdT vsim_str)
 {
 	char message_buffer[4096];
-  	Modelsim_FLI_To_String(name_buffer,vsim_str);
+  	Modelsim_FLI_To_String(message_buffer,vsim_str);
 	Vhpi_Log(message_buffer);
 }
 
