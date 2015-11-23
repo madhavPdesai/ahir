@@ -2159,4 +2159,52 @@ package BaseComponents is
 	 reset : in std_logic);
   end component;
 
+  ----------------------------------------------------------------------------------------------
+  -- glue
+  ----------------------------------------------------------------------------------------------
+  component PipeJoin is
+   generic (name : string; data_width_0, data_width_1: integer);
+   port (
+    write_req_0   : in std_logic;
+    write_ack_0   : out std_logic;
+    write_data_0   : in std_logic_vector(data_width_0-1 downto 0);
+    write_req_1   : in std_logic;
+    write_ack_1   : out std_logic;
+    write_data_1   : in std_logic_vector(data_width_1-1 downto 0);
+    read_req      : in  std_logic;
+    read_ack       : out std_logic;
+    read_data     : out std_logic_vector((data_width_1 + data_width_0)-1 downto 0);
+    clk, reset : in  std_logic);
+  end component;
+
+  component PipeMerge is
+    generic (name : string; data_width_0, data_width_1: integer);
+    port (
+      write_req_0   : in std_logic;
+      write_ack_0   : out std_logic;
+      write_data_0   : in std_logic_vector(data_width_0-1 downto 0);
+      write_req_1   : in std_logic;
+      write_ack_1   : out std_logic;
+      write_data_1   : in std_logic_vector(data_width_1-1 downto 0);
+      read_req      : in  std_logic;
+      read_ack       : out std_logic;
+      read_data     : out std_logic_vector((data_width_1 + data_width_0)-1 downto 0);
+      clk, reset : in  std_logic);
+  end component;
+ 
+  component PipeMux is
+   generic (name : string; data_width: integer);
+   port (
+    write_req_0   : in std_logic;
+    write_ack_0   : out std_logic;
+    write_data_0   : in std_logic_vector(data_width-1 downto 0);
+    write_req_1   : in std_logic;
+    write_ack_1   : out std_logic;
+    write_data_1   : in std_logic_vector(data_width-1 downto 0);
+    read_req      : in  std_logic;
+    read_ack       : out std_logic;
+    read_data     : out std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  end component;
+
 end BaseComponents;
