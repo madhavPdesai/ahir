@@ -2207,4 +2207,36 @@ package BaseComponents is
     clk, reset : in  std_logic);
   end component;
 
+  component PipeUnblock is
+   generic (name : string; data_width: integer);
+   port (
+    write_req   : in std_logic;
+    write_ack   : out std_logic;
+    write_data   : in std_logic_vector(data_width-1 downto 0);
+    read_req      : in  std_logic;
+    read_ack       : out std_logic;
+    read_data     : out std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  end component;
+
+  component NonblockingReadPipeBase is
+   generic (name : string;
+	   num_reads: integer;
+           num_writes: integer;
+           data_width: integer;
+           lifo_mode: boolean := false;
+           depth: integer := 1;
+	   signal_mode: boolean := false);
+   port (
+    read_req       : in  std_logic_vector(num_reads-1 downto 0);
+    read_ack       : out std_logic_vector(num_reads-1 downto 0);
+    read_data      : out std_logic_vector((num_reads*data_width)-1 downto 0);
+    write_req       : in  std_logic_vector(num_writes-1 downto 0);
+    write_ack       : out std_logic_vector(num_writes-1 downto 0);
+    write_data      : in std_logic_vector((num_writes*data_width)-1 downto 0);
+    clk, reset : in  std_logic);
+  
+  end component;
+
+
 end BaseComponents;
