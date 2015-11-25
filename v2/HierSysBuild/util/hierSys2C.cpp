@@ -39,6 +39,7 @@ void Usage_hierSys2C()
   cerr << "Options: " << endl;
   cerr << "   -n system-name:  a prefix of system-name will be added to all generated functions. " << endl;
   cerr << "   -o out-directory:  generated source and header files will be printed into out-directory. " << endl;
+  cerr << "   -G  (to use Gnu Pth.. slower, but more reliable than pthreads)" << endl;
 }
 
 
@@ -86,6 +87,7 @@ int main(int argc, char* argv[])
 
   string opt_string;
 
+  bool use_gnu_pth = false;
 
   signal(SIGSEGV, Handle_Segfault);
 
@@ -95,7 +97,7 @@ int main(int argc, char* argv[])
       	exit(1);
     }
 
-  while ((opt = getopt_long(argc, argv, "n:o:", long_options, &option_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, "n:o:G", long_options, &option_index)) != -1) {
 	switch(opt) {
 		case 'n': 
 			c_prefix = optarg;
@@ -104,6 +106,10 @@ int main(int argc, char* argv[])
 		case 'o':
 			o_dir = optarg;
 			cerr << "Info: output-directory set to " << o_dir  << "." << endl;
+			break;
+		case 'G':
+			use_gnu_pth  = true;
+			cerr << "Info: will link to Gnu Pth." << endl;
 			break;
 		default: cerr << "Error: unknown option " << opt << endl; ret_val = 1; break;
 	}
@@ -152,7 +158,12 @@ int main(int argc, char* argv[])
 
 	source_file << "#include <string.h>"  << endl;
 	source_file << "#include <pipeHandler.h>"  << endl;
-	source_file << "#include <pthreadUtils.h>"  << endl;
+
+	if(use_gnu_pth)
+		source_file << "#include <GnuPthUtils.h>"  << endl;
+	else
+		source_file << "#include <pthreadUtils.h>"  << endl;
+
 	source_file << "#include <rtl2AaMatcher.h>"  << endl;
 	source_file << "#include <" << base_header_file_name << ">" << endl;
 

@@ -113,12 +113,16 @@ class AaProgram
 
 
 
+  static set<string> _mutex_set;
  public:
+
   static int _pointer_width;
   static int _foreign_word_size;
   static int _foreign_address_width;
   static string _current_file_name;
   static bool _verbose_flag;
+  // gnu-pth links for aa2c?
+  static bool _use_gnu_pth;
 
   static bool _balance_loop_pipeline_bodies;
   static string _tool_name;
@@ -157,6 +161,14 @@ class AaProgram
   static string Report_Log_File_Name()
   {
 	return(AaProgram::_c_vhdl_module_prefix + "__report_log_file__");
+  }
+  static void Add_Mutex(string m)
+  {
+		AaProgram::_mutex_set.insert(m);
+  }
+  static bool Is_Mutex(string m)
+  {
+	return(AaProgram::_mutex_set.find(m) != AaProgram::_mutex_set.end());
   }
 
   static void Make_Extmem_Object();

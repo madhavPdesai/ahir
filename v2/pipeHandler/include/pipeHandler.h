@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include <stdio.h>  // FILE
 #include <stdint.h>
+#ifdef USE_GNUPTH
+#include <pth.h>
+#else
+#include <pthread.h>
+#endif
 
 #define PIPE_FIFO_MODE  0
 #define PIPE_LIFO_MODE  1

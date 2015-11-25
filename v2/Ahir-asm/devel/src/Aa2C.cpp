@@ -82,6 +82,7 @@ void Print_C_Declaration(string obj_name, bool static_flag, AaType* t, ofstream&
 // Global objects need special care.. 
 void Print_C_Global_Declaration(string obj_name, AaType* t, ofstream& ofile)
 {
+	//ofile << "volatile ";  // so that the compiler doesnt optimize the dang thing away.
 	if(!t->Is_Pointer_Type())
 	{
 		if(t->Is_Integer_Type())

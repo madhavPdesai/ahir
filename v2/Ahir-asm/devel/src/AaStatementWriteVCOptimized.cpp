@@ -580,7 +580,7 @@ void AaBlockStatement::Identify_Maximal_Sequences( AaStatementSequence* sseq,
 			stmt  = sseq->Get_Statement(end_idx);
 
 			// some statements are just ignored.
-			if(stmt->Is("AaNullStatement") || stmt->Is("AaReportStatement"))
+			if(stmt->Is_Null_Like_Statement())
 			{
 				end_idx++;
 				continue;
@@ -680,7 +680,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			AaStatement* stmt = sseq->Get_Statement(idx);
 
 			// skip null, report statements.
-			if(stmt->Is("AaNullStatement") || stmt->Is("AaReportStatement"))
+			if(stmt->Is_Null_Like_Statement())
 				continue;
 
 			if(stmt->Is_Block_Statement())
@@ -727,7 +727,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					AaStatement* prev_stmt = sseq->Get_Statement(K);
 
 					// if prev_stmt is a constant or can be ignored, then skip it.
-					if(prev_stmt->Is_Constant() || prev_stmt->Is("AaNullStatement") || prev_stmt->Is("AaReportStatement"))
+					if(prev_stmt->Is_Constant() || prev_stmt->Is_Null_Like_Statement())
 						continue;
 
 					__J(__SST(stmt), __UCT(prev_stmt));

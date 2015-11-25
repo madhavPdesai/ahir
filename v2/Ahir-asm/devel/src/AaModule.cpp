@@ -897,8 +897,8 @@ void AaModule::Set_Statement_Sequence(AaStatementSequence* statement_sequence)
 		AaStatement* s = statement_sequence->Get_Statement(idx);
 		if(this->Is_Pipelined())
 		{
-			if(!(s->Is("AaAssignmentStatement") || s->Is("AaCallStatement") 
-					|| s->Is("AaReportStatement") || s->Is("AaNullStatement")))
+			if(!(s->Is("AaAssignmentStatement") || s->Is("AaCallStatement") || s->Is_Null_Like_Statement()))
+
 			{
 				AaRoot::Error("pipelined module can contain only call/assignment/null statements.", s);
 				err_flag = true;
@@ -909,7 +909,7 @@ void AaModule::Set_Statement_Sequence(AaStatementSequence* statement_sequence)
 
 		if(this->Get_Operator_Flag() || this->Get_Volatile_Flag())
 		{
-			if(!(s->Is("AaAssignmentStatement") ||  s->Is("AaNullStatement")))
+			if(!(s->Is("AaAssignmentStatement") || s->Is_Null_Like_Statement()))
 			{
 				if(!s->Is("AaCallStatement"))
 				{
@@ -947,8 +947,7 @@ void AaModule::Check_Statements()
 		if(this->Is_Pipelined())
 		{
 			if(!(s->Is("AaAssignmentStatement") || s->Is("AaCallStatement") 
-					|| s->Is("AaReportStatement") || s->Is("AaNullStatement")))
-			{
+					|| s->Is_Null_Like_Statement())){
 				AaRoot::Error("pipelined module can contain only call/assignment/null statements.", s);
 				err_flag = true;
 			}

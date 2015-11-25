@@ -128,6 +128,7 @@ class AaRoot
 
   virtual bool Is_Expression() {return(false); }
   virtual bool Is_Statement() {return(false); }
+  virtual bool Is_Null_Like_Statement() {return(false); }
   virtual bool Is_Assignment_Statement() {return(false); }
   virtual bool Is_Call_Statement() {return(false); }
 

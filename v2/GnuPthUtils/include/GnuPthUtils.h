@@ -6,7 +6,7 @@
 #define MUTEX_UNLOCK(x) pth_mutex_release(&x);
 
 #define DEFINE_THREAD(x)  void* __##x() {  x(); }
-#define DEFINE_THREAD_WITH_ARG(x)  void* __##x(void* arg) {  x(arg); }
+#define DEFINE_THREAD_WITH_ARG(x,arg)  void* __##x(void* arg) {  x(arg); }
 
 #define PTHREAD_DECL(x)  pth_t  __thread_##x;
 #define PTHREAD_CREATE(x)  {\
@@ -28,5 +28,7 @@
 	}
 #define PTHREAD_JOIN(x)    pth_join(__thread_##x,NULL);
 #define PTHREAD_CANCEL(x)  pth_cancel(__thread_##x);
+#define PTHREAD_DECL_AND_CREATE(x) PTHREAD_DECL(x); PTHREAD_CREATE(x);
+#define PTHREAD_YIELD() pth_yield(NULL);
 
 #endif

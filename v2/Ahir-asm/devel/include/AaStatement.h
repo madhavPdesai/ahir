@@ -429,6 +429,8 @@ class AaNullStatement: public AaStatement
     return("_null_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
+  virtual bool Is_Null_Like_Statement() {return(true);}
+
   virtual bool Can_Block(bool pipeline_flag) { return(false); }
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
@@ -472,6 +474,32 @@ class AaReportStatement: public AaNullStatement
   	virtual void Map_Source_References();
   	virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
         virtual string Kind() {return("AaReportStatement");}
+};
+
+class AaLockStatement: public AaNullStatement
+{
+	public:
+        string _mutex_id;
+	AaLockStatement(AaScope* parent, string mid);
+        virtual void Print(ostream& ofile)
+	{
+		ofile << "$lock " << _mutex_id << endl;
+	}
+  	virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
+        virtual string Kind() {return("AaLockStatement");}
+};
+
+class AaUnlockStatement: public AaNullStatement
+{
+	public:
+        string _mutex_id;
+	AaUnlockStatement(AaScope* parent, string mid);
+        virtual void Print(ostream& ofile)
+	{
+		ofile << "$unlock " << _mutex_id << endl;
+	}
+  	virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
+        virtual string Kind() {return("AaUnlockStatement");}
 };
 
 // assignment statement

@@ -1,5 +1,9 @@
 // Author: Madhav Desai
+// 
 #include <string.h>
+#ifdef USE_GNUPTH
+#include <pth.h>
+#endif
 #include <fcntl.h>
 #include <SocketLib.h>
 
@@ -342,7 +346,11 @@ int connect_to_client(int server_fd)
   select(server_fd+1, &c_set,NULL,NULL,&time_limit);
   if(FD_ISSET(server_fd,&c_set))
     {
+#ifdef USE_GNUPTH
+      newsockfd = pth_accept(server_fd,(struct sockaddr *) &cli_addr,&clilen);
+#else
       newsockfd = accept(server_fd,(struct sockaddr *) &cli_addr,&clilen);
+#endif
 
       if (newsockfd >= 0)
 	{
@@ -412,7 +420,11 @@ int receive_string(int sock_id, char* buffer)
     }
 
   
+#ifdef USE_GNUPTH
+  nbytes = pth_recv(sock_id,buffer,MAX_BUF_SIZE,0);
+#else
   nbytes = recv(sock_id,buffer,MAX_BUF_SIZE,0);
+#endif
 
   return(nbytes);
 }
@@ -464,7 +476,13 @@ void send_packet_and_wait_for_response(char* buffer, int send_len, char* server_
       n =-1;
 
       while(n == -1)
+      {
+#ifdef USE_GNUPTH
+	n=pth_connect(sockfd,(struct sockaddr*) &serv_addr,sizeof(serv_addr));
+#else
 	n=connect(sockfd,(struct sockaddr*) &serv_addr,sizeof(serv_addr));
+#endif
+      }
       
 #ifdef DEBUG
       fprintf(stderr, "Info: successfully connected to server %s on port %d .......... \n",
@@ -481,7 +499,11 @@ void send_packet_and_wait_for_response(char* buffer, int send_len, char* server_
 	  __SLEEP__(1000);
 	}
 
+#ifdef USE_GNUPTH
+      pth_send(sockfd,buffer,send_len,0);
+#else
       send(sockfd,buffer,send_len,0);
+#endif
 
 #ifdef DEBUG
       char payload[4096];

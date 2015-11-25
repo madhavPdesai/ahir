@@ -1,5 +1,9 @@
 #include <rtl2AaMatcher.h>
+#ifdef USE_GNUPTH
+#include <GnuPthUtils.h>
+#else
 #include <pthreadUtils.h>
+#endif
 #include <string.h>
 
 ////////////////////////////////////////// Pipe matching ///////////////////////////////////////////////////
@@ -99,7 +103,7 @@ void Aa2RtlPipeTransferMatcher(void* vmrec)
 
 			setState(mrec, _DONE);
 		}
-		pthread_yield(NULL);
+		PTHREAD_YIELD();
 	}
 }
 
@@ -121,7 +125,7 @@ void Rtl2AaPipeTransferMatcher(void* vmrec)
 
 			setState(mrec, _DONE);
 		}
-		pthread_yield(NULL);
+		PTHREAD_YIELD();
 	}
 }
 
@@ -219,7 +223,7 @@ void Aa2RtlSignalTransferMatcher(void* sig_val)
 	
 		read_bit_vector_from_pipe(mrec->_signal_name, &tmp_val);
 		assignSignalValue(mrec, &tmp_val);
-		pthread_yield(NULL);
+		PTHREAD_YIELD();
 	}
 }
 
@@ -233,7 +237,7 @@ void Rtl2AaSignalTransferMatcher(void* sig_val)
 	{
 		getSignalValue(mrec, &tmp_val);
 		write_bit_vector_to_pipe(mrec->_signal_name, &tmp_val);
-		pthread_yield(NULL);
+		PTHREAD_YIELD();
 	}
 }
 

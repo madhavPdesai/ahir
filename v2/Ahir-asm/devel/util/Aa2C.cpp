@@ -28,6 +28,16 @@ void Handle_Segfault(int signal)
   exit(-1);
 }
 
+void printUsage()
+{
+      cerr << "Usage: Aa2C [-I ext-storage-object] [-T top-module]* [-P c-fn-prefix] [-o <output-directory>] [-G] <filename> (<filename>) ... " << endl;
+      cerr << "   -I <ext-storage-object> (as used in Aa2C etc.) " << endl;
+      cerr << "   -T <top-module-name>    (as in Aa2C etc.)" << endl;
+      cerr << "   -P <c-fn-prefix>    (prefix appended to all generated functions)" << endl;
+      cerr << "   -o <output-director> (results to be placed here) " << endl;
+      cerr << "   -G    (to use Gnu Pth..  slower than pthreads, but more well behaved)" << endl;
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -35,11 +45,12 @@ int main(int argc, char* argv[])
 
   if(argc < 2)
     {
-      cerr << "Usage: Aa2C [-I ext-storage-object] [-T top-module]* [-P c-fn-prefix] [-o <output-directory>]  <filename> (<filename>) ... " << endl;
+      printUsage();
       exit(1);
     }
 
 
+  bool use_gnu_pthreads = false;
    AaProgram::_tool_name = "Aa2C";
   string fname;
   string mod_name;
@@ -48,7 +59,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "I:T:P:o:",
+		      "I:T:P:o:G",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -71,6 +82,10 @@ int main(int argc, char* argv[])
 	  opt_string = optarg; 
 	  AaProgram::_aa2c_output_directory  = opt_string;
 	  cerr << "Info: C output directory set to " << opt_string << ". " << endl;
+	  break;
+	case 'G':
+	  AaProgram::_use_gnu_pth = true;
+	  cerr << "Info: compatible with GNU-PTH. " << opt_string << ". " << endl;
 	  break;
 	default:
 	  cerr << "Error: unknown option " << opt << endl;

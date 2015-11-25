@@ -1008,7 +1008,7 @@ void bit_vector_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vec
 void bit_vector_not_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
 	bit_vector_clear(t);
-	if(!bit_vector_compare(signed_flag,r,s) == IS_EQUAL)
+	if(bit_vector_compare(signed_flag,r,s) != IS_EQUAL)
 	{
 		bit_vector_set_bit(t,0,1);
 	}

@@ -110,8 +110,21 @@ aA_Program
             (
                     nt = aA_Named_Record_Type_Declaration[null_scope]
             )
+	    |
+	    ( 
+		aA_Mutex_Declaration
+            )
         )*
     ;
+
+//-----------------------------------------------------------------------------------------------
+// aA_Mutex_Declaration.  MUTEX simple_identifier
+//-----------------------------------------------------------------------------------------------
+aA_Mutex_Declaration
+{
+}:
+     MUTEX sid: SIMPLE_IDENTIFIER {AaProgram::Add_Mutex(sid->getText());}
+;
 
 
 
@@ -282,7 +295,7 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 		// NOTE: the split statement can create a group of statements..
 		//       Thus, we put the created statement(s) in a list.
 	   (aA_Assignment_Statement[scope,llist] |  aA_Call_Statement[scope,llist] | aA_Split_Statement[scope,llist]
-			| aA_Report_Statement[scope,llist]) 
+			| aA_Report_Statement[scope,llist] | aA_Lock_Statement[scope,llist] | aA_Unlock_Statement[scope,llist]) 
 	   (MARK mid: SIMPLE_IDENTIFIER 
 		{
 			mark_flag = true;
@@ -347,6 +360,42 @@ aA_Null_Statement[AaScope* scope] returns[AaStatement* new_stmt]
         }
     ;
 
+
+//-----------------------------------------------------------------------------------------------
+// aA_Lock_Statement : $lock simple-identifier
+//-----------------------------------------------------------------------------------------------
+aA_Lock_Statement[AaScope* scope, vector<AaStatement*>& slist] 
+{
+	int line_number=0;
+	AaLockStatement* ls = NULL;
+}
+:
+    lid: LOCK {line_number = lid->getLine();}
+		sid: SIMPLE_IDENTIFIER
+		{
+			ls = new AaLockStatement(scope, sid->getText());
+			ls->Set_Line_Number(line_number);
+			slist.push_back(ls);
+		}
+;
+
+//-----------------------------------------------------------------------------------------------
+// aA_Unlock_Statement : $lock simple-identifier
+//-----------------------------------------------------------------------------------------------
+aA_Unlock_Statement[AaScope* scope, vector<AaStatement*>& slist] 
+{
+	int line_number=0;
+	AaUnlockStatement* ls = NULL;
+}
+:
+    lid: UNLOCK {line_number = lid->getLine();}
+		sid: SIMPLE_IDENTIFIER
+		{
+			ls = new AaUnlockStatement(scope, sid->getText());
+			ls->Set_Line_Number(line_number);
+			slist.push_back(ls);
+		}
+;
 
 //-----------------------------------------------------------------------------------------------
 // aA_Report_Statement : $report LPAREN synopsys-string (descr-string descr-expr)* RPAREN
@@ -2017,6 +2066,10 @@ DO            : "$dopipeline";
 WHILE         : "$while";
 SLICE         : "$slice";
 BITMAP        : "$bitmap";
+MUTEX         : "$mutex";
+LOCK          : "$lock";
+UNLOCK        : "$unlock";
+
 
 // Special symbols
 COLON		 : ':' ; // label separator

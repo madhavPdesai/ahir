@@ -1,7 +1,12 @@
 #include <stdint.h>
 #include <rtl2AaMatcher.h>
 #include <pipeHandler.h>
+#ifdef USE_GNUPTH
+#include <pth.h>
+#include <GnuPthUtils.h>
+#else
 #include <pthreadUtils.h>
+#endif
 
 PipeMatcherRec* write_matcher;
 PipeMatcherRec* read_matcher;
@@ -129,7 +134,7 @@ void Ticker()
 		if(counter == 16)
 			break;
 
-		pthread_yield();
+		PTHREAD_YIELD();
 	}
 }
 
@@ -146,6 +151,9 @@ int main(int argc, char* argv[])
 	read_matcher  = makePipeMatcher("test_pipe",32);
 
 
+#ifdef USE_GNUPTH
+	pth_init();
+#endif
 	init_pipe_handler();
 	PTHREAD_DECL(Ticker);
 	PTHREAD_DECL(Rtl2AaPipeTransferMatcher);

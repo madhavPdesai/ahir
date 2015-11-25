@@ -21,6 +21,7 @@ int AaProgram::_pointer_width = 32;
 bool AaProgram::_keep_extmem_inside = false;
 bool AaProgram::_verbose_flag = false;
 bool AaProgram::_print_inlined_functions_in_caller = false;
+bool AaProgram::_use_gnu_pth = false;
 AaStorageObject* AaProgram::_extmem_object = NULL;
 string AaProgram::_extmem_object_name;
 int AaProgram::_extmem_size;
@@ -43,6 +44,7 @@ std::set<AaPointerDereferenceExpression*> AaProgram::_pointer_dereferences;
 std::set<string> AaProgram::_root_module_names;
 std::set<string> AaProgram::_top_level_daemons;
 std::set<AaModule*> AaProgram::_reachable_modules;
+std::set<string> AaProgram::_mutex_set;
 
 //
 // prefix to be attached to c/vhdl modules.
@@ -238,6 +240,12 @@ void AaProgram::Print_ExtMem_Access_Modules(ostream& ofile)
 
 void AaProgram::Print(ostream& ofile)
 {
+  for(std::set<string>::iterator muiter = AaProgram::_mutex_set.begin(), fmuiter = AaProgram::_mutex_set.end();
+					muiter != fmuiter; muiter++)
+  {
+	ofile << "$mutex " << *muiter <<  endl;
+  }
+
 
   // print named types
   for(std::map<string,AaType*>::iterator iter = AaProgram::_type_map.begin(),
@@ -1053,9 +1061,17 @@ void AaProgram::Write_C_Model()
   header_file << "#include <BitVectors.h>" << endl;
   // declare all the record types that you have encountered.
 
+  if(AaProgram::_use_gnu_pth) 
+  {
+	source_file << "#include <pth.h>" << endl;
+	source_file << "#include <GnuPthUtils.h>" << endl;
+  }
+  else
+  {
+  	source_file << "#include <pthread.h>" << endl;
+        source_file << "#include <pthreadUtils.h>" << endl;
+  }
   source_file << "#include <Pipes.h>" << endl;
-  source_file << "#include <pthread.h>" << endl;
-  source_file << "#include <pthreadUtils.h>" << endl;
   source_file << "#include <" << header << ">" << endl;
 
   source_file << "FILE* " << AaProgram::Report_Log_File_Name() << " = NULL;" << endl;
@@ -1064,6 +1080,13 @@ void AaProgram::Write_C_Model()
   source_file << AaProgram::Report_Log_File_Name() << " = fp;" << endl;
   source_file << "}" << endl;
   
+  // declare mutexes
+  for(std::set<string>::iterator muiter = AaProgram::_mutex_set.begin(), fmuiter = AaProgram::_mutex_set.end();
+					muiter != fmuiter; muiter++)
+  {
+	source_file << "MUTEX_DECL(" << *muiter << ");" << endl;
+  }
+
   for(std::map<string,AaType*,StringCompare>::iterator miter = AaProgram::_type_map.begin();
       miter != AaProgram::_type_map.end();
       miter++)

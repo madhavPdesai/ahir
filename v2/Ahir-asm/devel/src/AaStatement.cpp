@@ -815,6 +815,43 @@ void AaNullStatement::Write_VC_Control_Path(ostream& ofile)
   ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 }
+
+//---------------------------------------------------------------------
+// AaLockStatement: public AaNullStatement
+//---------------------------------------------------------------------
+AaLockStatement::AaLockStatement(AaScope* prnt, string mutex_id):AaNullStatement(prnt)
+{
+	_mutex_id = mutex_id;
+	if(!AaProgram::Is_Mutex(mutex_id))
+	{
+		AaRoot::Error("lock statement uses undeclared mutex.", this);
+	}
+}
+
+  	
+void AaLockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
+{
+	srcfile << "MUTEX_LOCK(" << _mutex_id << ");" << endl;
+}
+
+//---------------------------------------------------------------------
+// AaUnlockStatement: public AaNullStatement
+//---------------------------------------------------------------------
+AaUnlockStatement::AaUnlockStatement(AaScope* prnt, string mutex_id):AaNullStatement(prnt)
+{
+	_mutex_id = mutex_id;
+	if(!AaProgram::Is_Mutex(mutex_id))
+	{
+		AaRoot::Error("unlock statement uses undeclared mutex.", this);
+	}
+}
+
+void AaUnlockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
+{
+	srcfile << "MUTEX_UNLOCK(" << _mutex_id << ");" << endl;
+}
+
+//
 //---------------------------------------------------------------------
 // AaReportStatement: public AaNullStatement
 //---------------------------------------------------------------------

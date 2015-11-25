@@ -20,4 +20,5 @@
 
 
 #define PTHREAD_DECL_AND_CREATE(x) PTHREAD_DECL(x); PTHREAD_CREATE(x)
+#define PTHREAD_YIELD() pthread_yield();
 #endif
