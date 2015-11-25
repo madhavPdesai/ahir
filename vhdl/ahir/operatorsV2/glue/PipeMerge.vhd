@@ -31,7 +31,7 @@ begin  -- default_arch
 
    begin
 	accept_data := false;
-	read_ack <= write_req_0 or write_ack_0;
+	read_ack <= write_req_0 or write_req_1;
 	read_data_var_0 := (others => '0');
 	read_data_var_1 := (others => '0');
 

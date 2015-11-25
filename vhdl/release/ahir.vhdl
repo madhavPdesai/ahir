@@ -21696,6 +21696,98 @@ begin
 end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- brief description:
+--  as the name indicates, a squash-shift-register
+--  provides an implementation of a pipeline.
+--
+entity SquashShiftRegister is
+  generic (name : string;
+	   data_width: integer;
+           depth: integer := 1);
+  port (
+    read_req       : in  std_logic;
+    read_ack       : out std_logic;
+    read_data      : out std_logic_vector(data_width-1 downto 0);
+    write_req       : in  std_logic;
+    write_ack       : out std_logic;
+    write_data      : in std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  
+end SquashShiftRegister;
+
+architecture default_arch of SquashShiftRegister is
+
+  constant n_stages: integer := Ceil(depth, 2);
+  constant last_stage_depth : integer :=  (depth - ((n_stages-1)*2));
+
+  signal int_write_reqs, int_write_acks, int_read_reqs, int_read_acks: std_logic_vector(1 to n_stages);
+
+  type DataArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
+  signal stage_data: DataArray(0 to n_stages); 
+
+begin  -- default_arch
+  int_write_reqs(1) <= write_req;
+  write_ack <= int_write_reqs(1);
+
+  int_read_reqs(n_stages)  <= read_req;
+  read_ack <= int_read_acks(n_stages);
+
+  stage_data(0) <= write_data;
+  read_data <= stage_data(n_stages);
+
+  ifGen1: if(n_stages > 1) generate
+     genArray: for I in 1 to n_stages-1 generate
+	-- depth 2 queues.. to reduce the combinational path delays
+	inst: QueueBase 
+		generic map(name => name & ":stage:" & Convert_To_String(I), data_width => data_width, queue_depth => 2)
+		port map(pop_req => int_read_reqs(I),
+			  pop_ack => int_read_acks(I),
+			  push_req => int_write_reqs(I),
+			  push_ack => int_write_acks(I),
+			  data_in => stage_data(I-1),
+			  data_out => stage_data(I), 
+			  clk => clk, 
+			  reset => reset);
+    end generate genArray;
+  end generate ifGen1;
+	
+  ifSingleLast: if(last_stage_depth = 1) generate
+    lastinst: PipelineRegister 
+	generic map(name => name & ":stage:" & Convert_To_String(n_stages), data_width => data_width)
+		port map(read_req => int_read_reqs(n_stages),
+			  read_ack => int_read_acks(n_stages),
+			  write_req => int_write_reqs(n_stages),
+			  write_ack => int_write_acks(n_stages),
+			  write_data => stage_data(n_stages-1),
+			  read_data => stage_data(n_stages), 
+			  clk => clk, 
+			  reset => reset);
+  end generate ifSingleLast;
+
+  ifNotSingleLast: if(last_stage_depth > 1) generate
+	inst: QueueBase 
+		generic map(name => name & ":stage:" & Convert_To_String(n_stages), data_width => data_width, queue_depth => 2)
+		port map(pop_req => int_read_reqs(n_stages),
+			  pop_ack => int_read_acks(n_stages),
+			  push_req => int_write_reqs(n_stages),
+			  push_ack => int_write_acks(n_stages),
+			  data_in => stage_data(n_stages-1),
+			  data_out => stage_data(n_stages), 
+			  clk => clk, 
+			  reset => reset);
+  end generate ifNotSingleLast;
+
+
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
@@ -22108,6 +22200,269 @@ begin  -- Behave
 
 end Vanilla;
 
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+--
+-- returns 0 if there is no data available for reading.
+--  (data must be coded so that all-0's is invalid).
+--
+
+entity NonblockingReadPipeBase is
+  generic (name : string;
+	   num_reads: integer;
+           num_writes: integer;
+           data_width: integer;
+           lifo_mode: boolean := false;
+           depth: integer := 1;
+	   signal_mode: boolean := false);
+  port (
+    read_req       : in  std_logic_vector(num_reads-1 downto 0);
+    read_ack       : out std_logic_vector(num_reads-1 downto 0);
+    read_data      : out std_logic_vector((num_reads*data_width)-1 downto 0);
+    write_req       : in  std_logic_vector(num_writes-1 downto 0);
+    write_ack       : out std_logic_vector(num_writes-1 downto 0);
+    write_data      : in std_logic_vector((num_writes*data_width)-1 downto 0);
+    clk, reset : in  std_logic);
+  
+end NonblockingReadPipeBase;
+
+architecture default_arch of NonblockingReadPipeBase is
+
+   signal write_req_nb       : std_logic_vector(num_reads-1 downto 0);
+   signal write_ack_nb       : std_logic_vector(num_reads-1 downto 0);
+   signal write_data_nb      : std_logic_vector((num_reads*data_width)-1 downto 0);
+  
+begin  -- default_arch
+
+ 
+	pb: PipeBase generic map (name => name & "-core-blocking-pipe" ,
+				    num_reads => num_reads,
+					num_writes => num_writes,
+				         data_width => data_width,
+						lifo_mode => lifo_mode, 
+							depth => depth,
+								signal_mode => signal_mode)
+		port map(read_req => write_ack_nb,
+			   read_ack => write_req_nb,
+				read_data => write_data_nb,
+					write_req => write_req,
+					  write_ack => write_ack,
+						write_data => write_data,
+							clk => clk, reset => reset);
+
+
+	genNB: for I in 0 to num_reads-1 generate
+
+		nb: PipeUnblock 
+			generic map (name => name & "-nb-" & Convert_To_String(I),
+					data_width => data_width)
+			port map (write_req => write_req_nb(I),
+					write_ack => write_ack_nb(I),
+						write_data => write_data_nb (((I+1)*data_width)-1 downto (I*data_width)),
+							read_req => read_req(I),
+								read_ack => read_ack(I),
+									read_data => read_data (((I+1)*data_width)-1 downto (I*data_width)),
+										clk => clk, reset => reset);
+	end generate genNB;
+
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity PipeJoin is
+  generic (name : string; data_width_0, data_width_1: integer);
+  port (
+    write_req_0   : in std_logic;
+    write_ack_0   : out std_logic;
+    write_data_0   : in std_logic_vector(data_width_0-1 downto 0);
+    write_req_1   : in std_logic;
+    write_ack_1   : out std_logic;
+    write_data_1   : in std_logic_vector(data_width_1-1 downto 0);
+    read_req      : in  std_logic;
+    read_ack       : out std_logic;
+    read_data     : out std_logic_vector((data_width_1 + data_width_0)-1 downto 0);
+    clk, reset : in  std_logic);
+end PipeJoin;
+
+architecture default_arch of PipeJoin is
+begin  -- default_arch
+   read_ack <= write_req_0 and write_req_1;
+   write_ack_0 <= read_req;
+   write_ack_1 <= read_req;
+   read_data <= write_data_1 & write_data_0;
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity PipeMerge is
+  generic (name : string; data_width_0, data_width_1: integer);
+  port (
+    write_req_0   : in std_logic;
+    write_ack_0   : out std_logic;
+    write_data_0   : in std_logic_vector(data_width_0-1 downto 0);
+    write_req_1   : in std_logic;
+    write_ack_1   : out std_logic;
+    write_data_1   : in std_logic_vector(data_width_1-1 downto 0);
+    read_req      : in  std_logic;
+    read_ack       : out std_logic;
+    read_data     : out std_logic_vector((data_width_1 + data_width_0)-1 downto 0);
+    clk, reset : in  std_logic);
+end PipeMerge;
+
+architecture default_arch of PipeMerge is
+begin  -- default_arch
+   process(write_req_0, write_req_1, write_data_0, write_data_1, read_req)
+	variable accept_data: boolean;
+	variable read_data_var_0 : std_logic_vector(data_width_0-1 downto 0);
+	variable read_data_var_1 : std_logic_vector(data_width_1-1 downto 0);
+
+   begin
+	accept_data := false;
+	read_ack <= write_req_0 or write_req_1;
+	read_data_var_0 := (others => '0');
+	read_data_var_1 := (others => '0');
+
+	if(write_req_0 = '1') then
+		read_data_var_0 := write_data_0;
+	end if;
+	if(write_req_1 = '1') then
+		read_data_var_1 := write_data_0;
+	end if;
+
+	read_data <= (read_data_var_1 & read_data_var_0);
+
+	write_ack_0 <= read_req;
+	write_ack_1 <= read_req;
+   end process;
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity PipeMux is
+  generic (name : string; data_width: integer);
+  port (
+    write_req_0   : in std_logic;
+    write_ack_0   : out std_logic;
+    write_data_0   : in std_logic_vector(data_width-1 downto 0);
+    write_req_1   : in std_logic;
+    write_ack_1   : out std_logic;
+    write_data_1   : in std_logic_vector(data_width-1 downto 0);
+    read_req      : in  std_logic;
+    read_ack       : out std_logic;
+    read_data     : out std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+end PipeMux;
+
+architecture default_arch of PipeMux is
+
+   signal priority_flag: std_logic;
+  
+begin  -- default_arch
+   process(clk, reset, priority_flag,  write_req_0, write_req_1, write_data_0, write_data_1, read_req)
+	variable accept_data: boolean;
+   begin
+	accept_data := false;
+	read_ack <= write_req_0 or write_req_1;
+	read_data <= (others => '0');
+
+	if(((write_req_0 = '1') or (write_req_1 = '1')) and (read_req = '1')) then
+		accept_data := true;
+	end if;
+
+	if(priority_flag = '0') then
+		if(write_req_0 = '1') then
+			read_data <= write_data_0;
+			write_ack_0 <= read_req;
+		elsif (write_req_1 = '1') then
+			read_data <= write_data_1;
+			write_ack_1 <= read_req;
+		end if;
+	else
+		if(write_req_1 = '1') then
+			read_data <= write_data_1;
+			write_ack_1 <= read_req;
+		elsif (write_req_0 = '1') then
+			read_data <= write_data_0;
+			write_ack_0 <= read_req;
+		end if;
+	end if;
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			priority_flag <= '0';
+		else
+			if(accept_data) then
+				priority_flag <= not priority_flag;
+			end if;
+		end if;
+	end if;
+    end process;
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+--
+-- an interface which reads 0's from the writer
+-- if the writer does not have data to send.
+--
+entity PipeUnblock is
+  generic (name : string; data_width: integer);
+  port (
+    write_req   : in std_logic;
+    write_ack   : out std_logic;
+    write_data   : in std_logic_vector(data_width-1 downto 0);
+    read_req      : in  std_logic;
+    read_ack       : out std_logic;
+    read_data     : out std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+end PipeUnblock;
+
+architecture default_arch of PipeUnblock is
+begin  -- default_arch
+   process(write_req, write_data, read_req)
+	variable read_data_var : std_logic_vector(data_width-1 downto 0);
+   begin
+	read_ack <= write_req;
+	read_data_var := (others => '0');
+
+	if(write_req = '1') then
+		read_data_var := write_data;
+	end if;
+	read_data <= read_data_var;
+
+	write_ack <= read_req;
+   end process;
+end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

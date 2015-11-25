@@ -106,11 +106,12 @@ class hierSystemInstance: public hierRoot
 	bool Add_Port_Mapping(string formal, 
 				string actual, 
 				map<string, pair<int,int> >& pmap, 
-				set<string>& signals);
+				set<string>& signals, 
+				set<string>& noblock_pipes);
 	bool Add_Port_Mapping(string formal, 
 				string actual);
 
-	bool Map_Unmapped_Ports_To_Defaults( map<string, pair<int,int> >& pmap, set<string>& signals);
+	bool Map_Unmapped_Ports_To_Defaults( map<string, pair<int,int> >& pmap, set<string>& signals, set<string>& noblock_pipes);
 
 
 	string Get_Actual(string formal)
@@ -147,6 +148,7 @@ class hierSystem: public hierRoot
 	map<hierSystemInstance*, vector<string> > _subsystem_pipe_connection_map;
 	map<string,  hierSystemInstance* > _child_map;
 
+	set<string> _noblock_pipes;
 	set<string> _signals;
 	int _instance_count;
 
@@ -192,6 +194,14 @@ public:
 	
 	
 
+	void Add_Noblock_Pipe(string pname)
+	{
+		_noblock_pipes.insert(pname);
+	}
+	bool Is_Noblock_Pipe(string pname)
+	{
+		return(_noblock_pipes.find(pname) != _noblock_pipes.end());
+	}
 
 	void Add_Signal(string pname)
 	{
@@ -272,6 +282,8 @@ public:
 	{
 		for(map<string,pair<int,int> >::iterator iter = pmap.begin(), fiter = pmap.end(); iter != fiter; iter++)
 		{
+			if(this->Is_Noblock_Pipe((*iter).first))
+				ofile << " $noblock ";
 			ofile << (this->Is_Signal((*iter).first) ? "  $signal " : "  $pipe ");
 			ofile << " " << (*iter).first << " " << (*iter).second.first << " $depth " <<
 					(*iter).second.second;
@@ -305,10 +317,12 @@ public:
 
 
 			
-	void Add_In_Pipe(string pid, int pipe_width, int depth)
+	void Add_In_Pipe(string pid, int pipe_width, int depth, bool noblock_flag)
 	{
 
 		this->Add_Pipe_To_Map(_in_pipes, pid, pipe_width, depth, "in-pipe");
+		if(noblock_flag)
+			this->Add_Noblock_Pipe(pid);
 
 		if(this->Get_Output_Pipe_Width(pid) > 0)
 		{
@@ -320,9 +334,12 @@ public:
 		}
 
 	}
-	void Add_Out_Pipe(string pid, int pipe_width, int depth)
+	void Add_Out_Pipe(string pid, int pipe_width, int depth, bool noblock_flag)
 	{
 		Add_Pipe_To_Map(_out_pipes, pid, pipe_width, depth, "out-pipe");
+		if(noblock_flag)
+			this->Add_Noblock_Pipe(pid);
+
 		if(this->Get_Input_Pipe_Width( pid) > 0)
 		{
 			this->Report_Error("pipe " + pid + " in system " + this->_id + " is both input and output pipe.");
@@ -332,9 +349,12 @@ public:
 			this->Report_Error("pipe " + pid + " in system " + this->_id + " is both internal and output pipe.");
 		}
 	}
-	void Add_Internal_Pipe(string pid, int pipe_width, int depth)
+	void Add_Internal_Pipe(string pid, int pipe_width, int depth, bool noblock_flag)
 	{
 		Add_Pipe_To_Map(_internal_pipes, pid, pipe_width, depth,  "internal-pipe");
+		if(noblock_flag)
+			this->Add_Noblock_Pipe(pid);
+
 		if(this->Get_Input_Pipe_Width(pid) > 0)
 		{
 			this->Report_Error("pipe " + pid + " in system " + this->_id + " is both internal and input pipe.");
@@ -479,10 +499,10 @@ public:
 	// print Vhdl
 	void Print_Vhdl_Port_Declarations(ostream& ofile);
 	void Print_Vhdl_Component_Declaration(ostream& ofile);
-	void Print_Vhdl_Inclusions(ostream& ofile);
-	void Print_Vhdl_Rtl_Threads(ostream& ofile);
-	void Print_Vhdl_Entity_Architecture(ostream& ofile);
-	void Print_Vhdl_Test_Bench(string sim_link_lib, string sim_link_prefix, ostream& ofile); // in progress.
+	void Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work);
+	void Print_Vhdl_Rtl_Threads(ostream& ofile, int map_all_libs_to_work);
+	void Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_to_work);
+	void Print_Vhdl_Test_Bench(string sim_link_lib, string sim_link_prefix, ostream& ofile, int map_all_libs_to_work); // in progress.
 	void Print_Vhdl_Instance_In_Testbench(string inst_name, ostream& ofile);
 	void Print_Vhdl_Pipe_Instance(string pipe_name, int pipe_width, int pipe_depth, ostream& ofile);
 
@@ -500,11 +520,12 @@ public:
 
 void listPipeMap(map<string, pair<int,int> >& pmap, vector<string>& pvec);
 
-bool getPipeInfoFromGlobals(string pname, map<string, pair<int,int> >& pmap, set<string>& signals, 
-			int& width, int& depth, bool& is_signal);
+bool getPipeInfoFromGlobals(string pname, map<string, pair<int,int> >& pmap, set<string>& signals,  set<string>& noblock_pipes,
+					int& width, int& depth, bool& is_signal, bool& noblock_flag);
 
 void addPipeToGlobalMaps(string oname, map<string, pair<int,int> >& pipe_map, 
-				set<string>& signals, int pipe_width, int pipe_depth, bool is_signal);
+				set<string>& signals, set<string>& noblock_pipes, 
+					int pipe_width, int pipe_depth, bool is_signal, bool noblock_mode);
 
 
 string IntToStr(int u);

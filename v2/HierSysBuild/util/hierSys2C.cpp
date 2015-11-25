@@ -17,6 +17,7 @@ int option_index = 0;
 // global variables
 map<string, pair<int,int> > __pmap;
 set<string> __signals;
+set<string> __noblock_pipes;
 
 struct option long_options[] = {
     {"relaxed-component-visibility", 0, 0, 0},
@@ -62,7 +63,7 @@ int  Parse(string filename, vector<hierSystem*>& sys_vec)
   
   try
     {
-      parser->sys_Description(sys_vec, __pmap, __signals);
+      parser->sys_Description(sys_vec, __pmap, __signals,__noblock_pipes);
     }
   catch(ANTLR_USE_NAMESPACE(antlr)RecognitionException& re)
     {
@@ -194,7 +195,11 @@ int main(int argc, char* argv[])
 			if(sys->Is_Signal(pname))
 				source_file << " register_signal(" << q_pname <<  ", " << eW << ");" << endl;
 			else
-				source_file << " register_pipe(" << q_pname << ", "  << eD << ", " << eW << ", 0);" << endl;
+			{
+				int pipe_type = (sys->Is_Noblock_Pipe(pname) ? 2 : 0);
+				source_file << " register_pipe(" << q_pname << ", "  << eD << ", " << eW << ", "
+									<< pipe_type << ");" << endl;
+			}
 
 			source_file << " set_pipe_is_read_from(" << q_pname << ");" << endl;
 		}
@@ -209,7 +214,11 @@ int main(int argc, char* argv[])
 			if(sys->Is_Signal(pname))
 				source_file << " register_signal(" << q_pname <<  ", " << eW << ");" << endl;
 			else
-				source_file << " register_pipe(" << q_pname << ", "  << eD << ", " << eW << ", 0);" << endl;
+			{
+				int pipe_type = (sys->Is_Noblock_Pipe(pname) ? 2 : 0);
+				source_file << " register_pipe(" << q_pname << ", "  << eD << ", " << eW << ", "
+									<< pipe_type << ");" << endl;
+			}
 			source_file << " set_pipe_is_written_into(" << q_pname << ");" << endl;
 		}
 		for(J = 0, fJ = internal_pipes.size(); J < fJ; J++)
@@ -223,7 +232,11 @@ int main(int argc, char* argv[])
 			if(sys->Is_Signal(pname))
 				source_file << " register_signal(" << q_pname <<  ", " << eW << ");" << endl;
 			else
-				source_file << " register_pipe(" << q_pname << ", "  << eD << ", " << eW << ", 0);" << endl;
+			{
+				int pipe_type = (sys->Is_Noblock_Pipe(pname) ? 2 : 0);
+				source_file << " register_pipe(" << q_pname << ", "  << eD << ", " << eW << ", "
+									<< pipe_type << ");" << endl;
+			}
 			source_file << " set_pipe_is_read_from(" << q_pname << ");" << endl;
 			source_file << " set_pipe_is_written_into(" << q_pname << ");" << endl;
 		}

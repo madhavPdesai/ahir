@@ -31,10 +31,10 @@ begin  -- default_arch
 	variable accept_data: boolean;
    begin
 	accept_data := false;
-	read_ack <= write_req_0 or write_ack_0;
+	read_ack <= write_req_0 or write_req_1;
 	read_data <= (others => '0');
 
-	if(((write_req_0 = '1') or (write_ack_0 = '1')) and (read_req = '1')) then
+	if(((write_req_0 = '1') or (write_req_1 = '1')) and (read_req = '1')) then
 		accept_data := true;
 	end if;
 
@@ -59,6 +59,9 @@ begin  -- default_arch
 		if(reset = '1') then
 			priority_flag <= '0';
 		else
+			if(accept_data) then
+				priority_flag <= not priority_flag;
+			end if;
 		end if;
 	end if;
     end process;

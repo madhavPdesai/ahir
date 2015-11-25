@@ -1511,8 +1511,9 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 	    bool is_signal = false;
 	    bool is_synch  = false;
 	    bool is_p2p   = false;
+	    bool noblock_flag = false;
         }
-        : (LIFO { lifo_flag = true; })? 
+        : ((LIFO { lifo_flag = true; }) | (NOBLOCK {noblock_flag = true;}))? 
 		(st:PIPE aA_Object_Declaration_List_Base[scope,oname_list,otype,initial_value]) 
         (DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
 		(IN {in_mode = true;} | OUT {out_mode = true;})? 
@@ -1530,6 +1531,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
                 ((AaPipeObject*)obj)->Set_Depth(pipe_depth);
             	obj->Set_Line_Number(st->getLine());
 	    	((AaPipeObject*)obj)->Set_Lifo_Mode(lifo_flag);
+	    	((AaPipeObject*)obj)->Set_No_Block_Mode(noblock_flag);
 	    	((AaPipeObject*)obj)->Set_In_Mode(in_mode);
 	    	((AaPipeObject*)obj)->Set_Out_Mode(out_mode);
 	    	((AaPipeObject*)obj)->Set_Signal(is_signal);
@@ -1973,6 +1975,7 @@ STORAGE       : "$storage";
 REGISTER      : "$register";
 PIPE          : "$pipe";
 LIFO          : "$lifo";
+NOBLOCK       : "$noblock";
 PORT          : "$port";
 SIGNAL        : "$signal";
 CONSTANT      : "$constant";

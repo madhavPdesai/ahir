@@ -140,14 +140,14 @@ int vcSystem::Get_Pipe_Depth(string pipe_id)
   assert(_pipe_map.find(pipe_id) != _pipe_map.end());
   return(_pipe_map[pipe_id]->Get_Depth());
 }
-void vcSystem::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bool in_flag, bool out_flag, 
+void vcSystem::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bool noblock_mode,  bool in_flag, bool out_flag, 
 					bool signal_flag, bool p2p_flag) 
 {
   assert(_pipe_map.find(pipe_id) == _pipe_map.end());
   assert(width > 0);
   assert(depth >= 0);
 
-  vcPipe* np = new vcPipe(NULL, pipe_id, width, depth, lifo_mode);
+  vcPipe* np = new vcPipe(NULL, pipe_id, width, depth, lifo_mode, noblock_mode);
   _pipe_map[pipe_id] = np;
   np->Set_In_Flag(in_flag);
   np->Set_Out_Flag(out_flag);

@@ -24,6 +24,7 @@ struct option long_options[] = {
 // globals
 map<string, pair<int,int> > __pmap;
 set<string> __signals;
+set<string> __noblock_pipes;
 
 void Handle_Segfault(int signal)
 {
@@ -35,10 +36,11 @@ void Usage_hierSys2Vhdl()
 {
   cerr << "brief description: reads hierarchical system description and produces VHDL, " << endl;
   cerr << "Usage: " << endl;
-  cerr << "hierSys2Vhdl [-s <ghdl/modelsim>] [-o <vhdl-output-directory>]  <file-name> (<file-name>)* " << endl;
+  cerr << "hierSys2Vhdl [-s <ghdl/modelsim>] [-o <vhdl-output-directory>] [-w]  <file-name> (<file-name>)* " << endl;
   cerr << "Options: " << endl;
   cerr << "   -s ghdl or -s modelsim:  specifies the simulator for which the test-bench should be generated." << endl;
   cerr << "   -o <vhdl-dir>:  specifies the directory into which the VHDL is to be printed." << endl;
+  cerr << "   -w:  all libraries will be mapped to work." << endl;
 }
 
 
@@ -63,7 +65,7 @@ int  Parse(string filename, vector<hierSystem*>& sys_vec)
   
   try
     {
-      parser->sys_Description(sys_vec, __pmap, __signals);
+      parser->sys_Description(sys_vec, __pmap, __signals, __noblock_pipes);
     }
   catch(ANTLR_USE_NAMESPACE(antlr)RecognitionException& re)
     {
@@ -82,6 +84,7 @@ int main(int argc, char* argv[])
 
   int ret_val = 0;
   int print_whole_hierarchy = 0;
+  int map_all_libraries_to_work = 0;
 
   string opt_string;
 
@@ -102,6 +105,7 @@ int main(int argc, char* argv[])
 	switch(opt) {
 		case 's': 
 			opt_string = optarg;
+			cerr << "Info: simulator option is " << opt_string << "." << endl;
 			if(opt_string == "modelsim")  {
 				sim_link_prefix = "Modelsim_FLI_";
 				sim_link_library = "ModelsimLink";
@@ -109,9 +113,15 @@ int main(int argc, char* argv[])
 			break;
 		case 'o':
 			odir = optarg;
+			cerr << "Info: output-directory is " << odir << "." << endl;
+			break;
+		case 'w':
+			map_all_libraries_to_work = 1;
+			cerr << "Info: all libraries will be mapped to work." << endl;
 			break;
 		case 'a':
 			print_whole_hierarchy = 1;
+			cerr << "Info: the full VHDL hierarchy will be printed." << endl;
 			break;
 		default: cerr << "Error: unknown option " << opt << endl; ret_val = 1; break;
 	}
@@ -148,7 +158,7 @@ int main(int argc, char* argv[])
 
   	hierSystem* top_sys = sys_vec.back();
 	string top_vhdl_lib = top_sys->Get_Library();
-	if(top_vhdl_lib == "")
+	if(top_vhdl_lib == "" || map_all_libraries_to_work)
 		top_vhdl_lib = "work";
 
 	
@@ -167,7 +177,7 @@ int main(int argc, char* argv[])
 				continue;
 
 			string sys_vhdl_lib = sys->Get_Library();
-			if(sys_vhdl_lib == "")
+			if(sys_vhdl_lib == "" || map_all_libraries_to_work)
 				sys_vhdl_lib = "work";
 
 
@@ -178,8 +188,8 @@ int main(int argc, char* argv[])
 			ofstream sys_vhdl_file;
 
 			sys_vhdl_file.open(sys_vhdl_file_name.c_str());
-			sys->Print_Vhdl_Rtl_Threads(sys_vhdl_file);
-			sys->Print_Vhdl_Entity_Architecture(sys_vhdl_file);
+			sys->Print_Vhdl_Rtl_Threads(sys_vhdl_file, map_all_libraries_to_work);
+			sys->Print_Vhdl_Entity_Architecture(sys_vhdl_file, map_all_libraries_to_work);
 			sys_vhdl_file.close();
 		}
 	}
@@ -191,12 +201,12 @@ int main(int argc, char* argv[])
 	ofstream top_vhdl_file;
 
 	top_vhdl_file.open(top_vhdl_file_name.c_str());
-	top_sys->Print_Vhdl_Rtl_Threads(top_vhdl_file);
-	top_sys->Print_Vhdl_Entity_Architecture(top_vhdl_file);
+	top_sys->Print_Vhdl_Rtl_Threads(top_vhdl_file, map_all_libraries_to_work);
+	top_sys->Print_Vhdl_Entity_Architecture(top_vhdl_file, map_all_libraries_to_work);
 	top_vhdl_file.close();
 
 
-	string tb_dir = odir + "/work";
+	string tb_dir = odir + "/testbench";
 	boost::filesystem::create_directory(tb_dir);
 
 	string vhdl_tb_file_name = tb_dir + "/" + top_sys->Get_Id() + "_test_bench.unformatted_vhdl";
@@ -206,7 +216,7 @@ int main(int argc, char* argv[])
 	vhdl_tb_file << "library ieee;" << endl;
 	vhdl_tb_file << "use ieee.std_logic_1164.all;" << endl;
 
-	top_sys->Print_Vhdl_Test_Bench(sim_link_library, sim_link_prefix, vhdl_tb_file);
+	top_sys->Print_Vhdl_Test_Bench(sim_link_library, sim_link_prefix, vhdl_tb_file, map_all_libraries_to_work);
 	vhdl_tb_file.close();
   }
   if(hierRoot::_error_count > 0) 

@@ -375,6 +375,7 @@ AaPipeObject::AaPipeObject(AaScope* parent_tpr, string oname, AaType* otype):AaO
 {
 	_depth = 1;
 	_lifo_mode = false;
+	_no_block_mode = false;
 	_port = false;
 	_in_mode = false;
 	_out_mode = false;
@@ -404,6 +405,8 @@ void AaPipeObject::Print(ostream& ofile)
 	ofile << this->Tab();
 	if(_lifo_mode)
 		ofile << "$lifo ";
+	else if(_no_block_mode)
+		ofile << "$noblock ";
 	ofile << "$pipe ";
 	this->AaObject::Print(ofile);
 	ofile << " $depth " << this->Get_Depth() << " ";
@@ -477,6 +480,7 @@ void AaPipeObject::Write_VC_Model(ostream& ofile)
 			this->_type->Size(),
 			this->Get_Depth(),
 			this->Get_Lifo_Mode(),
+			this->Get_No_Block_Mode(),
 			this->Get_In_Mode(),
 			this->Get_Out_Mode(),
 			this->Get_Signal(),
@@ -497,7 +501,7 @@ void AaPipeObject::PrintC_Pipe_Registration(ofstream& ofile)
 	string pname = this->C_Reference_String();
 
 	// register the pipe.
-	Print_C_Pipe_Registration(pname, t, _depth, (_port | _signal),  _lifo_mode, ofile);
+	Print_C_Pipe_Registration(pname, t, _depth, (_port | _signal),  _lifo_mode, _no_block_mode,  ofile);
 }
 
 //---------------------------------------------------------------------

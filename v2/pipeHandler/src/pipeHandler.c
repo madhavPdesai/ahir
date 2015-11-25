@@ -142,7 +142,7 @@ int check_for_dangling_pipes()
 }
 
 // return 0 on success, 1 on error.
-uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo_mode)
+uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int pipe_mode)
 {
   PipeRec* p;
   p = find_pipe(pipe_name); // this also uses the lock.
@@ -158,7 +158,7 @@ uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo
 	      fprintf(stderr,"\nError: pipeHandler: redefinition of pipe %s with conflicting depths (%d or %d?)\n", pipe_name, p->pipe_depth, pipe_depth);
 		return(1);
         }
-	if(p->lifo_mode != lifo_mode)
+	if(p->pipe_mode != pipe_mode)
 	{
 	      fprintf(stderr,"\nError: pipeHandler: redefinition of pipe %s with conflicting modes (FIFO or LIFO?)\n", pipe_name);
 		return(1);
@@ -174,7 +174,7 @@ uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo
   new_p->write_pointer = 0;
   new_p->read_pointer = 0;
   new_p->buffer.ptr8 = (uint8_t*) calloc(1, ((pipe_depth*pipe_width)/8)*sizeof(uint8_t));
-  new_p->lifo_mode = lifo_mode;
+  new_p->pipe_mode = pipe_mode;
 
 #ifdef USE_GNUPTH
   pth_mutex_init(&(new_p->pm));
@@ -191,7 +191,7 @@ uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo
   if(log_file != NULL)
   {
     __LOCKLOG__
-    fprintf(log_file,"\nAdded: %s depth %d width %d lifo_mode %d.", pipe_name,pipe_depth,pipe_width, lifo_mode);
+    fprintf(log_file,"\nAdded: %s depth %d width %d pipe_mode %d.", pipe_name,pipe_depth,pipe_width, pipe_mode);
     fflush(log_file);
     __UNLOCKLOG__
   }
@@ -247,6 +247,10 @@ uint32_t register_signal(char* id, int pipe_width)
   return(0);
 }
 
+//
+// if pipe mode is NOBLOCK, then either send back the
+// full chunk of data or send back all zeros.
+//
 uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requested, void* burst_payload)
 {
   if(log_file != NULL)
@@ -288,7 +292,12 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
 	  }
   }
 
-  if(ret_val > 0)
+  if((p->pipe_mode == PIPE_FIFO_NON_BLOCK_READ) && (ret_val < number_of_words_requested))
+  {
+	ret_val = number_of_words_requested;
+	bzero(burst_payload, number_of_words_requested*width/8);
+  }
+  else if(ret_val > 0)
   {
 	  uint32_t idx;
 	  uint8_t* ptr = (uint8_t*) burst_payload;
@@ -300,16 +309,16 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
   }
   MUTEX_UNLOCK(p->pm);
 
-	  if(ret_val > 0)
+  if(ret_val > 0)
+  {
+	  if(log_file != NULL)
 	  {
-		  if(log_file != NULL)
-		  {
-			  __LOCKLOG__
-				  fprintf(log_file,"\nRead: %s %d word(s) of width %d: ", pipe_name, ret_val,width);
-			  print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);  
-			  __UNLOCKLOG__
-		  }
+		  __LOCKLOG__
+			  fprintf(log_file,"\nRead: %s %d word(s) of width %d: ", pipe_name, ret_val,width);
+		  print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);  
+		  __UNLOCKLOG__
 	  }
+  }
   return(ret_val);
 }
 
@@ -340,7 +349,7 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 	}
 
 	MUTEX_LOCK(p->pm);
-		int available = __AVAILABLE(p);
+	int available = __AVAILABLE(p);
 	if(available >= number_of_words_requested)
 	{
 		ret_val = number_of_words_requested;
@@ -362,16 +371,16 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 	}
 	MUTEX_UNLOCK(p->pm);
 
-		if(ret_val > 0)
+	if(ret_val > 0)
+	{
+		if(log_file != NULL)
 		{
-			if(log_file != NULL)
-			{
-				__LOCKLOG__
-					fprintf(log_file,"\nWrote: %s %d word(s) of width %d: ", pipe_name,ret_val,width);
-				print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);
-				__UNLOCKLOG__
-			}
+			__LOCKLOG__
+				fprintf(log_file,"\nWrote: %s %d word(s) of width %d: ", pipe_name,ret_val,width);
+			print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);
+			__UNLOCKLOG__
 		}
+	}
 
 	return(ret_val);
 }

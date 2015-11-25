@@ -85,14 +85,14 @@ void rtlThread::Print_Vhdl_Component(ostream& ofile)
 	ofile << "--} " << endl << "end component;" << endl;
 }
 
-void rtlThread::Print_Vhdl_Entity_Architecture(ostream& ofile)
+void rtlThread::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_to_work)
 {
 	//
 	// TODO: print library, use clauses
 	//       (dont forget the types package for this system).
 	//       	
 	//
-	this->Get_Parent()->Print_Vhdl_Inclusions(ofile);
+	this->Get_Parent()->Print_Vhdl_Inclusions(ofile, map_all_libs_to_work);
 
 	ofile << "entity " << this->Get_Id() << " is  -- {" << endl;
 	this->Print_Vhdl_Port_Declarations(ofile);

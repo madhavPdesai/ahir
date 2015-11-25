@@ -1492,13 +1492,14 @@ vcPipe* vcModule::Find_Pipe(string pipe_id)
 	return(ret_pipe);
 }
 
-void vcModule::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bool in_flag, bool out_flag, bool signal_flag, bool p2p_flag) 
+void vcModule::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bool noblock_mode,
+					 bool in_flag, bool out_flag, bool signal_flag, bool p2p_flag) 
 {
 	assert(_pipe_map.find(pipe_id) == _pipe_map.end());
 	assert(width > 0);
 	assert(depth >= 0);
 
-	vcPipe* np =  new vcPipe(this, pipe_id, width, depth, lifo_mode);
+	vcPipe* np =  new vcPipe(this, pipe_id, width, depth, lifo_mode, noblock_mode);
 	_pipe_map[pipe_id] = np;
 
 	np->Set_In_Flag(in_flag);

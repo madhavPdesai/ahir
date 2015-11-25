@@ -87,7 +87,7 @@ hierSystemInstance::hierSystemInstance(hierSystem* parent, hierSystem* base_sys,
 
 bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
 		map<string, pair<int,int> >& global_pipe_map,
-		set<string>& global_signals)
+		set<string>& global_signals, set<string>& global_noblock_pipes)
 {
 	// check if actual exists?  If not check if it exists in the
 	// visible pipes
@@ -97,8 +97,9 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
 	{
 		int w, d;
 		bool is_sig;
-		bool err = getPipeInfoFromGlobals(actual, global_pipe_map, global_signals,
-				w, d, is_sig);	
+		bool is_nb;
+		bool err = getPipeInfoFromGlobals(actual, global_pipe_map, global_signals, global_noblock_pipes,
+				w, d, is_sig, is_nb);	
 		if(err)
 		{
 			this->Report_Error("Instance " + this->Get_Id() + " in " + parent->Get_Id() + 
@@ -109,9 +110,11 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
 		{
 			this->Report_Warning(string("Added internal ") + 
 					(is_sig ? "signal " : "pipe " )  + actual + " to " + parent->Get_Id());
-			parent->Add_Internal_Pipe(actual, w, d);
+			parent->Add_Internal_Pipe(actual, w, d, is_nb);
 			if(is_sig)
 				parent->Add_Signal(actual);
+			if(is_nb)
+				parent->Add_Noblock_Pipe(actual);
 		}
 	}	
 	this->Add_Port_Mapping(formal, actual);
@@ -164,7 +167,7 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 	
 // unmapped ports will be mapped to default
 // pipes in parent if they exist.
-bool hierSystemInstance::Map_Unmapped_Ports_To_Defaults( map<string, pair<int,int> >& pmap, set<string>& signals)
+bool hierSystemInstance::Map_Unmapped_Ports_To_Defaults( map<string, pair<int,int> >& pmap, set<string>& signals, set<string>& noblock_pipes)
 {
 	bool err = false;
 	vector<string> ports;
@@ -178,7 +181,7 @@ bool hierSystemInstance::Map_Unmapped_Ports_To_Defaults( map<string, pair<int,in
 		if(_port_map.find(f) == _port_map.end())
 		{
 			this->Report_Warning("mapping unmapped formal in instance " + this->Get_Id() + " to default: " + f);
-			bool lerr = this->Add_Port_Mapping(f,f,pmap, signals);
+			bool lerr = this->Add_Port_Mapping(f,f,pmap, signals, noblock_pipes);
 			if(lerr)
 				this->Report_Warning( "in mapping unmapped formal in instance " + this->Get_Id() + " to default (not found): " + f);
 		
@@ -499,7 +502,7 @@ void hierSystem::Print_Vhdl_Rtl_Type_Package(ostream& ofile)
 	ofile << "end package;" << endl;
 }
 
-void hierSystem::Print_Vhdl_Inclusions(ostream& ofile)
+void hierSystem::Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work)
 {
 	ofile << "library ahir;" << endl;
 	ofile << "use ahir.BaseComponents.all;" << endl;
@@ -510,23 +513,30 @@ void hierSystem::Print_Vhdl_Inclusions(ostream& ofile)
 	ofile << "library ieee;" << endl;
 	ofile << "use ieee.std_logic_1164.all;" << endl;
 	ofile << "use ieee.numeric_std.all;" << endl;
-	ofile << "library " << this->_library << ";" << endl;
-	ofile << "use " << this->_library << "." << this->Get_Id() << "_Type_Package.all;" << endl;
+	string this_lib;
+	ofile << "-->>>>>"  << endl;
+	if(map_all_libs_to_work)
+		this_lib = "work";
+	else 
+		this_lib = this->_library;
+	ofile << "library " << this_lib << ";" << endl;
+	ofile << "use " << this_lib << "." << this->Get_Id() << "_Type_Package.all;" << endl;
+	ofile << "--<<<<<"  << endl;
 }
 
 	
-void hierSystem::Print_Vhdl_Rtl_Threads(ostream& ofile)
+void hierSystem::Print_Vhdl_Rtl_Threads(ostream& ofile, int map_all_libs_to_work)
 {
 	this->Print_Vhdl_Rtl_Type_Package(ofile);
 	for(map<string, rtlThread*>::iterator iter = this->_thread_map.begin(), fiter = this->_thread_map.end();
 				iter != fiter; iter++)
 	{
 		rtlThread* t = (*iter).second;
-		t->Print_Vhdl_Entity_Architecture(ofile);
+		t->Print_Vhdl_Entity_Architecture(ofile, map_all_libs_to_work);
 	}
 }
 
-void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile)
+void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_to_work)
 {
         if((this->_child_map.size() == 0) && (this->_rtl_strings.size() == 0))
 	{
@@ -534,17 +544,19 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile)
 		return;
 	}
 
-	this->Print_Vhdl_Inclusions(ofile);
+	this->Print_Vhdl_Inclusions(ofile, map_all_libs_to_work);
 	// library refs..
+	ofile << "-->>>>>" << endl;
 	for(map<string,hierSystemInstance*>::iterator iter = _child_map.begin(), fiter = _child_map.end();	
 		iter != fiter; iter++)
 	{
 		hierSystemInstance* inst = (*iter).second;
-		if(inst->Get_Base_System()->Get_Library() != "work")
+		if(!map_all_libs_to_work && (inst->Get_Base_System()->Get_Library() != "work"))
 		{
 			ofile << "library " << inst->Get_Base_System()->Get_Library() << ";" << endl;
 		}
 	}
+	ofile << "--<<<<<" << endl;
 
 	// Entity..
 	ofile << "entity " << this->Get_Id() << " is -- {" << endl;
@@ -587,11 +599,14 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile)
 			inst->Get_Base_System()->Print_Vhdl_Component_Declaration(ofile);
 			bases_encountered.insert(inst->Get_Base_System());
 		}
-		if(inst->Get_Base_System()->Get_Library() != "work")
+
+		if(!map_all_libs_to_work && (inst->Get_Base_System()->Get_Library() != "work"))
 		{
+			ofile << "-->>>>>" << endl;
 			ofile << "for " << inst->Get_Id() << " :  " << inst->Get_Base_System()->Get_Id() << " -- { " << endl;
 			ofile << "   use entity " << inst->Get_Base_System()->Get_Library() << "." 
 				<< inst->Get_Base_System()->Get_Id() << "; -- } " << endl;
+			ofile << "--<<<<<" << endl;
 		}
 	}
 
@@ -608,11 +623,13 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile)
 			threads_encountered.insert(bt);
 		}
 
-		if(bt->Get_Parent() && (bt->Get_Parent()->Get_Library() != "work"))
+		if(!map_all_libs_to_work && (bt->Get_Parent() && (bt->Get_Parent()->Get_Library() != "work")))
 		{
+			ofile << "-->>>>" << endl;
 			ofile << "for " << s->Get_Id() << " :  " << bt->Get_Id() << " -- { " << endl;
 			ofile << "   use entity " << bt->Get_Parent()->Get_Library() << "." 
 				<< bt->Get_Id() << "; -- } " << endl;
+			ofile << "--<<<<<" << endl;
 		}
 	}
 
@@ -806,7 +823,8 @@ void Write_Pipe_Access_Process(string sim_link_prefix, string pipe_id, int pipe_
 // generate a Vhpi-enabled--testbench so that the assembled system can be
 // verified.  This reuses the existing code in vc2vhdl..
 //
-void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_prefix,  ostream& ofile)
+void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_prefix,  ostream& ofile, 
+						int map_all_libs_to_work)
 {
         ofile 	<< "library ahir;\n" 
 		<< "use ahir.memory_subsystem_package.all;\n"
@@ -822,7 +840,12 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 	ofile << "use "     << sim_link_library << "." 
 		<<   sim_link_prefix << "Foreign.all;" << endl;
 
-	ofile << "library " << this->Get_Library() << ";"  << endl;
+	ofile << "-->>>>>" << endl;
+	if(!map_all_libs_to_work)
+		ofile << "library " << this->Get_Library() << ";"  << endl;
+	else
+		ofile << "library work;"  << endl;
+	ofile << "--<<<<<" << endl;
 
 	ofile << "entity " << this->Get_Id() << "_Test_Bench is -- {" << endl;
 	ofile << "-- }\n end entity;" << endl;
@@ -863,9 +886,14 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 	ofile << "signal clk : std_logic := '0'; " << endl; 
 	ofile << "signal reset: std_logic := '1'; " << endl; 
 	this->Print_Vhdl_Component_Declaration(ofile);
-	ofile << "for " << "dut :  " << this->Get_Id() << " -- { " << endl;
-	ofile << "   use entity " << this->Get_Library() << "." 
+	if(!map_all_libs_to_work)
+	{
+		ofile << "-->>>>>" << endl;
+		ofile << "for " << "dut :  " << this->Get_Id() << " -- { " << endl;
+		ofile << "   use entity " << this->Get_Library() << "." 
 			<< this->Get_Id() << "; -- } " << endl;
+		ofile << "--<<<<<" << endl;
+	}
 
 	ofile << "-- }\n begin --{" << endl;
 	ofile << "-- clock/reset generation " << endl;
@@ -950,7 +978,7 @@ bool hierSystem::Check_For_Errors()
 				if(this->Get_Output_Pipe_Width(formal) > 0)
 				{
 					this->Report_Error("Error: formal out-pipe " +  formal 
-						+ " mapped to actual in-pipe in instance " + hi->Get_Id());
+							+ " mapped to actual in-pipe in instance " + hi->Get_Id());
 					ret_val = true;
 				}
 				else 
@@ -1036,7 +1064,7 @@ void listPipeMap(map<string, pair<int,int> >& pmap, vector<string>& pvec)
 }
 
 bool getPipeInfoFromGlobals(string pname, map<string, pair<int,int> >& pmap, 
-	set<string>& signals, int& width, int& depth, bool& is_signal)
+	set<string>& signals, set<string>& noblock_pipes, int& width, int& depth, bool& is_signal, bool& noblock_flag)
 {
 	if(pmap.find(pname) == pmap.end())
 		return(true);
@@ -1045,12 +1073,15 @@ bool getPipeInfoFromGlobals(string pname, map<string, pair<int,int> >& pmap,
 	depth = pmap[pname].second;
 
 	is_signal = (signals.find(pname) != signals.end());
+	noblock_flag = (noblock_pipes.find(pname) != noblock_pipes.end());
+	
 	return(false);
 }
 	
 
 void addPipeToGlobalMaps(string oname, map<string, pair<int,int> >& pipe_map, 
-				set<string>& signals, int pipe_width, int pipe_depth, bool is_signal)
+				set<string>& signals, set<string>& noblock_pipes, 
+					int pipe_width, int pipe_depth, bool is_signal, bool noblock_mode)
 {
 		std::cerr << "Info: adding pipe " << oname << " width = " << pipe_width << ", depth = " 
 			<< pipe_depth << " to global map " << endl;
@@ -1060,8 +1091,13 @@ void addPipeToGlobalMaps(string oname, map<string, pair<int,int> >& pipe_map,
 
 		if(is_signal)
 		{
-			std::cerr << "Info: marking pipe " << oname << " as a signl in global set." << endl;
+			std::cerr << "Info: marking pipe " << oname << " as a signal in global set." << endl;
 			signals.insert(oname);
+		}
+		if(noblock_mode)
+		{
+			std::cerr << "Info: marking pipe " << oname << " as a noblock-pipe in global set." << endl;
+			noblock_pipes.insert(oname);
 		}
 }
 

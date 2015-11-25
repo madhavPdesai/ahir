@@ -64,8 +64,8 @@ begin  -- default_arch
 			port map (write_req => write_req_nb(I),
 					write_ack => write_ack_nb(I),
 						write_data => write_data_nb (((I+1)*data_width)-1 downto (I*data_width)),
-							read_req => read_req,
-								read_ack => read_ack,
+							read_req => read_req(I),
+								read_ack => read_ack(I),
 									read_data => read_data (((I+1)*data_width)-1 downto (I*data_width)),
 										clk => clk, reset => reset);
 	end generate genNB;

@@ -62,27 +62,29 @@ vc_System[vcSystem* sys]
 	;
 
 //-----------------------------------------------------------------------------------------------
-// vc_Pipe :  LIFO? PIPE vc_Label UINTEGER
+// vc_Pipe :  (LIFO | NOBLOCK)? PIPE vc_Label UINTEGER
 //-----------------------------------------------------------------------------------------------
 vc_Pipe[vcSystem* sys, vcModule* m]
 {
   string lbl;
   int depth = 1;
   bool lifo_mode = false;
+  bool noblock_mode = false;
   bool in_flag = false;
   bool out_flag = false;
   bool port_flag = false;
   bool signal_flag = false;
   bool p2p_flag = false;
-}:  (LIFO {lifo_mode = true;})? PIPE lbl = vc_Label  wid:UINTEGER  (DEPTH did:UINTEGER {depth = atoi(did->getText().c_str()); })?
+}:  ((LIFO {lifo_mode = true;}) | (NOBLOCK {noblock_mode = true;}))? 
+	PIPE lbl = vc_Label  wid:UINTEGER  (DEPTH did:UINTEGER {depth = atoi(did->getText().c_str()); })?
 	( IN {in_flag = true;} | OUT {out_flag = true;} )?
 	(SIGNAL {signal_flag = true;})?
 	(P2P {p2p_flag = true;})?
         {
             if (sys) 
-                sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode,  in_flag, out_flag, signal_flag, p2p_flag);
+                sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode, noblock_mode, in_flag, out_flag, signal_flag, p2p_flag);
             else if(m)
-                m->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode,  in_flag, out_flag, signal_flag, p2p_flag);
+                m->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode, noblock_mode,  in_flag, out_flag, signal_flag, p2p_flag);
         } 
 ;
 
@@ -1723,6 +1725,7 @@ INLINE        : "$inline";
 IOPORT        : "$ioport";
 PIPE          : "$pipe";
 LIFO          : "$lifo";
+NOBLOCK       : "$noblock";
 SIGNAL        : "$signal";
 P2P           : "$p2p";
 FROM          : "$from";

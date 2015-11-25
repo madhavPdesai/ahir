@@ -16,7 +16,8 @@ void Print_C_Assert_If_Bitvector_Undefined(string var_name, ostream& ofile)
 	ofile << "assert(0);} " << __endl__;
 }
 
-void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, bool signal_mode, bool lifo_mode, ofstream& ofile)
+void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, bool signal_mode, bool lifo_mode, 
+						bool noblock_mode, ofstream& ofile)
 {
 	int wsize;
 	int tsize = pipe_type->Size();
@@ -39,7 +40,7 @@ void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, 
 	else
 	{
 		ofile << "register_pipe(\"" << pipe_name << "\", " <<  (nwords*depth)
-			<< ", " << wsize << ", " <<   (lifo_mode ? 1 : 0) << ");" << __endl__;
+			<< ", " << wsize << ", " <<   (lifo_mode ? 1 : (noblock_mode ? 2 : 0)) << ");" << __endl__;
 
 	}
 }

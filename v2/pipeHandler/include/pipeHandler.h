@@ -5,6 +5,10 @@
 #include <stdio.h>  // FILE
 #include <stdint.h>
 
+#define PIPE_FIFO_MODE  0
+#define PIPE_LIFO_MODE  1
+#define PIPE_FIFO_NON_BLOCK_READ 2
+
 typedef struct PipeRec_ PipeRec;
 struct PipeRec_
 {
@@ -16,7 +20,7 @@ struct PipeRec_
   int write_pointer;
   int number_of_entries;
 
-  int lifo_mode;
+  int pipe_mode;
   int is_signal;
 
   // to check for dangling pipes
@@ -90,7 +94,7 @@ struct PipeRec_
 			}\
 			else if(p->number_of_entries > 0) {\
 				*((uint##n##_t *)x) = p->buffer.ptr##n[p->read_pointer];\
-				if(!p->lifo_mode)\
+				if(!p->pipe_mode)\
 				 	INCR(p->read_pointer,p);\
 				else\
 				{\
@@ -108,7 +112,7 @@ struct PipeRec_
 		else if(p->number_of_entries < p->pipe_depth) {\
 			p->number_of_entries += 1;\
 			p->buffer.ptr##n[p->write_pointer] = *((uint##n##_t *) x);\
-			if(p->lifo_mode)\
+			if(p->pipe_mode)\
 			{\
 				p->read_pointer = p->write_pointer;\
 			}\
@@ -122,7 +126,7 @@ void init_pipe_handler_with_log(char* log_file);
 // close after your app finishes using the pipehandler
 void close_pipe_handler();
 // returns 0 on success, 1 if something went wrong..
-uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo_mode);
+uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int pipe_mode);
 // set pipe status.. this tells the pipe-handler that the pipe
 // will be written into or read from 
 void set_pipe_is_written_into(char* pipe_name);

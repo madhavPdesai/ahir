@@ -121,6 +121,8 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 	bool is_internal_pipe = ((num_reads > 0) && (num_writes > 0));
 	bool is_unused_pipe = ((num_reads == 0) && (num_writes == 0));
 
+	bool is_no_block = this->Get_No_Block_Mode();
+
 	if(!is_unused_pipe)
 	{
 		// the pipe may be used in one of three modes.
@@ -156,9 +158,14 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 			num_reads = MAX(num_reads,1);
 			num_writes = MAX(num_writes,1);
 
-
-
-			ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
+			if(is_no_block)
+			{
+				ofile << pipe_id << "_Pipe: NonBlockingReadPipeBase -- {" << endl;
+			}
+			else
+			{
+				ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
+			}
 			ofile << "generic map( -- { " << endl;
 			ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
 			ofile << "num_reads => " << num_reads << "," << endl;

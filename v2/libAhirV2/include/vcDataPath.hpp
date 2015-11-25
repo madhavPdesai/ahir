@@ -37,6 +37,7 @@ class vcPipe: public vcRoot
   map<vcModule*, vector<int> > _pipe_write_map;
   int _pipe_write_count;
   bool _lifo_mode;
+  bool _no_block_mode;
   bool _port;
   bool _in_flag;
   bool _out_flag;
@@ -45,7 +46,7 @@ class vcPipe: public vcRoot
 public:
 
   
-  vcPipe(vcModule* parent, string id, int w, int d, bool lifo_mode):vcRoot(id)
+  vcPipe(vcModule* parent, string id, int w, int d, bool lifo_mode, bool noblock_mode):vcRoot(id)
   {
     _parent = parent;
     _width = w;
@@ -53,6 +54,7 @@ public:
     _pipe_read_count = 0;
     _pipe_write_count = 0;
     _lifo_mode = lifo_mode;
+    _no_block_mode = noblock_mode;
     _port = false;
     _in_flag = false;
     _out_flag = false;
@@ -79,6 +81,7 @@ public:
   int Get_Width() { return(this->_width);}
   int Get_Depth() { return(this->_depth);}
   bool Get_Lifo_Mode() {return(_lifo_mode);}
+  bool Get_No_Block_Mode() {return(_no_block_mode);}
 
   map<vcModule*,vector<int> >& Get_Pipe_Read_Map()
   {
@@ -99,6 +102,8 @@ public:
   {
     if(_lifo_mode)
     	ofile << vcLexerKeywords[__LIFO]  << " ";
+    else if(_no_block_mode)
+    	ofile << vcLexerKeywords[__NOBLOCK]  << " ";
 
     ofile << vcLexerKeywords[__PIPE] 
 	  << " [" << this->Get_Id() << "] " 

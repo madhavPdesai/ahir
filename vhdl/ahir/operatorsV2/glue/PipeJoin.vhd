@@ -24,7 +24,7 @@ end PipeJoin;
 
 architecture default_arch of PipeJoin is
 begin  -- default_arch
-   read_ack <= write_req_0 and write_ack_0;
+   read_ack <= write_req_0 and write_req_1;
    write_ack_0 <= read_req;
    write_ack_1 <= read_req;
    read_data <= write_data_1 & write_data_0;
