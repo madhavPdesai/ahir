@@ -277,26 +277,13 @@ void Print_C_Pipe_Read(string tgt, AaType* tgt_type, AaPipeObject* p, ofstream& 
 	int tsize = tgt_type->Size();
 	if(tgt_type->Is_Integer_Type() || tgt_type->Is_Pointer_Type())
 	{
-		if((tsize == 8) || (tsize == 16) || (tsize == 32) || (tsize == 64))
+		if(tgt_type->Is_Pointer_Type())
 		{
-			if(tgt_type->Is_Pointer_Type())
-			{
-				ofile << tgt << " = (" << tgt_type->C_Name() << "*)  read_pointer(\"" <<  p->Get_Name() << "\");" << __endl__;
-			}
-			else
-			{
-				ofile << "bit_vector_assign_uint64(" 
-					<< (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &"
-					<<  tgt << ", " 
-					<< "read_uint" << tsize << "(\"" << p->Get_Name() << "\")); " << __endl__;
-			}
+			ofile << tgt << " = (" << tgt_type->C_Name() << "*)  read_pointer(\"" <<  p->Get_Name() << "\");" << __endl__;
 		}
 		else
 		{
-			int wsize = 8;
-			int nwords = ((tsize % wsize) ? (tsize/wsize)+1 : tsize/wsize);
-			ofile << "bit_vector_clear(&" << tgt << ");" << __endl__ ;
-			ofile  << "read_uint8_n(\"" << p->Get_Name() << "\", " << tgt << ".val.byte_array," << tgt << ".val.array_size);" << __endl__;
+			ofile << "read_bit_vector_from_pipe(\"" << p->Get_Name() << "\",&(" << tgt << "));" << __endl__;
 		}
 	}
 	else if(tgt_type->Is_Float_Type())
@@ -310,27 +297,13 @@ void Print_C_Pipe_Write(string src, AaType* src_type, AaPipeObject* p, ofstream&
 	int tsize = src_type->Size();
 	if(src_type->Is_Integer_Type() || src_type->Is_Pointer_Type())
 	{
-		if( (tsize == 8) || (tsize == 16) || (tsize == 32) || (tsize == 64) )
+		if(src_type->Is_Pointer_Type())
 		{
-			if(src_type->Is_Pointer_Type())
-			{
-				ofile << "write_pointer" << tsize << "(\"" << p->Get_Name() << "\", (void*) " << src << "); " << __endl__;
-			}
-			else
-			{
-				ofile << "{ " << __endl__;
-				ofile << src_type->Native_C_Name() << " __tmp;";
-				ofile << "__tmp = bit_vector_to_uint64(0, &" << src << ");" << __endl__;
-				ofile << "write_uint" << tsize << "(\"" << p->Get_Name() << "\", __tmp); " << __endl__;
-				ofile << "}" << __endl__;
-			}
+			ofile << "write_pointer" << tsize << "(\"" << p->Get_Name() << "\", (void*) " << src << "); " << __endl__;
 		}
 		else
 		{
-			int wsize = 8;
-			int nwords = ((tsize % wsize) ? (tsize/wsize)+1 : tsize/wsize);
-			ofile << "write_uint8_n(\"" << p->Get_Name() << "\", " << src << ".val.byte_array," << src << ".val.array_size);"
-				<< __endl__;
+			ofile << "write_bit_vector_to_pipe(\"" << p->Get_Name() << "\",&(" << src << "));" << __endl__;
 		}
 	}
 	else if(src_type->Is_Float_Type())
@@ -348,17 +321,17 @@ void Print_C_Type_Cast_Operation(bool bit_cast, string src, AaType* src_type, st
 
 	uint8_t src_is_bv = src_type->Is_Integer_Type();
 	uint8_t tgt_is_bv = tgt_type->Is_Integer_Type();
-	
-	
+
+
 	// signed conversion if
 	//   not bitcast and 
 	//   src-is-signed and target is float/signed.
 	//   tgt-is-signed and
 	bool signed_conversion = (!bit_cast && 
-					((tgt_type->Is_Float_Type() && src_signed) || tgt_signed));
+			((tgt_type->Is_Float_Type() && src_signed) || tgt_signed));
 	if(src_type->Is_Integer_Type())
 	{
-		
+
 		if(tgt_type->Is_Integer_Type())
 		{
 			// if both are integer, then use bit_vector_op.
@@ -367,12 +340,12 @@ void Print_C_Type_Cast_Operation(bool bit_cast, string src, AaType* src_type, st
 			if(bit_cast)
 			{
 				ofile << "bit_vector_bitcast_to_bit_vector("
-						<< " &(" << tgt << "), &(" << src << "));" << __endl__;
+					<< " &(" << tgt << "), &(" << src << "));" << __endl__;
 			}
 			else
 			{
 				ofile << "bit_vector_cast_to_bit_vector(" << (sign_flag ? 1 : 0) 
-						<< ", &(" << tgt << "), &(" << src << "));" << __endl__;
+					<< ", &(" << tgt << "), &(" << src << "));" << __endl__;
 			}
 		}
 		else

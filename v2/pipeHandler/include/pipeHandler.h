@@ -14,6 +14,7 @@
 #define PIPE_LIFO_MODE  1
 #define PIPE_FIFO_NON_BLOCK_READ 2
 
+
 typedef struct PipeRec_ PipeRec;
 struct PipeRec_
 {
@@ -46,6 +47,8 @@ struct PipeRec_
   } buffer;
 
 };
+
+int is_lifo_mode(PipeRec* p);
 
 #define __APPEND(lst,lnk) if(lst.tail)		\
       {\
@@ -99,7 +102,7 @@ struct PipeRec_
 			}\
 			else if(p->number_of_entries > 0) {\
 				*((uint##n##_t *)x) = p->buffer.ptr##n[p->read_pointer];\
-				if(!p->pipe_mode)\
+				if(!is_lifo_mode(p))\
 				 	INCR(p->read_pointer,p);\
 				else\
 				{\
@@ -117,7 +120,7 @@ struct PipeRec_
 		else if(p->number_of_entries < p->pipe_depth) {\
 			p->number_of_entries += 1;\
 			p->buffer.ptr##n[p->write_pointer] = *((uint##n##_t *) x);\
-			if(p->pipe_mode)\
+			if(is_lifo_mode(p))\
 			{\
 				p->read_pointer = p->write_pointer;\
 			}\

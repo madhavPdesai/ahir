@@ -911,6 +911,7 @@ IN: "$in";
 OUT: "$out";
 PIPE: "$pipe";
 LIFO: "$lifo";
+NOBLOCK: "$noblock";
 SIGNAL: "$signal";
 GROUP: "$group";
 INSTANCE: "$instance";

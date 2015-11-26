@@ -72,15 +72,16 @@ begin
       when others => null;
     end case;
 
-    if(reset = '1') then
-      next_state := idle;
-    end if;
     
     synch_ack <= synch_ack_var;
     asynch_req <= asynch_req_var;
 
     if(clk'event and clk = '1') then
-      in_fsm_state <= next_state;
+       if(reset = '1') then
+         in_fsm_state <= idle;
+       else 
+         in_fsm_state <= next_state;
+      end if;
     end if;
   end process;
 

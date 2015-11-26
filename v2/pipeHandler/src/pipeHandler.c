@@ -46,6 +46,10 @@ MUTEX_DECL(ph_log_mutex);
 #define __LOCKLOG__  MUTEX_LOCK(ph_log_mutex);
 #define __UNLOCKLOG__  MUTEX_UNLOCK(ph_log_mutex);
 
+int is_lifo_mode(PipeRec* p)
+{
+	return(p->pipe_mode == PIPE_LIFO_MODE);
+}
 
 void print_buffer(FILE* lfile, uint8_t* burst_payload,int count)
 {
