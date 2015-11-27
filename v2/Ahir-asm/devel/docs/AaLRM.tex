@@ -160,28 +160,30 @@ Such a pipe is an input port of the program.
 \end{itemize}
 A pipe declaration has the form
 \begin{verbatim}
-($lifo)? $pipe <pipe-name>: <pipe-type>  ($depth <integer>)?
+($lifo | $noblock)? $pipe <pipe-name>: <pipe-type>  ($depth <integer>)?
 \end{verbatim}
 For example
 \begin{verbatim}
 $pipe myfifo: $uint<32> $depth 16 // 16-slot queue
 $lifo $pipe mystack: $uint<32> $depth 4 // 4-slot stack
+$noblock $pipe cmd_pipe: $uint<8> // non-blocking reads.
 \end{verbatim}
+A non-blocking pipe when read, will deliver $0$ if
+it does not contain data (thus, you will have to reserve
+the $0$ for invalid data).
+
 Pipe variable declarations can also be appended by
 the following keywords:
 \begin{verbatim}
-   ($in | $out)? ($port)? ($signal)? 
+   ($in | $out)? ($signal)? 
 \end{verbatim}
 These additional keywords mean the following things:
 \begin{itemize}
 \item Inclusion of ``\$in'' (respectively ``\$out'') means
 that the pipe is a read-only (respectively write-only) object.
-\item The ``\$port'' keyword means that the pipe is meant to
-be connected to the outside world {\em without} any handshake,
-such as for example in an asynchronous interface to the outside
-world.
-\item The ``\$signal'' keyword means that the interface to
-the external world is a single bit.
+\item The ``\$signal'' keyword means that the pipe behaves
+like a variable.  That is, it remembers the last value
+that was written to it.    
 \end{itemize}
 \item {\bf Constant} variables declared at
 the program scope are globally visible and have
