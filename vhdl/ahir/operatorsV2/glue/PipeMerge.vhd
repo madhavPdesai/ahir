@@ -24,6 +24,9 @@ end PipeMerge;
 
 architecture default_arch of PipeMerge is
 begin  -- default_arch
+
+   assert false report "NOT IMPLEMENTED" severity ERROR;
+
    process(write_req_0, write_req_1, write_data_0, write_data_1, read_req)
 	variable accept_data: boolean;
 	variable read_data_var_0 : std_logic_vector(data_width_0-1 downto 0);
@@ -39,7 +42,7 @@ begin  -- default_arch
 		read_data_var_0 := write_data_0;
 	end if;
 	if(write_req_1 = '1') then
-		read_data_var_1 := write_data_0;
+		read_data_var_1 := write_data_1;
 	end if;
 
 	read_data <= (read_data_var_1 & read_data_var_0);

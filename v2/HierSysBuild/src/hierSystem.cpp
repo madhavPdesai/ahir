@@ -666,7 +666,10 @@ void hierSystem::Print_Vhdl_Pipe_Instance(string pipe_name, int pipe_width, int 
 {
 	string inst_name = pipe_name + "_inst";
 	ofile << inst_name << ": ";
-	ofile << " PipeBase -- { " << endl;
+	if(this->Is_Noblock_Pipe(pipe_name))
+		ofile << " NonblockingReadPipeBase -- { " << endl;
+	else
+		ofile << " PipeBase -- { " << endl;
 	ofile << "generic map( -- { " << endl;
 	ofile << "name => " << '"' << "pipe " << pipe_name << '"' << "," << endl;
 	ofile << "num_reads => 1," << endl;

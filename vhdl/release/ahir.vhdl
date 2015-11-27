@@ -15067,15 +15067,16 @@ begin
       when others => null;
     end case;
 
-    if(reset = '1') then
-      next_state := idle;
-    end if;
     
     synch_ack <= synch_ack_var;
     asynch_req <= asynch_req_var;
 
     if(clk'event and clk = '1') then
-      in_fsm_state <= next_state;
+       if(reset = '1') then
+         in_fsm_state <= idle;
+       else 
+         in_fsm_state <= next_state;
+      end if;
     end if;
   end process;
 
@@ -22299,6 +22300,9 @@ end PipeJoin;
 
 architecture default_arch of PipeJoin is
 begin  -- default_arch
+   assert false report "NOT IMPLEMENTED" severity ERROR;
+
+	-- NOT CORRECT..  TODO. fix it.
    read_ack <= write_req_0 and write_req_1;
    write_ack_0 <= read_req;
    write_ack_1 <= read_req;
@@ -22330,6 +22334,9 @@ end PipeMerge;
 
 architecture default_arch of PipeMerge is
 begin  -- default_arch
+
+   assert false report "NOT IMPLEMENTED" severity ERROR;
+
    process(write_req_0, write_req_1, write_data_0, write_data_1, read_req)
 	variable accept_data: boolean;
 	variable read_data_var_0 : std_logic_vector(data_width_0-1 downto 0);
@@ -22345,7 +22352,7 @@ begin  -- default_arch
 		read_data_var_0 := write_data_0;
 	end if;
 	if(write_req_1 = '1') then
-		read_data_var_1 := write_data_0;
+		read_data_var_1 := write_data_1;
 	end if;
 
 	read_data <= (read_data_var_1 & read_data_var_0);
@@ -22383,6 +22390,8 @@ architecture default_arch of PipeMux is
    signal priority_flag: std_logic;
   
 begin  -- default_arch
+   assert false report "NOT IMPLEMENTED" severity ERROR;
+
    process(clk, reset, priority_flag,  write_req_0, write_req_1, write_data_0, write_data_1, read_req)
 	variable accept_data: boolean;
    begin
@@ -22449,17 +22458,17 @@ end PipeUnblock;
 
 architecture default_arch of PipeUnblock is
 begin  -- default_arch
+   read_ack <= '1';
    process(write_req, write_data, read_req)
 	variable read_data_var : std_logic_vector(data_width-1 downto 0);
    begin
-	read_ack <= write_req;
 	read_data_var := (others => '0');
 
 	if(write_req = '1') then
 		read_data_var := write_data;
 	end if;
-	read_data <= read_data_var;
 
+	read_data <= read_data_var;
 	write_ack <= read_req;
    end process;
 end default_arch;

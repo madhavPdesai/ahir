@@ -24,6 +24,9 @@ end PipeJoin;
 
 architecture default_arch of PipeJoin is
 begin  -- default_arch
+   assert false report "NOT IMPLEMENTED" severity ERROR;
+
+	-- NOT CORRECT..  TODO. fix it.
    read_ack <= write_req_0 and write_req_1;
    write_ack_0 <= read_req;
    write_ack_1 <= read_req;

@@ -27,6 +27,8 @@ architecture default_arch of PipeMux is
    signal priority_flag: std_logic;
   
 begin  -- default_arch
+   assert false report "NOT IMPLEMENTED" severity ERROR;
+
    process(clk, reset, priority_flag,  write_req_0, write_req_1, write_data_0, write_data_1, read_req)
 	variable accept_data: boolean;
    begin
