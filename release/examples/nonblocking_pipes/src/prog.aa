@@ -10,16 +10,14 @@ $module [run_daemon] $in () $out () $is
 		$dopipeline $depth 8 $buffering 2 $fullrate
 
 			$merge $entry $loopback 
-				$phi counter := ($bitcast ($uint<8>) 0) $on $entry next_counter $on $loopback
+
 				$phi FULL := ($bitcast ($uint<1>) 0) $on $entry next_FULL $on $loopback
-				$phi R_CMD := ($bitcast ($uint<8>) 0) $on $entry next_R_CMD $on $loopback
-				$phi W_CMD := ($bitcast ($uint<8>) 0) $on $entry next_W_CMD $on $loopback
+				$phi counter := ($bitcast($uint<8>) 0) $on $entry next_counter $on $loopback
+
 			$endmerge
 
-			$volatile active_rcmd := (R_CMD != 0)
-			$volatile active_wcmd := (W_CMD != 0)
-			$volatile fetch_next_rcmd := ((~active_rcmd) | (active_rcmd & (FULL | active_wcmd)))
-			$volatile fetch_next_wcmd := ((~active_wcmd) | (active_wcmd & ((~FULL) | active_rcmd)))
+			$volatile fetch_next_rcmd := FULL
+			$volatile fetch_next_wcmd := (~FULL)
 								
 			$guard (fetch_next_rcmd)
 				rcmd := read_command
@@ -27,25 +25,15 @@ $module [run_daemon] $in () $out () $is
 			$guard (fetch_next_wcmd)
 				wcmd := write_command
 
+			$volatile active_read := (fetch_next_rcmd & (rcmd [] 0))
+			$volatile active_write := (fetch_next_wcmd & (wcmd [] 0))
+		
 
-			$volatile next_R_CMD := ($mux fetch_next_rcmd rcmd R_CMD) 
-			$volatile next_W_CMD := ($mux fetch_next_wcmd wcmd W_CMD) 
+			$volatile next_FULL := ($prioritymux active_read 0 active_write 1 $default FULL)
+			$volatile next_counter := ($mux active_write (counter+1) counter)
 
-
-			$volatile apply_read  := (active_rcmd & (FULL | active_wcmd))
-			$volatile apply_write := (active_wcmd & ((~FULL) | active_rcmd))
-
-			$volatile next_FULL := ($excmux 
-							(apply_read  & apply_write)       FULL
-							(apply_read  & (~apply_write))    0
-							((~apply_read)  & apply_write)    1
-							((~apply_read)  & (~apply_write)) FULL)
-
-			$volatile next_counter := ($mux apply_write (counter+1) counter)
-
-			$guard (apply_read) 
+			$guard (active_read) 
 					out_data := counter
-
 
 		$while 1
 	}

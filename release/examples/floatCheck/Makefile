@@ -6,7 +6,7 @@ PIPEHANDLER_LIB=$(AHIR_RELEASE)/lib
 VHDL_LIB=$(AHIR_RELEASE)/vhdl/
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 #DEFS= -DADD -DMUL -DDOT -DCMP
-#DEFS= -DADD
+DEFS= -DADD
 #DEFS= -DADD -DMUL -DSUB -DTOINT
 #DEFS= -DCMP
 #DEFS=-DBUG
@@ -14,11 +14,11 @@ FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 
 
 #TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
-#TOPMODULES= -t fpadd
+TOPMODULES= -t fpadd -t fpincr
 #TOPMODULES= -t fpadd -t fpmul -t fpsub -t fpincr -t fp2int -t fp2uint -t fpincrd
 #TOPMODULES= -t fpsub
 #TOPMODULES= -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
-TOPMODULES= -t fpincrd
+#TOPMODULES= -t fpincrd
 
 all: SW HW 
 
