@@ -324,7 +324,7 @@ begin
                                  downto 0));
 
     normalizer_tag_in(normalizer_tag_in'high downto 1) <= 
-		raw_tag & std_logic_vector(fpresult);
+		raw_tag & Float_To_SLV(fpresult);
     normalizer_tag_in(0) <= exceptional_result;
    	
     normalizer: GenericFloatingPointNormalizer

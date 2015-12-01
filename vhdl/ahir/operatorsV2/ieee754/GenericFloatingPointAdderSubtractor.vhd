@@ -668,7 +668,7 @@ begin
   process(tag4, fpresult_4, rexpon_4, sign_4, sticky_4, exceptional_result_4)
   begin
 	adder_tag_in(adder_tag_in'high downto 3)
-		<= tag4 & std_logic_vector(fpresult_4) & std_logic_vector(rexpon_4);
+		<= tag4 & Float_To_SLV(fpresult_4) & std_logic_vector(rexpon_4);
 	adder_tag_in(2) <= sign_4;
 	adder_tag_in(1) <= sticky_4;
 	adder_tag_in(0) <= exceptional_result_4;
@@ -717,7 +717,7 @@ begin
     exceptional_result <= adder_tag_out(0);
 
     
-    normalizer_tag_in(normalizer_tag_in'high downto 1) <= tagv & std_logic_vector(fpresult);
+    normalizer_tag_in(normalizer_tag_in'high downto 1) <= tagv & Float_To_SLV(fpresult);
     normalizer_tag_in(0) <= exceptional_result;
 
     normalizer: GenericFloatingPointNormalizer

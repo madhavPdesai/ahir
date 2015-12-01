@@ -294,7 +294,7 @@ begin
 		shift_amount <= shiftu;
 
 		shift_tag_in(shift_tag_in'high downto 4) <= std_logic_vector(stage_tags(3)) & 
-			std_logic_vector(exp_3) & std_logic_vector(result_3);
+			std_logic_vector(exp_3) & Float_To_SLV(result_3);
 		shift_tag_in(3) <=  sign_3;
 		shift_tag_in(2) <=  exceptional_result_flag_3;
 		shift_tag_in(1) <=  reverse_flag;
