@@ -33,6 +33,8 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_pipeline_parent = NULL;
   this->_is_intermediate = true;
   this->_buffering = 1;
+  this->_guard_expression = NULL;
+  this->_guard_complement = false;
 }
 
 AaExpression::~AaExpression() {};
@@ -106,11 +108,15 @@ void AaExpression::PrintC_Declaration(ofstream& ofile)
 
 string AaExpression::Get_VC_Guard_String()
 {
-	string ret_string;
-	AaStatement* stmt = this->Get_Associated_Statement();
-	if(stmt != NULL)
+	string ret_string = "";
+	AaExpression* ge = this->Get_Guard_Expression();
+	bool not_flag = this->Get_Guard_Complement();
+	if(ge)
 	{
-	    ret_string = stmt->Get_VC_Guard_String();
+		if(not_flag)
+			ret_string = "$guard ( ~ " + ge->Get_VC_Driver_Name() + " ) " ;
+		else
+			ret_string = "$guard ( " + ge->Get_VC_Driver_Name() + " ) " ;
 	}
 	return(ret_string);
 }
@@ -237,16 +243,27 @@ void AaExpression::Set_Type(AaType* t)
 
 bool AaExpression::Is_Part_Of_Pipelined_Module()
 {
-	AaStatement* s = this->Get_Associated_Statement();
-	if(s->Get_Scope() && s->Get_Scope()->Is("AaModule") && ((AaModule*) s->Get_Scope())->Is_Pipelined())
+	AaScope* s = NULL;
+	AaStatement* stmt = this->Get_Associated_Statement();
+	if(stmt != NULL)
+		s = stmt->Get_Scope();
+	else 
+		s = this->Get_Scope();
+	if(s && s->Is("AaModule") && ((AaModule*) s)->Is_Pipelined())
 		return(true);
+
 	return(false);
 }
 
 bool AaExpression::Is_Part_Of_Operator_Module()
 {
-	AaStatement* s = this->Get_Associated_Statement();
-	if(s->Get_Scope() && s->Get_Scope()->Is("AaModule") && ((AaModule*) s->Get_Scope())->Get_Operator_Flag())
+	AaScope* s = NULL;
+	AaStatement* stmt = this->Get_Associated_Statement();
+	if(stmt != NULL)
+		s = stmt->Get_Scope();
+	else 
+		s = this->Get_Scope();
+	if(s && s->Is("AaModule") && ((AaModule*) s)->Get_Operator_Flag())
 		return(true);
 	return(false);
 }
@@ -293,19 +310,33 @@ bool AaExpression::Used_Only_In_Address_Of_Expression()
   return(ret_val);
 }
 
+void AaExpression::Set_Guard_Expression(AaExpression* expr)
+{
+	_guard_expression = expr;
+}
+
+void AaExpression::Set_Guard_Complement(bool v)
+{
+	_guard_complement = v;
+}
+
 AaExpression* AaExpression::Get_Guard_Expression()
 {
 	if(_associated_statement != NULL)
-		return(_associated_statement->Get_Guard_Expression());
-	else
-		return(NULL);
+	{
+		if(_associated_statement->Get_Guard_Expression())
+			return(_associated_statement->Get_Guard_Expression());
+	}
+	return(this->_guard_expression);
 }
 bool AaExpression::Get_Guard_Complement()
 {
 	if(_associated_statement != NULL)
-		return(_associated_statement->Get_Guard_Complement());
-	else
-		return(false);
+	{
+		if(_associated_statement->Get_Guard_Expression())
+			return(_associated_statement->Get_Guard_Complement());
+	}
+	return(this->_guard_complement);
 }
 
 //---------------------------------------------------------------------

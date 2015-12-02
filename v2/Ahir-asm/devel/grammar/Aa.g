@@ -795,9 +795,11 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
     new_ps = new AaPhiStatement(scope,pm);
     string label;
     AaExpression* expr;
+    AaExpression* guard_expr = NULL;
     AaSimpleObjectReference* target;
     set<string,StringCompare> tset;
     vector<string> labels;
+    bool not_flag = false;
 }
     : pl: PHI tgt:SIMPLE_IDENTIFIER 
         {
@@ -808,7 +810,17 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
         }
         ASSIGNEQUAL 
         ( 
+	    (GUARD LPAREN (NOT {not_flag = true;})? guard_expr = aA_Expression[scope] RPAREN)?
             expr = aA_Expression[scope]
+	    {
+		if(guard_expr != NULL)
+		{
+			expr->Set_Guard_Expression(guard_expr);
+			expr->Set_Guard_Complement(not_flag);
+			guard_expr = NULL;
+			not_flag = false;
+		}
+            }
             ON
             ( 
                 (sid: SIMPLE_IDENTIFIER {label = sid->getText(); labels.push_back(label); }) |

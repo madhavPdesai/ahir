@@ -29,7 +29,12 @@ class AaExpression: public AaRoot
 	bool _is_intermediate;
 
 
+	AaExpression* _guard_expression;
+	bool _guard_complement;
+
+
 	protected:
+	
 	// type of the expression
 	AaType* _type;
 
@@ -281,8 +286,12 @@ class AaExpression: public AaRoot
 	// is an address-of expression
 	bool Used_Only_In_Address_Of_Expression();
 
+	virtual void Set_Guard_Expression(AaExpression* expr);
+	virtual void Set_Guard_Complement(bool v);
+
 	virtual AaExpression* Get_Guard_Expression();
 	virtual bool Get_Guard_Complement();
+
 	virtual void Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& visited_elements, ostream& ofile);
 	virtual void Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
 	virtual void Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile);

@@ -3590,7 +3590,17 @@ void AaPhiStatement::Print(ostream& ofile)
 	for(unsigned int i=0; i < this->_source_pairs.size(); i++)
 	{
 		ofile << this->Tab() << "  ";
-		this->_source_pairs[i].second->Print(ofile);
+		AaExpression* expr = this->_source_pairs[i].second;
+		AaExpression* ge = expr->Get_Guard_Expression();
+		if(ge != NULL)
+		{
+			ofile << "$guard (";
+			if(expr->Get_Guard_Complement())
+				ofile << "~ ";
+			ge->Print(ofile);
+			ofile << ") ";
+		}
+		expr->Print(ofile);
 		ofile << " $on " << this->_source_pairs[i].first;
 	}
 	if(this->_target->Get_Type())
@@ -3632,8 +3642,18 @@ void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
 {
 	_merged_labels.insert(label);
 
+			
+	AaExpression* ge = expr->Get_Guard_Expression();
+	if(ge != NULL)
+	{
+		// phi statements do not have guards, only their
+		// sources can have guards.
+		ge->Set_Associated_Statement(this);
+	}
+
 	expr->Set_Associated_Statement(this);
 	expr->Set_Is_Intermediate(true);
+
 	if(this->_target)
 	{
 		expr->Add_Target(this->_target);
@@ -3652,6 +3672,11 @@ void AaPhiStatement::Map_Source_References()
 		AaProgram::Add_Type_Dependency(this->_target, this->_source_pairs[i].second);
 
 		this->_source_pairs[i].second->Map_Source_References(this->_source_objects);
+
+		AaExpression* ge = this->_source_pairs[i].second->Get_Guard_Expression();
+		if(ge != NULL)
+			ge->Map_Source_References(this->_source_objects);
+
 		bool special_place = (this->_source_pairs[i].first == "$entry");
 		if(this->Get_In_Do_While())
 			special_place = special_place || (this->_source_pairs[i].first == "$loopback");
@@ -3690,6 +3715,7 @@ AaSimpleObjectReference* AaPhiStatement::Get_Implicit_Target(string tgt_name)
 
 void AaPhiStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
+	_pipeline_parent = dws;
 	this->_target->Set_Pipeline_Parent(dws);
 	for(int idx = 0; idx < this->_source_pairs.size(); idx++)
 	{
@@ -3706,6 +3732,12 @@ void AaPhiStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	AaExpression* default_src = NULL;
 	for(unsigned int i=0; i < this->_source_pairs.size(); i++)
 	{
+		AaExpression* ge = this->_source_pairs[i].second->Get_Guard_Expression();
+		if(ge != NULL)
+		{
+			ge->PrintC_Declaration(headerfile);
+			ge->PrintC(headerfile);
+		}
 		this->_source_pairs[i].second->PrintC_Declaration(headerfile);
 	}
 
@@ -3716,10 +3748,10 @@ void AaPhiStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 
 	string tgt_name;
 	tgt_name = this->_target->C_Reference_String();
-
 	bool at_least_one = false;
 	for(unsigned int i=0; i < this->_source_pairs.size(); i++)
 	{
+
 		string mlabel = this->_source_pairs[i].first;
 
 		if(mlabel == "$entry")
@@ -3729,6 +3761,13 @@ void AaPhiStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 		}
 		else
 		{
+			AaExpression* ge = this->_source_pairs[i].second->Get_Guard_Expression();
+			bool gc = false;
+			if(ge != NULL)
+			{
+				gc = this->_source_pairs[i].second->Get_Guard_Complement();
+			}
+
 			string check_string;
 			if(mlabel == "$loopback")
 			{
@@ -3748,32 +3787,63 @@ void AaPhiStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 			}
 
 			headerfile << "if(" << check_string << ") {\\" << endl;
+			if(ge != NULL)
+			{
+				headerfile << "if(" <<  (gc ? "!" : "");
+				Print_C_Value_Expression(ge->C_Reference_String(), ge->Get_Type(), headerfile);
+				headerfile << ") {\\" << endl;
+			}
 			this->_source_pairs[i].second->PrintC(headerfile);
 			Print_C_Assignment(tgt_name, this->_source_pairs[i].second->C_Reference_String(),
 					this->_source_pairs[i].second->Get_Type(), headerfile);
+			if(ge != NULL)
+				headerfile << "}\\" << endl;
 			headerfile << "}\\" << endl;
 			at_least_one = true;
 		}
-
 	}
 
 	if(default_src != NULL)
 	{
+			
+		AaExpression* ge = default_src->Get_Guard_Expression();
+		bool gc = false;
+		if(ge != NULL)
+		{
+			gc = default_src->Get_Guard_Complement();
+		}
+
 		if(at_least_one)
 		{
 			headerfile << "else {\\" << endl;
+			if(ge != NULL)
+			{
+				headerfile << "if(" <<  (gc ? "!" : "");
+				Print_C_Value_Expression(ge->C_Reference_String(), ge->Get_Type(), headerfile);
+				headerfile << ") {\\" << endl;
+			}
 			default_src->PrintC_Declaration(headerfile);
 			default_src->PrintC(headerfile);
 			Print_C_Assignment(tgt_name,  default_src->C_Reference_String(),
 					default_src->Get_Type(), headerfile);
+			if(ge != NULL)
+				headerfile << "}\\" << endl;
 			headerfile << "}\\" << endl;
 		}
 		else
 		{
+			if(ge != NULL)
+			{
+				headerfile << "if(" <<  (gc ? "!" : "");
+				Print_C_Value_Expression(ge->C_Reference_String(), ge->Get_Type(), headerfile);
+				headerfile << ") {\\" << endl;
+			}
 			default_src->PrintC_Declaration(headerfile);
 			default_src->PrintC(headerfile);
 			Print_C_Assignment(tgt_name,  default_src->C_Reference_String(),
 					default_src->Get_Type(), headerfile);
+			if(ge != NULL)
+				headerfile << "}\\" << endl;
 		}
 	}
 
@@ -3811,7 +3881,13 @@ void AaPhiStatement::Write_VC_Source_Control_Paths(ostream& ofile)
 {
 	ofile << "// sources for " << this->To_String();
 	for(int idx = 0; idx < _source_pairs.size(); idx++)
+	{
+		if(_source_pairs[idx].second->Get_Guard_Expression())
+			_source_pairs[idx].second->Get_Guard_Expression()->Write_VC_Control_Path(ofile);
 		_source_pairs[idx].second->Write_VC_Control_Path(ofile);
+		if(_source_pairs[idx].second->Get_Guard_Expression())
+			_source_pairs[idx].second->Get_Guard_Expression()->Write_VC_Control_Path(ofile);
+	}
 }
 
 
@@ -3871,8 +3947,10 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	// in the extreme pipelining case, output buffering
 	// will be kept to 2.
 	AaStatement* dws = this->Get_Pipeline_Parent();
-	if((dws != NULL)  && (dws->Get_Pipeline_Full_Rate_Flag()))
+	if(dws != NULL)
 	{
+		// PHI statement is always double buffered
+		// to cut long combinational paths.
 		ofile << "$buffering  $out " << dpe_name << " "
 			<< tgt_name << " 2" << endl;
 	}

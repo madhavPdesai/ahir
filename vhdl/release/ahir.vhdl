@@ -10206,10 +10206,10 @@ use ahir.Utilities.all;
 entity phi_sequencer  is
   generic (place_capacity : integer; nreqs : integer; nenables : integer; name : string := "anonPhiSequencer");
   port (
-  selects : in BooleanArray(0 to nreqs-1); -- one out of nreqs..
-  reqs : out BooleanArray(0 to nreqs-1); -- one out of nreqs.
-  ack  : in Boolean;
-  enables  : in BooleanArray(0 to nenables-1);  -- all must have a token.
+  selects : in BooleanArray(0 to nreqs-1); -- there are nreq triggers.
+  reqs : out BooleanArray(0 to nreqs-1);   -- generated reqs for the phis. one for each trigger.
+  ack  : in Boolean;			   -- incoming sample-ack from phi.
+  enables  : in BooleanArray(0 to nenables-1);  -- enables (all have to be asserted)
   done : out Boolean;
   clk, reset: in std_logic);
 end phi_sequencer;

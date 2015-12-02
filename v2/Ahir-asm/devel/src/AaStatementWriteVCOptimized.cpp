@@ -1593,18 +1593,38 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       string trig_place = _source_pairs[idx].first;
 
       if(!source_expr->Is_Constant())
-	{
-	  source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
-						       visited_elements,
-						       ls_map,pipe_map,barrier,
-						       ofile);
-	  __J(__SST(this),__UCT(source_expr));
-	  if(pipeline_flag)
-	  {
-		source_expr->Write_VC_Update_Reenables(__SCT(this), false,
-						visited_elements, ofile);
-	  }
-        }
+      {
+	      AaExpression* sge = source_expr->Get_Guard_Expression();
+	      if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr))
+	      {
+		      sge->Write_VC_Control_Path_Optimized(pipeline_flag,
+				      visited_elements,
+				      ls_map,pipe_map,barrier,
+				      ofile);
+	      }
+
+	      source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
+			      visited_elements,
+			      ls_map,pipe_map,barrier,
+			      ofile);
+	
+	      __J(__SST(this),__UCT(source_expr));
+
+	      if(sge != NULL)
+	      {
+		      ofile << "// Guard dependency" << endl;
+		      __J(__SST(source_expr), __UCT(sge));
+	      }
+
+	      if(pipeline_flag)
+	      {
+		      if(sge != NULL)
+		      {
+			      sge->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+		      }
+		      source_expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+	      }
+      }
       if(trig_place == "$loopback")
       {
 	      phi_triggers += trigger_from_loop_back  + " "; 
@@ -1637,58 +1657,58 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
   // take care of the guard
   if(this->_guard_expression)
-    {
-		// For the moment, PHI statements cannot have guards.
-	    AaRoot::Error("Guards for PHI statements are not permitted.", this);
-    }
+  {
+	  // For the moment, PHI statements cannot have guards.
+	  AaRoot::Error("Guards for PHI statements are not permitted.", this);
+  }
   visited_elements.insert(this);
 }
 
 // called only if it appears in a do-while loop.
 void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
-  bool ok_flag = this->Get_In_Do_While();
-  if(!ok_flag)
-    assert(0);
+	bool ok_flag = this->Get_In_Do_While();
+	if(!ok_flag)
+		assert(0);
 
-  vector<string> reqs;
-  vector<string> acks;
+	vector<string> reqs;
+	vector<string> acks;
 
-  string sample_from_loop_back = this->Get_VC_Name() + "_loopback_sample_req";
-  string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
-  string sample_ack = __SCT(this);
-  string update_req = __UST(this);
-  string update_ack = __UCT(this);
+	string sample_from_loop_back = this->Get_VC_Name() + "_loopback_sample_req";
+	string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
+	string sample_ack = __SCT(this);
+	string update_req = __UST(this);
+	string update_ack = __UCT(this);
 
-  for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
-    {
-      string trig_place = _source_pairs[idx].first;
-      if(trig_place == "$loopback")
-	reqs.push_back(hier_id + "/" + sample_from_loop_back);
-      else
-	reqs.push_back(hier_id + "/" + sample_from_entry);
-    }
-  reqs.push_back(hier_id + "/" + update_req);
-  acks.push_back(hier_id + "/" + sample_ack);
-  acks.push_back(hier_id + "/" + update_ack);
-  
-  Write_VC_Link(this->Get_VC_Name(),reqs,acks,ofile);
+	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
+	{
+		string trig_place = _source_pairs[idx].first;
+		if(trig_place == "$loopback")
+			reqs.push_back(hier_id + "/" + sample_from_loop_back);
+		else
+			reqs.push_back(hier_id + "/" + sample_from_entry);
+	}
+	reqs.push_back(hier_id + "/" + update_req);
+	acks.push_back(hier_id + "/" + sample_ack);
+	acks.push_back(hier_id + "/" + update_ack);
 
-  for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
-    {
-      AaExpression* source_expr = _source_pairs[idx].second;
-      source_expr->Write_VC_Links_Optimized(hier_id, ofile);
-    }
+	Write_VC_Link(this->Get_VC_Name(),reqs,acks,ofile);
+
+	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
+	{
+		AaExpression* source_expr = _source_pairs[idx].second;
+		source_expr->Write_VC_Links_Optimized(hier_id, ofile);
+	}
 }
 
 // AaSwitchStatement
 void AaSwitchStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
-  this->Write_VC_Control_Path(true, ofile);
+	this->Write_VC_Control_Path(true, ofile);
 }
 void AaSwitchStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
-  this->Write_VC_Links(true, hier_id, ofile);
+	this->Write_VC_Links(true, hier_id, ofile);
 }
 
 // AaIfStatement

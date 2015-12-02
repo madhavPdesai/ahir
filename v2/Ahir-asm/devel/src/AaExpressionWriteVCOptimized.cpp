@@ -184,6 +184,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 									// root statement and read statement have to be different!
 									// else there will be a big problem.
 									ofile << "// root-writer is " << root->To_String() << endl;
+									//if(!root->Is("AaPhiStatement"))
 									__J(__UST(root), __SCT(read_stmt));
 									__MJ(__SST(read_stmt), __UCT(root), true);
 								}
