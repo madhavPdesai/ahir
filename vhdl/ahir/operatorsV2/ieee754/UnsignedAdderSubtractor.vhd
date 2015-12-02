@@ -180,15 +180,13 @@ begin  -- Pipelined
 	end loop;
 
 	if(clk'event and clk = '1') then
-		if(stall = '0') then
+		if(reset = '1') then
+			stage_active(2) <= '0';
+		elsif(stall = '0') then
 			block_carries <= cin;
 			stage_tags(2) <= stage_tags(1);
 			addsubcell_Sum_Delayed <= addsubcell_Sum;
 			subtract_op_2 <= subtract_op_1;
-		end if;	
-		if(reset = '1') then
-			stage_active(2) <= '0';
-		elsif stall = '0' then
 			stage_active(2) <= stage_active(1);
 		end if;
 	end if;
@@ -201,7 +199,9 @@ begin  -- Pipelined
 	variable is_negative: boolean;
   begin
 	if(clk'event and clk = '1') then
-		if(stall = '0') then
+		if(reset = '1') then
+			stage_active(3) <= '0';
+		elsif(stall = '0') then
 			final_sums(0) <= addsubcell_Sum_Delayed(0);
 			for I in 0 to num_chunks-1 loop
 				correction := (others => '0');
@@ -212,11 +212,7 @@ begin  -- Pipelined
 			end loop;
 
 			stage_tags(3) <= stage_tags(2);
-			if(reset = '1') then
-				stage_active(3) <= '0';
-			elsif stall = '0' then
-				stage_active(3) <= stage_active(2);
-			end if;
+			stage_active(3) <= stage_active(2);
 		end if;
 	end if;
   end process;

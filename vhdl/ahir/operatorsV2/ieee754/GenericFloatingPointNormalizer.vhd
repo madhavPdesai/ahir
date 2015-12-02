@@ -51,7 +51,9 @@ begin
     	   variable result : UNRESOLVED_float (exponent_width downto -fraction_width);
 	begin
 		if(clk'event and clk = '1') then
-			if(stall = '0') then
+			if(reset = '1') then
+				out_rdy <= '0';
+			elsif(stall = '0') then
 
 				result := 
 					normalize(fract,expon,sign,sticky,
@@ -61,14 +63,7 @@ begin
 				normalized_result <= result;
 
 				tag_out <= tag_in;
-			end if;
-			
-			if(reset = '1') then
-				out_rdy <= '0';
-			else
-				if(stall = '0') then
-					out_rdy <= in_rdy;
-				end if;
+				out_rdy <= in_rdy;
 			end if;
 
 			
@@ -139,7 +134,9 @@ begin
                - fraction_width - nguard;  -- subtract the length we want
     exp := resize (expon, exp'length) + shiftr;
     if(clk'event and clk = '1') then
-	if(stall = '0') then
+	if(reset = '1') then
+		stage_full(1) <= '0';
+	elsif(stall = '0') then
 		zerores_1 <= zerores;
 		infres_1  <= infres;
 		round_1   <= round;
@@ -149,10 +146,6 @@ begin
 		sticky_1 <= sticky;
 		sign_1 <= sign;
 		expon_1 <= expon;
-	end if;
-	if(reset = '1') then
-		stage_full(1) <= '0';
-	elsif (stall = '0') then
 		stage_full(1) <= stage_full(0);
 		stage_tags(1) <= stage_tags(0);
 	end if;
@@ -195,7 +188,9 @@ begin
       infres := true;
     end if;
     if(clk'event and clk = '1') then
-	if(stall = '0') then
+	if(reset = '1') then
+		stage_full(2) <= '0';
+	elsif(stall = '0') then
 		zerores_2 <= zerores;
 		infres_2 <= infres;
 		round_2 <= round;
@@ -204,10 +199,6 @@ begin
 		fract_2 <= fract_1;
                 sticky_2 <= sticky_1;
 		sign_2 <= sign_1;
-	end if;
-	if(reset = '1') then
-		stage_full(2) <= '0';
-	elsif (stall = '0') then
 		stage_full(2) <= stage_full(1);
 		stage_tags(2) <= stage_tags(1);
 	end if;
@@ -248,7 +239,9 @@ begin
     end if;
   
     if(clk'event and clk = '1') then
-	if(stall ='0') then
+	if(reset = '1') then
+		stage_full(3) <= '0';
+	elsif(stall ='0') then
 		fract_3 <= fract_2;	
 		sticky_3 <= sticky_2;
 		shiftr_3 <= shiftr;
@@ -256,10 +249,6 @@ begin
 		exceptional_result_flag_3 <= exceptional_result_flag;
 		result_3 <= result;
 		sign_3 <= sign_2;
-	end if;
-	if(reset = '1') then
-		stage_full(3) <= '0';
-	elsif (stall = '0') then
 		stage_full(3) <= stage_full(2);
 		stage_tags(3) <= stage_tags(2);
 	end if;
@@ -277,7 +266,9 @@ begin
     reverse_flag := '0';
     --- break 3 -----
     if(clk'event and clk = '1') then
-	if(stall = '0') then
+	if(reset = '1') then
+		stage_full(4) <= '0';
+	elsif(stall = '0') then
 		if(shiftr_3 <= 0) then
 			reverse_flag := '1';
                         tmp := - shiftr_3;
@@ -299,10 +290,6 @@ begin
 		shift_tag_in(2) <=  exceptional_result_flag_3;
 		shift_tag_in(1) <=  reverse_flag;
 		shift_tag_in(0) <=  stickyx;
-	end if;
-	if(reset = '1') then
-		stage_full(4) <= '0';
-	elsif (stall = '0') then
 		stage_full(4) <= stage_full(3);
 		stage_tags(4) <= stage_tags(3);
 	end if;
@@ -387,16 +374,14 @@ begin
     result (exponent_width) := signx;    -- sign BIT
 
     if(clk'event and clk = '1') then
-	if(stall = '0') then
+	if(reset = '1') then
+		stage_full(6) <= '0';
+	elsif (stall = '0') then
 		if(exceptional_result_flag = '0') then
 			result_6 <= result;
 		else
 			result_6 <= result_exceptional;
 		end if;
-	end if;
-	if(reset = '1') then
-		stage_full(6) <= '0';
-	elsif (stall = '0') then
 		stage_full(6) <= stage_full(5);
 		stage_tags(6) <= shift_tag_out(shift_tag_out'high downto 
 					(shift_tag_out'high - (tag_width-1)));

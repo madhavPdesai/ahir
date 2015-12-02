@@ -17246,7 +17246,9 @@ begin
     	   variable result : UNRESOLVED_float (exponent_width downto -fraction_width);
 	begin
 		if(clk'event and clk = '1') then
-			if(stall = '0') then
+			if(reset = '1') then
+				out_rdy <= '0';
+			elsif(stall = '0') then
 
 				result := 
 					normalize(fract,expon,sign,sticky,
@@ -17256,14 +17258,7 @@ begin
 				normalized_result <= result;
 
 				tag_out <= tag_in;
-			end if;
-			
-			if(reset = '1') then
-				out_rdy <= '0';
-			else
-				if(stall = '0') then
-					out_rdy <= in_rdy;
-				end if;
+				out_rdy <= in_rdy;
 			end if;
 
 			
@@ -17334,7 +17329,9 @@ begin
                - fraction_width - nguard;  -- subtract the length we want
     exp := resize (expon, exp'length) + shiftr;
     if(clk'event and clk = '1') then
-	if(stall = '0') then
+	if(reset = '1') then
+		stage_full(1) <= '0';
+	elsif(stall = '0') then
 		zerores_1 <= zerores;
 		infres_1  <= infres;
 		round_1   <= round;
@@ -17344,10 +17341,6 @@ begin
 		sticky_1 <= sticky;
 		sign_1 <= sign;
 		expon_1 <= expon;
-	end if;
-	if(reset = '1') then
-		stage_full(1) <= '0';
-	elsif (stall = '0') then
 		stage_full(1) <= stage_full(0);
 		stage_tags(1) <= stage_tags(0);
 	end if;
@@ -17390,7 +17383,9 @@ begin
       infres := true;
     end if;
     if(clk'event and clk = '1') then
-	if(stall = '0') then
+	if(reset = '1') then
+		stage_full(2) <= '0';
+	elsif(stall = '0') then
 		zerores_2 <= zerores;
 		infres_2 <= infres;
 		round_2 <= round;
@@ -17399,10 +17394,6 @@ begin
 		fract_2 <= fract_1;
                 sticky_2 <= sticky_1;
 		sign_2 <= sign_1;
-	end if;
-	if(reset = '1') then
-		stage_full(2) <= '0';
-	elsif (stall = '0') then
 		stage_full(2) <= stage_full(1);
 		stage_tags(2) <= stage_tags(1);
 	end if;
@@ -17443,7 +17434,9 @@ begin
     end if;
   
     if(clk'event and clk = '1') then
-	if(stall ='0') then
+	if(reset = '1') then
+		stage_full(3) <= '0';
+	elsif(stall ='0') then
 		fract_3 <= fract_2;	
 		sticky_3 <= sticky_2;
 		shiftr_3 <= shiftr;
@@ -17451,10 +17444,6 @@ begin
 		exceptional_result_flag_3 <= exceptional_result_flag;
 		result_3 <= result;
 		sign_3 <= sign_2;
-	end if;
-	if(reset = '1') then
-		stage_full(3) <= '0';
-	elsif (stall = '0') then
 		stage_full(3) <= stage_full(2);
 		stage_tags(3) <= stage_tags(2);
 	end if;
@@ -17472,7 +17461,9 @@ begin
     reverse_flag := '0';
     --- break 3 -----
     if(clk'event and clk = '1') then
-	if(stall = '0') then
+	if(reset = '1') then
+		stage_full(4) <= '0';
+	elsif(stall = '0') then
 		if(shiftr_3 <= 0) then
 			reverse_flag := '1';
                         tmp := - shiftr_3;
@@ -17494,10 +17485,6 @@ begin
 		shift_tag_in(2) <=  exceptional_result_flag_3;
 		shift_tag_in(1) <=  reverse_flag;
 		shift_tag_in(0) <=  stickyx;
-	end if;
-	if(reset = '1') then
-		stage_full(4) <= '0';
-	elsif (stall = '0') then
 		stage_full(4) <= stage_full(3);
 		stage_tags(4) <= stage_tags(3);
 	end if;
@@ -17582,16 +17569,14 @@ begin
     result (exponent_width) := signx;    -- sign BIT
 
     if(clk'event and clk = '1') then
-	if(stall = '0') then
+	if(reset = '1') then
+		stage_full(6) <= '0';
+	elsif (stall = '0') then
 		if(exceptional_result_flag = '0') then
 			result_6 <= result;
 		else
 			result_6 <= result_exceptional;
 		end if;
-	end if;
-	if(reset = '1') then
-		stage_full(6) <= '0';
-	elsif (stall = '0') then
 		stage_full(6) <= stage_full(5);
 		stage_tags(6) <= shift_tag_out(shift_tag_out'high downto 
 					(shift_tag_out'high - (tag_width-1)));
@@ -18574,15 +18559,13 @@ begin  -- Pipelined
 	end loop;
 
 	if(clk'event and clk = '1') then
-		if(stall = '0') then
+		if(reset = '1') then
+			stage_active(2) <= '0';
+		elsif(stall = '0') then
 			block_carries <= cin;
 			stage_tags(2) <= stage_tags(1);
 			addsubcell_Sum_Delayed <= addsubcell_Sum;
 			subtract_op_2 <= subtract_op_1;
-		end if;	
-		if(reset = '1') then
-			stage_active(2) <= '0';
-		elsif stall = '0' then
 			stage_active(2) <= stage_active(1);
 		end if;
 	end if;
@@ -18595,7 +18578,9 @@ begin  -- Pipelined
 	variable is_negative: boolean;
   begin
 	if(clk'event and clk = '1') then
-		if(stall = '0') then
+		if(reset = '1') then
+			stage_active(3) <= '0';
+		elsif(stall = '0') then
 			final_sums(0) <= addsubcell_Sum_Delayed(0);
 			for I in 0 to num_chunks-1 loop
 				correction := (others => '0');
@@ -18606,11 +18591,7 @@ begin  -- Pipelined
 			end loop;
 
 			stage_tags(3) <= stage_tags(2);
-			if(reset = '1') then
-				stage_active(3) <= '0';
-			elsif stall = '0' then
-				stage_active(3) <= stage_active(2);
-			end if;
+			stage_active(3) <= stage_active(2);
 		end if;
 	end if;
   end process;
@@ -19209,9 +19190,6 @@ begin  -- Pipelined
 					stage_active(STAGE) <=  '0';
 				elsif stall = '0' then
 					stage_active(STAGE) <= stage_active(STAGE-1);
-				end if;
-
-				if(stall = '0') then
   					intermediate_results(STAGE) <= shifted_L;
   					intermediate_tags(STAGE) <= intermediate_tags(STAGE-1);
 					intermediate_shift_amount(STAGE) <= 
@@ -21695,98 +21673,6 @@ begin
         end generate;
 
 end Behave;
-library ieee;
-use ieee.std_logic_1164.all;
-
-library ahir;
-use ahir.Types.all;
-use ahir.Subprograms.all;
-use ahir.Utilities.all;
-use ahir.BaseComponents.all;
-
--- brief description:
---  as the name indicates, a squash-shift-register
---  provides an implementation of a pipeline.
---
-entity SquashShiftRegister is
-  generic (name : string;
-	   data_width: integer;
-           depth: integer := 1);
-  port (
-    read_req       : in  std_logic;
-    read_ack       : out std_logic;
-    read_data      : out std_logic_vector(data_width-1 downto 0);
-    write_req       : in  std_logic;
-    write_ack       : out std_logic;
-    write_data      : in std_logic_vector(data_width-1 downto 0);
-    clk, reset : in  std_logic);
-  
-end SquashShiftRegister;
-
-architecture default_arch of SquashShiftRegister is
-
-  constant n_stages: integer := Ceil(depth, 2);
-  constant last_stage_depth : integer :=  (depth - ((n_stages-1)*2));
-
-  signal int_write_reqs, int_write_acks, int_read_reqs, int_read_acks: std_logic_vector(1 to n_stages);
-
-  type DataArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  signal stage_data: DataArray(0 to n_stages); 
-
-begin  -- default_arch
-  int_write_reqs(1) <= write_req;
-  write_ack <= int_write_reqs(1);
-
-  int_read_reqs(n_stages)  <= read_req;
-  read_ack <= int_read_acks(n_stages);
-
-  stage_data(0) <= write_data;
-  read_data <= stage_data(n_stages);
-
-  ifGen1: if(n_stages > 1) generate
-     genArray: for I in 1 to n_stages-1 generate
-	-- depth 2 queues.. to reduce the combinational path delays
-	inst: QueueBase 
-		generic map(name => name & ":stage:" & Convert_To_String(I), data_width => data_width, queue_depth => 2)
-		port map(pop_req => int_read_reqs(I),
-			  pop_ack => int_read_acks(I),
-			  push_req => int_write_reqs(I),
-			  push_ack => int_write_acks(I),
-			  data_in => stage_data(I-1),
-			  data_out => stage_data(I), 
-			  clk => clk, 
-			  reset => reset);
-    end generate genArray;
-  end generate ifGen1;
-	
-  ifSingleLast: if(last_stage_depth = 1) generate
-    lastinst: PipelineRegister 
-	generic map(name => name & ":stage:" & Convert_To_String(n_stages), data_width => data_width)
-		port map(read_req => int_read_reqs(n_stages),
-			  read_ack => int_read_acks(n_stages),
-			  write_req => int_write_reqs(n_stages),
-			  write_ack => int_write_acks(n_stages),
-			  write_data => stage_data(n_stages-1),
-			  read_data => stage_data(n_stages), 
-			  clk => clk, 
-			  reset => reset);
-  end generate ifSingleLast;
-
-  ifNotSingleLast: if(last_stage_depth > 1) generate
-	inst: QueueBase 
-		generic map(name => name & ":stage:" & Convert_To_String(n_stages), data_width => data_width, queue_depth => 2)
-		port map(pop_req => int_read_reqs(n_stages),
-			  pop_ack => int_read_acks(n_stages),
-			  push_req => int_write_reqs(n_stages),
-			  push_ack => int_write_acks(n_stages),
-			  data_in => stage_data(n_stages-1),
-			  data_out => stage_data(n_stages), 
-			  clk => clk, 
-			  reset => reset);
-  end generate ifNotSingleLast;
-
-
-end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

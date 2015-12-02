@@ -106,9 +106,6 @@ begin  -- Pipelined
 					stage_active(STAGE) <=  '0';
 				elsif stall = '0' then
 					stage_active(STAGE) <= stage_active(STAGE-1);
-				end if;
-
-				if(stall = '0') then
   					intermediate_results(STAGE) <= shifted_L;
   					intermediate_tags(STAGE) <= intermediate_tags(STAGE-1);
 					intermediate_shift_amount(STAGE) <= 
