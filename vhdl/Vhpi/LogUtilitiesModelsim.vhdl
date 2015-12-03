@@ -155,7 +155,7 @@ package body LogUtilities is
         assert false report "(completed) PipeRead " & pipe_name & " => " & reader_name & " = " & Convert_SLV_To_Hex_String(read_data)
           severity note;
 	log_string := Pack_String_To_Vhpi_String(Convert_To_String(clock_cycle) & ". Completed PipeRead " &  pipe_name & " from " & reader_name & " data=" & Convert_SLV_To_Hex_String(read_data));
-	Vhpi_log(log_string);
+	Modelsim_FLI_Log(log_string);
       end if;      
     end if;    
   end procedure;
