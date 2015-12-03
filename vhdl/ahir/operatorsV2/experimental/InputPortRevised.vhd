@@ -63,7 +63,7 @@ begin
 	signal fsm_state: FsmState;
 	signal data_reg : std_logic_vector(data_width-1 downto 0);
     begin
-	process(clk, reset, write_enable(I))
+	process(clk, reset, fsm_state, update_req(I),  write_enable(I))
 		variable next_fsm_state: FsmState;
 		variable has_room_v : std_logic;
 		variable latch_v : boolean;
