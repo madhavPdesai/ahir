@@ -3430,7 +3430,7 @@ void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
 
 					ofile << "||[" << (*siter)->Get_VC_Name() << "_sources] {" << endl;
 					// the sources to the phi must be computed.
-					(*siter)->Write_VC_Source_Control_Paths(ofile);
+					(*siter)->Write_VC_Source_Control_Paths(mplace, ofile);
 
 
 					ofile << "}" << endl;
@@ -3904,12 +3904,17 @@ void AaPhiStatement::Write_VC_Control_Path(ostream& ofile)
 
 
 // the merge statement calls this
-void AaPhiStatement::Write_VC_Source_Control_Paths(ostream& ofile)
+void AaPhiStatement::Write_VC_Source_Control_Paths(string& mplace, ostream& ofile)
 {
 	ofile << "// sources for " << this->To_String();
 	for(int idx = 0; idx < _source_pairs.size(); idx++)
 	{
 		AaExpression* src_expr = _source_pairs[idx].second;
+		string place_name = _source_pairs[idx].first;
+
+		if(mplace != place_name)
+			continue;
+
 		if(src_expr->Is_Constant())
 		{
 			// constant source. nothing is necessary..

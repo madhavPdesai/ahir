@@ -1,0 +1,13 @@
+$pipe out_data : $uint<32> $depth 2
+
+$module [phi_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$merge $entry loopback 
+			$phi COUNT := ($bitcast ($uint<32>) 0) $on $entry NCOUNT $on loopback
+		$endmerge
+		$volatile NCOUNT := (COUNT + 1)
+		out_data := COUNT
+		$place [loopback]
+	}
+}

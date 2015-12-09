@@ -1188,7 +1188,7 @@ class AaPhiStatement: public AaStatement
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
 
-  virtual void Write_VC_Source_Control_Paths(ostream& ofile);
+  virtual void Write_VC_Source_Control_Paths(string& mplace, ostream& ofile);
 
   virtual void Propagate_Constants();
   virtual bool Is_Constant();
