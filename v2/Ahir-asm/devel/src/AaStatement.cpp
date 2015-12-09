@@ -977,6 +977,15 @@ void AaAssignmentStatement::Set_Is_Volatile(bool v)
 void AaAssignmentStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
 	_pipeline_parent = dws;
+	
+	//
+	// lets do buffering = 2.. use up
+	// a few flops, but save in clock period.
+	// and fewer headaches in general.
+	//
+	if((dws != NULL) && (_buffering < 2))
+		_buffering = 2;
+
 	this->_source->Set_Pipeline_Parent(dws);
 	this->_target->Set_Pipeline_Parent(dws);
 }
@@ -3525,8 +3534,6 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 
 	if(_statement_sequence)
 	{
-
-
 		for(int idx = 0; idx < _statement_sequence->Get_Statement_Count(); idx++)
 		{
 			AaStatement* stmt = _statement_sequence->Get_Statement(idx);
@@ -3552,6 +3559,21 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 						phi_stmt->Get_VC_Name() + "_sources");
 
 				phi_stmt->_source_pairs[pidx].second->Write_VC_Links(src_hier_id,ofile);
+				AaExpression* src_expr = phi_stmt->_source_pairs[pidx].second;
+				if(!src_expr->Is_Constant() &&
+					(src_expr->Is_Implicit_Variable_Reference() ||
+							src_expr->Is_Signal_Read()))
+				{
+					string dpe_name = src_expr->Get_VC_Driver_Name() + "_buf";
+					vector<string> reqs;	
+					vector<string> acks;	
+					reqs.push_back(src_hier_id + "/Interlock/Sample/req");
+					reqs.push_back(src_hier_id + "/Interlock/Update/req");
+					acks.push_back(src_hier_id + "/Interlock/Sample/ack");
+					acks.push_back(src_hier_id + "/Interlock/Update/ack");
+					Write_VC_Link(dpe_name, reqs, acks, ofile);
+					reqs.clear(); acks.clear();
+				}
 
 				reqs.push_back(req_hier_id + "/" + phi_stmt->Get_VC_Name() + "_req");
 			}
@@ -3667,6 +3689,7 @@ void AaPhiStatement::Map_Source_References()
 {
 
 	this->_target->Map_Source_References(this->_target_objects);
+
 	for(unsigned int i=0; i < this->_source_pairs.size(); i++)
 	{
 		AaProgram::Add_Type_Dependency(this->_target, this->_source_pairs[i].second);
@@ -3720,6 +3743,10 @@ void AaPhiStatement::Set_Pipeline_Parent(AaStatement* dws)
 	for(int idx = 0; idx < this->_source_pairs.size(); idx++)
 	{
 		this->_source_pairs[idx].second->Set_Pipeline_Parent(dws);
+
+		// buffering set to 2.
+		if(dws != NULL)
+			this->_source_pairs[idx].second->Set_Buffering(2);
 	}
 }
 
@@ -3882,11 +3909,36 @@ void AaPhiStatement::Write_VC_Source_Control_Paths(ostream& ofile)
 	ofile << "// sources for " << this->To_String();
 	for(int idx = 0; idx < _source_pairs.size(); idx++)
 	{
-		if(_source_pairs[idx].second->Get_Guard_Expression())
-			_source_pairs[idx].second->Get_Guard_Expression()->Write_VC_Control_Path(ofile);
-		_source_pairs[idx].second->Write_VC_Control_Path(ofile);
-		if(_source_pairs[idx].second->Get_Guard_Expression())
-			_source_pairs[idx].second->Get_Guard_Expression()->Write_VC_Control_Path(ofile);
+		AaExpression* src_expr = _source_pairs[idx].second;
+		if(src_expr->Is_Constant())
+		{
+			// these will be sacrificial..
+			__T(__SST(src_expr));
+			__T(__SCT(src_expr));
+			__T(__UST(src_expr));
+			__T(__UCT(src_expr));
+		}
+		else
+		{
+			if(src_expr->Get_Guard_Expression())
+				src_expr->Get_Guard_Expression()->Write_VC_Control_Path(ofile);
+			if(src_expr->Is_Implicit_Variable_Reference() ||
+					src_expr->Is_Signal_Read())
+			{
+				ofile << "|| [Interlock] {" << endl;
+				ofile << " ;;[Sample] {" << endl;
+				ofile << "$T [req] $T [ack]" << endl;
+				ofile << "}" << endl;
+				ofile << " ;;[Update] {" << endl;
+				ofile << "$T [req] $T [ack]" << endl;
+				ofile << "}" << endl;
+				ofile << "}" << endl;
+			}
+			else
+			{
+				src_expr->Write_VC_Control_Path(ofile);
+			}
+		}
 	}
 }
 
@@ -3899,7 +3951,9 @@ void AaPhiStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 	ofile << "// " << this->Get_Source_Info() << endl;
 
 	for(int idx = 0; idx < _source_pairs.size(); idx++)
+	{
 		_source_pairs[idx].second->Write_VC_Constant_Wire_Declarations(ofile);
+	}
 
 	this->_target->Write_VC_Constant_Wire_Declarations(ofile);
 }
@@ -3911,7 +3965,19 @@ void AaPhiStatement::Write_VC_Wire_Declarations(ostream& ofile)
 
 
 	for(int idx = 0; idx < _source_pairs.size(); idx++)
-		_source_pairs[idx].second->Write_VC_Wire_Declarations(false,ofile);
+	{
+		AaExpression* src_expr = _source_pairs[idx].second;
+		src_expr->Write_VC_Wire_Declarations(false,ofile);
+
+		// additional wire for the buffer.
+		if(!src_expr->Is_Constant() &&
+			(src_expr->Is_Implicit_Variable_Reference() ||
+				src_expr->Is_Signal_Read()))
+		{
+			Write_VC_Wire_Declaration(src_expr->Get_VC_Driver_Name() + "_buffered",
+							src_expr->Get_Type(), ofile);	
+		}
+	}
 
 	this->_target->Write_VC_Wire_Declarations_As_Target(ofile);
 }
@@ -3922,15 +3988,33 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
 
-
+	AaStatement* dws = this->Get_Pipeline_Parent();
 	vector<pair<string,AaType*> > sources;
 	for(int i = 0; i < _source_pairs.size(); i++)
 	{
-		sources.push_back(pair<string,AaType*>(_source_pairs[i].second->Get_VC_Driver_Name(),
-					_source_pairs[i].second->Get_Type()));
+		AaExpression* src_expr = _source_pairs[i].second;
 
-		// write the data-path..
-		_source_pairs[i].second->Write_VC_Datapath_Instances(NULL,ofile);
+		string src_driver_name;
+		if(src_expr->Is_Implicit_Variable_Reference() ||
+				src_expr->Is_Signal_Read())
+		{
+			src_driver_name = src_expr->Get_VC_Driver_Name() + "_buffered";
+			string dpe_name = src_expr->Get_VC_Driver_Name() + "_buf";
+			Write_VC_Interlock_Buffer(dpe_name, src_expr->Get_VC_Driver_Name(),
+					src_driver_name, "", false, ofile);
+			if(dws != NULL)
+			{
+				ofile << "$buffering $out " << dpe_name <<  " " << 
+					src_driver_name  << " 2 " << endl;
+			}
+		}
+		else
+		{
+			src_driver_name = src_expr->Get_VC_Driver_Name();
+			// write the data-path..
+			_source_pairs[i].second->Write_VC_Datapath_Instances(NULL,ofile);
+		}
+		sources.push_back(pair<string,AaType*>(src_driver_name, _source_pairs[i].second->Get_Type()));
 	}
 
 	string dpe_name = this->Get_VC_Name();
@@ -3945,13 +4029,13 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			ofile);
 
 	// in the extreme pipelining case, output buffering
-	// will be kept to 2.
-	AaStatement* dws = this->Get_Pipeline_Parent();
+	// will be kept to 2...  NOTE: not relevant in new scheme
+	// since source expressions will be buffered.
 	if(dws != NULL)
 	{
 		// PHI statement is always double buffered
 		// to cut long combinational paths.
-		ofile << "$buffering  $out " << dpe_name << " "
+		ofile << "// $buffering  $out " << dpe_name << " "
 			<< tgt_name << " 2" << endl;
 	}
 }

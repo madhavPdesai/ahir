@@ -270,6 +270,7 @@ public:
   vcPhi(string id, vector<vcWire*>& inwires, vcWire* outwire);
   virtual void Print(ostream& ofile);
 
+  virtual string Get_Bypass_String() {return("false");}
 
   vector<vcWire*>& Get_Inwires() {return(this->_input_wires);}
   vcWire* Get_Outwire() {if(_output_wires.size() > 0) return(this->_output_wires[0]); else return (NULL);}
@@ -288,8 +289,7 @@ public:
   vcPhiPipelined(string id, vector<vcWire*>& inwires, vcWire* outwire);
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcPhiPipeined");}
-  virtual void Print_VHDL(ostream& ofile);
-  virtual void Print_VHDL_Logger(vcModule* parent_module, ostream& ofile);
+  virtual string Get_Bypass_String() {return("true");}
   friend class vcDataPath;
 
 };

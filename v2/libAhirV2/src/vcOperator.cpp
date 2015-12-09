@@ -350,6 +350,7 @@ void vcPhi::Print(ostream& ofile)
 	this->Print_Delay(ofile);
 }
 
+
 void vcPhi::Print_VHDL(ostream& ofile)
 {
 	int odata_width = this->Get_Output_Width();
@@ -396,6 +397,7 @@ void vcPhi::Print_VHDL(ostream& ofile)
 	ofile << "phi: PhiBase -- {" << endl
 		<< "generic map( -- { " << endl 
 		<< "num_reqs => " << num_reqs << "," << endl
+		<< "bypass_flag => " << this->Get_Bypass_String() << "," << endl
 		<< "data_width => " << odata_width << ") -- }"  << endl
 		<< "port map( -- { "<< endl 
 		<< "req => req, " << endl
@@ -451,102 +453,6 @@ void vcPhiPipelined::Print(ostream& ofile)
 	this->vcPhi::Print(ofile);
 }
 
-void vcPhiPipelined::Print_VHDL(ostream& ofile)
-{
-	int num_inputs = this->Get_Inwires().size();
-	int odata_width = this->Get_Output_Width();
-	int idata_width = this->Get_Input_Width();
-	int buffering = 0;
-
-	// num-inputs sample reqs, 1 update-req
-	if((this->Get_Number_Of_Reqs() != (num_inputs+1)) ||
-			(this->Get_Number_Of_Acks() != 2))
-	{
-		vcSystem::Error("pipelined-phi operator " + this->Get_Id() + " has inadequate/incorrect req-ack links");
-		return;
-	}
-
-	assert(this->Get_Number_Of_Output_Wires() ==  1);
-	buffering = this->Get_Output_Buffering(this->Get_Output_Wire(0));
-
-	ofile << this->Get_VHDL_Id() << ": Block -- pipelined-phi operator {" << endl;
-	ofile << "signal idata: std_logic_vector(" << idata_width-1 << " downto 0);" << endl;
-	ofile << "signal sample_req: BooleanArray(" << num_inputs-1 << " downto 0);" << endl;
-	ofile << "signal sample_ack, update_req, update_ack: Boolean;" << endl;
-	ofile << "--}\n begin -- {" << endl;
-	ofile << "idata <= ";
-	for(int idx = 0; idx < this->Get_Number_Of_Input_Wires(); idx++)
-	{
-		vcWire* w = this->Get_Input_Wire(idx);
-		if(idx > 0)
-			ofile << " & ";
-		ofile << w->Get_VHDL_Signal_Id();
-		int U = this->Get_Input_Buffering(w);
-		buffering = ((buffering < U) ? U : buffering); 
-	}
-	ofile << ";" << endl;
-
-	ofile << "sample_req <= ";
-	for(int idx = 0; idx < num_inputs; idx++)
-	{
-		if(idx > 0)
-			ofile << " & ";
-		ofile << this->Get_Req(idx)->Get_CP_To_DP_Symbol();
-	}
-	ofile << ";" << endl;
-	ofile << "update_req <= " <<  this->Get_Req(num_inputs)->Get_CP_To_DP_Symbol() << ";" << endl;
-
-	ofile << "phi: PhiPipelined -- {" << endl
-		<< "generic map( -- { " << endl 
-		<< "name => \"" << this->Get_VHDL_Id() << "\"," << endl
-		<< "buffering => " << buffering << "," << endl
-		<< "num_reqs => " << num_inputs << "," << endl
-		<< "data_width => " << odata_width << ") -- }"  << endl
-		<< "port map( -- { "<< endl 
-		<< "sample_req => sample_req, " << endl
-		<< "sample_ack => " << this->Get_Ack(0)->Get_DP_To_CP_Symbol()  << "," << endl
-		<< "update_req => update_req," << endl
-		<< "update_ack => " << this->Get_Ack(1)->Get_DP_To_CP_Symbol()  << "," << endl
-		<< "idata => idata," << endl
-		<< "odata => " << this->Get_Outwire()->Get_VHDL_Signal_Id() << "," << endl
-		<< "clk => clk," << endl
-		<< "reset => reset ); -- }}" << endl;
-	ofile << "-- }\n end Block; -- phi operator " << this->Get_VHDL_Id() << endl;
-}
-
-void vcPhiPipelined::Print_VHDL_Logger(vcModule* parent_module, ostream& ofile)
-{
-	string module_name = parent_module->Get_Id();
-	string input_names;
-	string input_concat;
-
-	ofile << "-- logger for phi " << this->Get_Id() << endl;
-	ofile << "process(clk) " << endl;
-	ofile << "begin -- {" << endl;
-	ofile << "if((reset = '0') and (clk'event and clk = '1')) then --{" << endl;
-	for(int idx = 0, fidx = _input_wires.size(); idx < fidx; idx++)
-	{
-		string mesg_string = "\"logger:" + module_name + ":DP:"  + this->Get_Id() + ":input-" + IntToStr(idx) + " " + _input_wires[idx]->Get_VHDL_Signal_Id();
-		mesg_string += "= \" & Convert_SLV_To_Hex_String(" + _input_wires[idx]->Get_VHDL_Signal_Id() + ")";
-		ofile << "if " << this->Get_Req(idx)->Get_CP_To_DP_Symbol() << " then --{ " << endl;
-		ofile << "LogRecordPrint(global_clock_cycle_count, " << mesg_string << ");" << endl;
-		ofile << "--} " << endl << "end if;" << endl;
-	}	
-
-
-	ofile << "if " << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " then --{" << endl;
-	ofile << "LogRecordPrint(global_clock_cycle_count,\" logger:" << module_name << ":DP:" << this->Get_Id() << ":sample-completed\");" << endl;
-	ofile << "--} " << endl << "end if;" << endl;
-
-	string mesg_string = "\"logger:" + module_name + ":DP:" + this->Get_Id() + ":output "  + _output_wires[0]->Get_VHDL_Signal_Id();
-	mesg_string += "= \" & Convert_SLV_To_Hex_String(" + _output_wires[0]->Get_VHDL_Signal_Id() + ")";
-	ofile << "if " << this->Get_Ack(1)->Get_DP_To_CP_Symbol() << " then --{" << endl;
-	ofile << "LogRecordPrint(global_clock_cycle_count," << mesg_string << ");" << endl;
-	ofile << "--} " << endl << "end if;" << endl;
-	ofile << "--} "<< endl << "end if;" << endl;
-	ofile << "--}" << endl;
-	ofile << "end process; " << endl;
-}
 
 vcCall::vcCall(string id, vcModule* m, vector<vcWire*>& in_wires, vector<vcWire*> out_wires, bool inline_flag):vcSplitOperator(id)
 {
@@ -721,7 +627,7 @@ void vcSplitOperator::Print_VHDL_Instantiation_Preamble(bool flow_through_flag, 
 		string guards = "guard_vector";
 		vector<vcWire*> gwires;
 		gwires.push_back(this->_guard_wire);
-		Print_VHDL_Guard_Instance("gI", 1, "guardBuffering", "guardFlags", "guard_vector",
+		Print_VHDL_Guard_Instance(false, false, "gI", 1, "guardBuffering", "guardFlags", "guard_vector",
 				"sample_req_ug", "sample_ack_ug", "sample_req", "sample_ack",
 				"update_req_ug", "update_ack_ug", "update_req", "update_ack", ofile);
 	}
@@ -1168,7 +1074,7 @@ void vcSelect::Print_VHDL(ostream& ofile)
 		string guards = "guard_vector";
 		vector<vcWire*> gwires;
 		gwires.push_back(this->_guard_wire);
-		Print_VHDL_Guard_Instance("gI", 1, "guardBuffering", "guardFlags", "guard_vector",
+		Print_VHDL_Guard_Instance(false, false, "gI", 1, "guardBuffering", "guardFlags", "guard_vector",
 				"sample_req_ug", "sample_ack_ug", "sample_req", "sample_ack",
 				"update_req_ug", "update_ack_ug", "update_req", "update_ack", ofile);
 	}
@@ -1278,7 +1184,7 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 		string guards = "guard_vector";
 		vector<vcWire*> gwires;
 		gwires.push_back(this->_guard_wire);
-		Print_VHDL_Guard_Instance("gI", 1, "guardBuffering", "guardFlags", "guard_vector",
+		Print_VHDL_Guard_Instance(false, false, "gI", 1, "guardBuffering", "guardFlags", "guard_vector",
 				"wreq_ug", "wack_ug", "wreq", "wack",
 				"rreq_ug", "rack_ug", "rreq", "rack", ofile);
 	}
@@ -1293,7 +1199,8 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 	ofile << " buffer_size => " << buf_size << "," << endl;
 	ofile << " flow_through => " <<  (flow_through ? " true " : " false ") << "," << endl;
 	ofile << " in_data_width => " << in_data_width << "," << endl;
-	ofile << " out_data_width => " << out_data_width <<  endl;
+	ofile << " out_data_width => " << out_data_width <<  "," << endl;
+	ofile << " bypass_flag => true " <<  endl;
 	ofile << " -- }" << endl << ")";
 	ofile << "port map ( -- { " << endl;
 	ofile << " write_req => wreq(0), "   << endl;
@@ -1424,7 +1331,7 @@ void vcSlice::Print_VHDL(ostream& ofile)
 		string guards = "guard_vector";
 		vector<vcWire*> gwires;
 		gwires.push_back(this->_guard_wire);
-		Print_VHDL_Guard_Instance("gI", 1, "guardBuffering", "guardFlags", "guard_vector",
+		Print_VHDL_Guard_Instance(false, false, "gI", 1, "guardBuffering", "guardFlags", "guard_vector",
 				"sample_req_ug", "sample_ack_ug", "sample_req", "sample_ack",
 				"update_req_ug", "update_ack_ug", "update_req", "update_ack", ofile);
 	}
@@ -1577,7 +1484,7 @@ void vcPermutation::Print_VHDL(ostream& ofile)
 		string guards = "guard_vector";
 		vector<vcWire*> gwires;
 		gwires.push_back(this->_guard_wire);
-		Print_VHDL_Guard_Instance("gI", 1, "guardBuffering", "guardFlags", "guard_vector",
+		Print_VHDL_Guard_Instance(false, false, "gI", 1, "guardBuffering", "guardFlags", "guard_vector",
 				"sample_req_ug", "sample_ack_ug", "sample_req", "sample_ack",
 				"update_req_ug", "update_ack_ug", "update_req", "update_ack", ofile);
 	}

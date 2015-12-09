@@ -224,7 +224,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				ofile << "}" << endl;
 
 				ofile <<  ";;[" << this->Get_VC_Name() << "_Update] { " << endl;
-				ofile << "$T [req] $T [ack] // interlock-sample." << endl;
+				ofile << "$T [req] $T [ack] // interlock-update." << endl;
 				ofile << "}" << endl;
 
 				__ConnectSplitProtocolPattern;
@@ -1520,6 +1520,12 @@ void AaMergeStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 }
 
 // AaPhiStatement
+void AaPhiStatement::Write_VC_WAR_Dependencies(bool pipeline_flag, set<AaRoot*>& visited_elements,
+				 ostream& ofile)
+{
+	this->_target->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements, ofile);
+}
+
 void AaPhiStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
   this->Write_VC_Control_Path(ofile);
@@ -1547,28 +1553,42 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
   ofile << "// (pipelined) PHI statement " << this->Get_VC_Name() << endl;
   ofile << "// " << this->To_String() << endl;
+  __DeclTransSplitProtocolPattern;
+
+   //for the Phi, we will introduce one more interlock
+   // to ensure that there is no saturation of intermediate
+   // places in the phi-sequencer.
+  __J(__UST(this), __SCT(this));
+  __MJ(__SST(this), __UST(this), false); // update start should retrigger sample start.
+
+  __T(__SST(this) + "_ps");
+  __J((__SST(this) + "_ps"), __SST(this));
+
+  __T(__SCT(this) + "_ps");
+  __F((__SCT(this) + "_ps"), __SCT(this));
+
+  __T(__UST(this) + "_ps");
+  __J((__UST(this) + "_ps"), __UST(this));
+
+  __T(__UCT(this) + "_ps");
+  __F((__UCT(this) + "_ps"), __UCT(this));
+
+
 
   // the active, completed and the active transitions
   string trigger_from_loop_back = this->Get_VC_Name() + "_loopback_trigger";
-  string sample_from_loop_back_from_phi_seq = this->Get_VC_Name() + "_loopback_sample_req_from_phi_seq";
   string sample_from_loop_back = this->Get_VC_Name() + "_loopback_sample_req";
   __T(trigger_from_loop_back);
-  __T(sample_from_loop_back_from_phi_seq);
-  __T(sample_from_loop_back);
   __J(trigger_from_loop_back,"back_edge_to_loop_body");
-  __J(sample_from_loop_back, sample_from_loop_back_from_phi_seq);
+  __T(sample_from_loop_back);
 
   string trigger_from_entry = this->Get_VC_Name() + "_entry_trigger";
   string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
-  string sample_from_entry_from_phi_seq = this->Get_VC_Name() + "_entry_sample_req_from_phi_seq";
   __T(trigger_from_entry);
-  __T(sample_from_entry_from_phi_seq);
-  __T(sample_from_entry);
   __J(trigger_from_entry, "first_time_through_loop_body");
-  __J(sample_from_entry, sample_from_entry_from_phi_seq);
+  __T(sample_from_entry);
 
 
-  __DeclTransSplitProtocolPattern;
 
   if(pipeline_flag)
   {
@@ -1580,17 +1600,46 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   string req_merge_name = this->Get_VC_Name() + "_req_merge";
   __T(msample_req);
 
+  string merge_from_entry = sample_from_entry +  "__merge_in";
+  __T(merge_from_entry);
+  __J(merge_from_entry, sample_from_entry);
+  string merge_from_loop_back = sample_from_loop_back +  "__merge_in";
+  __T(merge_from_loop_back);
+  __J(merge_from_loop_back, sample_from_loop_back);
+ 
   ofile << "$transitionmerge [" << req_merge_name << "] (" 
-	<< sample_from_entry << " " << sample_from_loop_back << ") (" << msample_req << ")" << endl;
+	<< merge_from_entry << " " << merge_from_loop_back << ") (" << msample_req << ")" << endl;
   __F(msample_req, "$null"); // merged the two and tied the merge as open.
 
-  string phi_triggers;
-  string phi_reqs;
+  vector<string> triggers;
+  vector<string> src_sample_reqs;
+  vector<string> src_sample_acks;
+  vector<string> src_update_reqs;
+  vector<string> src_update_acks;
+  vector<string> phi_mux_reqs;
+
+  string phi_mux_ack = this->Get_VC_Name() + "_phi_mux_ack";
+  __T(phi_mux_ack);
+  string phi_mux_ack_ps = this->Get_VC_Name() + "_phi_mux_ack_ps";
+  __T(phi_mux_ack_ps);
+  __J(phi_mux_ack_ps, phi_mux_ack);
+
   // the source control paths.
   for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
     {
       AaExpression* source_expr = _source_pairs[idx].second;
       string trig_place = _source_pairs[idx].first;
+
+
+	__T(__SST(source_expr) + "_ps");
+	__T(__SCT(source_expr) + "_ps");
+	__T(__UST(source_expr) + "_ps");
+	__T(__UCT(source_expr) + "_ps");
+
+      src_sample_reqs.push_back(__SST(source_expr) + "_ps");
+      src_sample_acks.push_back(__SCT(source_expr) + "_ps");
+      src_update_reqs.push_back(__UST(source_expr) + "_ps");
+      src_update_acks.push_back(__UCT(source_expr) + "_ps");
 
       if(!source_expr->Is_Constant())
       {
@@ -1601,18 +1650,49 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				      visited_elements,
 				      ls_map,pipe_map,barrier,
 				      ofile);
+
+			__J(__SST(sge), (__SST(source_expr) + "_ps"));
+			
 	      }
 
-	      source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
+	      if(source_expr->Is_Implicit_Variable_Reference() ||
+			source_expr->Is_Signal_Read())
+		{
+			__T(__SST(source_expr));
+			__T(__SCT(source_expr));
+			__T(__UST(source_expr));
+			__T(__UCT(source_expr));
+
+			string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
+			ofile <<  ";;[" << sample_region_name << "] { " << endl;
+			ofile << "$T [req] $T [ack] // interlock-sample." << endl;
+			ofile << "}" << endl;
+			__F(__SST(source_expr), sample_region_name);
+			__J(__SCT(source_expr), sample_region_name);
+
+			string update_region_name = source_expr->Get_VC_Name() + "_Update";
+			ofile <<  ";;[" << update_region_name << "] { " << endl;
+			ofile << "$T [req] $T [ack] // interlock-update." << endl;
+			ofile << "}" << endl;
+			__F(__UST(source_expr), update_region_name);
+			__J(__UCT(source_expr), update_region_name);
+			
+
+			// dont forget!
+			visited_elements.insert(source_expr);
+		}
+	      else
+		{
+	      		source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
 			      visited_elements,
 			      ls_map,pipe_map,barrier,
 			      ofile);
+		}
 	
-	      __J(__SST(this),__UCT(source_expr));
 
 	      if(sge != NULL)
 	      {
-		      ofile << "// Guard dependency" << endl;
+		      ofile << "// Guard dependency in PHI alternative.." << endl;
 		      __J(__SST(source_expr), __UCT(sge));
 	      }
 
@@ -1622,34 +1702,67 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		      {
 			      sge->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
 		      }
+
 		      source_expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
 	      }
       }
+      else
+      {
+	// source is constant... but phi-sequencer needs dummies.
+	ofile << "// dummies for constant expression source for phi" << endl;
+	__T(__SST(source_expr));
+	__T(__SCT(source_expr));
+	__J(__SCT(source_expr), __SST(source_expr));
+
+	__T(__UST(source_expr));
+	// delay needed from UST -> UCT.
+	ofile << "$T [" << __UCT(source_expr) << "] $delay " << endl;
+	__J(__UCT(source_expr), __UST(source_expr));
+
+      }
+
+	// relayed to i/o of phi-sequencer.
+      __J(__SST(source_expr), (__SST(source_expr) + "_ps"));
+      __J((__SCT(source_expr) + "_ps"), __SCT(source_expr));
+      __J(__UST(source_expr), (__UST(source_expr) + "_ps"));
+      __J((__UCT(source_expr) + "_ps"), __UCT(source_expr));
+
       if(trig_place == "$loopback")
       {
-	      phi_triggers += trigger_from_loop_back  + " "; 
-	      phi_reqs += sample_from_loop_back_from_phi_seq + " ";
+	      triggers.push_back(trigger_from_loop_back);
+	      phi_mux_reqs.push_back(sample_from_loop_back);
       }
       else
       {
-	      phi_triggers +=  trigger_from_entry + " ";
-	      phi_reqs += sample_from_entry_from_phi_seq + " ";
+	      triggers.push_back(trigger_from_entry);
+	      phi_mux_reqs.push_back(sample_from_entry);
       }
     }
-
-  string  phi_sequencer_done = this->Get_VC_Name() + "_phi_sequencer_done";
-  __T(phi_sequencer_done);
-  __F(phi_sequencer_done, "$null");
-
 
   // the control-sequencing for the PHI is too complicated to
   // model in a normal-fork block. The dirty stuff is hidden
   // in the phi_sequencer.
-  ofile << "$phisequencer [ " << this->Get_VC_Name() << "_phi_seq] ( ";
-  ofile << phi_triggers << " : ";
-  ofile << __SST(this) << " : " ;
-  ofile << __SCT(this) << " ) ( " ;
-  ofile << phi_reqs << " : " << phi_sequencer_done << " ) " << endl;
+  ofile << "$phisequencer [ " << this->Get_VC_Name() << "_phi_seq] : " << endl;
+ofile << "     ";
+  for(int idx = 0, fidx = triggers.size(); idx < fidx; idx++)
+  {
+	ofile << triggers[idx] <<  " " << src_sample_reqs[idx] << " "
+			<< src_sample_acks[idx] << " " 
+			<< src_update_reqs[idx] << " "
+			<< src_update_acks[idx] << " ";
+  }
+  ofile << ":" << endl;
+  ofile << "     ";
+  ofile << __SST(this)+"_ps" << " " << __SCT(this)+"_ps" << " " << __UST(this)+"_ps" << " " << __UCT(this)+"_ps" << " ";
+  ofile << ":" << endl;
+  ofile << "     ";
+  for(int idx = 0, fidx = phi_mux_reqs.size(); idx < fidx; idx++)
+  {
+	ofile <<  phi_mux_reqs[idx] << " ";
+  }
+  ofile << ": " << endl;
+  ofile << "     ";
+  ofile << phi_mux_ack << endl;
 
   // sample-ack from phi must join with condition-evaluated so that
   // loop-back is delayed until the present PHI has sampled.
@@ -1661,6 +1774,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  // For the moment, PHI statements cannot have guards.
 	  AaRoot::Error("Guards for PHI statements are not permitted.", this);
   }
+
+  this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements, ofile);
   visited_elements.insert(this);
 }
 
@@ -1676,9 +1791,6 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 
 	string sample_from_loop_back = this->Get_VC_Name() + "_loopback_sample_req";
 	string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
-	string sample_ack = __SCT(this);
-	string update_req = __UST(this);
-	string update_ack = __UCT(this);
 
 	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
 	{
@@ -1688,16 +1800,32 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 		else
 			reqs.push_back(hier_id + "/" + sample_from_entry);
 	}
-	reqs.push_back(hier_id + "/" + update_req);
-	acks.push_back(hier_id + "/" + sample_ack);
-	acks.push_back(hier_id + "/" + update_ack);
-
+	acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_phi_mux_ack");
 	Write_VC_Link(this->Get_VC_Name(),reqs,acks,ofile);
 
 	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
 	{
 		AaExpression* source_expr = _source_pairs[idx].second;
-		source_expr->Write_VC_Links_Optimized(hier_id, ofile);
+		if(!source_expr->Is_Constant() &&
+			(source_expr->Is_Implicit_Variable_Reference()  ||
+				source_expr->Is_Signal_Read()))
+		{
+			// interlock.
+			vector<string> reqs;
+			vector<string> acks;
+			string dpe_name = source_expr->Get_VC_Driver_Name() + "_buf";
+			string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
+			string update_region_name = source_expr->Get_VC_Name() + "_Update";
+			reqs.push_back(hier_id + "/" + sample_region_name + "/req");
+			reqs.push_back(hier_id + "/" + update_region_name + "/req");
+			acks.push_back(hier_id + "/" + sample_region_name + "/ack");
+			acks.push_back(hier_id + "/" + update_region_name + "/ack");
+			Write_VC_Link(dpe_name, reqs, acks, ofile);
+		}
+		else
+		{
+			source_expr->Write_VC_Links_Optimized(hier_id, ofile);
+		}
 	}
 }
 

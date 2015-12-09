@@ -24,6 +24,9 @@ void AaExpression::Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaR
 	Write_VC_RAW_Release_Deps(((AaRoot*)this),non_triv_preds);
 }
 
+// This expression is the reader.  Its roots should be reenabled 
+// by ctrans (which is the sample-complete transition of the statement of which this
+// expression is a source).
 void AaExpression::Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,  set<AaRoot*>& visited_elements,  ostream& ofile)
 {
 	set<AaExpression*> root_set;
@@ -35,7 +38,10 @@ void AaExpression::Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,
 		bool bypass = (bypass_if_true || producer->Update_Protocol_Has_Delay(visited_elements));
 		
 		if(visited_elements.find(producer) != visited_elements.end())
-			__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, bypass);
+		{
+			if((this->Get_Associated_Phi_Statement() == NULL) || (producer != this))
+				__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, bypass);
+		}
 
 		// 
 		// if producer is part of operator module, and if producer is
@@ -148,8 +154,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 					{
 						ofile << "// WAR dependency: release  Read: " << read_expr->To_String() 
 							<< " with Write: " << write_stmt->To_String() << endl;
-						if(read_stmt != write_stmt)
-							__MJ(__SST(read_expr), __UCT(write_stmt), true);
+						__MJ(__SST(read_expr), __UCT(write_stmt), true);
 					}
 					else
 					{
@@ -178,16 +183,9 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 							{
 								forward_dependency = true;
 
-								// root is a statement
-								if(root != ((AaRoot*) read_stmt))
-								{
-									// root statement and read statement have to be different!
-									// else there will be a big problem.
-									ofile << "// root-writer is " << root->To_String() << endl;
-									//if(!root->Is("AaPhiStatement"))
-									__J(__UST(root), __SCT(read_stmt));
-									__MJ(__SST(read_stmt), __UCT(root), true);
-								}
+								ofile << "// root-writer is " << root->To_String() << endl;
+								__J(__UST(root), __SCT(read_stmt));
+								__MJ(__SST(read_stmt), __UCT(root), true);
 							}
 
 							if(!forward_dependency)
@@ -206,30 +204,30 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 }
 
 //
-// from guard expression sexpr to this.
+// from guard expression guard_expr to this.
 //
-void AaExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile)
+void AaExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* guard_expr, set<AaRoot*>& visited_elements, ostream& ofile)
 {
-	AaRoot* root = sexpr->Get_Root_Object();
+	AaRoot* root = guard_expr->Get_Root_Object();
 	if(visited_elements.find(root) != visited_elements.end())
 	{
-		__J(__SST(this), __UCT(sexpr));
+		__J(__SST(this), __UCT(guard_expr));
 		// Note: with new SplitGuardInterface
 		// this dependency is no longer necessary.
 		//__J(__UST(this), __UCT(root));
 	}
 	else
 	{
-		ofile << "// root " << root->Get_VC_Name() << " of guard-expression " << sexpr->Get_VC_Name() << " not in visited elements." << endl;
+		ofile << "// root " << root->Get_VC_Name() << " of guard-expression " << guard_expr->Get_VC_Name() << " not in visited elements." << endl;
 	}
 }
 
 
-void AaExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
+void AaExpression::Write_VC_Guard_Backward_Dependency(AaExpression* guard_expr,
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {
 	// when this completes, the guard can be re-evaluated.
-	expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+	guard_expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
 
 	// With new SplitGuardInterface, this dependency is
 	// no longer necessary.
@@ -391,8 +389,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			{
 				__J(__SST(this), __UCT(root));
 			}	  
-			else
+			else if(this->Get_Associated_Phi_Statement() == NULL)
 			{
+				// in PHI, the sources are enabled from the sequencer.
 				__J(__SST(this), "$entry");
 			}
 
@@ -402,7 +401,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			__J(__UCT(this),__UST(this));
 
 			bool pm = this->Is_Part_Of_Pipelined_Module();
-			if(pm)
+			if(pm && (this->Get_Associated_Phi_Statement() == NULL))
 			{
 				//string sample_enable = this->_object->Get_VC_Name() + "_update_enable";
 				//
@@ -431,7 +430,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 				__J(__SST(this), __UCT(root));
 
 			}
-			else
+			else if(this->Get_Associated_Phi_Statement() == NULL)
 			{
 				__J(__SST(this), "$entry");
 			}
@@ -622,11 +621,34 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 	}
 }
 
+	
+bool AaSimpleObjectReference::Is_Pipe_Read()
+{
+	if(this->_object == NULL)
+		return(false);
+	if(this->_object->Is_Pipe_Object())
+	{
+		return(!this->Get_Is_Target());
+	}
+}
+
 void AaSimpleObjectReference::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {
-
-	this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
+	if(this->Is_Pipe_Read())
+	{
+		//
+		// for pipe reads, release guard from update complete.
+		//
+		expr->Write_VC_Update_Reenables(__UCT(this), true, visited_elements, ofile);
+	}
+	else
+	{
+		//
+		// else do the usual thing.
+		//
+		this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
+	}
 	/*  Not necessary..  split release will take care of this..
 	    if(this->_object->Is("AaPipeObject"))
 	    {

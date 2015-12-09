@@ -1171,6 +1171,8 @@ class AaPhiStatement: public AaStatement
 
   virtual AaSimpleObjectReference* Get_Implicit_Target(string tgt_name);
 
+  void Write_VC_WAR_Dependencies(bool pipeline_flag, set<AaRoot*>& visited_elements,
+				 ostream& ofile);
 
   virtual string Get_C_Name()
   {
@@ -1377,8 +1379,8 @@ class AaDoWhileStatement: public AaStatement
   AaMergeStatement* _merge_statement;
   AaStatementSequence* _loop_body_sequence;
 
-  int _pipeline_depth;
-  int _pipeline_buffering;
+  int  _pipeline_depth;
+  int  _pipeline_buffering;
   bool _pipeline_full_rate_flag;
  public:
 

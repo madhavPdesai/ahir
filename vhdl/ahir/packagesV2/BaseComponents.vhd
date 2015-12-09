@@ -185,11 +185,38 @@ package BaseComponents is
       clk, reset: in std_logic);
   end component;
 
+  component phi_sequencer_v2  is
+    generic (place_capacity : integer; 
+	      ntriggers : integer; 
+	      name : string := "anonPhiSequencer");
+    port (
+  	triggers : in BooleanArray(0 to ntriggers-1); 	    -- there are nreq triggers.
+  	src_sample_starts : out BooleanArray(0 to ntriggers-1);   -- sample starts for sources.
+	src_sample_completes: in BooleanArray(0 to ntriggers-1);  -- sample completes from sources.
+  	src_update_starts : out BooleanArray(0 to ntriggers-1);   -- update starts for sources.
+	src_update_completes: in BooleanArray(0 to ntriggers-1);  -- update completes from sources.
+  	phi_sample_req  : in Boolean;			   	  -- incoming sample-req to phi.
+	phi_sample_ack  : out Boolean;				  -- outgoing sample-ack from phi.
+  	phi_update_req  : in Boolean;			   	  -- incoming update-req to phi.
+	phi_update_ack  : out Boolean;				  -- outgoing update-ack from phi.
+  	phi_mux_select_reqs    : out BooleanArray(0 to ntriggers-1);	  -- phi-select mux select reqs.
+	phi_mux_ack: in Boolean;				  -- ack from mux signifying select complete.
+  	clk, reset: in std_logic);
+   end component;
+
+   component conditional_fork is
+       generic (place_capacity: integer := 1; 
+			ntriggers: integer; name : string := "anonConditionalRepeater");
+       port  (triggers: in BooleanArray(0 to ntriggers-1);
+			in_transition: in Boolean;
+			out_transitions: out BooleanArray(0 to ntriggers-1);
+			clk: in std_logic; reset: in std_logic);
+   end component;
+
   component transition_merge 
       port (preds      : in   BooleanArray;
           symbol_out : out  boolean);
   end component;
-  
   
   component access_regulator_base 
     generic (name : string; num_slots: integer := 1);
@@ -441,6 +468,18 @@ package BaseComponents is
          pop_req: in std_logic);
   end component QueueBase;
 
+  component QueueBaseWithBypass
+    generic(name : string := "anon"; queue_depth: integer := 2; data_width: integer := 32);
+    port(clk: in std_logic;
+         reset: in std_logic;
+         data_in: in std_logic_vector(data_width-1 downto 0);
+         push_req: in std_logic;
+         push_ack: out std_logic;
+         data_out: out std_logic_vector(data_width-1 downto 0);
+         pop_ack : out std_logic;
+         pop_req: in std_logic);
+  end component QueueBaseWithBypass;
+
   component SynchFifo 
     generic(name: string := "anon"; queue_depth: integer := 3; data_width: integer := 72);
     port(clk: in std_logic;
@@ -526,7 +565,8 @@ package BaseComponents is
   component PhiBase 
     generic (
       num_reqs   : integer;
-      data_width : integer);
+      data_width : integer;
+      bypass_flag: boolean := false);
     port (
       req                 : in  BooleanArray(num_reqs-1 downto 0);
       ack                 : out Boolean;
@@ -1586,8 +1626,39 @@ package BaseComponents is
 	      reset: in std_logic);
   end component;
 
+  component SplitSampleGuardInterfaceBase is
+	generic (buffering:integer);
+	port (sr_in: in Boolean;
+	      sa_out: out Boolean;
+	      sr_out: out Boolean;
+	      sa_in: in Boolean;
+	      cr_in: in Boolean;
+	      ca_out: out Boolean;
+	      cr_out: out Boolean;
+	      ca_in: in Boolean;
+	      guard_interface: in std_logic;
+	      clk: in std_logic;
+	      reset: in std_logic);
+  end component;
+
+  component SplitUpdateGuardInterfaceBase is
+	generic (buffering:integer);
+	port (sr_in: in Boolean;
+	      sa_out: out Boolean;
+	      sr_out: out Boolean;
+	      sa_in: in Boolean;
+	      cr_in: in Boolean;
+	      ca_out: out Boolean;
+	      cr_out: out Boolean;
+	      ca_in: in Boolean;
+	      guard_interface: in std_logic;
+	      clk: in std_logic;
+	      reset: in std_logic);
+  end component;
+
   component SplitGuardInterface is
-	generic (nreqs: integer; buffering: IntegerArray; use_guards: BooleanArray);
+	generic (nreqs: integer; buffering: IntegerArray; use_guards: BooleanArray;
+			sample_only: Boolean := false; update_only: Boolean := false);
 	port (sr_in: in BooleanArray(nreqs-1 downto 0);
 	      sa_out: out BooleanArray(nreqs-1 downto 0); 
 	      sr_out: out BooleanArray(nreqs-1 downto 0);

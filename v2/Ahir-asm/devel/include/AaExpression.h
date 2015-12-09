@@ -15,6 +15,7 @@ class AaStorageObject;
 class AaStatement;
 class AaAssignmentStatement;
 class AaDoWhileStatement;
+class AaPhiStatement;
 class AaSimpleObjectReference;
 class AaModule;
 class AaExpression: public AaRoot
@@ -25,7 +26,6 @@ class AaExpression: public AaRoot
 	bool _is_target;
 	bool _does_pipe_access;
 	bool _is_malformed;
-
 	bool _is_intermediate;
 
 
@@ -88,6 +88,12 @@ class AaExpression: public AaRoot
 	int Get_Buffering() {return(_buffering);}
  	virtual void Print_Buffering(ostream& ofile);
 
+	virtual void Set_Guarded_Expression(AaExpression* expr) {assert(0);}
+	virtual AaExpression* Get_Guarded_Expression() {return(NULL);}
+	virtual void Set_Guarded_Statement(AaExpression* stmt) {assert(0);}
+	virtual AaStatement* Get_Guarded_Statement() {return(NULL);}
+
+	AaPhiStatement* Get_Associated_Phi_Statement();
 
 	virtual AaScope* Get_Scope() { return(this->_scope);}
 	virtual AaModule* Get_Module();
@@ -333,7 +339,6 @@ class AaExpression: public AaRoot
 	virtual void Collect_Root_Sources(set<AaExpression*>& root_set) {if(!this->Is_Constant()) root_set.insert(this);}
 	virtual void Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,  set<AaRoot*>& visited_elements, ostream& ofile);
 
-	virtual AaStatement* Get_Guarded_Statement() {return(NULL);}
 
 	virtual bool Is_Part_Of_Pipelined_Module(); // TODO: return true if in pipelined module.
 
@@ -719,11 +724,17 @@ class AaSimpleObjectReference: public AaObjectReference
 
 	set<AaStorageObject*> _addressed_objects;
 	AaStatement* _guarded_statement;
+	AaExpression* _guarded_expression;
+
 	public:
 
-	void Set_Guarded_Statement(AaStatement* stmt) {_guarded_statement = stmt;}
+	virtual void Set_Guarded_Statement(AaStatement* stmt) {_guarded_statement = stmt;}
 	virtual AaStatement* Get_Guarded_Statement() {return(_guarded_statement);}
 
+	virtual void Set_Guarded_Expression(AaExpression* expr) {_guarded_expression = expr;}
+	virtual AaExpression* Get_Guarded_Expression() {return(_guarded_expression);}
+
+	bool Is_Pipe_Read();
 	AaSimpleObjectReference(AaScope* scope_tpr, string object_ref_string);
 	AaSimpleObjectReference(AaScope* scope_tpr, AaAssignmentStatement* root_object);
 

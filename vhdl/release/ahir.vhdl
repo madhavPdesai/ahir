@@ -1853,11 +1853,38 @@ package BaseComponents is
       clk, reset: in std_logic);
   end component;
 
+  component phi_sequencer_v2  is
+    generic (place_capacity : integer; 
+	      ntriggers : integer; 
+	      name : string := "anonPhiSequencer");
+    port (
+  	triggers : in BooleanArray(0 to ntriggers-1); 	    -- there are nreq triggers.
+  	src_sample_starts : out BooleanArray(0 to ntriggers-1);   -- sample starts for sources.
+	src_sample_completes: in BooleanArray(0 to ntriggers-1);  -- sample completes from sources.
+  	src_update_starts : out BooleanArray(0 to ntriggers-1);   -- update starts for sources.
+	src_update_completes: in BooleanArray(0 to ntriggers-1);  -- update completes from sources.
+  	phi_sample_req  : in Boolean;			   	  -- incoming sample-req to phi.
+	phi_sample_ack  : out Boolean;				  -- outgoing sample-ack from phi.
+  	phi_update_req  : in Boolean;			   	  -- incoming update-req to phi.
+	phi_update_ack  : out Boolean;				  -- outgoing update-ack from phi.
+  	phi_mux_select_reqs    : out BooleanArray(0 to ntriggers-1);	  -- phi-select mux select reqs.
+	phi_mux_ack: in Boolean;				  -- ack from mux signifying select complete.
+  	clk, reset: in std_logic);
+   end component;
+
+   component conditional_fork is
+       generic (place_capacity: integer := 1; 
+			ntriggers: integer; name : string := "anonConditionalRepeater");
+       port  (triggers: in BooleanArray(0 to ntriggers-1);
+			in_transition: in Boolean;
+			out_transitions: out BooleanArray(0 to ntriggers-1);
+			clk: in std_logic; reset: in std_logic);
+   end component;
+
   component transition_merge 
       port (preds      : in   BooleanArray;
           symbol_out : out  boolean);
   end component;
-  
   
   component access_regulator_base 
     generic (name : string; num_slots: integer := 1);
@@ -2109,6 +2136,18 @@ package BaseComponents is
          pop_req: in std_logic);
   end component QueueBase;
 
+  component QueueBaseWithBypass
+    generic(name : string := "anon"; queue_depth: integer := 2; data_width: integer := 32);
+    port(clk: in std_logic;
+         reset: in std_logic;
+         data_in: in std_logic_vector(data_width-1 downto 0);
+         push_req: in std_logic;
+         push_ack: out std_logic;
+         data_out: out std_logic_vector(data_width-1 downto 0);
+         pop_ack : out std_logic;
+         pop_req: in std_logic);
+  end component QueueBaseWithBypass;
+
   component SynchFifo 
     generic(name: string := "anon"; queue_depth: integer := 3; data_width: integer := 72);
     port(clk: in std_logic;
@@ -2194,7 +2233,8 @@ package BaseComponents is
   component PhiBase 
     generic (
       num_reqs   : integer;
-      data_width : integer);
+      data_width : integer;
+      bypass_flag: boolean := false);
     port (
       req                 : in  BooleanArray(num_reqs-1 downto 0);
       ack                 : out Boolean;
@@ -3254,8 +3294,39 @@ package BaseComponents is
 	      reset: in std_logic);
   end component;
 
+  component SplitSampleGuardInterfaceBase is
+	generic (buffering:integer);
+	port (sr_in: in Boolean;
+	      sa_out: out Boolean;
+	      sr_out: out Boolean;
+	      sa_in: in Boolean;
+	      cr_in: in Boolean;
+	      ca_out: out Boolean;
+	      cr_out: out Boolean;
+	      ca_in: in Boolean;
+	      guard_interface: in std_logic;
+	      clk: in std_logic;
+	      reset: in std_logic);
+  end component;
+
+  component SplitUpdateGuardInterfaceBase is
+	generic (buffering:integer);
+	port (sr_in: in Boolean;
+	      sa_out: out Boolean;
+	      sr_out: out Boolean;
+	      sa_in: in Boolean;
+	      cr_in: in Boolean;
+	      ca_out: out Boolean;
+	      cr_out: out Boolean;
+	      ca_in: in Boolean;
+	      guard_interface: in std_logic;
+	      clk: in std_logic;
+	      reset: in std_logic);
+  end component;
+
   component SplitGuardInterface is
-	generic (nreqs: integer; buffering: IntegerArray; use_guards: BooleanArray);
+	generic (nreqs: integer; buffering: IntegerArray; use_guards: BooleanArray;
+			sample_only: Boolean := false; update_only: Boolean := false);
 	port (sr_in: in BooleanArray(nreqs-1 downto 0);
 	      sa_out: out BooleanArray(nreqs-1 downto 0); 
 	      sr_out: out BooleanArray(nreqs-1 downto 0);
@@ -9557,6 +9628,68 @@ begin
   fin_req <= '1';
 
 end default_arch;
+-- conditional-fork.
+--    forward in-transition to out-transitions if triggers are enabled.
+-- written by Madhav P. Desai, December 2015.
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+use ahir.BaseComponents.all;
+use ahir.Utilities.all;
+
+-- for a transition on in-transition, produce a transition on an out-transitions 
+-- if the trigger is enabled (disable all triggers when the out-transition is fired).
+entity conditional_fork is
+       generic (place_capacity: integer := 1; 
+			ntriggers: integer; name : string := "anonConditionalRepeater");
+       port (triggers: in BooleanArray(0 to ntriggers-1);
+			in_transition: in Boolean;
+			out_transitions: out BooleanArray(0 to ntriggers-1);
+			clk: in std_logic; reset: in std_logic);
+end entity conditional_fork;
+
+architecture Basic of conditional_fork is
+    signal trig_places, trig_clears: BooleanArray(0 to ntriggers-1);
+    signal in_trans_place, in_trans_clear: Boolean;
+begin
+    TrigPlaces: for I in 0 to (ntriggers-1) generate
+	placeBlock: block
+	  signal place_pred, place_succ: BooleanArray(0 downto 0);
+        begin
+	  place_pred(0) <= triggers(I);
+	  place_succ(0) <= trig_clears(I);
+
+          -- a bypass place: in order to speed up loop turnaround times.
+	  pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+		     name => name & ":trigplaces:" & Convert_To_String(I))
+		  port map(place_pred,place_succ,trig_places(I),clk,reset);
+        end block;
+    end generate TrigPlaces;
+
+    inTransPlaceBlock: block
+      signal place_pred, place_succ: BooleanArray(0 downto 0);
+    begin
+      place_pred(0) <= in_transition;
+      place_succ(0) <= in_trans_clear;
+
+      -- a bypass place: in order to speed up loop turnaround times.
+      pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+		     name => name & ":inTransPlace:")
+		  port map(place_pred,place_succ,in_trans_place,clk,reset);
+    end block;
+
+    cGen: for I in 0 to ntriggers-1 generate
+	trig_clears(I) <= in_trans_place and trig_places(I);
+	out_transitions(I) <= trig_clears(I);
+    end generate cGen;
+  
+     -- clear in-transition when any of the trigs are cleared.
+     in_trans_clear <= OrReduce(trig_clears);
+
+end Basic;
+
 library ieee;
 use ieee.std_logic_1164.all;
 
@@ -10192,6 +10325,104 @@ begin  -- default_arch
   symbol_out <= AndReduce(preds);
 
 end default_arch;
+-- phi-sequencer.. improved version
+--  src-expressions are triggered only when needed
+--  (as opposed to the old phi which was clumsy).
+-- written by Madhav P. Desai, December 2015.
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+use ahir.BaseComponents.all;
+use ahir.Utilities.all;
+use ahir.GlobalConstants.all;
+
+
+entity phi_sequencer_v2  is
+  generic (place_capacity : integer; 
+	   ntriggers : integer; 
+	   name : string := "anonPhiSequencer");
+  port (
+  	triggers : in BooleanArray(0 to ntriggers-1); 	    -- there are nreq triggers.
+  	src_sample_starts : out BooleanArray(0 to ntriggers-1);   -- sample starts for sources.
+	src_sample_completes: in BooleanArray(0 to ntriggers-1);  -- sample completes from sources.
+  	src_update_starts : out BooleanArray(0 to ntriggers-1);   -- update starts for sources.
+	src_update_completes: in BooleanArray(0 to ntriggers-1);  -- update completes from sources.
+  	phi_sample_req  : in Boolean;			   	  -- incoming sample-req to phi.
+	phi_sample_ack  : out Boolean;				  -- outgoing sample-ack from phi.
+  	phi_update_req  : in Boolean;			   	  -- incoming update-req to phi.
+	phi_update_ack  : out Boolean;				  -- outgoing update-ack from phi.
+  	phi_mux_select_reqs    : out BooleanArray(0 to ntriggers-1);	  -- phi-select mux select reqs.
+	phi_mux_ack: in Boolean;				  -- ack from mux signifying select complete.
+  	clk, reset: in std_logic);
+end phi_sequencer_v2;
+
+
+--
+-- on reset, wait for a transition on any of the in_places.
+-- the corresponding req is asserted..  A token in the
+-- enable places is needed to allow firing of the reqs.
+--
+architecture Behave of phi_sequencer_v2 is
+  signal trigger_tokens, trigger_clears : BooleanArray(0 to ntriggers-1);
+  signal sample_wait_tokens, sample_wait_clears : BooleanArray(0 to ntriggers-1);
+  signal src_update_start_tokens, src_update_start_clears : BooleanArray(0 to ntriggers-1);
+  signal src_update_wait_tokens, src_update_wait_clears : BooleanArray(0 to ntriggers-1);
+begin  -- Behave
+
+  -- fatal: multiple triggers should never be active.
+  ErrorFlag: if global_debug_flag generate
+    process(clk, reset)
+        variable found_flag : Boolean := false;
+    begin
+       found_flag := false;
+       if(clk'event and clk = '1') then
+         if(reset = '0') then
+	   for I in 0 to ntriggers-1 loop
+             if(triggers(I)) then
+		if(found_flag) then
+		   assert false report "Multiple triggers to phi " & name & " are active. "
+				severity error;
+		else
+		   found_flag := true;
+                end if;
+             end if;
+          end loop;
+         end if;
+       end if;
+    end process;
+  end generate ErrorFlag;
+ 
+  trigForkSample: conditional_fork
+		generic map (place_capacity => place_capacity,
+				ntriggers => ntriggers,
+					name => name & ":trigFork")
+		port map (triggers => triggers,
+				in_transition => phi_sample_req,
+					out_transitions => src_sample_starts, 
+						clk => clk, reset => reset);
+  trigForkUpdate: conditional_fork
+		generic map (place_capacity => place_capacity,
+				ntriggers => ntriggers,
+					name => name & ":trigFork")
+		port map (triggers => src_sample_completes,
+				in_transition => phi_update_req,
+					out_transitions => src_update_starts, 
+						clk => clk, reset => reset);
+					
+					
+
+  -- mux-selects triggered by src-update completes.
+  phi_mux_select_reqs <= src_update_completes;
+
+  -- phi-sample-ack is reduced or src-sample-completes.
+  phi_sample_ack <= OrReduce(src_sample_completes);
+
+  -- phi-mux-ack goes back as phi_update_ack.
+  phi_update_ack <= phi_mux_ack; 
+
+end Behave;
 -- phi-sequencer..
 -- written by Madhav P. Desai, December 2012.
 library ieee;
@@ -12483,7 +12714,8 @@ use ahir.Utilities.all;
 entity PhiBase is
   generic (
     num_reqs   : integer;
-    data_width : integer);
+    data_width : integer;
+    bypass_flag : boolean := false);
   port (
     req                 : in  BooleanArray(num_reqs-1 downto 0);
     ack                 : out Boolean;
@@ -12494,29 +12726,53 @@ end PhiBase;
 
 
 architecture Behave of PhiBase is
-
+   signal muxed_idata: std_logic_vector(data_width-1 downto 0);
+   signal odata_reg: std_logic_vector(data_width-1 downto 0);
+   signal there_is_a_req: boolean;
+   signal ack_internal: boolean;
 begin  -- Behave
 
   assert(idata'length = (odata'length * req'length)) report "data size mismatch" severity failure;
+
+  -- muxed data..
+  muxed_idata <= MuxOneHot(idata,req);
+  there_is_a_req <= OrReduce(req);
+  ack_internal <= there_is_a_req;
 
   process(clk)
 	variable mux_data : std_logic_vector(odata'length-1 downto 0);
   begin
      if(clk'event and clk = '1') then
 	if(reset = '1') then
-          ack <= false;
-          odata <= (others => '0');
+          odata_reg <= (others => '0');
 	else
-          if(OrReduce(req)) then
-            odata <= MuxOneHot(idata,req);
-            ack <= true;
-          else
-            ack <= false;
+          if(there_is_a_req) then
+            odata_reg <= MuxOneHot(idata,req);
           end if;
 	end if;
      end if;
   end process;
 
+  -- bypass.
+  Byp: if bypass_flag generate
+  	odata <= muxed_idata when there_is_a_req else odata_reg;
+        ack <= ack_internal;
+  end generate Byp;
+
+  -- no-bypass.
+  NoByp: if (not bypass_flag) generate
+  	odata <= odata_reg;
+        process(clk)
+        begin
+ 	   if(clk'event and clk = '1') then
+		if(reset = '1') then
+			ack <= false;
+		else 
+			ack <= ack_internal;
+		end if;
+	   end if;
+        end process;
+  end generate NoByp;
 end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -21032,6 +21288,135 @@ begin  -- Behave
     end if;
   end process;
 end Behave;
+-- copyright: Madhav Desai
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+
+entity QueueBaseWithBypass is
+  generic(name : string := "anon"; queue_depth: integer := 1; data_width: integer := 32);
+  port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+end entity QueueBaseWithBypass;
+
+architecture behave of QueueBaseWithBypass  is
+
+  type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
+  function Incr(x: integer; M: integer) return integer is
+  begin
+    if(x < M) then
+      return(x + 1);
+    else
+      return(0);
+    end if;
+  end Incr;
+
+begin  -- SimModel
+
+ --
+ -- 0-depth queue is just a set of wires.
+ --
+ triv: if queue_depth = 0 generate
+	push_ack <= pop_req;
+	pop_ack  <= push_req;
+	data_out <= data_in;
+ end generate triv;
+
+
+ nontriv: if queue_depth > 0 generate 
+  NTB: block 
+  	signal queue_array : QueueArray(queue_depth-1 downto 0);
+  	signal read_pointer, write_pointer : integer range 0 to queue_depth-1;
+  	signal queue_size : integer range 0 to queue_depth;
+        signal data_out_from_queue : std_logic_vector(data_width-1 downto 0);
+        signal bypass_signal: Boolean;
+  begin
+ 
+    assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
+
+    push_ack <= '1' when (bypass_signal or (queue_size < queue_depth)) else '0';
+    pop_ack  <= '1' when (bypass_signal or (queue_size > 0)) else '0';
+
+    -- bottom pointer gives the data in FIFO mode..
+    data_out_from_queue <= queue_array(read_pointer);
+
+    --
+    -- if queue size = 0, and if push-req is true, then data is
+    -- presented to data-out through the bypass path.
+    --
+    data_out <= data_in when bypass_signal else data_out_from_queue;
+
+  
+    -- single process
+    process(clk, queue_size, push_req, pop_req, write_pointer, read_pointer)
+      variable qsize : integer range 0 to queue_depth;
+      variable push,pop : boolean;
+      variable next_read_ptr,next_write_ptr : integer range 0 to queue_depth-1;
+      variable bypass: boolean;
+    begin
+
+      qsize := queue_size;
+      push  := false;
+      pop   := false;
+      next_read_ptr := read_pointer;
+      next_write_ptr := write_pointer;
+
+      bypass := ((qsize = 0) and  (push_req = '1') and (pop_req = '1'));
+      bypass_signal <= bypass;
+      
+      if((qsize < queue_depth) and (push_req = '1') and (not bypass)) then
+          push := true;
+      end if;
+  
+      if((qsize > 0) and (pop_req = '1') and (not bypass)) then
+          pop := true;
+      end if;
+  
+  
+      if(push) then
+          next_write_ptr := Incr(next_write_ptr,queue_depth-1);
+      end if;
+  
+      if(pop) then
+         next_read_ptr := Incr(next_read_ptr,queue_depth-1);
+      end if;
+  
+      if(pop and (not push)) then
+         qsize := qsize - 1;
+      elsif(push and (not pop)) then
+         qsize := qsize + 1;
+      end if;
+        
+  
+      if(clk'event and clk = '1') then
+        if(reset = '1') then
+		queue_size <= 0;
+		read_pointer <= 0;
+		write_pointer <= 0;
+	else
+        	if(push) then
+          		queue_array(write_pointer) <= data_in;
+        	end if;
+        	
+        	queue_size <= qsize;
+        	read_pointer <= next_read_ptr;
+        	write_pointer <= next_write_ptr;
+	end if;
+      end if;
+      
+    end process;
+   end block NTB;
+  end generate nontriv;
+  
+
+end behave;
 -- TODO: add bypass path to the receive buffer.
 --       this will reduce buffering requirements
 --       by a factor of two (for full pipelining).
@@ -21385,7 +21770,7 @@ begin
 
 	qdata_in(0) <= guard_interface;
 
-	qI: QueueBase
+	qI: QueueBase  -- dont bypass.. combinational cycle alert!
 		generic map(queue_depth => buffering, data_width => 1)
 		port map(clk => clk, reset => reset,
 				data_in => qdata_in,
@@ -21628,7 +22013,8 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity SplitGuardInterface is
-	generic (nreqs: integer; buffering:IntegerArray; use_guards: BooleanArray);
+	generic (nreqs: integer; buffering:IntegerArray; use_guards: BooleanArray; 
+			sample_only: Boolean := false; update_only: Boolean := false);
 	port (sr_in: in BooleanArray(nreqs-1 downto 0);
 	      sa_out: out BooleanArray(nreqs-1 downto 0); 
 	      sr_out: out BooleanArray(nreqs-1 downto 0);
@@ -21650,7 +22036,8 @@ begin
 	BaseGen: for I in nreqs-1 downto 0 generate
 
 	     gCase: if gFlags(I) generate
-		sgi: SplitGuardInterfaceBase
+		SampleOnly: if sample_only generate
+		   sgis: SplitSampleGuardInterfaceBase
 			generic map (buffering => gBufs(I))
 			port map(sr_in => sr_in(I),
 				 sr_out => sr_out(I),
@@ -21662,6 +22049,38 @@ begin
 				 ca_out => ca_out(I),
 				 guard_interface => guards(I),
 				 clk => clk, reset => reset);
+		end generate SampleOnly;
+
+		UpdateOnly: if update_only generate
+		   sgiu: SplitUpdateGuardInterfaceBase
+			generic map (buffering => gBufs(I))
+			port map(sr_in => sr_in(I),
+				 sr_out => sr_out(I),
+				 sa_in => sa_in(I),
+				 sa_out => sa_out(I),
+				 cr_in => cr_in(I),
+				 cr_out => cr_out(I),
+				 ca_in => ca_in(I),
+				 ca_out => ca_out(I),
+				 guard_interface => guards(I),
+				 clk => clk, reset => reset);
+		end generate UpdateOnly;
+
+		SampleAndUpdate: if (not (sample_only or update_only)) generate
+		   sgi: SplitGuardInterfaceBase
+			generic map (buffering => gBufs(I))
+			port map(sr_in => sr_in(I),
+				 sr_out => sr_out(I),
+				 sa_in => sa_in(I),
+				 sa_out => sa_out(I),
+				 cr_in => cr_in(I),
+				 cr_out => cr_out(I),
+				 ca_in => ca_in(I),
+				 ca_out => ca_out(I),
+				 guard_interface => guards(I),
+				 clk => clk, reset => reset);
+		end generate SampleAndUpdate;
+
               end generate gCase;
 	   
  	      noG: if not gFlags(I) generate
@@ -21675,6 +22094,7 @@ begin
 end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Types.all;
@@ -21682,89 +22102,181 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
--- brief description:
---  as the name indicates, a squash-shift-register
---  provides an implementation of a pipeline.
---
-entity SquashShiftRegister is
-  generic (name : string;
-	   data_width: integer;
-           depth: integer := 1);
-  port (
-    read_req       : in  std_logic;
-    read_ack       : out std_logic;
-    read_data      : out std_logic_vector(data_width-1 downto 0);
-    write_req       : in  std_logic;
-    write_ack       : out std_logic;
-    write_data      : in std_logic_vector(data_width-1 downto 0);
-    clk, reset : in  std_logic);
-  
-end SquashShiftRegister;
 
-architecture default_arch of SquashShiftRegister is
+-- A half guard interface which forwards only
+-- the sample.  (used on output ports).
+--  Madhav P. Desai.
+entity SplitSampleGuardInterfaceBase is
+	generic (buffering:integer);
+	port (sr_in: in Boolean;
+	      sa_out: out Boolean;
+	      sr_out: out Boolean;
+	      sa_in: in Boolean;
+	      cr_in: in Boolean;
+	      ca_out: out Boolean;
+	      cr_out: out Boolean;
+	      ca_in: in Boolean;
+	      guard_interface: in std_logic;
+	      clk: in std_logic;
+	      reset: in std_logic);
+end entity;
 
-  constant n_stages: integer := Ceil(depth, 2);
-  constant last_stage_depth : integer :=  (depth - ((n_stages-1)*2));
 
-  signal int_write_reqs, int_write_acks, int_read_reqs, int_read_acks: std_logic_vector(1 to n_stages);
+architecture Behave of SplitSampleGuardInterfaceBase is
+	Type FsmState is (Idle, Busy);
+	signal fsm_state: FsmState;
+begin
 
-  type DataArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  signal stage_data: DataArray(0 to n_stages); 
+	-- cr/ca interface is a dummy... no need to forward to the
+	-- operator which does not care anyway.
+	cr_out <= false;
+	process(clk,reset)
+	begin
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				ca_out <= false;
+			else
+				ca_out <= cr_in;
+			end if;
+		end if;
+	end process;
 
-begin  -- default_arch
-  int_write_reqs(1) <= write_req;
-  write_ack <= int_write_reqs(1);
 
-  int_read_reqs(n_stages)  <= read_req;
-  read_ack <= int_read_acks(n_stages);
+	-- sample guard FSM.
+	process(clk, guard_interface, fsm_state, sr_in, sa_in)
+		variable next_state : FsmState;
+		variable sr_out_var, sa_out_var: Boolean;
+	begin
+		next_state := fsm_state;
+		sr_out_var := false;
+		sa_out_var := false;
+		case fsm_state is
+			when Idle =>
+				if(sr_in) then
+					if(guard_interface  = '1') then
+						sr_out_var := true;
+						if(sa_in) then
+							sa_out_var := true;
+						else
+							next_state := Busy;
+						end if;
+					else
+						-- give ack, since guard is 0.
+						sa_out_var := true;	
+					end if;
+				end if;
+			when Busy => 
+				if(sa_in) then
+					next_state := Idle;
+					sa_out_var := true;
+				end if;
+		end case;
+		
+		sr_out <= sr_out_var;
+		sa_out <= sa_out_var;
 
-  stage_data(0) <= write_data;
-  read_data <= stage_data(n_stages);
-
-  ifGen1: if(n_stages > 1) generate
-     genArray: for I in 1 to n_stages-1 generate
-	-- depth 2 queues.. to reduce the combinational path delays
-	inst: QueueBase 
-		generic map(name => name & ":stage:" & Convert_To_String(I), data_width => data_width, queue_depth => 2)
-		port map(pop_req => int_read_reqs(I),
-			  pop_ack => int_read_acks(I),
-			  push_req => int_write_reqs(I),
-			  push_ack => int_write_acks(I),
-			  data_in => stage_data(I-1),
-			  data_out => stage_data(I), 
-			  clk => clk, 
-			  reset => reset);
-    end generate genArray;
-  end generate ifGen1;
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				fsm_state <= Idle;
+			else 
+				fsm_state <= next_state;
+			end if;
+		end if;
+	end process;	
 	
-  ifSingleLast: if(last_stage_depth = 1) generate
-    lastinst: PipelineRegister 
-	generic map(name => name & ":stage:" & Convert_To_String(n_stages), data_width => data_width)
-		port map(read_req => int_read_reqs(n_stages),
-			  read_ack => int_read_acks(n_stages),
-			  write_req => int_write_reqs(n_stages),
-			  write_ack => int_write_acks(n_stages),
-			  write_data => stage_data(n_stages-1),
-			  read_data => stage_data(n_stages), 
-			  clk => clk, 
-			  reset => reset);
-  end generate ifSingleLast;
+end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
-  ifNotSingleLast: if(last_stage_depth > 1) generate
-	inst: QueueBase 
-		generic map(name => name & ":stage:" & Convert_To_String(n_stages), data_width => data_width, queue_depth => 2)
-		port map(pop_req => int_read_reqs(n_stages),
-			  pop_ack => int_read_acks(n_stages),
-			  push_req => int_write_reqs(n_stages),
-			  push_ack => int_write_acks(n_stages),
-			  data_in => stage_data(n_stages-1),
-			  data_out => stage_data(n_stages), 
-			  clk => clk, 
-			  reset => reset);
-  end generate ifNotSingleLast;
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
 
 
-end default_arch;
+-- A half guard interface which forwards only
+-- the update.  (used on input ports).
+--  Madhav P. Desai.
+entity SplitUpdateGuardInterfaceBase is
+	generic (buffering:integer);
+	port (sr_in: in Boolean;
+	      sa_out: out Boolean;
+	      sr_out: out Boolean;
+	      sa_in: in Boolean;
+	      cr_in: in Boolean;
+	      ca_out: out Boolean;
+	      cr_out: out Boolean;
+	      ca_in: in Boolean;
+	      guard_interface: in std_logic;
+	      clk: in std_logic;
+	      reset: in std_logic);
+end entity;
+
+
+architecture Behave of SplitUpdateGuardInterfaceBase is
+	Type FsmState is (Idle, Busy);
+	signal fsm_state: FsmState;
+	signal ca_out_u, ca_out_d: Boolean;
+begin
+
+	-- sr/sa interface is a dummy... no need to forward to the
+	-- operator which does not care anyway.
+	sr_out <= false;
+	sa_out <= sr_in;
+
+	-- update guard FSM.
+	process(clk, guard_interface, fsm_state, cr_in, ca_in)
+		variable next_state : FsmState;
+		variable cr_out_var, ca_out_var_d, ca_out_var_u: Boolean;
+	begin
+		next_state := fsm_state;
+		cr_out_var := false;
+		ca_out_var_u := false;
+		ca_out_var_d := false;
+		case fsm_state is
+			when Idle =>
+				if(cr_in) then
+					if(guard_interface  = '1') then
+						cr_out_var := true;
+						next_state := Busy;
+					else
+						-- give delayed ack, since guard is 0.
+						ca_out_var_d := true;	
+					end if;
+				end if;
+			when Busy => 
+				if(ca_in) then
+					ca_out_var_u := true;
+					if(cr_in) then
+						if(guard_interface = '1') then
+							cr_out_var := true;
+						else
+							ca_out_var_d := true;
+							next_state := Idle;
+						end if;
+					else
+						next_state := Idle;
+					end if;
+				end if;
+		end case;
+		
+		cr_out <= cr_out_var;
+		ca_out_u <= ca_out_var_u;
+
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				fsm_state <= Idle;
+				ca_out_d <= false;
+			else 
+				fsm_state <= next_state;
+				ca_out_d <= ca_out_var_d;
+			end if;
+		end if;
+	end process;	
+	ca_out <= ca_out_u or ca_out_d;
+end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

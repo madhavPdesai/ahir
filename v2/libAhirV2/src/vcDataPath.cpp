@@ -1578,7 +1578,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL_unregulated", "ackL_unregulated", false, ofile);
       	  this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 	*/
-	Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+	Print_VHDL_Guard_Instance(false, false, "gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 						"reqL_unguarded", "ackL_unguarded",
 						"reqL_unregulated", "ackL_unregulated",
 						"reqR_unguarded", "ackR_unguarded",
@@ -1599,7 +1599,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  	this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL", "ackL", false, ofile);
       	  	this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 		*/
-		Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+		Print_VHDL_Guard_Instance(false,false,"gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 						"reqL_unguarded", "ackL_unguarded",
 						"reqL", "ackL",
 						"reqR_unguarded", "ackR_unguarded",
@@ -2099,7 +2099,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	 false,  ofile);
 	 this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 	 */
-      Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+      Print_VHDL_Guard_Instance(false,false,"gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 		      "reqL_unguarded", "ackL_unguarded",
 		      "reqL_unregulated", "ackL_unregulated",
 		      "reqR_unguarded", "ackR_unguarded",
@@ -2335,7 +2335,7 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
       this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 	*/
 
-      Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+      Print_VHDL_Guard_Instance(false,false,"gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 		      "reqL_unguarded", "ackL_unguarded",
 		      "reqL_unregulated", "ackL_unregulated",
 		      "reqR_unguarded", "ackR_unguarded",
@@ -2531,7 +2531,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 	 this->Print_VHDL_Guard_Instance("gI", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL", "ackL", false, ofile);
 	 this->Print_VHDL_Guard_Instance("gO", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 	 */
-      Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+      Print_VHDL_Guard_Instance(false, true, "gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 		      "reqL_unguarded", "ackL_unguarded",
 		      "reqL", "ackL",
 		      "reqR_unguarded", "ackR_unguarded",
@@ -2697,7 +2697,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "sample_req_unguarded", "sample_ack_unguarded", "sample_req", "sample_ack", false, ofile);
       this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "update_req_unguarded", "update_ack_unguarded", "update_req", "update_ack", true, ofile);
 	*/
-      Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+      Print_VHDL_Guard_Instance(true, false, "gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 		      "sample_req_unguarded", "sample_ack_unguarded",
 		      "sample_req", "sample_ack",
 		      "update_req_unguarded", "update_ack_unguarded",
@@ -2990,7 +2990,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 		   false, ofile);
 		   this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 		 */
-		Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+		Print_VHDL_Guard_Instance(false, false, "gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 				"reqL_unguarded", "ackL_unguarded",
 				"reqL_unregulated", "ackL_unregulated",
 				"reqR_unguarded", "ackR_unguarded",
@@ -3532,12 +3532,15 @@ void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, strin
 		<< "guards => " << guards << "); -- }" << endl;
 }
 
-void Print_VHDL_Guard_Instance(string inst_id, int num_reqs, string buffering, string guard_flags, string guards, 
+void Print_VHDL_Guard_Instance(bool sample_only, bool update_only,
+	string inst_id, int num_reqs, string buffering, string guard_flags, string guards, 
 		string sr_in, string sa_out,  string sr_out, string sa_in,
 		string cr_in, string ca_out,  string cr_out, string ca_in, ostream& ofile)
 {
 	ofile << inst_id << ": SplitGuardInterface generic map(nreqs => " << num_reqs
-		<< ", buffering => " << buffering << ", use_guards => " << guard_flags
+		<< ", buffering => " << buffering << ", use_guards => " << guard_flags << ", "
+		<< " sample_only => " << (sample_only ? "true" : "false" ) << ", " 
+		<< " update_only => " << (update_only ? "true" : "false" ) 
 		<< ") -- {" << endl
 		<< "port map(clk => clk, reset => reset," << endl
 		<< "sr_in => " << sr_in << "," << endl

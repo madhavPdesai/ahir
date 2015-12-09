@@ -686,7 +686,8 @@ void Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vc
 void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, 
 		string req, string ack, bool delay_flag, ostream& ofile);
 
-void Print_VHDL_Guard_Instance(string inst_id, int num_reqs, string buffering, string guard_flags, string guards, 
+void Print_VHDL_Guard_Instance(bool sample_only, bool update_only,
+		string inst_id, int num_reqs, string buffering, string guard_flags, string guards, 
 		string sr_in, string sa_out,  string sr_out, string sa_in,
 		string cr_in, string ca_out,  string cr_out, string ca_in, ostream& ofile);
 #endif // vcDataPath

@@ -12,15 +12,10 @@ AA2VHDLSIM: aa2vc  vc2vhdl  vhdlsim
 TOVHDL:TOVC vc2vhdl
 
 # llvm2aa opts: pipelined case, extract-do-while.
-#LLVM2AAOPTS=--storageinit=true
-LLVM2AAOPTS=-extract_do_while=true --storageinit=true -pipedepths=pipedepths.txt
+LLVM2AAOPTS=-extract_do_while=true 
 
-#program defs: no unrolling
-#PROGDEFS=-DPIPELINE 
-PROGDEFS=-DPIPELINE -DALT
-#PROGDEFS=-DUNROLL
 
-TOPMODULES=-T run_daemon 
+TOPMODULES=-T phi_check_daemon 
 
 
 
@@ -32,14 +27,14 @@ AA2VHDL: aa2vc vc2vhdl vhdlsim
 # Aa to vC
 aalink: $(SRC)/prog.aa 
 	AaLinkExtMem $(SRC)/prog.aa | vcFormat > prog.linked.aa
-	AaOpt  prog.linked.aa | vcFormat > prog.linked.opt.aa
+	AaOpt -B prog.linked.aa | vcFormat > prog.linked.opt.aa
 
 aa2vc: prog.linked.opt.aa
 	Aa2VC -O -C prog.linked.opt.aa | vcFormat > prog.vc
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -O -S 4 -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc 
+	vc2vhdl  -O -S 4 -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

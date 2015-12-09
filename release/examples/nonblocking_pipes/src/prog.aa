@@ -1,6 +1,8 @@
 $noblock $pipe read_command: $uint<8>   $depth 2
-$pipe write_command : $uint<8> $depth 2
+$noblock $pipe write_command : $uint<8> $depth 2
 $pipe out_data: $uint<8> $depth 2
+$constant ONE_1: $uint<1> := 1
+$constant ZERO_1: $uint<1> := 0
 
 
 $module [run_daemon] $in () $out () $is
@@ -11,29 +13,47 @@ $module [run_daemon] $in () $out () $is
 
 			$merge $entry $loopback 
 
-				$phi FULL := ($bitcast ($uint<1>) 0) $on $entry next_FULL $on $loopback
+				$phi FULL := ($bitcast ($uint<1>) 1) $on $entry next_FULL $on $loopback
 				$phi counter := ($bitcast($uint<8>) 0) $on $entry next_counter $on $loopback
 
+				$phi read_cmd := 0 $on $entry $guard (~next_read_state)
+									read_command $on $loopback
+				$phi read_state := 0 $on $entry next_read_state $on $loopback
+
+				$phi write_cmd :=  0 $on $entry $guard (~next_write_state)
+									write_command $on $loopback
+				$phi write_state := 0 $on $entry next_write_state $on $loopback
 			$endmerge
 
-			$volatile fetch_next_rcmd := FULL
-			$volatile fetch_next_wcmd := (~FULL)
-								
-			$guard (fetch_next_rcmd)
-				rcmd := read_command
+			$volatile read_cmd_valid  :=  (read_cmd [] 0)
+			$volatile write_cmd_valid :=  (write_cmd [] 0)
 
-			$guard (fetch_next_wcmd)
-				wcmd := write_command
+			$volatile next_read_state := 
+				($prioritymux 
+					($reduce & read_cmd_valid  write_cmd_valid)  ZERO_1
+					($reduce & read_cmd_valid  FULL)  ZERO_1
+					read_cmd_valid     ONE_1
+					$default read_state)
+						
+			$volatile next_write_state := 
+				($prioritymux
+					($reduce & read_cmd_valid  write_cmd_valid)  ZERO_1
+					($reduce & write_cmd_valid (~FULL))  ZERO_1
+					write_cmd_valid ONE_1
+					$default write_state)
 
-			$volatile active_read := (fetch_next_rcmd & (rcmd [] 0))
-			$volatile active_write := (fetch_next_wcmd & (wcmd [] 0))
-		
+			$volatile next_FULL :=
+				($prioritymux
+					($reduce & read_cmd_valid write_cmd_valid) FULL
+					($reduce & read_cmd_valid FULL)            ZERO_1
+					($reduce & write_cmd_valid (~FULL))        ONE_1
+					$default FULL)
 
-			$volatile next_FULL := ($prioritymux active_read 0 active_write 1 $default FULL)
-			$volatile next_counter := ($mux active_write (counter+1) counter)
+			$volatile next_counter := ($mux ((~next_write_state) & write_cmd_valid) (counter + 1) counter)
 
-			$guard (active_read) 
-					out_data := counter
+			$volatile send_data := ((~next_read_state) & read_cmd_valid)
+			$guard (send_data)
+				out_data := counter
 
 		$while 1
 	}

@@ -8,6 +8,7 @@ class vcCPPipelinedLoopBody;
 class vcCPPipelinedForkBlock;
 class vcCPBlock;
 class vcModule;
+class vcTransition;
 class vcCPElement: public vcRoot
 {
 
@@ -60,6 +61,12 @@ public:
 
   void Set_Marked_Predecessor_Delay(vcCPElement* cpe, int m);
   int  Get_Marked_Predecessor_Delay(vcCPElement* cpe);
+
+  void Connect(vcCPElement* dest)
+  {
+	this->Add_Successor(dest);
+	dest->Add_Predecessor(this);
+  }
 
   virtual bool Is_Pipeline() { return (false); }
   virtual bool Is_Block() { return (false); }
@@ -229,6 +236,11 @@ public:
 
   virtual void Print_VHDL_Bindings(vcControlPath* cp, ostream& ofile) {assert(0);}
   virtual bool Is_Pipelined() {return(false);}
+
+  // CP function related.
+  virtual bool Is_In_Transition(vcTransition* p) {return(false);}
+  virtual bool Is_Out_Transition(vcTransition* p) {return(false);}
+
 };
 
 
@@ -564,157 +576,212 @@ public:
   void Print_Dot_Entry(vcControlPath* cp, ostream& ofile);
 
   virtual void Update_Predecessor_Successor_Links();
+  virtual bool Is_In_Transition(vcTransition* p)
+  {
+	for(int idx = 0, fidx = _in_transitions.size(); idx < fidx; idx++)
+	{
+		if(_in_transitions[idx] == p)
+			return(true);
+		else 
+			return(false);
+	}
+	return(false);
+  }
+  virtual bool Is_Out_Transition(vcTransition* p)
+  {
+	return(_out_transition == p);
+  }
+
 };
 
 class vcPhiSequencer: public vcCPElement
 {
-  int _place_capacity;
-
-  vector<vcTransition*> _selects;
-  vector<vcTransition*> _enables;
-  vector<vcTransition*> _reqs;
-  vcTransition* _ack;
-  vcTransition* _done;
 
 public:
+  int _place_capacity;
+
+  vector<vcTransition*> _triggers;
+  vector<vcTransition*> _src_sample_reqs;
+  vector<vcTransition*> _src_sample_acks;
+  vector<vcTransition*> _src_update_reqs;
+  vector<vcTransition*> _src_update_acks;
+  vcTransition* _phi_sample_req;
+  vcTransition* _phi_sample_ack;
+  vcTransition* _phi_update_req;
+  vcTransition* _phi_update_ack;
+  vector<vcTransition*> _phi_mux_reqs;
+  vcTransition* _phi_mux_ack;
+
   vcPhiSequencer(vcCPElement* prnt, string id);
-  void Add_Select(vcTransition* s) { _selects.push_back(s); }
-  void Add_Enable(vcTransition* s) { _enables.push_back(s); }
-  void Add_Req(vcTransition* s) { _reqs.push_back(s); }
-  void Set_Ack(vcTransition* p) { _ack = p; }
-  void Set_Done(vcTransition* p) { _done = p; }
+  void Add_Trigger(vcTransition* s) { _triggers.push_back(s); }
+
+  void Add_Src_Sample_Req(vcTransition* s) { _src_sample_reqs.push_back(s); }
+  void Add_Src_Sample_Ack(vcTransition* s) { _src_sample_acks.push_back(s); }
+  void Add_Src_Update_Req(vcTransition* s) { _src_update_reqs.push_back(s); }
+  void Add_Src_Update_Ack(vcTransition* s) { _src_update_acks.push_back(s); }
+
+  void Set_Phi_Sample_Req(vcTransition* p) { _phi_sample_req = p; }
+  void Set_Phi_Sample_Ack(vcTransition* p) { _phi_sample_ack = p; }
+  void Set_Phi_Update_Req(vcTransition* p) { _phi_update_req = p; }
+  void Set_Phi_Update_Ack(vcTransition* p) { _phi_update_ack = p; }
+
+  void Add_Phi_Mux_Req(vcTransition* s) { _phi_mux_reqs.push_back(s); }
+  void Set_Phi_Mux_Ack(vcTransition* p) { _phi_mux_ack = p; }
  
   void Set_Place_Capacity(int n) {_place_capacity = n;}
-  int Get_Place_Capacity() {return(_place_capacity);}
+  int  Get_Place_Capacity() {return(_place_capacity);}
 
-  int Get_Number_Of_Selects() { return(_selects.size()); }
-  vcTransition* Get_Select(int idx) 
-  { 
-    if((idx >= 0) && (idx < _selects.size()))
-      return(_selects[idx]);
-    else
-      return(NULL);
-  }
 
-  int Get_Number_Of_Enables() { return(_enables.size()); }
-  vcTransition* Get_Enable(int idx) 
-  { 
-    if((idx >= 0) && (idx < _enables.size()))
-      return(_enables[idx]);
-    else
-      return(NULL);
-  }
+  // return false if there is a problem.
+  bool Check_Consistency()
+  {
+	if(_triggers.size() != _src_sample_reqs.size())
+		return(true);
+	if(_triggers.size() != _src_sample_acks.size())
+		return(true);
+	if(_triggers.size() != _src_update_reqs.size())
+		return(true);
+	if(_triggers.size() != _src_update_acks.size())
+		return(true);
+	if(_triggers.size() != _phi_mux_reqs.size())
+		return(true);
 
-  int Get_Number_Of_Reqs() { return(_reqs.size()); }
-  vcTransition* Get_Req(int idx) 
-  { 
-    if((idx >= 0) && (idx < _reqs.size()))
-      return(_reqs[idx]);
-    else
-      return(NULL);
+	return(false);
   }
-  
-  vcTransition* Get_Ack()
-  {return(_ack);}
-  vcTransition* Get_Done() 
-  {return(_done);}
 
   void Print(ostream& ofile);
   void Print_VHDL(vcControlPath* cp, ostream& ofile);
   void Print_Dot_Entry(vcControlPath* cp, ostream& ofile);
 
   virtual void Update_Predecessor_Successor_Links();
+
+  virtual bool Is_In_Transition(vcTransition* p)
+  {
+	for(int idx = 0, fidx = _triggers.size(); idx < fidx; idx++)
+	{
+		if(_triggers[idx] == p)
+			return(true);
+		if(_src_sample_acks[idx] == p)
+			return(true);
+		if(_src_update_acks[idx] == p)
+			return(true);
+	}
+	if(_phi_sample_req == p)
+		return(true);
+	if(_phi_update_req == p)
+		return(true);
+	if(_phi_mux_ack == p)
+		return(true);
+	return(false);
+  }
+  virtual bool Is_Out_Transition(vcTransition* p)
+  {
+	  for(int idx = 0, fidx = _triggers.size(); idx < fidx; idx++)
+	  {
+		  if(_src_sample_reqs[idx] == p)
+			  return(true);
+		  if(_src_update_reqs[idx] == p)
+			  return(true);
+		  if(_phi_mux_reqs[idx] == p)
+			  return(true);
+	  }
+	  if(_phi_sample_ack == p)
+		  return(true);
+	  if(_phi_update_ack == p)
+		  return(true);
+	  return(false);
+  }
 };
 
 
 class vcLoopTerminator: public vcCPElement
 {
-  vcCPElement* _loop_exit;
-  vcCPElement* _loop_taken;
-  vcCPElement* _loop_body;
-  vcCPElement* _loop_back;
-  vcCPElement* _exit_from_loop;
+	vcCPElement* _loop_exit;
+	vcCPElement* _loop_taken;
+	vcCPElement* _loop_body;
+	vcCPElement* _loop_back;
+	vcCPElement* _exit_from_loop;
 
- public:
+	public:
 
-   vcLoopTerminator(vcCPElement* prnt, string id):vcCPElement(prnt,id) 
-   {
-	_loop_exit = NULL;
-	_loop_taken = NULL;
-	_loop_body = NULL;
-	_loop_back = NULL;
-	_exit_from_loop = NULL;
-   }
+	vcLoopTerminator(vcCPElement* prnt, string id):vcCPElement(prnt,id) 
+	{
+		_loop_exit = NULL;
+		_loop_taken = NULL;
+		_loop_body = NULL;
+		_loop_back = NULL;
+		_exit_from_loop = NULL;
+	}
 
-   friend class vcCPSimpleLoopBlock;
+	friend class vcCPSimpleLoopBlock;
 };
 
 class vcCPPipelinedLoopBody;
 class vcCPSimpleLoopBlock: public vcCPBranchBlock
 {
 
-  vcLoopTerminator* _terminator;
-  int  _pipeline_depth;
-  int  _pipeline_buffering;
-  bool _pipeline_full_rate_flag;
+	vcLoopTerminator* _terminator;
+	int  _pipeline_depth;
+	int  _pipeline_buffering;
+	bool _pipeline_full_rate_flag;
 
-public:
-  vcCPSimpleLoopBlock(vcCPBlock* parent, string id);
-  virtual string Kind() {return("vcCPSimpleLoopBlock");}
+	public:
+	vcCPSimpleLoopBlock(vcCPBlock* parent, string id);
+	virtual string Kind() {return("vcCPSimpleLoopBlock");}
 
-  void Set_Pipeline_Depth(int d) {_pipeline_depth = d;}
-  int  Get_Pipeline_Depth() {return(_pipeline_depth);}
+	void Set_Pipeline_Depth(int d) {_pipeline_depth = d;}
+	int  Get_Pipeline_Depth() {return(_pipeline_depth);}
 
-  void Set_Pipeline_Buffering(int d) {_pipeline_buffering = d;}
-  int  Get_Pipeline_Buffering() {return(_pipeline_buffering);}
+	void Set_Pipeline_Buffering(int d) {_pipeline_buffering = d;}
+	int  Get_Pipeline_Buffering() {return(_pipeline_buffering);}
 
-  void Set_Pipeline_Full_Rate_Flag(bool d) {_pipeline_full_rate_flag = d;}
-  int  Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
+	void Set_Pipeline_Full_Rate_Flag(bool d) {_pipeline_full_rate_flag = d;}
+	int  Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
 
-  virtual int Get_Max_Iterations_In_Flight() {return(_pipeline_depth);}
+	virtual int Get_Max_Iterations_In_Flight() {return(_pipeline_depth);}
 
-  virtual void Print(ostream& ofile);
-  virtual void Print_VHDL(ostream& ofile);
-  
-
-  void Print_VHDL_Terminator(vcControlPath* cp, ostream& ofile);
-  vcCPPipelinedLoopBody* Get_Loop_Body();
-
-  virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
-
-  virtual bool Check_Structure(); // check that the block is well-formed.
+	virtual void Print(ostream& ofile);
+	virtual void Print_VHDL(ostream& ofile);
 
 
-  virtual void Update_Predecessor_Successor_Links();
-  void Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back, string exit_from_loop);
+	void Print_VHDL_Terminator(vcControlPath* cp, ostream& ofile);
+	vcCPPipelinedLoopBody* Get_Loop_Body();
+
+	virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
+
+	virtual bool Check_Structure(); // check that the block is well-formed.
 
 
-  //
-  // all except the following:
-  // do_while_stmt_4__exit__
-  // loop_back
-  // condition_done
-  // loop_body_done
-  // do_while_stmt_4_loop_body
-  // loop_exit
-  // loop_taken
-  // $entry
-  //
-  virtual int Number_Of_Elements_Reachable_From_Entry()
-  {
-	return(this->Get_Number_Of_Elements() + 2 - 8);
-  }
+	virtual void Update_Predecessor_Successor_Links();
+	void Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back, string exit_from_loop);
 
-  //
-  // all except the following
-  // do_while_stmt_4__entry__
-  // loop_back
-  //
-  virtual int Number_Of_Elements_That_Can_Reach_Exit()
-  {
-	return(this->Get_Number_Of_Elements() + 2 - 3);
-  }
-  void Print_Terminator_Dot_Entry(vcControlPath* cp, ostream& ofile);
+
+	//
+	// all except the following:
+	// do_while_stmt_4__exit__
+	// loop_back
+	// condition_done
+	// loop_body_done
+	// do_while_stmt_4_loop_body
+	// loop_exit
+	// loop_taken
+	// $entry
+	//
+	virtual int Number_Of_Elements_Reachable_From_Entry()
+	{
+		return(this->Get_Number_Of_Elements() + 2 - 8);
+	}
+
+	//
+	// all except the following
+	// do_while_stmt_4__entry__
+	// loop_back
+	//
+	virtual int Number_Of_Elements_That_Can_Reach_Exit()
+	{
+		return(this->Get_Number_Of_Elements() + 2 - 3);
+	}
+	void Print_Terminator_Dot_Entry(vcControlPath* cp, ostream& ofile);
 };
 
 
@@ -829,7 +896,18 @@ public:
 
   virtual void Update_Predecessor_Successor_Links();
 
-  void Add_Phi_Sequencer(string& phi_id, vector<string>& selects, vector<string>& enables, string& ack, vector<string>& reqs, string& done);
+  void Add_Phi_Sequencer(string& phi_id, 
+				vector<string>& triggers, 
+				vector<string>& src_sample_reqs, 
+				vector<string>& src_sample_acks, 
+				vector<string>& src_update_reqs, 
+				vector<string>& src_update_acks, 
+				string& phi_sample_req,
+				string& phi_sample_ack,
+				string& phi_update_req,
+				string& phi_update_ack,
+				vector<string>& phi_mux_reqs,
+				string& phi_mux_ack);
   void Add_Transition_Merge(string& tm_id, vector<string>& in_transition, string& out_transition);
 
   // for a pipelined loop block some of the elements are not reachable from

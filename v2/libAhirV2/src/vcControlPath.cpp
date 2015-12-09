@@ -1660,50 +1660,47 @@ void vcCPBranchBlock::Update_Predecessor_Successor_Links()
 vcPhiSequencer::vcPhiSequencer(vcCPElement* prnt, string id): vcCPElement(prnt,id)
 {
 	_place_capacity = 1;
-	_done   = NULL;
-	_ack    = NULL;
+	_phi_mux_ack   = NULL;
+	_phi_sample_req    = NULL;
+	_phi_sample_ack    = NULL;
+	_phi_update_req    = NULL;
+	_phi_update_ack    = NULL;
 }
 
 void vcPhiSequencer::Print(ostream& ofile)
 {
+	assert(!this->Check_Consistency());
+
 	ofile << vcLexerKeywords[__PHISEQUENCER] << " " << this->Get_Label() 
-		<<   " " << vcLexerKeywords[__LPAREN] << " ";
+		<<   " " << vcLexerKeywords[__COLON] << " ";
 	// selects.
-	for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
+	for(int idx = 0, fidx = _triggers.size(); idx < fidx; idx++)
 	{
-		ofile << _selects[idx]->Get_Id() << " ";
+		ofile << _triggers[idx]->Get_Id() << " ";
+		ofile << _src_sample_reqs[idx]->Get_Id() << " ";
+		ofile << _src_sample_acks[idx]->Get_Id() << " ";
+		ofile << _src_update_reqs[idx]->Get_Id() << " ";
+		ofile << _src_update_acks[idx]->Get_Id() << " ";
 	}
 
-	ofile << vcLexerKeywords[__COLON] << " : ";
-	// enables.
-	for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
+	ofile << vcLexerKeywords[__COLON]  << " ";
+	ofile << _phi_sample_req->Get_Id() << " ";
+	ofile << _phi_sample_ack->Get_Id() << " ";
+	ofile << _phi_update_req->Get_Id() << " ";
+	ofile << _phi_update_ack->Get_Id() << " ";
+	ofile << vcLexerKeywords[__COLON]  << " ";
+	for(int idx = 0, fidx = _triggers.size(); idx < fidx; idx++)
 	{
-		ofile << _enables[idx]->Get_Id() << " ";
+		ofile << _phi_mux_reqs[idx]->Get_Id() << " ";
 	}
-
-	ofile << vcLexerKeywords[__COLON] << " : ";
-	// ack
-	ofile << _ack->Get_Id() << " ";
-
-
-	ofile << vcLexerKeywords[__RPAREN] << " ";
-
-	ofile << vcLexerKeywords[__LPAREN] << " ";
-	// reqs.
-	for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
-	{
-		ofile << _reqs[idx]->Get_Id() << " ";
-	}
-
-	ofile << vcLexerKeywords[__COLON] << " : ";
-	// done
-	ofile << _done->Get_Id() << " ";
-
-	ofile << vcLexerKeywords[__RPAREN] << " " << endl;
+	ofile << vcLexerKeywords[__COLON] << " ";
+	ofile << _phi_mux_ack->Get_Id() << " ";
 }
 
 void vcPhiSequencer::Print_VHDL(vcControlPath* cp, ostream& ofile)
 {
+
+	assert(!this->Check_Consistency());
 
 	bool parent_is_pipelined_loop_body = (this->Get_Parent()->Is("vcCPPipelinedLoopBody"));
 	int max_iterations_in_flight = 1;
@@ -1713,29 +1710,41 @@ void vcPhiSequencer::Print_VHDL(vcControlPath* cp, ostream& ofile)
 	}
 
 	ofile << this->Get_VHDL_Id() << "_block : block -- { " << endl;
-	ofile << "signal reqs, selects : BooleanArray(0 to " << _reqs.size()-1 << ");" << endl;
-	ofile << "signal enables : BooleanArray(0 to " << _enables.size()-1 << "); -- }" << endl;
+	ofile << "signal triggers, src_sample_reqs, src_sample_acks, src_update_reqs, src_update_acks : BooleanArray(0 to " << _triggers.size()-1 << ");" << endl;
+	ofile << "signal phi_mux_reqs : BooleanArray(0 to " << _triggers.size()-1 << "); -- }" << endl;
 	ofile << "begin -- { " << endl;
-	for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
+	for(int idx = 0, fidx = _triggers.size(); idx < fidx; idx++)
 	{
-		string sig_id = _selects[idx]->Get_Exit_Symbol(cp);
-		ofile << "selects(" << idx << ")  <= " << sig_id << ";" << endl;
-		ofile << _reqs[idx]->Get_Exit_Symbol(cp) << " <= reqs(" << idx << ");" << endl;
-	}
+		string sig_id = _triggers[idx]->Get_Exit_Symbol(cp);
+		ofile << "triggers(" << idx << ")  <= " << sig_id << ";" << endl;
+		ofile <<  _src_sample_reqs[idx]->Get_Exit_Symbol(cp) 
+				<< "<= src_sample_reqs(" << idx << ");" << endl;
+		ofile << "src_sample_acks(" << idx << ")  <= " << 
+			_src_sample_acks[idx]->Get_Exit_Symbol(cp) << ";" << endl;
+		ofile <<  _src_update_reqs[idx]->Get_Exit_Symbol(cp) 
+				<< "<= src_update_reqs(" << idx << ");" << endl;
+		ofile << "src_update_acks(" << idx << ")  <= " << 
+			_src_update_acks[idx]->Get_Exit_Symbol(cp) << ";" << endl;
 
-	for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
-	{
-		string sig_id = _enables[idx]->Get_Exit_Symbol(cp);
-		ofile << "enables(" << idx << ")  <= " << sig_id << ";" << endl;
+		ofile << _phi_mux_reqs[idx]->Get_Exit_Symbol(cp) << " <= phi_mux_reqs(" << idx << ");" << endl;
 	}
 
 	string gen_name = '"' +  this->Get_VHDL_Id() + '"';
-	ofile << this->Get_VHDL_Id() << " : phi_sequencer -- { " << endl;;
-	ofile << "generic map (place_capacity => " << max_iterations_in_flight << ", nreqs => " << _reqs.size() 
-		<< ", nenables => "  << _enables.size() 
+	ofile << this->Get_VHDL_Id() << " : phi_sequencer_v2-- { " << endl;;
+	ofile << "generic map (place_capacity => " << max_iterations_in_flight 
+		<< ", ntriggers => "  << _triggers.size() 
 		<< ", name => "  << gen_name << ") " << endl;
-	ofile << "port map (selects => selects, reqs => reqs, enables => enables, ack => " << _ack->Get_Exit_Symbol(cp) 
-		<< ", done => " << _done->Get_Exit_Symbol(cp) << ", clk => clk, reset => reset);" << endl;
+	ofile << "port map ( -- {" << endl
+		<< " triggers => triggers, src_sample_starts => src_sample_reqs, "   << endl
+		<< " src_sample_completes => src_sample_acks, src_update_starts => src_update_reqs, " << endl
+		<< " src_update_completes => src_update_acks," << endl
+		<< " phi_mux_select_reqs => phi_mux_reqs, "  << endl
+		<< " phi_sample_req => " << _phi_sample_req->Get_Exit_Symbol(cp) << ", " << endl
+		<< " phi_sample_ack => " << _phi_sample_ack->Get_Exit_Symbol(cp) << ", " << endl
+		<< " phi_update_req => " << _phi_update_req->Get_Exit_Symbol(cp) << ", " << endl
+		<< " phi_update_ack => " << _phi_update_ack->Get_Exit_Symbol(cp) << ", " << endl
+		<< " phi_mux_ack => "    << _phi_mux_ack->Get_Exit_Symbol(cp)    << ", " << endl
+		<< " clk => clk, reset => reset -- }" << endl << ");" << endl;
 	ofile << " -- } } " << endl;
 	ofile << "end block;" << endl;
 
@@ -1746,61 +1755,71 @@ void vcPhiSequencer::Print_Dot_Entry(vcControlPath* cp, ostream& ofile)
 	string tnode_id = this->Get_VHDL_Id();
 	ofile << "  " << tnode_id << " [shape=rectangle];" << endl;
 
-	for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
+	for(int idx = 0, fidx = _triggers.size(); idx < fidx; idx++)
 	{
-		string sel_id = cp->Get_Group(_selects[idx])->Get_Dot_Id();
-		ofile << sel_id << " -> " << tnode_id << ";" << endl;
+		string src = cp->Get_Group(_triggers[idx])->Get_Dot_Id();
+		ofile << src << " -> " << tnode_id << ";" << endl;
 
-		string req_id = cp->Get_Group(_reqs[idx])->Get_Dot_Id();
-		ofile << tnode_id << " -> " << req_id << ";" << endl;
+		string dest = cp->Get_Group(_src_sample_reqs[idx])->Get_Dot_Id();
+		ofile << tnode_id << " -> " << dest << ";" << endl;
+
+		dest = cp->Get_Group(_src_update_reqs[idx])->Get_Dot_Id();
+		ofile << tnode_id << " -> " << dest << ";" << endl;
+
+		dest = cp->Get_Group(_phi_mux_reqs[idx])->Get_Dot_Id();
+		ofile << tnode_id << " -> " << dest << ";" << endl;
+
+		src = cp->Get_Group(_src_sample_acks[idx])->Get_Dot_Id();
+		ofile << src << " -> " << tnode_id << ";" << endl;
+
+		src = cp->Get_Group(_src_update_acks[idx])->Get_Dot_Id();
+		ofile << src << " -> " << tnode_id << ";" << endl;
 	}
 
-	for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
-	{
-		string en_id = cp->Get_Group(_enables[idx])->Get_Dot_Id();
-		ofile << en_id << " -> " << tnode_id << ";" << endl;
-	}
+	string src = cp->Get_Group(_phi_sample_ack)->Get_Dot_Id();
+	ofile << src << " -> " << tnode_id << ";" << endl;
 
-	ofile << cp->Get_Group(_ack)->Get_Dot_Id() << " -> " << tnode_id << ";" << endl;
-	ofile << tnode_id << " -> " <<  cp->Get_Group(_done)->Get_Dot_Id() << ";" << endl;
+	src = cp->Get_Group(_phi_update_ack)->Get_Dot_Id();
+	ofile << src << " -> " << tnode_id << ";" << endl;
+
+	string dest = cp->Get_Group(_phi_sample_req)->Get_Dot_Id();
+	ofile << tnode_id << " -> " << dest << ";" << endl;
+
+	dest = cp->Get_Group(_phi_update_req)->Get_Dot_Id();
+	ofile << tnode_id << " -> " << dest << ";" << endl;
+	
+	src = cp->Get_Group(_phi_mux_ack)->Get_Dot_Id();
+	ofile << src << " -> " << tnode_id << ";" << endl;
+
 }
 
+// connectivity is expressed.
 void vcPhiSequencer::Update_Predecessor_Successor_Links()
 {
+	assert (!this->Check_Consistency());
 
 	// predecessor successor relations.
-	// selects -> done, selects -> reqs
-	for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
+	for(int idx = 0, fidx = _triggers.size(); idx < fidx; idx++)
 	{
-		vcTransition* s = _selects[idx];
-		s->Add_Successor(_ack);
-		_done->Add_Predecessor(s);
+		vcTransition* s = _triggers[idx];
+		s->Connect(_src_sample_reqs[idx]);
+		s->Connect(_src_update_reqs[idx]);
 
-		vcTransition* r = _reqs[idx];
-		s->Add_Successor(r);
-		r->Add_Predecessor(s);
+		_src_sample_reqs[idx]->Connect(_src_sample_acks[idx]);
+		_src_update_reqs[idx]->Connect(_src_update_acks[idx]);
+		_phi_mux_reqs[idx]->Connect(_phi_mux_ack);
+
+		_phi_sample_req->Connect(_src_sample_reqs[idx]);
+		_src_sample_acks[idx]->Connect(_phi_sample_ack);
+
+		_phi_update_req->Connect(_src_update_reqs[idx]);
+		_src_update_acks[idx]->Connect(_phi_mux_reqs[idx]);
+		
+		// suppress this.. not a true join.
+		//_phi_mux_reqs[idx]->Connect(_phi_mux_ack); 
 	}
 
-	// enables -> reqs,
-	for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
-	{
-		vcTransition* s = _enables[idx];
-		s->Add_Successor(_ack);
-		_ack->Add_Predecessor(s);
-
-		for(int jdx = 0, fjdx = _reqs.size(); jdx < fjdx; jdx++)
-		{
-			vcTransition* r = _reqs[jdx];
-			s->Add_Successor(r);
-			r->Add_Predecessor(s);
-		}
-	}
-
-	// reqs -> acks links are omitted.
-
-	// ack -> done
-	_ack->Add_Successor(_done);
-	_done->Add_Predecessor(_ack);
+	_phi_mux_ack->Connect(_phi_update_ack);
 }
 
 
@@ -3169,84 +3188,156 @@ void vcCPPipelinedLoopBody::Print_VHDL(ostream& ofile)
 	ofile << "-- }" << endl << "end Block; -- " << id << endl;
 }
 
-void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id, vector<string>& selects, vector<string>& enables, string& ack,
-		vector<string>& reqs, string& done)
+// A bit of a heavy function.. But the phi-sequencer hides a lot 
+// of ugliness.
+void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id, 
+				vector<string>& triggers, 
+				vector<string>& src_sample_reqs, 
+				vector<string>& src_sample_acks, 
+				vector<string>& src_update_reqs, 
+				vector<string>& src_update_acks, 
+				string& phi_sample_req,
+				string& phi_sample_ack,
+				string& phi_update_req,
+				string& phi_update_ack,
+				vector<string>& phi_mux_reqs,
+				string& phi_mux_ack)
 {
-
-	if(selects.size() != reqs.size())
-	{
-		vcSystem::Error("In Phi-sequencer " + phi_id +  ", reqs and selects do not have the same size.");
-		return;
-	}
-
 
 	vcPhiSequencer* new_phi_seq = new vcPhiSequencer(this, phi_id);
 	new_phi_seq->Set_Place_Capacity(this->Get_Max_Iterations_In_Flight());
 
-	// add selects.
-	for(int idx = 0, fidx = selects.size(); idx < fidx; idx++)
+        assert(triggers.size() == src_sample_reqs.size());
+        assert(triggers.size() == src_sample_acks.size());
+        assert(triggers.size() == src_update_reqs.size());
+        assert(triggers.size() == src_update_acks.size());
+        assert(triggers.size() == phi_mux_reqs.size());
+
+	// add per-trigger stuff.
+	for(int idx = 0, fidx = triggers.size(); idx < fidx; idx++)
 	{
-		vcCPElement* ste = this->Find_CPElement(selects[idx]);
+		vcCPElement* ste = this->Find_CPElement(triggers[idx]);
 		if((ste == NULL) || (!ste->Is_Transition()))
 		{
-			vcSystem::Error("Select " + selects[idx] + " transition not found in " + this->Get_Id());
+			vcSystem::Error("Trigger " + triggers[idx] + " transition not found in " + this->Get_Id());
 			delete new_phi_seq;
 			return;
 		}
-		new_phi_seq->Add_Select((vcTransition*) ste);
+		new_phi_seq->Add_Trigger((vcTransition*) ste);
 		((vcTransition*) ste)->Set_Is_Bound_As_Input_To_CP_Function(true);
 		ste->Set_Associated_CP_Function(new_phi_seq);
 
-		vcCPElement* rte = this->Find_CPElement(reqs[idx]);
+		vcCPElement* rte = this->Find_CPElement(src_sample_reqs[idx]);
 		if((rte == NULL) || (!rte->Is_Transition()))
 		{
-			vcSystem::Error("Req " + reqs[idx] + " transition not found in " + this->Get_Id());
+			vcSystem::Error("Sample-Req " + src_sample_reqs[idx] + " transition not found in " + this->Get_Id());
 			delete new_phi_seq;
 			return;
 		}
-		new_phi_seq->Add_Req((vcTransition*) rte);
+		new_phi_seq->Add_Src_Sample_Req((vcTransition*) rte);
 		((vcTransition*) rte)->Set_Is_Bound_As_Output_From_CP_Function(true);
 		rte->Set_Associated_CP_Function(new_phi_seq);
 
-	}
-
-	// add enables.
-	for(int idx = 0, fidx = enables.size(); idx < fidx; idx++)
-	{
-		vcCPElement* rte = this->Find_CPElement(enables[idx]);
+		rte = this->Find_CPElement(src_update_reqs[idx]);
 		if((rte == NULL) || (!rte->Is_Transition()))
 		{
-			vcSystem::Error("Enable " + enables[idx] + " transition not found in " + this->Get_Id());
+			vcSystem::Error("Update-Req " + src_update_reqs[idx] + " transition not found in " + this->Get_Id());
 			delete new_phi_seq;
 			return;
 		}
-		new_phi_seq->Add_Enable((vcTransition*) rte);
+		new_phi_seq->Add_Src_Update_Req((vcTransition*) rte);
+		((vcTransition*) rte)->Set_Is_Bound_As_Output_From_CP_Function(true);
+		rte->Set_Associated_CP_Function(new_phi_seq);
+
+		rte = this->Find_CPElement(phi_mux_reqs[idx]);
+		if((rte == NULL) || (!rte->Is_Transition()))
+		{
+			vcSystem::Error("Phi-Mux-Req " + phi_mux_reqs[idx] + " transition not found in " + this->Get_Id());
+			delete new_phi_seq;
+			return;
+		}
+		new_phi_seq->Add_Phi_Mux_Req((vcTransition*) rte);
+		((vcTransition*) rte)->Set_Is_Bound_As_Output_From_CP_Function(true);
+		rte->Set_Associated_CP_Function(new_phi_seq);
+
+		rte = this->Find_CPElement(src_sample_acks[idx]);
+		if((rte == NULL) || (!rte->Is_Transition()))
+		{
+			vcSystem::Error("Sample-Ack " + src_sample_acks[idx] + " transition not found in " + this->Get_Id());
+			delete new_phi_seq;
+			return;
+		}
+		new_phi_seq->Add_Src_Sample_Ack((vcTransition*) rte);
+		((vcTransition*) rte)->Set_Is_Bound_As_Input_To_CP_Function(true);
+		rte->Set_Associated_CP_Function(new_phi_seq);
+		
+
+		rte = this->Find_CPElement(src_update_acks[idx]);
+		if((rte == NULL) || (!rte->Is_Transition()))
+		{
+			vcSystem::Error("Update-Ack " + src_update_acks[idx] + " transition not found in " + this->Get_Id());
+			delete new_phi_seq;
+			return;
+		}
+		new_phi_seq->Add_Src_Update_Ack((vcTransition*) rte);
 		((vcTransition*) rte)->Set_Is_Bound_As_Input_To_CP_Function(true);
 		rte->Set_Associated_CP_Function(new_phi_seq);
 	}
 
-	// set ack.
-	vcCPElement* ate = this->Find_CPElement(ack);
-	if((ate == NULL) || (!ate->Is_Transition()))
+	vcCPElement* psr = this->Find_CPElement(phi_sample_req);
+	if((psr == NULL) || (!psr->Is_Transition()))
 	{
-		vcSystem::Error("Ack " + ack + " transition not found in " + this->Get_Id());
+		vcSystem::Error("Phi-Sample-Req " + phi_sample_req + " transition not found in " + this->Get_Id());
 		delete new_phi_seq;
 		return;
 	}
-	new_phi_seq->Set_Ack((vcTransition*) ate);
-	((vcTransition*) ate)->Set_Is_Bound_As_Input_To_CP_Function(true);
-	ate->Set_Associated_CP_Function(new_phi_seq);
+	new_phi_seq->Set_Phi_Sample_Req((vcTransition*) psr);
+	((vcTransition*) psr)->Set_Is_Bound_As_Input_To_CP_Function(true);
+	psr->Set_Associated_CP_Function(new_phi_seq);
+
+	vcCPElement* pur = this->Find_CPElement(phi_update_req);
+	if((pur == NULL) || (!pur->Is_Transition()))
+	{
+		vcSystem::Error("Phi-Update-Req " + phi_update_req + " transition not found in " + this->Get_Id());
+		delete new_phi_seq;
+		return;
+	}
+	new_phi_seq->Set_Phi_Update_Req((vcTransition*) pur);
+	((vcTransition*) pur)->Set_Is_Bound_As_Input_To_CP_Function(true);
+	pur->Set_Associated_CP_Function(new_phi_seq);
+
+	vcCPElement* psc = this->Find_CPElement(phi_sample_ack);
+	if((psc == NULL) || (!psc->Is_Transition()))
+	{
+		vcSystem::Error("Phi-Sample-Ack " + phi_sample_ack + " transition not found in " + this->Get_Id());
+		delete new_phi_seq;
+		return;
+	}
+	new_phi_seq->Set_Phi_Sample_Ack((vcTransition*) psc);
+	((vcTransition*) psc)->Set_Is_Bound_As_Output_From_CP_Function(true);
+	psc->Set_Associated_CP_Function(new_phi_seq);
+
+	vcCPElement* puc = this->Find_CPElement(phi_update_ack);
+	if((puc == NULL) || (!puc->Is_Transition()))
+	{
+		vcSystem::Error("Phi-Update-Ack " + phi_update_ack + " transition not found in " + this->Get_Id());
+		delete new_phi_seq;
+		return;
+	}
+	new_phi_seq->Set_Phi_Update_Ack((vcTransition*) puc);
+	((vcTransition*) puc)->Set_Is_Bound_As_Output_From_CP_Function(true);
+	puc->Set_Associated_CP_Function(new_phi_seq);
 
 	// set done.
-	vcCPElement* dte = this->Find_CPElement(done);
+	vcCPElement* dte = this->Find_CPElement(phi_mux_ack);
 	if((dte == NULL) || (!dte->Is_Transition()))
 	{
-		vcSystem::Error("Done " + done + " transition not found in " + this->Get_Id());
+		vcSystem::Error("Phi-mux-ack " + phi_mux_ack + " transition not found in " + this->Get_Id());
 		delete new_phi_seq;
 		return;
 	}
-	new_phi_seq->Set_Done((vcTransition*) dte);
-	((vcTransition*) dte)->Set_Is_Bound_As_Output_From_CP_Function(true);
+	new_phi_seq->Set_Phi_Mux_Ack((vcTransition*) dte);
+	((vcTransition*) dte)->Set_Is_Bound_As_Input_To_CP_Function(true);
 	dte->Set_Associated_CP_Function(new_phi_seq);
 
 	_phi_sequencers.push_back(new_phi_seq);

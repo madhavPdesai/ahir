@@ -49,7 +49,19 @@ AaModule* AaExpression::Get_Module()
 	else
 		return(NULL);
 }
+
+AaPhiStatement* AaExpression::Get_Associated_Phi_Statement()
+{
+	AaStatement* stmt = this->Get_Associated_Statement();
+	if((stmt != NULL) && (stmt->Is("AaPhiStatement")))
+		return((AaPhiStatement*) stmt);
 	
+	AaExpression* e = this->Get_Guarded_Expression();
+	if(e != NULL)
+		return(e->Get_Associated_Phi_Statement());
+
+	return(NULL);
+}	
 
 void AaExpression::Print_Buffering(ostream& ofile)
 {
@@ -313,6 +325,7 @@ bool AaExpression::Used_Only_In_Address_Of_Expression()
 void AaExpression::Set_Guard_Expression(AaExpression* expr)
 {
 	_guard_expression = expr;
+	expr->Set_Guarded_Expression(this);
 }
 
 void AaExpression::Set_Guard_Complement(bool v)
@@ -662,6 +675,7 @@ void AaExpression::Update_Guard_Adjacency(map<AaRoot*, vector< pair<AaRoot*, int
 AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, string object_id):AaObjectReference(parent_tpr, object_id) 
 {
 	_guarded_statement = NULL;
+	_guarded_expression = NULL;
 };
 AaSimpleObjectReference::~AaSimpleObjectReference() {};
 void AaSimpleObjectReference::Set_Object(AaRoot* obj)
@@ -1092,6 +1106,9 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 		// use the active of that driver statement.
 		//
 	{
+		AaPhiStatement* pstmt = this->Get_Associated_Phi_Statement();
+		if(pstmt != NULL)
+			return(__UST(pstmt));
 
 		if(this->_object->Is("AaStorageObject"))
 			return(__UST(this));
@@ -1174,12 +1191,14 @@ string AaSimpleObjectReference::Get_VC_Unmarked_Reenable_Update_Transition_Name(
 // this expression's inputs.
 string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
 {
+	bool phi_stmt_case = false;
 	if(this->Is_Constant() || this->Is_Signal_Read())
 	{
 		// if it is a constant, there is no such transition.
 		return("$null");
 	}
-	else 
+	else
+	
 		// either it is an access to a storage object, pipe,
 		// implicit variable or interface object.
 		//
@@ -1195,6 +1214,10 @@ string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoo
 		// use the active of that driver statement.
 		//
 	{
+		AaPhiStatement* pstmt = this->Get_Associated_Phi_Statement();
+		if(pstmt != NULL)
+			return(__SST(pstmt));
+
 
 		if(this->_object->Is("AaStorageObject"))
 			return(__SST(this));

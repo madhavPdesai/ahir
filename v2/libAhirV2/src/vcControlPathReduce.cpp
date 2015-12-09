@@ -15,6 +15,11 @@ void vcPlace::Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp)
 
 void vcTransition::Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp)
 {
+  if((this->Get_Is_Delay_Element()) &&
+	(this->_predecessors.size() == 0))
+  {
+	vcSystem::Error("Transition " + this->Get_Id() + " is delay element and has no predecessors?");
+  }
   vcCPElementGroup* my_group = cp->Make_New_Group();
   cp->Add_To_Group(this,my_group);
 }
@@ -698,6 +703,7 @@ void vcControlPath::Construct_Reduced_Group_Graph()
 	{
 		vcSystem::Error("malformed group graph after reduction.");
 	}
+	//this->Print_Groups(cerr);	
 }
 
 void vcControlPath::Index_Groups()

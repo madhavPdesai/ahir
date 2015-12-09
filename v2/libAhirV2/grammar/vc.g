@@ -463,33 +463,53 @@ vc_CPLoopTerminate[vcCPSimpleLoopBlock* slb]
 
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPPhiSequencer: PHISEQUENCER vcLabel LPAREN vc_Identifier+ COLON vcIdentifier+ COLON vcIdentifier RPAREN 
-//                               LPAREN vc_Identifier+ : vc_Identifier RPAREN
+// vc_CPPhiSequencer: PHISEQUENCER vcLabel 
+//      COLON (vc_Identifier vc_Indentifier vc_Indentifier vc_Identifier vc_Indentifier)+  // triggers
+//      COLON vcIdentifier vcIdentifier vcIdentifier vcIdentifier 			   // phi-split proto.
+//      COLON vcIdentifier vcIdentifier							   // phi-mux reqs
+//      COLON vcIdentifier								   // phi-mux ack
 //-----------------------------------------------------------------------------------------------
 vc_CPPhiSequencer[vcCPPipelinedLoopBody* slb] 
 {
-    vector<string> selects;
-    vector<string> enables;
-    vector<string> reqs;
+    vector<string> triggers;
+    vector<string> src_sample_reqs;
+    vector<string> src_sample_acks;
+    vector<string> src_update_reqs;
+    vector<string> src_update_acks;
+    string phi_sample_req, phi_sample_ack, phi_update_req, phi_update_ack;
+    vector<string> phi_mux_reqs;
+    string phi_mux_ack;
     string lbl;
-    string enable;
-    string ack;
-    string done;
     string tmp_string;
 }
-:  PHISEQUENCER lbl = vc_Label LPAREN 
-        ( tmp_string = vc_Identifier {selects.push_back(tmp_string);})+
+:  PHISEQUENCER lbl = vc_Label 
+	COLON
+        ( 
+		tmp_string = vc_Identifier {triggers.push_back(tmp_string);}
+		tmp_string = vc_Identifier {src_sample_reqs.push_back(tmp_string);}
+		tmp_string = vc_Identifier {src_sample_acks.push_back(tmp_string);}
+		tmp_string = vc_Identifier {src_update_reqs.push_back(tmp_string);}
+		tmp_string = vc_Identifier {src_update_acks.push_back(tmp_string);}
+	)+
         COLON
-        ( tmp_string = vc_Identifier {enables.push_back(tmp_string);})+
+        ( 
+		phi_sample_req = vc_Identifier
+		phi_sample_ack = vc_Identifier
+		phi_update_req = vc_Identifier
+		phi_update_ack = vc_Identifier
+	)
         COLON
-        ack = vc_Identifier
-        RPAREN
-        LPAREN
-        ( tmp_string = vc_Identifier {reqs.push_back(tmp_string);})+
+	(
+      		tmp_string = vc_Identifier {phi_mux_reqs.push_back(tmp_string);}
+	)+
         COLON
-        done = vc_Identifier
-        RPAREN
-   { slb->Add_Phi_Sequencer(lbl, selects, enables, ack, reqs, done); }
+       		phi_mux_ack = vc_Identifier 
+   	{ 
+		slb->Add_Phi_Sequencer(lbl, 
+					triggers, src_sample_reqs, src_sample_acks, src_update_reqs, src_update_acks,
+					phi_sample_req, phi_sample_ack, phi_update_req, phi_update_ack,
+					phi_mux_reqs, phi_mux_ack);
+	}
 ;
 
 
