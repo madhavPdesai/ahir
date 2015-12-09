@@ -3912,11 +3912,7 @@ void AaPhiStatement::Write_VC_Source_Control_Paths(ostream& ofile)
 		AaExpression* src_expr = _source_pairs[idx].second;
 		if(src_expr->Is_Constant())
 		{
-			// these will be sacrificial..
-			__T(__SST(src_expr));
-			__T(__SCT(src_expr));
-			__T(__UST(src_expr));
-			__T(__UCT(src_expr));
+			// constant source. nothing is necessary..
 		}
 		else
 		{
