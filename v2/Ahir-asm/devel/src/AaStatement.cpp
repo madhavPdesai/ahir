@@ -3430,7 +3430,7 @@ void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
 
 					ofile << "||[" << (*siter)->Get_VC_Name() << "_sources] {" << endl;
 					// the sources to the phi must be computed.
-					(*siter)->Write_VC_Source_Control_Paths(mplace, ofile);
+					(*siter)->Write_VC_Source_Control_Paths(mlabel, ofile);
 
 
 					ofile << "}" << endl;
@@ -3564,7 +3564,8 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 					(src_expr->Is_Implicit_Variable_Reference() ||
 							src_expr->Is_Signal_Read()))
 				{
-					string dpe_name = src_expr->Get_VC_Driver_Name() + "_buf";
+					string dpe_name = src_expr->Get_VC_Driver_Name() +  "_" 
+							+ Int64ToStr(src_expr->Get_Index()) + "_buf";
 					vector<string> reqs;	
 					vector<string> acks;	
 					reqs.push_back(src_hier_id + "/Interlock/Sample/req");
@@ -3975,7 +3976,8 @@ void AaPhiStatement::Write_VC_Wire_Declarations(ostream& ofile)
 			(src_expr->Is_Implicit_Variable_Reference() ||
 				src_expr->Is_Signal_Read()))
 		{
-			Write_VC_Wire_Declaration(src_expr->Get_VC_Driver_Name() + "_buffered",
+			Write_VC_Wire_Declaration(src_expr->Get_VC_Driver_Name() +  "_" + 
+				Int64ToStr(src_expr->Get_Index()) + "_buffered",
 							src_expr->Get_Type(), ofile);	
 		}
 	}
@@ -3999,8 +4001,10 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 		if(src_expr->Is_Implicit_Variable_Reference() ||
 				src_expr->Is_Signal_Read())
 		{
-			src_driver_name = src_expr->Get_VC_Driver_Name() + "_buffered";
-			string dpe_name = src_expr->Get_VC_Driver_Name() + "_buf";
+			src_driver_name = src_expr->Get_VC_Driver_Name() +  "_"  + 
+					Int64ToStr(src_expr->Get_Index()) + "_buffered";
+			string dpe_name = src_expr->Get_VC_Driver_Name() + "_" + 
+						Int64ToStr(src_expr->Get_Index()) +  "_buf";
 			Write_VC_Interlock_Buffer(dpe_name, src_expr->Get_VC_Driver_Name(),
 					src_driver_name, "", false, ofile);
 			if(dws != NULL)

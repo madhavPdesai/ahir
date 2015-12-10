@@ -7,6 +7,11 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
+--
+-- a full rate register.
+-- has a path from read-req to write-ack which
+-- can cause long combinational paths.
+--
 entity PipelineRegister is
   generic (name : string; data_width: integer);
   port (

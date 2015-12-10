@@ -25,7 +25,7 @@ void vcPipe::Register_Pipe_Write(vcModule* m, int idx)
 	_pipe_write_count++;
 	if(_p2p && (_pipe_write_count > 1))
 	{
-		vcSystem::Error("P2P pipe " + this->Get_VHDL_Id() + " cannot have multiole writers.");
+		vcSystem::Error("P2P pipe " + this->Get_VHDL_Id() + " cannot have multiple writers.");
 	}
 }
 
@@ -492,14 +492,26 @@ vcWire* vcDataPath::Find_Wire(string wname)
 
 void vcDataPath::Add_Wire(string wname, vcType* t)
 {
-  assert(this->Find_Wire(wname) == NULL);
-  this->_wire_map[wname] = new vcWire(wname, t);
+  if(this->Find_Wire(wname) != NULL)
+  {
+	vcSystem::Error("redeclaration of wire " + wname);
+  }
+  else
+  {
+  	this->_wire_map[wname] = new vcWire(wname, t);
+  }
 }
 
 void vcDataPath::Add_Intermediate_Wire(string wname, vcType* t)
 {
-  assert(this->Find_Wire(wname) == NULL);
-  this->_wire_map[wname] = new vcIntermediateWire(wname, t);
+  if(this->Find_Wire(wname) != NULL)
+  {
+	vcSystem::Error("redeclaration of wire " + wname);
+  }
+  else
+  {
+	  this->_wire_map[wname] = new vcIntermediateWire(wname, t);
+  }
 }
 
 void vcDataPath::Add_Constant_Wire(string wname, vcValue* v)

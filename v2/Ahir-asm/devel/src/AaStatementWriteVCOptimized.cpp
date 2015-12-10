@@ -1813,7 +1813,8 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 			// interlock.
 			vector<string> reqs;
 			vector<string> acks;
-			string dpe_name = source_expr->Get_VC_Driver_Name() + "_buf";
+			string dpe_name = source_expr->Get_VC_Driver_Name() + "_" +
+						Int64ToStr(source_expr->Get_Index()) +  "_buf";
 			string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
 			string update_region_name = source_expr->Get_VC_Name() + "_Update";
 			reqs.push_back(hier_id + "/" + sample_region_name + "/req");
