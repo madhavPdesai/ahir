@@ -59,20 +59,27 @@ begin
 
   gen: for I in num_reqs-1 downto 0 generate
 
-       ack_sig(I) <= req_active(I) and oack; 
-       fair_acks(I) <= ack_sig(I);
+       SingleReq: if (num_reqs = 1) generate
+          ack_sig(I) <=  oack; 
+       	  data_array(I) <= data;
+       end generate SingleReq;
 
-       process(data,req_active(I))
-         variable target: std_logic_vector(data_width-1 downto 0);
-       begin
-          if(req_active(I) = '1') then
+       MultipleReq: if (num_reqs > 1) generate
+          ack_sig(I) <= req_active(I) and oack; 
+       	  process(data,req_active(I))
+             variable target: std_logic_vector(data_width-1 downto 0);
+          begin
+            if(req_active(I) = '1') then
 		Extract(data,I,target);
-	  else
+	    else
 		target := (others => '0');
-	  end if;	
-       	  data_array(I) <= target;
-       end process;
+	    end if;	
+       	    data_array(I) <= target;
+          end process;
+       end generate MultipleReq;
+
          
+       fair_acks(I) <= ack_sig(I);
   end generate gen;
 
 end Base;

@@ -977,15 +977,6 @@ void AaAssignmentStatement::Set_Is_Volatile(bool v)
 void AaAssignmentStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
 	_pipeline_parent = dws;
-	
-	//
-	// lets do buffering = 2.. use up
-	// a few flops, but save in clock period.
-	// and fewer headaches in general.
-	//
-	if((dws != NULL) && (_buffering < 2))
-		_buffering = 2;
-
 	this->_source->Set_Pipeline_Parent(dws);
 	this->_target->Set_Pipeline_Parent(dws);
 }

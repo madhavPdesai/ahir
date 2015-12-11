@@ -154,7 +154,8 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 					{
 						ofile << "// WAR dependency: release  Read: " << read_expr->To_String() 
 							<< " with Write: " << write_stmt->To_String() << endl;
-						__MJ(__SST(read_expr), __UCT(write_stmt), true);
+						__MJ(read_expr->Get_VC_Reenable_Sample_Transition_Name(visited_elements), 
+									__UCT(write_stmt), true);
 					}
 					else
 					{

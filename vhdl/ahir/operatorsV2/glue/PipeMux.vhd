@@ -28,43 +28,4 @@ architecture default_arch of PipeMux is
   
 begin  -- default_arch
    assert false report "NOT IMPLEMENTED" severity ERROR;
-
-   process(clk, reset, priority_flag,  write_req_0, write_req_1, write_data_0, write_data_1, read_req)
-	variable accept_data: boolean;
-   begin
-	accept_data := false;
-	read_ack <= write_req_0 or write_req_1;
-	read_data <= (others => '0');
-
-	if(((write_req_0 = '1') or (write_req_1 = '1')) and (read_req = '1')) then
-		accept_data := true;
-	end if;
-
-	if(priority_flag = '0') then
-		if(write_req_0 = '1') then
-			read_data <= write_data_0;
-			write_ack_0 <= read_req;
-		elsif (write_req_1 = '1') then
-			read_data <= write_data_1;
-			write_ack_1 <= read_req;
-		end if;
-	else
-		if(write_req_1 = '1') then
-			read_data <= write_data_1;
-			write_ack_1 <= read_req;
-		elsif (write_req_0 = '1') then
-			read_data <= write_data_0;
-			write_ack_0 <= read_req;
-		end if;
-	end if;
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			priority_flag <= '0';
-		else
-			if(accept_data) then
-				priority_flag <= not priority_flag;
-			end if;
-		end if;
-	end if;
-    end process;
 end default_arch;

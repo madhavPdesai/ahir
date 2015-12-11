@@ -87,6 +87,10 @@ class AaExpression: public AaRoot
 	void Set_Buffering(int d) {_buffering = d;}
 	int Get_Buffering() {return(_buffering);}
  	virtual void Print_Buffering(ostream& ofile);
+	virtual void Write_VC_Output_Buffering(string dpe_name, string tgt_name, ostream& ofile);
+	virtual void Write_VC_Input_Buffering(string dpe_name, string src_name, ostream& ofile)
+ 	{
+	}
 
 	virtual void Set_Guarded_Expression(AaExpression* expr) {assert(0);}
 	virtual AaExpression* Get_Guarded_Expression() {return(NULL);}
@@ -760,6 +764,9 @@ class AaSimpleObjectReference: public AaObjectReference
 	}
 
 	virtual void Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile);
+
+	virtual void Write_VC_Output_Buffering(string dpe_name, string tgt_name, ostream& ofile);
+	virtual void Write_VC_Input_Buffering(string dpe_name, string src_name, ostream& ofile);
 
 	virtual bool Is_Implicit_Variable_Reference();
 	virtual bool Is_Interface_Object_Reference();

@@ -55,7 +55,13 @@ begin  -- default_arch
 
   gen: for I in num_reqs-1 downto 0 generate
 
-    ack_sig(I) <= req_active(I) and oack; 
+    SingleReq: if (num_reqs = 1) generate 
+    	ack_sig(I) <=  oack; 
+    end generate SingleReq;
+
+    MultipleReqs: if (num_reqs > 1) generate
+    	ack_sig(I) <= req_active(I) and oack; 
+    end generate MultipleReqs;
     
     ack(I) <= ack_sig(I);
     

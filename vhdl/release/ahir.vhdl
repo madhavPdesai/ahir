@@ -11561,7 +11561,13 @@ begin  -- default_arch
 
   gen: for I in num_reqs-1 downto 0 generate
 
-    ack_sig(I) <= req_active(I) and oack; 
+    SingleReq: if (num_reqs = 1) generate 
+    	ack_sig(I) <=  oack; 
+    end generate SingleReq;
+
+    MultipleReqs: if (num_reqs > 1) generate
+    	ack_sig(I) <= req_active(I) and oack; 
+    end generate MultipleReqs;
     
     ack(I) <= ack_sig(I);
     
@@ -12553,20 +12559,27 @@ begin
 
   gen: for I in num_reqs-1 downto 0 generate
 
-       ack_sig(I) <= req_active(I) and oack; 
-       fair_acks(I) <= ack_sig(I);
+       SingleReq: if (num_reqs = 1) generate
+          ack_sig(I) <=  oack; 
+       	  data_array(I) <= data;
+       end generate SingleReq;
 
-       process(data,req_active(I))
-         variable target: std_logic_vector(data_width-1 downto 0);
-       begin
-          if(req_active(I) = '1') then
+       MultipleReq: if (num_reqs > 1) generate
+          ack_sig(I) <= req_active(I) and oack; 
+       	  process(data,req_active(I))
+             variable target: std_logic_vector(data_width-1 downto 0);
+          begin
+            if(req_active(I) = '1') then
 		Extract(data,I,target);
-	  else
+	    else
 		target := (others => '0');
-	  end if;	
-       	  data_array(I) <= target;
-       end process;
+	    end if;	
+       	    data_array(I) <= target;
+          end process;
+       end generate MultipleReq;
+
          
+       fair_acks(I) <= ack_sig(I);
   end generate gen;
 
 end Base;
@@ -22796,12 +22809,6 @@ end PipeJoin;
 architecture default_arch of PipeJoin is
 begin  -- default_arch
    assert false report "NOT IMPLEMENTED" severity ERROR;
-
-	-- NOT CORRECT..  TODO. fix it.
-   read_ack <= write_req_0 and write_req_1;
-   write_ack_0 <= read_req;
-   write_ack_1 <= read_req;
-   read_data <= write_data_1 & write_data_0;
 end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -22829,32 +22836,7 @@ end PipeMerge;
 
 architecture default_arch of PipeMerge is
 begin  -- default_arch
-
    assert false report "NOT IMPLEMENTED" severity ERROR;
-
-   process(write_req_0, write_req_1, write_data_0, write_data_1, read_req)
-	variable accept_data: boolean;
-	variable read_data_var_0 : std_logic_vector(data_width_0-1 downto 0);
-	variable read_data_var_1 : std_logic_vector(data_width_1-1 downto 0);
-
-   begin
-	accept_data := false;
-	read_ack <= write_req_0 or write_req_1;
-	read_data_var_0 := (others => '0');
-	read_data_var_1 := (others => '0');
-
-	if(write_req_0 = '1') then
-		read_data_var_0 := write_data_0;
-	end if;
-	if(write_req_1 = '1') then
-		read_data_var_1 := write_data_1;
-	end if;
-
-	read_data <= (read_data_var_1 & read_data_var_0);
-
-	write_ack_0 <= read_req;
-	write_ack_1 <= read_req;
-   end process;
 end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -22886,45 +22868,6 @@ architecture default_arch of PipeMux is
   
 begin  -- default_arch
    assert false report "NOT IMPLEMENTED" severity ERROR;
-
-   process(clk, reset, priority_flag,  write_req_0, write_req_1, write_data_0, write_data_1, read_req)
-	variable accept_data: boolean;
-   begin
-	accept_data := false;
-	read_ack <= write_req_0 or write_req_1;
-	read_data <= (others => '0');
-
-	if(((write_req_0 = '1') or (write_req_1 = '1')) and (read_req = '1')) then
-		accept_data := true;
-	end if;
-
-	if(priority_flag = '0') then
-		if(write_req_0 = '1') then
-			read_data <= write_data_0;
-			write_ack_0 <= read_req;
-		elsif (write_req_1 = '1') then
-			read_data <= write_data_1;
-			write_ack_1 <= read_req;
-		end if;
-	else
-		if(write_req_1 = '1') then
-			read_data <= write_data_1;
-			write_ack_1 <= read_req;
-		elsif (write_req_0 = '1') then
-			read_data <= write_data_0;
-			write_ack_0 <= read_req;
-		end if;
-	end if;
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			priority_flag <= '0';
-		else
-			if(accept_data) then
-				priority_flag <= not priority_flag;
-			end if;
-		end if;
-	end if;
-    end process;
 end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
