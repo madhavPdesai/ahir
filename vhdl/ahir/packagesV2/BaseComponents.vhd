@@ -2053,6 +2053,24 @@ package BaseComponents is
     clk, reset : in  std_logic);
   end component;
 
+  component InputPort_P2P is
+    generic (name : string;
+	   data_width: integer;
+	   queue_depth: integer);
+    port (
+    -- pulse interface with the data-path
+     sample_req        : in  Boolean; -- sacrificial.
+     sample_ack        : out Boolean; -- sacrificial.
+     update_req        : in  Boolean;
+     update_ack        : out Boolean;
+     data              : out std_logic_vector(data_width-1 downto 0);
+    -- ready/ready interface with outside world
+     oreq       : out std_logic;
+     oack       : in  std_logic;
+     odata      : in  std_logic_vector(data_width-1 downto 0);
+     clk, reset : in  std_logic);
+  end component;
+
   ---------------------------------------------------------------------------------
   -- some useful miscellaneous stuff
   ---------------------------------------------------------------------------------

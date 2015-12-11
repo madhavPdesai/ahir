@@ -1658,6 +1658,7 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& of
 				(source != NULL ? 
 				 source->Get_VC_Driver_Name() : this->Get_VC_Driver_Name());
 
+			
 			// io write.
 			Write_VC_IO_Output_Port((AaPipeObject*) this->_object,
 					this->Get_VC_Datapath_Instance_Name(),
