@@ -2556,21 +2556,11 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
       string group_name = p->Get_VHDL_Id() + "_read_" + IntToStr(idx);
       string name = '"' + group_name + '"';
 
-      // single reader?
-      bool single_reader = p->Get_P2P();
-      if(single_reader)
-      {
-	      ofile << group_name << ": InputPortSingleReader -- { " << endl;
-	      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ")"  << endl;
-      }
-      else
-      {
-	      ofile << group_name << ": InputPortRevised -- { " << endl;
-	      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
-		      << "  num_reqs => " << num_reqs << ","
-		      << "  output_buffering => outBUFs, "
-		      << "  no_arbitration => " << no_arb_string << ")" << endl;
-      }
+      ofile << group_name << ": InputPortRevised -- { " << endl;
+      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
+	      << "  num_reqs => " << num_reqs << ","
+	      << "  output_buffering => outBUFs, "
+	      << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map (-- {\n sample_req => reqL " << ", " <<  endl
 	      << "    sample_ack => ackL" << ", " <<  endl
 	      << "    update_req => reqR" << ", " <<  endl
@@ -2657,15 +2647,15 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 			update_ack.push_back(so->Get_Ack(1));
 
 			so->Append_Guard(guards, guard_complements);
-	}
-      assert(p != NULL);
-      assert(data_width > 0);
+		}
+		assert(p != NULL);
+		assert(data_width > 0);
 
-      int in_width = 0;
-      for(int u = 0; u < inwires.size(); u++)
-	{
-	  in_width += inwires[u]->Get_Size();
-	}
+		int in_width = 0;
+		for(int u = 0; u < inwires.size(); u++)
+		{
+			in_width += inwires[u]->Get_Size();
+		}
 
 
       string input_buffering_string;
@@ -2722,19 +2712,11 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       string group_name = p->Get_VHDL_Id() + "_write_" + IntToStr(idx);
       string name = '"' + p->Get_VHDL_Id() + '"';
       bool single_writer = p->Get_P2P();
-      if(single_writer)
-      {
-	      ofile << group_name << ": OutputPortSingleWriter -- { " << endl;
-	      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ")" << endl;
-      }
-      else
-      {
-	      ofile << group_name << ": OutputPortRevised -- { " << endl;
-	      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
-		      << " num_reqs => " << num_reqs << ","
-		      << " input_buffering => inBUFs," 
-		      << " no_arbitration => " << no_arb_string << ")" << endl;
-      }
+      ofile << group_name << ": OutputPortRevised -- { " << endl;
+      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
+	      << " num_reqs => " << num_reqs << ","
+	      << " input_buffering => inBUFs," 
+	      << " no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map (--{\n sample_req => sample_req " << ", " <<  endl
 	      << "    sample_ack => sample_ack " << ", " <<  endl
 	      << "    update_req => update_req " << ", " <<  endl

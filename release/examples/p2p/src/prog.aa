@@ -1,0 +1,26 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2
+$pipe mid_pipe_0 : $uint<32> $depth 0 $p2p
+$pipe mid_pipe_1 : $uint<32> $depth 0 $p2p
+$pipe mid_pipe_2 : $uint<32> $depth 0 $p2p
+
+$module [p2p_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+	 	CMD := in_data
+
+		mid_pipe_0 := CMD
+		CMD_0 := mid_pipe_0
+
+		mid_pipe_1 := CMD_0
+		CMD_1 := mid_pipe_1
+
+		mid_pipe_2 := CMD_1
+		CMD_2 := mid_pipe_2
+
+		out_data :=  CMD_2
+		$while 1
+	}
+}

@@ -1608,6 +1608,7 @@ void AaSimpleObjectReference::Write_VC_Output_Buffering(string dpe_name, string 
 
 void AaSimpleObjectReference::Write_VC_Input_Buffering(string dpe_name, string src_name, ostream& ofile)
 {
+	/*
 	if(this->_object->Is_Pipe_Object() && this->Get_Is_Target())
 	{
 		AaPipeObject* pobj = (AaPipeObject*) (this->_object);
@@ -1626,8 +1627,13 @@ void AaSimpleObjectReference::Write_VC_Input_Buffering(string dpe_name, string s
 	}
 	else
 	{
-		this->AaExpression::Write_VC_Input_Buffering(dpe_name, src_name, ofile);
+	*/
+
+	// Why waste a cycle?
+	this->AaExpression::Write_VC_Input_Buffering(dpe_name, src_name, ofile);
+	/*
 	}
+	*/
 }
 
 

@@ -149,14 +149,24 @@ int check_for_dangling_pipes()
 uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int pipe_mode)
 {
   PipeRec* p;
+
+  if(pipe_depth <= 0)
+  {
+	  fprintf(stderr,"\nWarning: pipeHandler: pipe %s with declared depth %d set to depth=1.\n", pipe_name,
+				 pipe_depth);
+	  pipe_depth = 1;
+  }
+
   p = find_pipe(pipe_name); // this also uses the lock.
   if(p != NULL)
   {
-	if(p->pipe_width != pipe_width)
-        {
+	  if(p->pipe_width != pipe_width)
+	  {
 	      fprintf(stderr,"\nError: pipeHandler: redefinition of pipe %s with conflicting widths (%d or %d?)\n", pipe_name, p->pipe_width, pipe_width);
 		return(1);
         }
+
+
 	if(p->pipe_depth != pipe_depth)
         {
 	      fprintf(stderr,"\nError: pipeHandler: redefinition of pipe %s with conflicting depths (%d or %d?)\n", pipe_name, p->pipe_depth, pipe_depth);
