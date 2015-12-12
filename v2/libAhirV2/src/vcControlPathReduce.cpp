@@ -6,6 +6,9 @@
 #include <vcModule.hpp>
 #include <BGLWrap.hpp>
 
+int _flip_flop_count;
+int _mux2_count;
+int _and2_count;
 
 void vcPlace::Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp)
 {
@@ -621,6 +624,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 		string joined_symbol = this->Get_VHDL_Id();
 		string join_name = module_name + "_cp_element_group_" + IntToStr(this->Get_Group_Index());
 	  
+		_and2_count += (_predecessors.size() - 1);
 		for(set<vcCPElementGroup*>::iterator iter = _predecessors.begin(),
 				fiter = _predecessors.end();
 				iter != fiter;
@@ -630,6 +634,12 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 			pred_markings.push_back(0);
 			pred_capacities.push_back(max_iterations_in_flight);
 			pred_delays.push_back(bypass_delay);
+
+			_flip_flop_count += CeilLog2(max_iterations_in_flight);
+
+			if(bypass_delay == 0)
+				_mux2_count++;
+
 		}
 
 	  	for(set<vcCPElementGroup*>::iterator iter = this->_marked_predecessors.begin(),
@@ -640,7 +650,11 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 			preds.push_back((*iter)->Get_VHDL_Id());
 			pred_markings.push_back(1);
 			pred_capacities.push_back(1);
-			pred_delays.push_back(this->Get_Marked_Predecessor_Delay(*iter));
+			int dly = this->Get_Marked_Predecessor_Delay(*iter);
+			pred_delays.push_back(dly);
+			_flip_flop_count++;
+			if(dly == 0)
+				_mux2_count++;
 	    	}
 
 		Print_VHDL_Join(join_name, preds, pred_markings, pred_capacities, pred_delays, joined_symbol, ofile);
@@ -1308,6 +1322,10 @@ void vcControlPath::Print_Groups(ostream& ofile)
 void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
 {
 
+	_flip_flop_count = 0;
+	_mux2_count = 0;
+	_and2_count = 0;
+
 	string id = "control-path";
 
 	ofile << this->Get_VHDL_Id() << ": Block -- " << id << " {" << endl;
@@ -1358,6 +1376,10 @@ void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
 
 	this->Print_VHDL_Export_Cleanup_Optimized(ofile);
 	ofile << "-- }" << endl << "end Block; -- " << id << endl;
+
+	vcSystem::Info("resources used by CP "  + this->Get_VHDL_Id() + ": ff-count=" + IntToStr(_flip_flop_count) + ","
+				+ " mux2-count= " + IntToStr(_mux2_count) + ","
+				+ " and2-count= " + IntToStr(_and2_count));
 }
 
 void vcControlPath::Print_VHDL_Export_Cleanup_Optimized(ostream& ofile)

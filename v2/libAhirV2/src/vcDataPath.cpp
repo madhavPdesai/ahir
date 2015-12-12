@@ -807,7 +807,7 @@ void vcDataPath::Print_Compatible_Operator_Groups(ostream& ofile, vector<set<vcD
 	  iter++)
 	{
 	  ofile << (*iter)->Get_Id() << "  ";
-	  this->Get_P2P() << "   ("
+	  ofile << "   ("
 		<< (*iter)->_reqs.front()->Get_Compatibility_Label()->Get_Id()
 		<< ","
 		<< (*iter)->_acks.back()->Get_Compatibility_Label()->Get_Id()
