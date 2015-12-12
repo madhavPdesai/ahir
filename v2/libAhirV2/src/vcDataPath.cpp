@@ -177,6 +177,8 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 			ofile << "num_writes => " << num_writes << "," << endl;
 			ofile << "data_width => " << pipe_width << "," << endl;
 			ofile << "lifo_mode => " << (this->Get_Lifo_Mode() ? "true" : "false") << "," << endl;
+			ofile << "shift_register_mode => " << (this->Get_Shift_Reg() ? "true" : "false") << "," << endl;
+	
 			ofile << "depth => " << actual_pipe_depth << " --}\n)" << endl;
 			ofile << "port map( -- { " << endl;
 			ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 

@@ -407,6 +407,10 @@ void AaPipeObject::Print(ostream& ofile)
 		ofile << "$lifo ";
 	else if(_no_block_mode)
 		ofile << "$noblock ";
+
+	if(_shift_reg)
+		ofile << " $shiftreg ";
+
 	ofile << "$pipe ";
 	this->AaObject::Print(ofile);
 	ofile << " $depth " << this->Get_Depth() << " ";
@@ -427,6 +431,7 @@ void AaPipeObject::Print(ostream& ofile)
 
 	if(_p2p)
 		ofile << " $p2p ";
+
 
 	ofile << endl << "// can point into ";
 	Print_Storage_Object_Set(this->Get_Addressed_Objects(),ofile);
@@ -485,6 +490,7 @@ void AaPipeObject::Write_VC_Model(ostream& ofile)
 			this->Get_Out_Mode(),
 			this->Get_Signal(),
 			this->Get_P2P(),
+			this->Get_Shift_Reg(),
 			ofile);
 }
 

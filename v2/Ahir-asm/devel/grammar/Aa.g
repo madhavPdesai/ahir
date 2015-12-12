@@ -1573,8 +1573,10 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 	    bool is_synch  = false;
 	    bool is_p2p   = false;
 	    bool noblock_flag = false;
+	    bool is_shift_reg = false;
         }
         : ((LIFO { lifo_flag = true; }) | (NOBLOCK {noblock_flag = true;}))? 
+	  (SHIFTREG {is_shift_reg = true;})?
 		(st:PIPE aA_Object_Declaration_List_Base[scope,oname_list,otype,initial_value]) 
         (DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
 		(IN {in_mode = true;} | OUT {out_mode = true;})? 
@@ -1598,6 +1600,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 	    	((AaPipeObject*)obj)->Set_Signal(is_signal);
 	    	((AaPipeObject*)obj)->Set_Synch(is_synch);
 	    	((AaPipeObject*)obj)->Set_P2P(is_p2p);
+	    	((AaPipeObject*)obj)->Set_Shift_Reg(is_shift_reg);
 
 		if(scope == NULL)
 			AaProgram::Add_Object(obj);
@@ -2182,6 +2185,10 @@ SYNCH           : "$synch";
 
 // point-to-point pipe attribute.
 P2P		: "$p2p";
+
+// shift-reg pipe attribute.
+SHIFTREG        : "$shiftreg";
+
 
 
 // combinational/operator module types.

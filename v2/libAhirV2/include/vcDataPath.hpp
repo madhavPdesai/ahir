@@ -43,6 +43,7 @@ class vcPipe: public vcRoot
   bool _out_flag;
   bool _signal;
   bool _p2p;
+  bool _shift_reg;
 public:
 
   
@@ -60,6 +61,7 @@ public:
     _out_flag = false;
     _signal = false;
     _p2p = false;
+    _shift_reg = false;
   }
 
   void Set_Port(bool v) { _port = v; }
@@ -67,6 +69,9 @@ public:
 
   void Set_P2P(bool v) { _p2p = v; }
   bool Get_P2P() {return(_p2p);}
+
+  void Set_Shift_Reg(bool v) { _shift_reg = v; }
+  bool Get_Shift_Reg() {return(_shift_reg);}
 
   void Set_In_Flag(bool v) { _in_flag = v; }
   bool Get_In_Flag() {return(_in_flag);}
@@ -104,6 +109,9 @@ public:
     	ofile << vcLexerKeywords[__LIFO]  << " ";
     else if(_no_block_mode)
     	ofile << vcLexerKeywords[__NOBLOCK]  << " ";
+
+    if(_shift_reg)
+	    ofile << vcLexerKeywords[__SHIFTREG]  << " ";
 
     ofile << vcLexerKeywords[__PIPE] 
 	  << " [" << this->Get_Id() << "] " 

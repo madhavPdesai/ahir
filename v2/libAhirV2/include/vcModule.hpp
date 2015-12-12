@@ -179,7 +179,7 @@ class vcModule: public vcRoot
   }
   vcPipe* Find_Pipe(string pipe_id);
   void Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bool noblock_mode,  
-			bool in_flag, bool out_flag, bool signal_flag, bool p2p_flag);
+			bool in_flag, bool out_flag, bool signal_flag, bool p2p_flag, bool shiftreg_flag);
   void Print_Pipes(ostream& ofile);
   void Print_VHDL_Pipe_Signals(ostream& ofile);
   void Print_VHDL_Pipe_Instances(ostream& ofile);

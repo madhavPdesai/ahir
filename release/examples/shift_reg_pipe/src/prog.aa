@@ -1,0 +1,18 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2
+$shiftreg $pipe mid_pipe : $uint<32> $depth 4
+
+$module [shiftreg_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+	 	CMD := in_data
+
+		mid_pipe := CMD
+		CMD_1 := mid_pipe
+
+		out_data :=  CMD_1
+		$while 1
+	}
+}

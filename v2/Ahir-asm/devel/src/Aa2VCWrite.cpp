@@ -384,12 +384,15 @@ void Write_VC_Intermediate_Wire_Declaration(string name, AaType* type, ostream& 
 
 
 void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode, bool noblock_flag,
-			bool in_flag, bool out_flag, bool signal_flag, bool p2p_flag,  ostream& ofile)
+			bool in_flag, bool out_flag, bool signal_flag, bool p2p_flag, bool shiftreg_flag,  ostream& ofile)
 {
   if(lifo_mode)
 	ofile << "$lifo ";
   else if(noblock_flag)
 	ofile << "$noblock ";
+
+  if(shiftreg_flag)
+	  ofile << " $shiftreg ";
   
   ofile << "$pipe [" << name << "] " << width << " " << "$depth " << depth << " ";
 
@@ -403,6 +406,7 @@ void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode,
 
   if(p2p_flag)
 	  ofile << " $p2p ";
+
 
   ofile << endl;
 }

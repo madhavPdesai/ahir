@@ -20,7 +20,8 @@ entity PipeBase is
            data_width: integer;
            lifo_mode: boolean := false;
            depth: integer := 1;
-	   signal_mode: boolean := false);
+	   signal_mode: boolean := false;
+           shift_register_mode: boolean := false);
   port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
     read_ack       : out std_logic_vector(num_reads-1 downto 0);
@@ -130,6 +131,7 @@ begin  -- default_arch
 
   DeepFifo: if (not signal_mode) and (depth > 2) and (not lifo_mode) generate
     
+   notShiftReg: if (not shift_register_mode) generate
     queue : SynchFifo generic map (
       name => name & ":Queue:", 
       queue_depth => depth,
@@ -144,7 +146,24 @@ begin  -- default_arch
         nearly_full => open,
         clk      => clk,
         reset    => reset);
+   end generate notShiftReg;
     
+   shiftReg: if shift_register_mode generate
+      srqueue : ShiftRegisterQueue generic map (	
+        name => name & ":Queue:",	
+        queue_depth => depth,
+        data_width       => data_width)
+        port map (
+          push_req   => pipe_req,
+          push_ack => pipe_ack,
+          data_in  => pipe_data,
+          pop_req  => pipe_req_repeated,
+          pop_ack  => pipe_ack_repeated,
+          data_out => pipe_data_repeated,
+          clk      => clk,
+          reset    => reset);
+   end generate shiftReg;
+ 
   end generate DeepFifo;
 
   Lifo: if (not signal_mode) and  lifo_mode generate

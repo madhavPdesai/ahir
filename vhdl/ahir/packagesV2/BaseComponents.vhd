@@ -521,6 +521,18 @@ package BaseComponents is
     
   end component SynchToAsynchReadInterface;
 
+  component ShiftRegisterQueue is
+    generic(name : string := "anon"; queue_depth: integer := 1; data_width: integer := 32);
+    port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+  end component;
+
 
   -----------------------------------------------------------------------------
   -- pipe
@@ -533,7 +545,8 @@ package BaseComponents is
              data_width: integer;
              lifo_mode: boolean := false;
              depth: integer := 1;
-	     signal_mode: boolean := false);
+	     signal_mode: boolean := false;
+ 	     shift_register_mode: boolean := false);
     port (
       read_req       : in  std_logic_vector(num_reads-1 downto 0);
       read_ack       : out std_logic_vector(num_reads-1 downto 0);
@@ -2315,7 +2328,8 @@ package BaseComponents is
            data_width: integer;
            lifo_mode: boolean := false;
            depth: integer := 1;
-	   signal_mode: boolean := false);
+	   signal_mode: boolean := false;
+	   shift_register_mode: boolean := false);
    port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
     read_ack       : out std_logic_vector(num_reads-1 downto 0);

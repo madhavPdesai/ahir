@@ -2189,6 +2189,18 @@ package BaseComponents is
     
   end component SynchToAsynchReadInterface;
 
+  component ShiftRegisterQueue is
+    generic(name : string := "anon"; queue_depth: integer := 1; data_width: integer := 32);
+    port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+  end component;
+
 
   -----------------------------------------------------------------------------
   -- pipe
@@ -2201,7 +2213,8 @@ package BaseComponents is
              data_width: integer;
              lifo_mode: boolean := false;
              depth: integer := 1;
-	     signal_mode: boolean := false);
+	     signal_mode: boolean := false;
+ 	     shift_register_mode: boolean := false);
     port (
       read_req       : in  std_logic_vector(num_reads-1 downto 0);
       read_ack       : out std_logic_vector(num_reads-1 downto 0);
@@ -3983,7 +3996,8 @@ package BaseComponents is
            data_width: integer;
            lifo_mode: boolean := false;
            depth: integer := 1;
-	   signal_mode: boolean := false);
+	   signal_mode: boolean := false;
+	   shift_register_mode: boolean := false);
    port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
     read_ack       : out std_logic_vector(num_reads-1 downto 0);
@@ -10878,43 +10892,6 @@ end Behave;
 
 library ieee;
 use ieee.std_logic_1164.all;
-
-entity BypassRegister is
-  generic(data_width: integer; enable_bypass: boolean := false); 
-  port (
-    clk, reset : in  std_logic;
-    enable     : in  std_logic;
-    data_in     : in  std_logic_vector(data_width-1 downto 0);
-    data_out    : out std_logic_vector(data_width-1 downto 0));
-end BypassRegister;
-
-architecture behave of BypassRegister is
-  constant datazero : std_logic_vector(data_width-1 downto 0) := (others => '0');
-  signal data_reg: std_logic_vector(data_width-1 downto 0);
-begin  -- behave
-
-  process (clk, reset)
-  begin  -- process
-    if clk'event and clk = '1' then     -- rising clock edge
-      if reset = '1' then
-	data_reg <= datazero;
-      elsif enable = '1' then
-        data_reg <= data_in;
-      end if;
-    end if;
-  end process;
-
-  Bypass: if enable_bypass generate
-    data_out <= data_in when enable = '1' else data_reg;    
-  end generate Bypass;
-
-  NoBypass: if not enable_bypass generate
-    data_out <= data_reg;
-  end generate NoBypass;
-
-end behave;
-library ieee;
-use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
@@ -12827,7 +12804,8 @@ entity PipeBase is
            data_width: integer;
            lifo_mode: boolean := false;
            depth: integer := 1;
-	   signal_mode: boolean := false);
+	   signal_mode: boolean := false;
+           shift_register_mode: boolean := false);
   port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
     read_ack       : out std_logic_vector(num_reads-1 downto 0);
@@ -12937,6 +12915,7 @@ begin  -- default_arch
 
   DeepFifo: if (not signal_mode) and (depth > 2) and (not lifo_mode) generate
     
+   notShiftReg: if (not shift_register_mode) generate
     queue : SynchFifo generic map (
       name => name & ":Queue:", 
       queue_depth => depth,
@@ -12951,7 +12930,24 @@ begin  -- default_arch
         nearly_full => open,
         clk      => clk,
         reset    => reset);
+   end generate notShiftReg;
     
+   shiftReg: if shift_register_mode generate
+      srqueue : ShiftRegisterQueue generic map (	
+        name => name & ":Queue:",	
+        queue_depth => depth,
+        data_width       => data_width)
+        port map (
+          push_req   => pipe_req,
+          push_ack => pipe_ack,
+          data_in  => pipe_data,
+          pop_req  => pipe_req_repeated,
+          pop_ack  => pipe_ack_repeated,
+          data_out => pipe_data_repeated,
+          clk      => clk,
+          reset    => reset);
+   end generate shiftReg;
+ 
   end generate DeepFifo;
 
   Lifo: if (not signal_mode) and  lifo_mode generate
@@ -13378,117 +13374,6 @@ begin  -- Behave
 
   end generate MultipleRequesters;
 end Fair;
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-
--- forwards req_in to req_out (with one cycle delay)
--- and waits until ack_in appears before forwarding ack_out (one cycle delay).
-entity RigidRepeater is
-    generic(data_width: integer := 32);
-    port(clk: in std_logic;
-         reset: in std_logic;
-         data_in: in std_logic_vector(data_width-1 downto 0);
-         req_in: in std_logic;
-         ack_out: out std_logic;
-         data_out: out std_logic_vector(data_width-1 downto 0);
-         req_out : out std_logic;
-         ack_in: in std_logic);
-end entity RigidRepeater;
-
-architecture behave of RigidRepeater is
-
-	type RR_State is (idle, busy, done);
-	signal state_sig: RR_State;
-
-begin  -- SimModel
-  process(clk,state_sig,req_in,ack_in)
-    variable nstate: RR_State;
-    variable latch_v : boolean;
-    variable req_out_v, ack_out_v : std_logic;
-  begin
-    nstate := state_sig;
-    latch_v := false;
-    req_out_v := '0';
-    ack_out_v := '0';
-    
-    case state_sig is
-      when idle =>
-        -- req_in?
-        if(req_in = '1') then
-          nstate := busy;
-          -- latch the data
-          latch_v := true;
-        end if;
-      when busy =>
-        -- pass to req_out
-        req_out_v := '1';
-        if(ack_in = '1') then
-          -- ack_in?
-          nstate := done;
-        end if;
-      when done =>
-        -- spend one cycle here.. ack_out
-        ack_out_v := '1';
-        nstate := idle;
-    end case;
-
-    req_out <= req_out_v;
-    ack_out <= ack_out_v;
-
-    if(clk'event and clk = '1') then
-      if(reset = '1') then
-        state_sig <= idle;
-      else
-        state_sig <= nstate;
-      end if;
-      
-      if(latch_v) then
-        data_out <= data_in;
-      end if;
-    end if;
-    
-  end process;
-
-end behave;
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library ahir;
-use ahir.Types.all;
-use ahir.Subprograms.all;
-use ahir.Utilities.all;
-use ahir.BaseComponents.all;
-
--- like PhiBase, but multiple writers can
--- be simultaneously active.  Use simple priority
--- to decide the winner.
-entity ScalarRegister is
-
-  generic (
-    num_reqs   : integer;
-    data_width : integer);
-  port (
-    req                 : in  BooleanArray(num_reqs-1 downto 0);
-    ack                 : out Boolean;
-    idata               : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
-    odata               : out std_logic_vector(data_width-1 downto 0);
-    clk, reset          : in std_logic);
-
-end ScalarRegister;
-
-
-architecture Behave of ScalarRegister is
-  signal req_PE: BooleanArray(num_reqs-1 downto 0);
-begin  -- Behave
-
-  req_PE <= PriorityEncode(req);
-  pInst: PhiBase generic map(num_reqs => num_reqs, data_width => data_width)
-		port map(req => req_PE, ack => ack, idata => idata, odata => odata,
-				clk => clk, reset => reset);
-end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
@@ -22648,7 +22533,8 @@ entity NonblockingReadPipeBase is
            data_width: integer;
            lifo_mode: boolean := false;
            depth: integer := 1;
-	   signal_mode: boolean := false);
+	   signal_mode: boolean := false;
+	   shift_register_mode: boolean := false);
   port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
     read_ack       : out std_logic_vector(num_reads-1 downto 0);
@@ -22828,6 +22714,63 @@ begin  -- default_arch
 	write_ack <= read_req;
    end process;
 end default_arch;
+-- copyright: Madhav Desai
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+use ahir.Utilities.all;
+
+--
+-- higher in->out latency, but distributed in space (think ASIC, ASIC).
+-- often good enough.
+--
+entity ShiftRegisterQueue is
+  generic(name : string := "anon"; queue_depth: integer := 1; data_width: integer := 32);
+  port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+end entity ShiftRegisterQueue;
+
+architecture behave of ShiftRegisterQueue is
+
+  type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
+  constant n_stages : integer := (queue_depth + 1)/2;
+  signal intermediate_data: QueueArray(0 to n_stages);
+  signal intermediate_lr_req: std_logic_vector(0 to n_stages);
+  signal intermediate_lr_ack: std_logic_vector(0 to n_stages);
+
+begin  -- SimModel
+
+     intermediate_data(0) <= data_in;
+     intermediate_lr_req(0) <= push_req;
+     push_ack <= intermediate_lr_ack(0);
+
+     stageGen: for I in 0 to n_stages-1 generate
+	qinst: QueueBase 
+		generic map (name => name & "-stage-" & Convert_To_String(I),
+				queue_depth => 2, data_width => data_width)
+		port map ( reset => reset, clk => clk, 
+			data_in => intermediate_data(I),
+			push_req => intermediate_lr_req(I),
+			push_ack => intermediate_lr_ack(I),
+			pop_req  => intermediate_lr_ack(I+1), -- cross-over
+			pop_ack => intermediate_lr_req(I+1), -- cross-over
+			data_out => intermediate_data(I+1));
+     end generate stageGen;
+
+     data_out <= intermediate_data(n_stages);
+     intermediate_lr_ack(n_stages) <= pop_req;
+     pop_ack <= intermediate_lr_req(n_stages);
+
+end behave;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

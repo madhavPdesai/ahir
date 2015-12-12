@@ -1,3 +1,6 @@
+TODO: this README is out-of-date..  Please rewrite it.  Who, me?
+
+
 An implementation of all the data-path operators needed to 
 generate a VHDL netlist from a VC description. For book-keeping
 reasons, the control-path related elements are kept in the

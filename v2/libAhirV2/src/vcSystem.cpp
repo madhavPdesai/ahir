@@ -141,7 +141,7 @@ int vcSystem::Get_Pipe_Depth(string pipe_id)
   return(_pipe_map[pipe_id]->Get_Depth());
 }
 void vcSystem::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bool noblock_mode,  bool in_flag, bool out_flag, 
-					bool signal_flag, bool p2p_flag) 
+					bool signal_flag, bool p2p_flag, bool shiftreg_flag) 
 {
   assert(_pipe_map.find(pipe_id) == _pipe_map.end());
   assert(width > 0);
@@ -153,6 +153,7 @@ void vcSystem::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bo
   np->Set_Out_Flag(out_flag);
   np->Set_Signal(signal_flag);
   np->Set_P2P(p2p_flag);
+  np->Set_Shift_Reg(shiftreg_flag);
 }
 
 void vcSystem::Add_Module(vcModule* module)

@@ -283,6 +283,7 @@ class AaPipeObject: public AaObject
   bool _port;
   bool _synch;
   bool _p2p;
+  bool _shift_reg;
  public:
 
   
@@ -312,6 +313,9 @@ class AaPipeObject: public AaObject
 
   void Set_P2P(bool v) { _p2p = v; }
   bool Get_P2P() {return(_p2p);}
+
+  void Set_Shift_Reg(bool v) { _shift_reg = v; }
+  bool Get_Shift_Reg() {return(_shift_reg);}
 
   virtual void Print(ostream& ofile);
 
