@@ -856,11 +856,13 @@ void AaUnlockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 // AaReportStatement: public AaNullStatement
 //---------------------------------------------------------------------
 AaReportStatement::AaReportStatement(AaScope* parent, 
+			AaExpression* assert_expr,
 			string tag,
 			string synopsys, 
 			vector< pair<string,AaExpression* > >& descr_pairs): 
 		AaNullStatement(parent)
 {
+	_assert_expression = assert_expr;
 	_tag = tag;
 	_synopsys = synopsys;
 	for(int I = 0, fI = descr_pairs.size(); I < fI; I++)
@@ -868,9 +870,43 @@ AaReportStatement::AaReportStatement(AaScope* parent,
 		_descr_pairs.push_back(pair<string,AaExpression*>(descr_pairs[I].first, descr_pairs[I].second));
 	}
 }
- 
+
+void AaReportStatement::Print(ostream& ofile)
+{
+	if(this->Get_Guard_Expression())
+	{
+		ofile << "$guard (";
+		if(this->Get_Guard_Complement())
+		{
+			ofile << "~";
+		}
+		this->Get_Guard_Expression()->Print(ofile);
+		ofile << ") ";
+	}
+
+	if(_assert_expression)
+	{
+		ofile << "$assert ";
+		_assert_expression->Print(ofile);
+		ofile << " ";
+	}
+	ofile << "$report (" << _tag << " " << _synopsys << " ";
+	for(int I = 0, fI = _descr_pairs.size(); I < fI; I++)
+	{
+		ofile << this->Tab() << " " << _descr_pairs[I].first << " ";
+		_descr_pairs[I].second->Print(ofile);
+		ofile << " ";
+	}
+	ofile << ")" << endl;
+}
+
 void AaReportStatement::Map_Source_References()
 {
+	if(_assert_expression)
+	{
+		_assert_expression->Map_Source_References(this->_source_objects);
+	}
+
 	if(this->Get_Guard_Expression())
 	{
 		this->Get_Guard_Expression()->Map_Source_References(this->_source_objects);
@@ -890,10 +926,22 @@ void AaReportStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	srcfile << "// " << this->To_String();
 	headerfile << "\n#define " << this->Get_C_Macro_Name() << " " ;
 	srcfile << this->Get_C_Macro_Name() << "; " << endl ;
+	if(this->_assert_expression)
+	{
+		this->_assert_expression->PrintC_Declaration(headerfile);
+		this->_assert_expression->PrintC(headerfile);
+	}
 	if(this->Get_Guard_Expression())
 	{
 		this->Get_Guard_Expression()->PrintC_Declaration(headerfile);
 		this->Get_Guard_Expression()->PrintC(headerfile);
+	}
+	if(this->_assert_expression)
+	{
+		headerfile << "if (!" ;
+		Print_C_Value_Expression(this->_assert_expression->C_Reference_String(), 
+			this->_assert_expression->Get_Type(), headerfile);
+		headerfile << ") {\\" << endl;
 	}
 	if(this->Get_Guard_Expression())
 	{
@@ -905,19 +953,31 @@ void AaReportStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	}
 	string plock_counter = this->Get_C_Macro_Name() + "__print_counter";
 	headerfile << "uint32_t " << plock_counter << "= get_file_print_lock(" << AaProgram::Report_Log_File_Name() <<");";
-	Print_C_Report_String(plock_counter, this->_tag, this->_synopsys, headerfile);
-	
+
+	string tag_expression;
+	if(_assert_expression != NULL)
+		tag_expression  = "ASSERTION! " + this->_tag;
+	else
+		tag_expression = this->_tag;
+		
+	Print_C_Report_String(plock_counter, tag_expression, this->_synopsys, headerfile);
+
 	for(int I = 0, fI = _descr_pairs.size(); I < fI; I++)
 	{
 		_descr_pairs[I].second->PrintC_Declaration(headerfile);
 		_descr_pairs[I].second->PrintC(headerfile);
 		Print_C_Report_String_Expr_Pair(plock_counter, this->_tag, _descr_pairs[I].first,
-							_descr_pairs[I].second->C_Reference_String(),
-							_descr_pairs[I].second->Get_Type(), headerfile);
+				_descr_pairs[I].second->C_Reference_String(),
+				_descr_pairs[I].second->Get_Type(), headerfile);
 	}
 	headerfile << "release_file_print_lock(" << AaProgram::Report_Log_File_Name() <<");";
 	if(this->Get_Guard_Expression())
 		headerfile << "}";
+	if(this->_assert_expression)
+	{
+		headerfile << "assert(0);" ;
+		headerfile << "}";
+	}
 	headerfile << ";" << endl;
 }
 
@@ -925,21 +985,21 @@ void AaReportStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 // AaAssignmentStatement
 //---------------------------------------------------------------------
 AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* tgt, AaExpression* src, int lineno):
-  AaStatement(parent_tpr) 
+	AaStatement(parent_tpr) 
 {
-  assert(tgt); assert(src);
-  _is_volatile = false;
+	assert(tgt); assert(src);
+	_is_volatile = false;
 
-  tgt->Set_Associated_Statement(this);
-  tgt->Set_Is_Intermediate(false);
-  src->Set_Associated_Statement(this);
-  src->Set_Is_Intermediate(false);
+	tgt->Set_Associated_Statement(this);
+	tgt->Set_Is_Intermediate(false);
+	src->Set_Associated_Statement(this);
+	src->Set_Is_Intermediate(false);
 
 
-  this->Set_Line_Number(lineno);
+	this->Set_Line_Number(lineno);
 
-  this->_target = tgt;
-  this->_target->Set_Is_Target(true);
+	this->_target = tgt;
+	this->_target->Set_Is_Target(true);
 
   if(tgt->Is_Object_Reference())
     this->Map_Target((AaObjectReference*)tgt);

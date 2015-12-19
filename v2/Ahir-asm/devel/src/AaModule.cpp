@@ -955,7 +955,7 @@ void AaModule::Check_Statements()
 
 		if(this->Get_Operator_Flag() || this->Get_Volatile_Flag())
 		{
-			if(!(s->Is("AaAssignmentStatement") ||  s->Is("AaNullStatement")))
+			if(!(s->Is("AaAssignmentStatement") ||  s->Is_Null_Like_Statement()))
 			{
 				if(!s->Is("AaCallStatement"))
 				{

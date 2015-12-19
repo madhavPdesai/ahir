@@ -12061,7 +12061,7 @@ begin  -- Behave
         
         if(clk'event and clk = '1') then
            if(reset = '1') then
-              nstate := 0;
+	      lhs_state <= 0;
 	   else
               lhs_state <= nstate;
            end if;        
@@ -12100,17 +12100,14 @@ begin  -- Behave
           when others => null;
         end case;
 
-        if(reset = '1') then
-          nstate := '0';
-        end if;        
-
         lhs_clear <= lhs_clear_var;
         
         if(clk'event and clk = '1') then
-          rhs_state <= nstate;
 	  if(reset = '1') then 
 		ackR(I) <= false;
+          	rhs_state <= '0';
 	  else
+          	rhs_state <= nstate;
           	ackR(I) <= aR_var;
 	  end if;
         end if;
@@ -12223,14 +12220,15 @@ begin  -- Behave
           when others => null;
         end case;
 
-        if(reset = '1') then
-          nstate := '0';
-        end if;        
-
         ackL_sig(I) <= aL_var;
         
         if(clk'event and clk = '1') then
-          lhs_state <= nstate;
+	  if(reset = '1') then
+		lhs_state <= '0';
+	  else
+            	lhs_state <= nstate;
+          end if;
+
           if(latch_flag) then
             dfinal(I) <= dataL;
           end if;          
@@ -12268,15 +12266,15 @@ begin  -- Behave
           when others => null;
         end case;
 
-        if(reset = '1') then
-          nstate := '0';
-        end if;        
-
         ackR_sig(I) <= aR_var;
         lhs_clear <= lhs_clear_var;
         
         if(clk'event and clk = '1') then
-          rhs_state <= nstate;
+	  if(reset = '1') then
+		rhs_state <= '0';
+	  else
+          	rhs_state <= nstate;
+	  end if;
         end if;
      end process;
     end block RegFSM;

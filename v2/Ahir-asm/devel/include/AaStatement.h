@@ -444,33 +444,14 @@ class AaNullStatement: public AaStatement
 class AaReportStatement: public AaNullStatement
 {
 	public:
+        AaExpression* _assert_expression;
         string _tag;
 	string _synopsys;
 	vector<pair<string, AaExpression*> > _descr_pairs;
 
-	AaReportStatement(AaScope* parent, string tag, string synopsys, vector<pair<string,AaExpression*> >& descr_pairs);
-        virtual void Print(ostream& ofile)
-	{
-		if(this->Get_Guard_Expression())
-		{
-			ofile << "$guard (";
-			if(this->Get_Guard_Complement())
-			{
-				ofile << "~";
-			}
-			this->Get_Guard_Expression()->Print(ofile);
-			ofile << ") ";
-		}
-
-		ofile << "$report (" << _tag << " " << _synopsys << " ";
-		for(int I = 0, fI = _descr_pairs.size(); I < fI; I++)
-		{
-			ofile << this->Tab() << " " << _descr_pairs[I].first << " ";
-			_descr_pairs[I].second->Print(ofile);
-			ofile << " ";
-		}
-		ofile << ")" << endl;
-	}
+	AaReportStatement(AaScope* parent, AaExpression* assert_expr, 
+				string tag, string synopsys, vector<pair<string,AaExpression*> >& descr_pairs);
+        virtual void Print(ostream& ofile);
   	virtual void Map_Source_References();
   	virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
         virtual string Kind() {return("AaReportStatement");}

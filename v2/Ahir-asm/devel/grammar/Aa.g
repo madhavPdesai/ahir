@@ -409,7 +409,9 @@ aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
    vector<pair<string,AaExpression*> > dpairs;
    AaReportStatement* new_stmt = NULL;
    int line_number;
+   AaExpression* assert_expr = NULL;
 }:
+      (ASSERT assert_expr = aA_Expression[scope])?
       (
 	(rdd:REPORT {line_number = rdd->getLine();}  LPAREN 
                 tagid : SIMPLE_IDENTIFIER{tag = tagid->getText();}
@@ -436,7 +438,7 @@ aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
 	)
       )
 	{
-		new_stmt = new AaReportStatement(scope, tag, synopsys, dpairs);
+		new_stmt = new AaReportStatement(scope, assert_expr, tag, synopsys, dpairs);
             	new_stmt->Set_Line_Number(line_number);
 		slist.push_back(new_stmt);
 	}
@@ -2152,6 +2154,7 @@ SPLIT : "$split";
 
 
 // report-statement
+ASSERT  : "$assert";
 REPORT   : "$report";
 RREPORT   : "$rreport";
 
