@@ -1494,6 +1494,14 @@ void AaSimpleObjectReference::Evaluate()
 		{
 			this->Assign_Expression_Value(((AaExpression*)_object)->Get_Expression_Value());
 		}
+		else if(this->_object->Is_Statement())
+		{
+			if(this->_object->Is("AaAssignmentStatement"))
+			{
+				AaAssignmentStatement* ss = (AaAssignmentStatement*) (this->_object);
+				this->Assign_Expression_Value(ss->Get_Target()->Get_Expression_Value());
+			}
+		}
 	}
 }
 

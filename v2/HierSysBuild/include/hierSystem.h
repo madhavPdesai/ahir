@@ -28,6 +28,7 @@ using namespace std;
 #include <stdint.h>
 
 
+
 class rtlObject;
 class rtlThread;
 class rtlString;
@@ -88,6 +89,57 @@ class hierRoot
 };
 
 class hierSystem;
+class hierPipe: public hierRoot
+{
+	public:
+	string _name;
+	int    _width;
+	int    _depth;
+	bool   _is_signal;
+	bool   _is_noblock;
+	bool   _is_p2p;
+	bool   _is_input;
+	bool   _is_output;
+	bool   _is_internal;
+
+	hierPipe(string name, int width, int depth);
+	void Set_Is_Signal(bool v) {_is_signal = v;}
+	void Set_Is_Noblock(bool v) {_is_noblock = v;}
+	void Set_Is_P2P(bool v) {_is_p2p = v;}
+	void Set_Is_Input(bool v) {_is_input = v;}
+	void Set_Is_Output(bool v) {_is_output = v;}
+	void Set_Is_Internal(bool v) {_is_internal = v;}
+
+	bool Get_Is_Signal() {return(_is_signal);}
+	bool Get_Is_Noblock() {return(_is_noblock);}
+	bool Get_Is_P2P() {return(_is_p2p);}
+	bool Get_Is_Input() {return(_is_input);}
+	bool Get_Is_Output() {return(_is_output);}
+	bool Get_Is_Internal() {return(_is_internal);}
+
+	string Get_Name() {return(_name);}
+	int    Get_Depth() {return(_depth);}
+	int    Get_Width() {return(_width);}
+
+	virtual void Print(ostream& ofile)
+	{
+		ofile << " ";
+		if(_is_noblock)
+			ofile  << "$noblock ";
+		if(_is_p2p)
+			ofile  << "$p2p ";
+		if(_is_signal)
+			ofile << "$signal ";
+		else
+			ofile << "$pipe ";
+
+		ofile << _name << " " << _width << " $depth " << _depth << " " << endl;
+	}
+
+	void Print_Vhdl_Instance(hierSystem* sys, ostream& ofile);
+};
+
+class hierSystem;
 class hierSystemInstance: public hierRoot
 {
 	public:
@@ -105,13 +157,9 @@ class hierSystemInstance: public hierRoot
 	hierSystem* Get_Base_System() {return(_base_system);}
 	bool Add_Port_Mapping(string formal, 
 				string actual, 
-				map<string, pair<int,int> >& pmap, 
-				set<string>& signals, 
-				set<string>& noblock_pipes);
-	bool Add_Port_Mapping(string formal, 
-				string actual);
-
-	bool Map_Unmapped_Ports_To_Defaults( map<string, pair<int,int> >& pmap, set<string>& signals, set<string>& noblock_pipes);
+				map<string, hierPipe* >& pmap);
+	bool Add_Port_Mapping(string formal, string actual);
+	bool Map_Unmapped_Ports_To_Defaults( map<string, hierPipe* >& pmap);
 
 
 	string Get_Actual(string formal)
@@ -140,16 +188,17 @@ class hierSystem: public hierRoot
 {
         string _library;
 	hierSystem* _parent;
-	map<string, pair<int,int> > _in_pipes;
-	map<string, pair<int,int> > _out_pipes;
-	map<string, pair<int,int> > _internal_pipes;
+
+	map<string, hierPipe* > _pipe_map;
+
+	map<string, hierPipe* > _in_pipes;
+	map<string, hierPipe* > _out_pipes;
+	map<string, hierPipe* > _internal_pipes;
 
 	map<string, hierSystemInstance*>  _pipe_to_subsystem_connection_map;
 	map<hierSystemInstance*, vector<string> > _subsystem_pipe_connection_map;
 	map<string,  hierSystemInstance* > _child_map;
 
-	set<string> _noblock_pipes;
-	set<string> _signals;
 	int _instance_count;
 
 	// pipes that are driven
@@ -196,31 +245,51 @@ public:
 
 	void Add_Noblock_Pipe(string pname)
 	{
-		_noblock_pipes.insert(pname);
+		if(_pipe_map.find(pname) != _pipe_map.end())
+			_pipe_map[pname]->Set_Is_Noblock(true);
+		else
+			hierRoot::Report_Error("Failed to add noblock pipe " + pname + ", pipe not found.");
 	}
+
 	bool Is_Noblock_Pipe(string pname)
 	{
-		return(_noblock_pipes.find(pname) != _noblock_pipes.end());
+		if(_pipe_map.find(pname) != _pipe_map.end())
+			return(_pipe_map[pname]->Get_Is_Noblock());
+		else
+			return(false);
 	}
 
 	void Add_Signal(string pname)
 	{
-		_signals.insert(pname);
+		if(_pipe_map.find(pname) != _pipe_map.end())
+			_pipe_map[pname]->Set_Is_Signal(true);
+		else
+			hierRoot::Report_Error("Failed to add signal " + pname + ", pipe not found.");
 	}
 
 	bool Is_Signal(string pname)
 	{
-		return(_signals.find(pname) != _signals.end());
+		if(_pipe_map.find(pname) != _pipe_map.end())
+			return(_pipe_map[pname]->Get_Is_Signal());
+		else	
+			return(false);
 	}
 
-	int Get_Pipe_Width(map<string, pair<int,int> >& pmap, string pipe_id)
+	int Get_Pipe_Width(map<string, hierPipe*>& pmap, string pname)
 	{
-		return((pmap.find(pipe_id) != pmap.end()) ? pmap[pipe_id].first : 0);
+		if(pmap.find(pname) != pmap.end())
+			return(pmap[pname]->Get_Width());
+		else
+			return(0);
 	}
-	int Get_Pipe_Depth(map<string, pair<int,int> >& pmap, string pipe_id)
+	int Get_Pipe_Depth(map<string, hierPipe*>& pmap, string pname)
 	{
-		return((pmap.find(pipe_id) != pmap.end()) ? pmap[pipe_id].second : 0);
+		if(pmap.find(pname) != pmap.end())
+			return(pmap[pname]->Get_Depth());
+		else
+			return(0);
 	}
+
 
 	int Get_Input_Pipe_Width(string pipe_id) {
 		return(this->Get_Pipe_Width(_in_pipes, pipe_id));
@@ -244,85 +313,98 @@ public:
 
 	int Get_Pipe_Width(string pipe_id)
 	{
-		int ret_w = this->Get_Input_Pipe_Width(pipe_id);
-		if(ret_w > 0)
-			return(ret_w);
-		ret_w = this->Get_Output_Pipe_Width(pipe_id);
-
-		if(ret_w > 0)
-			return(ret_w);
-
-		ret_w = this->Get_Internal_Pipe_Width(pipe_id);
-			
-		return(ret_w);
+		if(_pipe_map.find(pipe_id) != _pipe_map.end())
+			return(_pipe_map[pipe_id]->Get_Width());
+		else
+			return(0);
 	}
 	int Get_Pipe_Depth(string pipe_id)
 	{
-		int ret_w = this->Get_Input_Pipe_Depth(pipe_id);
-		if(ret_w > 0)
-			return(ret_w);
-		ret_w = this->Get_Output_Pipe_Depth(pipe_id);
-
-		if(ret_w > 0)
-			return(ret_w);
-
-		ret_w = this->Get_Internal_Pipe_Depth(pipe_id);
-			
-		return(ret_w);
+		if(_pipe_map.find(pipe_id) != _pipe_map.end())
+			return(_pipe_map[pipe_id]->Get_Depth());
+		else
+			return(0);
 	}
 	bool Has_Port(string pid)
 	{
-		return ( (this->Get_Input_Pipe_Width(pid) > 0)
-			||  (this->Get_Output_Pipe_Width(pid) > 0)
-			||  (this->Get_Internal_Pipe_Width(pid) > 0));
+		return(_pipe_map.find(pid) != _pipe_map.end());
 	}
 
-
-        void Print_Pipe_Map(map<string, pair<int,int> >& pmap, ostream& ofile)
+        void Print_Pipe_Map(map<string, hierPipe* >& pmap, ostream& ofile)
 	{
-		for(map<string,pair<int,int> >::iterator iter = pmap.begin(), fiter = pmap.end(); iter != fiter; iter++)
+		for(map<string,hierPipe* >::iterator iter = pmap.begin(), fiter = pmap.end(); iter != fiter; iter++)
 		{
-			if(this->Is_Noblock_Pipe((*iter).first))
-				ofile << " $noblock ";
-			ofile << (this->Is_Signal((*iter).first) ? "  $signal " : "  $pipe ");
-			ofile << " " << (*iter).first << " " << (*iter).second.first << " $depth " <<
-					(*iter).second.second;
-			ofile << endl;
+			(*iter).second->Print(ofile);
 		}
 	}
 
-	void Add_Pipe_To_Map(map<string, pair<int,int> >& pipe_map, string pid, int pipe_width, int pipe_depth,  string pipe_type)
+	// add pipe to pipe-map.
+	hierPipe* Add_Pipe(string pid, int pipe_width, int pipe_depth, string pipe_type)
 	{
-		if(pipe_map.find(pid) != pipe_map.end())
+		hierPipe* p = NULL;
+		if(_pipe_map.find(pid) != _pipe_map.end())
 		{
-			int width = pipe_map[pid].first;
+			hierRoot::Report_Warning("Warning : redeclaration of " + pipe_type + " " 
+								+ pid + " will ignore second declaration");
 
-			if(width != pipe_width)
+			p = _pipe_map[pid];
+			if(p->Get_Width() != pipe_width)
 			{
-				hierRoot::Report_Error("incompatible redeclaration of " + pipe_type + 
+				hierRoot::Report_Error("incompatible widths.. redeclaration of " + pipe_type + 
 										" " + pid + " will be ignored. ");
 			}
-			else
+			if(p->Get_Depth() != pipe_depth)
 			{
-				hierRoot::Report_Warning("Warning : redeclaration of " + pipe_type + " " 
-								+ pid + " will ignore second declaration");
+				hierRoot::Report_Error("incompatible depths.. redeclaration of " + pipe_type + 
+										" " + pid + " will be ignored. ");
+			}
+		}
+		else
+		{
+			p = new hierPipe(pid, pipe_width, pipe_depth);
+			_pipe_map[pid] = p;
+		}
+	}
+
+	void Add_Pipe_To_Map(map<string, hierPipe*>& pipe_map, string pipe_name, int width, int depth,
+					string pipe_type)
+	{
+		if(pipe_map.find(pipe_name) != pipe_map.end())
+		{
+			hierRoot::Report_Warning("Warning : redeclaration of " + pipe_type + " " 
+								+ pipe_name + " will ignore second declaration");
+
+			hierPipe* p = pipe_map[pipe_name];
+			if(p->Get_Width() != width)
+			{
+				hierRoot::Report_Error("incompatible widths.. redeclaration of " + pipe_type + 
+										" " + pipe_name + " will be ignored. ");
+			}
+			if(p->Get_Depth() != depth)
+			{
+				hierRoot::Report_Error("incompatible depths.. redeclaration of " + pipe_type + 
+										" " + pipe_name + " will be ignored. ");
 			}
 
 		}
 		else
 		{
-			pipe_map[pid] = pair<int,int>(pipe_width, pipe_depth);
+			pipe_map[pipe_name] = new hierPipe(pipe_name, width, depth);
 		}
 	 }
 
 
 			
-	void Add_In_Pipe(string pid, int pipe_width, int depth, bool noblock_flag)
+	void Add_In_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag)
 	{
+		hierPipe* p = this->Add_Pipe(pid, pipe_width, depth, "in-pipe");
+		_in_pipes[pid] = p;
+		p->Set_Is_Input(true);
 
-		this->Add_Pipe_To_Map(_in_pipes, pid, pipe_width, depth, "in-pipe");
 		if(noblock_flag)
-			this->Add_Noblock_Pipe(pid);
+			p->Set_Is_Noblock(true);
+		if(p2p_flag)
+			p->Set_Is_P2P(true);
 
 		if(this->Get_Output_Pipe_Width(pid) > 0)
 		{
@@ -334,11 +416,15 @@ public:
 		}
 
 	}
-	void Add_Out_Pipe(string pid, int pipe_width, int depth, bool noblock_flag)
+	void Add_Out_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag)
 	{
-		Add_Pipe_To_Map(_out_pipes, pid, pipe_width, depth, "out-pipe");
+		hierPipe* p = this->Add_Pipe(pid, pipe_width, depth, "out-pipe");
+		_out_pipes[pid] = p;
+		p->Set_Is_Output(true);
 		if(noblock_flag)
-			this->Add_Noblock_Pipe(pid);
+			p->Set_Is_Noblock(true);
+		if(p2p_flag)
+			p->Set_Is_P2P(true);
 
 		if(this->Get_Input_Pipe_Width( pid) > 0)
 		{
@@ -349,11 +435,15 @@ public:
 			this->Report_Error("pipe " + pid + " in system " + this->_id + " is both internal and output pipe.");
 		}
 	}
-	void Add_Internal_Pipe(string pid, int pipe_width, int depth, bool noblock_flag)
+	void Add_Internal_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag)
 	{
-		Add_Pipe_To_Map(_internal_pipes, pid, pipe_width, depth,  "internal-pipe");
+		hierPipe* p = this->Add_Pipe(pid, pipe_width, depth, "internal-pipe");
+		_internal_pipes[pid] = p;
+		p->Set_Is_Internal(true);
 		if(noblock_flag)
-			this->Add_Noblock_Pipe(pid);
+			p->Set_Is_Noblock(true);
+		if(p2p_flag)
+			p->Set_Is_P2P(true);
 
 		if(this->Get_Input_Pipe_Width(pid) > 0)
 		{
@@ -518,14 +608,17 @@ public:
 	void Print_Vhdl_Rtl_Type_Package(ostream& ofile);
 };
 
-void listPipeMap(map<string, pair<int,int> >& pmap, vector<string>& pvec);
+void listPipeMap(map<string, hierPipe* >& pmap, vector<string>& pvec);
 
-bool getPipeInfoFromGlobals(string pname, map<string, pair<int,int> >& pmap, set<string>& signals,  set<string>& noblock_pipes,
-					int& width, int& depth, bool& is_signal, bool& noblock_flag);
+bool getPipeInfoFromGlobals(string pname, 
+				map<string, hierPipe*>& pmap,
+					int& width, int& depth, bool& is_signal, bool& noblock_flag,
+						bool& p2p_flag);
 
-void addPipeToGlobalMaps(string oname, map<string, pair<int,int> >& pipe_map, 
-				set<string>& signals, set<string>& noblock_pipes, 
-					int pipe_width, int pipe_depth, bool is_signal, bool noblock_mode);
+void addPipeToGlobalMaps(string oname, 
+				map<string, hierPipe*>& pipe_map, 
+					int pipe_width, int pipe_depth, bool is_signal, bool noblock_mode, 
+						bool p2p_mode);
 
 
 string IntToStr(int u);

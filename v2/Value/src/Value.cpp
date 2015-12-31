@@ -592,18 +592,24 @@ void Unsigned::Rotate_Right(int idx)
 bool Unsigned::Greater(Unsigned& b)
 {
 	bool ret_val = true;
+	bool equal = true;
 	assert(this->Width() == b.Width());
 	for(int idx = this->Width()-1; idx >= 0; idx--)
 	{
 		if((!this->Get_Bit(idx) && b.Get_Bit(idx)))
 		{
 			ret_val = false;
+			equal = false;
 			break;
 		}
 		else if(this->Get_Bit(idx) && !b.Get_Bit(idx))
+		{
+			equal = false;
 			break;
+		}
 	}
 
+	ret_val = (ret_val && !equal);
 	return(ret_val);
 }
 

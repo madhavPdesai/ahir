@@ -1,0 +1,19 @@
+$pipe out_data_1 : $uint<32> $depth 2
+$pipe out_data_0 : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2
+
+$module [demux_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+
+		CMD := in_data
+		send_to_1 := (CMD [] 0)
+
+		$guard (send_to_1) out_data_1 := in_data
+		$guard (~send_to_1) out_data_0 := in_data
+
+		$while 1
+	}
+}

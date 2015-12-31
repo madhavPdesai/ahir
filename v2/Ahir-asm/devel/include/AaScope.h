@@ -41,6 +41,7 @@ class AaScope : public AaRoot
     else
       return(this);
   }
+  virtual bool Get_Is_Volatile() {return(false);}
 
   AaScope(AaScope* parent_scope);
   ~AaScope(); 

@@ -37,23 +37,21 @@ $system Top
         $instance i0  LLIB:Left   A => a Asig => asig  TMP => tmp1 TMPsig => tmp_sig 
 
 	$thread   REPEATER
-		$in     rack wack: $unsigned<1>
-		$out    rreq wreq : $unsigned<1>
-		$in     rdata : $unsigned<16>
-		$out    wdata : $unsigned<16>
+		$in $pipe    rdata : $unsigned<16>
+		$out $pipe   wdata : $unsigned<16>
+
 		$signal data_reg : $unsigned<16>
 		$constant O1: $unsigned<1> := ($unsigned<1>) _b1
 
-		$group $in $pipe RPIPE (rreq rdata rack)
-		$group $out $pipe WPIPE (wreq wdata wack)
+		$default // empty
 
 		<reset>  {
-			$emit rreq
-			$if (rack == O1)
+			$now rdata$req := O1
+			$if (rdata$ack == O1)
 			{
-				$emit wreq
-				$volatile wdata := rdata
-				$if (wack == O1) 
+				$now wdata$req := O1
+				$now wdata := rdata
+				$if (wdata$ack == O1) 
 				{
 					$goto reset
 				}
@@ -68,9 +66,9 @@ $system Top
 			}
 		}
 		<wait_state>  {
-				$emit wreq
-				$volatile wdata := data_reg
-				$if(wack == O1)
+				$now wdata$req := O1
+				$now wdata := data_reg
+				$if(wdata$ack == O1)
 				{
 					$goto reset
 				}
@@ -79,15 +77,17 @@ $system Top
 					$goto wait_state
 				}
 		}
+	$now // empty
+	$tick // empty	
 
 	
 	$string tt0:REPEATER
-		RPIPE => tmp1
-		WPIPE => tmp2
+		rdata => tmp1
+		wdata => tmp2
 
 	$string tt1:REPEATER
-		RPIPE => tmp2
-		WPIPE => tmp3
+		rdata => tmp2
+		wdata => tmp3
 
         $instance i1  RLIB:Right  TMPsig => tmp_sig TMP => tmp3 B => b Bsig => bsig
 }

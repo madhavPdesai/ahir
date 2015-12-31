@@ -85,6 +85,8 @@ class AaModule: public AaSeriesBlockStatement
   virtual void Set_Volatile_Flag(bool v) {_volatile_flag = v;}
   virtual bool Get_Volatile_Flag() {return(_volatile_flag);}
 
+  virtual bool Get_Is_Volatile() {return(this->Get_Volatile_Flag());}
+
   void Update_Memory_Space_Info();
 
   void Add_Written_Global_Object(AaStorageObject* sobj) {_global_objects_that_are_written.insert(sobj);}

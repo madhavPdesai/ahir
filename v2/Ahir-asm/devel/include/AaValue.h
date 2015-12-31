@@ -66,7 +66,7 @@ class AaUintValue: public AaValue
   Value* _value;
 
   virtual Value* Get_Value() {return(_value);}
-  AaUintValue(AaScope* s, int width);
+  AaUintValue(AaScope* s, AaType* t);
   virtual void Set_Value(string format);
   virtual unsigned int Eat(unsigned int init_id, vector<string>& init_vals) 
   {
@@ -113,7 +113,7 @@ class AaUintValue: public AaValue
 class AaIntValue: public AaUintValue
 {
  public:
-  AaIntValue(AaScope* s, int width);
+  AaIntValue(AaScope* s, AaType* t);
   virtual void Make_Value(int w);
   virtual void Set_Value(string format);
   virtual void Assign(AaType* target_type, AaValue* expr_value);

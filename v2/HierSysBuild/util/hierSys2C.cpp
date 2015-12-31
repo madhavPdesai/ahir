@@ -15,9 +15,7 @@ int option_index = 0;
 
   
 // global variables
-map<string, pair<int,int> > __pmap;
-set<string> __signals;
-set<string> __noblock_pipes;
+map<string, hierPipe* > __pmap;
 
 struct option long_options[] = {
     {"relaxed-component-visibility", 0, 0, 0},
@@ -64,7 +62,7 @@ int  Parse(string filename, vector<hierSystem*>& sys_vec)
   
   try
     {
-      parser->sys_Description(sys_vec, __pmap, __signals,__noblock_pipes);
+      parser->sys_Description(sys_vec, __pmap);
     }
   catch(ANTLR_USE_NAMESPACE(antlr)RecognitionException& re)
     {

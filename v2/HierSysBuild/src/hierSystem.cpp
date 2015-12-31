@@ -35,6 +35,55 @@ void hierRoot::Print(ofstream& ofile)
   ostream *outstr = &ofile;
   this->Print(*outstr);
 }
+
+hierPipe::hierPipe(string pname, int w, int d):hierRoot(pname)
+{
+	_name = pname;
+	_width = w;
+	_depth = d;
+	_is_signal = false;
+	_is_noblock = false;
+	_is_p2p = false;
+	_is_input = false;
+	_is_output = false;
+	_is_internal = false;
+}
+
+
+
+void hierPipe::Print_Vhdl_Instance(hierSystem* sys, ostream& ofile)
+{
+	if(this->Get_Is_Signal())
+		return;
+
+	string pipe_name = this->Get_Name();
+	int pipe_width = this->Get_Width();
+	int pipe_depth = this->Get_Depth();
+
+	string inst_name = pipe_name + "_inst";
+	ofile << inst_name << ": ";
+	if(this->Get_Is_Noblock())
+		ofile << " NonblockingReadPipeBase -- { " << endl;
+	else
+		ofile << " PipeBase -- { " << endl;
+	ofile << "generic map( -- { " << endl;
+	ofile << "name => " << '"' << "pipe " << pipe_name << '"' << "," << endl;
+	ofile << "num_reads => 1," << endl;
+	ofile << "num_writes => 1," << endl;
+	ofile << "data_width => " << pipe_width << "," << endl;
+	ofile << "lifo_mode => false," << endl;
+	ofile << "signal_mode => false," << endl;
+	ofile << "depth => " << pipe_depth << " --}\n)" << endl;
+	ofile << "port map( -- { " << endl;
+	ofile << "read_req => " << sys->Get_Pipe_Vhdl_Read_Req_Name(pipe_name) << "," << endl 
+		<< "read_ack => " << sys->Get_Pipe_Vhdl_Read_Ack_Name(pipe_name) << "," << endl 
+		<< "read_data => "<< sys->Get_Pipe_Vhdl_Read_Data_Name(pipe_name) << "," << endl 
+		<< "write_req => " << sys->Get_Pipe_Vhdl_Write_Req_Name(pipe_name) << "," << endl 
+		<< "write_ack => " << sys->Get_Pipe_Vhdl_Write_Ack_Name(pipe_name) << "," << endl 
+		<< "write_data => "<< sys->Get_Pipe_Vhdl_Write_Data_Name(pipe_name) << "," << endl 
+		<< "clk => clk,"
+		<< "reset => reset -- }\n ); -- }" << endl;
+}
 	
 void hierRoot::Print(string& ostring)
 {
@@ -86,8 +135,7 @@ hierSystemInstance::hierSystemInstance(hierSystem* parent, hierSystem* base_sys,
 }
 
 bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
-		map<string, pair<int,int> >& global_pipe_map,
-		set<string>& global_signals, set<string>& global_noblock_pipes)
+		map<string, hierPipe*>& global_pipe_map)
 {
 	// check if actual exists?  If not check if it exists in the
 	// visible pipes
@@ -98,8 +146,8 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
 		int w, d;
 		bool is_sig;
 		bool is_nb;
-		bool err = getPipeInfoFromGlobals(actual, global_pipe_map, global_signals, global_noblock_pipes,
-				w, d, is_sig, is_nb);	
+		bool is_p2p;
+		bool err = getPipeInfoFromGlobals(actual, global_pipe_map, w, d, is_sig, is_nb, is_p2p);	
 		if(err)
 		{
 			this->Report_Error("Instance " + this->Get_Id() + " in " + parent->Get_Id() + 
@@ -110,11 +158,9 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
 		{
 			this->Report_Warning(string("Added internal ") + 
 					(is_sig ? "signal " : "pipe " )  + actual + " to " + parent->Get_Id());
-			parent->Add_Internal_Pipe(actual, w, d, is_nb);
+			parent->Add_Internal_Pipe(actual, w, d, is_nb, is_p2p);
 			if(is_sig)
 				parent->Add_Signal(actual);
-			if(is_nb)
-				parent->Add_Noblock_Pipe(actual);
 		}
 	}	
 	this->Add_Port_Mapping(formal, actual);
@@ -167,7 +213,7 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 	
 // unmapped ports will be mapped to default
 // pipes in parent if they exist.
-bool hierSystemInstance::Map_Unmapped_Ports_To_Defaults( map<string, pair<int,int> >& pmap, set<string>& signals, set<string>& noblock_pipes)
+bool hierSystemInstance::Map_Unmapped_Ports_To_Defaults( map<string, hierPipe* >& pmap)
 {
 	bool err = false;
 	vector<string> ports;
@@ -181,7 +227,7 @@ bool hierSystemInstance::Map_Unmapped_Ports_To_Defaults( map<string, pair<int,in
 		if(_port_map.find(f) == _port_map.end())
 		{
 			this->Report_Warning("mapping unmapped formal in instance " + this->Get_Id() + " to default: " + f);
-			bool lerr = this->Add_Port_Mapping(f,f,pmap, signals, noblock_pipes);
+			bool lerr = this->Add_Port_Mapping(f,f,pmap);
 			if(lerr)
 				this->Report_Warning( "in mapping unmapped formal in instance " + this->Get_Id() + " to default (not found): " + f);
 		
@@ -323,12 +369,12 @@ void hierSystem::Print(ostream& ofile)
 void hierSystem::Print_Vhdl_Port_Declarations(ostream& ofile)
 {
 	ofile << " port( -- {" << endl ;
-	for(map<string, pair<int,int> >::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end();
+	for(map<string, hierPipe*>::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end();
 		iter != fiter; iter++)
 	{
 		string pipe_name = (*iter).first;
-		int pipe_width   = (*iter).second.first;
-		int pipe_depth   = (*iter).second.second;
+		int pipe_width   = (*iter).second->Get_Width();
+		int pipe_depth   = (*iter).second->Get_Depth();
 
 		if(!this->Is_Signal(pipe_name))
 		{
@@ -341,12 +387,12 @@ void hierSystem::Print_Vhdl_Port_Declarations(ostream& ofile)
 			ofile << pipe_name << " : in std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
 		}
 	}
-	for(map<string, pair<int,int> >::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end();
+	for(map<string, hierPipe* >::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end();
 		iter != fiter; iter++)
 	{
 		string pipe_name = (*iter).first;
-		int pipe_width   = (*iter).second.first;
-		int pipe_depth   = (*iter).second.second;
+		int pipe_width   = (*iter).second->Get_Width();
+		int pipe_depth   = (*iter).second->Get_Depth();
 
 		if(!this->Is_Signal(pipe_name))
 		{
@@ -524,6 +570,7 @@ void hierSystem::Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work)
 	ofile << "--<<<<<"  << endl;
 }
 
+
 	
 void hierSystem::Print_Vhdl_Rtl_Threads(ostream& ofile, int map_all_libs_to_work)
 {
@@ -564,12 +611,12 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs
 	ofile << "--} " << endl << "end entity " << this->Get_Id() << ";" << endl;
 
 	ofile << "architecture struct of " << this->Get_Id() << " is -- {" << endl;
-	for(map<string, pair<int,int> >::iterator iter = _internal_pipes.begin(), fiter = _internal_pipes.end();
+	for(map<string, hierPipe* >::iterator iter = _internal_pipes.begin(), fiter = _internal_pipes.end();
 		iter != fiter; iter++)
 	{
 		string pipe_name = (*iter).first;
-		int pipe_width   = (*iter).second.first;
-		int pipe_depth   = (*iter).second.second;
+		int pipe_width   = (*iter).second->Get_Width();
+		int pipe_depth   = (*iter).second->Get_Depth();
 
 		if(!this->Is_Signal(pipe_name))
 		{
@@ -649,44 +696,17 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs
 	}
 
 	// print internal pipe instances.
-	for(map<string, pair<int,int> >::iterator piter = _internal_pipes.begin(), fpiter = _internal_pipes.end();
+	for(map<string, hierPipe* >::iterator piter = _internal_pipes.begin(), fpiter = _internal_pipes.end();
 			piter != fpiter; piter++)
 	{
-		bool signal_mode = this->Is_Signal((*piter).first);
+		hierPipe* p = (*piter).second;
 
 		// signals are not printed as pipes..
-		if(!signal_mode)
-			this->Print_Vhdl_Pipe_Instance((*piter).first, (*piter).second.first, (*piter).second.second, ofile);
+		if(!p->Get_Is_Signal())
+			p->Print_Vhdl_Instance(this,ofile);
 	}	
 	ofile << "-- }" << endl;
 	ofile << "end struct;" << endl;
-}
-
-void hierSystem::Print_Vhdl_Pipe_Instance(string pipe_name, int pipe_width, int pipe_depth, ostream& ofile)
-{
-	string inst_name = pipe_name + "_inst";
-	ofile << inst_name << ": ";
-	if(this->Is_Noblock_Pipe(pipe_name))
-		ofile << " NonblockingReadPipeBase -- { " << endl;
-	else
-		ofile << " PipeBase -- { " << endl;
-	ofile << "generic map( -- { " << endl;
-	ofile << "name => " << '"' << "pipe " << pipe_name << '"' << "," << endl;
-	ofile << "num_reads => 1," << endl;
-	ofile << "num_writes => 1," << endl;
-	ofile << "data_width => " << pipe_width << "," << endl;
-	ofile << "lifo_mode => false," << endl;
-	ofile << "signal_mode => false," << endl;
-	ofile << "depth => " << pipe_depth << " --}\n)" << endl;
-	ofile << "port map( -- { " << endl;
-	ofile << "read_req => " << this->Get_Pipe_Vhdl_Read_Req_Name(pipe_name) << "," << endl 
-		<< "read_ack => " << this->Get_Pipe_Vhdl_Read_Ack_Name(pipe_name) << "," << endl 
-		<< "read_data => "<< this->Get_Pipe_Vhdl_Read_Data_Name(pipe_name) << "," << endl 
-		<< "write_req => " << this->Get_Pipe_Vhdl_Write_Req_Name(pipe_name) << "," << endl 
-		<< "write_ack => " << this->Get_Pipe_Vhdl_Write_Ack_Name(pipe_name) << "," << endl 
-		<< "write_data => "<< this->Get_Pipe_Vhdl_Write_Data_Name(pipe_name) << "," << endl 
-		<< "clk => clk,"
-		<< "reset => reset -- }\n ); -- }" << endl;
 }
 
 
@@ -694,10 +714,10 @@ void hierSystem::Print_Vhdl_Instance_In_Testbench(string inst_name, ostream& ofi
 {
 	ofile << inst_name << ": " << this->Get_Id() << endl;
 	ofile << "port map ( --{ " << endl;
-	for(map<string,pair<int,int> >::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end(); iter != fiter; iter++)
+	for(map<string,hierPipe*>::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end(); iter != fiter; iter++)
 	{
 		string pipe_id = (*iter).first;
-		int pipe_width = (*iter).second.first;
+		int pipe_width = (*iter).second->Get_Width();
 
 		if(!this->Is_Signal(pipe_id))
 		{
@@ -710,10 +730,10 @@ void hierSystem::Print_Vhdl_Instance_In_Testbench(string inst_name, ostream& ofi
 			ofile << pipe_id << " => " << pipe_id << "," << endl;
 		}
 	}
-	for(map<string,pair<int,int> >::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end(); iter != fiter; iter++)
+	for(map<string,hierPipe* >::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end(); iter != fiter; iter++)
 	{
 		string pipe_id = (*iter).first;
-		int pipe_width = (*iter).second.first;
+		int pipe_width = (*iter).second->Get_Width();
 
 
 		if(!this->Is_Signal(pipe_id))
@@ -855,11 +875,11 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 
 	ofile << "architecture VhpiLink of " << this->Get_Id() << "_Test_Bench is -- {" << endl;
 	// signals
-	for(map<string, pair<int,int> >::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end();
+	for(map<string, hierPipe* >::iterator iter = _in_pipes.begin(), fiter = _in_pipes.end();
 			iter != fiter; iter++)
 	{
 		string pipe_name = (*iter).first;
-		int pipe_width   = (*iter).second.first;
+		int pipe_width   = (*iter).second->Get_Width();
 
 		ofile << "signal " << pipe_name << "_pipe_write_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
 		ofile << "signal " << pipe_name << "_pipe_write_req  : std_logic_vector(0  downto 0);" << endl;
@@ -871,11 +891,11 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		}
 
 	}
-	for(map<string, pair<int,int> >::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end();
+	for(map<string, hierPipe* >::iterator iter = _out_pipes.begin(), fiter = _out_pipes.end();
 			iter != fiter; iter++)
 	{
 		string pipe_name = (*iter).first;
-		int pipe_width   = (*iter).second.first;
+		int pipe_width   = (*iter).second->Get_Width();
 
 		ofile << "signal " << pipe_name << "_pipe_read_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
 		ofile << "signal " << pipe_name << "_pipe_read_req  : std_logic_vector(0  downto 0);" << endl;
@@ -915,11 +935,11 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 	ofile << "--}" << endl << "end process;" << endl << endl;
 
 	// input pipe related code.
-	for(map<string, pair<int,int> >::iterator pipe_iter = _in_pipes.begin(), fpiter = _in_pipes.end();
+	for(map<string, hierPipe* >::iterator pipe_iter = _in_pipes.begin(), fpiter = _in_pipes.end();
 			pipe_iter != fpiter; pipe_iter++)
 	{
 		string pipe_id = (*pipe_iter).first;
-		int pipe_width = (*pipe_iter).second.first;
+		int pipe_width = (*pipe_iter).second->Get_Width();
 		int num_reads = 1;
 		int num_writes = 0;
 
@@ -930,11 +950,11 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 	}
 
 	// output pipe related code.
-	for(map<string, pair<int,int> >::iterator pipe_iter = _out_pipes.begin(), fpiter = _out_pipes.end();
+	for(map<string, hierPipe* >::iterator pipe_iter = _out_pipes.begin(), fpiter = _out_pipes.end();
 			pipe_iter != fpiter; pipe_iter++)
 	{
 		string pipe_id = (*pipe_iter).first;
-		int pipe_width = (*pipe_iter).second.first;
+		int pipe_width = (*pipe_iter).second->Get_Width();
 		int num_reads = 0;
 		int num_writes = 1;
 
@@ -1056,9 +1076,9 @@ bool hierSystem::Check_For_Errors()
 	return(ret_val);
 }
 
-void listPipeMap(map<string, pair<int,int> >& pmap, vector<string>& pvec)
+void listPipeMap(map<string, hierPipe*>& pmap, vector<string>& pvec)
 {
-	for(map<string, pair<int,int> >::iterator iter = pmap.begin(), fiter = pmap.end();
+	for(map<string, hierPipe*>::iterator iter = pmap.begin(), fiter = pmap.end();
 		iter != fiter; 
 		iter++)
 	{
@@ -1066,41 +1086,60 @@ void listPipeMap(map<string, pair<int,int> >& pmap, vector<string>& pvec)
 	}
 }
 
-bool getPipeInfoFromGlobals(string pname, map<string, pair<int,int> >& pmap, 
-	set<string>& signals, set<string>& noblock_pipes, int& width, int& depth, bool& is_signal, bool& noblock_flag)
+bool getPipeInfoFromGlobals(string pname, map<string, hierPipe*>& pmap, 
+		int& width, int& depth, bool& is_signal, bool& is_noblock, bool& is_p2p)
 {
 	if(pmap.find(pname) == pmap.end())
 		return(true);
 
-	width = pmap[pname].first;
-	depth = pmap[pname].second;
+	hierPipe* p = pmap[pname];
+	width = p->Get_Width();
+	depth = p->Get_Depth();
 
-	is_signal = (signals.find(pname) != signals.end());
-	noblock_flag = (noblock_pipes.find(pname) != noblock_pipes.end());
+	is_signal = p->Get_Is_Signal();
+	is_noblock = p->Get_Is_Noblock();
+	is_p2p = p->Get_Is_P2P();
 	
 	return(false);
 }
 	
 
-void addPipeToGlobalMaps(string oname, map<string, pair<int,int> >& pipe_map, 
-				set<string>& signals, set<string>& noblock_pipes, 
-					int pipe_width, int pipe_depth, bool is_signal, bool noblock_mode)
+void addPipeToGlobalMaps(string oname, map<string, hierPipe*>& pipe_map, 
+					int pipe_width, int pipe_depth, bool is_signal, bool noblock_mode,
+						bool p2p_mode)
 {
 		std::cerr << "Info: adding pipe " << oname << " width = " << pipe_width << ", depth = " 
 			<< pipe_depth << " to global map " << endl;
 
-		pipe_map[oname].first  = pipe_width;
-		pipe_map[oname].second = pipe_depth;
+		hierPipe* p = NULL;
+		if(pipe_map.find(oname) == pipe_map.end())
+		{
+			p = new hierPipe(oname, pipe_width, pipe_depth);
+			pipe_map[oname] = p;
+		}
+		else
+		{
+			p = pipe_map[oname];
+			if(p->Get_Width() != pipe_width)
+				p->Report_Error("width mismatch in global pipe " + oname);
+			if(p->Get_Depth() != pipe_depth)
+				p->Report_Error("depth mismatch in global pipe " + oname);
+		}
 
 		if(is_signal)
 		{
 			std::cerr << "Info: marking pipe " << oname << " as a signal in global set." << endl;
-			signals.insert(oname);
+			p->Set_Is_Signal(true);
 		}
 		if(noblock_mode)
 		{
 			std::cerr << "Info: marking pipe " << oname << " as a noblock-pipe in global set." << endl;
-			noblock_pipes.insert(oname);
+			p->Set_Is_Noblock(true);
+		}
+		if(p2p_mode)
+		{
+			std::cerr << "Info: marking pipe " << oname << " as a noblock-pipe in global set." << endl;
+			p->Set_Is_P2P(true);
 		}
 }
 

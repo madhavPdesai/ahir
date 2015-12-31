@@ -52,22 +52,20 @@ options {
 //---------------------------------------------------------------------------------------------------------------
 // hier_System :  "hier_system" SIMPLE_IDENTIFIER in-pipe-decls out-pipe-decls internal-pipe decls subsystem decls
 //---------------------------------------------------------------------------------------------------------------
-sys_Description [vector<hierSystem*>& sys_vec, map<string,pair<int,int> >&  global_pipe_map, set<string>& global_pipe_signals,
-								set<string>& global_noblock_pipes]
+sys_Description [vector<hierSystem*>& sys_vec, map<string,hierPipe*>&  global_pipe_map]
 {
 
 	hierSystem* sys = NULL;
 }
 :
-      (hier_system_Pipe_Declaration[global_pipe_map,global_pipe_signals, global_noblock_pipes] )*
-      (sys = hier_System [sys_vec, global_pipe_map,global_pipe_signals, global_noblock_pipes] {sys_vec.push_back(sys); })*
+      (hier_system_Pipe_Declaration[global_pipe_map] )*
+      (sys = hier_System [sys_vec, global_pipe_map] {sys_vec.push_back(sys); })*
 ;
 
 //---------------------------------------------------------------------------------------------------------------
 // hier_System :  "hier_system" SIMPLE_IDENTIFIER in-pipe-decls out-pipe-decls internal-pipe decls subsystem decls
 //---------------------------------------------------------------------------------------------------------------
-hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global_pipe_map, 
-				set<string>& global_pipe_signals, set<string>& global_noblock_pipes]  
+hier_System[vector<hierSystem*>& sys_vector, map<string,hierPipe*>&  global_pipe_map]
 		returns [hierSystem* sys]
 
 { 
@@ -82,6 +80,7 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 	string lib_id = "work";
 	int depth = 1;
 	int pipe_width = 0;
+	bool p2p_flag = false;
 }:
 	(SYSTEM 
 		sysid:SIMPLE_IDENTIFIER  
@@ -95,107 +94,26 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 	)
 	
 
+
+	// interface, pipe
 	IN 
 	( 
-		(NOBLOCK {noblock_flag = true;})? (PIPE | (SIGNAL {signal_flag = true;}))
-		sidi: SIMPLE_IDENTIFIER  (uidi: UINTEGER {pipe_width = atoi(uidi->getText().c_str());})?
-				(DEPTH didi: UINTEGER {depth = atoi(didi->getText().c_str());})?
-			{
-				string pipe_name = sidi->getText();
-				if((pipe_width == 0) || (depth == 0))
-				{
-					bool err = getPipeInfoFromGlobals(pipe_name, global_pipe_map,
-									     global_pipe_signals, global_noblock_pipes,
-											 pipe_width, depth, signal_flag,
-												noblock_flag);
-					if(err)
-					{
-						sys->Report_Error("underspecified pipe " + pipe_name + " not found in globals.");		
-					}
-			
-				}
-
-				sys->Add_In_Pipe(pipe_name, pipe_width, depth, noblock_flag);
-				if(signal_flag)
-					sys->Add_Signal(sidi->getText());
-				signal_flag = false;
-				depth = 1;
-				pipe_width = 0;
-
-			} 
-
-	)*
-
+	  hier_system_Pipe_Base [sys, global_pipe_map, true,false]
+        )*
 	OUT
 	( 
-		(NOBLOCK {noblock_flag = true;})?
-		(PIPE | (SIGNAL {signal_flag = true;}))
-		 sido: SIMPLE_IDENTIFIER  (uido:UINTEGER  {pipe_width = atoi(uido->getText().c_str());})?
-				(DEPTH dido: UINTEGER {depth = atoi(dido->getText().c_str());})?
-			{
-				string pipe_name = sido->getText();
-				if((pipe_width == 0) || (depth == 0))
-				{
-					bool err = getPipeInfoFromGlobals(pipe_name, global_pipe_map,
-									     global_pipe_signals, global_noblock_pipes,
-											 pipe_width, depth, signal_flag,
-												noblock_flag);
-					if(err)
-					{
-						sys->Report_Error("underspecified pipe " + pipe_name + " not found in globals.");		
-					}
-			
-				}
-				sys->Add_Out_Pipe(pipe_name, pipe_width, depth, noblock_flag);
-				if(signal_flag)
-					sys->Add_Signal(sido->getText());
-				signal_flag = false;
-				depth = 1;
-				pipe_width = 0;
-			} 
- 		     
+	  hier_system_Pipe_Base [sys, global_pipe_map, false,true]
 	)*
-
 	LBRACE
-
-
 	( 
-		(NOBLOCK {noblock_flag = true;})?
-		(PIPE |  (SIGNAL {signal_flag = true;}))
-		  sidint: SIMPLE_IDENTIFIER  
-			(uidint: UINTEGER {pipe_width = atoi(uidint->getText().c_str());})?
-				(DEPTH didint: UINTEGER {depth = atoi(didint->getText().c_str());})?
-				{
-					string pipe_name = sidint->getText();
-					if((pipe_width == 0) || (depth == 0))
-					{
-						bool err = getPipeInfoFromGlobals(pipe_name, global_pipe_map,
-									     	global_pipe_signals, global_noblock_pipes,
-											 pipe_width, depth, signal_flag,
-											noblock_flag);
-						if(err)
-						{
-							sys->Report_Error("underspecified pipe " + 
-									pipe_name + " not found in globals.");		
-						}
-				
-					}
-					sys->Add_Internal_Pipe(pipe_name, pipe_width, depth, noblock_flag);
-					if(signal_flag)
-						sys->Add_Signal(sidint->getText());
-					signal_flag = false;
-					depth = 1;
-					pipe_width = 0;
-				} 
-	
+	  hier_system_Pipe_Base [sys, global_pipe_map, false,false]
 	)*
-
 
 	(
 
 		(
 
-			subsys = hier_System_Instance[sys, sys_vector, global_pipe_map, global_pipe_signals, global_noblock_pipes] 
+			subsys = hier_System_Instance[sys, sys_vector, global_pipe_map]
 			{
 				if(subsys != NULL)
 					sys->Add_Child(subsys);
@@ -236,9 +154,49 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,pair<int,int> >&  global
 ;
 
 
+hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map, bool in_flag, bool out_flag]
+{
+	bool	noblock_flag = false;
+	bool    signal_flag = false;
+	bool    p2p_flag = false;
+	string pipe_name;
+	int depth = 1;
+	int pipe_width = 0;
+}:
+		(NOBLOCK {noblock_flag = true;})? 
+		(P2P {p2p_flag = true;})?
+		(PIPE | (SIGNAL {signal_flag = true;}))
+		sidi: SIMPLE_IDENTIFIER  (uidi: UINTEGER {pipe_width = atoi(uidi->getText().c_str());})?
+				(DEPTH didi: UINTEGER {depth = atoi(didi->getText().c_str());})?
+			{
+				string pipe_name = sidi->getText();
+				if((pipe_width == 0) || (depth == 0))
+				{
+					bool err = getPipeInfoFromGlobals(pipe_name, global_pipe_map,
+											 pipe_width, depth, signal_flag,
+												noblock_flag, p2p_flag);
+					if(err)
+					{
+						sys->Report_Error("underspecified pipe " + pipe_name + " not found in globals.");		
+					}
+			
+				}
 
-hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<string, pair<int,int> >& global_pipe_map,
-			set<string>& global_signals, set<string>& global_noblock_pipes] returns [hierSystemInstance* sys_inst]
+				if(in_flag)
+					sys->Add_In_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag);
+				else if(out_flag)
+					sys->Add_Out_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag);
+				else
+					sys->Add_Internal_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag);
+
+				if(signal_flag)
+					sys->Add_Signal(sidi->getText());
+			} 
+;
+
+
+hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<string, hierPipe* >& global_pipe_map]
+		returns [hierSystemInstance* sys_inst]
 {
 	sys_inst = NULL;
 	string lib_id = "work";
@@ -276,9 +234,7 @@ hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<strin
 					if(sys_inst)
 						sys_inst->Add_Port_Mapping(formal_port->getText(), 
 										actual_pipe->getText(),
-										global_pipe_map,
-										global_signals,
-										global_noblock_pipes);
+										global_pipe_map);
 				
 				}
 			)*
@@ -288,13 +244,11 @@ hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<strin
 				//      pass global maps to this function..
 				//
 				if(sys_inst)
-					sys_inst->Map_Unmapped_Ports_To_Defaults(global_pipe_map,
-										 global_signals,
-										 global_noblock_pipes);
+					sys_inst->Map_Unmapped_Ports_To_Defaults(global_pipe_map);
 			}
 ;
 
-hier_system_Pipe_Declaration[map<string, pair<int,int> >& pipe_map, set<string>& signals, set<string>& noblock_pipes] 
+hier_system_Pipe_Declaration[map<string, hierPipe* >& pipe_map]
 {
     vector<string> oname_list;
     int pipe_depth = 1;
@@ -308,6 +262,7 @@ hier_system_Pipe_Declaration[map<string, pair<int,int> >& pipe_map, set<string>&
     bool is_port = false;
     bool is_signal = false;
     bool is_synch  = false;
+    bool is_p2p   = false;
 }
     :       ((lid:LIFO { std::cerr << "Warning: lifo flag ignored.. line number " << lid->getLine() << endl; }) |
 			(nid: NOBLOCK {noblock_mode = true;}))? 
@@ -317,12 +272,13 @@ hier_system_Pipe_Declaration[map<string, pair<int,int> >& pipe_map, set<string>&
         {pipe_width = atoi(wid->getText().c_str());} 
         (DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
 		(SIGNAL {is_signal = true;})?
+		(P2P    {is_p2p = true;})?
         {
             for(int I = 0, fI = oname_list.size(); I < fI; I++)
                 {
                     string oname = oname_list[I];
                     
-                    addPipeToGlobalMaps(oname, pipe_map, signals,  noblock_pipes, pipe_width, pipe_depth, is_signal, noblock_mode);
+                    addPipeToGlobalMaps(oname, pipe_map, pipe_width, pipe_depth, is_signal, noblock_mode, is_p2p);
 
                 }
 
@@ -912,8 +868,8 @@ OUT: "$out";
 PIPE: "$pipe";
 LIFO: "$lifo";
 NOBLOCK: "$noblock";
+P2P: "$p2p";
 SIGNAL: "$signal";
-GROUP: "$group";
 INSTANCE: "$instance";
 LIBRARY: "$library";
 DEPTH: "$depth";

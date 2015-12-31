@@ -23,7 +23,7 @@ int AaValue::Get_Width()
 	return(_type->Size());
 }
 
-AaUintValue::AaUintValue(AaScope* s, int w):AaValue(s,AaProgram::Make_Integer_Type((unsigned int) w))
+AaUintValue::AaUintValue(AaScope* s, AaType* t):AaValue(s, t)
 {
   _value = NULL;
 }
@@ -64,7 +64,7 @@ void AaUintValue::Fill_Byte_Array(uint8_t* v_array, uint32_t v_width)
 	_value->Fill_Byte_Array(v_array,v_width);
 }
 
-AaIntValue::AaIntValue(AaScope* s, int width):AaUintValue(s,width)
+AaIntValue::AaIntValue(AaScope* s, AaType* t):AaUintValue(s,t)
 {
 }
 void AaIntValue::Make_Value(int w)
@@ -356,14 +356,12 @@ AaValue* Make_Aa_Value(AaScope* scope, AaType* t)
   AaValue* ret_value = NULL;
   if(t->Is("AaUintType") || t->Is("AaPointerType"))
     {
-      ret_value = new AaUintValue(scope,
-				 t->Size());
+      ret_value = new AaUintValue(scope, AaProgram::Make_Uinteger_Type(t->Size()));
       ((AaUintValue*)ret_value)->Make_Value(t->Size());
     }
   else if(t->Is("AaIntType"))
     {
-      ret_value = new AaIntValue(scope,
-				 t->Size());
+      ret_value = new AaIntValue(scope, AaProgram::Make_Integer_Type(t->Size()));
       ((AaIntValue*)ret_value)->Make_Value(t->Size());
     }
   else if(t->Is_Float_Type())

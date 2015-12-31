@@ -418,6 +418,7 @@ aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
 		qsid: SIMPLE_IDENTIFIER {synopsys = qsid->getText();}
 		(did: SIMPLE_IDENTIFIER expr=aA_Expression[scope] 
 			{ 
+				expr->Set_Line_Number(did->getLine());
 				descr = did->getText(); 
 				dpairs.push_back(pair<string,AaExpression*> (descr, expr));
 			}
@@ -431,6 +432,7 @@ aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
 			{ 
 				descr = rdid->getText(); 
 				expr = new AaSimpleObjectReference(scope, descr);
+				expr->Set_Line_Number(rdid->getLine());
 				dpairs.push_back(pair<string,AaExpression*> (descr, expr));
 			}
 		)*

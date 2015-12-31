@@ -134,7 +134,9 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			AaRoot* robj = this->_target->Get_Root_Object();
 			if(robj->Is_Interface_Object())
 			{
-				AaRoot::Error("Target of volatile statement cannot be an interface object..", this);
+				if((this->Get_Root_Scope() == NULL) || 
+						!this->Get_Root_Scope()->Get_Is_Volatile())
+					AaRoot::Error("Target of volatile statement cannot be an interface object..", this);
 			}
 		}
 
@@ -399,7 +401,9 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				AaRoot* robj = expr->Get_Root_Object();
 				if(robj->Is_Interface_Object())
 				{
-					AaRoot::Error("Target of volatile statement cannot be an interface object..", this);
+					if((this->Get_Root_Scope() == NULL) || 
+						!this->Get_Root_Scope()->Get_Is_Volatile())
+						AaRoot::Error("Target of volatile statement cannot be an interface object..", this);
 				}
 			}
 
