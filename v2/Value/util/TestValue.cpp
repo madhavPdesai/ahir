@@ -9,6 +9,18 @@ int main()
   Unsigned a(4,"_b0011");
   cout <<  "a = " << a.To_String() << endl;
 
+  bool eq = b.Equal(b);
+  cout <<  "(" << b.To_String() << " == " << b.To_String() << ") = " << (eq ? "true" : "false") << endl;
+  bool grtr = a.Greater(b);
+  cout <<  "(" << a.To_String() << " > " << b.To_String() << ") = " << (grtr ? "true" : "false") << endl;
+  bool ngrtr = b.Greater(a);
+  cout <<  "(" << b.To_String() << " > " << a.To_String() << ") = " << (ngrtr ? "true" : "false") << endl;
+  bool lessthan = b.Less_Than(a);
+  cout <<  "(" << b.To_String() << " < " << a.To_String() << ") = " << (lessthan ? "true" : "false") << endl;
+  bool nlessthan = a.Less_Than(b);
+  cout <<  "(" << a.To_String() << " < " << b.To_String() << ") = " << (lessthan ? "true" : "false") << endl;
+
+
   cout << "Word-size is " << __WORD_SIZE__ << endl;
   cout << a.To_String() << " a" << endl << b.To_String() << " b" << endl;
   a.Add(b);
