@@ -1,5 +1,5 @@
-$pipe out_data_1 : $uint<32> $depth 2
-$pipe out_data_0 : $uint<32> $depth 2
+$pipe out_data_1 : $uint<32> $depth 1
+$pipe out_data_0 : $uint<32> $depth 8
 $pipe in_data : $uint<32> $depth 2
 
 $module [demux_daemon] $in() $out () $is

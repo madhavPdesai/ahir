@@ -43,14 +43,25 @@ architecture behave of SynchFifo is
 
 
   signal pull_reg_state: std_logic;
+  signal incr_write_pointer, incr_read_pointer : integer range 0 to queue_depth-1;
+  
 begin  -- SimModel
 
   assert(queue_depth > 2) report "Synch FIFO depth must be greater than 2" severity failure;
   assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
 
+  qD1: if (queue_depth = 1) generate
+     incr_read_pointer <= read_pointer;
+     incr_write_pointer <= write_pointer;
+  end generate qD1;
+
+  qDG1: if (queue_depth > 1) generate
+     incr_read_pointer <= Incr(read_pointer, queue_depth-1);
+     incr_write_pointer <= Incr(write_pointer, queue_depth-1);
+  end generate qDG1;
   
   -- single process
-  process(clk,reset,queue_size,push_req,pop_req_int,read_pointer, write_pointer)
+  process(clk,reset,queue_size,push_req,pop_req_int,read_pointer, write_pointer, incr_read_pointer, incr_write_pointer)
     variable qsize : integer range 0 to queue_depth;
     variable push_ack_v, pop_ack_v, nearly_full_v: std_logic;
     variable push,pop : boolean;
@@ -91,11 +102,11 @@ begin  -- SimModel
     end if;
 
     if(push) then
-      next_write_ptr := Incr(next_write_ptr,queue_depth-1);
+      next_write_ptr := incr_write_pointer;
     end if;
 
     if(pop) then
-      next_read_ptr := Incr(next_read_ptr,queue_depth-1);
+      next_read_ptr := incr_read_pointer;
     end if;
 
 

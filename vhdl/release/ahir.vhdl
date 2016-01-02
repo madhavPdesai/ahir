@@ -13089,6 +13089,7 @@ architecture behave of QueueBase is
     end if;
   end Incr;
 
+
 begin  -- SimModel
 
  --
@@ -13101,14 +13102,26 @@ begin  -- SimModel
  end generate triv;
 
 
- nontriv: if queue_depth > 0 generate 
+
+ qDGt0: if queue_depth > 0 generate 
   NTB: block 
   	signal queue_array : QueueArray(queue_depth-1 downto 0);
   	signal read_pointer, write_pointer : integer range 0 to queue_depth-1;
+  	signal incr_write_pointer, incr_read_pointer : integer range 0 to queue_depth-1;
   	signal queue_size : integer range 0 to queue_depth;
   begin
  
     assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
+
+    qD1: if (queue_depth = 1) generate
+     incr_read_pointer <= read_pointer;
+     incr_write_pointer <= write_pointer;
+    end generate qD1;
+
+    qDG1: if (queue_depth > 1) generate
+     incr_read_pointer <= Incr(read_pointer, queue_depth-1);
+     incr_write_pointer <= Incr(write_pointer, queue_depth-1);
+    end generate qDG1;
 
     push_ack <= '1' when (queue_size < queue_depth) else '0';
     pop_ack  <= '1' when (queue_size > 0) else '0';
@@ -13117,7 +13130,7 @@ begin  -- SimModel
     data_out <= queue_array(read_pointer);
   
     -- single process
-    process(clk)
+    process(clk, reset, read_pointer, write_pointer, incr_read_pointer, incr_write_pointer, queue_size)
       variable qsize : integer range 0 to queue_depth;
       variable push,pop : boolean;
       variable next_read_ptr,next_write_ptr : integer range 0 to queue_depth-1;
@@ -13143,11 +13156,11 @@ begin  -- SimModel
   
   
         if(push) then
-          next_write_ptr := Incr(next_write_ptr,queue_depth-1);
+          next_write_ptr := incr_write_pointer;
         end if;
   
         if(pop) then
-          next_read_ptr := Incr(next_read_ptr,queue_depth-1);
+          next_read_ptr := incr_read_pointer;
         end if;
   
   
@@ -13172,7 +13185,7 @@ begin  -- SimModel
       
     end process;
    end block NTB;
-  end generate nontriv;
+  end generate qDGt0;
   
 
 end behave;
@@ -14911,14 +14924,25 @@ architecture behave of SynchFifo is
 
 
   signal pull_reg_state: std_logic;
+  signal incr_write_pointer, incr_read_pointer : integer range 0 to queue_depth-1;
+  
 begin  -- SimModel
 
   assert(queue_depth > 2) report "Synch FIFO depth must be greater than 2" severity failure;
   assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
 
+  qD1: if (queue_depth = 1) generate
+     incr_read_pointer <= read_pointer;
+     incr_write_pointer <= write_pointer;
+  end generate qD1;
+
+  qDG1: if (queue_depth > 1) generate
+     incr_read_pointer <= Incr(read_pointer, queue_depth-1);
+     incr_write_pointer <= Incr(write_pointer, queue_depth-1);
+  end generate qDG1;
   
   -- single process
-  process(clk,reset,queue_size,push_req,pop_req_int,read_pointer, write_pointer)
+  process(clk,reset,queue_size,push_req,pop_req_int,read_pointer, write_pointer, incr_read_pointer, incr_write_pointer)
     variable qsize : integer range 0 to queue_depth;
     variable push_ack_v, pop_ack_v, nearly_full_v: std_logic;
     variable push,pop : boolean;
@@ -14959,11 +14983,11 @@ begin  -- SimModel
     end if;
 
     if(push) then
-      next_write_ptr := Incr(next_write_ptr,queue_depth-1);
+      next_write_ptr := incr_write_pointer;
     end if;
 
     if(pop) then
-      next_read_ptr := Incr(next_read_ptr,queue_depth-1);
+      next_read_ptr := incr_read_pointer;
     end if;
 
 
@@ -22023,6 +22047,98 @@ begin
 	end process;	
 	ca_out <= ca_out_u or ca_out_d;
 end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- brief description:
+--  as the name indicates, a squash-shift-register
+--  provides an implementation of a pipeline.
+--
+entity SquashShiftRegister is
+  generic (name : string;
+	   data_width: integer;
+           depth: integer := 1);
+  port (
+    read_req       : in  std_logic;
+    read_ack       : out std_logic;
+    read_data      : out std_logic_vector(data_width-1 downto 0);
+    write_req       : in  std_logic;
+    write_ack       : out std_logic;
+    write_data      : in std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  
+end SquashShiftRegister;
+
+architecture default_arch of SquashShiftRegister is
+
+  constant n_stages: integer := Ceil(depth, 2);
+  constant last_stage_depth : integer :=  (depth - ((n_stages-1)*2));
+
+  signal int_write_reqs, int_write_acks, int_read_reqs, int_read_acks: std_logic_vector(1 to n_stages);
+
+  type DataArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
+  signal stage_data: DataArray(0 to n_stages); 
+
+begin  -- default_arch
+  int_write_reqs(1) <= write_req;
+  write_ack <= int_write_reqs(1);
+
+  int_read_reqs(n_stages)  <= read_req;
+  read_ack <= int_read_acks(n_stages);
+
+  stage_data(0) <= write_data;
+  read_data <= stage_data(n_stages);
+
+  ifGen1: if(n_stages > 1) generate
+     genArray: for I in 1 to n_stages-1 generate
+	-- depth 2 queues.. to reduce the combinational path delays
+	inst: QueueBase 
+		generic map(name => name & ":stage:" & Convert_To_String(I), data_width => data_width, queue_depth => 2)
+		port map(pop_req => int_read_reqs(I),
+			  pop_ack => int_read_acks(I),
+			  push_req => int_write_reqs(I),
+			  push_ack => int_write_acks(I),
+			  data_in => stage_data(I-1),
+			  data_out => stage_data(I), 
+			  clk => clk, 
+			  reset => reset);
+    end generate genArray;
+  end generate ifGen1;
+	
+  ifSingleLast: if(last_stage_depth = 1) generate
+    lastinst: PipelineRegister 
+	generic map(name => name & ":stage:" & Convert_To_String(n_stages), data_width => data_width)
+		port map(read_req => int_read_reqs(n_stages),
+			  read_ack => int_read_acks(n_stages),
+			  write_req => int_write_reqs(n_stages),
+			  write_ack => int_write_acks(n_stages),
+			  write_data => stage_data(n_stages-1),
+			  read_data => stage_data(n_stages), 
+			  clk => clk, 
+			  reset => reset);
+  end generate ifSingleLast;
+
+  ifNotSingleLast: if(last_stage_depth > 1) generate
+	inst: QueueBase 
+		generic map(name => name & ":stage:" & Convert_To_String(n_stages), data_width => data_width, queue_depth => 2)
+		port map(pop_req => int_read_reqs(n_stages),
+			  pop_ack => int_read_acks(n_stages),
+			  push_req => int_write_reqs(n_stages),
+			  push_ack => int_write_acks(n_stages),
+			  data_in => stage_data(n_stages-1),
+			  data_out => stage_data(n_stages), 
+			  clk => clk, 
+			  reset => reset);
+  end generate ifNotSingleLast;
+
+
+end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
