@@ -15,16 +15,14 @@ entity control_delay_element is
 end control_delay_element;
 
 architecture default_arch of control_delay_element is
-
-  signal delay_count : integer range 0 to delay_value;
   
 begin  -- default_arch
 
-  ZeroDelay: if delay_value <= 0 generate
+  ZeroDelay: if (delay_value <= 0) generate
     ack <= req;
   end generate ZeroDelay;
 
-  UnitDelay: if delay_value = 1 generate
+  UnitDelay: if (delay_value = 1) generate
 
 	process(clk)
         begin
@@ -40,7 +38,7 @@ begin  -- default_arch
   end generate UnitDelay;
 
 
-  DelayGTOne: if delay_value > 1 generate
+  DelayGTOne: if (delay_value > 1) generate
 
    ShiftReg: block
 	signal sr_state: BooleanArray(0 to delay_value-1);
