@@ -23,7 +23,10 @@ void Exit(int sig)
 	
 void Rx_1()
 {
-	read_uint32_n("out_data_1", val_1, ORDER);
+	int idx;
+	for(idx = 0; idx < ORDER; idx++)
+		val_1[idx] = read_uint32("out_data_1");
+	//read_uint32_n("out_data_1", val_1, ORDER);
 }
 
 void Rx_0()
