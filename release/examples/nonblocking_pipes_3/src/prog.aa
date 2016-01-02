@@ -1,0 +1,94 @@
+$noblock $pipe read_command: $uint<8>   $depth 2
+$pipe read_response: $uint<8>   $depth 2
+$noblock $pipe write_command : $uint<8> $depth 2
+
+$constant Z1 : $uint<1> := 0
+$constant Z3 : $uint<3> := 0
+$constant Z4 : $uint<4> := 0
+$constant Z64 : $uint<64> := 0
+
+
+$volatile $module [wr_mux]
+		$in (R8 : $uint<64> idx: $uint<3> rval : $uint<8>)
+		$out (NR8: $uint<64>)
+$is
+{
+	$split (R8 8 8 8 8 8 8 8 8)
+			(R8_7 R8_6 R8_5 R8_4 R8_3 R8_2 R8_1 R8_0)
+
+	NR8_0 := ($mux (idx == 0) rval R8_0)
+	NR8_1 := ($mux (idx == 1) rval R8_1)
+	NR8_2 := ($mux (idx == 2) rval R8_2)
+	NR8_3 := ($mux (idx == 3) rval R8_3)
+	NR8_4 := ($mux (idx == 4) rval R8_4)
+	NR8_5 := ($mux (idx == 5) rval R8_5)
+	NR8_6 := ($mux (idx == 6) rval R8_6)
+	NR8_7 := ($mux (idx == 7) rval R8_7)
+
+	NR8 := ($concat NR8_7 NR8_6 NR8_5 NR8_4 NR8_3 NR8_2 NR8_1 NR8_0)
+}
+
+
+$volatile $module [rd_mux]
+	$in (R8: $uint<64> idx: $uint<3>) $out (rval: $uint<8>) $is
+{
+	$split (R8 8 8 8 8 8 8 8 8)
+			(R8_7 R8_6 R8_5 R8_4 R8_3 R8_2 R8_1 R8_0)
+	rval := ($excmux
+			(idx == 0) R8_0
+			(idx == 1) R8_1
+			(idx == 2) R8_2
+			(idx == 3) R8_3
+			(idx == 4) R8_4
+			(idx == 5) R8_5
+			(idx == 6) R8_6
+			(idx == 7) R8_7)
+}
+
+$module [queue_daemon] $in () $out () $is
+{
+	$branchblock[LoOp] {
+
+		$dopipeline $depth 8 $buffering 2 $fullrate
+			$merge $entry $loopback 
+				$phi read_cmd := 0 $on $entry 
+							$guard (get_read_command) 
+										read_command $on $loopback
+				$phi write_cmd :=  0 $on $entry
+							$guard (get_write_command)
+										 write_command $on $loopback
+
+				$phi read_pointer  := Z3 $on $entry next_read_pointer $on $loopback
+				$phi write_pointer := Z3 $on $entry next_read_pointer $on $loopback
+				$phi queue_size    := Z4 $on $entry next_queue_size $on $loopback
+
+
+				$phi ASR := Z64 $on $entry next_ASR $on $loopback
+			$endmerge
+
+			$volatile read_cmd_valid  :=  (read_cmd [] 0)
+			$volatile write_cmd_valid :=  (write_cmd [] 0)
+
+			$volatile wr_val := (Z1 && ($slice write_cmd 7 1))
+			$volatile $call wr_mux (ASR write_pointer wr_val) (written_ASR)
+
+			$volatile get_write_command := ((~write_cmd_valid) | (queue_size < 8))
+			$volatile next_ASR := ($mux get_write_command written_ASR ASR)
+
+			$volatile $call rd_mux (next_ASR read_pointer) (read_val)
+
+			$volatile get_read_command := ((~read_cmd_valid) | (queue_size > 0))
+
+			$volatile next_write_pointer := ($mux get_write_command (write_pointer+1) write_pointer)
+			$volatile next_read_pointer := ($mux get_read_command (read_pointer+1) read_pointer)
+			$volatile next_queue_size := ($prioritymux
+								(get_write_command & get_read_command) queue_size
+								get_write_command (queue_size+1)	
+								get_read_command  (queue_size-1)
+								$default queue_size)
+
+			$guard (get_read_command)
+				read_response := read_val
+		$while 1
+	}
+}
