@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <pthread.h>
+#include <pthreadUtils.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -12,7 +14,8 @@
 #include <Vhpi.h>
 
 #define LOG_FILE "vhpi.log"
-FILE *log_file = NULL;
+
+
 
 #define z32__ "00000000000000000000000000000000"
 
@@ -56,6 +59,9 @@ FILE *log_file = NULL;
       lnk->prev = lnk->next = NULL;\
     }
 
+////////////////////////////////  global variables /////////////////////////////////////////////////
+FILE *log_file = NULL;
+
 // cycle count;
 int vhpi_cycle_count = 0;
 
@@ -69,6 +75,9 @@ int server_socket_id = -1;
 JobList new_jobs;
 JobList active_jobs;
 JobList finished_jobs;
+
+// protected by mutex.
+MUTEX_DECL(__global_variable_mutex__);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // some utility functions.
@@ -420,12 +429,15 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
     }
 
   // append the job.
+  MUTEX_LOCK(__global_variable_mutex__);
   APPEND(new_jobs, new_job);
+  MUTEX_UNLOCK(__global_variable_mutex__);
 
 #ifdef DEBUG
   fprintf(log_file,"Info: finished appending job %s to JobList in cycle %d\n", new_job->name, vhpi_cycle_count);
   fflush(log_file);
 #endif 
+
 }
 
 static void Vhpi_Exit(int sig)
@@ -449,6 +461,8 @@ void  Vhpi_Initialize()
   signal(SIGINT,  Vhpi_Exit);
   signal(SIGTERM, Vhpi_Exit);
 
+  MUTEX_LOCK(__global_variable_mutex__);
+
   new_jobs.head = NULL;
   new_jobs.tail = NULL;
   
@@ -458,12 +472,14 @@ void  Vhpi_Initialize()
   finished_jobs.head = NULL;
   finished_jobs.tail = NULL;
 
+
   int try_limit = 100;
 
   // open the socket. and start listening. 
   while(try_limit > 0)
     {
 
+      
       server_socket_id = create_server(DEFAULT_SERVER_PORT,DEFAULT_MAX_CONNECTIONS);
       if(server_socket_id > 0)
 	{
@@ -488,6 +504,8 @@ void  Vhpi_Initialize()
 	  //return;
 	}
     }
+
+  MUTEX_UNLOCK(__global_variable_mutex__);
 }
 
 void  Vhpi_Close()
@@ -495,7 +513,9 @@ void  Vhpi_Close()
   // close all connections and the socket.
   fprintf(stderr,"Info: closing VHPI link\n");
   fclose(log_file);
+  MUTEX_LOCK(__global_variable_mutex__);
   close(server_socket_id);
+  MUTEX_UNLOCK(__global_variable_mutex__);
 }
 
 
@@ -514,6 +534,8 @@ void  Vhpi_Send()
   sprintf(spacer_string, " ");
   JobLink* top, *next;
 
+
+  MUTEX_LOCK(__global_variable_mutex__);
 
   // first look at all active jobs and see if they
   // can be moved to completed status.
@@ -632,6 +654,8 @@ void  Vhpi_Send()
 	  top = top->next;
 	}
     }
+
+  MUTEX_UNLOCK(__global_variable_mutex__);
 }
 
 void  Vhpi_Listen()
@@ -695,6 +719,8 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value, int port_width)
   char* index_string = strtok_r(NULL," ",&save_ptr);
   assert((obj_name != NULL) && (index_string != NULL));
   int excess_bits;
+
+  MUTEX_LOCK(__global_variable_mutex__);
 
   // look within jobs that are active.. 
   JobLink* jlink;
@@ -801,6 +827,7 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value, int port_width)
 	    }
 	}
     }
+  MUTEX_UNLOCK(__global_variable_mutex__);
 }
 
 void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
@@ -815,6 +842,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
   int val_found = 0;
   int excess_bits = 0;
 
+  MUTEX_LOCK(__global_variable_mutex__);
   // look within jobs that are active
   JobLink* jlink = NULL;
   for(jlink = active_jobs.head; jlink != NULL; jlink = jlink->next)
@@ -930,12 +958,16 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
     fprintf(log_file,"Info: port %s not active, returning %s in cycle %d\n", port_name, port_value, vhpi_cycle_count);
   fflush(log_file);
 #endif
+  MUTEX_UNLOCK(__global_variable_mutex__);
 }
 
 void Vhpi_Log(char* message_string)
 {
+  MUTEX_LOCK(__global_variable_mutex__);
 	if(log_file != NULL)
 		fprintf(log_file,"LogInfo: %s.\n", message_string);
+  MUTEX_UNLOCK(__global_variable_mutex__);
+  
 }
 
 #ifdef GHDL
