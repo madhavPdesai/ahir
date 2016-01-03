@@ -1,0 +1,52 @@
+$noblock $pipe read_command: $uint<8>   $depth 2
+$pipe read_response: $uint<8>   $depth 2
+$noblock $pipe write_command : $uint<8> $depth 2
+
+$constant Z1 : $uint<1> := 0
+$constant Z6 : $uint<6> := 0
+
+$storage ASR : $array [32] $of $uint<8>
+
+
+$module [queue_daemon] $in () $out () $is
+{
+	$branchblock[LoOp] {
+
+		$dopipeline $depth 8 $buffering 2 $fullrate
+			$merge $entry $loopback 
+				$phi read_cmd := 0 $on $entry 
+							$guard (get_read_command) 
+										read_command $on $loopback
+				$phi write_cmd :=  0 $on $entry
+							$guard (get_write_command)
+										 write_command $on $loopback
+
+				$phi read_pointer  := Z6 $on $entry next_read_pointer $on $loopback
+				$phi write_pointer := Z6 $on $entry next_read_pointer $on $loopback
+				$phi queue_size    := Z6 $on $entry next_queue_size $on $loopback
+			$endmerge
+
+			$volatile read_cmd_valid  :=  (read_cmd [] 0)
+			$volatile write_cmd_valid :=  (write_cmd [] 0)
+
+			$volatile get_write_command := ((~write_cmd_valid) | (queue_size < 32))
+			$guard (get_write_command)
+				ASR[write_pointer] := (Z1 && ($slice write_cmd 7 1))
+
+			$volatile get_read_command := ((~read_cmd_valid) | (queue_size > 0))
+			$guard (get_read_command)
+				read_val := ASR[read_pointer]
+
+			$volatile next_write_pointer := ($mux get_write_command (write_pointer+1) write_pointer)
+			$volatile next_read_pointer := ($mux get_read_command (read_pointer+1) read_pointer)
+			$volatile next_queue_size := ($prioritymux
+								(get_write_command & get_read_command) queue_size
+								get_write_command (queue_size+1)	
+								get_read_command  (queue_size-1)
+								$default queue_size)
+
+			$guard (get_read_command)
+				read_response := read_val
+		$while 1
+	}
+}
