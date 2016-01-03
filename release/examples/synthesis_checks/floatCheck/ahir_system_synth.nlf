@@ -1,0 +1,349 @@
+Release 14.2 - netgen P.28xd (lin64)
+Copyright (c) 1995-2012 Xilinx, Inc.  All rights reserved.
+
+Command Line: netgen -ofmt vhdl -fn -w ahir_system_synth.ngc  
+
+Reading design 'ahir_system_synth.ngc' ...
+WARNING:NetListWriters:376 - Flattening of design that contains KEEP_HIERARCHY
+   property.
+Flattening design ...
+Processing design ... 
+  Preping design's networks ...
+  Preping design's macros ...
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/GND
+   _96_o_PWR_98_o_wide_mux_77_OUT( 7 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/sti
+   cky_2_vector( 3 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/add
+   L_4( 26 downto 0 ) on block ahir_system is not reconstructed, because there
+   are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/r(
+   8 downto -23 ) on block ahir_system is not reconstructed, because there are
+   some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/l(
+   8 downto -23 ) on block ahir_system is not reconstructed, because there are
+   some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/sta
+   ge_full( 6 downto 3 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/nor
+   malizer_tag_out( 34 downto 0 ) on block ahir_system is not reconstructed,
+   because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/add
+   er_tag_out( 45 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/shi
+   fter_tag_out( 105 downto 0 ) on block ahir_system is not reconstructed,
+   because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/add
+   er/addsubcell_Sum( 3 downto 0 , 7 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/add
+   er/stage_tags_1( 45 downto 0 ) on block ahir_system is not reconstructed,
+   because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/nor
+   malizer.normalizer/shift_tag_in( 80 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/nor
+   malizer.normalizer/shift_tag_out( 80 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGen
+   eric.op/GND_148_o_GND_148_o_mux_157_OUT( 9 downto 0 ) on block ahir_system is
+   not reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGen
+   eric.op/GND_148_o_GND_148_o_mux_117_OUT( 4 downto 0 ) on block ahir_system is
+   not reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGen
+   eric.op/GND_148_o_PWR_154_o_wide_mux_57_OUT( 7 downto 0 ) on block
+   ahir_system is not reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGen
+   eric.op/fpresult_1( 8 downto -10 ) on block ahir_system is not reconstructed,
+   because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGen
+   eric.op/normalizer_tag_out( 34 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGen
+   eric.op/tag2_extended( 45 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGen
+   eric.op/Normalizer.normalizer/shift_tag_in( 80 downto 0 ) on block
+   ahir_system is not reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGen
+   eric.op/Normalizer.normalizer/shift_tag_out( 80 downto 0 ) on block
+   ahir_system is not reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGen
+   eric.op/amul/tag_array_6( 41 downto 11 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fp2int_instance/data_path.ApFloatToApIntSigned_group_0.UnsharedOperator/comb_
+   block/PWR_192_o_PWR_192_o_mux_12_OUT( 31 downto 20 ) on block ahir_system is
+   not reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/GND_225_
+   o_PWR_230_o_wide_mux_74_OUT( 7 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/sticky_2
+   _vector( 3 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/r( 8
+   downto -23 ) on block ahir_system is not reconstructed, because there are
+   some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/l( 8
+   downto -23 ) on block ahir_system is not reconstructed, because there are
+   some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/stage_fu
+   ll( 6 downto 3 ) on block ahir_system is not reconstructed, because there are
+   some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normaliz
+   er_tag_out( 32 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder_ta
+   g_out( 43 downto 0 ) on block ahir_system is not reconstructed, because there
+   are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/shifter_
+   tag_out( 103 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder/ad
+   dsubcell_Sum( 3 downto 0 , 7 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder/st
+   age_tags_1( 43 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normaliz
+   er.normalizer/shift_tag_in( 78 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normaliz
+   er.normalizer/shift_tag_out( 78 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/idata( 63 downto 23 )
+   on block ahir_system is not reconstructed, because there are some missing bus
+   signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/sticky_
+   2_vector( 3 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/r( 6
+   downto 0 ) on block ahir_system is not reconstructed, because there are some
+   missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/l( 8
+   downto -23 ) on block ahir_system is not reconstructed, because there are
+   some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/stage_f
+   ull( 6 downto 3 ) on block ahir_system is not reconstructed, because there
+   are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normali
+   zer_tag_out( 32 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder_t
+   ag_out( 43 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/shifter
+   _tag_out( 103 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder/a
+   ddsubcell_Sum( 3 downto 0 , 7 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder/s
+   tage_tags_1( 43 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normali
+   zer.normalizer/shift_tag_in( 78 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normali
+   zer.normalizer/shift_tag_out( 78 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.
+   op/GND_325_o_GND_325_o_mux_154_OUT( 9 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.
+   op/GND_325_o_PWR_330_o_wide_mux_54_OUT( 7 downto 0 ) on block ahir_system is
+   not reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.
+   op/normalizer_tag_out( 32 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.
+   op/tag2_extended( 43 downto 0 ) on block ahir_system is not reconstructed,
+   because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.
+   op/Normalizer.normalizer/shift_tag_in( 78 downto 0 ) on block ahir_system is
+   not reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.
+   op/Normalizer.normalizer/shift_tag_out( 78 downto 0 ) on block ahir_system is
+   not reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.
+   op/amul/tag_array_6( 41 downto 11 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/GND_346_
+   o_PWR_351_o_wide_mux_74_OUT( 7 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/sticky_2
+   _vector( 3 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/r( 8
+   downto -23 ) on block ahir_system is not reconstructed, because there are
+   some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/l( 8
+   downto -23 ) on block ahir_system is not reconstructed, because there are
+   some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/stage_fu
+   ll( 6 downto 3 ) on block ahir_system is not reconstructed, because there are
+   some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/normaliz
+   er_tag_out( 32 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/adder_ta
+   g_out( 43 downto 0 ) on block ahir_system is not reconstructed, because there
+   are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/shifter_
+   tag_out( 103 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/adder/ad
+   dsubcell_Sum( 3 downto 0 , 7 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/adder/st
+   age_tags_1( 43 downto 0 ) on block ahir_system is not reconstructed, because
+   there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/normaliz
+   er.normalizer/shift_tag_in( 78 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+
+WARNING:NetListWriters:306 - Signal bus
+   fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/normaliz
+   er.normalizer/shift_tag_out( 78 downto 0 ) on block ahir_system is not
+   reconstructed, because there are some missing bus signals.
+Writing VHDL netlist 'ahir_system_synth.vhd' ...
+INFO:NetListWriters:635 - The generated VHDL netlist contains Xilinx UNISIM
+   simulation primitives and has to be used with UNISIM library for correct
+   compilation and simulation. 
+Number of warnings: 67
+Number of info messages: 1
+Total memory usage is 370604 kilobytes

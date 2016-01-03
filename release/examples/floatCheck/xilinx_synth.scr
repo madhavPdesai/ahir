@@ -27,3 +27,4 @@ run
 -register_duplication yes
 -opt_mode speed
 -opt_level 2
+-use_new_parser yes

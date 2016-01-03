@@ -1,0 +1,23 @@
+run
+-ifn xilinx_synth.prj
+-ofn ahir_system_synth
+-ifmt mixed
+-ofmt NGC
+-p xc6vlx240t-ff1156-1 
+-top InputPortRevisedCheck
+-safe_implementation yes
+-optimize_primitives no
+-iuc yes
+-equivalent_register_removal no
+-keep_hierarchy  yes
+-write_timing_constraints yes
+-hierarchy_separator _
+-bus_delimiter <>
+-fsm_extract no
+-ram_extract no
+-rom_extract no
+-resource_sharing yes
+-max_fanout 16
+-register_duplication yes
+-opt_mode speed
+-use_new_parser yes

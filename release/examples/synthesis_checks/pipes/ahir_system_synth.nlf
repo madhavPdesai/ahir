@@ -1,0 +1,19 @@
+Release 14.2 - netgen P.28xd (lin64)
+Copyright (c) 1995-2012 Xilinx, Inc.  All rights reserved.
+
+Command Line: netgen -fn -w -ofmt vhdl ahir_system_synth.ngc  
+
+Reading design 'ahir_system_synth.ngc' ...
+WARNING:NetListWriters:376 - Flattening of design that contains KEEP_HIERARCHY
+   property.
+Flattening design ...
+Processing design ... 
+  Preping design's networks ...
+  Preping design's macros ...
+Writing VHDL netlist 'ahir_system_synth.vhd' ...
+INFO:NetListWriters:635 - The generated VHDL netlist contains Xilinx UNISIM
+   simulation primitives and has to be used with UNISIM library for correct
+   compilation and simulation. 
+Number of warnings: 1
+Number of info messages: 1
+Total memory usage is 314520 kilobytes

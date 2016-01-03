@@ -47,9 +47,11 @@ begin  -- default_arch
   process(data_final)
     variable ldata: std_logic_vector((num_reqs*data_width)-1 downto 0);
   begin
-    for J in num_reqs-1 downto 0 loop
-      Insert(ldata,J,data_final(J));
+
+    for J in 0 to num_reqs-1 loop
+       ldata(((J+1)*data_width)-1 downto (J*data_width)) := data_final(J);
     end loop;
+
     data <= ldata;
   end process;
 

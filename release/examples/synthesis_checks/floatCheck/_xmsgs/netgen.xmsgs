@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- IMPORTANT: This is an internal file that has been generated
+     by the Xilinx ISE software.  Any direct editing or
+     changes made to this file may result in unpredictable
+     behavior or data corruption.  It is strongly advised that
+     users do not edit the contents of this file. -->
+<messages>
+<msg type="warning" file="NetListWriters" num="376" delta="new" >Flattening of design that contains KEEP_HIERARCHY property.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/GND_96_o_PWR_98_o_wide_mux_77_OUT</arg><arg fmt="%s" index="2">( 7 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/sticky_2_vector</arg><arg fmt="%s" index="2">( 3 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/addL_4</arg><arg fmt="%s" index="2">( 26 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/r</arg><arg fmt="%s" index="2">( 8 downto -23 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/l</arg><arg fmt="%s" index="2">( 8 downto -23 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/stage_full</arg><arg fmt="%s" index="2">( 6 downto 3 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normalizer_tag_out</arg><arg fmt="%s" index="2">( 34 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder_tag_out</arg><arg fmt="%s" index="2">( 45 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/shifter_tag_out</arg><arg fmt="%s" index="2">( 105 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder/addsubcell_Sum</arg><arg fmt="%s" index="2">( 3 downto 0 , 7 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder/stage_tags_1</arg><arg fmt="%s" index="2">( 45 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normalizer.normalizer/shift_tag_in</arg><arg fmt="%s" index="2">( 80 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normalizer.normalizer/shift_tag_out</arg><arg fmt="%s" index="2">( 80 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGeneric.op/GND_148_o_GND_148_o_mux_157_OUT</arg><arg fmt="%s" index="2">( 9 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGeneric.op/GND_148_o_GND_148_o_mux_117_OUT</arg><arg fmt="%s" index="2">( 4 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGeneric.op/GND_148_o_PWR_154_o_wide_mux_57_OUT</arg><arg fmt="%s" index="2">( 7 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGeneric.op/fpresult_1</arg><arg fmt="%s" index="2">( 8 downto -10 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGeneric.op/normalizer_tag_out</arg><arg fmt="%s" index="2">( 34 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGeneric.op/tag2_extended</arg><arg fmt="%s" index="2">( 45 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGeneric.op/Normalizer.normalizer/shift_tag_in</arg><arg fmt="%s" index="2">( 80 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGeneric.op/Normalizer.normalizer/shift_tag_out</arg><arg fmt="%s" index="2">( 80 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">dotProduct_instance/data_path.ApFloatMul_group_1.PipedFpOp/IEEE754xMul.useGeneric.op/amul/tag_array_6</arg><arg fmt="%s" index="2">( 41 downto 11 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fp2int_instance/data_path.ApFloatToApIntSigned_group_0.UnsharedOperator/comb_block/PWR_192_o_PWR_192_o_mux_12_OUT</arg><arg fmt="%s" index="2">( 31 downto 20 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/GND_225_o_PWR_230_o_wide_mux_74_OUT</arg><arg fmt="%s" index="2">( 7 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/sticky_2_vector</arg><arg fmt="%s" index="2">( 3 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/r</arg><arg fmt="%s" index="2">( 8 downto -23 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/l</arg><arg fmt="%s" index="2">( 8 downto -23 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/stage_full</arg><arg fmt="%s" index="2">( 6 downto 3 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normalizer_tag_out</arg><arg fmt="%s" index="2">( 32 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder_tag_out</arg><arg fmt="%s" index="2">( 43 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/shifter_tag_out</arg><arg fmt="%s" index="2">( 103 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder/addsubcell_Sum</arg><arg fmt="%s" index="2">( 3 downto 0 , 7 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder/stage_tags_1</arg><arg fmt="%s" index="2">( 43 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normalizer.normalizer/shift_tag_in</arg><arg fmt="%s" index="2">( 78 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpadd_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normalizer.normalizer/shift_tag_out</arg><arg fmt="%s" index="2">( 78 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/idata</arg><arg fmt="%s" index="2">( 63 downto 23 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/sticky_2_vector</arg><arg fmt="%s" index="2">( 3 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/r</arg><arg fmt="%s" index="2">( 6 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/l</arg><arg fmt="%s" index="2">( 8 downto -23 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/stage_full</arg><arg fmt="%s" index="2">( 6 downto 3 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normalizer_tag_out</arg><arg fmt="%s" index="2">( 32 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder_tag_out</arg><arg fmt="%s" index="2">( 43 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/shifter_tag_out</arg><arg fmt="%s" index="2">( 103 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder/addsubcell_Sum</arg><arg fmt="%s" index="2">( 3 downto 0 , 7 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/adder/stage_tags_1</arg><arg fmt="%s" index="2">( 43 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normalizer.normalizer/shift_tag_in</arg><arg fmt="%s" index="2">( 78 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpincr_instance/data_path.ApFloatAdd_group_0.PipedFpOp/IEEE754xAdd.op/normalizer.normalizer/shift_tag_out</arg><arg fmt="%s" index="2">( 78 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.op/GND_325_o_GND_325_o_mux_154_OUT</arg><arg fmt="%s" index="2">( 9 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.op/GND_325_o_PWR_330_o_wide_mux_54_OUT</arg><arg fmt="%s" index="2">( 7 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.op/normalizer_tag_out</arg><arg fmt="%s" index="2">( 32 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.op/tag2_extended</arg><arg fmt="%s" index="2">( 43 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.op/Normalizer.normalizer/shift_tag_in</arg><arg fmt="%s" index="2">( 78 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.op/Normalizer.normalizer/shift_tag_out</arg><arg fmt="%s" index="2">( 78 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpmul_instance/data_path.ApFloatMul_group_0.PipedFpOp/IEEE754xMul.useGeneric.op/amul/tag_array_6</arg><arg fmt="%s" index="2">( 41 downto 11 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/GND_346_o_PWR_351_o_wide_mux_74_OUT</arg><arg fmt="%s" index="2">( 7 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/sticky_2_vector</arg><arg fmt="%s" index="2">( 3 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/r</arg><arg fmt="%s" index="2">( 8 downto -23 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/l</arg><arg fmt="%s" index="2">( 8 downto -23 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/stage_full</arg><arg fmt="%s" index="2">( 6 downto 3 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/normalizer_tag_out</arg><arg fmt="%s" index="2">( 32 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/adder_tag_out</arg><arg fmt="%s" index="2">( 43 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/shifter_tag_out</arg><arg fmt="%s" index="2">( 103 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/adder/addsubcell_Sum</arg><arg fmt="%s" index="2">( 3 downto 0 , 7 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/adder/stage_tags_1</arg><arg fmt="%s" index="2">( 43 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/normalizer.normalizer/shift_tag_in</arg><arg fmt="%s" index="2">( 78 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="warning" file="NetListWriters" num="306" delta="new" >Signal bus <arg fmt="%s" index="1">fpsub_instance/data_path.ApFloatSub_group_0.PipedFpOp/IEEE754xAdd.op/normalizer.normalizer/shift_tag_out</arg><arg fmt="%s" index="2">( 78 downto 0 )</arg> on block <arg fmt="%s" index="3">ahir_system</arg> is not reconstructed, because there are some missing bus signals.
+</msg>
+
+<msg type="info" file="NetListWriters" num="635" delta="new" >The generated VHDL netlist contains Xilinx <arg fmt="%s" index="1">UNISIM</arg> simulation primitives and has to be used with <arg fmt="%s" index="2">UNISIM</arg> library for correct compilation and simulation. 
+</msg>
+
+</messages>
+

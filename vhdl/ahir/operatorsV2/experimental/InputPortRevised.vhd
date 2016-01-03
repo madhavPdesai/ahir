@@ -134,18 +134,13 @@ begin
     variable ldata: std_logic_vector((num_reqs*data_width)-1 downto 0);
   begin
     for J in num_reqs-1 downto 0 loop
-      Insert(ldata,J,read_data(J));
+      ldata(((J+1)*data_width)-1 downto J*data_width) := read_data(J);
     end loop;
     data <= ldata;
   end process;
 
   gen : for I in num_reqs-1 downto 0 generate
-    process(demux_data)
-      variable target: std_logic_vector(data_width-1 downto 0);
-    begin
-      Extract(demux_data,I,target);
-      write_data(I) <= target;
-    end process;
+    write_data(I) <= demux_data(((I+1)*data_width)-1 downto I*data_width); 
   end generate gen;
 
 end Base;
