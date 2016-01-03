@@ -1,6 +1,6 @@
 $pipe out_data_1 : $uint<32> $depth 1
-$pipe out_data_0 : $uint<32> $depth 8
-$pipe in_data : $uint<32> $depth 2
+$pipe out_data_0 : $uint<32> $depth 1
+$pipe in_data : $uint<32> $depth 1
 
 $module [demux_daemon] $in() $out () $is
 {
@@ -11,8 +11,9 @@ $module [demux_daemon] $in() $out () $is
 		CMD := in_data
 		send_to_1 := (CMD [] 0)
 
-		$guard (send_to_1) out_data_1 := in_data
-		$guard (~send_to_1) out_data_0 := in_data
+		u := in_data 
+		$guard (send_to_1) out_data_1  :=  u
+		$guard (~send_to_1) out_data_0 := u
 
 		$while 1
 	}

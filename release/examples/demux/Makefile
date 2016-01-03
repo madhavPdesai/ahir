@@ -10,6 +10,8 @@ TOVC:aalink aa2vc
 VC2VHDL: vc2vhdl  vhdlsim
 AA2VHDLSIM: aa2vc  vc2vhdl  vhdlsim
 TOVHDL:TOVC vc2vhdl
+SIMPRIM=$(AHIR_RELEASE)/vhdl/ghdl/simprim
+UNISIM=$(AHIR_RELEASE)/vhdl/ghdl/unisim
 
 # llvm2aa opts: pipelined case, extract-do-while.
 LLVM2AAOPTS=-extract_do_while=true 
@@ -53,7 +55,18 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl $(SRC)/testbench.c vhdlCSt
 	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl
-	ghdl -m --work=work -Wl,-L$(AHIR_LIB) -Wl,-lVhpi ahir_system_test_bench 
+	ghdl -m  -fexplicit --ieee=synopsys --no-vital-checks --work=work -Wl,-L$(AHIR_LIB) -Wl,-lVhpi ahir_system_test_bench 
+
+postsynthvhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl $(SRC)/testbench.c vhdlCStubs.h vhdlCStubs.c
+	ghdl --clean
+	ghdl --remove
+	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl
+	ghdl -i --work=aHiR_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
+	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
+	ghdl -i --work=work ahir_system_global_package.vhdl
+	ghdl -i --work=work ahir_system_synth.vhd
+	ghdl -i -P$(UNISIM) --work=work ahir_system_test_bench.vhdl
+	ghdl -m -P$(UNISIM)  -fexplicit --ieee=synopsys --no-vital-checks --work=work -Wl,-L$(AHIR_LIB) -Wl,-lVhpi ahir_system_test_bench 
 
 clean:
 	rm -rf *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_data* testbench_sw testbench_hw ahir_system_test_bench vhpi.log *.aa *.vc *.lso xst *.ngc *_xmsgs *.xrpt pipeHandler.log *.srp *.ghw *.dot

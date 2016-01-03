@@ -1168,8 +1168,17 @@ package body Subprograms is
 
   -----------------------------------------------------------------------------
   function PriorityEncode(x: std_logic_vector) return std_logic_vector is
+    alias lx  : std_logic_vector(1 to x'length) is x;
+    variable ret_var  : std_logic_vector(1 to x'length);
   begin
-    return(To_SLV(PriorityEncode(To_BooleanArray(x))));
+    ret_var := (others => '0');
+    for I in 1 to lx'length loop
+       if(lx(I) = '1') then
+           ret_var(I) := '1';
+           exit;
+       end if;
+    end loop; 
+    return(ret_var);
   end PriorityEncode;
 
   -----------------------------------------------------------------------------
