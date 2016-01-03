@@ -1,4 +1,4 @@
--- $Header: /devl/xcs/repo/env/Databases/CAEInterfaces/vhdsclibs/data/unisim_VPKG.vhd,v 1.16.48.1 2007/03/09 18:13:35 patrickp Exp $
+-- $Header: /devl/xcs/repo/env/Databases/CAEInterfaces/vhdsclibs/data/unisim_VPKG.vhd,v 1.19 2010/12/08 18:25:32 fphillip Exp $
 ----------------------------------------------------------------
 -- 
 -- Created by the Synopsys Library Compiler v3.4b
@@ -36,18 +36,17 @@
 --		     13. Added "IN" in SLV_TO_INT function decl.SG, 12/09/98.
 --		     14. Fixed a bug in SLV_TO_STR function. SG, 01/06/99.
 --                   15. Added type_std_logic_vector1,2,3,4 -- CR 225004 -- FP, 02/08/06
+--                   16. Changed type_std_logic_vector1,2,3,4 to integer range instead of natural -- CR 520723 -- FP, 05/08/09
+--                   17. Removed "synopsys translate_off/on" -- CR 585467 -- 12/08/10
 ----------------------------------------------------------------
 LIBRARY STD;
 USE STD.TEXTIO.ALL;
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
--- synopsys translate_off
 
-library IEEE;
 use IEEE.VITAL_Timing.all;
 use IEEE.VITAL_Primitives.all;
--- synopsys translate_on
 
 package VPKG is
   type OtherGenericsType is record    
@@ -58,10 +57,10 @@ package VPKG is
                                  Read_B_Write_A,
                                  Write_A_Write_B);
 
-  type std_logic_vector1 is array (natural range <>) of std_logic;
-  type std_logic_vector2 is array (natural range <>, natural range <>) of std_logic;
-  type std_logic_vector3 is array (natural range <>, natural range <>, natural range <>) of std_logic;
-  type std_logic_vector4 is array (natural range <>, natural range <>, natural range <>, natural range <>) of std_logic;
+  type std_logic_vector1 is array (integer range <>) of std_logic;
+  type std_logic_vector2 is array (integer range <>, integer range <>) of std_logic;
+  type std_logic_vector3 is array (integer range <>, integer range <>, integer range <>) of std_logic;
+  type std_logic_vector4 is array (integer range <>, integer range <>, integer range <>, integer range <>) of std_logic;
  
   
   CONSTANT L : VitalTableSymbolType := '0';
