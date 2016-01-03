@@ -364,6 +364,7 @@ public:
 			p = new hierPipe(pid, pipe_width, pipe_depth);
 			_pipe_map[pid] = p;
 		}
+		return(p);
 	}
 
 	void Add_Pipe_To_Map(map<string, hierPipe*>& pipe_map, string pipe_name, int width, int depth,
