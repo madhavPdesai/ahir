@@ -6,8 +6,8 @@ cat ../Vhpi/Utility_Package.vhdl >> GhdlLink.vhdl
 cat ../Vhpi/Vhpi_Package.vhdl >> GhdlLink.vhdl
 cat ../Vhpi/LogUtilitiesGhdl.vhdl >> GhdlLink.vhdl
 cat ../Vhpi/Utility_Package.vhdl >> ModelsimLink.vhdl
-cat ../Vhpi/LogUtilitiesModelsim.vhdl >> ModelsimLink.vhdl
 cat ../Vhpi/Modelsim_FLI_Foreign.vhdl >> ModelsimLink.vhdl
+cat ../Vhpi/LogUtilitiesModelsim.vhdl >> ModelsimLink.vhdl
 cat ../ahir/packagesV2/GlobalConstants.vhd >> ahir.vhdl
 cat ../ahir/packagesV2/Types.vhd >> ahir.vhdl
 cat ../ahir/packagesV2/Utilities.vhd >> ahir.vhdl

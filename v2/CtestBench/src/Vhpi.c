@@ -954,7 +954,8 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
 	    }
 	}
     }
-  else
+  
+  if(found_one == 0)
     {
 #ifdef DEBUG
        fprintf(log_file,"Info: did not find new or active job %s in cycle %d\n",port_name,vhpi_cycle_count);
@@ -968,16 +969,22 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
       {
         snprintf(port_value,port_width, z32__);
       }
-	
     }
+
+ 
 
 #ifdef DEBUG
   if(found_one)
     fprintf(log_file,"Info: returning value of port %s (%s) as %s in cycle %d!\n", port_name, index_string, port_value,
 		vhpi_cycle_count);
   else
-    fprintf(log_file,"Info: port %s not active, returning %s in cycle %d\n", port_name, port_value, vhpi_cycle_count);
+    fprintf(log_file,"Info: port %s (%s) not active, returning %s in cycle %d\n", port_name, index_string, port_value, vhpi_cycle_count);
+  
   fflush(log_file);
+#endif
+#ifdef DEBUG
+	fprintf(log_file, "Leaving Get_Port_Value for port %s in cycle %d.\n",  port_name, vhpi_cycle_count);
+	fflush(log_file);
 #endif
   MUTEX_UNLOCK(__global_variable_mutex__);
 }
