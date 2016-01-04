@@ -845,11 +845,6 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value, int port_width)
 void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
 {
 
-#ifdef DEBUG
-	fprintf(log_file, "Entering Get_Port_Value for port %s in cycle %d.\n",  port_name, vhpi_cycle_count);
-	fflush(log_file);
-#endif
-
   char found_one = 0;
   char* save_ptr;
   char* obj_name = strtok_r(port_name," ",&save_ptr);
@@ -900,10 +895,6 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
 	{
 	  Copy_Value(port_value,jlink->req_port->port_value,1);
 	  found_one = 1;
-#ifdef DEBUG
-		fprintf(log_file, "In Get_Port_Value for port %s in cycle %d, found req.\n",  port_name, vhpi_cycle_count);
-		fflush(log_file);
-#endif
 	  if(jlink->is_module_access)
 	    {
 	      //
@@ -967,7 +958,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
        // completion of the job.
       if(strcmp(index_string, "req") == 0)
       {
-        snprintf(port_value,port_width, z32__);
+	Copy_Value(port_value,"0",1);
       }
     }
 
@@ -981,10 +972,6 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
     fprintf(log_file,"Info: port %s (%s) not active, returning %s in cycle %d\n", port_name, index_string, port_value, vhpi_cycle_count);
   
   fflush(log_file);
-#endif
-#ifdef DEBUG
-	fprintf(log_file, "Leaving Get_Port_Value for port %s in cycle %d.\n",  port_name, vhpi_cycle_count);
-	fflush(log_file);
 #endif
   MUTEX_UNLOCK(__global_variable_mutex__);
 }
