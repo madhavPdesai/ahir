@@ -329,7 +329,9 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
       if(data_width_str == NULL)
 	{
 	  fprintf(stderr,"Error: data width in burst access not specified\n");
+	  MUTEX_LOCK(__global_variable_mutex__);
 	  Delete_JobLink(new_job);
+	  MUTEX_UNLOCK(__global_variable_mutex__);
 	  return;	  
 	}
       new_job->word_length = atoi(data_width_str);
@@ -338,7 +340,9 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
       if(number_of_data_objects_str == NULL)
 	{
 	  fprintf(stderr,"Error: number of data objects in burst access not specified\n");
+	  MUTEX_LOCK(__global_variable_mutex__);
 	  Delete_JobLink(new_job);
+	  MUTEX_UNLOCK(__global_variable_mutex__);
 	  return;	  
 	}      
 
@@ -350,7 +354,9 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
 	  if(payload_length != Payload_Length(new_job))
 	    {
 	      fprintf(stderr,"Error: payload string did not have %d bytes\n", Payload_Length(new_job));
+	      MUTEX_LOCK(__global_variable_mutex__);
 	      Delete_JobLink(new_job);
+	      MUTEX_UNLOCK(__global_variable_mutex__);
 	      return;
 	    }
 	  bcopy(payload,new_job->payload,Payload_Length(new_job));
