@@ -763,7 +763,13 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value, int port_width)
 
 		   // req must be tied to 0
 		  if(all_done)
+                  {
 		    sprintf(jlink->req_port->port_value, "0");
+#ifdef DEBUG
+             	    fprintf(log_file,"Info: set %s req  to 0 in cycle %d\n",jlink->name,vhpi_cycle_count);
+                    fflush(log_file);
+#endif
+		  }
 		}
 	    }
 	  else
@@ -839,6 +845,11 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value, int port_width)
 void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
 {
 
+#ifdef DEBUG
+	fprintf(log_file, "Entering Get_Port_Value for port %s in cycle %d.\n",  port_name, vhpi_cycle_count);
+	fflush(log_file);
+#endif
+
   char found_one = 0;
   char* save_ptr;
   char* obj_name = strtok_r(port_name," ",&save_ptr);
@@ -889,6 +900,10 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
 	{
 	  Copy_Value(port_value,jlink->req_port->port_value,1);
 	  found_one = 1;
+#ifdef DEBUG
+		fprintf(log_file, "In Get_Port_Value for port %s in cycle %d, found req.\n",  port_name, vhpi_cycle_count);
+		fflush(log_file);
+#endif
 	  if(jlink->is_module_access)
 	    {
 	      //
@@ -958,7 +973,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
 
 #ifdef DEBUG
   if(found_one)
-    fprintf(log_file,"Info: returning value of port %s (%s) as %s in cycle %d\n", port_name, index_string, port_value,
+    fprintf(log_file,"Info: returning value of port %s (%s) as %s in cycle %d!\n", port_name, index_string, port_value,
 		vhpi_cycle_count);
   else
     fprintf(log_file,"Info: port %s not active, returning %s in cycle %d\n", port_name, port_value, vhpi_cycle_count);
