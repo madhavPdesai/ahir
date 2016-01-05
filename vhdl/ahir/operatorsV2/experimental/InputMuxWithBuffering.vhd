@@ -63,10 +63,10 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   RxGen: for I in 0 to nreqs-1 generate 
      process(dataL)
-        variable regv : std_logic_vector(owidth-1 downto 0);
+        --variable regv : std_logic_vector(owidth-1 downto 0);
      begin
-        Extract(dataL,I,regv);
-        rx_data_in(I) <= regv;
+        -- Extract(dataL,I,regv);
+        rx_data_in(I) <= dataL(((I+1)*owidth)-1 downto I*owidth);
      end process;
 
 

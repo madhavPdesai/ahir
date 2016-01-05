@@ -170,10 +170,11 @@ begin  -- Behave
     ackR <= ackR_sig;
 
     process(dfinal)
-      variable dataRv : std_logic_vector(dataR'high downto dataR'low);
+      variable dataRv : std_logic_vector(owidth-1 downto 0);
     begin
       for I in dfinal'range loop
-        Insert(dataRv,I,dfinal(I));
+	dataRv(((I+1)*iwidth)-1 downto I*iwidth) := dfinal(I);
+        --Insert(dataRv,I,dfinal(I));
       end loop;
       dataR <= dataRv;
     end process;
@@ -208,10 +209,11 @@ begin  -- Behave
     end generate Freggen;
 
     process(dfinal_reg)
-      variable dataRv : std_logic_vector(dataR'high downto dataR'low);
+      variable dataRv : std_logic_vector(owidth-1 downto 0);
     begin
       for I in dfinal_reg'range loop
-        Insert(dataRv,I,dfinal_reg(I));
+	dataRv(((I+1)*iwidth)-1 downto I*iwidth) := dfinal_reg(I);
+        -- Insert(dataRv,I,dfinal_reg(I));
       end loop;
       dataR <= dataRv;
     end process;

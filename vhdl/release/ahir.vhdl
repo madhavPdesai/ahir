@@ -12143,10 +12143,11 @@ begin  -- Behave
     ackR <= ackR_sig;
 
     process(dfinal)
-      variable dataRv : std_logic_vector(dataR'high downto dataR'low);
+      variable dataRv : std_logic_vector(owidth-1 downto 0);
     begin
       for I in dfinal'range loop
-        Insert(dataRv,I,dfinal(I));
+	dataRv(((I+1)*iwidth)-1 downto I*iwidth) := dfinal(I);
+        --Insert(dataRv,I,dfinal(I));
       end loop;
       dataR <= dataRv;
     end process;
@@ -12181,10 +12182,11 @@ begin  -- Behave
     end generate Freggen;
 
     process(dfinal_reg)
-      variable dataRv : std_logic_vector(dataR'high downto dataR'low);
+      variable dataRv : std_logic_vector(owidth-1 downto 0);
     begin
       for I in dfinal_reg'range loop
-        Insert(dataRv,I,dfinal_reg(I));
+	dataRv(((I+1)*iwidth)-1 downto I*iwidth) := dfinal_reg(I);
+        -- Insert(dataRv,I,dfinal_reg(I));
       end loop;
       dataR <= dataRv;
     end process;
@@ -12412,7 +12414,8 @@ begin
              variable target: std_logic_vector(data_width-1 downto 0);
           begin
             if(req_active(I) = '1') then
-		Extract(data,I,target);
+		target := data(((I+1)*data_width)-1 downto I*data_width);
+		--Extract(data,I,target);
 	    else
 		target := (others => '0');
 	    end if;	
@@ -13358,7 +13361,9 @@ begin
      variable lreturn_tag : std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
    begin
      for J in return_tag_sig'high(1) downto return_tag_sig'low(1) loop
-       Insert(lreturn_tag,J,return_tag_sig(J));
+       lreturn_tag(((J+1)*caller_tag_length)-1 downto J*caller_tag_length)
+		:= return_tag_sig(J);
+       --Insert(lreturn_tag,J,return_tag_sig(J));
      end loop;  -- J
      return_tag <= lreturn_tag;
    end process;
@@ -13585,7 +13590,9 @@ begin
      variable lreturn_data : std_logic_vector((num_reqs*return_data_width)-1 downto 0);
    begin
      for J in return_data_sig'high(1) downto return_data_sig'low(1) loop
-       Insert(lreturn_data,J,return_data_sig(J));
+       lreturn_data(((J+1)*return_data_width)-1 downto J*return_data_width)
+		:= return_data_sig(J);
+       -- Insert(lreturn_data,J,return_data_sig(J));
      end loop;  -- J
      return_data <= lreturn_data;
    end process;
@@ -13594,7 +13601,9 @@ begin
      variable lreturn_tag : std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
    begin
      for J in return_tag_sig'high(1) downto return_tag_sig'low(1) loop
-       Insert(lreturn_tag,J,return_tag_sig(J));
+       lreturn_tag(((J+1)*caller_tag_length)-1 downto J*caller_tag_length)
+		:= return_tag_sig(J);
+       -- Insert(lreturn_tag,J,return_tag_sig(J));
      end loop;  -- J
      return_tag <= lreturn_tag;
    end process;
@@ -13783,7 +13792,8 @@ begin
         out_data := (others => '0');
        	for I in num_reqs-1 downto 0 loop
        		if(pe_call_reqs(I) = '1') then
-       			Extract(call_data,I,out_data);
+			out_data := call_data(((I+1)*call_data_width)-1 downto I*call_data_width);
+       			--Extract(call_data,I,out_data);
 			if(latch_call_data = '1') then
 				fair_call_acks(I) <= '1';
 			end if;
@@ -13831,7 +13841,9 @@ begin
      variable lreturn_tag : std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
    begin
      for J in return_tag_sig'high(1) downto return_tag_sig'low(1) loop
-       Insert(lreturn_tag,J,return_tag_sig(J));
+       lreturn_tag(((J+1)*caller_tag_length)-1 downto J*caller_tag_length)
+		:= return_tag_sig(J);
+       -- Insert(lreturn_tag,J,return_tag_sig(J));
      end loop;  -- J
      return_tag <= lreturn_tag;
    end process;
@@ -14028,7 +14040,9 @@ begin
 	out_data := (others => '0');
        	for I in num_reqs-1 downto 0 loop
        		if(pe_call_reqs(I) = '1') then
-       			Extract(call_data,I,out_data);
+			out_data := call_data(((I+1)*call_data_width)-1 downto
+							I*call_data_width);
+       			-- Extract(call_data,I,out_data);
 			if(latch_call_data = '1') then
 				fair_call_acks(I) <= '1';
 			end if;
@@ -14081,7 +14095,9 @@ begin
      variable lreturn_data : std_logic_vector((num_reqs*return_data_width)-1 downto 0);
    begin
      for J in return_data_sig'high(1) downto return_data_sig'low(1) loop
-       Insert(lreturn_data,J,return_data_sig(J));
+       lreturn_data(((J+1)*return_data_width)-1 downto J*return_data_width)
+		:= return_data_sig(J);
+       -- Insert(lreturn_data,J,return_data_sig(J));
      end loop;  -- J
      return_data <= lreturn_data;
    end process;
@@ -14091,7 +14107,9 @@ begin
      variable lreturn_tag : std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
    begin
      for J in return_tag_sig'high(1) downto return_tag_sig'low(1) loop
-       Insert(lreturn_tag,J,return_tag_sig(J));
+       lreturn_tag(((J+1)*caller_tag_length)-1 downto J*caller_tag_length)
+		:= return_tag_sig(J);
+       -- Insert(lreturn_tag,J,return_tag_sig(J));
      end loop;  -- J
      return_tag <= lreturn_tag;
    end process;
@@ -19215,10 +19233,10 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   RxGen: for I in 0 to nreqs-1 generate 
      process(dataL)
-        variable regv : std_logic_vector(owidth-1 downto 0);
+        --variable regv : std_logic_vector(owidth-1 downto 0);
      begin
-        Extract(dataL,I,regv);
-        rx_data_in(I) <= regv;
+        -- Extract(dataL,I,regv);
+        rx_data_in(I) <= dataL(((I+1)*owidth)-1 downto I*owidth);
      end process;
 
 
@@ -19679,7 +19697,8 @@ begin
          variable target: std_logic_vector(data_width-1 downto 0);
        begin
           if(req_active(I) = '1') then
-		Extract(write_data,I,target);
+		-- Extract(write_data,I,target);
+		target := write_data(((I+1)*data_width)-1 downto I*data_width);
 	  else
 		target := (others => '0');
 	  end if;	

@@ -63,7 +63,8 @@ begin
          variable target: std_logic_vector(data_width-1 downto 0);
        begin
           if(req_active(I) = '1') then
-		Extract(write_data,I,target);
+		-- Extract(write_data,I,target);
+		target := write_data(((I+1)*data_width)-1 downto I*data_width);
 	  else
 		target := (others => '0');
 	  end if;	

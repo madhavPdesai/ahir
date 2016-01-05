@@ -150,7 +150,9 @@ begin
      variable lreturn_tag : std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
    begin
      for J in return_tag_sig'high(1) downto return_tag_sig'low(1) loop
-       Insert(lreturn_tag,J,return_tag_sig(J));
+       lreturn_tag(((J+1)*caller_tag_length)-1 downto J*caller_tag_length)
+		:= return_tag_sig(J);
+       --Insert(lreturn_tag,J,return_tag_sig(J));
      end loop;  -- J
      return_tag <= lreturn_tag;
    end process;
