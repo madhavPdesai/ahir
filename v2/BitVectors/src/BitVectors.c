@@ -166,6 +166,76 @@ char* to_string(bit_vector* t)
 	return(to_string_buffer);
 }
 
+char to_hex_string_buffer[4096];
+char* to_hex_string(bit_vector* t)
+{
+	int hex_length = (t->width/4);
+	if(hex_length*4 < t->width)
+		hex_length++;
+
+	// 4k should be enough.. if not assert.
+	assert(hex_length < 4095);
+
+	// null terminate.
+	to_hex_string_buffer[hex_length] = 0;
+
+	int C = 0;
+	char hexCharBuf[5];
+	int QUAD = 4;
+
+	hexCharBuf[QUAD] = 0;
+	sprintf(hexCharBuf, "0000");
+
+	for(C = 0; C < t->width; C++)
+	{
+		QUAD--;
+		hexCharBuf[QUAD] = (bit_vector_get_bit(t,C) ? '1' : '0');
+		if((QUAD == 0) || (C == t->width-1))
+		{
+			hex_length--;	
+			assert(hex_length >= 0);
+
+			if(strcmp(hexCharBuf, "0000") == 0)
+				to_hex_string_buffer[hex_length] = '0';
+			else 	if(strcmp(hexCharBuf, "0001") == 0)
+				to_hex_string_buffer[hex_length] = '1';
+			else 	if(strcmp(hexCharBuf, "0010") == 0)
+				to_hex_string_buffer[hex_length] = '2';
+			else 	if(strcmp(hexCharBuf, "0011") == 0)
+				to_hex_string_buffer[hex_length] = '3';
+			else 	if(strcmp(hexCharBuf, "0100") == 0)
+				to_hex_string_buffer[hex_length] = '4';
+			else 	if(strcmp(hexCharBuf, "0101") == 0)
+				to_hex_string_buffer[hex_length] = '5';
+			else 	if(strcmp(hexCharBuf, "0110") == 0)
+				to_hex_string_buffer[hex_length] = '6';
+			else 	if(strcmp(hexCharBuf, "0111") == 0)
+				to_hex_string_buffer[hex_length] = '7';
+			else 	if(strcmp(hexCharBuf, "1000") == 0)
+				to_hex_string_buffer[hex_length] = '8';
+			else 	if(strcmp(hexCharBuf, "1001") == 0)
+				to_hex_string_buffer[hex_length] = '9';
+			else 	if(strcmp(hexCharBuf, "1010") == 0)
+				to_hex_string_buffer[hex_length] = 'a';
+			else 	if(strcmp(hexCharBuf, "1011") == 0)
+				to_hex_string_buffer[hex_length] = 'b';
+			else 	if(strcmp(hexCharBuf, "1100") == 0)
+				to_hex_string_buffer[hex_length] = 'c';
+			else 	if(strcmp(hexCharBuf, "1101") == 0)
+				to_hex_string_buffer[hex_length] = 'd';
+			else 	if(strcmp(hexCharBuf, "1110") == 0)
+				to_hex_string_buffer[hex_length] = 'e';
+			else 	if(strcmp(hexCharBuf, "1111") == 0)
+				to_hex_string_buffer[hex_length] = 'f';
+			else 	
+				to_hex_string_buffer[hex_length] = '?';
+
+			QUAD = 4;
+			sprintf(hexCharBuf,"0000");
+		}
+	}
+	return(to_hex_string_buffer);
+}
 
 uint8_t is_undefined_bit(bit_vector* t, uint32_t index)
 {

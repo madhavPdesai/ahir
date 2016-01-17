@@ -822,7 +822,7 @@ void Print_C_Report_String_Expr_Pair(string seq_id, string tag, string qs, strin
 	ofile << "fprintf(" << log_file_name << ",\"[%u]" << tag << ">\\t\\t%s\\t\\t\"," << seq_id << "," << "\"" << qs << "\");";
 	if(etype->Is_Integer_Type())
 	{
-		ofile << "fprintf(" << log_file_name << ", \":= %llx\\n\",bit_vector_to_uint64(0,&(" << expr  << ")));";
+		ofile << "fprintf(" << log_file_name << ", \":= 0x%s\\n\",to_hex_string(&(" << expr  << ")));";
 	}
 	else if(etype->Is_Float_Type())
 	{

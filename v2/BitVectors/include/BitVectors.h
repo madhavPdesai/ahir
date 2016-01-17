@@ -50,6 +50,7 @@ void free_bit_vector(bit_vector* t);
 void print_bit_vector(bit_vector* t, FILE* ofile);
 void printf_bit_vector(bit_vector* t);
 char* to_string(bit_vector* t);
+char* to_hex_string(bit_vector* t);
 
 uint8_t is_undefined_bit(bit_vector* t, uint32_t index);
 uint8_t has_undefined_bit(bit_vector* t);
