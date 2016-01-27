@@ -189,6 +189,7 @@ uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int pipe
   new_p->read_pointer = 0;
   new_p->buffer.ptr8 = (uint8_t*) calloc(1, ((pipe_depth*pipe_width)/8)*sizeof(uint8_t));
   new_p->pipe_mode = pipe_mode;
+  new_p->next = NULL;
 
 #ifdef USE_GNUPTH
   pth_mutex_init(&(new_p->pm));
