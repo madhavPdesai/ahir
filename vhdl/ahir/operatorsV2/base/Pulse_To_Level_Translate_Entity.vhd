@@ -53,6 +53,7 @@ begin  -- Behave
             nstate := Idle;
           end if; 
         when Waiting =>
+	  rR <= '1';
           if(aR = '1') then
             nstate := Ack;
           end if;
