@@ -1,0 +1,37 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$module [shuffle_daemon] $in() $out () $is
+{
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 4 $buffering 1
+		$merge $entry $loopback $endmerge
+
+		X0 := in_data
+		X1 := in_data
+		X2 := in_data
+		X3 := in_data
+
+		$volatile $split (X0 8 8 8 8)
+					(X00 X01 X02 X03)
+		$volatile $split (X1 8 8 8 8)
+					(X10 X11 X12 X13)
+		$volatile $split (X2 8 8 8 8)
+					(X20 X21 X22 X23)
+		$volatile $split (X3 8 8 8 8)
+					(X30 X31 X32 X33)
+
+		Y0 := ($concat X00 X10 X20 X30)
+		Y1 := ($concat X01 X11 X21 X31) $buffering 2
+		Y2 := ($concat X02 X12 X22 X32) $buffering 3
+		Y3 := ($concat X03 X13 X23 X33) $buffering 4
+
+		out_data := Y0
+		out_data := Y1
+		out_data := Y2
+		out_data := Y3
+
+		$while 1
+	}
+}
