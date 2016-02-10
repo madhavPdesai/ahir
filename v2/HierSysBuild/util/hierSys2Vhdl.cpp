@@ -34,11 +34,12 @@ void Usage_hierSys2Vhdl()
 {
   cerr << "brief description: reads hierarchical system description and produces VHDL, " << endl;
   cerr << "Usage: " << endl;
-  cerr << "hierSys2Vhdl [-s <ghdl/modelsim>] [-o <vhdl-output-directory>] [-w]  <file-name> (<file-name>)* " << endl;
+  cerr << "hierSys2Vhdl [-s <ghdl/modelsim>] [-o <vhdl-output-directory>] [-w] [-a]  <file-name> (<file-name>)* " << endl;
   cerr << "Options: " << endl;
   cerr << "   -s ghdl or -s modelsim:  specifies the simulator for which the test-bench should be generated." << endl;
   cerr << "   -o <vhdl-dir>:  specifies the directory into which the VHDL is to be printed." << endl;
   cerr << "   -w:  all libraries will be mapped to work." << endl;
+  cerr << "   -a:  full VHDL hierarchy will be printed." << endl;
 }
 
 
