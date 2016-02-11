@@ -843,6 +843,8 @@ class AaSimpleObjectReference: public AaObjectReference
 	// added so that we can track from simple object references
 	// backward through combinational statements.
 	virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
+
+	virtual bool Is_Trivial();
 };
 
 

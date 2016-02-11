@@ -882,6 +882,11 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		{
 			vcWire* w = outarg_wires[idx];
 			ofile << w->Get_VHDL_Id() << " <= " << w->Get_VHDL_Signal_Id() << ";" << endl;
+			vcValue* v = ((vcOutputWire*)w)->Get_Value();
+			if(v != NULL)
+			{
+				ofile << w->Get_VHDL_Signal_Id() << " <= " << v->To_VHDL_String() << ";" << endl;
+			}
 		}
 	}
 	else

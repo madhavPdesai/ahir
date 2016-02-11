@@ -725,6 +725,13 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 
 }
 
+bool AaSimpleObjectReference::Is_Trivial()
+{
+	return(!this->Get_Is_Target() 
+			&& (this->Is_Implicit_Variable_Reference()));
+}
+
+
 AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, AaAssignmentStatement* root_obj):AaObjectReference(parent_tpr, root_obj) 
 {
 	this->Set_Object(root_obj);

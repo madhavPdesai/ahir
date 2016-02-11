@@ -1,19 +1,29 @@
 $pipe in_data  : $uint<8> $depth 2
 $pipe out_data : $uint<8> $depth 2
 
+$volatile $module [split_and_merge] $in (X: $uint<8>) 
+		$out (send_flag: $uint<1> Y: $uint<8>) $is
+{
+	$volatile $split (X 1 1 1 1 1 1 1 1)
+				(x7 x6 x5 x4 x3 x2 x1 x0)
+	send_flag := 1
+	Y := ($concat x7 x6 x5 x4 x3 x2 x1 x0)
+}
+
 $module [volatile_check_daemon] $in() $out () $is
 {
-        o1 := ($bitcast($uint<1>) 1)
 	$branchblock[lOoP] {
 		$dopipeline $depth 16 $buffering 2 $fullrate
 		$merge $entry $loopback $endmerge
 		X := in_data
-		$volatile $split (X 1 1 1 1 1 1 1 1)
-					(x7 x6 x5 x4 x3 x2 x1 x0)
-
-		$volatile send_flag := (x7 | o1)
-		$guard (send_flag) out_data := ($concat x7 x6 x5 x4 x3 x2 x1 x0)
-
+		$volatile $call split_and_merge (X) (s0 Y0)
+		$volatile $call split_and_merge (Y0) (s1 Y1)
+		$volatile $call split_and_merge (Y1) (s2 Y2)
+		$volatile $call split_and_merge (Y2) (s3 Y3)
+		$volatile $call split_and_merge (Y3) (s4 Y4)
+		$volatile $call split_and_merge (Y4) (s5 Y5)
+		$guard (s5) 
+			out_data := Y5
 		$while 1
 	}
 }

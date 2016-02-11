@@ -1,0 +1,46 @@
+$pipe in_data : $uint<8> $depth 2
+$pipe out_data: $uint<8> $depth 2
+//
+// reset=2, 0,1 are other legal inputs.
+
+// empty, 1, 11
+$constant RST_STATE: $uint<2> := 0
+$constant ONE_STATE: $uint<2> := 1
+$constant ONEONE_STATE: $uint<2> := 2
+
+$constant ONE_1 : $uint<8> := 1
+
+
+$module [fsm_daemon] $in () $out () $is
+{
+	$branchblock[LoOp] {
+		$dopipeline $depth 4 $buffering 2 $fullrate
+
+		$merge $entry $loopback 
+			$phi current_state := RST_STATE $on $entry
+					next_state $on $loopback
+		$endmerge
+
+		X := in_data
+
+		$volatile next_state :=
+			($excmux
+				(current_state == RST_STATE)
+					($mux (X==1) ONE_STATE RST_STATE)
+
+				(current_state == ONE_STATE)
+					($mux (X==1) ONEONE_STATE RST_STATE)
+
+				(current_state == ONEONE_STATE)
+					($mux (X==1) ONEONE_STATE RST_STATE)
+			)
+
+		$volatile out_val :=
+			($mux ((current_state == ONEONE_STATE) &
+					(X==1)) ONE_1 0)
+
+		out_data := out_val
+
+	    	$while 1
+	}
+}

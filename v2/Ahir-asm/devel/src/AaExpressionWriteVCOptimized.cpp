@@ -227,8 +227,11 @@ void AaExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* gu
 void AaExpression::Write_VC_Guard_Backward_Dependency(AaExpression* guard_expr,
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {
-	// when this completes, the guard can be re-evaluated.
-	guard_expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+	if(this->Get_Is_Target() || !(this->Is_Trivial() && this->Get_Is_Intermediate()))
+	{
+		// when this completes, the guard can be re-evaluated.
+		guard_expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+	}
 
 	// With new SplitGuardInterface, this dependency is
 	// no longer necessary.
@@ -643,7 +646,7 @@ void AaSimpleObjectReference::Write_VC_Guard_Backward_Dependency(AaExpression* e
 		//
 		expr->Write_VC_Update_Reenables(__UCT(this), true, visited_elements, ofile);
 	}
-	else
+	else if (this->Get_Is_Target() || !this->Is_Implicit_Variable_Reference())
 	{
 		//
 		// else do the usual thing.
@@ -1820,7 +1823,7 @@ void AaBinaryExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr, 
 			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT_I(this,1), expr->Update_Protocol_Has_Delay(visited_elements)); // bypass
 		}
 	}
-	else
+	else if(!(this->Is_Trivial() && this->Get_Is_Intermediate()))
 	{
 		this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
 	}
