@@ -1,0 +1,23 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$volatile $module [try_floats] $in (X: $uint<32>) $out (Y: $uint<32>) $is
+{
+	A := ($cast ($float<8,23>) X)
+	B := (A + A)
+	C := ($cast ($float <11,52>) B)
+	D := ($cast ($uint<32>) C)
+	Y := D
+}
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+		X := in_data
+		$volatile $call try_floats (X) (Y)
+		out_data := Y
+		$while 1
+	}
+}
