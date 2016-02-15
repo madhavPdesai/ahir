@@ -39,7 +39,8 @@ void AaExpression::Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,
 		
 		if(visited_elements.find(producer) != visited_elements.end())
 		{
-			if((this->Get_Associated_Phi_Statement() == NULL) || (producer != this))
+			if((this->Get_Associated_Phi_Statement() == NULL) || 
+				(producer->Get_Associated_Phi_Statement() != this->Get_Associated_Phi_Statement()))
 				__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, bypass);
 		}
 
@@ -646,7 +647,7 @@ void AaSimpleObjectReference::Write_VC_Guard_Backward_Dependency(AaExpression* e
 		//
 		expr->Write_VC_Update_Reenables(__UCT(this), true, visited_elements, ofile);
 	}
-	else if (this->Get_Is_Target() || !this->Is_Implicit_Variable_Reference())
+	else 
 	{
 		//
 		// else do the usual thing.
