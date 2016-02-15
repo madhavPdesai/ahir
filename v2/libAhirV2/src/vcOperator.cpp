@@ -1663,6 +1663,7 @@ bool Is_Compare_Op(string vc_op_id)
 	else if(vc_op_id == vcLexerKeywords[__ULT_OP]        ) { ret_val = true; }
 	else if(vc_op_id == vcLexerKeywords[__ULE_OP]        ) { ret_val = true; }
 	else if(vc_op_id == vcLexerKeywords[__NEQ_OP]        ) { ret_val = true; }
+	else if(vc_op_id == vcLexerKeywords[__UNORDERED_OP]        ) { ret_val = true; }
 
 	return(ret_val);
 }
