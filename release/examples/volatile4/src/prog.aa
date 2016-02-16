@@ -22,6 +22,7 @@ $module [volatile_check_daemon] $in() $out () $is
 		$volatile $call split_and_merge (Y2) (s3 Y3)
 		$volatile $call split_and_merge (Y3) (s4 Y4)
 		$volatile $call split_and_merge (Y4) (s5 Y5)
+		$rreport (vcd status Y0 Y1 Y2 Y3 Y4 Y5)
 		$guard (s5) 
 			out_data := Y5
 		$while 1

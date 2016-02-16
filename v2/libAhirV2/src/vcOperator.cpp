@@ -782,7 +782,7 @@ void vcUnarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
 	{
 		ofile << "SingleInputOperation(\"" << vhdl_op_id << "\", " << X << ", tmp_var);" << endl;
 	}
-	ofile <<  Z  << " <= tmp_var;" << endl;
+	ofile <<  Z  << " <= tmp_var; -- }" << endl;
 	ofile << "end process;" << endl; 
 }
 
@@ -989,9 +989,10 @@ void vcBinarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
 		ofile << X << ", " << Y ;
 		ofile << "," << exponent_width << ", " << fraction_width << ", tmp_var);" << endl;
 	}
-	else
+	else 
 	{
-		ofile << "TwoInputOperation(\"" << vhdl_op_id << "\", ";
+		string procedure_name = vhdl_op_id + "_proc";
+		ofile << procedure_name << "(";
 		ofile << X << ", " << Y ;
 		ofile << ", tmp_var);" << endl;
 	}

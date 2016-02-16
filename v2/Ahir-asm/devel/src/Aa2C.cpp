@@ -12,7 +12,8 @@
 void Print_C_Assert_If_Bitvector_Undefined(string var_name, ostream& ofile)
 {
 	ofile << "if (has_undefined_bit(&" << var_name << ")) {";
-	ofile << "fprintf(stderr, \"Error: variable " << var_name << " has undefined value at test point.\\n\");";
+	ofile << "fprintf(stderr, \"Error: variable " << var_name << " has undefined value (%s) at test point.\\n\", to_string(&"
+		<< var_name << "));";
 	ofile << "assert(0);} " << __endl__;
 }
 

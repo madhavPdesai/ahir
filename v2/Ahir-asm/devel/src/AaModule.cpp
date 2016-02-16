@@ -691,6 +691,12 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
 
 void AaModule::Write_VC_Links(bool opt_flag, ostream& ofile)
 {
+  if(this->Get_Volatile_Flag())
+  {
+	ofile << "// Volatile module.. no links." << endl;
+	return;
+  }
+
   if(this->_statement_sequence)
     {
       if(opt_flag)
@@ -711,103 +717,108 @@ void AaModule::Write_VC_Control_Path(bool opt_flag, ostream& ofile)
 
   this->Check_Statements(); // check for errors.
   ofile << "$CP { // begin control-path " << endl;
-  // for each statement, print a CP region.
-  if(!opt_flag)
-    {
-      for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
-	{
-	  this->_statement_sequence->Get_Statement(idx)->Write_VC_Control_Path(ofile);
-	}
-    }
+  if(this->Get_Volatile_Flag()) 
+	ofile << "// Volatile! CP is left blank " << endl;
   else
-    {
-      this->Write_VC_Control_Path_Optimized_Base(ofile);
-    }
+  {
+	  // for each statement, print a CP region.
+	  if(!opt_flag)
+	  {
+		  for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+		  {
+			  this->_statement_sequence->Get_Statement(idx)->Write_VC_Control_Path(ofile);
+		  }
+	  }
+	  else
+	  {
+		  this->Write_VC_Control_Path_Optimized_Base(ofile);
+	  }
 
+  }
   ofile << "} // end control-path" << endl;
 }
 
 void AaModule::Write_VC_Data_Path(ostream& ofile)
 {
-  ofile << "$DP { // begin data-path " << endl;
+	ofile << "$DP { // begin data-path " << endl;
 
-  this->Write_VC_Constant_Declarations(ofile);
+	this->Write_VC_Constant_Declarations(ofile);
 
-  if(this->_statement_sequence)
-    {
-      this->_statement_sequence->Write_VC_Constant_Wire_Declarations(ofile);
-      this->_statement_sequence->Write_VC_Wire_Declarations(ofile);
-      this->_statement_sequence->Write_VC_Datapath_Instances(ofile);
-    }
-  ofile << "} // end data-path" << endl;
+	if(this->_statement_sequence)
+	{
+		this->_statement_sequence->Write_VC_Constant_Wire_Declarations(ofile);
+		this->_statement_sequence->Write_VC_Wire_Declarations(ofile);
+		this->_statement_sequence->Write_VC_Datapath_Instances(ofile);
+	}
+	ofile << "} // end data-path" << endl;
 }
 
 
 void AaModule::Write_VC_Memory_Spaces(bool opt_flag, ostream& ofile)
 {
-  for(int idx = 0; idx < _memory_spaces.size(); idx++)
-    _memory_spaces[idx]->Write_VC_Model(opt_flag, ofile);
+	for(int idx = 0; idx < _memory_spaces.size(); idx++)
+		_memory_spaces[idx]->Write_VC_Model(opt_flag, ofile);
 }
 
 
 void AaModule::Write_VHDL_C_Stub_Prefix(ostream& ofile)
 {
- string ret_type;
- bool multiple_outputs = false;
- if(this->Get_Number_Of_Output_Arguments() == 0)
-   {
-     ret_type = "void";
-   }
- else if(this->Get_Number_Of_Output_Arguments() == 1)
-   {
-     ret_type = this->Get_Output_Argument(0)->Get_Type()->Native_C_Name();
-   }
- else
-   {
-     multiple_outputs = true;
-     ret_type = "void";
-   }
- 
- string comma;
- ofile << ret_type << " " << this->Get_Label() << "(";
- for(int idx = 0; idx < this->Get_Number_Of_Input_Arguments(); idx++)
-   {
-     ofile << comma;
-     
-     ofile << this->Get_Input_Argument(idx)->Get_Type()->Native_C_Name()
-	   << " " << this->Get_Input_Argument(idx)->Get_Name();
-     
-     comma = ",";
-   }
- 
- if(multiple_outputs)
-   {
-     for(int idx = 0; idx < this->Get_Number_Of_Output_Arguments(); idx++)
-       {
-	 ofile << comma;
-	 
-	 ofile << this->Get_Output_Argument(idx)->Get_Type()->Native_C_Name()
-	       << "* " << this->Get_Output_Argument(idx)->Get_Name();
-	 
-	 comma = ",";
-       }      
-   }
- ofile << ")";
+	string ret_type;
+	bool multiple_outputs = false;
+	if(this->Get_Number_Of_Output_Arguments() == 0)
+	{
+		ret_type = "void";
+	}
+	else if(this->Get_Number_Of_Output_Arguments() == 1)
+	{
+		ret_type = this->Get_Output_Argument(0)->Get_Type()->Native_C_Name();
+	}
+	else
+	{
+		multiple_outputs = true;
+		ret_type = "void";
+	}
+
+	string comma;
+	ofile << ret_type << " " << this->Get_Label() << "(";
+	for(int idx = 0; idx < this->Get_Number_Of_Input_Arguments(); idx++)
+	{
+		ofile << comma;
+
+		ofile << this->Get_Input_Argument(idx)->Get_Type()->Native_C_Name()
+			<< " " << this->Get_Input_Argument(idx)->Get_Name();
+
+		comma = ",";
+	}
+
+	if(multiple_outputs)
+	{
+		for(int idx = 0; idx < this->Get_Number_Of_Output_Arguments(); idx++)
+		{
+			ofile << comma;
+
+			ofile << this->Get_Output_Argument(idx)->Get_Type()->Native_C_Name()
+				<< "* " << this->Get_Output_Argument(idx)->Get_Name();
+
+			comma = ",";
+		}      
+	}
+	ofile << ")";
 }
 
 void AaModule::Write_VHDL_C_Stub_Header(ostream& ofile)
 {
-  
- if (!this->Can_Have_Native_C_Interface())
-	return;
-  this->Write_VHDL_C_Stub_Prefix(ofile);
-  ofile << ";" << endl;
+
+	if (!this->Can_Have_Native_C_Interface())
+		return;
+	this->Write_VHDL_C_Stub_Prefix(ofile);
+	ofile << ";" << endl;
 }
 
 void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
 {
- if (!this->Can_Have_Native_C_Interface())
-	return;
+	if (!this->Can_Have_Native_C_Interface())
+		return;
   this->Write_VHDL_C_Stub_Prefix(ofile);
   ofile << endl << "{" << endl;
   
