@@ -1,0 +1,39 @@
+$noblock $pipe in_data_1 : $uint<8> $depth 2
+$noblock $pipe in_data_2  : $uint<8> $depth 2
+$noblock $pipe in_data_3  : $uint<8> $depth 2
+$pipe out_data : $uint<8> $depth 2
+$constant Z8: $uint<8> := 0
+
+$volatile $module [combi_block] $in (X1 X2 X3: $uint<8>) $out (V F1 F2 F3: $uint<1> odata: $uint<8>) $is
+{
+ $split (X1 7 1) (U1 V1)
+ $split (X2 7 1) (U2 V2)
+ $split (X3 7 1) (U3 V3)
+
+ V := ($reduce & V1 V2 V3)
+ F1 := (V | (~V1))
+ F2 := (V | (~V2))
+ F3 := (V | (~V3))
+
+ odata := ($reduce | X1 X2 X3)
+}
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] 
+	{
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi X1 := Z8 $on $entry $guard (F1) in_data_1 $on $loopback
+			$phi X2 := Z8 $on $entry $guard (F2) in_data_2 $on $loopback
+			$phi X3 := Z8 $on $entry $guard (F3) in_data_3 $on $loopback
+			$phi COUNT := Z8 $on $entry (COUNT+1) $on $loopback
+		$endmerge
+
+		$volatile $call combi_block (X1 X2 X3) (V F1 F2 F3 odata)
+		$volatile oodata := (odata  | (COUNT ^ COUNT))
+		$guard (V)
+			out_data := oodata
+		$while 1
+	}
+}

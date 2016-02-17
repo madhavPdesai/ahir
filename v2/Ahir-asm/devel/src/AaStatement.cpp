@@ -3613,7 +3613,8 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 				AaExpression* src_expr = phi_stmt->_source_pairs[pidx].second;
 				if(!src_expr->Is_Constant() &&
 					(src_expr->Is_Implicit_Variable_Reference() ||
-							src_expr->Is_Signal_Read()))
+							src_expr->Is_Signal_Read() ||
+							(src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate())))
 				{
 					string dpe_name = src_expr->Get_VC_Driver_Name() +  "_" 
 							+ Int64ToStr(src_expr->Get_Index()) + "_buf";
@@ -3976,7 +3977,8 @@ void AaPhiStatement::Write_VC_Source_Control_Paths(string& mplace, ostream& ofil
 			if(src_expr->Get_Guard_Expression())
 				src_expr->Get_Guard_Expression()->Write_VC_Control_Path(ofile);
 			if(src_expr->Is_Implicit_Variable_Reference() ||
-					src_expr->Is_Signal_Read())
+					src_expr->Is_Signal_Read() ||
+					(src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()))
 			{
 				ofile << "|| [Interlock] {" << endl;
 				ofile << " ;;[Sample] {" << endl;
@@ -4025,7 +4027,8 @@ void AaPhiStatement::Write_VC_Wire_Declarations(ostream& ofile)
 		// additional wire for the buffer.
 		if(!src_expr->Is_Constant() &&
 			(src_expr->Is_Implicit_Variable_Reference() ||
-				src_expr->Is_Signal_Read()))
+				src_expr->Is_Signal_Read() ||
+					(src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate())))
 		{
 			Write_VC_Wire_Declaration(src_expr->Get_VC_Driver_Name() +  "_" + 
 				Int64ToStr(src_expr->Get_Index()) + "_buffered",
@@ -4050,7 +4053,8 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 		string src_driver_name;
 		if(src_expr->Is_Implicit_Variable_Reference() ||
-				src_expr->Is_Signal_Read())
+				src_expr->Is_Signal_Read() ||
+				(src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()))
 		{
 			src_driver_name = src_expr->Get_VC_Driver_Name() +  "_"  + 
 					Int64ToStr(src_expr->Get_Index()) + "_buffered";
@@ -4064,12 +4068,15 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 					src_driver_name  << " 2 " << endl;
 			}
 		}
-		else
+
+		if(!(src_expr->Is_Implicit_Variable_Reference() || src_expr->Is_Signal_Read()))
 		{
-			src_driver_name = src_expr->Get_VC_Driver_Name();
-			// write the data-path..
 			_source_pairs[i].second->Write_VC_Datapath_Instances(NULL,ofile);
+			if(!(src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()))
+				src_driver_name = src_expr->Get_VC_Driver_Name();
+			// write the data-path..
 		}
+
 		sources.push_back(pair<string,AaType*>(src_driver_name, _source_pairs[i].second->Get_Type()));
 	}
 

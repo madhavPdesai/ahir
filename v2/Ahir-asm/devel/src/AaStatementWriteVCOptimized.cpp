@@ -1660,7 +1660,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	      }
 
 	      if(source_expr->Is_Implicit_Variable_Reference() ||
-			source_expr->Is_Signal_Read())
+			source_expr->Is_Signal_Read() ||
+			(source_expr->Is_Trivial() && source_expr->Get_Is_Intermediate()))
 		{
 			__T(__SST(source_expr));
 			__T(__SCT(source_expr));
@@ -1812,7 +1813,8 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 		AaExpression* source_expr = _source_pairs[idx].second;
 		if(!source_expr->Is_Constant() &&
 			(source_expr->Is_Implicit_Variable_Reference()  ||
-				source_expr->Is_Signal_Read()))
+				source_expr->Is_Signal_Read() ||
+				(source_expr->Is_Trivial() && source_expr->Get_Is_Intermediate())))
 		{
 			// interlock.
 			vector<string> reqs;
