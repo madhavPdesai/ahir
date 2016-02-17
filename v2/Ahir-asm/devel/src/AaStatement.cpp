@@ -3963,6 +3963,9 @@ void AaPhiStatement::Write_VC_Source_Control_Paths(string& mplace, ostream& ofil
 	for(int idx = 0; idx < _source_pairs.size(); idx++)
 	{
 		AaExpression* src_expr = _source_pairs[idx].second;
+		bool src_is_constant = src_expr->Is_Constant();
+		bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
+		bool src_has_trivial_dpe = (!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
 		string place_name = _source_pairs[idx].first;
 
 		if(mplace != place_name)
@@ -3976,9 +3979,7 @@ void AaPhiStatement::Write_VC_Source_Control_Paths(string& mplace, ostream& ofil
 		{
 			if(src_expr->Get_Guard_Expression())
 				src_expr->Get_Guard_Expression()->Write_VC_Control_Path(ofile);
-			if(src_expr->Is_Implicit_Variable_Reference() ||
-					src_expr->Is_Signal_Read() ||
-					(src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()))
+			if(src_has_no_dpe || src_has_trivial_dpe)
 			{
 				ofile << "|| [Interlock] {" << endl;
 				ofile << " ;;[Sample] {" << endl;
@@ -4022,13 +4023,14 @@ void AaPhiStatement::Write_VC_Wire_Declarations(ostream& ofile)
 	for(int idx = 0; idx < _source_pairs.size(); idx++)
 	{
 		AaExpression* src_expr = _source_pairs[idx].second;
+		bool src_is_constant = src_expr->Is_Constant();
+		bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
+		bool src_has_trivial_dpe = (!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
+
 		src_expr->Write_VC_Wire_Declarations(false,ofile);
 
 		// additional wire for the buffer.
-		if(!src_expr->Is_Constant() &&
-			(src_expr->Is_Implicit_Variable_Reference() ||
-				src_expr->Is_Signal_Read() ||
-					(src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate())))
+		if(!src_is_constant && (src_has_no_dpe || src_has_trivial_dpe))
 		{
 			Write_VC_Wire_Declaration(src_expr->Get_VC_Driver_Name() +  "_" + 
 				Int64ToStr(src_expr->Get_Index()) + "_buffered",
@@ -4050,11 +4052,13 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	for(int i = 0; i < _source_pairs.size(); i++)
 	{
 		AaExpression* src_expr = _source_pairs[i].second;
+		bool src_is_constant = src_expr->Is_Constant();
+		bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
+		bool src_has_trivial_dpe = (!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
 
-		string src_driver_name;
-		if(src_expr->Is_Implicit_Variable_Reference() ||
-				src_expr->Is_Signal_Read() ||
-				(src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()))
+		string src_driver_name = src_expr->Get_VC_Driver_Name();
+
+		if(!src_is_constant && (src_has_no_dpe || src_has_trivial_dpe))
 		{
 			src_driver_name = src_expr->Get_VC_Driver_Name() +  "_"  + 
 					Int64ToStr(src_expr->Get_Index()) + "_buffered";
@@ -4069,12 +4073,9 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			}
 		}
 
-		if(!(src_expr->Is_Implicit_Variable_Reference() || src_expr->Is_Signal_Read()))
+		if(!src_is_constant && !src_has_no_dpe)
 		{
 			_source_pairs[i].second->Write_VC_Datapath_Instances(NULL,ofile);
-			if(!(src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()))
-				src_driver_name = src_expr->Get_VC_Driver_Name();
-			// write the data-path..
 		}
 
 		sources.push_back(pair<string,AaType*>(src_driver_name, _source_pairs[i].second->Get_Type()));

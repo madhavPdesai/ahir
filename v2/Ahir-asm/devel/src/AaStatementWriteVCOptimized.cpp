@@ -1659,9 +1659,9 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			
 	      }
 
-	      if(source_expr->Is_Implicit_Variable_Reference() ||
-			source_expr->Is_Signal_Read() ||
-			(source_expr->Is_Trivial() && source_expr->Get_Is_Intermediate()))
+	      bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
+	      bool src_has_trivial_dpe = (!src_has_no_dpe && (source_expr->Is_Trivial() && source_expr->Get_Is_Intermediate()));
+	      if(src_has_no_dpe || src_has_trivial_dpe)
 		{
 			__T(__SST(source_expr));
 			__T(__SCT(source_expr));
@@ -1684,7 +1684,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			
 
 			// dont forget!
-			visited_elements.insert(source_expr);
+			source_expr->Mark_As_Visited(visited_elements);
 		}
 	      else
 		{
@@ -1811,10 +1811,9 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
 	{
 		AaExpression* source_expr = _source_pairs[idx].second;
-		if(!source_expr->Is_Constant() &&
-			(source_expr->Is_Implicit_Variable_Reference()  ||
-				source_expr->Is_Signal_Read() ||
-				(source_expr->Is_Trivial() && source_expr->Get_Is_Intermediate())))
+	        bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
+	        bool src_has_trivial_dpe = (!src_has_no_dpe && (source_expr->Is_Trivial() && source_expr->Get_Is_Intermediate()));
+		if(!source_expr->Is_Constant() && (src_has_no_dpe || src_has_trivial_dpe))
 		{
 			// interlock.
 			vector<string> reqs;

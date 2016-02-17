@@ -351,6 +351,11 @@ class AaExpression: public AaRoot
 	virtual AaRoot* Get_Object() { assert(0); }
 
 	virtual bool Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements) {return(true);}
+
+	virtual void Mark_As_Visited(set<AaRoot*>& visited_elements)
+	{
+		visited_elements.insert(this);
+	}
 };
 
 
@@ -861,6 +866,15 @@ class AaArrayObjectReference: public AaObjectReference
 
 	vector<AaExpression*>* Get_Index_Vector() {return(&(_indices));}
 
+	virtual void Mark_As_Visited(set<AaRoot*>& visited_elements)
+	{
+		visited_elements.insert(this);
+		for(int I = 0; I < _indices.size(); I++)
+		{
+			_indices[I]->Mark_As_Visited(visited_elements);
+		}
+		_pointer_ref->Mark_As_Visited(visited_elements);
+	}
 
 	virtual void Set_Pipeline_Parent(AaStatement* dws)
 	{
@@ -996,6 +1010,13 @@ class AaPointerDereferenceExpression: public AaObjectReference
 	public:
 
 	AaPointerDereferenceExpression(AaScope* scope, AaObjectReference* obj_ref);
+	virtual void Mark_As_Visited(set<AaRoot*>& visited_elements)
+	{
+	
+		visited_elements.insert(this);
+		visited_elements.insert(_reference_to_object);
+	}
+
 
 	AaObjectReference* Get_Reference_To_Object()
 	{
@@ -1095,6 +1116,11 @@ class AaAddressOfExpression: public AaObjectReference
 
 	public:
 	AaAddressOfExpression(AaScope* scope, AaObjectReference* obj_ref);
+	virtual void Mark_As_Visited(set<AaRoot*>& visited_elements)
+	{
+		visited_elements.insert(this);
+		visited_elements.insert(_reference_to_object);
+	}
 
 	virtual void Print(ostream& ofile);
 
@@ -1189,6 +1215,11 @@ class AaTypeCastExpression: public AaExpression
 
 	AaType* Get_To_Type() {return(this->_to_type);}
 	AaExpression* Get_Rest() {return(this->_rest);}
+	virtual void Mark_As_Visited(set<AaRoot*>& visited_elements)
+	{
+		visited_elements.insert(this);
+		_rest->Mark_As_Visited(visited_elements);
+	}
 
 	// plain type-cast.
 	AaTypeCastExpression(AaScope* scope, AaType* ref_type, AaExpression *rest);
@@ -1295,6 +1326,11 @@ class AaUnaryExpression: public AaExpression
 	AaUnaryExpression(AaScope* scope_tpr, AaOperation operation, AaExpression* rest);
 	~AaUnaryExpression();
 	virtual void Print(ostream& ofile); 
+	virtual void Mark_As_Visited(set<AaRoot*>& visited_elements)
+	{
+		visited_elements.insert(this);
+		_rest->Mark_As_Visited(visited_elements);
+	}
 
 	AaOperation Get_Operation() {return(this->_operation);}
 	AaExpression* Get_Rest() {return(this->_rest);}
@@ -1397,6 +1433,12 @@ class AaBinaryExpression: public AaExpression
 	virtual void Print(ostream& ofile);
 	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC(ofstream& ofile);
+	virtual void Mark_As_Visited(set<AaRoot*>& visited_elements)
+	{
+		visited_elements.insert(this);
+		_first->Mark_As_Visited(visited_elements);
+		_second->Mark_As_Visited(visited_elements);
+	}
 	bool Is_Logical_Operation() 
 	{ 
 		if((_operation == __OR) || (_operation == __AND)
@@ -1515,6 +1557,13 @@ class AaTernaryExpression: public AaExpression
 		if(this->_test) this->_test->Map_Source_References(source_objects);
 		if(this->_if_true) this->_if_true->Map_Source_References(source_objects);
 		if(this->_if_false) this->_if_false->Map_Source_References(source_objects);
+	}
+	virtual void Mark_As_Visited(set<AaRoot*>& visited_elements)
+	{
+		visited_elements.insert(this);
+		_test->Mark_As_Visited(visited_elements);
+		_if_true->Mark_As_Visited(visited_elements);
+		_if_false->Mark_As_Visited(visited_elements);
 	}
 
 	virtual void Set_Associated_Statement(AaStatement* stmt)
