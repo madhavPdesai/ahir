@@ -8,7 +8,8 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity UnloadBuffer is
-  generic (name: string; buffer_size: integer := 2; data_width : integer := 32; bypass_flag : boolean := false);
+  generic (name: string; buffer_size: integer := 2; data_width : integer := 32; 
+			bypass_flag : boolean := false; nonblocking_read_flag : boolean := false);
   port ( write_req: in std_logic;
         write_ack: out std_logic;
         write_data: in std_logic_vector(data_width-1 downto 0);
@@ -41,24 +42,47 @@ begin  -- default_arch
   assert (buffer_size > 0) report "Unload buffer size must be > 0" & ": buffer = " & name  severity error;
   
   -- the input pipe.
-  bufPipe : PipeBase generic map (
-    name =>  name & " fifo ",
-    num_reads  => 1,
-    num_writes => 1,
-    data_width => data_width,
-    lifo_mode  => false,
-    depth      => buffer_size)
-    port map (
-      read_req   => pop_req,
-      read_ack   => pop_ack,
-      read_data  => pipe_data_out,
-      write_req  => push_req,
-      write_ack  => push_ack,
-      write_data => write_data,
-      clk        => clk,
-      reset      => reset);
-  push_req(0) <= write_req;
-  write_ack <= push_ack(0);
+  blocking_read: if (not nonblocking_read_flag) generate
+    bufPipe : PipeBase generic map (
+        name =>  name & " fifo ",
+        num_reads  => 1,
+        num_writes => 1,
+        data_width => data_width,
+        lifo_mode  => false,
+        depth      => buffer_size)
+      port map (
+        read_req   => pop_req,
+        read_ack   => pop_ack,
+        read_data  => pipe_data_out,
+        write_req  => push_req,
+        write_ack  => push_ack,
+        write_data => write_data,
+        clk        => clk,
+        reset      => reset);
+    push_req(0) <= write_req;
+    write_ack <= push_ack(0);
+  end generate blocking_read;
+
+  nonblocking_read: if (nonblocking_read_flag) generate
+    bufPipe : NonBlockingReadPipeBase generic map (
+        name =>  name & " non-blocking-read-fifo ",
+        num_reads  => 1,
+        num_writes => 1,
+        data_width => data_width,
+        lifo_mode  => false,
+        depth      => buffer_size)
+      port map (
+        read_req   => pop_req,
+        read_ack   => pop_ack,
+        read_data  => pipe_data_out,
+        write_req  => push_req,
+        write_ack  => push_ack,
+        write_data => write_data,
+        clk        => clk,
+        reset      => reset);
+    push_req(0) <= write_req;
+    write_ack <= push_ack(0);
+  end generate nonblocking_read;
 
 
   -- FSM

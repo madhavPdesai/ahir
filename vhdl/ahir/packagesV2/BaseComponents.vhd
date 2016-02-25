@@ -2069,7 +2069,8 @@ package BaseComponents is
   component InputPort_P2P is
     generic (name : string;
 	   data_width: integer;
-	   queue_depth: integer);
+	   queue_depth: integer;
+	   nonblocking_read_flag: boolean := false);
     port (
     -- pulse interface with the data-path
      sample_req        : in  Boolean; -- sacrificial.
@@ -2208,7 +2209,8 @@ package BaseComponents is
   end component;
 
   component UnloadBuffer 
-    generic (name: string; buffer_size: integer := 2; data_width : integer := 32; bypass_flag: boolean := false);
+    generic (name: string; buffer_size: integer := 2; data_width : integer := 32; 
+				bypass_flag: boolean := false; nonblocking_read_flag: boolean := false);
     port (write_req: in std_logic;
           write_ack: out std_logic;
           write_data: in std_logic_vector(data_width-1 downto 0);

@@ -1,0 +1,55 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2
+$noblock $pipe mid_pipe_0 : $uint<32> $depth 1 $p2p
+$noblock $pipe mid_pipe_1 : $uint<32> $depth 1 $p2p
+
+$constant Z32: $uint<32> := 0
+$constant Z1 : $uint<1> := 0
+
+$module [p2p_ping_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 4 $buffering 2 $fullrate
+		$merge $entry $loopback 
+	 		$phi CMD := Z32 $on $entry
+					$guard (get_cmd) in_data $on $loopback
+			$phi response_pending := Z1 $on $entry next_response_pending $on $loopback
+		$endmerge
+		$volatile cmd_valid := (CMD [] 0)
+
+		// send command if response is not pending.
+		$volatile send_cmd := (cmd_valid & (~response_pending))
+
+		$guard (send_cmd)
+			mid_pipe_0 := CMD
+
+		$guard (response_pending)
+			RESP := mid_pipe_1
+
+		$volatile rsp_valid := (RESP [] 0)
+		$volatile send_response := (rsp_valid & response_pending)
+
+		// get command if cmd is not valid or if valid response is received.
+		$volatile  get_cmd := ((~cmd_valid) | send_response)
+
+		$guard (send_response)
+			out_data :=  RESP
+
+		$volatile next_response_pending := ($mux
+							response_pending (~rsp_valid) send_cmd)
+
+		$while 1
+	}
+}
+
+$module [p2p_pong_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 4 $buffering 2 $fullrate
+		  $merge $entry $loopback $endmerge
+	 	  CMD := mid_pipe_0
+		  $volatile snd := (CMD [] 0)
+		  $guard (snd) mid_pipe_1 := CMD
+		$while 1
+	}
+}

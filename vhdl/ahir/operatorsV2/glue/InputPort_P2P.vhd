@@ -12,7 +12,8 @@ use ahir.Utilities.all;
 entity InputPort_P2P is
   generic (name : string;
 	   data_width: integer;
-	   queue_depth: integer);
+	   queue_depth: integer;
+	   nonblocking_read_flag: boolean);
   port (
     -- pulse interface with the data-path
     sample_req        : in  Boolean; -- sacrificial.
@@ -29,6 +30,8 @@ end entity;
 
 
 architecture Base of InputPort_P2P is
+  signal noblock_update_req, noblock_update_ack: boolean;
+  signal noblock_data : std_logic_vector(data_width-1 downto 0);
 begin
 
   bufLeOne: if(queue_depth < 2) generate
@@ -36,12 +39,37 @@ begin
 	constant bufs : IntegerArray (0 downto 0) := (0 => 1);
         signal sr, sa, ur, ua: BooleanArray(0 downto 0);
     begin
-	sr(0) <= sample_req;
-	sample_ack <= sa(0);
-	ur(0) <= update_req;
-	update_ack <= ua(0);
+	
+	nonblocking_read: if (nonblocking_read_flag) generate
+	   sample_ack <= sample_req;
+	   oreq <= '1' when update_req  else '0';
+	   process(clk)
+	   begin
+		if(clk'event and clk = '1') then
+		   if(reset = '1') then
+			update_ack <= false;
+		   else
+			update_ack <= update_req;
+			if(update_req) then
+				if(oack = '1') then
+					data <= odata;
+				else
+					data <= (others => '0');
+				end if;
+			end if;
+		   end if;
+		end if;
+	   end process;
+	end generate nonblocking_read;
 
-	ipr: InputPortRevised
+	blocking_read: if (not nonblocking_read_flag) generate
+	   sr(0) <= sample_req;
+	   sample_ack <= sa(0);
+	
+	   ur(0) <= update_req;
+	   update_ack <= ua(0);
+
+	   ipr: InputPortRevised
 			generic map (name => name & "-input-port-revised",
 							num_reqs => 1, 
 							data_width => data_width,
@@ -54,6 +82,7 @@ begin
 					oreq => oreq, oack => oack, odata => odata,
 					clk => clk, reset => reset	
 				);
+         end generate blocking_read;
     end block bb;
   end generate bufLeOne;
 
@@ -63,7 +92,8 @@ begin
 	generic map (name => name & "-unload-buffer", 
 				data_width => data_width,
 				   buffer_size => queue_depth, 
-					bypass_flag => true)
+					bypass_flag => true, 
+						nonblocking_read_flag => nonblocking_read_flag)
 	port map (write_req => oack, write_ack => oreq, 
 					write_data => odata,
 				unload_req => update_req,
