@@ -19461,14 +19461,15 @@ begin
 			if(reset = '1') then
 				update_ack(I) <= false;
 				fsm_state <= Idle;
+				data_reg <= write_data(I);
 			else
 				fsm_state <= next_fsm_state;
 				update_ack(I) <= latch_v;
+				if(latch_v) then
+					data_reg <= write_data(I);
+				end if;
 			end if;
 
-			if(latch_v) then
-				data_reg <= write_data(I);
-			end if;
 		end if;
 	end process;
 
@@ -21990,6 +21991,7 @@ begin
 		if(clk'event and clk = '1') then
 		   if(reset = '1') then
 			update_ack <= false;
+			data <= (others => '0');
 		   else
 			update_ack <= update_req;
 			if(update_req) then
@@ -22235,10 +22237,11 @@ begin  -- default_arch
    process(write_req, write_data, read_req)
 	variable read_data_var : std_logic_vector(data_width-1 downto 0);
    begin
-	read_data_var := (others => '0');
 
 	if(write_req = '1') then
 		read_data_var := write_data;
+	else
+		read_data_var := (others => '0');
 	end if;
 
 	read_data <= read_data_var;

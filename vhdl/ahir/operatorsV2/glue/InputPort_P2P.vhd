@@ -48,6 +48,7 @@ begin
 		if(clk'event and clk = '1') then
 		   if(reset = '1') then
 			update_ack <= false;
+			data <= (others => '0');
 		   else
 			update_ack <= update_req;
 			if(update_req) then

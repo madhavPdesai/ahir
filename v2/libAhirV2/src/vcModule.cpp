@@ -747,14 +747,14 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		}
 	}
 
-	if(vcSystem::_enable_logging && !volatile_form)
+	if(vcSystem::_enable_logging)
 	{
 		ofile << "signal global_clock_cycle_count: integer := 0;" << endl;
 	}
 
 	ofile << "-- }" << endl << "begin --  {" << endl;
 
-	if(vcSystem::_enable_logging && !volatile_form)
+	if(vcSystem::_enable_logging)
 	{
 		ofile << " ---------------------------------------------------------- " << endl;
 		ofile << "process(clk)  " << endl;

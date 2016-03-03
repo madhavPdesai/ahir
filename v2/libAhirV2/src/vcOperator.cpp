@@ -157,7 +157,7 @@ void vcOperator::Print_VHDL_Logger(vcModule* parent_module, ostream& ofile)
 		this->Generate_Flowthrough_Logger_Sensitivity_List(sens_list);
 		ofile  << "process(" << sens_list << ") -- {" << endl;
 		ofile <<  "--}" << endl << "begin -- {" << endl;
-		ofile << " LogRecordPrint(0,  " << print_message << ");" << endl;
+		ofile << " LogRecordPrint(global_clock_cycle_count,  " << print_message << ");" << endl;
 		ofile << "--} " << endl << "end process; " << endl;
 	}
 }
@@ -171,7 +171,9 @@ void vcSplitOperator::Print_VHDL_Logger(vcModule* parent_module, ostream& ofile)
 	if(this->_acks.size() < 2)
 		flow_through = true;
 
-	string start_op_descriptor = "logger:" + module_name + ":DP:"  + this->Get_Id() + ":started: " ;
+	//string start_op_descriptor = "logger:" + module_name + ":DP:"  + this->Get_Id() + ":started: " ;
+	string start_op_descriptor = "logger:" + module_name + ":DP:" + this->Get_Id() + ":started: "  + 
+			(flow_through ? ":flowthrough " : " ") + this->Get_Logger_Description();
 	string finish_op_descriptor = "logger:" + module_name + ":DP:"  + this->Get_Id() + ":finished: ";
 
 	string input_string;
@@ -214,7 +216,7 @@ void vcSplitOperator::Print_VHDL_Logger(vcModule* parent_module, ostream& ofile)
 		this->Generate_Flowthrough_Logger_Sensitivity_List(sens_list);
 		ofile  << "process(" << sens_list << ") -- {" << endl;
 		ofile <<  "--}" << endl << "begin -- {" << endl;
-		ofile << " LogRecordPrint(0,  " << flow_through_print_message << ");" << endl;
+		ofile << " LogRecordPrint(global_clock_cycle_count,  " << flow_through_print_message << ");" << endl;
 		ofile << "--} " << endl << "end process; " << endl;
 	}
 }
@@ -463,6 +465,12 @@ vcCall::vcCall(string id, vcModule* m, vector<vcWire*>& in_wires, vector<vcWire*
 	_inline_flag = inline_flag;
 }
 
+
+string vcCall::Get_Logger_Description()
+{
+	return("Call to module " + _called_module->Get_Id());
+}
+
 bool vcCall::Is_Shareable_With(vcDatapathElement* other) 
 {
 	vcCall* ocall = NULL;
@@ -574,6 +582,12 @@ void vcCall::Print_Flow_Through_VHDL(ostream& ofile)
 		first_one = false;
 		ofile << this->_called_module->Get_Output_Argument(idx) << " => "
 			<< this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
+	}
+	if(vcSystem::_enable_logging)
+	{
+		if(!first_one)
+			ofile << ", ";
+		ofile << "clk => clk, reset => reset";
 	}
 	ofile << "); " << endl;
 }

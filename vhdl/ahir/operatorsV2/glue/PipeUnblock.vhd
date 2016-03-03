@@ -29,10 +29,11 @@ begin  -- default_arch
    process(write_req, write_data, read_req)
 	variable read_data_var : std_logic_vector(data_width-1 downto 0);
    begin
-	read_data_var := (others => '0');
 
 	if(write_req = '1') then
 		read_data_var := write_data;
+	else
+		read_data_var := (others => '0');
 	end if;
 
 	read_data <= read_data_var;

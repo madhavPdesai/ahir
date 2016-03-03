@@ -69,6 +69,7 @@ public:
 
   virtual void Print_Flow_Through_VHDL(ostream& ofile) {assert(0);}
   virtual void Print_VHDL_Instantiation_Preamble(bool flow_through_flag, ostream& ofile);
+  virtual string Get_Logger_Description() {return ("");}
   friend class vcDataPath;
 };
 
@@ -106,6 +107,7 @@ public:
 
   // operator instance..
   virtual void Print_Operator_VHDL(ostream& ofile);
+  virtual string Get_Logger_Description();
 
   friend class vcDataPath;
 };

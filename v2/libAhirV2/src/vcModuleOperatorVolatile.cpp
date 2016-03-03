@@ -60,6 +60,8 @@ void vcModule::Print_VHDL_Volatile_Entity(ostream& ofile)
 {
 	ofile << "entity " << this->Get_VHDL_Entity_Name() << " is -- {" << endl;
 	ofile << "port ( -- {" << endl;
+  	if(vcSystem::_enable_logging)
+	  ofile << " clk, reset: in std_logic; " << endl;
 	string sc = this->Print_VHDL_Argument_Ports("", ofile);
 	ofile << "-- } " << endl << ");" << endl;
 	ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Entity_Name() << ";" << endl;
@@ -71,6 +73,8 @@ void vcModule::Print_VHDL_Volatile_Component(ostream& ofile)
 {
   ofile << "component " << this->Get_VHDL_Entity_Name() << " is -- {" << endl;
   ofile << "port ( -- {" << endl;
+  if(vcSystem::_enable_logging)
+	  ofile << " clk, reset: in std_logic; " << endl;
   string sc = this->Print_VHDL_Argument_Ports("", ofile);
   if(this->_data_path != NULL)
   {
