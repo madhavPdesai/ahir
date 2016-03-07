@@ -35,7 +35,7 @@ $is
     $while (~exitcond1) 
 
 
-    $dopipeline $depth 8 $buffering 2 
+    $dopipeline $depth 8 $buffering 4 
 
 	$merge $entry $loopback
 		$phi inI := ($bitcast ($uint<16>) 0) $on $entry I $on $loopback

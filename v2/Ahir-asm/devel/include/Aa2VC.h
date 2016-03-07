@@ -84,6 +84,7 @@ void Write_VC_Unary_Operator(AaOperation op,
 			     AaType* target_type,
 			     string guard_string,
 			     bool flow_through,
+			     bool bitcast_flag, 
 			     ostream& ofile);
 
 void Write_VC_Bitmap_Operator(string inst_name, 

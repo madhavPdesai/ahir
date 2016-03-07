@@ -1,0 +1,78 @@
+// Aa code produced by llvm2aa (version 1.0)
+$pipe coeff_pipe : $float<8,23> $depth 1
+$pipe in_data_pipe : $float<8,23> $depth 1
+$storage coeff:$array [32] $of $float<8,23>
+$storage S:$array [32] $of $float<8,23>
+$pipe to_summer : $uint<33> $depth 8
+
+$module [fir] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    $dopipeline $depth 8 $buffering 1 
+    	$merge $entry $loopback
+    		$phi CC :=  ($bitcast ($uint<6>) 0) $on $entry  NCC $on $loopback
+    	$endmerge
+    	coeff[CC] := coeff_pipe
+	S[CC] := _f0.0e+0
+
+    	NCC := (CC + 1)
+    $while (CC < 31) 
+
+
+    $branchblock[firLoop] {
+
+
+
+        $dopipeline $depth 8 $buffering 2 
+
+	        $merge $entry $loopback
+		 	$phi K := ($bitcast ($uint<5>) 0) $on $entry NK $on $loopback
+			$phi WP := ($bitcast ($uint<5>) 0) $on $entry NWP $on $loopback
+		$endmerge
+
+		NK := (K + 8)
+		NWP := ($mux (NK == 32) (WP + 1) WP)
+
+		getX := (K == 0)
+		$guard (getX) S[WP] := in_data_pipe
+
+		K1 := (K + 1)
+		K2 := (K + 2)
+		K3 := (K + 3)
+		K4 := (K + 4)
+		K5 := (K + 5)
+		K6 := (K + 6)
+		K7 := (K + 7)
+
+		AWP_0 := (WP - K)
+		AWP_1 := (WP - K1)
+		AWP_2 := (WP - K2)
+		AWP_3 := (WP - K3)
+		AWP_4 := (WP - K4)
+		AWP_5 := (WP - K5)
+		AWP_6 := (WP - K6)
+		AWP_7 := (WP - K7)
+
+		P0 :=  (S[AWP_0] *  coeff[K])
+		P1 :=  (S[AWP_1] *  coeff[K1])
+		P2 :=  (S[AWP_2] *  coeff[K2])
+		P3 :=  (S[AWP_3] *  coeff[K3])
+		P4 :=  (S[AWP_4] *  coeff[K4])
+		P5 :=  (S[AWP_5] *  coeff[K5])
+		P6 :=  (S[AWP_6] *  coeff[K6])
+		P7 :=  (S[AWP_7] *  coeff[K7])
+
+		to_summer := ($concat ($bitcast ($uint<1>) 0) ($bitcast ($uint<32>) 
+					(((P0+P1) + (P2+P3)) + ((P4+P5)+(P6+P7))) ) )
+
+		closeSum := (NK == 32)
+		$guard (closeSum) 
+			to_summer :=  ($concat ($bitcast ($uint<1>) 1) ($bitcast ($uint<32>) 0))
+	$while 1
+    }
+  }
+}

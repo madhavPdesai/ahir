@@ -4081,7 +4081,8 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 				  tgt_name,
 				  this->Get_Type(),
 				  this->Get_VC_Guard_String(),
-				  flow_through,
+				  flow_through, 
+				  this->_bit_cast,
 				  ofile);
 	  }
 
@@ -4404,7 +4405,8 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 		      tgt_name,
 		      (target != NULL ? target->Get_Type() : this->Get_Type()),
 		      this->Get_VC_Guard_String(),
-			flow_through,
+			flow_through, 
+		      false, //not a bit-cast.
 		      ofile);
 
       if(!flow_through)
@@ -4704,10 +4706,11 @@ bool AaBinaryExpression::Is_Trivial()
 		// even though they have quadratic complexity.
 		return (this->_first->Get_Type()->Size() <= 16);
 	}
-	else if(this->_first->Get_Type()->Size() <= 32)
+	else if((this->_first->Get_Type()->Size() <= 32) && (!this->Get_Type()->Is_Float_Type()))
 	{
 		// others with less than 32 bits are "trivial"..
 		// because they have linear complexity.
+		// (except for floats!)
 		return (true);
 	}
 

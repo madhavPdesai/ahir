@@ -47,11 +47,12 @@ begin  -- default_arch
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			read_ack <= false;
+			data_register <= (others => '0');
 		else
 			read_ack <= joined_req;
-		end if;
-		if(joined_req) then
-			data_register <= write_data(min_data_width-1 downto 0);	
+			if(joined_req) then
+				data_register <= write_data(min_data_width-1 downto 0);	
+			end if;
 		end if;
 	end if;	
   end process;

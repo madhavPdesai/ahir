@@ -20244,11 +20244,12 @@ begin  -- default_arch
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			read_ack <= false;
+			data_register <= (others => '0');
 		else
 			read_ack <= joined_req;
-		end if;
-		if(joined_req) then
-			data_register <= write_data(min_data_width-1 downto 0);	
+			if(joined_req) then
+				data_register <= write_data(min_data_width-1 downto 0);	
+			end if;
 		end if;
 	end if;	
   end process;
@@ -21527,6 +21528,98 @@ begin
 	end process;	
 	ca_out <= ca_out_u or ca_out_d;
 end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- brief description:
+--  as the name indicates, a squash-shift-register
+--  provides an implementation of a pipeline.
+--
+entity SquashShiftRegister is
+  generic (name : string;
+	   data_width: integer;
+           depth: integer := 1);
+  port (
+    read_req       : in  std_logic;
+    read_ack       : out std_logic;
+    read_data      : out std_logic_vector(data_width-1 downto 0);
+    write_req       : in  std_logic;
+    write_ack       : out std_logic;
+    write_data      : in std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  
+end SquashShiftRegister;
+
+architecture default_arch of SquashShiftRegister is
+
+  constant n_stages: integer := Ceil(depth, 2);
+  constant last_stage_depth : integer :=  (depth - ((n_stages-1)*2));
+
+  signal int_write_reqs, int_write_acks, int_read_reqs, int_read_acks: std_logic_vector(1 to n_stages);
+
+  type DataArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
+  signal stage_data: DataArray(0 to n_stages); 
+
+begin  -- default_arch
+  int_write_reqs(1) <= write_req;
+  write_ack <= int_write_reqs(1);
+
+  int_read_reqs(n_stages)  <= read_req;
+  read_ack <= int_read_acks(n_stages);
+
+  stage_data(0) <= write_data;
+  read_data <= stage_data(n_stages);
+
+  ifGen1: if(n_stages > 1) generate
+     genArray: for I in 1 to n_stages-1 generate
+	-- depth 2 queues.. to reduce the combinational path delays
+	inst: QueueBase 
+		generic map(name => name & ":stage:" & Convert_To_String(I), data_width => data_width, queue_depth => 2)
+		port map(pop_req => int_read_reqs(I),
+			  pop_ack => int_read_acks(I),
+			  push_req => int_write_reqs(I),
+			  push_ack => int_write_acks(I),
+			  data_in => stage_data(I-1),
+			  data_out => stage_data(I), 
+			  clk => clk, 
+			  reset => reset);
+    end generate genArray;
+  end generate ifGen1;
+	
+  ifSingleLast: if(last_stage_depth = 1) generate
+    lastinst: PipelineRegister 
+	generic map(name => name & ":stage:" & Convert_To_String(n_stages), data_width => data_width)
+		port map(read_req => int_read_reqs(n_stages),
+			  read_ack => int_read_acks(n_stages),
+			  write_req => int_write_reqs(n_stages),
+			  write_ack => int_write_acks(n_stages),
+			  write_data => stage_data(n_stages-1),
+			  read_data => stage_data(n_stages), 
+			  clk => clk, 
+			  reset => reset);
+  end generate ifSingleLast;
+
+  ifNotSingleLast: if(last_stage_depth > 1) generate
+	inst: QueueBase 
+		generic map(name => name & ":stage:" & Convert_To_String(n_stages), data_width => data_width, queue_depth => 2)
+		port map(pop_req => int_read_reqs(n_stages),
+			  pop_ack => int_read_acks(n_stages),
+			  push_req => int_write_reqs(n_stages),
+			  push_ack => int_write_acks(n_stages),
+			  data_in => stage_data(n_stages-1),
+			  data_out => stage_data(n_stages), 
+			  clk => clk, 
+			  reset => reset);
+  end generate ifNotSingleLast;
+
+
+end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

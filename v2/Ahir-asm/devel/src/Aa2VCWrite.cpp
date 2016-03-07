@@ -106,6 +106,7 @@ void Write_VC_Unary_Operator(AaOperation op,
 			     AaType* target_type,
 			     string guard_string,
 			     bool flow_through,
+			     bool bitcast_flag,
 			     ostream& ofile)
 {
   string op_name;
@@ -127,7 +128,7 @@ void Write_VC_Unary_Operator(AaOperation op,
 	  src_kind = ((src_type->Is("AaFloatType")) ? "F" :
 		       (src_type->Is("AaIntType") ? "S" : "U"));
 
-	  if((target_type == src_type) || ( (dest_kind == "U" && src_kind == "U")))
+	  if(bitcast_flag || ((target_type == src_type) || ( (dest_kind == "U" && src_kind == "U"))))
 	    {
 	      	// just an interlock-buffer.
 	      	op_name = "# :=";

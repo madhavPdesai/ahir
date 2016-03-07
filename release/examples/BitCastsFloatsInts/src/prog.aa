@@ -1,0 +1,23 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+
+$module [bitcast_check_daemon] $in() $out () $is
+{
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback $endmerge
+
+		X := in_data
+
+		Y := (($bitcast ($float<8,23>) X) + _f1.0e+0)
+
+		Z := ($bitcast ($uint<32>) Y) 
+
+		out_data  := Z
+
+		$while 1
+	}
+}

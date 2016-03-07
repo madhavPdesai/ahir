@@ -1,0 +1,2 @@
+sum_flag 2
+sum_pipe  2

@@ -1007,6 +1007,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 								addr_type,
 								this->Get_VC_Guard_String(),
 								false,
+								false,
 								ofile);
 						// extreme pipelining.
 						if(this->Is_Part_Of_Extreme_Pipeline())
@@ -1180,6 +1181,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 						tgt_name,
 						addr_type,
 						this->Get_VC_Guard_String(),
+						false,
 						false,
 						ofile);
 				// extreme pipelining.
