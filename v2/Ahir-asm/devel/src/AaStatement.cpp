@@ -1014,6 +1014,11 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 AaAssignmentStatement::~AaAssignmentStatement() {};
 
 
+bool AaAssignmentStatement::Get_Is_Volatile()
+{
+	return(_is_volatile);
+}
+
 void AaAssignmentStatement::Set_Is_Volatile(bool v)
 {
 	AaScope* sc = this->Get_Root_Scope();
@@ -1697,6 +1702,10 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 }
 AaCallStatement::~AaCallStatement() {};
 
+bool AaCallStatement::Get_Is_Volatile()
+{
+	return(_is_volatile);
+}
 
 void AaCallStatement::Replace_Input_Argument(AaExpression* old_arg, AaSimpleObjectReference* new_arg)
 {

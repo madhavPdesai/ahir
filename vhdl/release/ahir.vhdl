@@ -6596,15 +6596,16 @@ end entity memory_bank;
 
 architecture SimModel of memory_bank is
 
-  signal write_done, read_done, write_has_priority: std_logic;
-  signal write_address_sig, read_address_sig : natural range 0 to (2**g_addr_width)-1;
-  signal state_sig: std_logic;
-  signal enable_base,enable_sig, write_enable_base, read_enable_base: std_logic;
+  signal write_has_priority: std_logic;
+  signal enable_base,enable_sig, write_enable_base, read_enable_base, read_enable_base_registered: std_logic;
 
   signal addr_base : std_logic_vector(g_addr_width-1 downto 0);
-  signal block_write_ack, block_read_ack: std_logic;
+  signal read_data_base  : std_logic_vector(g_data_width-1 downto 0);
+  signal read_data_base_reg  : std_logic_vector(g_data_width-1 downto 0);
   
-  
+  type FsmState is (IDLE, RDONE, WDONE);
+  signal fsm_state : FsmState;
+
 begin  -- behave
 
   Tstampgen: if g_time_stamp_width > 0 generate 
@@ -6638,60 +6639,84 @@ begin  -- behave
         write_has_priority <= write_enable;
    end generate NoTstampGen;
 
+  -- FSM
+  process(clk, reset, fsm_state, 
+		write_enable, write_addr, write_data, write_result_accept,
+		read_enable, read_addr, read_result_accept)
+	variable next_state: FsmState;
+	variable we_base, re_base: std_logic;
+        variable wrr, rrr: std_logic;
 
-  -- basically, the enable/ack pair and the ready/accept pair
-  -- have to be coordinated: in one complete cycle, the
-  -- following sequence must be followed
-  --  enable -> ready -> accept -> ack.
-  process(reset,write_enable,write_has_priority,read_enable,clk)
+	variable write_active, read_active: boolean;
   begin
-    if clk'event and clk = '1' then
-      if(reset = '1') then
-        write_done <= '0';
-        read_done <= '0';
-      else
-        if(write_enable = '1' and (write_has_priority = '1' or read_enable = '0')) then
-          write_done <= '1';
-        else
-          write_done <= '0';
-        end if; 
-        if(read_enable = '1' and (write_has_priority = '0' or write_enable = '0')) then
-          read_done <= '1';
-        else
-          read_done <= '0';
-        end if;
-      end if;
-    end if;
-  end process;
+	next_state := fsm_state;
+	we_base := '0'; 
+	re_base := '0';
+	wrr	:= '0';
+	rrr 	:= '0';
 
-  -- ack when done 
-  block_write_ack <= '1' when (write_done = '1' and write_result_accept = '0') else '0';
-  write_ack <= '1' when (write_enable = '1' and (read_enable = '0' or write_has_priority = '1') and  block_write_ack = '0') else '0';
-  write_result_ready <= write_done;
-  
-  -- ack to read only when result is also enabled
-  block_read_ack <= '1' when (read_done = '1' and read_result_accept = '0') else '0';
-  read_ack <= '1' when (read_enable = '1' and (write_enable = '0' or write_has_priority = '0') and  block_read_ack = '0') else '0';
-  read_result_ready <= read_done;  
+	write_active := ((((write_enable = '1') and (read_enable = '1')) and (write_has_priority = '1'))
+				or
+			 ((write_enable = '1') and (read_enable = '0')));
+	read_active := ((((write_enable = '1') and (read_enable = '1')) and (write_has_priority = '0'))
+				or
+			 ((write_enable = '0') and (read_enable = '1')));
 
+	case fsm_state is
+		when IDLE =>
+		        if(write_active) then
+				we_base := '1';
+				next_state := WDONE;
+			elsif (read_active) then
+				re_base := '1';
+				next_state := RDONE;
+			end if;
+		when RDONE =>
+			rrr := '1';
+			if(read_result_accept = '1') then
+		        	if(write_active) then
+					we_base := '1';
+					next_state := WDONE;
+				elsif (read_active) then
+					re_base := '1';
+					next_state := RDONE;
+				else
+					next_state := IDLE;
+				end if;
+			end if;
+		when WDONE =>
+			wrr := '1';
+			if(write_result_accept ='1') then
+		        	if(write_active) then
+					we_base := '1';
+					next_state := WDONE;
+				elsif (read_active) then
+					re_base := '1';
+					next_state := RDONE;
+				else
+					next_state := IDLE;
+				end if;
+			end if;
+	end case;
 
-  process(write_enable, write_has_priority, block_write_ack)
-  begin  -- process
-      if(write_enable = '1' and write_has_priority = '1' and block_write_ack = '0') then
-	write_enable_base <= '1';
-      else
-	write_enable_base <= '0';
-      end if;
-  end process;
+	write_enable_base <= we_base;
+	write_ack <= we_base;
 
-  
-  process(read_enable,  write_has_priority, block_read_ack)
-  begin
-    if(read_enable = '1' and write_has_priority = '0' and block_read_ack = '0') then
-	read_enable_base <= '1';
-    else
-	read_enable_base <= '0';
-    end if;
+	read_enable_base <= re_base;
+	read_ack <= re_base;
+
+	write_result_ready <= wrr;
+	read_result_ready <= rrr;
+
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			fsm_state <= IDLE;
+			read_enable_base_registered <= '0';
+		else
+			fsm_state <= next_state;
+			read_enable_base_registered <= re_base;
+		end if;
+	end if;
   end process;
 
   addr_base <= write_addr when write_enable_base = '1' else read_addr when read_enable_base = '1' else (others => '0');
@@ -6703,7 +6728,7 @@ begin  -- behave
 					g_base_bank_data_width => g_base_bank_data_width)
     port map(data_in => write_data,
              addr_in => addr_base,
-             data_out => read_data,
+             data_out => read_data_base,
              enable => enable_sig,
              write_bar => read_enable_base,
              clk => clk,
@@ -6715,7 +6740,10 @@ begin  -- behave
   process(clk)
   begin
 	if(clk'event and clk = '1') then
-		if(enable_sig = '1') then
+		if(reset = '1') then
+		     read_tag_out <= (others => '0');
+		     write_tag_out <= (others => '0');
+		elsif(enable_sig = '1') then
 			if(read_enable_base = '1') then
 				read_tag_out <= read_tag;
 			else
@@ -6724,7 +6752,18 @@ begin  -- behave
 		end if;
 	end if;
   end process;
-  
+
+  -- bypass register for read_data_base
+  process(clk)
+  begin
+	if(clk'event and clk = '1') then
+		if(read_enable_base_registered = '1') then 
+			read_data_base_reg  <= read_data_base;
+		end if;
+	end if;
+  end process;
+  read_data <= read_data_base when (read_enable_base_registered = '1') else read_data_base_reg;
+
 end SimModel;
 
 

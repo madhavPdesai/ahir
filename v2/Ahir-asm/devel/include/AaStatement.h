@@ -503,7 +503,7 @@ class AaAssignmentStatement: public AaStatement
   virtual bool Is_Assignment_Statement() { return(true);}
 
   virtual void Set_Is_Volatile(bool v);
-  virtual bool Get_Is_Volatile()       { return(_is_volatile); }
+  virtual bool Get_Is_Volatile(); //       { return(_is_volatile); }
   virtual void Collect_Root_Sources(set<AaExpression*>& root_src_exprs);
 
   virtual void Set_Pipeline_Parent(AaStatement* dws);
@@ -598,7 +598,7 @@ class AaCallStatement: public AaStatement
   virtual bool Is_Call_Statement() {return(true);}
 
   virtual void Set_Is_Volatile(bool v);
-  virtual bool Get_Is_Volatile()       { return(_is_volatile); }
+  virtual bool Get_Is_Volatile(); //       { return(_is_volatile); }
   virtual void Collect_Root_Sources(set<AaExpression*>& root_src_exprs);
 
   void Replace_Input_Argument(AaExpression* old_arg, AaSimpleObjectReference* new_arg);
