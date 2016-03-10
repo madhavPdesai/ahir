@@ -67,7 +67,7 @@ Release:
 	cp $(CTESTBENCH)/lib/* $(RELEASE)/lib/
 	# copy the VHDL files
 	cp $(VHDL)/release/*.vhdl $(RELEASE)/vhdl/
-	cp $(VHDL)/unisims/*.vhd* $(RELEASE)/vhdl/
+	cp -r $(VHDL)/unisims $(RELEASE)/vhdl/
 	#cp $(VHDL)/unisims/*.cf $(RELEASE)/vhdl/
 	#cp $(VHDL)/unisims/*.o $(RELEASE)/vhdl/
 	#cp $(VHDL)/simprims/*.vhd* $(RELEASE)/vhdl/
