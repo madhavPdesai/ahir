@@ -1,0 +1,90 @@
+$pipe in_data  : $uint<32> $depth 8 //use depth 2 or higher for correct execution
+$pipe out_data : $uint<32> $depth 8
+
+//An example for collecting 64, 32 bit integers, saving it in memory as floating point.
+//Reading it and sending it back
+
+$storage A: $array [256] $of $uint<128>
+$storage B: $array [256] $of $uint<128>
+
+$module [multiply] $in() $out () $is
+{
+	$branchblock[InitA] {
+		$merge $entry loopback
+    		$phi COUNT := ($bitcast ($uint<16>) 0) 
+					$on $entry NCOUNT $on loopback
+		$endmerge
+    w0 := in_data
+    w1 := in_data
+    w2 := in_data
+    w3 := in_data
+      
+    $volatile val := ($concat w0 w1 w2 w3)
+    
+    A[COUNT] := val
+    
+    NCOUNT := (COUNT+1)
+    $if (COUNT < 255) $then
+        $place[loopback]
+    $endif
+	}
+	
+	$branchblock[InitB] {
+		$merge $entry vecback
+    		$phi VCOUNT := ($bitcast ($uint<16>) 0) 
+					$on $entry NVCOUNT $on vecback
+		$endmerge
+    w0 := in_data
+    w1 := in_data
+    w2 := in_data
+    w3 := in_data
+    
+    $volatile valvec := ($concat w0 w1 w2 w3)
+    
+    B[VCOUNT] := valvec
+    
+    NVCOUNT := (VCOUNT+1)
+    $if (VCOUNT < 255) $then
+        $place[vecback]
+    $endif
+	}
+	
+	$branchblock[compute]{
+   $dopipeline $depth 16 $buffering 1
+    	$merge $entry $loopback 
+   			$phi IDI := ($bitcast ($uint<16>) 0) $on $entry NIDI $on $loopback
+      $endmerge 
+    
+      A1 := A[IDI]
+      B1 := B[IDI]
+      
+      $volatile $split (A1 32 32 32 32)
+				(a0 a1 a2 a3)
+
+      $volatile $split (B1 32 32 32 32)
+    				(b0 b1 b2 b3)
+                        
+      $volatile fa0 := ($bitcast ($float<8,23>) a0)
+      $volatile fa1 := ($bitcast ($float<8,23>) a1)
+      $volatile fa2 := ($bitcast ($float<8,23>) a2)
+      $volatile fa3 := ($bitcast ($float<8,23>) a3)
+      
+      $volatile fb0 := ($bitcast ($float<8,23>) b0)
+      $volatile fb1 := ($bitcast ($float<8,23>) b1)
+      $volatile fb2 := ($bitcast ($float<8,23>) b2)
+      $volatile fb3 := ($bitcast ($float<8,23>) b3)
+      
+      o1 := (fa0*fb0)
+      o2 := (fa1*fb1)
+      o3 := (fa2*fb2)
+      o4 := (fa3*fb3)
+               
+      out_data := ($bitcast ($uint<32>) o1)
+      out_data := ($bitcast ($uint<32>) o2)
+      out_data := ($bitcast ($uint<32>) o3)
+      out_data := ($bitcast ($uint<32>) o4)
+      
+      $volatile NIDI := (IDI+1)     
+    $while (IDI < 255)
+ 	}
+}
