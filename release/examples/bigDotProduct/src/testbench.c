@@ -29,8 +29,8 @@ void Sender()
 	
 	for (idx = 0; idx < ORDER; idx++)
 	{
-		A[idx] = idx;
-		B[idx] = idx;
+		A[idx] = drand48();
+		B[idx] = drand48();
 		expected_result[idx] = A[idx] * B[idx];
 		write_uint32("in_data",*((uint32_t*) &A[idx]));
 	}
