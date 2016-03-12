@@ -361,7 +361,8 @@ class AaExpression: public AaRoot
 	// used in root address calculation.
 	// 
 	virtual void
-		Update_Reenable_Points_And_Producer_Delay_Status(set<string>& en_points, set<AaRoot*>& visited_elements);
+		Update_Reenable_Points_And_Producer_Delay_Status(set<string>& en_points, map<string,bool>& en_bypass_flags, 
+													set<AaRoot*>& visited_elements);
 
 };
 

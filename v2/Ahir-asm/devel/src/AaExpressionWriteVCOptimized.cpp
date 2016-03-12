@@ -2463,7 +2463,9 @@ void AaObjectReference::Write_VC_Address_Calculation_Links_Optimized(string hier
 
 // when this expression is trivial, reenables to it have to be
 // targeted to the root sources.
-void AaExpression:: Update_Reenable_Points_And_Producer_Delay_Status(set<string>& en_points, set<AaRoot*>& visited_elements)
+void AaExpression:: Update_Reenable_Points_And_Producer_Delay_Status(set<string>& en_points, 
+									map<string,bool>& en_bypass_flags,
+										set<AaRoot*>& visited_elements)
 {
 	set<AaExpression*> root_expr_set;
 	this->Collect_Root_Sources(root_expr_set);
@@ -2480,6 +2482,9 @@ void AaExpression:: Update_Reenable_Points_And_Producer_Delay_Status(set<string>
 			{
 				string en_trans_name = root_expr->Get_VC_Reenable_Update_Transition_Name(visited_elements);	
 				en_points.insert(en_trans_name);
+
+				bool en_bypass = root_expr->Update_Protocol_Has_Delay(visited_elements);
+				en_bypass_flags[en_trans_name] =  en_bypass;
 			}
 		}
 	}	
@@ -2583,6 +2588,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 				if(pipeline_flag)
 				{
 					index_expr->Update_Reenable_Points_And_Producer_Delay_Status(index_chain_reenable_map[idx], 
+													active_reenable_bypass_flags,
 															visited_elements);
 				}
 				index_chain_complete_map[idx] = __UCT(index_expr);
