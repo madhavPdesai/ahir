@@ -356,6 +356,13 @@ class AaExpression: public AaRoot
 	{
 		visited_elements.insert(this);
 	}
+
+	//
+	// used in root address calculation.
+	// 
+	virtual void
+		Update_Reenable_Points_And_Producer_Delay_Status(set<string>& en_points, set<AaRoot*>& visited_elements);
+
 };
 
 

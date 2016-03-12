@@ -2461,7 +2461,31 @@ void AaObjectReference::Write_VC_Address_Calculation_Links_Optimized(string hier
 
 }
 
- 
+// when this expression is trivial, reenables to it have to be
+// targeted to the root sources.
+void AaExpression:: Update_Reenable_Points_And_Producer_Delay_Status(set<string>& en_points, set<AaRoot*>& visited_elements)
+{
+	set<AaExpression*> root_expr_set;
+	this->Collect_Root_Sources(root_expr_set);
+
+	for(set<AaExpression*>::iterator iter = root_expr_set.begin();
+			iter != root_expr_set.end(); iter++)
+	{
+		AaExpression* root_expr = *iter;
+		if(visited_elements.find(root_expr) != visited_elements.end())
+		{
+			if((this->Get_Associated_Phi_Statement() == NULL) || 
+				(root_expr->Get_Associated_Phi_Statement() != 
+						this->Get_Associated_Phi_Statement()))
+			{
+				string en_trans_name = root_expr->Get_VC_Reenable_Update_Transition_Name(visited_elements);	
+				en_points.insert(en_trans_name);
+			}
+		}
+	}	
+}
+
+
 
 // all operations are triggered immediately when the containing
 // fork-block is entered.  dependencies as indicated..
@@ -2522,7 +2546,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 	string base_address_calculated = this->Get_VC_Name() + "_base_address_calculated";
 
-	map<int,string> index_chain_reenable_map;
+	map<int,set<string> > index_chain_reenable_map;
 	map<int,string> index_chain_complete_map;
 
 	// if offset value is < 0, then it is not known at compile time.
@@ -2533,8 +2557,11 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 		for(int idx = 0; idx < index_vector->size(); idx++)
 		{
+			AaExpression* index_expr = (*index_vector)[idx];
+ 
 			// if the index is a constant dont bother to compute it..
-			if(!(*index_vector)[idx]->Is_Constant())
+			//
+			if(!index_expr->Is_Constant())
 			{
 				non_constant_indices.push_back(idx);
 
@@ -2547,30 +2574,25 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 				__T(index_scaled);
 
 				num_non_constant++;
-				(*index_vector)[idx]->Write_VC_Control_Path_Optimized(pipeline_flag, 
+				index_expr->Write_VC_Control_Path_Optimized(pipeline_flag, 
 						visited_elements,
 						ls_map,pipe_map,barrier,
 						ofile);
 
-				bool ivec_update_delay = (*index_vector)[idx]->Update_Protocol_Has_Delay(visited_elements);
-
-				string idx_reenable = ((*index_vector)[idx]->Get_VC_Reenable_Update_Transition_Name(visited_elements));
-				index_chain_reenable_map[idx] = idx_reenable;
 
 				if(pipeline_flag)
 				{
-					active_reenable_points.insert(idx_reenable);
-					active_reenable_bypass_flags[idx_reenable] = ivec_update_delay;
+					index_expr->Update_Reenable_Points_And_Producer_Delay_Status(index_chain_reenable_map[idx], 
+															visited_elements);
 				}
-
-				index_chain_complete_map[idx] = __UCT((*index_vector)[idx]);
+				index_chain_complete_map[idx] = __UCT(index_expr);
 
 
 				
 				string idx_resize_regn_name = this->Get_VC_Name() + "_index_resize_" + 
 								IntToStr(idx);
 
-				if((*index_vector)[idx]->Get_Type()->Is_Uinteger_Type())
+				if(index_expr->Get_Type()->Is_Uinteger_Type())
 				{
 					ofile << ";;[" << idx_resize_regn_name << "] {" << endl;
 					ofile << "$T [index_resize_req] $T [index_resize_ack] // resize index to address-width" << endl;
@@ -2620,14 +2642,17 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 					if(pipeline_flag)
 					{
-						// reenable index expression update when
-						// sample-completed.
-						__MJ(index_chain_reenable_map[idx], idx_resize_sample_complete, 
-								true);  // bypass
-						active_reenable_points.erase(index_chain_reenable_map[idx]);
-						index_chain_reenable_map[idx] = idx_resize_update_start;
-						active_reenable_points.insert(idx_resize_update_start);
-						active_reenable_bypass_flags[idx_resize_update_start] = true;
+						for(set<string>::iterator iiter = index_chain_reenable_map[idx].begin(), 
+							fiiter = index_chain_reenable_map[idx].end();
+							iiter != fiiter; iiter++)
+						{
+							// reenable index expression update when
+							// sample-completed.
+							string jj = *iiter;
+							__MJ(jj, idx_resize_sample_complete, true);  // bypass
+						}
+						index_chain_reenable_map[idx].clear();
+						index_chain_reenable_map[idx].insert(idx_resize_update_start);
 
 						// self-release. 
 						__MJ(idx_resize_sample_start, idx_resize_sample_complete, false); // no bypass
@@ -2678,11 +2703,17 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 					{
 						// successor complete: indices_scaled
 						// predecessor sample: index_resized.
-						__MJ(index_chain_reenable_map[idx], index_scaled, true); // bypass
-						active_reenable_points.erase(index_chain_reenable_map[idx]);
-						index_chain_reenable_map[idx] = idx_scale_update_start;
-						active_reenable_points.insert(idx_scale_update_start);
-						active_reenable_bypass_flags[idx_scale_update_start] = true;
+						for(set<string>::iterator iiter = index_chain_reenable_map[idx].begin(), 
+							fiiter = index_chain_reenable_map[idx].end();
+							iiter != fiiter; iiter++)
+						{
+							string jj = *iiter;
+							// reenable index expression update when
+							// sample-completed.
+							__MJ(jj, index_scaled, true);  // bypass
+						}
+						index_chain_reenable_map[idx].clear();
+						index_chain_reenable_map[idx].insert(index_scaled);
 
 						// self-release.. 
 						__MJ(idx_scale_sample_start, idx_scale_sample_complete, false); // bypass
@@ -2717,14 +2748,12 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		assert(non_constant_indices.size() > 0);
 
 		string last_sum_complete = index_chain_complete_map[non_constant_indices[0]];
-		string last_sum_reenable = index_chain_reenable_map[non_constant_indices[0]];
-		bool ls_reenable_flag = active_reenable_bypass_flags[last_sum_reenable];
+		string last_sum_reenable = "";
 
 		if(num_index_adds > 0)
 		{
 			for(int idx = 1; idx <= num_index_adds; idx++)
 			{
-				ls_reenable_flag = true;
 				reg_flag = true;
 				string prefix = this->Get_VC_Name() + "_partial_sum_" + IntToStr(idx);
 
@@ -2773,8 +2802,10 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 					if(pipeline_flag)
 					{
-						__MJ(index_chain_reenable_map[I0], sample_complete, true); // bypass
-						__MJ(index_chain_reenable_map[I1], sample_complete, true); // bypass
+						Write_VC_Marked_Joins(index_chain_reenable_map[I0], sample_complete, false, ofile);
+						Write_VC_Marked_Joins(index_chain_reenable_map[I1], sample_complete, false, ofile);
+						index_chain_reenable_map[I0].clear();
+						index_chain_reenable_map[I1].clear();
 					}
 				}
 				else
@@ -2784,7 +2815,10 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 					__J(sample_start, last_sum_complete);
 					if(pipeline_flag)
 					{	
-						__MJ(index_chain_reenable_map[I1], sample_complete, true); // bypass
+						Write_VC_Marked_Joins(index_chain_reenable_map[I1], sample_complete, true, ofile);
+						index_chain_reenable_map[I1].clear();
+						if(last_sum_reenable != "")
+							__MJ(last_sum_reenable, update_complete, false);
 					}
 				}
 
@@ -2796,13 +2830,26 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 				last_sum_complete =  update_complete;
 				last_sum_reenable =  update_start;
+
+				active_reenable_points.clear();
+				active_reenable_points.insert(last_sum_reenable);
+				active_reenable_bypass_flags[last_sum_reenable] = true;
 			}
 
 		}
-		active_reenable_points.clear();
-		active_reenable_points.insert(last_sum_reenable);
-		active_reenable_bypass_flags[last_sum_reenable] = ls_reenable_flag;
 
+		// active reenables from index-chains.
+		for(int IIDX = 0, FIIDX = index_vector->size(); IIDX < FIIDX; IIDX++)
+                {
+			for(set<string>::iterator iiter = index_chain_reenable_map[IIDX].begin(),
+				fiiter = index_chain_reenable_map[IIDX].end(); iiter != fiiter; iiter++)
+			{
+				active_reenable_points.insert(*iiter);
+				active_reenable_bypass_flags[*iiter] =true;
+			}
+                }
+
+		// index addition..
 		if(const_index_flag)
 		{
 			// add the constant index sum to the non-constant
@@ -2832,7 +2879,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 			if(pipeline_flag)
 			{
-				__MJ(last_sum_reenable, sample_complete, false); // no bypass.
+				Write_VC_Marked_Joins(active_reenable_points, sample_complete, false, ofile);
 				__MJ(update_start, offset_calculated, true); // bypass.
 			}
 		

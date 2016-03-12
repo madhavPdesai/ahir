@@ -625,6 +625,15 @@ void Write_VC_Reenable_Joins(set<string>& active_reenable_points,
 
 void Write_VC_RAW_Release_Deps(AaRoot* succ, set<AaRoot*>& preds) {assert(0);}
 
+void Write_VC_Marked_Joins(set<string> join_trans_set, string trig_trans, bool bypass_flag, ostream& ofile)
+{
+	for(set<string>::iterator iter = join_trans_set.begin(), fiter = join_trans_set.end(); iter != fiter; iter++)
+	{
+		string jname = *iter;
+		__MJ(jname, trig_trans, bypass_flag);
+	}
+}
+
 string Get_Op_Ascii_Name(AaOperation op, AaType* src_type, AaType* dest_type)
 {
 	string ret_val;

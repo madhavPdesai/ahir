@@ -213,6 +213,9 @@ void Write_VC_Reenable_Joins(set<string>& active_reenable_points,
 
 void Write_VC_RAW_Release_Deps(AaRoot* succ, set<AaRoot*>& preds);
 
+
+void Write_VC_Marked_Joins(set<string> join_trans_set, string trig_trans, bool bypass_flag, ostream& ofile);
+
 string Get_Op_Ascii_Name(AaOperation op, AaType* src_type, AaType* dest_type);
 
 #endif
