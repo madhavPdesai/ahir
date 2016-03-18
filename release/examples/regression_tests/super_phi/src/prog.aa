@@ -1,0 +1,35 @@
+$noblock $pipe read_command: $uint<8>   $depth 1
+$pipe write_command : $uint<8> $depth 1
+$pipe out_data: $uint<8> $depth 1
+
+$volatile $module [update_vars] 
+     $in (FULL: $uint<1> rcmd : $uint<8> wcmd : $uint<8> )
+     	$out (active_read active_write next_FULL: $uint<1>) $is
+{
+  active_read := (FULL & (rcmd [] 0))
+  active_write := ((~FULL) & (wcmd [] 0))
+  next_FULL := ($prioritymux active_read 0 active_write 1 $default FULL)
+}
+
+$module [run_daemon] $in () $out () $is
+{
+	$branchblock[LoOp] {
+
+		$dopipeline $depth 8 $buffering 2 $fullrate
+			$merge $entry $loopback 
+				$phi FULL := ($bitcast ($uint<1>) 1) $on $entry next_FULL $on $loopback
+				$phi counter := ($bitcast($uint<8>) 0) $on $entry next_counter $on $loopback
+				$phi rcmd := ($bitcast ($uint<8>) 0) $on $entry 
+							$guard (FULL) read_command $on $loopback
+				$phi wcmd := ($bitcast ($uint<8>) 0) $on $entry
+							$guard (~FULL) write_command $on $loopback
+			$endmerge
+
+			$volatile $call update_vars (FULL rcmd wcmd) (active_read active_write next_FULL)
+			$volatile next_counter := ($mux active_write (counter+1) counter)
+
+			$guard (active_read) 
+					out_data := counter
+		$while 1
+	}
+}

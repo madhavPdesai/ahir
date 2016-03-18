@@ -340,8 +340,9 @@ class AaExpression: public AaRoot
 	virtual bool Is_Part_Of_Extreme_Pipeline();
 	virtual bool Is_Part_Of_Operator_Module();
 
-	virtual void Collect_Root_Sources(set<AaExpression*>& root_set) {if(!this->Is_Constant()) root_set.insert(this);}
-	virtual void Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,  set<AaRoot*>& visited_elements, ostream& ofile);
+	virtual void Collect_Root_Sources(set<AaRoot*>& root_set) {if(!this->Is_Constant()) root_set.insert(this);}
+	virtual void Write_VC_Update_Reenables(AaRoot* reenabling_agent, 
+							string ctrans, bool bypass_if_true,  set<AaRoot*>& visited_elements, ostream& ofile);
 
 
 	virtual bool Is_Part_Of_Pipelined_Module(); // TODO: return true if in pipelined module.
@@ -731,7 +732,7 @@ class AaConstantLiteralReference: public AaObjectReference
 	{
 		_associated_statement = stmt;
 	}
-	virtual void Collect_Root_Sources(set<AaExpression*>& root_set) {};
+	virtual void Collect_Root_Sources(set<AaRoot*>& root_set) {};
 	virtual string Get_VC_Name() {return("konst_" + Int64ToStr(this->Get_Index()));}
 };
 
@@ -855,7 +856,7 @@ class AaSimpleObjectReference: public AaObjectReference
 
 	// added so that we can track from simple object references
 	// backward through combinational statements.
-	virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
+	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
 
 	virtual bool Is_Trivial();
 };
@@ -1003,7 +1004,7 @@ class AaArrayObjectReference: public AaObjectReference
 	virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
 	virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements);
-	virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
+	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
 	virtual bool Base_Address_Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements);
 };
 
@@ -1296,7 +1297,7 @@ class AaTypeCastExpression: public AaExpression
 	virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
 	virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements);
 	virtual bool Is_Trivial();
-	virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
+	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
 };
 
 class AaSliceExpression: public AaTypeCastExpression
@@ -1408,7 +1409,7 @@ class AaUnaryExpression: public AaExpression
 	} 
 
 	virtual bool Is_Trivial() {return(true);}
-	virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
+	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
 };
 
 class AaBitmapExpression: public AaUnaryExpression
@@ -1541,7 +1542,7 @@ class AaBinaryExpression: public AaExpression
 			AaRoot* barrier,
 			ostream& ofile);
 
-	virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
+	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
 };
 
 // ternary expression: a ? b : c
@@ -1639,7 +1640,7 @@ class AaTernaryExpression: public AaExpression
 	{
 		return(this->Get_VC_Sample_Start_Transition_Name());
 	}
-	virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
+	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
 	virtual bool Is_Trivial() {return(this->Get_Is_Intermediate());}
 	//virtual bool Is_Trivial() {return(false);}
 };

@@ -585,6 +585,24 @@ makes $r$ directly visible as $r$  in the parent scope of the
 branch-block.
 \end{itemize}
 
+\subsubsection{Careful! The phi-statements in a merge block are concurrent}
+
+Note that the phi-statements in a merge are concurrent, and
+may execute in any order.
+An example:
+\begin{verbatim}
+  $merge loopback $entry // $entry is the entry place
+     $phi p := 0 $on $entry np $on loopback
+     $phi q := 0 $on $entry p  $on loopback
+  $endmerge
+\end{verbatim}
+In this case, the two $phi$ statements may execute
+in any order, and thus the value on $q$ after the execution
+is indeterminate.  To prevent such race conditions, do not
+use the result of a $phi$ as an input to another $phi$ in
+the same merge block.
+
+
 \subsection{Pipelinable-loops: the {\bf dopipeline-while} construct}
 
 The \Aa language provides a single construct for describing loops.
@@ -1143,6 +1161,25 @@ For example
 ($mux a (b+1) (c+d))
 \end{verbatim}
 
+
+\section{Specifying buffering for expressions}
+
+By default, the result of each expression may be
+buffered by the AHIR compilers.  The default amount of
+buffering is $1$.  If you wish to specify more buffering, 
+say $2$ units, then we add 
+\begin{verbatim}
+$buffering 2
+\end{verbatim}
+after the expression.
+
+For example
+\begin{verbatim}
+( A $buffering 2  + (B + C) $buffering 3) $buffering 2
+\end{verbatim}
+means that the expression $A$ has buffering $2$,
+the expression $(B+C)$ has buffering $3$ and the
+overall expression $(A + (B+C))$ has buffering $2$.
 
 \section{Storage variables and Memory Spaces}
 

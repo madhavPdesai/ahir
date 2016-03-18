@@ -1,0 +1,23 @@
+Mapping all equations...
+WARNING:Xst:2170 - Unit ahir_system : the following signal(s) form a combinatorial loop: 
+	write_command_pipe_read_req
+	 run_daemon_instance_run_daemon_CP_6_elements<107>
+	 run_daemon_instance_src_update_reqs2<1>
+	 run_daemon_instance_run_daemon_CP_6.run_daemon_cp_element_group_14.gj_symbol_out_sig_0_and000120
+	 N479
+	 run_daemon_instance_sample_ack_unguarded<0>
+	 run_daemon_instance_wack<0>
+	 run_daemon_instance_run_daemon_CP_6_elements<18>
+	 run_daemon_instance_src_update_reqs<1>
+	 run_daemon_instance_sample_req<0>
+	 out_data_pipe_write_req
+	 write_command_pipe_write_ack<0>
+	 run_daemon_instance_run_daemon_CP_6_elements<14>
+	 run_daemon_instance_reqR0<0>
+	 run_daemon_instance_run_daemon_CP_6_elements<19>
+	 run_daemon_instance_run_daemon_CP_6.run_daemon_cp_element_group_15.gj_symbol_out_sig_0_and000120
+	 run_daemon_instance_run_daemon_CP_6_elements<108>
+	 run_daemon_instance_run_daemon_CP_6.phi_stmt_44_phi_seq_80_block.phi_stmt_44_phi_seq_80_trigForkUpdate_in_trans_place
+	 run_daemon_instance_run_daemon_CP_6_elements<104>
+	 run_daemon_instance_run_daemon_CP_6_elements<15>
+	 run_daemon_instance_run_daemon_CP_6.phi_stmt_60_phi_seq_223_block.phi_stmt_60_phi_seq_223_trigForkUpdate_in_trans_place.

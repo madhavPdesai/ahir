@@ -154,7 +154,6 @@ void AaObject::PrintC_Declaration(ofstream& ofile)
 {
 	AaType* t = this->Get_Type();
 	AaModule* m = this->Get_Module();
-	
 	bool static_flag = ((m != NULL) && m->Static_Flag_In_C());
 	Print_C_Declaration(this->C_Reference_String(), static_flag, t, ofile);
 
@@ -178,6 +177,7 @@ void AaObject::PrintC_Global_Initialization(ofstream& ofile)
 {
 	AaType* t = this->Get_Type();
 	Print_C_Global_Initialization(this->C_Reference_String(), t,  ofile);
+
 	if(_value != NULL)
 	{
 		this->_value->Evaluate();

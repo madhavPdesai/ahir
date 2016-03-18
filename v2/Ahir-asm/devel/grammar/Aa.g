@@ -825,6 +825,9 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
 			not_flag = false;
 		}
             }
+
+	    (aA_Expression_Buffering_Spec[expr])?
+
             ON
             ( 
                 (sid: SIMPLE_IDENTIFIER {label = sid->getText(); labels.push_back(label); }) |
@@ -1872,6 +1875,7 @@ aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
     : 
      (prefix_name = aA_Object_Reference_Prefix[hier_ids, search_ancestor_level])?
      (obj_ref = aA_Object_Reference_Base[prefix_name, hier_ids, search_ancestor_level, scope])
+     //(LPAREN aA_Expression_Buffering_Spec[obj_ref] RPAREN)?
 ;
 
 

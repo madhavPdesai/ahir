@@ -63,7 +63,7 @@ void Print_C_Declaration(string obj_name, bool static_flag, AaType* t, ofstream&
 		}
 		else 
 		{
-			ofile <<  t->C_Base_Name() 
+			ofile <<  (static_flag ? "static " : "") << t->C_Base_Name() 
 				<< " " 
 				<< obj_name
 				<< t->C_Dimension_String();
@@ -72,7 +72,7 @@ void Print_C_Declaration(string obj_name, bool static_flag, AaType* t, ofstream&
 	}
 	else
 	{
-		ofile << t->C_Name() 
+		ofile << (static_flag ? "static " : "") << t->C_Name() 
 			<< " " 
 			<< obj_name;
 		ofile << ";" << __endl__;

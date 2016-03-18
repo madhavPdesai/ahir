@@ -120,7 +120,13 @@ void AaExpression::PrintC_Declaration(ofstream& ofile)
 {
   AaModule* m = this->Get_Module();
   bool static_flag = ((m != NULL) && m->Static_Flag_In_C());
+
   Print_C_Declaration(this->C_Reference_String(), static_flag,  this->Get_Type(), ofile);
+  this->Evaluate();
+  if(this->Get_Expression_Value())
+  {
+     Print_C_Assignment_To_Constant(this->C_Reference_String(), this->Get_Type(), this->Get_Expression_Value(), ofile);
+  }
 }
 
 string AaExpression::Get_VC_Guard_String()
@@ -783,7 +789,7 @@ bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObjec
 
 }
 
-void AaSimpleObjectReference::Collect_Root_Sources(set<AaExpression*>& root_set)
+void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
 	if(this->Is_Constant())
 		return;
@@ -802,7 +808,10 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaExpression*>& root_set)
 					r->Collect_Root_Sources(root_set);
 				}
 				else
+				{
 					root_set.insert(this);
+					root_set.insert(r);
+				}
 			}	
 			else  // what could this be?
 				root_set.insert(this);
@@ -821,7 +830,10 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaExpression*>& root_set)
 				r->Collect_Root_Sources(root_set);
 			}
 			else
+			{
 				root_set.insert(this);
+				root_set.insert(r);
+			}
 		}	
 		else
 			root_set.insert(this);
@@ -1935,7 +1947,7 @@ void AaArrayObjectReference::Add_Target_Reference(AaRoot* referrer)
 	if(referrer->Is("AaInterfaceObject"))
 	{
 		AaType* rtype = ((AaInterfaceObject*)referrer)->Get_Type();
-		this->Set_Type(rtype->Get_Element_Type(0,_indices));
+		this->Set_Type(rtype);
 	}
 }
 void AaArrayObjectReference::Add_Source_Reference(AaRoot* referrer)
@@ -1944,7 +1956,7 @@ void AaArrayObjectReference::Add_Source_Reference(AaRoot* referrer)
 	if(referrer->Is("AaInterfaceObject"))
 	{
 		AaType* rtype = ((AaInterfaceObject*)referrer)->Get_Type();
-		this->Set_Type(rtype->Get_Element_Type(0,_indices));
+		this->Set_Type(rtype);
 	}
 }
 
@@ -2698,7 +2710,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances_As_Target(ostream& ofil
 				 ofile);
 }
 
-void AaArrayObjectReference::Collect_Root_Sources(set<AaExpression*>& root_set)
+void AaArrayObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
   if(this->Is_Constant())
     return;
@@ -4030,7 +4042,7 @@ bool AaTypeCastExpression::Is_Trivial()
 }
 
   
-void AaTypeCastExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
+void AaTypeCastExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
@@ -4278,7 +4290,7 @@ string AaUnaryExpression::Get_VC_Name()
 	return(ret_val);
 }
 
-void AaUnaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
+void AaUnaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
@@ -4736,7 +4748,7 @@ bool AaBinaryExpression::Is_Trivial()
 		return(false);
 }
 
-void AaBinaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
+void AaBinaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
@@ -5222,7 +5234,7 @@ void AaTernaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentS
 	this->Replace_Field_Expression(&_if_false, used_expr, replacement);
 }
 
-void AaTernaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
+void AaTernaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
 	if(!this->Is_Constant())
 	{

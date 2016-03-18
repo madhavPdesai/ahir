@@ -181,6 +181,29 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
 
 }
 
+bool AaStatement::Is_Dependent_On_Phi()
+{
+	bool ret_val = false;
+	if(this->Get_Is_Volatile())
+	{
+		set<AaRoot*> write_roots;
+		this->Collect_Root_Sources(write_roots);
+		for(set<AaRoot*>::iterator witer = write_roots.begin(), fwiter = write_roots.end();
+				witer != fwiter; witer++)
+		{
+			if((*witer)->Is("AaPhiStatement"))
+			{
+				ret_val = true;
+				break;
+			}
+		}
+	}
+	else
+		ret_val = this->Is("AaPhiStatement");
+
+	return(ret_val);
+}
+
 // return true if one of the sources or targets is a pipe.
 bool AaStatement::Can_Block(bool pipeline_flag)
 {
@@ -188,22 +211,22 @@ bool AaStatement::Can_Block(bool pipeline_flag)
 			siter != this->_target_objects.end();
 			siter++)
 	{
-	    if((*siter)->Is("AaPipeObject"))
-	    {
-		    if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
-			    return(true);
-	    }
+		if((*siter)->Is("AaPipeObject"))
+		{
+			if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
+				return(true);
+		}
 	}
 
 	for(set<AaRoot*>::iterator siter = this->_source_objects.begin();
 			siter != this->_source_objects.end();
 			siter++)
 	{
-	    if((*siter)->Is("AaPipeObject"))
-	    {
-		    if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
-			    return(true);
-	    }
+		if((*siter)->Is("AaPipeObject"))
+		{
+			if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
+				return(true);
+		}
 	}
 
 	return(false);
@@ -211,13 +234,13 @@ bool AaStatement::Can_Block(bool pipeline_flag)
 
 void AaStatement::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
 {
-  for(set<AaRoot*>::iterator iter = _source_references.begin();
-      iter != _source_references.end();
-      iter++)
-    {
-      if((*iter)->Is_Expression())
-	((AaExpression*)(*iter))->Propagate_Addressed_Object_Representative(obj,this);
-    }
+	for(set<AaRoot*>::iterator iter = _source_references.begin();
+			iter != _source_references.end();
+			iter++)
+	{
+		if((*iter)->Is_Expression())
+			((AaExpression*)(*iter))->Propagate_Addressed_Object_Representative(obj,this);
+	}
 }
 
 
@@ -633,24 +656,25 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 	}
 }
 
+
 //---------------------------------------------------------------------
 // AaStatementSequence
 //---------------------------------------------------------------------
 AaStatementSequence::AaStatementSequence(AaScope* scope, vector<AaStatement*>& statement_sequence):AaScope(scope)
 {
-  for(unsigned int i=0; i < statement_sequence.size();i++)
-    {
-      AaStatement* stmt = statement_sequence[i];
-      stmt->Set_Index_In_Sequence(i);
+	for(unsigned int i=0; i < statement_sequence.size();i++)
+	{
+		AaStatement* stmt = statement_sequence[i];
+		stmt->Set_Index_In_Sequence(i);
 
-      this->_statement_sequence.push_back(stmt);
-    }
- 
-    _pipeline_parent = NULL;
+		this->_statement_sequence.push_back(stmt);
+	}
+
+	_pipeline_parent = NULL;
 }
 AaStatementSequence::~AaStatementSequence() {}
-  
-  
+
+
 bool AaStatementSequence::Can_Block(bool pipeline_flag)
 {
 	for(int i = 0, imax = _statement_sequence.size(); i < imax; i++)
@@ -664,47 +688,47 @@ bool AaStatementSequence::Can_Block(bool pipeline_flag)
 
 void AaStatementSequence::Print(ostream& ofile)
 {
-  for(unsigned int i=0; i < this->_statement_sequence.size();i++)
-    this->_statement_sequence[i]->Print(ofile);
+	for(unsigned int i=0; i < this->_statement_sequence.size();i++)
+		this->_statement_sequence[i]->Print(ofile);
 }
 
 
 void AaStatementSequence::Write_VC_Control_Path(ostream& ofile)
 {
-  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
-    this->_statement_sequence[i]->Write_VC_Control_Path(ofile);
+	for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+		this->_statement_sequence[i]->Write_VC_Control_Path(ofile);
 }
 void AaStatementSequence::Write_VC_Pipe_Declarations(ostream& ofile)
 {
-  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
-    this->_statement_sequence[i]->Write_VC_Pipe_Declarations(ofile);
+	for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+		this->_statement_sequence[i]->Write_VC_Pipe_Declarations(ofile);
 }
 void AaStatementSequence::Write_VC_Memory_Space_Declarations(ostream& ofile)
 {
-  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
-    this->_statement_sequence[i]->Write_VC_Memory_Space_Declarations(ofile);
+	for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+		this->_statement_sequence[i]->Write_VC_Memory_Space_Declarations(ofile);
 }
 void AaStatementSequence::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
-  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
-    this->_statement_sequence[i]->Write_VC_Constant_Wire_Declarations(ofile);
+	for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+		this->_statement_sequence[i]->Write_VC_Constant_Wire_Declarations(ofile);
 }
 void AaStatementSequence::Write_VC_Wire_Declarations(ostream& ofile)
 {
-  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
-    this->_statement_sequence[i]->Write_VC_Wire_Declarations(ofile);
+	for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+		this->_statement_sequence[i]->Write_VC_Wire_Declarations(ofile);
 }
 void AaStatementSequence::Write_VC_Datapath_Instances(ostream& ofile)
 {
-  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
-    this->_statement_sequence[i]->Write_VC_Datapath_Instances(ofile);
+	for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+		this->_statement_sequence[i]->Write_VC_Datapath_Instances(ofile);
 }
 void AaStatementSequence::Write_VC_Links(string hier_id, ostream& ofile)
 {
-  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
-    this->_statement_sequence[i]->Write_VC_Links(hier_id, ofile);
+	for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+		this->_statement_sequence[i]->Write_VC_Links(hier_id, ofile);
 }
-  
+
 // TODO: get rid of this..
 void AaStatementSequence::Write_VC_Control_Path_As_Fork_Block(bool pipe_flag, string region_id, ostream& ofile)
 {
@@ -713,15 +737,15 @@ void AaStatementSequence::Write_VC_Control_Path_As_Fork_Block(bool pipe_flag, st
 
 AaStatement* AaStatementSequence::Get_Next_Statement(AaStatement* stmt)
 {
-  AaStatement* ret_stmt = NULL;
-  int idx = stmt->Get_Index_In_Sequence();
+	AaStatement* ret_stmt = NULL;
+	int idx = stmt->Get_Index_In_Sequence();
 
-  assert(idx >= 0);
+	assert(idx >= 0);
 
-  if(idx < (this->Get_Statement_Count() -1))
-    {
-      ret_stmt = this->Get_Statement(idx+1);
-    }
+	if(idx < (this->Get_Statement_Count() -1))
+	{
+		ret_stmt = this->Get_Statement(idx+1);
+	}
   
   return(ret_stmt);
 }
@@ -1209,12 +1233,16 @@ void AaAssignmentStatement::Map_Source_References()
 }
 
 
-void AaAssignmentStatement::Collect_Root_Sources(set<AaExpression*>& root_sources)
+void AaAssignmentStatement::Collect_Root_Sources(set<AaRoot*>& root_sources)
 {
 	if(this->Get_Is_Volatile())
 	{
 		if(this->_source != NULL)
 			this->_source->Collect_Root_Sources(root_sources);
+	}
+	else
+	{
+		root_sources.insert(this);
 	}
 }
 
@@ -2520,6 +2548,36 @@ void AaBlockStatement::Print(ostream& ofile)
 	}
 }
 
+void AaBlockStatement::Write_C_Object_Declarations_And_Initializations(ofstream& ofile)
+{
+	bool has_objs_for_initialization = false;
+	vector<AaObject*> init_objs;
+	for(unsigned int i = 0; i < this->_objects.size(); i++)
+	{
+		AaObject* obj = this->_objects[i];
+		if(obj->Is_Storage_Object() || obj->Is_Pipe_Object() || obj->Is_Constant())
+		{
+			has_objs_for_initialization = true;
+			init_objs.push_back(obj);
+		}
+
+		obj->PrintC_Declaration(ofile);
+	}
+	if(has_objs_for_initialization)
+	{
+		string init_objs_flag = this->Get_C_Name() + "_init_objects_flag";
+		ofile << "static char " << init_objs_flag << " = 1;\\" << endl;
+		ofile << "if (" << init_objs_flag << ") {\\" << endl;
+		ofile << init_objs_flag << "= 0;\\" << endl;
+		for(int I = 0, fI = init_objs.size(); I < fI; I++)
+		{
+			AaObject* iobj = init_objs[I];
+			iobj->PrintC_Global_Initialization(ofile);
+		}
+		ofile << " }\\" << endl;
+	}
+}
+
 void AaBlockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 {
 	map<string, AaType*> export_type_map;
@@ -2576,7 +2634,7 @@ void AaBlockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	{
 		Print_C_Declaration((*iter).first, static_flag, (*iter).second, headerfile);
 	}
-	this->Write_C_Object_Declarations(headerfile);
+	this->Write_C_Object_Declarations_And_Initializations(headerfile);
 	if(this->_statement_sequence != NULL)
 	{
 		this->_statement_sequence->PrintC_Implicit_Declarations(headerfile);
@@ -3807,8 +3865,7 @@ void AaPhiStatement::Set_Pipeline_Parent(AaStatement* dws)
 		this->_source_pairs[idx].second->Set_Pipeline_Parent(dws);
 
 		// buffering set to 2.
-		if(dws != NULL)
-			this->_source_pairs[idx].second->Set_Buffering(2);
+		//if(dws != NULL) this->_source_pairs[idx].second->Set_Buffering(2);
 	}
 }
 
@@ -4078,7 +4135,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			if(dws != NULL)
 			{
 				ofile << "$buffering $out " << dpe_name <<  " " << 
-					src_driver_name  << " 2 " << endl;
+					src_driver_name  << "  " << src_expr->Get_Buffering()  << endl;
 			}
 		}
 
@@ -5210,6 +5267,22 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 	map<string, vector<AaExpression*> > load_store_ordering_map;
 	map<string, vector<AaExpression*> >  pipe_map;
 
+
+	//
+	// PHI statements will run concurrently, in a synchronized manner.
+	//
+	if(phi_stmts.size() > 0)
+	{
+		__T("aggregated_phi_sample_req");
+		__T("aggregated_phi_sample_ack");
+		__T("aggregated_phi_update_req");
+		__T("aggregated_phi_update_ack");
+
+		// do not loop-back unless all phi's have used
+		// up their triggering tokens.
+		__F("aggregated_phi_update_req", "condition_evaluated");
+	}
+
 	// write the PHI statements.
 	for(unsigned int idx = 0; idx < phi_stmts.size(); idx++)
 	{
@@ -5526,7 +5599,7 @@ void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, in
 	visited_elements.insert(this);
 }
 
-void AaCallStatement::Collect_Root_Sources(set<AaExpression*>& root_sources)
+void AaCallStatement::Collect_Root_Sources(set<AaRoot*>& root_sources)
 {
 	if(this->Get_Is_Volatile())
 	{
@@ -5535,6 +5608,8 @@ void AaCallStatement::Collect_Root_Sources(set<AaExpression*>& root_sources)
 			_input_args[idx]->Collect_Root_Sources(root_sources);
 		}
 	}
+	else
+		root_sources.insert(this);
 }
 
 

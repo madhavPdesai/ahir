@@ -228,9 +228,14 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 
 
 	// sample-ack generation logic.
+	if(this->_pipeline_flag)
 	{
 		ofile << "-- sample-ack is join of  cp-entry-symbol and all-inputs-sampled " << endl;
 		ofile << "sample_ack <= " << cp_inputs_sampled_signal << ";" << endl;
+	}
+	else
+	{
+		ofile << "sample_ack <= " << cp_exit_symbol <<  ";"  << endl;
 	}
 
 	ofile << "-- input handling ------------------------------------------------" << endl;
@@ -303,32 +308,37 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 					ipred_delays.push_back(0); // revisit later..
 				}
 
-				if(this->_pipeline_flag && (ninputs == 0))
+				if(ninputs == 0)
 				{
 					vcSystem::Error("in pipelined operator module " + this->Get_Id() + ", no input is actually used in the module");
 				}
+
+				string joined_symbol = cp_entry_symbol;
+				ofile << "-- join of all unload_ack_symbols.. used to trigger CP." << endl;
+				Print_VHDL_Join(joined_symbol + "_join", 
+						preds,
+						pred_markings,
+						pred_capacities, 
+						pred_delays, 
+						joined_symbol,
+						ofile);
+
+				ofile << "-- join of all input-sampled signals.. used to produce sample_ack." << endl;
+				joined_symbol = cp_inputs_sampled_signal;
+				Print_VHDL_Join(joined_symbol + "_join", 
+						ipreds,
+						ipred_markings,
+						ipred_capacities, 
+						ipred_delays, 
+						joined_symbol,
+						ofile);
+				ofile << endl;
 			}
-
-			string joined_symbol = cp_entry_symbol;
-			ofile << "-- join of all unload_ack_symbols.. used to trigger CP." << endl;
-			Print_VHDL_Join(joined_symbol + "_join", 
-					preds,
-					pred_markings,
-					pred_capacities, 
-					pred_delays, 
-					joined_symbol,
-					ofile);
-
-			ofile << "-- join of all input-sampled signals.. used to produce sample_ack." << endl;
-			joined_symbol = cp_inputs_sampled_signal;
-			Print_VHDL_Join(joined_symbol + "_join", 
-					ipreds,
-					ipred_markings,
-					ipred_capacities, 
-					ipred_delays, 
-					joined_symbol,
-					ofile);
-			ofile << endl;
+			else
+			{
+				// sample-req.
+				ofile << cp_entry_symbol << " <= sample_req;" << endl;
+			}
 		}
 
 	}

@@ -248,7 +248,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						__J(__SST(this), __UCT(this->_guard_expression));
 						if(pipeline_flag)
 						{
-							this->_guard_expression->Write_VC_Update_Reenables(__SCT(this), false,
+							this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), false,
 								visited_elements, ofile);
 						}
 					}
@@ -265,7 +265,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			__J(__SST(this), __UCT(this->_source));
 			if(pipeline_flag)
 			{
-				this->_source->Write_VC_Update_Reenables(__SCT(this), false,
+				this->_source->Write_VC_Update_Reenables(this, __SCT(this), false,
 						visited_elements, ofile);
 				__SelfReleaseSplitProtocolPattern
 			}
@@ -279,7 +279,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			__J(__SST(this->_target), __UCT(this->_source));
 			if(pipeline_flag)
 			{
-				this->_source->Write_VC_Update_Reenables(__SCT(this->_target), false,
+				this->_source->Write_VC_Update_Reenables(this, __SCT(this->_target), false,
 						visited_elements, ofile);
 			}
 		}
@@ -434,7 +434,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 				if(pipeline_flag)
 				{
-					this->_guard_expression->Write_VC_Update_Reenables(__SCT(this), false,
+					this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), false,
 							visited_elements, ofile);
 				}
 			}
@@ -460,7 +460,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				{
 					// expression evaluation will be reenabled by activation of the
 					// call.
-					expr->Write_VC_Update_Reenables(__SCT(this), false,
+					expr->Write_VC_Update_Reenables(this, __SCT(this), false,
 							visited_elements, ofile);
 				}
 			}
@@ -1559,25 +1559,24 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   ofile << "// " << this->To_String() << endl;
   __DeclTransSplitProtocolPattern;
 
-   //for the Phi, we will introduce one more interlock
-   // to ensure that there is no saturation of intermediate
-   // places in the phi-sequencer.
-  __J(__UST(this), __SCT(this));
-  __MJ(__SST(this), __UST(this), false); // update start should retrigger sample start.
-
+   //
+   // PHI synchronization.
+   //
   __T(__SST(this) + "_ps");
-  __J((__SST(this) + "_ps"), __SST(this));
+  __J("aggregated_phi_sample_req", __SST(this));
+  __J((__SST(this) + "_ps"), "aggregated_phi_sample_req");
 
   __T(__SCT(this) + "_ps");
-  __F((__SCT(this) + "_ps"), __SCT(this));
+  __F((__SCT(this) + "_ps"),"aggregated_phi_sample_ack");
+  __F("aggregated_phi_sample_ack", __SCT(this));
 
   __T(__UST(this) + "_ps");
-  __J((__UST(this) + "_ps"), __UST(this));
+  __J("aggregated_phi_update_req", __UST(this));
+  __J((__UST(this) + "_ps"), "aggregated_phi_update_req");
 
   __T(__UCT(this) + "_ps");
-  __F((__UCT(this) + "_ps"), __UCT(this));
-
-
+  __F((__UCT(this) + "_ps"), "aggregated_phi_update_ack");
+  __F("aggregated_phi_update_ack", __UCT(this));
 
   // the active, completed and the active transitions
   string trigger_from_loop_back = this->Get_VC_Name() + "_loopback_trigger";
@@ -1705,10 +1704,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	      {
 		      if(sge != NULL)
 		      {
-			      sge->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+			      sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
 		      }
 
-		      source_expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+		      source_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
 	      }
       }
       else

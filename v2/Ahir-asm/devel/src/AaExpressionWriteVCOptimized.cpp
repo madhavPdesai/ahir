@@ -27,37 +27,84 @@ void AaExpression::Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaR
 // This expression is the reader.  Its roots should be reenabled 
 // by ctrans (which is the sample-complete transition of the statement of which this
 // expression is a source).
-void AaExpression::Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,  set<AaRoot*>& visited_elements,  ostream& ofile)
+void AaExpression::Write_VC_Update_Reenables(AaRoot* reenabling_agent,
+						string ctrans, bool bypass_if_true,  set<AaRoot*>& visited_elements,  ostream& ofile)
 {
-	set<AaExpression*> root_set;
+	set<AaRoot*> root_set;
 	this->Collect_Root_Sources(root_set);
-	ofile << "// RAW reenables for " << this->To_String() << endl;
-	for(set<AaExpression*>::iterator iter = root_set.begin(), fiter = root_set.end(); iter != fiter; iter++)
-	{
-		AaExpression* producer = *iter;
-		bool bypass = (bypass_if_true || producer->Update_Protocol_Has_Delay(visited_elements));
-		
-		if(visited_elements.find(producer) != visited_elements.end())
-		{
-			if((this->Get_Associated_Phi_Statement() == NULL) || 
-				(producer->Get_Associated_Phi_Statement() != this->Get_Associated_Phi_Statement()))
-				__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, bypass);
-		}
 
-		// 
-		// if producer is part of operator module, and if producer is
-		// a simple-object-reference to an input interface object, then 
-		// we create an unmarked link to an update-enable.
-		// 
-		if(this->Is_Part_Of_Operator_Module() && producer->Is("AaSimpleObjectReference"))
+	set<AaRoot*> reenabling_root_set;
+	if(reenabling_agent->Is_Statement())
+		((AaStatement*)reenabling_agent)->Collect_Root_Sources(reenabling_root_set);
+	else if(reenabling_agent->Is_Expression())
+		((AaExpression*)reenabling_agent)->Collect_Root_Sources(reenabling_root_set);
+
+        // Check if reenabling agent has a Phi-root.	
+        bool reenabling_agent_depends_on_phi       = false;
+        bool reenabling_agent_does_not_depend_on_phi = false;
+        for(set<AaRoot*>::iterator riter = reenabling_root_set.begin(), friter = reenabling_root_set.end();
+			riter != friter; riter++)
+	{
+		AaRoot* ra_root = *riter;
+		if(ra_root->Is("AaPhiStatement"))
 		{
-			AaSimpleObjectReference* sor = (AaSimpleObjectReference*) producer;
-			if(sor->Get_Object() && sor->Get_Object()->Is_Interface_Object())
+			reenabling_agent_depends_on_phi = true;
+		}
+		else if(ra_root->Is_Statement())
+		{
+			reenabling_agent_does_not_depend_on_phi = true;
+		}
+	}
+
+	if(reenabling_agent_depends_on_phi && reenabling_agent_does_not_depend_on_phi) 
+	{
+		AaRoot::Error("Volatile depends on both Phi's and non-Phi's.. Pipelining may fail!", reenabling_agent);
+	}
+		
+	ofile << "// RAW reenables for " << this->To_String() << endl;
+	for(set<AaRoot*>::iterator iter = root_set.begin(), fiter = root_set.end(); iter != fiter; iter++)
+	{
+		if((*iter)->Is_Expression())
+		{
+			AaExpression* producer = (AaExpression*) *iter;
+			bool bypass = (bypass_if_true || producer->Update_Protocol_Has_Delay(visited_elements));
+
+			if(visited_elements.find(producer) != visited_elements.end())
 			{
-				AaInterfaceObject* iobj = (AaInterfaceObject*) (sor->Get_Object());
-				if(iobj->Get_Mode() == "in")
+				if((!reenabling_agent_depends_on_phi && (this->Get_Associated_Phi_Statement() == NULL)) || 
+						(producer->Get_Associated_Phi_Statement() == NULL))
 				{
-					__J(sor->Get_VC_Unmarked_Reenable_Update_Transition_Name(visited_elements), ctrans);
+					AaRoot* producer_root = producer->Get_Root_Object();
+					if( (producer_root != NULL)  && producer_root->Is("AaPhiStatement") &&
+								(reenabling_agent_depends_on_phi ||
+											this->Get_Associated_Phi_Statement() != NULL))
+					{	
+						ofile << "// producer  and  user are both determined by PHI statements." << endl;
+					}
+					else
+					{
+						__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, bypass);
+					}
+				}
+				else
+					ofile << "// producer  and  user are determined by PHI statements." << endl;
+			}
+
+			// 
+			// if producer is part of operator module, and if producer is
+			// a simple-object-reference to an input interface object, then 
+			// we create an unmarked link to an update-enable.
+			// 
+			if(this->Is_Part_Of_Operator_Module() && producer->Is("AaSimpleObjectReference"))
+			{
+				AaSimpleObjectReference* sor = (AaSimpleObjectReference*) producer;
+				if(sor->Get_Object() && sor->Get_Object()->Is_Interface_Object())
+				{
+					AaInterfaceObject* iobj = (AaInterfaceObject*) (sor->Get_Object());
+					if(iobj->Get_Mode() == "in")
+					{
+						__J(sor->Get_VC_Unmarked_Reenable_Update_Transition_Name(visited_elements), ctrans);
+					}
 				}
 			}
 		}
@@ -91,6 +138,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 	AaStatement* write_stmt = this->Get_Associated_Statement();
 	assert(write_stmt != NULL); // this is always a target..  so statement completion should retrigger read.
 
+	bool write_stmt_is_dependent_on_phi = write_stmt->Is_Dependent_On_Phi();
 	bool this_is_volatile = write_stmt->Get_Is_Volatile();
 	bool err_flag = false;
 
@@ -134,12 +182,21 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				//
 				ofile << "// WAR dependency: Read: " << read_expr->To_String() << " before Write: " << write_stmt->To_String() << endl;
 				AaStatement* read_stmt = read_expr->Get_Associated_Statement();
+				bool read_is_dependent_on_phi = read_stmt->Is_Dependent_On_Phi();
+
 
 				// The target "b = (d+e)" cannot be updated until 
 				// the statement a := (b+c) has sampled b..  
 				// This is conservative.
-				if(read_stmt != write_stmt)
+				if((read_stmt != write_stmt) && 
+						(!(read_is_dependent_on_phi && write_stmt_is_dependent_on_phi)))
+				{
 					__J(__UST(write_stmt), __SCT(read_stmt));
+				}
+				else
+				{
+					ofile << "// self dependency in WAR or PHI-PHI dependency in WAR ignored." << endl;
+				}
 
 				// The completion of "b = (d+e)" reenables the
 				// evaluation of "a = (b+c)"
@@ -165,36 +222,50 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 						// this is volatile..  read-stmt should enable the root sources of the write-stmt.
 						// and the root sources of the write-stmt should reenable read-stmt.
-						set<AaExpression*> root_set;
+						set<AaRoot*> root_set;
 						write_stmt->Collect_Root_Sources(root_set);
 
-						bool forward_dependency = false;
-						for(set<AaExpression*>::iterator iter = root_set.begin(), fiter = root_set.end();
+						for(set<AaRoot*>::iterator iter = root_set.begin(), fiter = root_set.end();
 							iter != fiter; iter++)
 						{
-							AaExpression* root_write_expr = *iter;
-							AaRoot* root = root_write_expr->Get_Root_Object();
+							bool forward_dependency = false;
+							if((*iter)->Is_Expression())
+							{
 
-							ofile << "// CHECK THIS." << endl;
-							ofile << "// WAR dependency writer: " << root_write_expr->To_String() 
+								AaExpression* root_write_expr = (AaExpression*) *iter;
+								AaRoot* root = root_write_expr->Get_Root_Object();
+
+								ofile << "// CHECK THIS." << endl;
+								ofile << "// WAR dependency writer: " << root_write_expr->To_String() 
 									<< ", reader " << read_expr->To_String() << endl;
 
 
-							bool root_is_stmt = ((root != NULL) && root->Is_Statement());
-							if (root_is_stmt && (visited_elements.find(root) != visited_elements.end()))
-							{
-								forward_dependency = true;
+								bool root_is_stmt = ((root != NULL) && root->Is_Statement());
+								bool both_are_phi = (root_is_stmt && 
+										root->Is("AaPhiStatement") && 
+										read_stmt->Is("AaPhiStatement"));
 
-								ofile << "// root-writer is " << root->To_String() << endl;
-								__J(__UST(root), __SCT(read_stmt));
-								__MJ(__SST(read_stmt), __UCT(root), true);
-							}
+								if (root_is_stmt && (visited_elements.find(root) != visited_elements.end()))
+								{
+									forward_dependency = true;
+									if(!both_are_phi)
+									{
+										ofile << "// root-writer is " << root->To_String() << endl;
+										__J(__UST(root), __SCT(read_stmt));
+										__MJ(__SST(read_stmt), __UCT(root), true);
+									}
+									else
+									{
+										ofile << "// phi-phi WAR ignored " << endl;
+									}
+								}
 
-							if(!forward_dependency)
-							{
-								AaRoot::Error("Bad WAR dependency... write expression " + this->To_String()
-										+ " depends on downstream source " + root_write_expr->To_String(),
-										this);
+								if(!forward_dependency)
+								{
+									AaRoot::Error("Bad WAR dependency... write expression " + this->To_String()
+											+ " depends on downstream source " + root_write_expr->To_String(),
+											this);
+								}
 							}
 						}
 					}
@@ -213,10 +284,16 @@ void AaExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* gu
 	AaRoot* root = guard_expr->Get_Root_Object();
 	if(visited_elements.find(root) != visited_elements.end())
 	{
-		__J(__SST(this), __UCT(guard_expr));
-		// Note: with new SplitGuardInterface
-		// this dependency is no longer necessary.
-		//__J(__UST(this), __UCT(root));
+		if((this->Get_Associated_Phi_Statement() == NULL) ||
+				(guard_expr->Get_Associated_Phi_Statement() == NULL))
+		{
+			// No Phi-Phi dependencies
+			__J(__SST(this), __UCT(guard_expr));
+
+			// Note: with new SplitGuardInterface
+			// this dependency is no longer necessary.
+			//__J(__UST(this), __UCT(root));
+		}
 	}
 	else
 	{
@@ -231,7 +308,7 @@ void AaExpression::Write_VC_Guard_Backward_Dependency(AaExpression* guard_expr,
 	if(this->Get_Is_Target() || !(this->Is_Trivial() && this->Get_Is_Intermediate()))
 	{
 		// when this completes, the guard can be re-evaluated.
-		guard_expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+		guard_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
 	}
 
 	// With new SplitGuardInterface, this dependency is
@@ -432,7 +509,11 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			AaRoot* root = this->Get_Root_Object();
 			if(visited_elements.find(root) != visited_elements.end())
 			{
+				//if((this->Get_Associated_Phi_Statement() == NULL) 
+				// && !root->Is("AaPhiStatement"))
+				//{
 				__J(__SST(this), __UCT(root));
+				//}
 
 			}
 			else if(this->Get_Associated_Phi_Statement() == NULL)
@@ -645,7 +726,7 @@ void AaSimpleObjectReference::Write_VC_Guard_Backward_Dependency(AaExpression* e
 		//
 		// for pipe reads, release guard from update complete.
 		//
-		expr->Write_VC_Update_Reenables(__UCT(this), true, visited_elements, ofile);
+		expr->Write_VC_Update_Reenables(this, __UCT(this), true, visited_elements, ofile);
 	}
 	else 
 	{
@@ -1093,7 +1174,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					// reenable expression when this completes.
 					// note: conservative
 					// __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __UCT(this), true); // bypass
-					expr->Write_VC_Update_Reenables(__UCT(this), 
+					expr->Write_VC_Update_Reenables(this, __UCT(this), 
 							(!flow_through),
 							visited_elements,ofile);
 
@@ -1279,7 +1360,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
 		if(pipeline_flag)
 		{
 			//__MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
-			this->_reference_to_object->Write_VC_Update_Reenables(__SCT(this), false, visited_elements,ofile);
+			this->_reference_to_object->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements,ofile);
 		}
 
 	}
@@ -1335,7 +1416,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(b
 		__J(__SST(this),base_addr_calc);
 		if(pipeline_flag)
 		{
-			this->_reference_to_object->Write_VC_Update_Reenables(__SCT(this), false, visited_elements,ofile);
+			this->_reference_to_object->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements,ofile);
 			//__MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 		}
 	}
@@ -1578,7 +1659,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 
 		if(pipeline_flag && !flow_through)
 		{
-			this->_rest->Write_VC_Update_Reenables(__SCT(this), false, visited_elements,ofile);
+			this->_rest->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements,ofile);
 			// __MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true );  // bypass
 			__SelfReleaseSplitProtocolPattern
 		}
@@ -1686,7 +1767,7 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 
 		if(pipeline_flag && !flow_through)
 		{
-			this->_rest->Write_VC_Update_Reenables(__SCT(this), false,  visited_elements,ofile);
+			this->_rest->Write_VC_Update_Reenables(this, __SCT(this), false,  visited_elements,ofile);
 			// __MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 			
 			__SelfReleaseSplitProtocolPattern
@@ -1892,13 +1973,13 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 		{
 			if(!this->_first->Is_Constant())
 			{
-				this->_first->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+				this->_first->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
 				//__MJ(this->_first->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 			}
 
 			if(!this->_second->Is_Constant())
 			{	
-				this->_second->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+				this->_second->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
 				// __MJ(this->_second->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 			}
 
@@ -2018,17 +2099,17 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 
 		if(!this->_test->Is_Constant())
 		{
-			this->_test->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+			this->_test->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
 			 //__MJ(this->_test->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 		}
 		if(this->_if_true && !this->_if_true->Is_Constant())
 		{
-			this->_if_true->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+			this->_if_true->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
 			//__MJ(this->_if_true->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 		}
 		if(this->_if_false && !this->_if_false->Is_Constant())
 		{
-			this->_if_false->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+			this->_if_false->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
 			//__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 		}
 		
@@ -2467,24 +2548,27 @@ void AaExpression:: Update_Reenable_Points_And_Producer_Delay_Status(set<string>
 									map<string,bool>& en_bypass_flags,
 										set<AaRoot*>& visited_elements)
 {
-	set<AaExpression*> root_expr_set;
+	set<AaRoot*> root_expr_set;
 	this->Collect_Root_Sources(root_expr_set);
 
-	for(set<AaExpression*>::iterator iter = root_expr_set.begin();
+	for(set<AaRoot*>::iterator iter = root_expr_set.begin();
 			iter != root_expr_set.end(); iter++)
 	{
-		AaExpression* root_expr = *iter;
-		if(visited_elements.find(root_expr) != visited_elements.end())
+		if((*iter)->Is_Expression())
 		{
-			if((this->Get_Associated_Phi_Statement() == NULL) || 
-				(root_expr->Get_Associated_Phi_Statement() != 
-						this->Get_Associated_Phi_Statement()))
+			AaExpression* root_expr = (AaExpression*) *iter;
+			if(visited_elements.find(root_expr) != visited_elements.end())
 			{
-				string en_trans_name = root_expr->Get_VC_Reenable_Update_Transition_Name(visited_elements);	
-				en_points.insert(en_trans_name);
+				if((this->Get_Associated_Phi_Statement() == NULL) || 
+						(root_expr->Get_Associated_Phi_Statement() != 
+						 this->Get_Associated_Phi_Statement()))
+				{
+					string en_trans_name = root_expr->Get_VC_Reenable_Update_Transition_Name(visited_elements);	
+					en_points.insert(en_trans_name);
 
-				bool en_bypass = root_expr->Update_Protocol_Has_Delay(visited_elements);
-				en_bypass_flags[en_trans_name] =  en_bypass;
+					bool en_bypass = root_expr->Update_Protocol_Has_Delay(visited_elements);
+					en_bypass_flags[en_trans_name] =  en_bypass;
+				}
 			}
 		}
 	}	
@@ -2519,22 +2603,22 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	if(index_vector)
 		offset_val = this->Evaluate(index_vector,scale_factors, shift_factors);
 	int base_addr = this->Get_Base_Address();
-			    
+
 
 	// if both are constants.. give up.
 	if(offset_val >= 0 && base_addr >= 0)
 		return;
 
-        string base_addr_update_reenable = 
+	string base_addr_update_reenable = 
 		this->Get_VC_Base_Address_Update_Reenable_Transition(visited_elements);
 	bool base_addr_update_reenable_bypass = this->Base_Address_Update_Protocol_Has_Delay(visited_elements);
 	if(pipeline_flag)
 	{
-	    if(base_addr < 0)
-	    {
-	    	active_reenable_points.insert(base_addr_update_reenable);
-		active_reenable_bypass_flags[base_addr_update_reenable] =  base_addr_update_reenable_bypass;
-	    }
+		if(base_addr < 0)
+		{
+			active_reenable_points.insert(base_addr_update_reenable);
+			active_reenable_bypass_flags[base_addr_update_reenable] =  base_addr_update_reenable_bypass;
+		}
 	}
 
 	bool all_indices_zero = (offset_val == 0);
@@ -2563,7 +2647,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		for(int idx = 0; idx < index_vector->size(); idx++)
 		{
 			AaExpression* index_expr = (*index_vector)[idx];
- 
+
 			// if the index is a constant dont bother to compute it..
 			//
 			if(!index_expr->Is_Constant())

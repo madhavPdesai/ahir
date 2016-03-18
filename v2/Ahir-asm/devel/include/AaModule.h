@@ -142,8 +142,14 @@ class AaModule: public AaSeriesBlockStatement
   void Set_Macro_Flag(bool ff);
   bool Get_Macro_Flag() {return(this->_macro_flag);}
 
-  bool Static_Flag_In_C() 
-	{return(!(_inline_flag || _macro_flag || _volatile_flag || _operator_flag));}
+  //
+  // for the moment, we will make all static.. seems to
+  // break otherwise.  This prevents us from making two
+  // copies of a module e.g. if there is a multiple use
+  // of an operator..  
+  // 
+  bool Static_Flag_In_C() {return(!_volatile_flag);}
+	//{return(!(_inline_flag || _macro_flag || _volatile_flag || _operator_flag));}
 
   void Add_Argument(AaInterfaceObject* obj);
 

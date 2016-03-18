@@ -213,6 +213,11 @@ void AaModule::Write_C_Header(ofstream& ofile)
 {
  
   bool all_types_native = this->Can_Have_Native_C_Interface();
+  if(this->_operator_flag && (_number_of_times_called > 1))
+  {
+	AaRoot::Error("Operator module " + this->Get_Label() + " called multiple times... may get unexpected results in Aa2C code.",
+					NULL);
+  }
 
   if(all_types_native)
     {
@@ -325,7 +330,7 @@ void AaModule::Write_C_Source(ofstream& srcfile, ofstream& headerfile)
 	Print_C_Declaration(o_name, static_flag,  this->_output_args[i]->Get_Type(), headerfile);
     }
 
-  this->Write_C_Object_Declarations(headerfile);
+  this->Write_C_Object_Declarations_And_Initializations(headerfile);
   this->_statement_sequence->PrintC_Implicit_Declarations(headerfile);
   srcfile <<  this->Get_C_Inner_Input_Args_Prepare_Macro() << "; " << endl;
 

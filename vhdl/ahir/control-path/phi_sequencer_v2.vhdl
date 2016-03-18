@@ -42,7 +42,10 @@ architecture Behave of phi_sequencer_v2 is
   signal sample_wait_tokens, sample_wait_clears : BooleanArray(0 to ntriggers-1);
   signal src_update_start_tokens, src_update_start_clears : BooleanArray(0 to ntriggers-1);
   signal src_update_wait_tokens, src_update_wait_clears : BooleanArray(0 to ntriggers-1);
+  signal src_sample_start_sigs : BooleanArray(0 to ntriggers-1);   -- sample starts for sources.
 begin  -- Behave
+
+  src_sample_starts <= src_sample_start_sigs;
 
   -- fatal: multiple triggers should never be active.
   ErrorFlag: if global_debug_flag generate
@@ -73,13 +76,13 @@ begin  -- Behave
 					name => name & ":trigFork")
 		port map (triggers => triggers,
 				in_transition => phi_sample_req,
-					out_transitions => src_sample_starts, 
+					out_transitions => src_sample_start_sigs, 
 						clk => clk, reset => reset);
   trigForkUpdate: conditional_fork
 		generic map (place_capacity => place_capacity,
 				ntriggers => ntriggers,
 					name => name & ":trigFork")
-		port map (triggers => src_sample_completes,
+		port map (triggers => triggers,
 				in_transition => phi_update_req,
 					out_transitions => src_update_starts, 
 						clk => clk, reset => reset);

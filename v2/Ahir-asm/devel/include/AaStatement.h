@@ -135,6 +135,8 @@ class AaStatement: public AaScope
   virtual string Kind() {return("AaStatement");}
   virtual void Map_Source_References() { assert(0);}
 
+  bool Is_Dependent_On_Phi();
+
   virtual string Get_C_Name() {assert(0); }
 
   virtual string Get_C_Inner_Wrap_Function_Name() { return("_" + this->Get_C_Name() + "_"); }
@@ -267,7 +269,7 @@ class AaStatement: public AaScope
    // if combinational, then find the root source expressions on
    // which the outputs of this statement depend.
    //
-   virtual void Collect_Root_Sources(set<AaExpression*>& root_sources) {};
+   virtual void Collect_Root_Sources(set<AaRoot*>& root_sources) {};
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -504,7 +506,7 @@ class AaAssignmentStatement: public AaStatement
 
   virtual void Set_Is_Volatile(bool v);
   virtual bool Get_Is_Volatile(); //       { return(_is_volatile); }
-  virtual void Collect_Root_Sources(set<AaExpression*>& root_src_exprs);
+  virtual void Collect_Root_Sources(set<AaRoot*>& root_src_exprs);
 
   virtual void Set_Pipeline_Parent(AaStatement* dws);
 
@@ -599,7 +601,7 @@ class AaCallStatement: public AaStatement
 
   virtual void Set_Is_Volatile(bool v);
   virtual bool Get_Is_Volatile(); //       { return(_is_volatile); }
-  virtual void Collect_Root_Sources(set<AaExpression*>& root_src_exprs);
+  virtual void Collect_Root_Sources(set<AaRoot*>& root_src_exprs);
 
   void Replace_Input_Argument(AaExpression* old_arg, AaSimpleObjectReference* new_arg);
 
@@ -736,14 +738,8 @@ class AaBlockStatement: public AaStatement
       }
   }
 
-  virtual void Write_C_Object_Declarations(ofstream& ofile)
-  {
-    for(unsigned int i = 0; i < this->_objects.size(); i++)
-      {
-	this->_objects[i]->PrintC_Declaration(ofile);
-      }
-  }
   virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
+  virtual void Write_C_Object_Declarations_And_Initializations(ofstream& ofile);
 
   virtual void Print_Statement_Sequence(ostream& ofile)
   {

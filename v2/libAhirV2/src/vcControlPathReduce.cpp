@@ -1658,8 +1658,12 @@ void vcControlPath::Reduce_From_Nucleus(vcCPElementGroup* nucleus,
 	// now reduce..
 	for(int idx = 0, fidx = reduction_vector.size(); idx < fidx; idx++)
 	{
-		this->Merge_Groups(reduction_vector[idx], nucleus);
-		unabsorbed_elements.erase(reduction_vector[idx]);
+		vcCPElementGroup* succ = reduction_vector[idx];
+		if(nucleus->Can_Potentially_Absorb(succ))
+		{
+			this->Merge_Groups(reduction_vector[idx], nucleus);
+			unabsorbed_elements.erase(succ);
+		}
 	}
 }
 

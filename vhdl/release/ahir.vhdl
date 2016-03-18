@@ -10449,7 +10449,10 @@ architecture Behave of phi_sequencer_v2 is
   signal sample_wait_tokens, sample_wait_clears : BooleanArray(0 to ntriggers-1);
   signal src_update_start_tokens, src_update_start_clears : BooleanArray(0 to ntriggers-1);
   signal src_update_wait_tokens, src_update_wait_clears : BooleanArray(0 to ntriggers-1);
+  signal src_sample_start_sigs : BooleanArray(0 to ntriggers-1);   -- sample starts for sources.
 begin  -- Behave
+
+  src_sample_starts <= src_sample_start_sigs;
 
   -- fatal: multiple triggers should never be active.
   ErrorFlag: if global_debug_flag generate
@@ -10480,13 +10483,13 @@ begin  -- Behave
 					name => name & ":trigFork")
 		port map (triggers => triggers,
 				in_transition => phi_sample_req,
-					out_transitions => src_sample_starts, 
+					out_transitions => src_sample_start_sigs, 
 						clk => clk, reset => reset);
   trigForkUpdate: conditional_fork
 		generic map (place_capacity => place_capacity,
 				ntriggers => ntriggers,
 					name => name & ":trigFork")
-		port map (triggers => src_sample_completes,
+		port map (triggers => triggers,
 				in_transition => phi_update_req,
 					out_transitions => src_update_starts, 
 						clk => clk, reset => reset);
@@ -12497,12 +12500,14 @@ architecture Behave of PhiBase is
    signal odata_reg: std_logic_vector(data_width-1 downto 0);
    signal there_is_a_req: boolean;
    signal ack_internal: boolean;
+   signal req_registered, final_req : BooleanArray(num_reqs-1 downto 0);
 begin  -- Behave
 
   assert(idata'length = (odata'length * req'length)) report "data size mismatch" severity failure;
 
   -- muxed data..
-  muxed_idata <= MuxOneHot(idata,req);
+  odata <= MuxOneHot(idata,final_req);
+
   there_is_a_req <= OrReduce(req);
   ack_internal <= there_is_a_req;
 
@@ -12511,24 +12516,22 @@ begin  -- Behave
   begin
      if(clk'event and clk = '1') then
 	if(reset = '1') then
-          odata_reg <= (others => '0');
-	else
-          if(there_is_a_req) then
-            odata_reg <= MuxOneHot(idata,req);
-          end if;
+          req_registered <= (others => false);
+	elsif (there_is_a_req) then
+	  req_registered <= req;
 	end if;
      end if;
   end process;
 
   -- bypass.
   Byp: if bypass_flag generate
-  	odata <= muxed_idata when there_is_a_req else odata_reg;
+  	final_req <= req when there_is_a_req else req_registered;
         ack <= ack_internal;
   end generate Byp;
 
   -- no-bypass.
   NoByp: if (not bypass_flag) generate
-  	odata <= odata_reg;
+	final_req <= req_registered;
         process(clk)
         begin
  	   if(clk'event and clk = '1') then
