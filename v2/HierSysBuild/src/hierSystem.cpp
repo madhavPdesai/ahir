@@ -126,6 +126,19 @@ void hierSystem::List_Internal_Pipe_Names(vector<string>& pvec)
 	listPipeMap(_internal_pipes,pvec);
 }
 
+void hierSystem::List_In_Pipes(vector<hierPipe*>& pvec)
+{
+	listPipeMap(_in_pipes,pvec);
+}
+void hierSystem::List_Out_Pipes(vector<hierPipe*>& pvec)
+{
+	listPipeMap(_out_pipes,pvec);
+}
+void hierSystem::List_Internal_Pipes(vector<hierPipe*>& pvec)
+{
+	listPipeMap(_internal_pipes,pvec);
+}
+
 hierSystemInstance::hierSystemInstance(hierSystem* parent, hierSystem* base_sys, string id):hierRoot(id) 
 {	
 	_parent = parent;
@@ -1074,6 +1087,16 @@ bool hierSystem::Check_For_Errors()
 		
 	}
 	return(ret_val);
+}
+
+void listPipeMap(map<string, hierPipe*>& pmap, vector<hierPipe*>& pvec)
+{
+	for(map<string, hierPipe*>::iterator iter = pmap.begin(), fiter = pmap.end();
+		iter != fiter; 
+		iter++)
+	{
+		pvec.push_back((*iter).second);
+	}
 }
 
 void listPipeMap(map<string, hierPipe*>& pmap, vector<string>& pvec)

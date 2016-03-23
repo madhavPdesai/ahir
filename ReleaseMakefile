@@ -33,6 +33,8 @@ Release:
 	cp $(LLVM2AA)/bin/llvm2aa $(RELEASE)/bin/
 	cp $(HIERSYSBUILD)/bin/hierSys2Vhdl $(RELEASE)/bin/
 	cp $(HIERSYSBUILD)/bin/hierSys2C $(RELEASE)/bin/
+	cp $(HIERSYSBUILD)/bin/hierSysPartition $(RELEASE)/bin/
+	cp $(HIERSYSBUILD)/bin/hierSysCheck $(RELEASE)/bin/
 	# copy the IOLIB
 	#cp $(IOLIB)/*.h $(RELEASE)/iolib/include/
 	cp $(IOLIB)/*.h $(RELEASE)/include/

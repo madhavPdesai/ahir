@@ -145,6 +145,7 @@ class hierSystemInstance: public hierRoot
 	public:
 
 	hierSystem* _parent;
+	hierSystemInstance* _parent_instance;
 	hierSystem* _base_system;
 	map<string, string> _port_map;
 	map<string, string> _reverse_port_map;
@@ -184,10 +185,14 @@ class hierSystemInstance: public hierRoot
 	void Print_Vhdl(ostream& ofile);
 };
 
+class hierInstanceGraph;
 class hierSystem: public hierRoot
 {
         string _library;
 	hierSystem* _parent;
+
+
+	set<hierPipe*> _pipe_set;
 
 	map<string, hierPipe* > _pipe_map;
 
@@ -241,7 +246,17 @@ public:
 	void List_Out_Pipe_Names(vector<string>& pvec);
 	void List_Internal_Pipe_Names(vector<string>& pvec);
 	
-	
+	void List_In_Pipes(vector<hierPipe*>& pvec);
+	void List_Out_Pipes(vector<hierPipe*>& pvec);
+	void List_Internal_Pipes(vector<hierPipe*>& pvec);
+
+	hierPipe* Find_Pipe(string pname)
+	{
+		if(_pipe_map.find(pname) != _pipe_map.end())
+			return(_pipe_map[pname]);
+		else	
+			return(NULL);
+	}	
 
 	void Add_Noblock_Pipe(string pname)
 	{
@@ -363,10 +378,12 @@ public:
 		{
 			p = new hierPipe(pid, pipe_width, pipe_depth);
 			_pipe_map[pid] = p;
+			_pipe_set.insert(p);
 		}
 		return(p);
 	}
 
+	bool Has_Pipe(hierPipe* p) {return(_pipe_set.find(p) != _pipe_set.end());}
 	void Add_Pipe_To_Map(map<string, hierPipe*>& pipe_map, string pipe_name, int width, int depth,
 					string pipe_type)
 	{
@@ -607,9 +624,159 @@ public:
 	string Get_Pipe_Vhdl_Read_Ack_Name(string pipe);
 
 	void Print_Vhdl_Rtl_Type_Package(ostream& ofile);
+
+	void Build_Instance_Hierarchy(hierInstanceGraph** instance_graph);
+	void Build_Instance_Graph_Arcs (hierInstanceGraph* instance_graph);
+
+};
+
+class hierInstanceGraph;
+class hierPipeInstance: public hierRoot
+{
+	public:
+		hierPipe* _pipe;
+		hierInstanceGraph* _instance_graph_node;
+		hierPipeInstance* _root_actual_pipe;
+
+		hierPipeInstance(hierPipe* p, hierInstanceGraph* g)
+		{
+			_pipe = p;
+			_instance_graph_node = g;
+			_root_actual_pipe = NULL;
+		}
+};
+
+class hierInstanceGraphArc: public hierRoot
+{
+	public:
+
+	hierPipeInstance* _formal_pipe;
+	hierPipeInstance* _actual_pipe;
+
+
+	hierInstanceGraph* _driver;
+	hierInstanceGraph* _receiver;
+	hierInstanceGraph* _parent;
+
+	hierInstanceGraphArc(hierInstanceGraph* prnt, string id): hierRoot(id)
+	{
+		_parent = prnt;
+		_formal_pipe = NULL;
+		_actual_pipe = NULL;
+		_driver = NULL;
+		_receiver = NULL;
+	}
+
+
+	void Set_Formal_Pipe(hierPipeInstance* p) 
+	{	
+		assert((_formal_pipe == NULL) || (_formal_pipe == p));
+		_formal_pipe = p;
+	}
+	
+	void Set_Actual_Pipe(hierPipeInstance* p) 
+	{	
+		assert((_actual_pipe == NULL) || (_actual_pipe == p));
+		_actual_pipe = p;
+	}
+
+	void Set_Driver(hierInstanceGraph* driver)
+	{
+		assert(_driver == NULL);
+		_driver = driver;
+	}
+
+	void Set_Receiver(hierInstanceGraph* receiver)
+	{
+		assert(_receiver == NULL);
+		_receiver = receiver;
+	}
+
+	virtual void Print(ostream& ofile);
+};
+
+
+class FlatLeafGraph;
+class hierInstanceGraph: public hierRoot
+{
+	public:
+		hierSystem* _system;
+
+		hierSystemInstance* _instance;
+
+		hierInstanceGraph* _parent;
+
+		vector<hierInstanceGraph*> _child_nodes;
+		vector<hierInstanceGraphArc*> _arcs;
+
+
+		// pipe-instance map.
+		map<hierPipe*, hierPipeInstance*> _pipe_instance_map;
+
+		int _depth;
+
+		hierInstanceGraph(hierSystemInstance* inst): hierRoot(inst->Get_Id())
+		{
+			_parent = NULL;
+			_instance = inst;
+			_system   = inst->Get_Base_System();
+			_depth    = 0;
+		}
+
+		hierInstanceGraph(hierSystem* sys):hierRoot(sys->Get_Id())  
+		{
+			_parent = NULL;
+			_depth = 0;
+			_system = sys; 
+			_instance = NULL;
+		}
+		
+		void Add_Node(hierInstanceGraph* child) 
+		{ 
+			_child_nodes.push_back(child); 
+			child->_depth = (this->_depth + 1);
+		}
+		void Add_Arc(hierInstanceGraph* driver, hierInstanceGraph* receiver, hierPipeInstance* formal_p, hierPipeInstance* actual_p)
+		{
+			string arc_id = ((formal_p == NULL) ? "null" : formal_p->_pipe->Get_Id()) 
+						+ "_" + ((actual_p != NULL) ? actual_p->_pipe->Get_Id() : "null");
+			hierInstanceGraphArc* new_arc = new hierInstanceGraphArc(this,arc_id);
+
+			new_arc->_formal_pipe = formal_p;
+			new_arc->_actual_pipe = actual_p;
+			new_arc->_driver = driver;
+			new_arc->_receiver = receiver;
+
+			_arcs.push_back(new_arc);
+		}
+
+		void Build_Connectivity();
+		void Set_Root_Pipes(map<hierPipeInstance*,hierPipeInstance*>& root_pipe_map);
+		void Build_Flat_Leaf_Graph(FlatLeafGraph** flg);
+
+		virtual void Print(ostream& ofile);
+	
+		string Hierarchical_Name();
+};
+
+
+class FlatLeafGraph: public hierRoot
+{
+	public:
+
+		set<hierPipeInstance*> _flat_pipes;
+		set<hierInstanceGraph*> _instances;
+
+		map<hierPipeInstance*, hierInstanceGraph*> _driven_instance_map;
+		map<hierPipeInstance*, hierInstanceGraph*> _driving_instance_map;
+
+		FlatLeafGraph():hierRoot() {}
+		virtual void Print(ostream& ofile);
+
 };
 
 void listPipeMap(map<string, hierPipe* >& pmap, vector<string>& pvec);
+void listPipeMap(map<string, hierPipe* >& pmap, vector<hierPipe*>& pvec);
 
 bool getPipeInfoFromGlobals(string pname, 
 				map<string, hierPipe*>& pmap,

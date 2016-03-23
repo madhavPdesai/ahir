@@ -1309,6 +1309,10 @@ An operator module may also be marked as pipelined.
 $pipeline $operator $module [foo] $in (..) $out (..)
 \end{verbatim}
 
+An operator module is not allowed to access pipes from within.
+Inside an operator module, function calls can be made only
+to operator/volatile modules.
+
 \subsection{Volatile Modules}
 
 A module is marked as a volatile-module if 
