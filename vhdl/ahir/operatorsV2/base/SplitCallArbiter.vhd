@@ -77,7 +77,7 @@ begin
    ----------------------------------------------------------------------------
    -- process to handle call_reqs  --> call_mreq muxing
    ----------------------------------------------------------------------------
-   process(clk,pe_call_reqs,call_state,reset)
+   process(clk,pe_call_reqs,call_state,call_mack,reset)
         variable nstate: CallStateType;
         variable there_is_a_call : std_logic;
    begin

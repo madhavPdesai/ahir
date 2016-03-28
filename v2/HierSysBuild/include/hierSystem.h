@@ -186,6 +186,7 @@ class hierSystemInstance: public hierRoot
 };
 
 class hierInstanceGraph;
+class FlatLeafGraph;
 class hierSystem: public hierRoot
 {
         string _library;
@@ -627,6 +628,7 @@ public:
 
 	void Build_Instance_Hierarchy(hierInstanceGraph** instance_graph);
 	void Build_Instance_Graph_Arcs (hierInstanceGraph* instance_graph);
+	void Partition_Flat_Graph(FlatLeafGraph* g, set<string>& hw_instances, FlatLeafGraph** sw_graph, FlatLeafGraph** hw_graph);
 
 };
 
@@ -772,6 +774,10 @@ class FlatLeafGraph: public hierRoot
 
 		FlatLeafGraph():hierRoot() {}
 		virtual void Print(ostream& ofile);
+
+
+		void Print_Hsys_File(string top_name, string top_lib_name, ostream& ofile);
+		void Print_Pipe_Classifications(set<string>& hw_instances, ostream& ofile);
 
 };
 

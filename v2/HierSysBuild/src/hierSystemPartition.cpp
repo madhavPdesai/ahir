@@ -65,6 +65,68 @@ void hierSystem:: Build_Instance_Graph_Arcs (hierInstanceGraph* instance_graph)
 	instance_graph->Build_Connectivity();
 }
 
+
+	
+void hierSystem::Partition_Flat_Graph(FlatLeafGraph* g, set<string>& hw_instances, FlatLeafGraph** sw_graph, FlatLeafGraph** hw_graph)
+{
+	*sw_graph = new FlatLeafGraph();
+	*hw_graph = new FlatLeafGraph();
+
+	for(set<hierInstanceGraph*>::iterator iter = g->_instances.begin(), fiter = g->_instances.end();
+				iter != fiter; iter++)
+	{
+		hierInstanceGraph* ig = *iter;
+		if(ig->_instance != NULL)
+		{
+			string hname = ig->Hierarchical_Name();
+			if(hw_instances.find(hname) != hw_instances.end())
+			{
+				(*hw_graph)->_instances.insert(ig);
+			}
+			else
+			{
+				(*sw_graph)->_instances.insert(ig);
+			}
+		}
+	}
+
+	for(map<hierPipeInstance*, hierInstanceGraph*>::iterator miter = g->_driven_instance_map.begin(),
+			fmiter = g->_driven_instance_map.end(); miter != fmiter; miter++)
+	{
+		hierPipeInstance* p = (*miter).first;
+		hierInstanceGraph* igg = (*miter).second;
+		string hhname = igg->Hierarchical_Name();
+		if(hw_instances.find(hhname) != hw_instances.end())
+		{
+			(*hw_graph)->_flat_pipes.insert(p);
+			(*hw_graph)->_driven_instance_map[p] = igg;		
+		}
+		else
+		{
+			(*sw_graph)->_flat_pipes.insert(p);
+			(*sw_graph)->_driven_instance_map[p] = igg;		
+		}
+	}
+
+	for(map<hierPipeInstance*, hierInstanceGraph*>::iterator miter = g->_driving_instance_map.begin(),
+			fmiter = g->_driving_instance_map.end(); miter != fmiter; miter++)
+	{
+		hierPipeInstance* p = (*miter).first;
+		hierInstanceGraph* igg = (*miter).second;
+		string hhname = igg->Hierarchical_Name();
+		if(hw_instances.find(hhname) != hw_instances.end())
+		{
+			(*hw_graph)->_flat_pipes.insert(p);
+			(*hw_graph)->_driving_instance_map[p] = igg;		
+		}
+		else
+		{
+			(*sw_graph)->_flat_pipes.insert(p);
+			(*sw_graph)->_driving_instance_map[p] = igg;		
+		}
+	}
+}
+
 void hierInstanceGraph::Build_Connectivity()
 {
 	assert(_system != NULL);
@@ -316,3 +378,83 @@ void FlatLeafGraph::Print(ostream& ofile)
 		}
 	}
 }
+
+
+void FlatLeafGraph::Print_Hsys_File(string top_name, string top_lib_name, ostream& ofile)
+{
+	vector<hierPipe*> in_pipes;
+	vector<hierPipe*> out_pipes;
+
+	ofile << "$system " << 	top_name << " $library " << top_lib_name << endl;
+	for(set<hierPipeInstance*>::iterator piter =this->_flat_pipes.begin(), fpiter = this->_flat_pipes.end();
+				piter != fpiter; piter++)
+	{
+		hierPipeInstance* pi = *piter;
+		hierPipe* p = pi->_pipe;
+		bool driven_by_nothing = (this->_driving_instance_map.find(pi) == this->_driving_instance_map.end());
+		bool drives_nothing = (this->_driven_instance_map.find(pi) == this->_driven_instance_map.end());
+
+		if(p->_is_input)
+		{
+			assert(driven_by_nothing);
+			in_pipes.push_back(p);
+		}
+		else if (p->_is_output)
+		{
+			assert(drives_nothing);
+			out_pipes.push_back(p);
+		}
+		else if(driven_by_nothing && !drives_nothing)
+		{
+			in_pipes.push_back(p);
+		}
+		else if(!driven_by_nothing && drives_nothing)
+		{
+			out_pipes.push_back(p);
+		}
+	}
+	
+	ofile << " $in " << endl;
+	for (int I = 0, fI = in_pipes.size(); I < fI; I++)
+	{
+		hierPipe* p = in_pipes[I];
+		ofile << (p->_is_signal ? "  $signal " : "  $pipe ") << p->Get_Id() << endl;
+	}
+	ofile << " $out " << endl;
+	for (int I = 0, fI = out_pipes.size(); I < fI; I++)
+	{
+		hierPipe* p = out_pipes[I];
+		ofile << (p->_is_signal ? "  $signal " : "  $pipe ") << p->Get_Id() << endl;
+	}
+   ofile << "{" << endl;
+   for(set<hierInstanceGraph*>::iterator iiter = this->_instances.begin(), fiiter = this->_instances.end();
+		iiter != fiiter; iiter++)
+   {
+	hierInstanceGraph* g = *iiter;
+	ofile << "  $instance " << g->_instance->Get_Id() << " " << g->_system->Get_Library() <<  ":" << g->_system->Get_Id() << endl;
+   }
+   ofile << "}" << endl;
+}
+		
+void FlatLeafGraph::Print_Pipe_Classifications(set<string>& hw_instance_names, ostream& ofile)
+{
+	for(set<hierPipeInstance*>::iterator iter = this->_flat_pipes.begin(), fiter = this->_flat_pipes.end();
+			iter != fiter; iter++)
+	{
+		hierPipeInstance* pi = *iter;
+		hierInstanceGraph* driver   = this->_driving_instance_map[pi];
+		bool driver_in_hw = ((driver != NULL) &&
+					(hw_instance_names.find(driver->Hierarchical_Name()) != hw_instance_names.end()));
+
+		hierInstanceGraph* receiver = this->_driven_instance_map[pi];
+		bool receiver_in_hw = ((receiver != NULL) &&
+						(hw_instance_names.find(receiver->Hierarchical_Name()) != hw_instance_names.end()));
+
+		ofile << pi->_pipe->Get_Id() << " " <<  
+				((driver == NULL) ? "env" : (driver_in_hw ? "hw" : "sw")) 
+					<< " " << 
+				((receiver == NULL) ? "env" : (receiver_in_hw ? "hw" : "sw"))  << endl;
+	}
+}
+
+
