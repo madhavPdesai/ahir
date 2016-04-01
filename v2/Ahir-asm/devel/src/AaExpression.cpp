@@ -41,7 +41,21 @@ AaExpression::~AaExpression() {};
 
 void AaExpression::Write_VC_Output_Buffering(string dpe_name, string tgt_name, ostream& ofile)
 {
-	ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this->Get_Buffering() << endl;
+	int this_buffering = this->Get_Buffering();
+	int stmt_buf = 0;
+
+	AaStatement* stmt = this->Get_Associated_Statement();
+	if(stmt->Is("AaAssignmentStatement"))
+	{
+		AaAssignmentStatement* astmt = (AaAssignmentStatement*) stmt;
+		if(astmt->Get_Source() == this)
+			stmt_buf = astmt->Get_Buffering();
+	}
+
+	if(stmt_buf > this_buffering)
+		this_buffering = stmt_buf;
+
+	ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << this_buffering << endl;
 }
 
 AaModule* AaExpression::Get_Module()

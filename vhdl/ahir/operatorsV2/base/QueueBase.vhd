@@ -69,59 +69,61 @@ begin  -- SimModel
     data_out <= queue_array(read_pointer);
   
     -- single process
-    process(clk, reset, read_pointer, write_pointer, incr_read_pointer, incr_write_pointer, queue_size)
+    process(clk, reset, read_pointer, write_pointer, incr_read_pointer, incr_write_pointer, queue_size, push_req, pop_req)
       variable qsize : integer range 0 to queue_depth;
       variable push,pop : boolean;
       variable next_read_ptr,next_write_ptr : integer range 0 to queue_depth-1;
     begin
+
       qsize := queue_size;
       push  := false;
       pop   := false;
       next_read_ptr := read_pointer;
       next_write_ptr := write_pointer;
       
-      if(reset = '1') then
-        qsize := 0;
-        next_read_ptr := 0;
-        next_write_ptr := 0;
-      else
-        if((qsize < queue_depth) and push_req = '1') then
+      if((qsize < queue_depth) and push_req = '1') then
           push := true;
-        end if;
-  
-        if((qsize > 0) and pop_req = '1') then
-          pop := true;
-        end if;
-  
-  
-        if(push) then
-          next_write_ptr := incr_write_pointer;
-        end if;
-  
-        if(pop) then
-          next_read_ptr := incr_read_pointer;
-        end if;
-  
-  
-        if(pop and (not push)) then
-          qsize := qsize - 1;
-        elsif(push and (not pop)) then
-          qsize := qsize + 1;
-        end if;
-        
       end if;
+  
+      if((qsize > 0) and pop_req = '1') then
+          pop := true;
+      end if;
+  
+  
+      if(push) then
+          next_write_ptr := incr_write_pointer;
+      end if;
+  
+      if(pop) then
+          next_read_ptr := incr_read_pointer;
+      end if;
+  
+  
+      if(pop and (not push)) then
+          qsize := qsize - 1;
+      elsif(push and (not pop)) then
+          qsize := qsize + 1;
+      end if;
+        
   
       if(clk'event and clk = '1') then
         
-        if(push) then
-          queue_array(write_pointer) <= data_in;
-        end if;
+	if(reset = '1') then
+           queue_size <= 0;
+           read_pointer <= 0;
+           write_pointer <= 0;
+	else
+           if(push) then
+          	queue_array(write_pointer) <= data_in;
+           end if;
         
-        queue_size <= qsize;
-        read_pointer <= next_read_ptr;
-        write_pointer <= next_write_ptr;
+           queue_size <= qsize;
+           read_pointer <= next_read_ptr;
+           write_pointer <= next_write_ptr;
+
+        end if;
       end if;
-      
+
     end process;
    end block NTB;
   end generate qDGt0;

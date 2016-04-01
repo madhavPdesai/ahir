@@ -7,6 +7,25 @@
 #include <rtlStatement.h>
 #include <rtlThread.h>
 
+bool matchPrefix(string entire_name, set<string>& prefixes)
+{
+	bool ret_val = false;
+	for(set<string>::iterator iter = prefixes.begin(), fiter = prefixes.end(); iter != fiter; iter++)
+	{
+		string prefix = *iter;
+		if(prefix.size() <= entire_name.size())
+		{
+			string sub_entire_name = entire_name.substr(0, prefix.size());
+			if(sub_entire_name == prefix)
+			{
+				ret_val = true;
+				break;
+			}	
+		}
+	}
+	return(ret_val);
+}
+
 void hierInstanceGraphArc::Print(ostream& ofile)
 {
 	for(int I = 0; I < _parent->_depth; I++)
@@ -79,7 +98,7 @@ void hierSystem::Partition_Flat_Graph(FlatLeafGraph* g, set<string>& hw_instance
 		if(ig->_instance != NULL)
 		{
 			string hname = ig->Hierarchical_Name();
-			if(hw_instances.find(hname) != hw_instances.end())
+			if(matchPrefix(hname, hw_instances)) 
 			{
 				(*hw_graph)->_instances.insert(ig);
 			}
@@ -95,8 +114,7 @@ void hierSystem::Partition_Flat_Graph(FlatLeafGraph* g, set<string>& hw_instance
 	{
 		hierPipeInstance* p = (*miter).first;
 		hierInstanceGraph* igg = (*miter).second;
-		string hhname = igg->Hierarchical_Name();
-		if(hw_instances.find(hhname) != hw_instances.end())
+		if((*hw_graph)->_instances.find(igg) != (*hw_graph)->_instances.end())
 		{
 			(*hw_graph)->_flat_pipes.insert(p);
 			(*hw_graph)->_driven_instance_map[p] = igg;		
@@ -113,8 +131,7 @@ void hierSystem::Partition_Flat_Graph(FlatLeafGraph* g, set<string>& hw_instance
 	{
 		hierPipeInstance* p = (*miter).first;
 		hierInstanceGraph* igg = (*miter).second;
-		string hhname = igg->Hierarchical_Name();
-		if(hw_instances.find(hhname) != hw_instances.end())
+		if((*hw_graph)->_instances.find(igg) != (*hw_graph)->_instances.end())
 		{
 			(*hw_graph)->_flat_pipes.insert(p);
 			(*hw_graph)->_driving_instance_map[p] = igg;		
@@ -443,17 +460,17 @@ void FlatLeafGraph::Print_Pipe_Classifications(set<string>& hw_instance_names, o
 	{
 		hierPipeInstance* pi = *iter;
 		hierInstanceGraph* driver   = this->_driving_instance_map[pi];
-		bool driver_in_hw = ((driver != NULL) &&
-					(hw_instance_names.find(driver->Hierarchical_Name()) != hw_instance_names.end()));
+		bool driver_in_hw = ((driver != NULL) && matchPrefix(driver->Hierarchical_Name(), hw_instance_names));
 
 		hierInstanceGraph* receiver = this->_driven_instance_map[pi];
-		bool receiver_in_hw = ((receiver != NULL) &&
-						(hw_instance_names.find(receiver->Hierarchical_Name()) != hw_instance_names.end()));
+		bool receiver_in_hw = ((receiver != NULL) && matchPrefix(receiver->Hierarchical_Name(), hw_instance_names));
 
-		ofile << pi->_pipe->Get_Id() << " " <<  
-				((driver == NULL) ? "env" : (driver_in_hw ? "hw" : "sw")) 
-					<< " " << 
-				((receiver == NULL) ? "env" : (receiver_in_hw ? "hw" : "sw"))  << endl;
+		ofile << pi->_pipe->Get_Id() << " " 
+				<< pi->_pipe->Get_Width() << " " << pi->_pipe->Get_Depth() 
+				<< " " << (pi->_pipe->Get_Is_Signal() ? "signal" : "pipe") << " "
+				<< (pi->_pipe->Get_Is_Noblock() ? "noblock" : "block") << " " 
+				<< ((driver == NULL) ? "ENV" : (driver_in_hw ? "HW" : "SW")) << " " 
+				<< ((receiver == NULL) ? "ENV" : (receiver_in_hw ? "HW" : "SW"))  << endl;
 	}
 }
 
