@@ -12,12 +12,15 @@ use ahir.BaseComponents.all;
 -- that allows back-to-back transfers to an output
 -- port.  The combinational paths are a bit longer
 -- but cant have everything..
+--
+-- added full_rate flag to indicate that throughput is paramount.
 entity OutputPortRevised is
   generic(name : string;
 	  num_reqs: integer;
 	  data_width: integer;
 	  no_arbitration: boolean := false;
-	  input_buffering: IntegerArray);
+	  input_buffering: IntegerArray;
+	  full_rate: boolean);
   port (
     sample_req        : in  BooleanArray(num_reqs-1 downto 0);
     sample_ack        : out BooleanArray(num_reqs-1 downto 0);
@@ -68,7 +71,8 @@ begin
 	rxB: ReceiveBuffer 
 		generic map( name => name & " rxBuf " & Convert_To_String(I),
 				buffer_size => input_buf_sizes(I),
-				data_width => data_width)
+				data_width => data_width,
+				full_rate => full_rate)
 		port map(write_req => sample_req(I),
 		 	write_ack => sample_ack(I),
 		 	write_data => in_data_array(I),

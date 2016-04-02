@@ -1581,6 +1581,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 	    bool is_p2p   = false;
 	    bool noblock_flag = false;
 	    bool is_shift_reg = false;
+	    bool full_rate = false;
         }
         : ((LIFO { lifo_flag = true; }) | (NOBLOCK {noblock_flag = true;}))? 
 	  (SHIFTREG {is_shift_reg = true;})?
@@ -1590,6 +1591,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 		(SIGNAL {is_signal = true;})?
 		(SYNCH {is_synch = true;})?
 		(P2P {is_p2p = true;})?
+		(FULLRATE {full_rate = true;})?
         {
 	    for(int I = 0, fI = oname_list.size(); I < fI; I++)
 	    {
@@ -1607,6 +1609,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 	    	((AaPipeObject*)obj)->Set_Signal(is_signal);
 	    	((AaPipeObject*)obj)->Set_Synch(is_synch);
 	    	((AaPipeObject*)obj)->Set_P2P(is_p2p);
+	    	((AaPipeObject*)obj)->Set_Full_Rate(full_rate);
 	    	((AaPipeObject*)obj)->Set_Shift_Reg(is_shift_reg);
 
 		if(scope == NULL)

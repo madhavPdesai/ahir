@@ -40,7 +40,8 @@ entity UnsharedOperatorWithBuffering is
       constant_width : integer;
       buffering      : integer;
       use_constant  : boolean := false;
-      flow_through  : boolean := false
+      flow_through  : boolean := false;
+      full_rate: boolean 
       );
   port (
     -- req -> ack follow pulse protocol
@@ -96,10 +97,13 @@ begin  -- Behave
     -- output interlock buffer
     -----------------------------------------------------------------------------
     ilb: InterlockBuffer 
+
 	  generic map(name => name & " ilb ",
 			  buffer_size => buffering,
 			  in_data_width => owidth,
-			  out_data_width => owidth)
+			  out_data_width => owidth, 
+			  full_rate => full_rate)
+
 	  port map(write_req => reqL, write_ack => ackL, write_data => result,
 			  read_req => reqR, read_ack => ackR, read_data => dataR,
 				  clk => clk, reset => reset);

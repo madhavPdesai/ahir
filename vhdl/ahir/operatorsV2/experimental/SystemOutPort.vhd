@@ -15,7 +15,8 @@ entity SystemOutPort is
    generic (name : string;
 	    num_writes: integer;
 	    in_data_width: integer;
-            out_data_width : integer); 
+            out_data_width : integer;
+	    full_rate: boolean := false); 
    port (write_req : in std_logic_vector(num_writes-1 downto 0);
          write_ack : out std_logic_vector(num_writes-1 downto 0);
          write_data: in std_logic_vector((num_writes*in_data_width)-1 downto 0);
@@ -52,7 +53,7 @@ begin
     opipe: PipeBase generic map(name => name & " opipe", 
 				    num_reads => 1,
 					num_writes => num_writes, data_width => min_width,
-						lifo_mode => false, signal_mode => true, depth => 1)
+						lifo_mode => false, signal_mode => true, depth => 1, full_rate => full_rate)
 		port map(read_req => read_req, read_ack => read_ack,
 				read_data => pipe_data_out,
 					write_req => write_req, write_ack => write_ack,

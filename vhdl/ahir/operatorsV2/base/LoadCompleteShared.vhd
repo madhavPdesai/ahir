@@ -44,7 +44,8 @@ begin  -- Behave
       owidth =>  data_width*num_reqs,
       twidth =>  tag_length,
       nreqs  => num_reqs,
-      detailed_buffering_per_output => detailed_buffering_per_output )  
+      detailed_buffering_per_output => detailed_buffering_per_output,
+      full_rate => true )   -- always double buffered.
     port map (
       reqL   => mack,                   -- cross-over (mack from mem-subsystem)
       ackL   => mreq,                   -- cross-over 

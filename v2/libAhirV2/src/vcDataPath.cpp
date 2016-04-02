@@ -178,8 +178,8 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 			ofile << "num_writes => " << num_writes << "," << endl;
 			ofile << "data_width => " << pipe_width << "," << endl;
 			ofile << "lifo_mode => " << (this->Get_Lifo_Mode() ? "true" : "false") << "," << endl;
+			ofile << "full_rate => " << (this->Get_Full_Rate() ? "true" : "false") << "," << endl;
 			ofile << "shift_register_mode => " << (this->Get_Shift_Reg() ? "true" : "false") << "," << endl;
-	
 			ofile << "depth => " << actual_pipe_depth << " --}\n)" << endl;
 			ofile << "port map( -- { " << endl;
 			ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
@@ -734,8 +734,10 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 			if(dpe->Is_Shareable_With(*(dpe_group[idx].begin())))
 			{
 				bool is_compatible = true;
+				if(dpe->Get_Full_Rate() != (*(dpe_group[idx].begin()))->Get_Full_Rate())
+					is_compatible = false;
 
-				if(!vcSystem::_min_area_flag && !dpe->Is_Pipelined_Operator())
+				if(is_compatible && !vcSystem::_min_area_flag && !dpe->Is_Pipelined_Operator())
 				{
 					for(set<vcDatapathElement*>::iterator dpe_iter = dpe_group[idx].begin();
 							dpe_iter != dpe_group[idx].end();
@@ -1394,6 +1396,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 
 		// used in the unshared case.
 		bool flow_through = (lead_op->Get_Flow_Through() || this->Get_Parent()->Get_Volatile_Flag());
+		bool full_rate = lead_op->Get_Full_Rate();
 
 		//
 		// if it is a flow-through operator, just print 
@@ -1697,6 +1700,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 				<< " no_arbitration => " << no_arb_string << ","  << endl
 				<< " num_reqs => " << num_reqs << "," << endl
 				<< " use_input_buffering => true," << endl
+				<< " full_rate => " << (full_rate ? "true," : "false,") << endl
 				<< " detailed_buffering_per_input => inBUFs," << endl
 				<< " detailed_buffering_per_output => outBUFs -- } \n )" << endl;
 			ofile << "port map ( reqL => reqL , ackL => ackL, reqR => reqR, ackR => ackR, dataL => data_in, dataR => data_out, clk => clk, reset => reset); -- }" << endl;
@@ -1735,6 +1739,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		    << " constant_operand => " << const_operand << "," << endl // constant operand?
 		    << " constant_width => " << const_width << "," << endl // constant width
 		    << " use_constant  => " << (use_constant ? "true" : "false") << "," << endl // use constant?
+		    << " full_rate  => " << (full_rate ? "true" : "false") << "," << endl // full-rate?
 		    << " no_arbitration => " << no_arb_string << "," << endl
 		    << " min_clock_period => " << (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl
 		    << " num_reqs => " << num_reqs << "," << endl
@@ -1776,6 +1781,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		    << " constant_width => " << const_width << "," << endl // constant width
 		    << " buffering  => " << bufv << "," << endl // buffering in operator.
 		    << " flow_through => " << (flow_through ? "true" : "false") << "," << endl
+		    << " full_rate  => " << (full_rate ? "true" : "false") << "," << endl // full-rate?
 		    << " use_constant  => " << (use_constant ? "true" : "false") << endl // use constant?
 
 		    << "--} \n ) " << endl; // number of requesters..
@@ -2453,8 +2459,6 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 		vector<string> elements;
 
 
-
-
 		vcPipe* p = NULL;
 		int data_width = -1;
 
@@ -2657,6 +2661,9 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 		vcPipe* p = NULL;
 		int data_width = -1;
 
+		vcDatapathElement* lo = *(_compatible_outport_groups[idx].begin());
+		bool full_rate = lo->Get_Full_Rate();
+
 		// ok. collect all the information..
 		for(set<vcDatapathElement*>::iterator iter = _compatible_outport_groups[idx].begin();
 				iter != _compatible_outport_groups[idx].end();
@@ -2768,6 +2775,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 		ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
 			<< " num_reqs => " << num_reqs << ","
 			<< " input_buffering => inBUFs," 
+			<< " full_rate => " << (full_rate ? "true," : "false,") << endl
 			<< " no_arbitration => " << no_arb_string << ")" << endl;
 		ofile << "port map (--{\n sample_req => sample_req " << ", " <<  endl
 			<< "    sample_ack => sample_ack " << ", " <<  endl
@@ -2875,6 +2883,11 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
 		bool skip_because_volatile = false;
 		bool skip_because_operator = false;
+
+
+		// lead operator.. is it full-rate?
+		vcDatapathElement* lo = *(_compatible_call_groups[idx].begin());
+		bool full_rate = lo->Get_Full_Rate();
 
 		// ok. collect all the information..
 		for(set<vcDatapathElement*>::iterator iter = _compatible_call_groups[idx].begin();
@@ -3071,6 +3084,9 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 			ofile << " buffering => inBUFs,"  << endl;
 		}
 
+		// full-rate?
+		ofile << " full_rate => " << (full_rate ? " true," : " false,") << endl;
+
 		ofile << " twidth => " << tag_length << "," << endl
 			<< " nreqs => " << num_reqs << "," << endl;
 
@@ -3115,6 +3131,12 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 				<< " owidth => " << out_width << "," << endl; 
 		}
 		ofile << " detailed_buffering_per_output => outBUFs, " << endl;
+
+		if(called_module->Get_Out_Arg_Width() > 0)
+		{
+			ofile << " full_rate => " << 
+					(full_rate ? "true" : "false") << ", " << endl;
+		}
 
 		ofile << " twidth => " << tag_length << "," << endl
 			<< " name => " << '"' << omux_name << '"' << "," << endl

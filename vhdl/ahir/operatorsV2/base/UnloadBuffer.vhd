@@ -9,7 +9,9 @@ use ahir.BaseComponents.all;
 
 entity UnloadBuffer is
   generic (name: string; buffer_size: integer := 2; data_width : integer := 32; 
-			bypass_flag : boolean := false; nonblocking_read_flag : boolean := false);
+			bypass_flag : boolean := false; 
+			nonblocking_read_flag : boolean := false;
+			full_rate: boolean);
   port ( write_req: in std_logic;
         write_ack: out std_logic;
         write_data: in std_logic_vector(data_width-1 downto 0);
@@ -49,7 +51,8 @@ begin  -- default_arch
         num_writes => 1,
         data_width => data_width,
         lifo_mode  => false,
-        depth      => buffer_size)
+        depth      => buffer_size,
+	full_rate  => full_rate)
       port map (
         read_req   => pop_req,
         read_ack   => pop_ack,
@@ -70,7 +73,8 @@ begin  -- default_arch
         num_writes => 1,
         data_width => data_width,
         lifo_mode  => false,
-        depth      => buffer_size)
+        depth      => buffer_size,
+        full_rate  => full_rate)
       port map (
         read_req   => pop_req,
         read_ack   => pop_ack,

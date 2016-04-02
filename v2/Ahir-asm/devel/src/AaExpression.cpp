@@ -122,7 +122,7 @@ bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
 }
 
 
-bool AaExpression::Is_Part_Of_Extreme_Pipeline()
+bool AaExpression::Is_Part_Of_Fullrate_Pipeline()
 {
 	AaStatement* dws = this->Get_Pipeline_Parent();
 	bool ret_val = ((dws != NULL)  && dws->Get_Pipeline_Full_Rate_Flag());
@@ -1683,6 +1683,7 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& of
 	if(!this->Is_Constant()  && !this->Is_Implicit_Variable_Reference())
 	{
 		bool pipeline_flag = (this->Get_Pipeline_Parent() != NULL);
+		bool full_rate = (pipeline_flag && this->Get_Pipeline_Parent()->Get_Pipeline_Full_Rate_Flag());
 
 		ofile << "// " << this->To_String() << endl;
 		if(this->_object->Is("AaStorageObject"))
@@ -1705,6 +1706,7 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& of
 					this->Get_VC_Datapath_Instance_Name(),
 					src_name,
 					this->Get_VC_Guard_String(),
+					full_rate,
 					ofile);
 
 			//
@@ -1760,6 +1762,7 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances(AaExpression* target, 
 	if(!this->Is_Constant() && !this->Is_Implicit_Variable_Reference())
 	{
 		bool pipelining_flag = (this->Get_Pipeline_Parent() != NULL);
+		bool full_rate = (pipelining_flag && (this->Get_Pipeline_Parent()->Is_Part_Of_Fullrate_Pipeline()));
 
 		ofile << "// " << this->To_String() << endl;
 		if(this->_object->Is("AaStorageObject"))
@@ -1782,6 +1785,7 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances(AaExpression* target, 
 					dpe_name,
 					tgt_name,
 					this->Get_VC_Guard_String(),
+					full_rate, 
 					ofile);
 			this->Write_VC_Output_Buffering(dpe_name, tgt_name, ofile);
 		}
@@ -2755,6 +2759,9 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
   
   if(this->Is_Constant())
     return;
+	  
+  bool full_rate = ((this->Get_Associated_Statement() != NULL)
+					&& this->Get_Associated_Statement()->Is_Part_Of_Fullrate_Pipeline());
   
 
   ofile << "// " << this->To_String() << endl;
@@ -2792,6 +2799,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 				tgt_name,
 				this->Get_VC_Guard_String(),
 				false, // flow-through
+				full_rate, 
 			        ofile);
 
       //
@@ -2840,8 +2848,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 	  obj_type = ((AaObject*)(this->_object))->Get_Type();
 	  string pipe_inst = this->Get_VC_Name() + "_pipe_access";
 	  Write_VC_IO_Input_Port((AaPipeObject*)(this->_object), pipe_inst,source_wire,
-				  this->Get_VC_Guard_String(),
-					ofile);
+				  this->Get_VC_Guard_String(), full_rate, ofile);
 	  // pipelining: address calculation path is double buffered.
 	  if(this->Get_Pipeline_Parent() != NULL)
 	  {
@@ -2876,9 +2883,10 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 				  low_index,
 				  this->Get_VC_Guard_String(),
 				  flow_through,
+				  full_rate,
 				  ofile);
 	  // extreme pipelining
-	  if(!flow_through && (this->Get_Pipeline_Parent() != NULL))
+	  if(!flow_through && full_rate)
 	  {
 		ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " 2" << endl;
 	  }
@@ -3823,6 +3831,8 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
     {
       assert(this->_reference_to_object->Is("AaArrayObjectReference"));
 
+      bool full_rate = ((this->Get_Associated_Statement() != NULL)
+					&& this->Get_Associated_Statement()->Is_Part_Of_Fullrate_Pipeline());
       AaArrayObjectReference* obj_ref = 
 	(AaArrayObjectReference*)(this->_reference_to_object);
 
@@ -3848,6 +3858,7 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
 				tgt_name,
 			        this->Get_VC_Guard_String(),
 				false,
+				full_rate,
 			        ofile);
 
 	this->Write_VC_Output_Buffering(dpe_name, tgt_name, ofile);
@@ -4080,6 +4091,8 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 
       		
 	  bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+	  bool full_rate = ((this->Get_Associated_Statement() != NULL)
+					&& this->Get_Associated_Statement()->Is_Part_Of_Fullrate_Pipeline());
 
 	  this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
 
@@ -4095,6 +4108,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 				  tgt_name,
 				  this->Get_VC_Guard_String(),
 				  false,
+				  full_rate, 
 				  ofile);
 
 	  }
@@ -4109,6 +4123,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 				  this->Get_VC_Guard_String(),
 				  flow_through, 
 				  this->_bit_cast,
+				  full_rate, 
 				  ofile);
 	  }
 
@@ -4202,6 +4217,8 @@ void AaSliceExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
   if(!this->Is_Constant())
   {
 	  bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+	  bool full_rate = ((this->Get_Associated_Statement() != NULL)
+					&& this->Get_Associated_Statement()->Is_Part_Of_Fullrate_Pipeline());
 
 	  this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
 
@@ -4218,6 +4235,7 @@ void AaSliceExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 				  this->_low_index,
 				  this->Get_VC_Guard_String(),
 				  flow_through,
+				  full_rate, 
 				  ofile);
 
 	  // extreme pipelining.
@@ -4414,6 +4432,8 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
     {
 
       bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+	  bool full_rate = ((this->Get_Associated_Statement() != NULL)
+					&& this->Get_Associated_Statement()->Is_Part_Of_Fullrate_Pipeline());
 
       this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
 
@@ -4433,6 +4453,7 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 		      this->Get_VC_Guard_String(),
 			flow_through, 
 		      false, //not a bit-cast.
+		      full_rate, 
 		      ofile);
 
       if(!flow_through)
@@ -4518,6 +4539,8 @@ void AaBitmapExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 
       ofile << "// " << this->To_String() << endl;
       bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+	  bool full_rate = ((this->Get_Associated_Statement() != NULL)
+					&& this->Get_Associated_Statement()->Is_Part_Of_Fullrate_Pipeline());
 
       string dpe_name = this->Get_VC_Datapath_Instance_Name();
       string src_name = this->_rest->Get_VC_Driver_Name(); 
@@ -4530,6 +4553,7 @@ void AaBitmapExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 		      this->_bitmap_vector,
 		      this->Get_VC_Guard_String(),
 		      flow_through,
+		      full_rate,
 		      ofile);
 
       // extreme pipelining.
@@ -4880,6 +4904,8 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 
 		ofile << "// " << this->To_String() << endl;
 		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+	        bool full_rate = ((this->Get_Associated_Statement() != NULL)
+					&& this->Get_Associated_Statement()->Is_Part_Of_Fullrate_Pipeline());
 
 
 		string dpe_name = this->Get_VC_Datapath_Instance_Name();
@@ -4901,6 +4927,7 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 				this->Get_VC_Guard_String(),
 				add_hash,
 				flow_through,
+			        full_rate, 
 				ofile);
 
 		// extreme pipelining.
@@ -5169,6 +5196,8 @@ void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostr
 	if(!this->Is_Constant())
 	{
 		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+	        bool full_rate = ((this->Get_Associated_Statement() != NULL)
+					&& this->Get_Associated_Statement()->Is_Part_Of_Fullrate_Pipeline());
 
 		this->_test->Write_VC_Datapath_Instances(NULL,ofile);
 		this->_if_true->Write_VC_Datapath_Instances(NULL,ofile);
@@ -5193,6 +5222,7 @@ void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostr
 				(target != NULL ? target->Get_Type() : this->Get_Type()),
 				this->Get_VC_Guard_String(),
 				flow_through,
+				full_rate,
 				ofile);
       		if(!flow_through)
 	  		this->Write_VC_Output_Buffering(dpe_name, tgt_name, ofile);

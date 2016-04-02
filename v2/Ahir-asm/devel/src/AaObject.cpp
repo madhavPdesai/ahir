@@ -432,6 +432,9 @@ void AaPipeObject::Print(ostream& ofile)
 	if(_p2p)
 		ofile << " $p2p ";
 
+	if(_full_rate)
+		ofile << " $fullrate ";
+
 
 	ofile << endl << "// can point into ";
 	Print_Storage_Object_Set(this->Get_Addressed_Objects(),ofile);
@@ -491,6 +494,7 @@ void AaPipeObject::Write_VC_Model(ostream& ofile)
 			this->Get_Signal(),
 			this->Get_P2P(),
 			this->Get_Shift_Reg(),
+			this->Get_Full_Rate(),
 			ofile);
 }
 

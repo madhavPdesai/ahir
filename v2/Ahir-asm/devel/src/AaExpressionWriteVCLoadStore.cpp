@@ -248,7 +248,7 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* add
 		string addr_name = this->Get_VC_Word_Address_Name(idx);
 
 
-		bool extreme_pipelining_flag = this->Is_Part_Of_Extreme_Pipeline();
+		bool extreme_pipelining_flag = this->Is_Part_Of_Fullrate_Pipeline();
 
 		// load-store operator
 		if(read_or_write == "read")
@@ -673,6 +673,8 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
 		offset_val = this->Evaluate(indices,scale_factors, shift_factors);
 	int base_addr = this->Get_Base_Address();
 
+ 	bool full_rate = this->Is_Part_Of_Fullrate_Pipeline();
+
 	if(offset_val < 0 || base_addr < 0)
 	{
 		AaUintType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
@@ -705,10 +707,11 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
 						this->Get_VC_Guard_String(),
 						false,
 						false,
+						full_rate,
 						ofile
 						);
 				// extreme pipelining.
-				if(this->Is_Part_Of_Extreme_Pipeline())
+				if(full_rate)
 				{
 					ofile << "$buffering  $in " << dpe_name << " "
 						<< src_1_name << " 2" << endl;
@@ -957,6 +960,8 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 		offset_val = this->Evaluate(index_vector,scale_factors, shift_factors);
 	int base_addr = this->Get_Base_Address();
 
+ 	bool full_rate = this->Is_Part_Of_Fullrate_Pipeline();
+
 	AaUintType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
 	vector<AaExpression*> non_constant_indices;
 	bool all_indices_zero = (offset_val == 0);
@@ -1008,9 +1013,10 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 								this->Get_VC_Guard_String(),
 								false,
 								false,
+								full_rate,
 								ofile);
 						// extreme pipelining.
-						if(this->Is_Part_Of_Extreme_Pipeline())
+						if(full_rate)
 						{
 							ofile << "$buffering  $in " << dpe_name << " "
 								<< src_name << " 2" << endl;
@@ -1038,9 +1044,10 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 							 	this->Get_VC_Guard_String(),
 								false,
 								false,
+							        full_rate,
 								ofile);
 						// extreme pipelining.
-						if(this->Is_Part_Of_Extreme_Pipeline())
+						if(full_rate)
 						{
 							ofile << "$buffering  $in " << dpe_name << " "
 								<< src_1_name << " 2" << endl;
@@ -1098,12 +1105,13 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 						this->Get_VC_Guard_String(),
 						false,
 						false,
+						full_rate,
 						ofile);
 
 				last_sum =  this->Get_VC_Name() + "_index_partial_sum_" + IntToStr(idx);
 
 				// extreme pipelining.
-				if(this->Is_Part_Of_Extreme_Pipeline())
+				if(full_rate)
 				{
 					ofile << "$buffering  $in " << dpe_name << " "
 						<< src_1_name << " 2" << endl;
@@ -1135,9 +1143,10 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 					this->Get_VC_Guard_String(),
 					false,
 					false,
+					full_rate,
 					ofile);
 
-				if(this->Is_Part_Of_Extreme_Pipeline())
+				if(full_rate)
 				{
 					ofile << "$buffering  $in " << dpe_name << " "
 						<< src_1_name << " 2" << endl;
@@ -1183,9 +1192,10 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 						this->Get_VC_Guard_String(),
 						false,
 						false,
+						full_rate,
 						ofile);
 				// extreme pipelining.
-				if(this->Is_Part_Of_Extreme_Pipeline())
+				if(full_rate)
 				{
 					ofile << "$buffering  $in " << dpe_name << " "
 						<< src_name << " 2" << endl;
@@ -1223,9 +1233,10 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 					this->Get_VC_Guard_String(),
 					false,
 					false,
+					full_rate,
 					ofile);
 			// extreme pipelining.
-			if(this->Is_Part_Of_Extreme_Pipeline())
+			if(full_rate)
 			{
 				ofile << "$buffering  $in " << dpe_name << " "
 					<< src_1_name << " 2" << endl;

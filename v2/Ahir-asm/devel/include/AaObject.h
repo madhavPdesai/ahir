@@ -276,6 +276,7 @@ class AaPipeObject: public AaObject
   int _depth;
   bool _lifo_mode;
   bool _no_block_mode;
+  bool _full_rate;
 
   bool _in_mode;
   bool _out_mode;
@@ -295,6 +296,9 @@ class AaPipeObject: public AaObject
 
   void Set_Lifo_Mode(bool v) { _lifo_mode = v; }
   bool Get_Lifo_Mode() {return(_lifo_mode);}
+
+  void Set_Full_Rate(bool v) { _full_rate = v; }
+  bool Get_Full_Rate() {return(_full_rate);}
 
   void Set_No_Block_Mode(bool v) { _no_block_mode = v; }
   bool Get_No_Block_Mode() {return(_no_block_mode);}

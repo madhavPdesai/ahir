@@ -4,6 +4,7 @@ $pipe out_data : $uint<32> $depth 4
 $pipeline $depth 2 $buffering 2 $operator $module [xor_operator] $in (a b: $uint<32>) $out (c: $uint<32>) $is
 {
 	c := (a ^ b)
+	$attribute delay 8
 }
 
 $module [operator_check_daemon] $in() $out () $is

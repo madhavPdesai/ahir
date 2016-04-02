@@ -9,7 +9,8 @@ entity SelectSplitProtocol is
   generic(name: string; 
 	  data_width: integer; 
 	  buffering: integer; 
-	  flow_through: boolean := false);
+	  flow_through: boolean := false; 
+	  full_rate: boolean );
   port(x,y: in std_logic_vector(data_width-1 downto 0);
        sel: in std_logic_vector(0 downto 0);
        z : out std_logic_vector(data_width-1 downto 0);
@@ -31,7 +32,7 @@ begin
 		generic map(name => name & " ilb ",
 				buffer_size => buffering,
 				in_data_width => data_width,
-				out_data_width => data_width)
+				out_data_width => data_width, full_rate => full_rate)
 		port map(write_req => sample_req,
 			 write_ack => sample_ack,
 			 write_data => ilb_data_in,

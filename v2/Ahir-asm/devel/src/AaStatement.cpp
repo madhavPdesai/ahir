@@ -27,12 +27,13 @@ AaModule* AaStatement::Get_Module()
 		return(NULL);
 }
 
-bool AaStatement::Is_Part_Of_Extreme_Pipeline()
+bool AaStatement::Is_Part_Of_Fullrate_Pipeline()
 {
 	AaStatement* dws = this->Get_Pipeline_Parent();
 	bool ret_val = ((dws != NULL)  && dws->Get_Pipeline_Full_Rate_Flag());
 	return(ret_val);
 }
+
 string AaStatement::Tab()
 {
   return(Tab_(this->Get_Tab_Depth()));
@@ -1434,6 +1435,7 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 {
 	if(!this->Is_Constant())
 	{
+		bool full_rate = this->Is_Part_Of_Fullrate_Pipeline();
 
 		ofile << "// " << this->To_String() << endl;
 		ofile << "// " << this->Get_Source_Info() << endl;
@@ -1454,6 +1456,7 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 						tgt_name,
 						this->Get_VC_Guard_String(),
 						this->Get_Is_Volatile(), // flow-through-flag
+						full_rate,
 						ofile);
 
 
@@ -1771,6 +1774,14 @@ void AaCallStatement::Set_Is_Volatile(bool v)
 void AaCallStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
 	_pipeline_parent = dws;
+
+	// full rate flags of called module and dws must match.
+	if((dws != NULL) && (this->_called_module != NULL) && this->_called_module->Get_Pipeline_Flag() && 
+		(this->_called_module->Get_Pipeline_Full_Rate_Flag() != dws->Get_Pipeline_Full_Rate_Flag()))
+	{
+		AaRoot::Error("called module and containing scope of call statement have incompatible fullrate flags.", this);
+	}
+
 	for(unsigned int i = 0; i < _input_args.size(); i++)
 	{
 		_input_args[i]->Set_Pipeline_Parent(dws);
@@ -2026,6 +2037,13 @@ void AaCallStatement::Set_Called_Module(AaModule* m)
 	if(this->Get_Is_Volatile() != m->Get_Volatile_Flag())
 	{
 		AaRoot::Error("volatility of call statement not the same as that of called module", this);
+	}
+
+	AaStatement* dws = this->Get_Pipeline_Parent();
+	if((dws != NULL) && (this->_called_module != NULL) && this->_called_module->Get_Pipeline_Flag() && 
+		(this->_called_module->Get_Pipeline_Full_Rate_Flag() != dws->Get_Pipeline_Full_Rate_Flag()))
+	{
+		AaRoot::Error("called module and containing scope of call statement have incompatible fullrate flags.", this);
 	}
 }
 
@@ -2362,6 +2380,7 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	ofile << "// " << this->Get_Source_Info() << endl;
 
 	int delay = (this->Get_Is_Volatile() ? 0 : ((AaModule*)_called_module)->Get_Delay());
+	bool full_rate = this->Is_Part_Of_Fullrate_Pipeline();
 
 	vector<pair<string,AaType*> > inargs, outargs;
 
@@ -2386,6 +2405,7 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			outargs,
 			this->Get_VC_Guard_String(),
 			this->Get_Is_Volatile(),  // flow-through
+			full_rate,		      
 			ofile);
 	ofile << "$delay " << dpe_name <<  " " << delay << endl;
 
@@ -4114,6 +4134,8 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	ofile << "// " << this->Get_Source_Info() << endl;
 
 	AaStatement* dws = this->Get_Pipeline_Parent();
+	bool full_rate = this->Is_Part_Of_Fullrate_Pipeline();
+
 	vector<pair<string,AaType*> > sources;
 	for(int i = 0; i < _source_pairs.size(); i++)
 	{
@@ -4131,7 +4153,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			string dpe_name = src_expr->Get_VC_Driver_Name() + "_" + 
 						Int64ToStr(src_expr->Get_Index()) +  "_buf";
 			Write_VC_Interlock_Buffer(dpe_name, src_expr->Get_VC_Driver_Name(),
-					src_driver_name, "", false, ofile);
+							src_driver_name, "", false, full_rate,  ofile);
 			if(dws != NULL)
 			{
 				ofile << "$buffering $out " << dpe_name <<  " " << 
@@ -4156,6 +4178,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			tgt_name,
 			_target->Get_Type(),
 			this->Get_In_Do_While(), // pipelined case.
+			full_rate,
 			ofile);
 
 	// in the extreme pipelining case, output buffering
@@ -4570,6 +4593,7 @@ void AaSwitchStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				this->Get_VC_Guard_String(),
 				false,
 				false,
+				false, // no switches in pipelines.
 				ofile);
 
 		br_input.push_back(pair<string,AaType*>(expr->Get_VC_Constant_Name() + "_cmp",

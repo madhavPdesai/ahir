@@ -16,7 +16,8 @@ entity InputMuxWithBuffering is
 	   nreqs: integer := 1;
 	   buffering: IntegerArray;
 	   no_arbitration: Boolean := false;
-	   registered_output: Boolean := true);
+	   registered_output: Boolean := true;
+	   full_rate: boolean);
   port (
     -- req/ack follow pulse protocol
     reqL                 : in  BooleanArray(nreqs-1 downto 0);
@@ -72,7 +73,8 @@ begin  -- Behave
 
      rxBuf: ReceiveBuffer generic map(name => name & " receive-buffer " & Convert_To_String(I),
 					buffer_size =>  buffering(I),
-					data_width => owidth)
+					data_width => owidth,
+					full_rate => full_rate)
 		port map (write_req => reqL(I),
 			  write_ack => ackL(I),
 			  write_data => rx_data_in(I),

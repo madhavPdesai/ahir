@@ -56,6 +56,8 @@ class AaStatement: public AaScope
 	_marked_statement_map[mid] = stmt;
   }
 
+  virtual int Get_Buffering() {return(1);}
+  virtual void Set_Buffering(int b) {}
 
   virtual AaModule* Get_Module();
 
@@ -215,7 +217,7 @@ class AaStatement: public AaScope
 
   virtual string Get_Name() {return(this->Get_VC_Name());}
 
-  virtual bool Is_Part_Of_Extreme_Pipeline();
+  virtual bool Is_Part_Of_Fullrate_Pipeline();
 
   virtual void Set_Pipeline_Depth(int v){assert(0);}
   virtual int Get_Pipeline_Depth() {assert(0);}
@@ -510,8 +512,9 @@ class AaAssignmentStatement: public AaStatement
 
   virtual void Set_Pipeline_Parent(AaStatement* dws);
 
-  int Get_Buffering() {return(_buffering);}
-  void Set_Buffering(int b) {_buffering = b;}
+  virtual int Get_Buffering() {return(_buffering);}
+  virtual void Set_Buffering(int b) {_buffering = b;}
+
   string Get_VC_Buffering_String();
 
   virtual void Print(ostream& ofile); 
@@ -588,6 +591,7 @@ class AaCallStatement: public AaStatement
   AaModule* _called_module;
   vector<AaExpression*> _input_args;
   vector<AaObjectReference*> _output_args;
+  int _buffering;
   bool _is_volatile;
  public:
   unsigned int Get_Number_Of_Input_Args() {return(this->_input_args.size());}
@@ -613,6 +617,9 @@ class AaCallStatement: public AaStatement
 
   ~AaCallStatement();
   
+  virtual int Get_Buffering() {return(_buffering);}
+  virtual void Set_Buffering(int b) {_buffering = b;}
+
   AaExpression* Get_Input_Arg(unsigned int index);
   AaObjectReference* Get_Output_Arg(unsigned int index);
   

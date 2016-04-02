@@ -1074,6 +1074,7 @@ void vcSelect::Print_VHDL(ostream& ofile)
 	string block_name = inst_name + "_block"; 
 	string name = '"' + inst_name + '"';
 	bool flow_through = this->Get_Flow_Through();
+	bool full_rate = this->Get_Full_Rate();
 
 	ofile << block_name << " : block -- { " << endl;
 	ofile << "signal sample_req, sample_ack, update_req, update_ack: BooleanArray(0 downto 0); " << endl;
@@ -1136,7 +1137,8 @@ void vcSelect::Print_VHDL(ostream& ofile)
 	ofile << this->Get_VHDL_Id() << ": SelectSplitProtocol generic map(name => " << name 
 		<< ", data_width => " << this->Get_Z()->Get_Size()  << "," 
 		<< " buffering => " << buf_size << ", "
-		<< "flow_through => " << (flow_through ? "true" : "false") 
+		<< "flow_through => " << (flow_through ? "true" : "false")  << ", " 
+		<< "full_rate => " << (full_rate ? "true" : "false") 
 		<< ") -- {" << endl;
 	ofile << " port map( x => " 
 		<< this->Get_X()->Get_VHDL_Signal_Id() 
@@ -1188,6 +1190,8 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 	string inst_name = this->Get_VHDL_Id();
 	string block_name = inst_name + "_block"; 
 	string name = '"' + inst_name + '"';
+
+	bool full_rate = this->Get_Full_Rate();
 
 	ofile << block_name << ": block -- {" << endl;
 	ofile << " signal wreq, wack, rreq, rack: BooleanArray(0 downto 0); " << endl;
@@ -1251,6 +1255,7 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 	ofile << " name => " << name << "," << endl;
 	ofile << " buffer_size => " << buf_size << "," << endl;
 	ofile << " flow_through => " <<  (flow_through ? " true " : " false ") << "," << endl;
+	ofile << " full_rate => " <<  (full_rate ? " true " : " false ") << "," << endl;
 	ofile << " in_data_width => " << in_data_width << "," << endl;
 	ofile << " out_data_width => " << out_data_width <<  "," << endl;
 	ofile << " bypass_flag => true " <<  endl;
@@ -1334,6 +1339,7 @@ void vcSlice::Print_VHDL(ostream& ofile)
 	string block_name = inst_name + "_block"; 
 	string name = '"' + inst_name + '"';
 	bool flow_through = this->Get_Flow_Through();
+	bool full_rate = this->Get_Full_Rate();
 
 	ofile << block_name << " : block -- { " << endl;
 	ofile << "signal sample_req, sample_ack, update_req, update_ack: BooleanArray(0 downto 0); " << endl;
@@ -1394,7 +1400,8 @@ void vcSlice::Print_VHDL(ostream& ofile)
 		<< ", high_index => " << this->_high_index 
 		<< ", low_index => " << this->_low_index  << "," 
 		<< " buffering => " << buf_size << ","
-		<< " flow_through => " << (flow_through ? "true" : "false") 
+		<< " flow_through => " << (flow_through ? "true" : "false")  << ", "
+		<< " full_rate => " << (full_rate ? "true" : "false") 
 		<< ") -- {" << endl;
 	ofile << " port map( din => " 
 		<< this->Get_Din()->Get_VHDL_Signal_Id() 
@@ -1484,6 +1491,7 @@ void vcPermutation::Print_VHDL(ostream& ofile)
 	string block_name = inst_name + "_block"; 
 	string name = '"' + inst_name + '"';
 	bool flow_through = this->Get_Flow_Through();
+	bool full_rate = this->Get_Full_Rate();
 
 	ofile << block_name << " : block -- { " << endl;
 	ofile << "signal sample_req, sample_ack, update_req, update_ack: BooleanArray(0 downto 0); " << endl;
@@ -1573,7 +1581,8 @@ void vcPermutation::Print_VHDL(ostream& ofile)
 		<< ", in_data_width => " << this->Get_Din()->Get_Size() 
 		<< ", out_data_width => " << this->Get_Dout()->Get_Size() 
 		<< ", buffer_size => " << buf_size 
-		<< ", flow_through => " << (flow_through ? "true" : "false") 
+		<< ", flow_through => " << (flow_through ? "true" : "false")  << ", " 
+		<< ", full_rate => " << (full_rate ? "true" : "false") 
 		<< ") -- {" << endl;
 	ofile << " port map( write_data => permuted_sig" 
 		<< ", read_data => " 

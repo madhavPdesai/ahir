@@ -13,7 +13,8 @@ entity SliceSplitProtocol is
 	high_index: integer; 
 	low_index : integer; 
 	buffering : integer;
-	flow_through: boolean := false
+	flow_through: boolean := false;
+	full_rate: boolean := false
 	);
   port(din: in std_logic_vector(in_data_width-1 downto 0);
        dout: out std_logic_vector(high_index-low_index downto 0);
@@ -39,7 +40,7 @@ begin
 		generic map(name => name & " ilb ",
 				buffer_size => buffering,
 				in_data_width => (high_index - low_index) + 1,
-				out_data_width => (high_index - low_index) + 1)
+				out_data_width => (high_index - low_index) + 1, full_rate => full_rate)
 		port map(write_req => sample_req,
 			 write_ack => sample_ack,
 			 write_data => ilb_data_in,

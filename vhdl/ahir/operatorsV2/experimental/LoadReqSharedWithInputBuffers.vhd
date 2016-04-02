@@ -108,7 +108,8 @@ begin  -- Behave
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
 					buffer_size => Maximum(2,input_buffering(I)),
-					data_width => rx_word_length)
+					data_width => rx_word_length,
+					full_rate => false) -- Load-data-path will be double buffered.
 		port map(write_req => reqL(I), 
 			 write_ack => ackL(I), 
 			 write_data => rx_data_in(I), 

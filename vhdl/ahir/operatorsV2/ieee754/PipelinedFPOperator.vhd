@@ -22,7 +22,8 @@ entity PipelinedFPOperator is
       num_reqs : integer := 3; -- how many requesters?
       use_input_buffering: boolean := true;
       detailed_buffering_per_input: IntegerArray;
-      detailed_buffering_per_output: IntegerArray
+      detailed_buffering_per_output: IntegerArray;
+      full_rate: boolean
     );
   port (
     -- req/ack follow level protocol
@@ -102,6 +103,7 @@ begin  -- Behave
                 nreqs => num_reqs,
 		buffering => detailed_buffering_per_input,
                 no_arbitration => no_arbitration,
+		full_rate => full_rate,
                 registered_output => false)
       port map(
         reqL       => reqL,
@@ -213,7 +215,8 @@ begin  -- Behave
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,
 	nreqs  => num_reqs,
-	detailed_buffering_per_output => detailed_buffering_per_output)
+	detailed_buffering_per_output => detailed_buffering_per_output,
+	full_rate => full_rate)
     port map (
       reqL   => oreq,
       ackL   => oack,

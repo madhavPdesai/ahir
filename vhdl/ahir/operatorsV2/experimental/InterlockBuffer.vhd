@@ -12,7 +12,8 @@ entity InterlockBuffer is
   in_data_width : integer := 32;
   out_data_width : integer := 32;
   flow_through: boolean := false;
-  bypass_flag : boolean := false);
+  bypass_flag : boolean := false;
+  full_rate : boolean);
   port (write_req: in boolean;
         write_ack: out boolean;
         write_data: in std_logic_vector(in_data_width-1 downto 0);
@@ -66,7 +67,8 @@ begin  -- default_arch
 	sbuf: PipelineSynchBuffer
 		generic map (name => name & " synch-buffer ",
 				in_data_width => in_data_width,
-				out_data_width => out_data_width)
+				out_data_width => out_data_width,
+				full_rate => full_rate)
 		port map(
 				write_req => write_req,
 				write_ack => write_ack,

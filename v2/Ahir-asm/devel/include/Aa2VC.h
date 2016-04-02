@@ -84,6 +84,7 @@ void Write_VC_Unary_Operator(AaOperation op,
 			     AaType* target_type,
 			     string guard_string,
 			     bool flow_through,
+			     bool full_rate,
 			     bool bitcast_flag, 
 			     ostream& ofile);
 
@@ -94,6 +95,7 @@ void Write_VC_Bitmap_Operator(string inst_name,
 			      vector<pair<int,int> >& bmapv,
 			      string guard_string,
 			      bool flow_through,
+			     bool full_rate,
 			      ostream& ofile);
 
 void Write_VC_Register( string inst_name, 
@@ -107,6 +109,7 @@ void Write_VC_Interlock_Buffer( string inst_name,
 			string target_name,
 			string guard_string,
 			bool flow_through,
+			bool full_rate,
 			ostream& ofile);
 void Write_VC_Binary_Operator(AaOperation op, 
 			      string inst_name, 
@@ -119,6 +122,7 @@ void Write_VC_Binary_Operator(AaOperation op,
 			     string guard_string,
 			      bool add_hash,			
 			     bool flow_through,
+			     bool full_rate,
 			      ostream& ofile);
 void Write_VC_Call_Operator(string inst_name, 
 			    string module_name, 
@@ -126,6 +130,7 @@ void Write_VC_Call_Operator(string inst_name,
 			    vector<pair<string,AaType*> >& outargs,
 			    string guard_string,
 			    bool flow_through,
+			    bool full_rate,
 			    ostream& ofile);
 
 void Write_VC_Phi_Operator(string inst_name,
@@ -133,6 +138,7 @@ void Write_VC_Phi_Operator(string inst_name,
 			   string target,
 			   AaType* target_type,
 			   bool pipeline_flag,
+			   bool full_rate, 
 			   ostream& ofile);
 void Write_VC_Link(string inst_name, vector<string>& reqs, vector<string>& acks,
 		   ostream& ofile);
@@ -152,8 +158,9 @@ void Write_VC_Intermediate_Wire_Declaration(string wire_name,
 					    AaType* t,
 					    ostream& ofile);
 
-void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode,  bool noblock_flag, bool in_flag, bool out_flag, bool signal_flag, 
-			 bool p2p_flag, bool shiftreg_flag, ostream& ofile);
+void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode,  bool noblock_flag, 
+			bool in_flag, bool out_flag, bool signal_flag, 
+			 bool p2p_flag, bool shiftreg_flag, bool full_rate, ostream& ofile);
 void Write_VC_Memory_Space_Declaration(string space_name, string obj_name, AaType* type,ostream& ofile);
 void Write_VC_Load_Operator(string ms_name, string inst_name, string data_name, string addr_name,
 			     string guard_string,
@@ -162,10 +169,10 @@ void Write_VC_Store_Operator(string ms_name, string inst_name, string data_name,
 			     string guard_string,
 			     ostream& ofile);
 void Write_VC_IO_Input_Port(AaPipeObject* obj, string inst_name, string data_name,
-			     string guard_string,
+			     string guard_string, bool full_rate,
 				ostream& ofile);
 void Write_VC_IO_Output_Port(AaPipeObject* obj, string inst_name, string data_name,
-			     string guard_string,
+			     string guard_string, bool full_rate,
 				ostream& ofile);
 
 void Write_VC_Select_Operator(string inst_name,
@@ -179,6 +186,7 @@ void Write_VC_Select_Operator(string inst_name,
 			      AaType* target_type,
 			     string guard_string,
 			     bool flow_through,
+			     bool full_rate,
 			      ostream& ofile);
 
 void Write_VC_Slice_Operator(string inst_name,
@@ -188,6 +196,7 @@ void Write_VC_Slice_Operator(string inst_name,
 			     int low_index,
 			     string guard_string,
 			     bool flow_through,
+			     bool full_rate,
 			     ostream& ofile);
 
 bool Is_Trivial_VC_Type_Conversion(AaType* from, AaType* to);

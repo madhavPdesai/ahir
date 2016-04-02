@@ -144,7 +144,9 @@ enum vcLexerKeytags
     __DEAD,
     __TIED_HIGH,
     __LEFT_OPEN,
-    __HASH
+    __HASH,
+    __FULLRATE,
+    __FLOWTHROUGH
   };
 
 static string vcLexerKeywords[] = 
@@ -290,7 +292,9 @@ static string vcLexerKeywords[] =
       "$dead",
       "$tied_high",
       "$left_open",
-      "#"
+      "#",
+      "$flowthrough",
+      "$fullrate"
   };
 
 string To_VHDL(string x);

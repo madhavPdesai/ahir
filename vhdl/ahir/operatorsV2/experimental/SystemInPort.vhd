@@ -17,7 +17,8 @@ entity SystemInPort is
    generic (name : string;
 	    num_reads: integer;
 	    in_data_width: integer;
-            out_data_width : integer); 
+            out_data_width : integer; 
+	    full_rate: boolean);
    port (read_req : in std_logic_vector(num_reads-1 downto 0);
          read_ack : out std_logic_vector(num_reads-1 downto 0);
          read_data: out std_logic_vector((num_reads*out_data_width)-1 downto 0);

@@ -410,7 +410,8 @@ package BaseComponents is
         num_reqs : integer;  -- how many requesters?
 	use_input_buffering: boolean;
         detailed_buffering_per_input: IntegerArray;
-        detailed_buffering_per_output: IntegerArray
+        detailed_buffering_per_output: IntegerArray;
+	full_rate: boolean := false
         );
 
     port (
@@ -546,7 +547,8 @@ package BaseComponents is
              lifo_mode: boolean := false;
              depth: integer := 1;
 	     signal_mode: boolean := false;
- 	     shift_register_mode: boolean := false);
+ 	     shift_register_mode: boolean := false;
+	     full_rate : boolean := false);
     port (
       read_req       : in  std_logic_vector(num_reads-1 downto 0);
       read_ack       : out std_logic_vector(num_reads-1 downto 0);
@@ -641,7 +643,8 @@ package BaseComponents is
 	high_index: integer; 
 	low_index : integer; 
 	buffering : integer;
-	flow_through: boolean := false
+	flow_through: boolean := false; 
+	full_rate: boolean := false
 	);
     port(din: in std_logic_vector(in_data_width-1 downto 0);
        dout: out std_logic_vector(high_index-low_index downto 0);
@@ -745,7 +748,8 @@ package BaseComponents is
             owidth: integer;
             twidth: integer;
             nreqs : integer;
-            detailed_buffering_per_output: IntegerArray);
+            detailed_buffering_per_output: IntegerArray;
+	    full_rate : boolean);
     port (
       -- req/ack follow level protocol
       reqL                 : in  std_logic;
@@ -1509,7 +1513,8 @@ package BaseComponents is
       num_reqs : integer := 3; -- how many requesters?
       use_input_buffering: boolean;
       detailed_buffering_per_input : IntegerArray;
-      detailed_buffering_per_output : IntegerArray
+      detailed_buffering_per_output : IntegerArray;
+      full_rate: boolean
       );
     port (
       -- req/ack follow level protocol
@@ -1774,7 +1779,8 @@ package BaseComponents is
       constant_width : integer;
       buffering      : integer;
       use_constant  : boolean := false;
-      flow_through : boolean := false
+      flow_through : boolean := false;
+      full_rate: boolean := false
       );
     port (
       -- req -> ack follow pulse protocol
@@ -1859,40 +1865,6 @@ package BaseComponents is
   end component;
 
 
-  component BinaryUnsharedOperator is
-  generic
-    (
-      name          : string;          -- instance name.
-      operator_id   : string;          -- operator id
-      input_1_is_int : Boolean := true; -- false means float
-      input_1_characteristic_width : integer := 0; -- characteristic width if input1 is float
-      input_1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
-      input_1_width        : integer;    -- width of input1
-      input_1_is_constant  : boolean;
-      input_2_is_int : Boolean := true; -- false means float
-      input_2_characteristic_width : integer := 0; -- characteristic width if input2 is float
-      input_2_mantissa_width       : integer := 0; -- mantissa width if input2 is float
-      input_2_width        : integer;    -- width of input1
-      input_2_is_constant  : boolean;
-      output_is_int : Boolean := true;  -- false means that the output is a float
-      output_characteristic_width : integer := 0;
-      output_mantissa_width       : integer := 0;
-      output_width        : integer;          -- width of output.
-      output_buffering : integer := 2
-      );
-  port (
-    -- req -> ack follow pulse protocol
-    sample_req:  in BooleanArray(1 downto 0);
-    sample_ack:  out BooleanArray(1 downto 0);
-    update_req:  in Boolean;
-    update_ack:  out Boolean;
-    -- operands.
-    dataL      : in  std_logic_vector(input_1_width + input_2_width - 1 downto 0);
-    dataR      : out std_logic_vector(output_width-1 downto 0);
-    clk, reset : in  std_logic);
-  end component;
-
-
   component LoadReqSharedWithInputBuffers is
     generic
     (
@@ -1925,7 +1897,8 @@ package BaseComponents is
     generic(name: string; 
 	  data_width: integer; 
 	  buffering: integer; 
-	  flow_through: boolean := false);
+	  flow_through: boolean := false; 
+          full_rate: boolean := false);
     port(x,y: in std_logic_vector(data_width-1 downto 0);
        sel: in std_logic_vector(0 downto 0);
        z : out std_logic_vector(data_width-1 downto 0);
@@ -2053,6 +2026,7 @@ package BaseComponents is
 	  num_reqs: integer;
 	  data_width: integer;
 	  no_arbitration: boolean := false;
+	  full_rate: boolean;
 	  input_buffering : IntegerArray);
     port (
     sample_req        : in  BooleanArray(num_reqs-1 downto 0);
@@ -2096,6 +2070,7 @@ package BaseComponents is
 	   nreqs: integer := 1;
 	   buffering: IntegerArray;
 	   no_arbitration: Boolean := false;
+	   full_rate: boolean;
 	   registered_output: Boolean := true);
     port (
     -- req/ack follow pulse protocol
@@ -2116,7 +2091,8 @@ package BaseComponents is
 		in_data_width : integer := 32;
 		out_data_width : integer := 32;
 		flow_through: boolean := false;
-		bypass_flag : boolean := false);
+		bypass_flag : boolean := false; 
+		full_rate: boolean := false);
     port ( write_req: in boolean;
         write_ack: out boolean;
         write_data: in std_logic_vector(in_data_width-1 downto 0);
@@ -2128,7 +2104,10 @@ package BaseComponents is
   end component InterlockBuffer;
 
   component PipelineSynchBuffer is
-    generic (name : string; in_data_width: integer; out_data_width: integer);
+    generic (name : string; 
+		in_data_width: integer; 
+		out_data_width: integer; 
+		full_rate: boolean := false);
   port (
     read_req       : in  boolean;
     read_ack       : out boolean;
@@ -2141,7 +2120,8 @@ package BaseComponents is
   end component PipelineSynchBuffer;
 
   component ReceiveBuffer  is
-    generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
+    generic (name: string; buffer_size: integer := 2; data_width : integer := 32;
+	   		full_rate : boolean := false);
     port ( write_req: in boolean;
          write_ack: out boolean;
          write_data: in std_logic_vector(data_width-1 downto 0);
@@ -2210,7 +2190,8 @@ package BaseComponents is
 
   component UnloadBuffer 
     generic (name: string; buffer_size: integer := 2; data_width : integer := 32; 
-				bypass_flag: boolean := false; nonblocking_read_flag: boolean := false);
+				bypass_flag: boolean := false; nonblocking_read_flag: boolean := false;
+	   				full_rate : boolean := false);
     port (write_req: in std_logic;
           write_ack: out std_logic;
           write_data: in std_logic_vector(data_width-1 downto 0);
@@ -2228,7 +2209,8 @@ package BaseComponents is
    generic (name : string;
 	    num_reads: integer;
 	    in_data_width: integer;
-            out_data_width : integer); 
+            out_data_width : integer; 
+	    full_rate: boolean := false); 
    port (read_req : in std_logic_vector(num_reads-1 downto 0);
          read_ack : out std_logic_vector(num_reads-1 downto 0);
          read_data: out std_logic_vector((num_reads*out_data_width)-1 downto 0);
@@ -2241,7 +2223,8 @@ package BaseComponents is
    generic (name : string;
 	    num_writes: integer;
 	    in_data_width: integer;
-            out_data_width : integer); 
+            out_data_width : integer;
+	    full_rate: boolean := false); 
    port (write_req : in std_logic_vector(num_writes-1 downto 0);
          write_ack : out std_logic_vector(num_writes-1 downto 0);
          write_data: in std_logic_vector((num_writes*in_data_width)-1 downto 0);
@@ -2331,7 +2314,8 @@ package BaseComponents is
            lifo_mode: boolean := false;
            depth: integer := 1;
 	   signal_mode: boolean := false;
-	   shift_register_mode: boolean := false);
+	   shift_register_mode: boolean := false;
+	   full_rate : boolean := false);
    port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
     read_ack       : out std_logic_vector(num_reads-1 downto 0);

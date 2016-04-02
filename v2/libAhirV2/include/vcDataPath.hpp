@@ -44,6 +44,7 @@ class vcPipe: public vcRoot
   bool _signal;
   bool _p2p;
   bool _shift_reg;
+  bool _full_rate;
 public:
 
   
@@ -62,6 +63,7 @@ public:
     _signal = false;
     _p2p = false;
     _shift_reg = false;
+    _full_rate = false;
   }
 
   void Set_Port(bool v) { _port = v; }
@@ -69,6 +71,9 @@ public:
 
   void Set_P2P(bool v) { _p2p = v; }
   bool Get_P2P() {return(_p2p);}
+
+  void Set_Full_Rate(bool v) { _full_rate = v; }
+  bool Get_Full_Rate() {return(_full_rate);}
 
   void Set_Shift_Reg(bool v) { _shift_reg = v; }
   bool Get_Shift_Reg() {return(_shift_reg);}
@@ -131,6 +136,8 @@ public:
 
     if(_p2p)
 	    ofile << vcLexerKeywords[__P2P]  << " ";
+    if(_full_rate)
+	    ofile << vcLexerKeywords[__FULLRATE]  << " ";
 
     ofile << endl;
   }
@@ -272,6 +279,7 @@ protected:
 
   int  _delay;
   bool _flow_through;
+  bool _full_rate;
 
   vector<vcWire*>  _input_wires;
   vector<vcWire*>  _output_wires;
@@ -286,6 +294,7 @@ protected:
 		_guard_wire = NULL; 
 		_guard_complement = false; 
 		_flow_through = false;
+		_full_rate = false;
 		_delay = 1;
 		_in_width = 0;
 		_out_width = 0;
@@ -296,6 +305,7 @@ protected:
 		_guard_wire = NULL; 
 		_guard_complement = false; 
 		_flow_through = false;
+		_full_rate = false;
 		_delay = 1;
 		_in_width = 0;
 		_out_width = 0;
@@ -347,8 +357,11 @@ protected:
 	  _acks = acks;
   }
 
-  virtual void Set_Flow_Through(bool v) {_flow_through = v;}
+  void Set_Flow_Through(bool v) {_flow_through = v;}
   bool Get_Flow_Through() {return(_flow_through);}
+
+  virtual void Set_Full_Rate(bool v) {_full_rate = v;}
+  bool Get_Full_Rate() {return(_full_rate);}
 
   int Get_Number_Of_Reqs() {return(this->_reqs.size());}
   int Get_Number_Of_Acks() {return(this->_acks.size());}

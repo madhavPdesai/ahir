@@ -337,7 +337,7 @@ class AaExpression: public AaRoot
 
 
 	virtual bool Is_Part_Of_Pipeline() {return(this->_pipeline_parent != NULL);}
-	virtual bool Is_Part_Of_Extreme_Pipeline();
+	virtual bool Is_Part_Of_Fullrate_Pipeline();
 	virtual bool Is_Part_Of_Operator_Module();
 
 	virtual void Collect_Root_Sources(set<AaRoot*>& root_set) {if(!this->Is_Constant()) root_set.insert(this);}

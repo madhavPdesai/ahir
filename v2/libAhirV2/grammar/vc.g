@@ -75,6 +75,7 @@ vc_Pipe[vcSystem* sys, vcModule* m]
   bool port_flag = false;
   bool signal_flag = false;
   bool p2p_flag = false;
+  bool full_rate = false;
   bool shiftreg_flag = false;
 }:  ((LIFO {lifo_mode = true;}) | (NOBLOCK {noblock_mode = true;}))? 
 	(SHIFTREG {shiftreg_flag = true;})?
@@ -82,11 +83,12 @@ vc_Pipe[vcSystem* sys, vcModule* m]
 	( IN {in_flag = true;} | OUT {out_flag = true;} )?
 	(SIGNAL {signal_flag = true;})?
 	(P2P {p2p_flag = true;})?
+	(FULLRATE {full_rate = true;})?
         {
             if (sys) 
-                sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode, noblock_mode, in_flag, out_flag, signal_flag, p2p_flag, shiftreg_flag);
+                sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode, noblock_mode, in_flag, out_flag, signal_flag, p2p_flag, shiftreg_flag, full_rate);
             else if(m)
-                m->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode, noblock_mode,  in_flag, out_flag, signal_flag, p2p_flag, shiftreg_flag);
+                m->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode, noblock_mode,  in_flag, out_flag, signal_flag, p2p_flag, shiftreg_flag,full_rate);
         } 
 ;
 
@@ -749,6 +751,7 @@ vc_Guarded_Operator_Instantiation[vcSystem* sys, vcDataPath* dp]
 		}
 	}
  (FLOWTHROUGH {dpe->Set_Flow_Through(true);} )?
+ (FULLRATE {dpe->Set_Full_Rate(true);} )?
 
 ;
 	
@@ -1261,6 +1264,7 @@ vc_Phi_Instantiation[vcDataPath* dp]
          dp->Add_Phi(phi);
     }
   RPAREN
+ (FULLRATE {phi->Set_Full_Rate(true);} )?
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
@@ -1287,6 +1291,7 @@ vc_PhiPipelined_Instantiation[vcDataPath* dp]
          dp->Add_Phi(phi);
     }
   RPAREN
+ (FULLRATE {phi->Set_Full_Rate(true);} )?
 ;
 
 //-----------------------------------------------------------------------------------------------
@@ -1757,7 +1762,6 @@ CONSTANT      : "$constant";
 INTERMEDIATE  : "$intermediate";
 DEPTH         : "$depth";
 BUFFERING     : "$buffering";
-FULLRATE      : "$fullrate";
 GUARD         : "$guard";
 BIND          : "$bind";
 TERMINATE     : "$terminate";
@@ -1859,6 +1863,8 @@ HASH: "#";
 
 // flow-through indicator
 FLOWTHROUGH : "$flowthrough";
+// full-rate indicator.
+FULLRATE      : "$fullrate";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

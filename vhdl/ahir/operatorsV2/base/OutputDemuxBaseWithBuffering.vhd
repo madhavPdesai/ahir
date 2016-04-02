@@ -23,7 +23,8 @@ entity OutputDeMuxBaseWithBuffering is
 	  owidth: integer := 12;
 	  twidth: integer := 2;
 	  nreqs: integer := 3;
-	  detailed_buffering_per_output: IntegerArray);
+	  detailed_buffering_per_output: IntegerArray;
+	  full_rate: boolean);
   port (
     -- req/ack follow level protocol
     reqL                 : in  std_logic;
@@ -61,7 +62,8 @@ begin  -- Behave
        ub : UnloadBuffer generic map (
          name => name & " buffer " & Convert_To_String(I),
          buffer_size => detailed_buffering_per_output(I),
-         data_width  => iwidth)
+         data_width  => iwidth, 
+	 full_rate => full_rate)
          port map (
            write_req  => write_req,
            write_ack  => write_ack,

@@ -140,6 +140,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 	bool write_stmt_is_dependent_on_phi = write_stmt->Is_Dependent_On_Phi();
 	bool this_is_volatile = write_stmt->Get_Is_Volatile();
+	bool full_rate = write_stmt->Is_Part_Of_Fullrate_Pipeline();
 	bool err_flag = false;
 
 	// the transition that triggers the write.
@@ -214,6 +215,11 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 							<< " with Write: " << write_stmt->To_String() << endl;
 						__MJ(read_expr->Get_VC_Reenable_Sample_Transition_Name(visited_elements), 
 									__UCT(write_stmt), true);
+						int rb = write_stmt->Get_Buffering();
+						if(full_rate && (rb < 2))
+						{
+							write_stmt->Set_Buffering(2);
+						}
 					}
 					else
 					{
@@ -253,6 +259,12 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 										ofile << "// root-writer is " << root->To_String() << endl;
 										__J(__UST(root), __SCT(read_stmt));
 										__MJ(__SST(read_stmt), __UCT(root), true);
+
+										int rb = ((AaStatement*)root)->Get_Buffering();
+										if(full_rate && (rb < 2))
+										{
+											((AaStatement*) root)->Set_Buffering(2);
+										}
 									}
 									else
 									{

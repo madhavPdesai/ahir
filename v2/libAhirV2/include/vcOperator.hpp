@@ -290,8 +290,8 @@ class vcPhiPipelined: public vcPhi
 public:
   vcPhiPipelined(string id, vector<vcWire*>& inwires, vcWire* outwire);
   virtual void Print(ostream& ofile);
-  virtual string Kind() {return("vcPhiPipeined");}
-  virtual string Get_Bypass_String() {return("true");}
+  virtual string Kind() {return("vcPhiPipelined");}
+  virtual string Get_Bypass_String() {return(this->Get_Full_Rate() ? "true" : "false");}
   friend class vcDataPath;
 
 };

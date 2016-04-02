@@ -107,6 +107,7 @@ void Write_VC_Unary_Operator(AaOperation op,
 			     string guard_string,
 			     bool flow_through,
 			     bool bitcast_flag,
+			     bool full_rate, 
 			     ostream& ofile)
 {
   string op_name;
@@ -144,9 +145,10 @@ void Write_VC_Unary_Operator(AaOperation op,
     }
 
   string sflow_through = (flow_through ? " $flowthrough" : "");
+  string sfull_rate    = ((full_rate && !flow_through) ? " $fullrate" : "");
   ofile << op_name << " [" << inst_name << "] "
 	<< "(" << src_name <<  ") "
-	<< "(" << target_name << ")  " << guard_string << sflow_through << endl;
+	<< "(" << target_name << ")  " << guard_string << sflow_through << sfull_rate <<  endl;
 }
 
 
@@ -157,6 +159,7 @@ void Write_VC_Bitmap_Operator(string inst_name,
 			      vector<pair<int,int> >& bmapv,
 			      string guard_string,
 			      bool flow_through,
+			      bool full_rate, 
 			      ostream& ofile)
 {
 	ofile << ":X= [" << inst_name << "] ";
@@ -168,7 +171,8 @@ void Write_VC_Bitmap_Operator(string inst_name,
 	ofile << ") ";
 	ofile << "(" << target_name << ")" ;
   	string sflow_through = (flow_through ? " $flowthrough" : "");
-	ofile << " " << guard_string << " " << sflow_through << endl;
+        string sfull_rate    = ((full_rate && !flow_through) ? " $fullrate" : "");
+	ofile << " " << guard_string << " " << sflow_through << sfull_rate <<  endl;
 }
 
 void Write_VC_Register( string inst_name, 
@@ -187,12 +191,15 @@ void Write_VC_Interlock_Buffer( string inst_name,
 			string target_name,
                         string guard_string,
 			bool flow_through, 
+			bool full_rate, 
 			ostream& ofile)
 {
   string sflow_through = (flow_through ? " $flowthrough" : "");
+  string sfull_rate    = ((full_rate && !flow_through) ? " $fullrate" : "");
+
   ofile << "# := [" << inst_name << "] " 
 	<< "(" << src_name << ") "
-	<< "(" << target_name << ") " << guard_string << " " << sflow_through <<  endl;
+	<< "(" << target_name << ") " << guard_string << " " << sflow_through <<  " " << sfull_rate << endl;
 }
 
 void Write_VC_Binary_Operator(AaOperation op, 
@@ -204,8 +211,9 @@ void Write_VC_Binary_Operator(AaOperation op,
 			      string target_name,
 			      AaType* target_type,
 			      string guard_string,
-				bool add_hash,
-				bool flow_through,
+			      bool add_hash,
+			      bool flow_through,
+			      bool full_rate, 
 			      ostream& ofile)
 {
   string op_name;
@@ -277,9 +285,10 @@ void Write_VC_Binary_Operator(AaOperation op,
     assert(0);
 
   string sflow_through = (flow_through ? " $flowthrough" : "");
+  string sfull_rate    = ((full_rate && !flow_through) ? " $fullrate" : "");
   ofile << op_name << "[" << inst_name << "]" << " "
 	<< "(" << src1 << " " << src2 << ") "
-	<< "(" << target_name << ") " << guard_string << sflow_through <<  endl;
+	<< "(" << target_name << ") " << guard_string <<  " " << sflow_through <<  " " << sfull_rate <<  endl;
 }
 
 void Write_VC_Call_Operator(string inst_name, 
@@ -288,9 +297,11 @@ void Write_VC_Call_Operator(string inst_name,
 			    vector<pair<string,AaType*> >& outargs,
 			     string guard_string,
 			    bool flow_through,
+			    bool full_rate,
 			    ostream& ofile)
 {
   string sflow_through = (flow_through ? " $flowthrough" : "");
+  string sfull_rate = (full_rate ? " $fullrate" : "");
   ofile << "$call [" << inst_name << "] $module " << module_name 
 	<< "(";
   for(int idx = 0; idx < inargs.size(); idx++)
@@ -306,7 +317,7 @@ void Write_VC_Call_Operator(string inst_name,
 	ofile <<  " ";
       ofile << outargs[idx].first;
     }
-  ofile << ") " << guard_string << " " << sflow_through << endl;
+  ofile << ") " << guard_string << " " << sflow_through << sfull_rate << endl;
 }
 
 void Write_VC_Phi_Operator(string inst_name,
@@ -314,6 +325,7 @@ void Write_VC_Phi_Operator(string inst_name,
 			   string target,
 			   AaType* target_type,
 			   bool pipeline_flag,
+			   bool full_rate, 
 			   ostream& ofile)
 {
   if(pipeline_flag)
@@ -328,7 +340,7 @@ void Write_VC_Phi_Operator(string inst_name,
       ofile << sources[idx].first;
     }
   ofile << ") ";
-  ofile << "( " << target << " )"  << endl;
+  ofile << "( " << target << " )"  <<  " " << (full_rate ? "$fullrate" : "") << endl;
 }
 
 void Write_VC_Link(string inst_name, vector<string>& reqs, vector<string>& acks, ostream& ofile)
@@ -385,7 +397,7 @@ void Write_VC_Intermediate_Wire_Declaration(string name, AaType* type, ostream& 
 
 
 void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode, bool noblock_flag,
-			bool in_flag, bool out_flag, bool signal_flag, bool p2p_flag, bool shiftreg_flag,  ostream& ofile)
+			bool in_flag, bool out_flag, bool signal_flag, bool p2p_flag, bool shiftreg_flag,  bool full_rate, ostream& ofile)
 {
   if(lifo_mode)
 	ofile << "$lifo ";
@@ -408,6 +420,8 @@ void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode,
   if(p2p_flag)
 	  ofile << " $p2p ";
 
+  if(full_rate)
+	  ofile << " $fullrate ";
 
   ofile << endl;
 }
@@ -433,20 +447,22 @@ void Write_VC_Store_Operator(string ms_name, string inst_name, string data_name,
 	<< " (" << addr_name  << " " << data_name << ") " << guard_string <<  endl;
 }
 void Write_VC_IO_Input_Port(AaPipeObject* obj, string inst_name, string data_name,
-			    string guard_string,
+			    string guard_string, bool full_rate,
 			    ostream& ofile)
 {
+  string frate = (full_rate ? " $fullrate " : "");
   ofile << "$ioport $in [" << inst_name  << "] (" << obj->Get_VC_Name() << ") ("
-	<< data_name << ") " << guard_string <<  endl;
+	<< data_name << ") " << guard_string << frate <<  endl;
 }
 void Write_VC_IO_Output_Port(AaPipeObject* obj, string inst_name, string data_name,
-			    string guard_string,
+			    string guard_string, bool full_rate,
 			     ostream& ofile)
 {
+  string frate = (full_rate ? " $fullrate " : "");
   ofile << "$ioport $out [" << inst_name  << "] "
 	<< " (" << data_name << ") " 
 	<< "(" << obj->Get_VC_Name() << ") "
-	<< guard_string << endl;
+	<< guard_string << frate << endl;
 }
 
 void Write_VC_Select_Operator(string inst_name,
@@ -460,12 +476,14 @@ void Write_VC_Select_Operator(string inst_name,
 			      AaType* target_type,
 			    string guard_string,
 				bool flow_through,
+				bool full_rate,
 			      ostream& ofile)
 {
   string sflow_through = (flow_through ? " $flowthrough" : "");
+  string sfull_rate    = ((full_rate && !flow_through) ? " $fullrate" : "");
   ofile << "? [" << inst_name << "] " 
 	<< "(" << test_name << " " << if_true_name << " " << if_false_name << ") "
-	<< "(" << target_name << ") " << guard_string <<  sflow_through << endl;
+	<< "(" << target_name << ") " << guard_string <<  sflow_through << sfull_rate << endl;
 }
 
 
@@ -476,11 +494,13 @@ void Write_VC_Slice_Operator(string inst_name,
 			     int low_index,
 			    string guard_string,
 				bool flow_through,
+				bool full_rate, 
 			     ostream& ofile)
 {
   string sflow_through = (flow_through ? " $flowthrough" : "");
+  string sfull_rate    = ((full_rate && !flow_through) ? " $fullrate" : "");
   ofile << "[:] [" << inst_name << "] (" << in_name << " " << high_index << " " << low_index
-	<< ") (" << out_name << ") " << guard_string << sflow_through <<  endl;
+	<< ") (" << out_name << ") " << guard_string << sflow_through << sfull_rate <<  endl;
 }
 
 

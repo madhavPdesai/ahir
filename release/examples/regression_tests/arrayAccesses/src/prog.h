@@ -1,3 +1,3 @@
-#define ORDER 16
+#define ORDER 4
 void vectorSum();
 void _vectorSum_();

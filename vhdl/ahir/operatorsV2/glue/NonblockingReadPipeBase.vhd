@@ -20,7 +20,8 @@ entity NonblockingReadPipeBase is
            lifo_mode: boolean := false;
            depth: integer := 1;
 	   signal_mode: boolean := false;
-	   shift_register_mode: boolean := false);
+	   shift_register_mode: boolean := false;
+	   full_rate: boolean);
   port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
     read_ack       : out std_logic_vector(num_reads-1 downto 0);
@@ -47,7 +48,8 @@ begin  -- default_arch
 				         data_width => data_width,
 						lifo_mode => lifo_mode, 
 							depth => depth,
-								signal_mode => signal_mode)
+								signal_mode => signal_mode, 
+									full_rate => full_rate)
 		port map(read_req => write_ack_nb,
 			   read_ack => write_req_nb,
 				read_data => write_data_nb,

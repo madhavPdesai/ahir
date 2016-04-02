@@ -35,7 +35,8 @@ entity SplitOperatorShared is
       num_reqs : integer := 3; -- how many requesters?
       detailed_buffering_per_output : IntegerArray := (0 => 0);
       detailed_buffering_per_input : IntegerArray  := (0 => 0);
-      use_input_buffering: boolean := false
+      use_input_buffering: boolean := false;
+      full_rate : boolean 
     );
   port (
     -- req/ack follow level protocol
@@ -83,6 +84,7 @@ begin  -- Behave
                 twidth => tag_length,
                 nreqs => num_reqs,
 		buffering => detailed_buffering_per_input,
+		full_rate => full_rate, 
                 no_arbitration => no_arbitration,
                 registered_output => false)
       port map(
@@ -137,7 +139,8 @@ begin  -- Behave
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,
 	nreqs  => num_reqs,
-        detailed_buffering_per_output => detailed_buffering_per_output )  
+        detailed_buffering_per_output => detailed_buffering_per_output,
+	full_rate => full_rate )  
     port map (
       reqL   => oreq,
       ackL   => oack,
