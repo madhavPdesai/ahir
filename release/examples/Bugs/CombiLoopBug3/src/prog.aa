@@ -1,0 +1,22 @@
+$pipe out_data: $uint<16> $depth 4
+$module [ifetch_main_daemon] $in () $out () $is
+{
+	$branchblock[Main] {
+
+		$dopipeline $depth 16 $buffering 2 $fullrate
+
+		$merge $entry $loopback 
+			$phi pc  :=  ($bitcast ($uint<16>) 0)  $on $entry next_pc $on $loopback
+		$endmerge
+		
+		// this will induce a cycle.
+		// Aa compiler will buffer this by
+		// 2 to prevent the cycle.
+		next_pc := (pc + 1)
+
+		out_data  := next_pc
+		$while 1
+	}
+}
+
+
