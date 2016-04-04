@@ -1,15 +1,15 @@
 $pipe out_data: $uint<16> $depth 4
-$pipeline $depth 2 $fullrate  $operator $module [incr] 
+$pipeline $depth 2   $operator $module [incr] 
 	$in (a: $uint<16>) $out (b: $uint<16>) $is
 {
-	b := (a + 1)
+	b := (a + 1) 
 }
 
 $module [ifetch_main_daemon] $in () $out () $is
 {
 	$branchblock[Main] {
 
-		$dopipeline $depth 16 $buffering 2 $fullrate
+		$dopipeline $depth 16 $buffering 2 
 
 		$merge $entry $loopback 
 			$phi pc  :=  ($bitcast ($uint<16>) 0)  $on $entry next_pc $on $loopback
