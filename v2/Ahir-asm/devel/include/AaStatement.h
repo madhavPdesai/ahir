@@ -1220,11 +1220,8 @@ class AaSwitchStatement: public AaStatement
 
  public:
 
-  void Set_Select_Expression(AaExpression* expr) {this->_select_expression = expr;}
-  void Add_Choice(AaExpression* cond, AaStatementSequence* sseq)
-  {
-    this->_choice_pairs.push_back(pair<AaExpression*,AaStatementSequence*>(cond,sseq));
-  }
+  void Set_Select_Expression(AaExpression* expr);
+  void Add_Choice(AaExpression* cond, AaStatementSequence* sseq);
 
   void Set_Default_Sequence(AaStatementSequence* sseq)
   {
@@ -1282,7 +1279,7 @@ class AaIfStatement: public AaStatement
  public:
 
 
-  void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
+  void Set_Test_Expression(AaExpression* te);
   void Set_If_Sequence(AaStatementSequence* is) { this->_if_sequence = is; }
   void Set_Else_Sequence(AaStatementSequence* es) { this->_else_sequence = es; }
   AaStatement* Get_If_Sequence_Statement(int idx)

@@ -4236,6 +4236,20 @@ AaSwitchStatement::AaSwitchStatement(AaBranchBlockStatement* scope):AaStatement(
 AaSwitchStatement::~AaSwitchStatement() {}
 
 
+void AaSwitchStatement::Set_Select_Expression(AaExpression* expr) 
+{
+	this->_select_expression = expr;
+	if(expr != NULL)
+		expr->Set_Associated_Statement(this);
+}
+
+void AaSwitchStatement::Add_Choice(AaExpression* cond, AaStatementSequence* sseq)
+{
+	this->_choice_pairs.push_back(pair<AaExpression*,AaStatementSequence*>(cond,sseq));
+	if(cond != NULL)
+		cond->Set_Associated_Statement(this);
+}
+
 bool AaSwitchStatement::Can_Block(bool pipeline_flag)
 {
 	if(this->AaStatement::Can_Block(pipeline_flag))
@@ -4755,6 +4769,13 @@ AaIfStatement::AaIfStatement(AaBranchBlockStatement* scope):AaStatement(scope)
 	this->_else_sequence = NULL;
 }
 AaIfStatement::~AaIfStatement() {}
+
+void AaIfStatement::Set_Test_Expression(AaExpression* te) 
+{ 
+	this->_test_expression = te; 
+	if(te != NULL)
+		te->Set_Associated_Statement(this);
+}
 
 void AaIfStatement::Coalesce_Storage()
 {

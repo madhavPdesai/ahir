@@ -16,5 +16,6 @@ local.Append(CPPPATH = '../BGLWrap/include')
 local.Append(CPPPATH = '/usr/local/boost_1_46_1/')
 local.Append(LIBS = 'm')
 local.Append(LIBS = 'dl')
+local.Append(LIBS = 'pthread')
 local.Program('bin/llvm2aa', source_files, CCFLAGS = '-g')
 
