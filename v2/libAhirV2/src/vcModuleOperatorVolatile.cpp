@@ -300,7 +300,7 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 					preds.push_back(w->Get_VHDL_Id() + "_update_enable");
 					pred_capacities.push_back(this->Get_Pipeline_Depth());
 					pred_markings.push_back(0);
-					pred_delays.push_back(0); // revisit later..
+					pred_delays.push_back(1); // revisit later..
 
 					ipreds.push_back(w->Get_VHDL_Id() + "_update_enable_unmarked");
 					ipred_capacities.push_back(this->Get_Pipeline_Depth());
