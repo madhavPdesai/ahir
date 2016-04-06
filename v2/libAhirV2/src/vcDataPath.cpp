@@ -3067,25 +3067,22 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 		// now the operator instances 
 		string imux_name = ((called_module->Get_In_Arg_Width() > 0) ?
 				"InputMuxWithBuffering" : "InputMuxBaseNoData");
-		bool use_in_buffering =( (called_module->Get_In_Arg_Width() > 0) ? true : false);
+		bool use_in_buffering = (called_module->Get_In_Arg_Width() > 0);
 
 		ofile << "CallReq: " << imux_name << " -- {" << endl;
 		ofile << "generic map ( ";
 
-		if(called_module->Get_In_Arg_Width() > 0)
+		if(use_in_buffering)
 		{
 			ofile << " iwidth => " << in_width << "," << endl
 				<< " owidth => " << in_width/num_reqs << "," << endl;
-		}
 
-		if(use_in_buffering)
-		{
 			ofile << " name => " << '"' << imux_name << '"' << ","  << endl;
 			ofile << " buffering => inBUFs,"  << endl;
+
+			ofile << " full_rate => " << (full_rate ? " true," : " false,") << endl;
 		}
 
-		// full-rate?
-		ofile << " full_rate => " << (full_rate ? " true," : " false,") << endl;
 
 		ofile << " twidth => " << tag_length << "," << endl
 			<< " nreqs => " << num_reqs << "," << endl;
