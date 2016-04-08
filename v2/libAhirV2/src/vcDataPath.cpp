@@ -3499,10 +3499,13 @@ string vcDataPath::Print_VHDL_Call_Interface_Port_Map(string comma, ostream& ofi
 		  if(dpe->Is_Part_Of_Pipelined_Loop(D,S))
 		  {
 			  B = dpe->Get_Delay();
+			  if (B < 2) 
+				B = 2;
 		  }
 		  else
 		  {
-			  B = 1;
+			// double buffering.. to cut combinational paths.
+			  B = 2;
 		  }
 		  buffering_const +=  IntToStr(lidx)  + " => " + IntToStr(B);
 		  if(idx != 0)
