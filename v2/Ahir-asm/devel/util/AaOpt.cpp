@@ -103,10 +103,24 @@ int main(int argc, char* argv[])
       return(1);
     }
 
+  
   AaProgram::Elaborate();
+  if(!AaRoot::Get_Error_Flag() && AaProgram::_balance_loop_pipeline_bodies)
+	AaProgram::Equalize_Paths_Of_Pipelined_Modules();
+
 
   if(AaRoot::Get_Error_Flag())
+  {
     cerr << "Error: there were errors during elaboration, check the log" << endl;
+    return(1);
+  }
+
+  if(AaProgram::_balance_loop_pipeline_bodies)
+	AaProgram::Equalize_Paths_Of_Pipelined_Modules();
+
+
+  if(AaRoot::Get_Error_Flag())
+    cerr << "Error: there were errors during balancing of pipeline-bodies, check the log" << endl;
   else
     AaProgram::Print(cout);
 

@@ -133,12 +133,6 @@ void AaModule::Print_Body(ostream& ofile)
   	// print objects
   	this->Print_Objects(ofile);
 
-  	if(AaProgram::_balance_loop_pipeline_bodies)
-  	{
-  		if(this->Get_Pipeline_Flag())
-			this->Equalize_Paths_For_Pipelining();
-  	}
-
   	// print statement sequence
   	this->Print_Statement_Sequence(ofile);
 

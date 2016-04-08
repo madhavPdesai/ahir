@@ -1042,6 +1042,22 @@ void AaProgram::Elaborate()
   AaProgram::Propagate_Constants();
 }
 
+void AaProgram::Equalize_Paths_Of_Pipelined_Modules()
+{
+  for(int idx = 0, fidx = AaProgram::_ordered_module_vector.size(); idx < fidx; idx++)
+  {
+	  AaModule* m = ((AaModule*)(AaProgram::_ordered_module_vector[idx]));
+	  if(m->Is_Pipelined())
+	  {
+		m->Equalize_Paths_For_Pipelining();
+          }
+	  else  if(m->Get_Operator_Flag())
+	  {
+		m->Calculate_And_Update_Longest_Path();
+          }
+  }
+}
+
 void AaProgram::Write_C_Model()
 {
   ofstream header_file;

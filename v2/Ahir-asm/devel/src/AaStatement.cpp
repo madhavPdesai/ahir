@@ -310,7 +310,8 @@ void AaStatement::Equalize_Paths_For_Pipelining()
 
 	// OK. At this point, you have all the adjacencies.  Now, 
 	// AaRoot::Info("Adjacency map in do-while loop body " + this->Get_VC_Name());
-	this->Print_Adjacency_Map(adjacency_map);
+	if(AaProgram::_verbose_flag)
+		this->Print_Adjacency_Map(adjacency_map);
 
 	// find the longest paths from the NULL node to all other
 	// vertices.
@@ -321,13 +322,42 @@ void AaStatement::Equalize_Paths_For_Pipelining()
 	int longest_path = this->Find_Longest_Paths(adjacency_map,visited_elements, longest_paths_from_root_map);
 	this->Set_Longest_Path(longest_path);
 
-	this->Print_Slacks(visited_elements, adjacency_map, longest_paths_from_root_map);
+	AaRoot::Info("Longest path in " + this->Get_Name() + " is " + IntToStr(longest_path));
+
+	if(AaProgram::_verbose_flag)
+		this->Print_Slacks(visited_elements, adjacency_map, longest_paths_from_root_map);
 
 	// Now, for each expression in visited-elements..  introduce delayed
 	// versions of them as needed.
 	this->Add_Delayed_Versions(adjacency_map, visited_elements, longest_paths_from_root_map);
 }
 
+void AaStatement::Calculate_And_Update_Longest_Path()
+{
+	// implicit variable references.. which are targets
+	// of statements and the expression that depend on them,
+	// with the estimated delay from the point of generation
+	// to the point of use.
+	map<AaRoot*, vector< pair<AaRoot*, int> > > adjacency_map;
+
+	// set of statements already visited.
+	set<AaRoot*> visited_elements;
+
+	// steps 1,2.
+	//
+	this->Update_Adjacency_Map(adjacency_map, visited_elements);
+
+	// find the longest paths from the NULL node to all other
+	// vertices.
+	map<AaRoot*, int> longest_paths_from_root_map;
+
+
+	// find longest paths to each element from NULL.	
+	int longest_path = this->Find_Longest_Paths(adjacency_map,visited_elements, longest_paths_from_root_map);
+	this->Set_Longest_Path(longest_path);
+
+	AaRoot::Info("Longest path in " + this->Get_Name() + " is " + IntToStr(longest_path));
+}
 
 void AaStatement::Print_Slacks(set<AaRoot*>& visited_elements,
 	map<AaRoot*, vector< pair<AaRoot*, int> > > adjacency_map,

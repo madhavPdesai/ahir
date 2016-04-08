@@ -194,6 +194,9 @@ class AaProgram
 
   static void Add_Call_Pair(AaModule* caller, AaModule* callee);
 
+  // calculate longest path in all pipelined modules.
+  static void Equalize_Paths_Of_Pipelined_Modules();
+
   static AaVoidType* Make_Void_Type();
   static AaUintType* Make_Uinteger_Type(unsigned int w);
 

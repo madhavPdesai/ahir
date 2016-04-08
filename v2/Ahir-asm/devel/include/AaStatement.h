@@ -230,6 +230,7 @@ class AaStatement: public AaScope
 
   void Print_Adjacency_Map( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map);
   virtual void Equalize_Paths_For_Pipelining();
+  virtual void Calculate_And_Update_Longest_Path();
   virtual int Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
 		  set<AaRoot*>& visited_elements,
 		  map<AaRoot*, int>& longest_paths_from_root_map);
@@ -1002,6 +1003,11 @@ class AaPlaceStatement: public AaStatement
   virtual string Get_Place_Name() { return(this->Get_Label()); }
   virtual string C_Reference_String();
 
+  virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+  {
+	// do nothing.
+  }
+
   virtual void Print(ostream& ofile) 
   { 
     this->Err_Check(); 
@@ -1084,6 +1090,7 @@ class AaMergeStatement: public AaSeriesBlockStatement
   bool Get_In_Do_While() {return(_in_do_while);}
 
 
+  
   AaMergeStatement(AaBranchBlockStatement* scope);
   ~AaMergeStatement();
 
@@ -1228,6 +1235,20 @@ class AaSwitchStatement: public AaStatement
     this->_default_sequence = sseq;
   }
 
+  virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+  {
+	for(int I = 0, fI = _choice_pairs.size(); I < fI; I++)
+	{
+		AaStatementSequence* css = _choice_pairs[I].second;
+		if(css != NULL)
+			css->Update_Adjacency_Map(adjacency_map, visited_elements);
+	}
+	if(_default_sequence != NULL)
+	{
+		_default_sequence->Update_Adjacency_Map(adjacency_map, visited_elements);
+	}
+  }
+
   AaSwitchStatement(AaBranchBlockStatement* scope);
   ~AaSwitchStatement();
   virtual void Coalesce_Storage();
@@ -1296,6 +1317,14 @@ class AaIfStatement: public AaStatement
 	else
 		return(NULL);
   } 
+
+  virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+  {
+	if(_if_sequence != NULL)
+		_if_sequence->Update_Adjacency_Map(adjacency_map, visited_elements);
+	if(_else_sequence != NULL)
+		_else_sequence->Update_Adjacency_Map(adjacency_map, visited_elements);
+  }
 
   virtual bool Can_Block(bool pipeline_flag);
   AaIfStatement(AaBranchBlockStatement* scope);
