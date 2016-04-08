@@ -700,6 +700,8 @@ class AaBlockStatement: public AaStatement
   AaStatementSequence* _statement_sequence;
   map<string,string> _exports;
 
+
+  bool _has_declared_storage_object;
   
  public:
 
@@ -708,6 +710,14 @@ class AaBlockStatement: public AaStatement
   virtual bool Is_Block_Statement() {return(true);}
   virtual bool Is_Pipelined() {return(false);}
 
+  virtual bool Get_Has_Declared_Storage_Object() 
+  {
+	return(_has_declared_storage_object);
+  }
+  virtual void Set_Has_Declared_Storage_Object(bool v)
+  {
+	_has_declared_storage_object = v;
+  }
 
   virtual void Set_Pipeline_Parent(AaStatement* dws) 
   { 

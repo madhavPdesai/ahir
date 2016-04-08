@@ -209,8 +209,11 @@ void AaModule::Write_C_Header(ofstream& ofile)
   bool all_types_native = this->Can_Have_Native_C_Interface();
   if(this->_operator_flag && (_number_of_times_called > 1))
   {
-	AaRoot::Error("Operator module " + this->Get_Label() + " called multiple times... may get unexpected results in Aa2C code.",
+	if(this->Get_Has_Declared_Storage_Object())
+	{
+		AaRoot::Error("Operator module " + this->Get_Label() + " with storage object called multiple times... may get unexpected results in Aa2C code.",
 					NULL);
+	}
   }
 
   if(all_types_native)

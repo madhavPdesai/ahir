@@ -2519,6 +2519,7 @@ AaBlockStatement::AaBlockStatement(AaScope* scope,string label):AaStatement(scop
 	this->_statement_sequence = NULL;
 	if(label != "" && scope != NULL)
 		scope->Map_Child(label,this);
+	this->_has_declared_storage_object = false;
 }
 
 AaBlockStatement::~AaBlockStatement() {}
@@ -2532,6 +2533,7 @@ void AaBlockStatement::Add_Object(AaObject* obj)
 		if(obj->Is("AaStorageObject"))
 		{
 			AaProgram::Add_Storage_Dependency_Graph_Vertex(obj);
+			this->Set_Has_Declared_Storage_Object(true);
 		}
 	}
 	else

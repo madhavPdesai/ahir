@@ -121,14 +121,7 @@ class AaExpression: public AaRoot
 
 	virtual bool Is_Signal_Read() {return(false);}
 
-	virtual int Get_Delay()
-	{
-		// flow-through operators should have 0 delay.
-		if(this->_is_intermediate && this->Is_Trivial())
-			return(0);
-		else
-			return(this->AaRoot::Get_Delay());
-	}
+	virtual int Get_Delay();
 
 	void Set_Is_Intermediate(bool v) 
 	{
