@@ -2437,11 +2437,12 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			this->Get_Is_Volatile(),  // flow-through
 			full_rate,		      
 			ofile);
-	ofile << "$delay " << dpe_name <<  " " << delay << endl;
 
 	// no need for additional buffering if volatile..
 	if(this->Get_Is_Volatile())
 		return;
+
+	ofile << "$delay " << dpe_name <<  " " << delay << endl;
 
 	// extreme pipelining.
 	AaStatement* dws = this->Get_Pipeline_Parent();
@@ -5711,7 +5712,7 @@ AaSimpleObjectReference* AaCallStatement::Get_Implicit_Target(string tgt_name)
 
 // return true on error.
 bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector<AaExpression*>& targets, 
-		vector<AaStatement*>& slist, int line_number)
+		 vector<AaStatement*>& slist, int buffering, int line_number)
 {
 	if(sizes.size() != targets.size())
 	{
@@ -5740,6 +5741,7 @@ bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector
 		AaExpression* src_expr = new AaSliceExpression(scope, slice_type, LOW, root_ref);
 
 		AaAssignmentStatement* new_stmt = new AaAssignmentStatement(scope, tgt_expr, src_expr, line_number);
+		new_stmt->Set_Buffering(buffering);
 		slist.push_back(new_stmt);
 
 		HIGH = LOW-1;

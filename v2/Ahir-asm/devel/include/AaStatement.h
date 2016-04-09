@@ -1501,5 +1501,5 @@ class AaDoWhileStatement: public AaStatement
 
 
 bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector<AaExpression*>& targets, 
-				vector<AaStatement*>& slist, int  line_number);
+				vector<AaStatement*>& slist, int buffering, int  line_number);
 #endif

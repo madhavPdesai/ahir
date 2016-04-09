@@ -489,6 +489,7 @@ aA_Call_Statement[AaScope* scope, vector<AaStatement*>& slist]
             new_stmt = new AaCallStatement(scope,func_name,input_args,output_args,cl->getLine());
 	    slist.push_back(new_stmt);
         }
+	(BUFFERING bid: UINTEGER {int buf_val = atoi(bid->getText().c_str());  ((AaCallStatement*)new_stmt)->Set_Buffering(buf_val);})?
     ;
 
 //-----------------------------------------------------------------------------------------------
@@ -502,6 +503,7 @@ aA_Split_Statement[AaScope* scope, vector<AaStatement*>& slist]
     vector<int> sizes;
     AaExpression* expr  = NULL;
     vector<AaExpression*> targets;
+    int buffering = 1;
 }
     : 
         cl: SPLIT
@@ -512,8 +514,9 @@ aA_Split_Statement[AaScope* scope, vector<AaStatement*>& slist]
 	LPAREN
         (expr = aA_Expression[scope]  { targets.push_back(expr); })+
 	RPAREN
+	(BUFFERING bid: UINTEGER {buffering = atoi(bid->getText().c_str());})?
         {
-		bool err = Make_Split_Statement(scope, src, sizes, targets, slist, cl->getLine());
+		bool err = Make_Split_Statement(scope, src, sizes, targets, slist, buffering, cl->getLine());
 		if(err)
 			AaRoot::Error("incorrect split statement specification, line " + IntToStr(cl->getLine()), NULL);
         }
