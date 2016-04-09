@@ -3353,7 +3353,7 @@ package BaseComponents is
 
   component SplitGuardInterface is
 	generic (nreqs: integer; buffering: IntegerArray; use_guards: BooleanArray;
-			sample_only: Boolean := false; update_only: Boolean := false);
+			sample_only: Boolean; update_only: Boolean);
 	port (sr_in: in BooleanArray(nreqs-1 downto 0);
 	      sa_out: out BooleanArray(nreqs-1 downto 0); 
 	      sr_out: out BooleanArray(nreqs-1 downto 0);
@@ -21234,7 +21234,7 @@ use ahir.BaseComponents.all;
 
 entity SplitGuardInterface is
 	generic (nreqs: integer; buffering:IntegerArray; use_guards: BooleanArray; 
-			sample_only: Boolean := false; update_only: Boolean := false);
+			sample_only: Boolean; update_only: Boolean);
 	port (sr_in: in BooleanArray(nreqs-1 downto 0);
 	      sa_out: out BooleanArray(nreqs-1 downto 0); 
 	      sr_out: out BooleanArray(nreqs-1 downto 0);

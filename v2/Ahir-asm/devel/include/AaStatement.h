@@ -1431,6 +1431,12 @@ class AaDoWhileStatement: public AaStatement
     return(_merge_statement);
   } 
 
+  virtual bool Is_Part_Of_Fullrate_Pipeline()
+  {
+	return(_pipeline_full_rate_flag);
+  }
+
+
   AaStatement* Get_Loop_Body_Statement(int idx)
   {
 	if(_loop_body_sequence)

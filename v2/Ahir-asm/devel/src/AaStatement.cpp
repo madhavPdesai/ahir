@@ -526,7 +526,12 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 					new_target,
 					new_src,
 					0);
-			new_stmt->Set_Buffering((curr_slack < 2) ? 2 : curr_slack);
+
+			int buf_val = curr_slack;
+			if(this->Is_Part_Of_Fullrate_Pipeline())
+				buf_val = ((buf_val < 2) ? 2 : buf_val);
+			new_stmt->Set_Buffering(buf_val);
+
 			new_stmt->Map_Source_References();
 
 			AaSimpleObjectReference* new_guard_expr = new AaSimpleObjectReference(prnt_scope, new_stmt);
@@ -623,7 +628,11 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 				new_target,
 				new_src,
 				0);
-		new_stmt->Set_Buffering(curr_slack);
+
+		int buf_val = curr_slack;
+		if(this->Is_Part_Of_Fullrate_Pipeline())
+			buf_val = ((buf_val < 2) ? 2 : buf_val);
+		new_stmt->Set_Buffering(buf_val);
 
 		new_stmt->Map_Source_References();
 

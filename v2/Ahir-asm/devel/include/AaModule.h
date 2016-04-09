@@ -85,6 +85,11 @@ class AaModule: public AaSeriesBlockStatement
   virtual void Set_Volatile_Flag(bool v) {_volatile_flag = v;}
   virtual bool Get_Volatile_Flag() {return(_volatile_flag);}
 
+  virtual bool Is_Part_Of_Fullrate_Pipeline()
+  {
+	return(_pipeline_flag && _pipeline_full_rate_flag);
+  }
+
   virtual bool Get_Is_Volatile() {return(this->Get_Volatile_Flag());}
 
   void Update_Memory_Space_Info();
