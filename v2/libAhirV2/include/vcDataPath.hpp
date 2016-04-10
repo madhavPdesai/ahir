@@ -390,6 +390,7 @@ protected:
 
 
   virtual bool Is_Pipelined_Operator() {return(false);}
+  virtual bool Is_Float_To_Float_Operator() {return(false);}
 
   bool Is_Part_Of_Pipelined_Loop(int& depth, int& buffering);
   int Get_Buffering();

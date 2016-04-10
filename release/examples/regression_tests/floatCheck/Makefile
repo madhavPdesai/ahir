@@ -6,7 +6,7 @@ PIPEHANDLER_LIB=$(AHIR_RELEASE)/lib
 VHDL_LIB=$(AHIR_RELEASE)/vhdl/
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 #DEFS= -DADD -DMUL -DDOT -DCMP
-DEFS= -DADD -DMUL
+DEFS= -DADD -DMUL -DFLOATRESIZE
 #DEFS= -DADD -DMUL -DSUB -DTOINT
 #DEFS= -DCMP
 #DEFS=-DBUG
@@ -14,7 +14,7 @@ DEFS= -DADD -DMUL
 
 
 #TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
-TOPMODULES= -t fpadd -t fpincr -t fpmul
+TOPMODULES= -t fpadd -t fpincr -t fpmul -t double_to_float -t float_to_double
 #TOPMODULES= -t fpadd -t fpmul -t fpsub -t fpincr -t fp2int -t fp2uint -t fpincrd
 #TOPMODULES= -t fpsub
 #TOPMODULES= -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
@@ -32,6 +32,7 @@ SW: prog.c prog.h testbench.c
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
+TOVHDL: c2llvmbc llvmbc2aa aa2vc vc2vhdl 
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: prog.c prog.h testbench.c

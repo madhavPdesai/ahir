@@ -735,6 +735,14 @@ vcUnarySplitOperator::vcUnarySplitOperator(string id, string op_id, vcWire* x, v
 	this->_op_id = op_id;
 }
 
+bool vcUnarySplitOperator::Is_Float_To_Float_Operator()
+{
+	vcType* input_type =   this->Get_Input_Type();
+	vcType* output_type =  this->Get_Output_Type();
+
+	return(input_type->Is_Float_Type() && output_type->Is_Float_Type());
+}
+
 bool vcUnarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 {
 	// unary operations are too trivial to share..
@@ -855,6 +863,7 @@ bool vcBinarySplitOperator::Is_Pipelined_Operator()
 
 	return(is_pipelined_float_op);
 }
+
 
 bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 {

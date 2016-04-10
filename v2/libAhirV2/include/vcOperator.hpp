@@ -340,7 +340,7 @@ public:
 };
 
 
-// NOT is the only one of this type
+// NOT and type-casts are the only ones of this type
 class vcUnarySplitOperator: public vcSplitOperator
 {
 protected:
@@ -350,6 +350,8 @@ public:
 
   vcUnarySplitOperator(string id, string op_id, vcWire* x, vcWire* z);
   string Get_Op_Id() {return(this->_op_id);}
+
+  virtual bool Is_Float_To_Float_Operator();
 
   virtual bool Is_Shareable_With(vcDatapathElement* other);
   virtual void Print(ostream& ofile);

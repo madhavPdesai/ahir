@@ -60,33 +60,54 @@ begin  -- Behave
 
   assert((num_inputs = 1) or (num_inputs = 2)) report "either 1 or 2 inputs" severity failure;
 
-  reqR <= reqL;
-  ackL <= ackR;
-  tagR <= tagL;
+  f2f: if (operator_id = "ApFloatResize") generate
+	f2f_inst: GenericFloatToFloat
+			generic map (
+					tag_width => twidth,
+					in_exponent_width => input1_characteristic_width,
+					in_fraction_width => input1_mantissa_width,
+					out_exponent_width => output_characteristic_width,
+					out_fraction_width => output_mantissa_width)
+			port map (
+					INF => dataL, 
+					OUTF => dataR,
+					clk => clk, reset => reset,
+					env_rdy => reqL, accept_rdy => ackR,
+					tag_in => tagL, tag_out => tagR,
+					f2fi_rdy => ackL, f2fo_rdy => reqR		
+				);
+  end generate f2f;
+
+
+  Not_f2f:  if(operator_id /= "ApFloatResize") generate
+    reqR <= reqL;
+    ackL <= ackR;
+    tagR <= tagL;
+    
+    comb_block: GenericCombinationalOperator
+      generic map (
+        operator_id                 => operator_id,
+        input1_is_int               => input1_is_int,
+        input1_characteristic_width => input1_characteristic_width,
+        input1_mantissa_width       => input1_mantissa_width,
+        iwidth_1                    => iwidth_1,
+        input2_is_int               => input2_is_int,
+        input2_characteristic_width => input2_characteristic_width,
+        input2_mantissa_width       => input2_mantissa_width,
+        iwidth_2                    => iwidth_2,
+        num_inputs                  => num_inputs,
+        output_is_int               => output_is_int,
+        output_characteristic_width => output_characteristic_width,
+        output_mantissa_width       => output_mantissa_width,
+        owidth                      => owidth,
+        constant_operand            => constant_operand,
+        constant_width		  => constant_width,
+        use_constant                => use_constant)
+      port map (
+        data_in => dataL,
+        result  => dataR);
+  end generate Not_f2f;
   
-  comb_block: GenericCombinationalOperator
-    generic map (
-      operator_id                 => operator_id,
-      input1_is_int               => input1_is_int,
-      input1_characteristic_width => input1_characteristic_width,
-      input1_mantissa_width       => input1_mantissa_width,
-      iwidth_1                    => iwidth_1,
-      input2_is_int               => input2_is_int,
-      input2_characteristic_width => input2_characteristic_width,
-      input2_mantissa_width       => input2_mantissa_width,
-      iwidth_2                    => iwidth_2,
-      num_inputs                  => num_inputs,
-      output_is_int               => output_is_int,
-      output_characteristic_width => output_characteristic_width,
-      output_mantissa_width       => output_mantissa_width,
-      owidth                      => owidth,
-      constant_operand            => constant_operand,
-      constant_width		  => constant_width,
-      use_constant                => use_constant)
-    port map (
-      data_in => dataL,
-      result  => dataR);
-
-
+  
 end Vanilla;
-
+  

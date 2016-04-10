@@ -34,7 +34,7 @@ begin
           -- a bypass place: in order to speed up loop turnaround times.
 	  pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
 		     name => name & ":trigplaces:" & Convert_To_String(I))
-		  port map(place_pred,place_succ,trig_places(I),clk,reset);
+		  port map(preds => place_pred,succs =>place_succ,token => trig_places(I),clk => clk, reset => reset);
         end block;
     end generate TrigPlaces;
 
@@ -47,7 +47,7 @@ begin
       -- a bypass place: in order to speed up loop turnaround times.
       pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
 		     name => name & ":inTransPlace:")
-		  port map(place_pred,place_succ,in_trans_place,clk,reset);
+		  port map(preds => place_pred, succs => place_succ,token => in_trans_place, clk => clk, reset => reset);
     end block;
 
     cGen: for I in 0 to ntriggers-1 generate

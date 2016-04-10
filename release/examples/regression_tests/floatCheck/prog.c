@@ -75,3 +75,16 @@ double fpincrd (double x)
 {
 	return(x + 1.0);
 }
+
+// conversions.
+double float_to_double (float x)
+{
+	return((double)x);
+}
+
+
+float double_to_float (double x)
+{
+	return((float)x);
+}
+

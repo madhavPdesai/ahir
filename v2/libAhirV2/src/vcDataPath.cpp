@@ -1440,6 +1440,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		group_name = s__id + "_group_" + IntToStr(idx) ;
 
 		bool is_pipelined_op = lead_op->Is_Pipelined_Operator();
+		bool is_float_to_float = lead_op->Is_Float_To_Float_Operator();
 
 		// for pipelined ops.
 		if(is_pipelined_op)
@@ -1708,9 +1709,11 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		}
 		else
 		{
-			if(num_reqs > 1)
+			if((num_reqs > 1) || is_float_to_float)
 			{
 				// ok, a shared operator
+				//   note: float-to-float will be unshared, but we still stuff
+				//         it in here.  There is no extra cost.
 
 				ofile << "SplitOperator: SplitOperatorShared -- {" << endl;
 				ofile << "generic map ( -- { " ;

@@ -1438,6 +1438,29 @@ package BaseComponents is
   -----------------------------------------------------------------------------
   -- floating point operators (pipelined)
   -----------------------------------------------------------------------------
+  
+  component GenericFloatToFloat is
+    generic (tag_width : integer;
+           in_exponent_width: integer;
+           in_fraction_width : integer;
+           out_exponent_width: integer;
+           out_fraction_width : integer;
+           round_style : round_type := float_round_style;  -- rounding option
+           addguard       : NATURAL := float_guard_bits;  -- number of guard bits
+           check_error : BOOLEAN    := float_check_error;  -- check for errors
+           denormalize_in : BOOLEAN := float_denormalize;  -- Use IEEE extended FP           
+           denormalize : BOOLEAN    := float_denormalize  -- Use IEEE extended FP           
+           );
+    port(
+      INF: in std_logic_vector((in_exponent_width+in_fraction_width) downto 0);
+      OUTF: out std_logic_vector((out_exponent_width+out_fraction_width) downto 0);
+      clk,reset: in std_logic;
+      tag_in: in std_logic_vector(tag_width-1 downto 0);
+      tag_out: out std_logic_vector(tag_width-1 downto 0);
+      env_rdy, accept_rdy: in std_logic;
+      f2fi_rdy, f2fo_rdy: out std_logic);
+  end component;
+
   component GenericFloatingPointAdderSubtractor
     generic (tag_width : integer;
              exponent_width: integer;

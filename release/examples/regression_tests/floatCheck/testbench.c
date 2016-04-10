@@ -71,6 +71,33 @@ int main(int argc, char* argv[])
 		Y = drand48() * scale_factor;
 		scale_factor = 1.1 * scale_factor;
 
+#ifdef FLOATRESIZE
+		float fX = (float) X;
+		float ffX = double_to_float (X);
+		if(fX != ffX)
+		{
+			fprintf(stdout,"Error: (float) %le = %e, expected %e.\n", X,ffX, fX);
+			err_flag = 1;
+		}
+		else
+		{
+			fprintf(stdout,"Info: (float) %le = %e.\n", X,ffX);
+		}
+
+		float dfX = (double) fX;
+		double ddfX = float_to_double (fX);
+		if(ddfX != dfX)
+		{
+			fprintf(stdout,"Error: (double) %e = %le, expected %le.\n", fX,ddfX, dfX);
+			err_flag = 1;
+		}
+		else
+		{
+			fprintf(stdout,"Info: (double) %e = %le.\n", fX,ddfX);
+		}
+		
+#endif
+			
 
 #ifdef TOINT
 
