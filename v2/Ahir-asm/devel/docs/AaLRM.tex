@@ -635,7 +635,9 @@ two parameters as follows
 \end{verbatim}
 This specifies that up to 8 iterations of the loops will be kept alive
 in hardware, and the amount of buffering per operation will be kept to
-2.
+at least 2 (or any specified integer).  Further the buffering specification implies that at most
+2 versions of the same operations will be kept in flight across multiple
+loop iterations.
 
 Additionally, it is possible to specify that the loop-pipelining
 be done to its extreme possibility, that is, to the maximum possible
@@ -647,6 +649,10 @@ rate that can be achieved.
     ...
   $while ....
 \end{verbatim}
+When the full-rate is specified, the generated circuit will
+be aggressively implemented to obtain a 1-cycle loop initiation
+latency.  This may lead to long combinational paths, which can
+be controlled by using double buffering.
 
 Note that it is always possible to describe
 a do-while loop using a branch-block, and this is what should be done
@@ -661,7 +667,7 @@ structured system with complex branching behaviour.
 The resulting control flow structure is a
 petri-net with provable liveness and safety properties \cite{ref:SameerPhD}.
 
-\section{Scoping Rules} \label{sec:Scopes}
+\section{Scoping Rules (Deprecated!) } \label{sec:Scopes}
 
 An \Aa program is made of modules which in turn contain statements
 and so on.  The program thus has a hierarchy of scopes 
@@ -1281,6 +1287,14 @@ A pipeline module {\bf must} have {\bf at least} one input
 and one output argument.  Further, at least one input argument
 must actually be sampled inside the module, and one output argument
 must actually be updated inside the module.
+
+Pipeline modules can have several parameters as follows:
+\begin{verbatim}
+$pipeline ($depth <integer>)? ($buffering <integer>)? ($fullrate)?
+        $module [foo] $in (...) $out (...) $is
+\end{verbatim}
+The pipeline parameters are similar to the {\bf \$dopipeline} 
+construct.
 
 
 \subsection{Operator Modules}
