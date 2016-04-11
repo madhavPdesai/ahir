@@ -1,0 +1,4 @@
+A test case to check pipeline regulation.
+The number of pending versions of a single
+operation across pipeline iterations is
+bounded by the buffering parameter.

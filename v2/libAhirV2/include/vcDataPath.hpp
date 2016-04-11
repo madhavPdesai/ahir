@@ -441,7 +441,7 @@ protected:
   }
 
   virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering) {}
-  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering) {}
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering, int num_reqs) {}
 
   // if this operator refers to something inside the
   // datapath, then it is local to the datapath.
@@ -500,21 +500,9 @@ protected:
 	_output_wire_buffering_map[w] = buffering;
   }
  
-  int Get_Output_Buffering(vcWire* w)
-  {
-	int R;
+  int Get_Output_Buffering(vcWire* w);
+  int Get_Output_Buffering(vcWire* w, int num_reqs);
 
- 	if(_output_wire_buffering_map.find(w) != _output_wire_buffering_map.end())
-	{
-		R = (_output_wire_buffering_map[w]);
-	}
-	else
-	{
-		R = 1;
-	}
-
-	return ((R < 1) ? 1 :R);
-  }
 
   void Generate_Input_Log_Strings(string& log_string);
   void Generate_Output_Log_Strings(string& log_string);

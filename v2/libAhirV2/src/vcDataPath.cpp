@@ -350,6 +350,28 @@ bool vcDatapathElement::Is_Part_Of_Pipelined_Loop(int& depth, int& buffering)
 	return(ret_val);
 }
 
+int vcDatapathElement::Get_Output_Buffering(vcWire* w)
+{
+	int R = 1;
+	if(_output_wire_buffering_map.find(w) != _output_wire_buffering_map.end())
+	{
+		R = (_output_wire_buffering_map[w]);
+	}
+	return(R);
+}
+
+int vcDatapathElement::Get_Output_Buffering(vcWire* w, int num_reqs)
+{
+	int R = this->Get_Output_Buffering(w);
+	if(num_reqs > 1)
+	{
+		int pl_depth, pl_buffering;
+		this->Is_Part_Of_Pipelined_Loop(pl_depth, pl_buffering);
+		R = ((R < pl_buffering) ? pl_buffering : R );
+	}
+	return(R);
+}
+
 void vcDatapathElement::Generate_Flowthrough_Logger_Sensitivity_List(string& log_string)
 {
 	for(int idx = 0, fidx = this->Get_Number_Of_Output_Wires(); idx < fidx; idx++)
@@ -1481,7 +1503,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 			so->Append_Inwire_Buffering(inwire_buffering);
 
 			so->Append_Outwires(outwires);
-			so->Append_Outwire_Buffering(outwire_buffering);
+			so->Append_Outwire_Buffering(outwire_buffering, num_reqs);
 
 			reqL.push_back(so->Get_Req(0));
 			ackL.push_back(so->Get_Ack(0));
@@ -2011,7 +2033,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	  so->Append_Inwire_Buffering(inwire_buffering);
 
 	  so->Append_Outwires(outwires);
-	  so->Append_Outwire_Buffering(outwire_buffering);
+	  so->Append_Outwire_Buffering(outwire_buffering, num_reqs);
    
 	  reqL.push_back(so->Get_Req(0));
 	  ackL.push_back(so->Get_Ack(0));
@@ -2254,7 +2276,8 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
           inwire_buffering.push_back(so->Get_Input_Buffering(so->Get_Address()));
 
 	  datawires.push_back(so->Get_Data());
-          outwire_buffering.push_back(so->Get_Output_Buffering(so->Get_Data()));
+	  int obuf = so->Get_Output_Buffering(so->Get_Data(), num_reqs);
+          outwire_buffering.push_back(obuf);
 
 	  reqL.push_back(so->Get_Req(0));
 	  ackL.push_back(so->Get_Ack(0));
@@ -2489,7 +2512,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 			elements.push_back(so->Get_VHDL_Id());
 			dpe_elements.push_back(so);
 			so->Append_Outwires(outwires);
-			so->Append_Outwire_Buffering(outwire_buffering);
+			so->Append_Outwire_Buffering(outwire_buffering, num_reqs);
 
 			reqL.push_back(so->Get_Req(0));
 			ackL.push_back(so->Get_Ack(0));
@@ -2957,7 +2980,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 			so->Append_Inwire_Buffering(inwire_buffering);
 
 			so->Append_Outwires(outwires);
-			so->Append_Outwire_Buffering(outwire_buffering);
+			so->Append_Outwire_Buffering(outwire_buffering, num_reqs);
 
 			reqL.push_back(so->Get_Req(0));
 			ackL.push_back(so->Get_Ack(0));

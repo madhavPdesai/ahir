@@ -1365,7 +1365,8 @@ aA_Reduce_Expression[AaScope* scope] returns [AaExpression* expr]
 : lp: LPAREN 
 	REDUCE
 
-	( (OR {op = __OR;}) |  (AND {op = __AND;}) | (XOR {op = __XOR;}))
+	( (OR {op = __OR;}) |  (AND {op = __AND;}) | (XOR {op = __XOR;}) | (PLUS {op = __PLUS;}) 
+		| (MUL {op = __MUL;} ))
 
 	(nexpr = aA_Expression[scope]  {expr_vector.push_back(nexpr);})+
         {

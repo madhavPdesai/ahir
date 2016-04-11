@@ -284,9 +284,9 @@ void vcLoad::Append_Inwire_Buffering(vector<int>& inwire_buffering)
 	inwire_buffering.push_back(this->Get_Input_Buffering(this->Get_Input_Wire(0)));
 }
 
-void vcLoad::Append_Outwire_Buffering(vector<int>& outwire_buffering)
+void vcLoad::Append_Outwire_Buffering(vector<int>& outwire_buffering, int num_reqs)
 {
-	outwire_buffering.push_back(this->Get_Output_Buffering(this->Get_Output_Wire(0)));
+	outwire_buffering.push_back(this->Get_Output_Buffering(this->Get_Output_Wire(0), num_reqs));
 }
 
 vcStore::vcStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoadStore(id,ms) 
@@ -518,12 +518,12 @@ void vcCall::Append_Inwire_Buffering(vector<int>& inwire_buffering)
 
 // Calls will use a value for the output wire buffering which
 // is the maximum specified across all output wires.
-void vcCall::Append_Outwire_Buffering(vector<int>& outwire_buffering)
+void vcCall::Append_Outwire_Buffering(vector<int>& outwire_buffering, int num_reqs)
 {
 	int max_buf = 0;
 	for(int idx = 0, fidx = this->Get_Number_Of_Output_Wires(); idx < fidx; idx++)
 	{
-		int U = this->Get_Output_Buffering(this->Get_Output_Wire(idx));
+		int U = this->Get_Output_Buffering(this->Get_Output_Wire(idx), num_reqs);
 		max_buf = ((U > max_buf) ? U : max_buf);
 	}
 	outwire_buffering.push_back(max_buf);
@@ -755,9 +755,9 @@ void vcUnarySplitOperator::Append_Inwire_Buffering(vector<int>& inwire_buffering
 	inwire_buffering.push_back(this->Get_Input_Buffering(this->Get_X()));
 }
 
-void vcUnarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_buffering)
+void vcUnarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_buffering, int num_reqs)
 {
-	outwire_buffering.push_back(this->Get_Output_Buffering(this->Get_Z()));
+	outwire_buffering.push_back(this->Get_Output_Buffering(this->Get_Z(), num_reqs));
 }
 
 void vcUnarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
@@ -969,9 +969,9 @@ void vcBinarySplitOperator::Append_Inwire_Buffering(vector<int>& inwire_bufferin
 	inwire_buffering.push_back((bx > by) ? bx : by);
 }
 
-void vcBinarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_buffering)
+void vcBinarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_buffering, int num_reqs)
 {
-	outwire_buffering.push_back(this->Get_Output_Buffering(this->Get_Z()));
+	outwire_buffering.push_back(this->Get_Output_Buffering(this->Get_Z(), num_reqs));
 }
 
 void vcBinarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)

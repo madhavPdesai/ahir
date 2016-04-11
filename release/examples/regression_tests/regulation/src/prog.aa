@@ -1,0 +1,18 @@
+$pipe out_data : $float<8,23> $depth 2
+$pipe in_data : $float<8,23> $depth 2
+
+$module [l2_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 4 
+		$merge $entry $loopback $endmerge
+	
+		x0 := in_data
+		x1 := in_data
+		x2 := in_data
+		x3 := in_data
+		
+		out_data :=  ($reduce + (x0*x0)  (x1*x1)  (x2*x2)  (x3*x3))
+		$while 1
+	}
+}

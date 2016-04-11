@@ -93,7 +93,7 @@ public:
   virtual bool Is_Shareable_With(vcDatapathElement* other) ;
 
   virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering);
-  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering);
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering, int num_reqs);
 
   virtual bool Is_Local_To_Datapath()
   {
@@ -181,11 +181,11 @@ public:
 	else
 		return(NULL);
   }
-  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering)
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering, int num_reqs)
   {
 	vcWire* d  = this->Get_Data();
 	if(d != NULL)
-		outwire_buffering.push_back(this->Get_Output_Buffering(d));
+		outwire_buffering.push_back(this->Get_Output_Buffering(d, num_reqs));
   }
 
   virtual string Get_Logger_Description() {return (" PipeRead from " + _pipe->Get_Id()); }
@@ -236,7 +236,7 @@ public:
   virtual vcWire* Get_Data()  {if(_output_wires.size() > 0) return(this->_output_wires[0]); else return (NULL);}
 
   virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering);
-  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering);
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering, int num_reqs);
 
   friend class vcDataPath;
 };
@@ -257,7 +257,7 @@ public:
   virtual vcWire* Get_Data()  {if(_input_wires.size() > 1) return(this->_input_wires[1]); else return (NULL);}
 
   virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering);
-  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering) 
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering, int num_reqs) 
   {
     // nothing.
   }
@@ -329,7 +329,7 @@ public:
   virtual bool Is_Pipelined_Operator();
 
   virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering);
-  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering);
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering, int num_reqs);
 
   bool Is_Int_Add_Op();
   virtual string Get_Operator_Type() {return(this->Kind() + " (" + this->_op_id + ")");}
@@ -361,7 +361,7 @@ public:
   virtual string Get_Operator_Type() {return(this->Kind() + " (" + this->_op_id + ")");}
 
   virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering);
-  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering);
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering, int num_reqs);
 
   virtual vcType* Get_Input_Type() {if(_input_wires.size() > 0) return(this->_input_wires[0]->Get_Type()); else return(NULL);}
 
