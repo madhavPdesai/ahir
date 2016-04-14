@@ -198,11 +198,12 @@ begin
 		variable nstate : RhsState;
 		variable ca_out_u_var : Boolean;
 		variable ca_out_d_var : Boolean;
+		variable cr_out_var : Boolean;
 		variable next_c_counter: integer;
 	begin
 		nstate := rhs_state;
 		pop <= '0';
-		cr_out <= false;
+		cr_out_var := false;
 		ca_out_u_var := false;
 		ca_out_d_var := false;
 		next_c_counter := c_counter;
@@ -219,7 +220,7 @@ begin
 						nstate := r_Wait_On_Queue;			
 					else
 						if(qdata(0) = '1') then
-							cr_out <= true;
+							cr_out_var := true;
 							nstate := r_Wait_On_Ack_In;
 							next_c_counter := (next_c_counter + 1);
 						else
@@ -239,7 +240,7 @@ begin
 							nstate := r_Idle;
 						end if;
 					else 
-						cr_out <= true;
+						cr_out_var := true;
 						if(ca_in) then	
 							ca_out_u_var := true;
 						end if;
@@ -261,7 +262,7 @@ begin
 					ca_out_u_var := true;
 					if(cr_in  and (pop_ack = '1') and (qdata(0) = '1')) then
 						pop <= '1';
-						cr_out <= true;
+						cr_out_var := true;
 						next_c_counter := (next_c_counter + 1);
 					elsif(cr_in and (pop_ack = '1') and (qdata(0) = '0')) then
 						nstate := r_Idle;
@@ -276,7 +277,12 @@ begin
 				end if;
 		end case;
 
-		ca_out_u <= ca_out_u_var;
+		-- done separately below.
+		--   Xilinx xst optimization seems to be imperfect
+		--   and we need to help it out.
+		--
+		-- ca_out_u <= ca_out_u_var;
+		-- cr_out <= cr_out_var;
 
 		if(clk'event and clk = '1') then
 			if(reset = '1') then
@@ -290,5 +296,21 @@ begin
 			end if;
 		end if;
 	end process;
+
+
+	-- Mealy outputs (to ensure that xst doesn't screw up.)
+	cr_out <=  (((rhs_state = r_Idle) and cr_in and (pop_ack = '1') and (qdata(0) = '1')) 
+				or
+			 ((rhs_state = r_Wait_On_Queue) and (pop_ack = '1') and (qdata(0) = '1'))
+				or
+			  ((rhs_state = r_Wait_On_Ack_In) and ca_in and 
+						cr_in and (pop_ack = '1') and (qdata(0) = '1')));
+
+	ca_out_u <= (((rhs_state = r_Wait_On_Queue) and (pop_ack = '1') and (qdata(0) = '0'))
+				or
+			 ((rhs_state = r_Wait_On_Queue) and (pop_ack = '1') and (qdata(0) = '1') and ca_in)
+				or
+			 ((rhs_state = r_Wait_On_Ack_In) and ca_in));
+
 
 end Behave;

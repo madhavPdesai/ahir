@@ -129,7 +129,8 @@ begin  -- default_arch
  
      pop_req(0) <= preq;
      load_reg <= loadv;
-     unload_ack_byp <= bypassv;
+     -- help XST out..  write the function explicitly below.
+     -- unload_ack_byp <= bypassv;
 
      if(clk'event and clk = '1') then
 	if(reset = '1') then
@@ -145,6 +146,9 @@ begin  -- default_arch
         end if;
      end if;
   end process;
+
+  -- explicit logic here to show that unload-ack does NOT depend on unload-req.
+  unload_ack_byp <=  bypass_flag and ((fsm_state = waiting) and (pop_ack(0) = '1'));
 
   -- without bypass
   bypassGen: if bypass_flag generate
