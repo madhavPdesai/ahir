@@ -671,6 +671,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	// output port buffer signals.
 	ofile << "-- output port buffer signals" << endl;
 	vector<vcWire*> outarg_wires;
+	bool at_least_one_non_constant = false;
 	for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
 	{
 		vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
@@ -679,7 +680,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		ofile << "signal " << w->Get_VHDL_Signal_Id() << " : " 
 			<<  " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
 
-		if(!volatile_form)
+		if(!volatile_form && !w->Is_Constant())
 		{
 		// exit of CP will trigger write to the output-buffer..
 		// TODO: completion of write to output-buffer must
@@ -688,6 +689,15 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		ofile << "signal " << w->Get_VHDL_Id() << "_update_enable: Boolean;" << endl;
 		}
 
+		if(!w->Is_Constant())
+		{
+			at_least_one_non_constant = true;		
+		}
+	}
+
+	if(at_least_one_non_constant &&  this->Get_Pipeline_Flag() && !volatile_form)
+	{
+		vcSystem::Error("Pipelined module " + this->Get_Label() + " must have at least one non-constant output.");
 	}
 
 
@@ -887,6 +897,10 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 			{
 				ofile << w->Get_VHDL_Signal_Id() << " <= " << v->To_VHDL_String() << ";" << endl;
 			}
+			else
+			{
+				ofile << w->Get_VHDL_Signal_Id() << " <= " << v->To_VHDL_String() << ";" << endl;
+			}
 		}
 	}
 	else
@@ -963,7 +977,8 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 			for(int idx = 0, fidx = outarg_wires.size(); idx < fidx; idx++)
 			{
 				vcWire* w = outarg_wires[idx];
-				ofile << w->Get_VHDL_Id() + "_update_enable <= " << "out_buffer_write_ack_symbol;" << endl;
+				if(!w->Is_Constant())
+					ofile << w->Get_VHDL_Id() + "_update_enable <= " << "out_buffer_write_ack_symbol;" << endl;
 			}
 		}
 	}

@@ -134,6 +134,7 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 	// output port buffer signals.
 	ofile << "-- output port buffer signals" << endl;
 	vector<vcWire*> outarg_wires;
+	bool at_least_one_non_constant = false;
 	for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
 	{
 		vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
@@ -146,8 +147,17 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 		// TODO: completion of write to output-buffer must
 		//       be used to reenable all output updates in 
 		//       pipelined body.
-		ofile << "signal " << w->Get_VHDL_Id() << "_update_enable: Boolean;" << endl;
+		if(!w->Is_Constant())
+		{
+			ofile << "signal " << w->Get_VHDL_Id() << "_update_enable: Boolean;" << endl;
+			at_least_one_non_constant = true;
+		}
 
+	}
+
+	if(at_least_one_non_constant &&  this->Get_Pipeline_Flag() && !this->Get_Volatile_Flag())
+	{
+		vcSystem::Error("Pipelined operator module " + this->Get_Label() + " must have at least one non-constant output.");
 	}
 
 
@@ -351,18 +361,22 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 		{
 			vcOutputWire* w = (vcOutputWire*) outarg_wires[idx];
 			int wsize  = w->Get_Type()->Size();
+
+			if(w->Is_Constant())
+				ofile << w->Get_VHDL_Signal_Id() << " <= " << w->Get_Value()->To_VHDL_String() << ";" << endl;
+			ofile << w->Get_VHDL_Id() << " <= " << w->Get_VHDL_Signal_Id() << ";"  << endl;
+
 			if(w->Get_Number_Of_Drivers() == 0)
 				continue;
 			else
 				nouts++;
 
-			if(w->Is_Constant())
-				ofile << w->Get_VHDL_Signal_Id() << " <= " << w->Get_Value()->To_VHDL_String() << ";" << endl;
-
-			ofile << w->Get_VHDL_Id() << " <= " << w->Get_VHDL_Signal_Id() << ";"  << endl;
 
 			// update req from the outside world is the consumer.
-			ofile << w->Get_VHDL_Id() << "_update_enable <= update_req;" << endl;
+			// NOTE: do not make this connection if w is a constant
+			//       you will induce a combinational cycle.
+			if(!w->Is_Constant())
+				ofile << w->Get_VHDL_Id() << "_update_enable <= update_req;" << endl;
 
 		}
 
