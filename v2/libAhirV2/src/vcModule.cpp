@@ -897,10 +897,6 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 			{
 				ofile << w->Get_VHDL_Signal_Id() << " <= " << v->To_VHDL_String() << ";" << endl;
 			}
-			else
-			{
-				ofile << w->Get_VHDL_Signal_Id() << " <= " << v->To_VHDL_String() << ";" << endl;
-			}
 		}
 	}
 	else
