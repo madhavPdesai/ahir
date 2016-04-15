@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------
 -- generic ap-int (signed/unsigned operator)
--- modified by Madhav Desai.
+-- Madhav Desai.
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -12,6 +12,9 @@ use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 
 
+-- 
+-- mul/lshl/lshr/ashr.
+-- 
 entity GenericApIntArithOperator is
   generic (op_id: string;
 	    tag_width : integer := 8;
@@ -24,7 +27,7 @@ entity GenericApIntArithOperator is
            );
   port(
     in_data: in std_logic_vector((num_inputs*in_operand_width)-1 downto 0);
-    out_data: out std_logic_vector(out_result_widht-1 downto 0);
+    out_data: out std_logic_vector(out_result_width-1 downto 0);
     clk,reset: in std_logic;
     tag_in: in std_logic_vector(tag_width-1 downto 0);
     tag_out: out std_logic_vector(tag_width-1 downto 0);
@@ -45,9 +48,7 @@ begin
 
 
   -- binary operator.
-  arithOp: if ( (op_id = "ApIntAdd") or
-		(op_id = "ApIntSub") or
-		(op_id = "ApIntMul") or
+  arithOp: if ( (op_id = "ApIntMul") or
 		(op_id = "ApIntSHL") or
 		(op_id = "ApIntLSHR") or
 		(op_id = "ApIntLASHR") or
@@ -84,16 +85,14 @@ begin
        end block gBlk;
   end generate arithOp;
 
-  notArithOp:if ( (op_id /= "ApIntAdd") and
-		(op_id /= "ApIntSub") and
-		(op_id /= "ApIntMul") and
+  notArithOp:if ( (op_id /= "ApIntMul") and
 		(op_id /= "ApIntSHL") and
 		(op_id /= "ApIntLSHR") and
 		(op_id /= "ApIntLASHR") and
 		(op_id /= "ApIntROL") and
 		(op_id /= "ApIntROR"))  generate
 
- 	assert false report op_id & " is not a binary arith operation" severity failure;
+ 	assert false report op_id & " is not a pipelined binary arith operation" severity failure;
 
   end generate notArithOp;
 end rtl;

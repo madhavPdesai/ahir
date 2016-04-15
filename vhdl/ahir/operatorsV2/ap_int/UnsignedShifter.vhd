@@ -21,6 +21,7 @@ entity UnsignedShifter is
   
   generic (
     shift_right_flag   : boolean;
+    signed_flag        : boolean;
     tag_width          : integer;
     operand_width      : integer;
     shift_amount_width : integer);
