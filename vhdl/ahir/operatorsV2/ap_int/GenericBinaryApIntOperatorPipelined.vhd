@@ -30,20 +30,59 @@ entity GenericBinaryApIntArithOperatorPipelined is
 end entity;
 
 architecture rtl of GenericBinaryApIntArithOperatorPipelined is
-
   signal pipeline_stall : std_logic;
-  signal op_o_rdy_sig: std_logic;
-
 begin
-
-  pipeline_stall <= op_o_rdy_sig and (not accept_rdy);
 
 
   -- binary operator.
   addOp: if (op_id = "ApIntAdd") generate
+    bb: block
+       signal uInA, uInB: unsigned(in_data_width-1 downto 0)
+       signal uResult   : unsigned(out_data_width-1 downto 0)
+       signal sub_sig: std_logic;
+    begin;
+        out_data <= std_logic_vector(uResult);
+        uInA <= unsigned(inA);
+	uInB <= unsigned(inB);
+        sub_sig <= '0';
+
+	aI: UnsignedAdderSubtractor
+		generic map (tag_width => tag_width,
+					operand_width => in_operand_width,
+						chunk_width => 8)
+		port map (
+				L => uInA, R => uInB, RESULT => uResult,
+					substract_op => sub_sig,
+						clk => clk, reset => reset,
+							in_rdy => env_rdy,
+								out_rdy => op_o_rdy,
+									tag_in => tag_in, tag_out => tag_out);
+    end block;
   end generate addOp;
 
   subOp: if (op_id = "ApIntSub") generate
+    bb: block
+       signal uInA, uInB: unsigned(in_data_width-1 downto 0)
+       signal uResult   : unsigned(out_data_width-1 downto 0)
+       signal sub_sig: std_logic;
+    begin;
+        out_data <= std_logic_vector(uResult);
+        uInA <= unsigned(inA);
+	uInB <= unsigned(inB);
+        sub_sig <= '1';
+
+	aI: UnsignedAdderSubtractor
+		generic map (tag_width => tag_width,
+					operand_width => in_operand_width,
+						chunk_width => 8)
+		port map (
+				L => uInA, R => uInB, RESULT => uResult,
+					substract_op => sub_sig,
+						clk => clk, reset => reset,
+							in_rdy => env_rdy,
+								out_rdy => op_o_rdy,
+									tag_in => tag_in, tag_out => tag_out);
+    end block;
   end generate subOp;
 
   mulOp: if (op_id = "ApIntMul") generate

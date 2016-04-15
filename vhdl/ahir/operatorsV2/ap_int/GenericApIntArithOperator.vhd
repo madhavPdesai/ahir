@@ -80,8 +80,6 @@ begin
 					tag_in => tag_in, tag_out => tag_out,
 					env_rdy => env_rdy,
 					env_accept => env_accept,
-					op_i_rdy => op_i_rdy,
-					op_o_rdy => op_o_rdy_sig,
 					clk => clk, reset => reset);
        end block gBlk;
   end generate arithOp;

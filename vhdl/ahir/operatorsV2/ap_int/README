@@ -1,0 +1,16 @@
+Construction of an operator library for 
+integer arithmetic operations.
+
+
+	GenericApIntArithOperator.vhd
+		top-level
+
+	GenericBinaryApIntOperatorPipelined.vhd
+		generic pipelined operator, will
+		instantiate specific pipelined operators
+		based on op_id.
+
+	specific pipelined operator implementations
+		UnsignedAdderSubtractor.vhd
+		UnsignedMultiplier.vhd
+		UnsignedShifter.vhd
