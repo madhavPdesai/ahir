@@ -16,39 +16,39 @@ library ahir;
 use ahir.GlobalConstants.all;
 use ahir.Utilities.all;
 
-
 entity UnsignedShifter is
-  
+
   generic (
     shift_right_flag   : boolean;
-    signed_flag        : boolean;
+    signed_flag        : boolean := false;
     tag_width          : integer;
     operand_width      : integer;
     shift_amount_width : integer);
 
   port (
-    L       : in  unsigned(operand_width-1 downto 0);
-    R       : in  unsigned(shift_amount_width-1 downto 0);
-    RESULT     : out unsigned(operand_width-1 downto 0);
-    clk, reset : in  std_logic;
-    in_rdy     : in  std_logic;
-    out_rdy    : out std_logic;
-    stall      : in std_logic;
-    tag_in     : in std_logic_vector(tag_width-1 downto 0);
-    tag_out    : out std_logic_vector(tag_width-1 downto 0));
+    slv_L       : in  std_logic_vector(operand_width-1 downto 0);
+    slv_R       : in  std_logic_vector(shift_amount_width-1 downto 0);
+    slv_RESULT  : out std_logic_vector(operand_width-1 downto 0);
+    clk, reset  : in  std_logic;
+    in_rdy      : in  std_logic;
+    out_rdy     : out std_logic;
+    stall       : in std_logic;
+    tag_in      : in std_logic_vector(tag_width-1 downto 0);
+    tag_out     : out std_logic_vector(tag_width-1 downto 0));
 end entity;
 
 
 architecture Pipelined of UnsignedShifter is
 
-  constant phases_per_stage: integer := 4;
+  -- depth of multiplexor..
+  constant phases_per_stage: integer := 8;
+
   constant num_sig_bits: integer := Maximum(1,Minimum(shift_amount_width, Ceil_Log2(operand_width)));
   constant pipe_depth : integer := Ceil(num_sig_bits,phases_per_stage);
 
   type RWORD is array (natural range <>) of unsigned(operand_width-1 downto 0);
   type TWORD is array (natural range <>) of std_logic_vector(tag_width-1 downto 0);  
   type SWORD is array (natural range <>) of unsigned(num_sig_bits-1 downto 0);  
-
 
   signal intermediate_results : RWORD(0 to pipe_depth);
   signal intermediate_tags : TWORD(0 to pipe_depth);  
@@ -57,30 +57,27 @@ architecture Pipelined of UnsignedShifter is
 
   
   constant debug_flag: boolean := global_debug_flag;
+
+  signal sign_bit: std_logic;
+
+  function shift_right_signed ( X: std_logic_vector; Y: integer )
+		return std_logic_vector is
+	alias lX : std_logic_vector(1 to X'length) is X;
+	variable ret_val: std_logic_vector(1 to X'length);
+  begin
+  end shift_right_signed;
+
 begin  -- Pipelined
 
-  Debug: if debug_flag  generate
-	
-	DebugBlock: block
-		signal pipe_depth_sig, num_sig_bits_sig, tmp_sig, tmp_sig_2: integer;
-	begin
-		pipe_depth_sig <= pipe_depth;
-		num_sig_bits_sig <= num_sig_bits;
-		tmp_sig <= Ceil(num_sig_bits,phases_per_stage);
-		tmp_sig_2 <= (num_sig_bits/phases_per_stage);
-	end block;
-
-  end generate debug;
+  sign_bit <= slv_L(operand_width-1);
 
    
   TrivOp: if operand_width = 1 generate
-	intermediate_results(0) <= (others => '0') when R(0) = '1' else L;
+	intermediate_results(0) <= (others => '0') when slv_R(0) = '1' else slv_L;
   end generate TrivOp;
   
 
   NonTrivOp: if operand_width > 1 generate
-
-
 
         genStages: for STAGE in 1 to pipe_depth generate
   		process(clk)
@@ -94,9 +91,9 @@ begin  -- Pipelined
 					Minimum(num_sig_bits-1,(STAGE*phases_per_stage)-1) loop  
 				if(shift_amount(I) = '1') then
 					if(shift_right_flag) then
-						shifted_L :=  shift_right(shifted_L, 2**I);
+						shifted_L :=  To_SLV(shift_right(To_Signed(shifted_L),2**I));
 					else
-						shifted_L :=  shift_left(shifted_L, 2**I);
+						shifted_L :=  To_SLV(shift_right(To_Unsigned(shifted_L),2**I));
 					end if;
 				end if;
 			end loop;
@@ -120,7 +117,7 @@ begin  -- Pipelined
 
 
   -- I/O
-  intermediate_results(0) <=  L;
+  intermediate_results(0) <=  svl_L;
   intermediate_tags(0) <= tag_in;
   intermediate_shift_amount(0) <= R(num_sig_bits-1 downto 0);
   stage_active(0) <= in_rdy;

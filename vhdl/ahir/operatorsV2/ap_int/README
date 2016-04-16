@@ -11,6 +11,6 @@ integer arithmetic operations.
 		based on op_id.
 
 	specific pipelined operator implementations
-		UnsignedAdderSubtractor.vhd
-		UnsignedMultiplier.vhd
-		UnsignedShifter.vhd
+		UnsignedAdderSubtractor_*.vhd
+		UnsignedMultiplier_*.vhd
+		UnsignedShifter_*.vhd

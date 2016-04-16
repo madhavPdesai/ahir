@@ -156,7 +156,7 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Utilities.all;
 
-entity UnsignedMultiplier is
+entity UnsignedMultiplier_32_32_64 is
   
   generic (
     tag_width     : integer;
@@ -164,8 +164,8 @@ entity UnsignedMultiplier is
     chunk_width   : integer := 8);
 
   port (
-    L, R       : in  unsigned(operand_width-1 downto 0);
-    RESULT     : out unsigned((2*operand_width)-1 downto 0);
+    slv_L, slv_R       : in  unsigned(operand_width-1 downto 0);
+    slv_RESULT     : out unsigned((2*operand_width)-1 downto 0);
     clk, reset : in  std_logic;
     in_rdy     : in  std_logic;
     out_rdy    : out std_logic;
@@ -174,7 +174,7 @@ entity UnsignedMultiplier is
     tag_out    : out std_logic_vector(tag_width-1 downto 0));
 end entity;
 
-architecture Pipelined of UnsignedMultiplier is
+architecture Pipelined of UnsignedMultiplier_32_32_64 is
 
   constant pipe_depth : integer := operand_width/16;
 
@@ -186,8 +186,16 @@ architecture Pipelined of UnsignedMultiplier is
   signal intermediate_tags : TWORD(0 to pipe_depth);  
   signal stage_active : std_logic_vector(0 to pipe_depth);
   
+  signal L,R: unsigned (operand_width-1 downto 0);
+  signal RESULT: unsigned((2*operand_width)-1 downto 0);
+
 begin  -- Pipelined
 
+  -- unsigned <-> slv
+  L <= To_Unsigned(slv_L);
+  R <= To_Unsigned(slv_R);
+  slv_RESULT <= To_SLV(RESULT);
+  
   -- for now, just multiply..
   intermediate_results(0) <= L*R;
 
@@ -283,7 +291,14 @@ architecture ArrayMul of UnsignedMultiplier is
         signal SR,SL: OneD2BitArray(0 to NumChunks-1);
 
 	signal result_array : OneDChunkArray(0 to (2*NumChunks)-1);
+  
+	signal L,R: unsigned (operand_width-1 downto 0);
+  	signal RESULT: unsigned((2*operand_width)-1 downto 0);
 begin
+  	-- unsigned <-> slv
+  	L <= To_Unsigned(slv_L);
+  	R <= To_Unsigned(slv_R);
+  	slv_RESULT <= To_SLV(RESULT);
 
 	process(L)
 		variable lpad : unsigned(padded_operand_width-1 downto 0);
