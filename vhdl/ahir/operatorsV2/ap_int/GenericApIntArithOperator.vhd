@@ -10,23 +10,26 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
+use ahir.ApIntComponents.all;
 
 
 -- 
 -- mul/lshl/lshr/ashr.
 -- 
 entity GenericApIntArithOperator is
-  generic (op_id: string;
+  generic (
+	    name: string;
+	    op_id: string;
 	    tag_width : integer := 8;
 	    in_operand_width: integer;
 	    num_non_constant_inputs: integer;
             first_operand_is_constant: boolean;
             second_operand_is_constant: boolean;
 	    constant_value: std_logic_vector;
-	    out_result_width: integer;
+	    out_result_width: integer
            );
   port(
-    in_data: in std_logic_vector((num_inputs*in_operand_width)-1 downto 0);
+    in_data: in std_logic_vector((num_non_constant_inputs*in_operand_width)-1 downto 0);
     out_data: out std_logic_vector(out_result_width-1 downto 0);
     clk,reset: in std_logic;
     tag_in: in std_logic_vector(tag_width-1 downto 0);
@@ -42,6 +45,9 @@ architecture rtl of GenericApIntArithOperator is
 
 begin
 
+  assert (first_operand_is_constant or second_operand_is_constant)
+	report "In " & " operator " & name & ", both operands are constants." severity failure;
+
   pipeline_stall <= op_o_rdy_sig and (not accept_rdy);
   op_o_rdy <= op_o_rdy_sig;
   op_i_rdy <= (not pipeline_stall);
@@ -56,10 +62,10 @@ begin
 		(op_id = "ApIntROR"))  generate
        gBlk: block
 	signal inA, inB: std_logic_vector(in_operand_width-1 downto 0);
-	signal outR: std_logic_vector(out_operand_width-1 downto 0);
+	signal outR: std_logic_vector(out_result_width-1 downto 0);
        begin
 	     firstConstant: if (first_operand_is_constant) generate
-	    	inA <= constant_operand;
+	    	inA <= constant_value;
 	     end generate firstConstant;
 
 	     notfirstConstant: if (not first_operand_is_constant) generate
@@ -67,12 +73,12 @@ begin
 	     end generate notfirstConstant;
 	
 	     secondConstant: if (second_operand_is_constant) generate
-	    	inB <= constant_operand;
+	    	inB <= constant_value;
 	     end generate secondConstant;
 
 	     notsecondConstant: if (not second_operand_is_constant) generate
 	    	inB <= in_data(in_operand_width-1 downto 0);
-             end generate secondConstant;
+             end generate notsecondConstant;
 
 	     oprtr: GenericBinaryApIntArithOperatorPipelined
 			generic map(op_id => op_id)
@@ -80,7 +86,7 @@ begin
 					pipeline_stall => pipeline_stall,
 					tag_in => tag_in, tag_out => tag_out,
 					env_rdy => env_rdy,
-					env_accept => env_accept,
+					op_o_rdy => op_o_rdy_sig,
 					clk => clk, reset => reset);
        end block gBlk;
   end generate arithOp;
@@ -88,9 +94,7 @@ begin
   notArithOp:if ( (op_id /= "ApIntMul") and
 		(op_id /= "ApIntSHL") and
 		(op_id /= "ApIntLSHR") and
-		(op_id /= "ApIntLASHR") and
-		(op_id /= "ApIntROL") and
-		(op_id /= "ApIntROR"))  generate
+		(op_id /= "ApIntLASHR"))  generate
 
  	assert false report op_id & " is not a pipelined binary arith operation" severity failure;
 

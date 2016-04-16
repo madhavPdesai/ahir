@@ -2,6 +2,10 @@ Construction of an operator library for
 integer arithmetic operations.
 
 
+	ApIntComponents
+		component package for everything
+		in here.
+
 	GenericApIntArithOperator.vhd
 		top-level
 
@@ -10,7 +14,7 @@ integer arithmetic operations.
 		instantiate specific pipelined operators
 		based on op_id.
 
-	specific pipelined operator implementations
-		UnsignedAdderSubtractor_*.vhd
-		UnsignedMultiplier_*.vhd
-		UnsignedShifter_*.vhd
+	UnsignedAdderSubtractor_*.vhd
+	UnsignedMultiplier_*.vhd
+	UnsignedShifter_*.vhd
+		specific pipelined operator implementations

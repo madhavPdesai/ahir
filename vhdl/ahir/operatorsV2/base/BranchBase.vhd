@@ -25,7 +25,12 @@ begin
         ack0 <= false;
         ack1 <= false;
       elsif req then
+
+	assert(not is_X(condition)) report 
+		"branch condition is X" severity error;
+
         c_reduce := OrReduce(condition);
+	
         if(c_reduce = '1') then
           ack1 <= true;
           ack0 <= false;

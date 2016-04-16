@@ -98,9 +98,12 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Utilities.all;
+use ahir.SubPrograms.all;
+
 entity UnsignedAdderSubtractor_n_n_n is
   
   generic (
+    name : string;
     tag_width          : integer;
     operand_width      : integer;
     chunk_width        : integer
@@ -123,7 +126,7 @@ entity UnsignedAdderSubtractor_n_n_n is
 end entity;
 
 
-architecture Pipelined of UnsignedAdderSubtractor is
+architecture Pipelined of UnsignedAdderSubtractor_n_n_n is
  
   constant num_chunks: integer := Ceil(operand_width, chunk_width);
   constant padded_operand_width: integer := num_chunks  * chunk_width;
@@ -169,6 +172,7 @@ architecture Pipelined of UnsignedAdderSubtractor is
   signal R             : unsigned(operand_width-1 downto 0);
   signal RESULT        : unsigned(operand_width-1 downto 0);
   signal lsChunk_carry_in : unsigned(operand_width-1 downto 0);
+  signal lsChunk_carry_out: std_logic;
   
 begin  -- Pipelined
 
@@ -215,7 +219,7 @@ begin  -- Pipelined
    asCell0: LeastSignificantChunkAdder
 		generic map (operand_width => chunk_width)
 		port map (A => addsubCell_A(0), B => addsubCell_b(0), Sum => addsubcell_Sum(0),
-					carry_in => lsChunk_carry_in, carry_out => lsChunk_carry_out,
+					Cin => lsChunk_carry_in, Cout => lsChunk_carry_out,
 						clk => clk, reset => reset, stall => stall);
 		
   

@@ -155,17 +155,19 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Utilities.all;
+use ahir.SubPrograms.all;
 
-entity UnsignedMultiplier_32_32_64 is
+entity UnsignedMultiplier_n_n_2n is
   
   generic (
+    name: string;
     tag_width     : integer;
     operand_width : integer;
     chunk_width   : integer := 8);
 
   port (
-    slv_L, slv_R       : in  unsigned(operand_width-1 downto 0);
-    slv_RESULT     : out unsigned((2*operand_width)-1 downto 0);
+    slv_L, slv_R       : in  std_logic_vector(operand_width-1 downto 0);
+    slv_RESULT     : out std_logic_vector((2*operand_width)-1 downto 0);
     clk, reset : in  std_logic;
     in_rdy     : in  std_logic;
     out_rdy    : out std_logic;
@@ -174,7 +176,7 @@ entity UnsignedMultiplier_32_32_64 is
     tag_out    : out std_logic_vector(tag_width-1 downto 0));
 end entity;
 
-architecture Pipelined of UnsignedMultiplier_32_32_64 is
+architecture Pipelined of UnsignedMultiplier_n_n_2n is
 
   constant pipe_depth : integer := operand_width/16;
 
@@ -235,7 +237,7 @@ end Pipelined;
 
 
  
-architecture ArrayMul of UnsignedMultiplier is
+architecture ArrayMul of UnsignedMultiplier_n_n_2n is
 
 	constant NumChunks : integer := Ceil(operand_width, chunk_width);
 
