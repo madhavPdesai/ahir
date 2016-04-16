@@ -171,7 +171,7 @@ architecture Pipelined of UnsignedAdderSubtractor_n_n_n is
   signal L             : unsigned(operand_width-1 downto 0);
   signal R             : unsigned(operand_width-1 downto 0);
   signal RESULT        : unsigned(operand_width-1 downto 0);
-  signal lsChunk_carry_in : unsigned(operand_width-1 downto 0);
+  signal lsChunk_carry_in : unsigned(1 downto 0);
   signal lsChunk_carry_out: std_logic;
   
 begin  -- Pipelined

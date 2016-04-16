@@ -1413,6 +1413,15 @@ package BaseComponents is
           reset : in std_logic);
   end component;
 
+  component Level_To_Pulse_Translate_Entity is
+    port( rL : out std_logic;
+        rR : in  boolean;
+        aL : in std_logic;
+        aR : out boolean;
+        clk : in std_logic;
+        reset : in std_logic);
+  end component;
+
   component Request_Priority_Encode_Entity
     generic (num_reqs : integer := 1);
     port (
@@ -1423,7 +1432,6 @@ package BaseComponents is
       req_s : out std_logic;
       ack_s : in std_logic);
   end component;
-
 
   -----------------------------------------------------------------------------
   -- BinaryEncoder: introduced because Xilinx ISE 13.1 barfs on To_Unsigned

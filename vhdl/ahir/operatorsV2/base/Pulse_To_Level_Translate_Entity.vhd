@@ -25,7 +25,7 @@ architecture Behave of Pulse_To_Level_Translate_Entity is
   signal pull_mode_state : PullModeState;
 begin  -- Behave
 
-  process(clk, rL, aR)
+  process(clk, rL, aR, pull_mode_state)
     variable nstate : PullModeState;
   begin
     nstate := pull_mode_state;

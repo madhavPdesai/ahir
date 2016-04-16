@@ -45,7 +45,7 @@ architecture rtl of GenericApIntArithOperator is
 
 begin
 
-  assert (first_operand_is_constant or second_operand_is_constant)
+  assert (not (first_operand_is_constant and second_operand_is_constant))
 	report "In " & " operator " & name & ", both operands are constants." severity failure;
 
   pipeline_stall <= op_o_rdy_sig and (not accept_rdy);
@@ -81,7 +81,11 @@ begin
              end generate notsecondConstant;
 
 	     oprtr: GenericBinaryApIntArithOperatorPipelined
-			generic map(op_id => op_id)
+			generic map(name => name & ":binary" ,
+					op_id => op_id,
+					tag_width => tag_width,
+					in_operand_width => in_operand_width,
+					out_result_width => out_result_width)
 			port map (inA => inA, inB => inB, outR => outR,
 					pipeline_stall => pipeline_stall,
 					tag_in => tag_in, tag_out => tag_out,

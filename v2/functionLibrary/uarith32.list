@@ -1,0 +1,4 @@
+#mod-name:mod-delay
+umul32:6
+ushift32:4
+uaddsub32:4

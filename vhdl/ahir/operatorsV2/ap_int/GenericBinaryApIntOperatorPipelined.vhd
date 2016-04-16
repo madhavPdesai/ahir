@@ -60,10 +60,11 @@ begin
   shiftOp: if ((op_id = "ApIntSHL") or (op_id = "ApIntLSHR") or (op_id = "ApIntASHR")) generate
     bb: block
        signal shift_right_flag: std_logic;
-       signal sign_flag: std_logic;
+       signal signed_flag: std_logic;
     begin
-	sign_flag <= '1' when (op_id = "ApIntASHR") else '0';
+	signed_flag <= '1' when (op_id = "ApIntASHR") else '0';
 	shift_right_flag <= '1' when ((op_id = "ApIntLSHR") or (op_id = "ApIntASHR"))  else '0';
+
 	op: UnsignedShifter_n_n_n
 		generic map (
 				name => name & "-shift",
@@ -77,6 +78,8 @@ begin
 				slv_L => inA,
 				slv_R => inB,
 				slv_RESULT => outR,
+				signed_flag => signed_flag,
+				shift_right_flag => shift_right_flag,
 				stall => pipeline_stall,
 				tag_in => tag_in,
 				tag_out => tag_out,
