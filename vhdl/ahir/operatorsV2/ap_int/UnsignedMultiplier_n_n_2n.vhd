@@ -163,7 +163,7 @@ entity UnsignedMultiplier_n_n_2n is
     name: string;
     tag_width     : integer;
     operand_width : integer;
-    chunk_width   : integer := 8);
+    chunk_width   : integer := 16);
 
   port (
     slv_L, slv_R       : in  std_logic_vector(operand_width-1 downto 0);
@@ -456,9 +456,9 @@ begin
         --       inserted due to sum-cell array.
 
 
-	-- the right column and N-1 delays inserted.
+	-- the right column and 2*N-1 delays inserted.
 	RightColumn:  for Rows in 0 to NumChunks-1 generate
-		dRc: DelayCell generic map(operand_width => chunk_width, delay => NumChunks-1)
+		dRc: DelayCell generic map(operand_width => chunk_width, delay => ((2*NumChunks)-1)-Rows)
 			port map(Din => DiagOut(Rows,0),
 				 Dout => result_array(Rows),
 				 stall => stall,

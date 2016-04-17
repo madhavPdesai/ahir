@@ -13,48 +13,6 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Utilities.all;
-entity  LeastSignificantChunkAdder is
-	generic (operand_width: integer);
-	port (A,B: in unsigned(operand_width-1 downto 0);
-		Sum: out unsigned(operand_width-1 downto 0);
-		Cin: in unsigned(1 downto 0);
-		Cout: out std_logic;
-		stall: in std_logic;
-		clk, reset: in std_logic);
-end entity LeastSignificantChunkAdder;
-
-architecture Eqns of LeastSignificantChunkAdder is
-begin
-	process(clk)
-		variable  p,q,r,s: unsigned (operand_width downto 0);
-	begin
-		p(operand_width) := A(operand_width-1);
-		p(operand_width-1 downto 0) := A;
-
-		q(operand_width) := B(operand_width-1);
-		q(operand_width-1 downto 0) := B;
-
-		r := (others => '0');
-		r(1 downto 0) := Cin;
-
-
-		s := (p + q) + r;
-		
-		if(clk'event and clk = '1') then
-			if(stall = '0') then
-				Cout <= s(operand_width);			
-				Sum  <= s(operand_width-1 downto 0);
-			end if;
-		end if;
-	end process;
-end Eqns;
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library ahir;
-use ahir.Utilities.all;
 
 entity AddSubCell  is
 	generic (operand_width: integer);
@@ -144,21 +102,10 @@ architecture Pipelined of UnsignedAdderSubtractor_n_n_n is
   signal addsubcell_Sum, addsubcell_Sum_Delayed, 
 			addsubcell_A, addsubcell_B, final_sums: CWord(0 to num_chunks-1);
   signal addsubcell_BP, addsubcell_BG : std_logic_vector(0 to num_chunks-1);
-  signal addsubcell_Cin: std_logic_vector(0 to num_chunks);
 
   signal block_carries: std_logic_vector(0 to num_chunks);
   signal subtract_op_1, subtract_op_2: std_logic;
 
-
-  component  LeastSignificantChunkAdder is
-	generic (operand_width: integer);
-	port (A,B: in unsigned(operand_width-1 downto 0);
-		Sum: out unsigned(operand_width-1 downto 0);
-		Cin: in unsigned(1 downto 0);
-		Cout: out std_logic;
-		stall: in std_logic;
-		clk, reset: in std_logic);
-  end component LeastSignificantChunkAdder;
   component AddSubCell  is
 	generic ( operand_width: integer);
 	port (A,B: in unsigned(operand_width-1 downto 0);
@@ -171,8 +118,7 @@ architecture Pipelined of UnsignedAdderSubtractor_n_n_n is
   signal L             : unsigned(operand_width-1 downto 0);
   signal R             : unsigned(operand_width-1 downto 0);
   signal RESULT        : unsigned(operand_width-1 downto 0);
-  signal lsChunk_carry_in : unsigned(1 downto 0);
-  signal lsChunk_carry_out: std_logic;
+  signal lsChunk_carry_in : std_logic;
   
 begin  -- Pipelined
 
@@ -208,22 +154,10 @@ begin  -- Pipelined
 	end if;
   end process;
 
-  -- least significant block.
-   addsubCell_A(0) <= Lpadded(chunk_width-1 downto 0);
-   addsubCell_B(0) <= Rpadded(chunk_width-1 downto 0);
-   lsChunk_carry_in <=  "10" when
-				(slv_carry_in = '1' and subtract_op = '1') else 
-			"01" when (slv_carry_in = '1' or subtract_op = '1') else
-			"00";
-
-   asCell0: LeastSignificantChunkAdder
-		generic map (operand_width => chunk_width)
-		port map (A => addsubCell_A(0), B => addsubCell_b(0), Sum => addsubcell_Sum(0),
-					Cin => lsChunk_carry_in, Cout => lsChunk_carry_out,
-						clk => clk, reset => reset, stall => stall);
-		
+  -- carry into least significant block.
+  lsChunk_carry_in <=  '1' when ((slv_carry_in = '1') xor (subtract_op = '1')) else '0';
   
-  Stage1:  for I in  1 to num_chunks-1 generate
+  Stage1:  for I in  0 to num_chunks-1 generate
 
 	addsubCell_A(I) <= Lpadded(((I+1)*chunk_width)-1 downto (I*chunk_width));
 	addsubCell_B(I) <= Rpadded(((I+1)*chunk_width)-1 downto (I*chunk_width));
@@ -256,10 +190,10 @@ begin  -- Pipelined
 
   -- stage two: calculate the block carries.
   process(clk)	
-	variable cin: std_logic_vector(1 to num_chunks);
+	variable cin: std_logic_vector(0 to num_chunks);
   begin
-	cin(1) := lsChunk_carry_out;
-	for I in 2 to num_chunks loop
+	cin(0) := lsChunk_carry_in;
+	for I in 1 to num_chunks loop
 		cin(I) := (cin(I-1) and addsubcell_BP(I-1))  or addsubcell_BG(I-1);
 	end loop;
 
@@ -286,8 +220,7 @@ begin  -- Pipelined
 		if(reset = '1') then
 			stage_active(3) <= '0';
 		elsif(stall = '0') then
-			final_sums(0) <= addsubcell_Sum_Delayed(0);
-			for I in 1 to num_chunks-1 loop
+			for I in 0 to num_chunks-1 loop
 				correction := (others => '0');
 				if(block_carries(I) = '1') then
 					correction(0) := '1';

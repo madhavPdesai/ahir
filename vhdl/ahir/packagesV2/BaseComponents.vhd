@@ -1413,6 +1413,15 @@ package BaseComponents is
           reset : in std_logic);
   end component;
 
+  component Sample_Pulse_To_Level_Translate_Entity 
+    port( rL : in boolean;
+          rR : out std_logic;
+          aL : out boolean;
+          aR : in std_logic;
+          clk : in std_logic;
+          reset : in std_logic);
+  end component;
+
   component Level_To_Pulse_Translate_Entity is
     port( rL : out std_logic;
         rR : in  boolean;

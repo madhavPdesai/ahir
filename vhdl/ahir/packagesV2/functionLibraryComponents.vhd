@@ -273,12 +273,10 @@ component uaddsub32_Operator is --
     port ( -- 
       L : in  std_logic_vector(31 downto 0);
       R : in  std_logic_vector(31 downto 0);
-      shift_right_flag: in std_logic_vector(0 downto 0);
-      sign_flag: in std_logic_vector(0 downto 0);
       ret_val_x_x : out  std_logic_vector(31 downto 0);
-      carry_in: in std_logic;
-      carry_out: out std_logic;
-      subtract_flag: in std_logic;
+      carry_in: in std_logic_vector(0 downto 0);
+      carry_out: out std_logic_vector(0 downto 0);
+      subtract_flag: in std_logic_vector(0 downto 0);
       clk : in std_logic;
       reset : in std_logic;
       sample_req : in Boolean;

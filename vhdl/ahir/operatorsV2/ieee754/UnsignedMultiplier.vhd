@@ -439,16 +439,16 @@ begin
         --       inserted due to sum-cell array.
 
 
-	-- the right column and N-1 delays inserted.
+	-- the right column has 2*N-1 delays inserted.
 	RightColumn:  for Rows in 0 to NumChunks-1 generate
-		dRc: DelayCell generic map(operand_width => chunk_width, delay => NumChunks-1)
+		dRc: DelayCell generic map(operand_width => chunk_width, delay => ((2*NumChunks)-1) - Rows)
 			port map(Din => DiagOut(Rows,0),
 				 Dout => result_array(Rows),
 				 stall => stall,
 				 clk => clk);
 	end generate RightColumn;
 
-	-- the bottom row as N-C delays inserted as C goes from 0 to N-2
+	-- the bottom row has N-C delays inserted as C goes from 0 to N-2
 	BottomRow: for Cols in 0 to NumChunks-2 generate
 		dBr: DelayCell generic map(operand_width => chunk_width, delay => NumChunks-(Cols+1))
 			port map(Din => SDiagOut(Cols),

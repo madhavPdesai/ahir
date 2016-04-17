@@ -27,13 +27,13 @@ architecture Struct of umul32_Operator is
 begin
    tag_in(0) <= '0';
 
-   p2l: Pulse_To_Level_Translate_Entity
+   p2l: Sample_Pulse_To_Level_Translate_Entity
 		port map (rL => sample_req, rR => start_req,
 				aL => sample_ack, aR => start_ack,
 					clk => clk, reset => reset);
    l2p: Level_To_Pulse_Translate_Entity
 		port map (rL => fin_req, rR => update_req,
-				aL => fin_ack, aR => update_ack);
+				aL => fin_ack, aR => update_ack, clk => clk, reset => reset);
 				
    in_data <= L & R; -- concatenate..
 

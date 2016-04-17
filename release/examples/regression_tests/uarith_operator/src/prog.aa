@@ -1,0 +1,26 @@
+$constant O1: $uint<1> := 1
+$constant Z1: $uint<1>  := 0
+$constant O32: $uint<32> := 1
+
+$module [mul_check] $in(X : $uint<32>) $out (Y: $uint<64>) $is
+{
+	$call umul32 (X X) (Y)
+}
+
+$module [shift_check] $in(X : $uint<32>) $out (Y: $uint<32>) $is
+{
+	$call ushift32	 (X O32 O1 Z1) (r1)
+	$call ushift32	 (X O32 O1 O1) (r2)
+	$call ushift32	 (X O32 Z1 Z1) (r3)
+	Y := ($reduce ^ r1 r2 r3)
+}
+
+$module [add_check] $in(X : $uint<32>) $out (Y: $uint<32>) $is
+{
+	$call uaddsub32 (X O32 Z1 Z1) (t1 c1) // X + 1
+	$call uaddsub32 (X O32 Z1 O1) (t2 c2) // X + 2
+	$call uaddsub32 (X O32 O1 Z1) (t3 c3) // X - 1
+	$call uaddsub32 (X O32 O1 O1) (t4 c4) // X - 2
+
+	Y := ($reduce ^ t1 t2 t3 t4)
+}

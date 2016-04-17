@@ -1,0 +1,25 @@
+$pipe in_data : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$constant O1: $uint<1> := 1
+$constant Z1: $uint<1> := 0
+$constant O32: $uint<32> := 1
+
+$module [run_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+		X := in_data
+
+		$call umul32 (X X) (Y64)
+		Y := ($slice Y64 31 0)
+
+		$call ushift32 (Y O32 Z1 Z1) (YS)
+
+		$call uaddsub32 (YS O32 Z1 Z1) (R C)
+		out_data := R
+
+		$while 1
+	}
+}

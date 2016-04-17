@@ -35,7 +35,7 @@ package ApIntComponents is
     name: string;
     tag_width     : integer;
     operand_width : integer;
-    chunk_width   : integer := 8);
+    chunk_width   : integer := 16);
 
   port (
     slv_L, slv_R   : in  std_logic_vector(operand_width-1 downto 0);

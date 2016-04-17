@@ -42,12 +42,14 @@ architecture rtl of GenericApIntArithOperator is
 
   signal pipeline_stall : std_logic;
   signal op_o_rdy_sig: std_logic;
+  signal outR: std_logic_vector(out_result_width-1 downto 0);
 
 begin
 
   assert (not (first_operand_is_constant and second_operand_is_constant))
 	report "In " & " operator " & name & ", both operands are constants." severity failure;
 
+  out_data <= outR;
   pipeline_stall <= op_o_rdy_sig and (not accept_rdy);
   op_o_rdy <= op_o_rdy_sig;
   op_i_rdy <= (not pipeline_stall);
@@ -62,7 +64,6 @@ begin
 		(op_id = "ApIntROR"))  generate
        gBlk: block
 	signal inA, inB: std_logic_vector(in_operand_width-1 downto 0);
-	signal outR: std_logic_vector(out_result_width-1 downto 0);
        begin
 	     firstConstant: if (first_operand_is_constant) generate
 	    	inA <= constant_value;
