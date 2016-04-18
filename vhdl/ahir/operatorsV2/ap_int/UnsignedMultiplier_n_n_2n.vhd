@@ -178,7 +178,7 @@ end entity;
 
 architecture Pipelined of UnsignedMultiplier_n_n_2n is
 
-  constant pipe_depth : integer := operand_width/16;
+  constant pipe_depth : integer := operand_width/chunk_width;
 
   type RWORD is array (natural range <>) of unsigned((2*operand_width)-1 downto 0);
   type TWORD is array (natural range <>) of std_logic_vector(tag_width-1 downto 0);  
