@@ -107,7 +107,7 @@ begin  -- Behave
   end generate InBuffers;
 
    pipeOp: GenericApIntArithOperator
-		generic map(op_id => operator_id,
+		generic map(name => name & "-int-operator", op_id => operator_id,
 				tag_width => tag_length,
 				 in_operand_width => in_data_width,
 					num_non_constant_inputs => 0,	
