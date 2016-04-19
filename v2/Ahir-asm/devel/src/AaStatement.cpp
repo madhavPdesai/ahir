@@ -4203,7 +4203,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			}
 		}
 
-		if(!src_is_constant && !src_has_no_dpe)
+		if(!src_is_constant)
 		{
 			_source_pairs[i].second->Write_VC_Datapath_Instances(NULL,ofile);
 		}

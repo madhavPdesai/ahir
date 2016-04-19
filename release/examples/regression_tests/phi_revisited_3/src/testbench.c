@@ -27,7 +27,7 @@ void Sender()
 	for(idx = 0; idx < ORDER; idx++)
 	{
 		val[idx] = idx+1;
-		expected_result[idx] = idx;
+		expected_result[idx] = (idx+1);
 	}
 	write_uint32_n("in_data",val,ORDER);
 }
@@ -39,6 +39,8 @@ int main(int argc, char* argv[])
 	uint32_t result[ORDER];
 	signal(SIGINT,  Exit);
   	signal(SIGTERM, Exit);
+	
+	write_uint32("in_signal",1);
 
 	PTHREAD_DECL(Sender);
 	PTHREAD_CREATE(Sender);
