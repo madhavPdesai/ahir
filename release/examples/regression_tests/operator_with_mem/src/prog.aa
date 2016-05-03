@@ -1,0 +1,44 @@
+$pipe in_data: $uint<32> $depth 2
+$pipe out_data: $uint<32> $depth 2
+
+$pipeline $depth 8 $fullrate $operator $module 
+	[single_port_mem_256x32] 
+	$in (addr: $uint<8> wr_bar: $uint<1> din : $uint<32>) 
+	$out (dout: $uint<32>) $is
+{
+	$storage MEMARRAY: $array [256] $of $uint<32>
+
+	wr_bar_d := wr_bar
+
+	$guard (wr_bar) dout := MEMARRAY[addr] 
+	$guard (~wr_bar_d) MEMARRAY[addr] := din
+}
+
+
+$module [mem_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] 
+	{
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi addr := ($bitcast ($uint<8>) 0) $on $entry next_addr $on $loopback
+			$phi PARITY := ($bitcast ($uint<1>) 0) $on $entry next_parity $on $loopback
+		$endmerge
+	
+		$volatile wr_bar := PARITY
+
+		$guard (~PARITY) din := in_data
+
+		$call single_port_mem_256x32 (addr wr_bar din) (dout)
+
+		$volatile next_parity := (~ PARITY)
+		$volatile next_addr := ($mux PARITY (addr + 1) addr)
+
+
+		dout_buffered := dout $buffering 4
+
+		$guard (wr_bar) out_data := dout_buffered
+
+		$while 1
+	}
+}

@@ -1,0 +1,90 @@
+// 
+// 1024x160 single port RAM.
+// 16kB to be used in direct mapped caches.
+//
+// 16kB cache organized into 1024 128-bit lines.
+//
+// We also keep a 32-bit tag to keep track
+// of line status (index, dirty/clean etc.)
+//
+//
+$operator $module [ram_1xRW_1024x128x32]
+		$in (addr: $uint<10> din: $uint<128> tagin: $uint<32> wr_bar: $uint<1>)
+		$out (dout: $uint<128> tagout : $uint<32>) 
+$is
+{
+	$storage MEMARRAY: $array [1024] $of $uint<160>
+
+	$guard (wr_bar) read_data := MEMARRAY[addr]
+	$guard (~wr_bar) MEMARRAY[addr] := ($concat din tagin)
+
+	dout := ($mux wr_bar ($slice read_data 159 32) 0)
+	tagout := ($mux wr_bar ($slice read_data 31 0) 0)
+}
+
+
+//
+// 64-entry CAM, 32-bit tag, 40-bit value.
+//  (specialize for other widths, number-of-entries etc.).
+//  (to be used in TLB inside the MMU)
+//
+$operator $module [cam_64_32x40] 
+	$in (in_tag: $uint<32> in_value: $uint<40>   in_index: $uint<6>
+		init_flag erase_flag insert_flag lookup_flag index_flag: $uint<1>)
+	$out (out_value: $uint<40>   hit_flag: $uint<1>)
+$is
+{
+	$storage TAGARRAY: $array [64] $of $uint<33> 
+	$storage VALUEARRAY: $array [64] $of $uint<40> 
+
+
+	$branchblock[BehaveBlock] {
+			$merge $entry loopback 
+				$phi I := ($bitcast ($uint<6>) 0) $on $entry NI $on $loopback
+			$endmerge
+			NI := (I+1)
+
+
+		     	tv := TAGARRAY[I]
+
+			$if (I < 63) $then
+				$if init_flag $then
+					TAGARRAY[I] := 0
+				$else $if erase_flag $then
+			     		$if (($slice tv 31 0) == erase_tag) $then
+						TAGARRAY[I] := 0
+			     		$endif
+				$else $if insert_flag $then
+			     		$if (~(tv [] 32)) $then
+						TAGARRAY[I] := ($concat One_1 insert_tag)
+						VALUEARRAY[I] := in_value
+						$place [InsertHit]
+					$endif
+				$else $if lookup_flag $then
+					$if ((tv [] 32) & (($slice tv 31 0) == lookup_tag)) $then
+						l_out_value := VALUEARRAY[I]
+						$place [LookupHit]
+					$endif
+				$else $if index_flag $then
+					$if ((I == in_index) & (tv [] 32)) $then
+						i_out_value := VALUEARRAY[I]
+						$place [IndexHit]
+					$else $if (I == in_index) $then
+						$place [IndexMiss]
+					$endif
+				$endif
+
+				$place [loopback]
+			$endif
+
+			$merge $entry InsertHit  LookupHit IndexHit IndexMiss
+				$phi hit_flag := 1 $on InsertHit 1 $on LookupHit 1 $on IndexHit 
+								0 $on IndexMiss 0 $on $entry
+				$phi out_value := 0 $on $entry 0 $on InsertHit
+							l_out_value $on LookupHit 
+							i_out_value $on IndexHit
+							0 $on IndexMiss
+							
+			$endmerge
+	}
+}
