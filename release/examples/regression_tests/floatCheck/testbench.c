@@ -84,6 +84,18 @@ int main(int argc, char* argv[])
 			fprintf(stdout,"Info: (float) %le = %e.\n", X,ffX);
 		}
 
+		float nfX = (float) (-X);
+		float nffX = double_to_float (-X);
+		if(nfX != nffX)
+		{
+			fprintf(stdout,"Error: (float) %le = %e, expected %e.\n", -X,nffX,nfX);
+			err_flag = 1;
+		}
+		else
+		{
+			fprintf(stdout,"Info: (float) %le = %e.\n", -X,nffX);
+		}
+
 		float dfX = (double) fX;
 		double ddfX = float_to_double (fX);
 		if(ddfX != dfX)
@@ -95,6 +107,19 @@ int main(int argc, char* argv[])
 		{
 			fprintf(stdout,"Info: (double) %e = %le.\n", fX,ddfX);
 		}
+
+		float ndfX = (double) -fX;
+		double nddfX = float_to_double (-fX);
+		if(nddfX != ndfX)
+		{
+			fprintf(stdout,"Error: (double) %e = %le, expected %le.\n", -fX,nddfX, ndfX);
+			err_flag = 1;
+		}
+		else
+		{
+			fprintf(stdout,"Info: (double) %e = %le.\n",-fX,nddfX);
+		}
+		
 		
 #endif
 			

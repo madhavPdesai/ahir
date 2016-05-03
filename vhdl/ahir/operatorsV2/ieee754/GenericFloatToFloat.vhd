@@ -75,6 +75,7 @@ begin
     		variable fract_out         : UNSIGNED (out_fraction_width downto 0);  -- output fract
     		variable nguard            : NATURAL;
 		variable use_normalizer : std_logic;
+		variable fract_in_sign: std_logic;
     		constant check_error    : BOOLEAN    := float_check_error;
 	begin
 		result := (others => '0');
@@ -84,6 +85,7 @@ begin
 		fract_out := (others => '0');
 		nguard := 0;
 		use_normalizer := '0';
+		fract_in_sign := INF(in_exponent_width + in_fraction_width);
 
     		fptype := classfp(in_arg, check_error);
     		if ((fptype = pos_denormal or fptype = neg_denormal) and denormalize_in
@@ -171,6 +173,7 @@ begin
 				expon_out_sig <= expon_out;
 				normalizer_tag_in(0) <= use_normalizer;
 				normalizer_tag_in((tag_width + result'length) downto 1) <= (tag_in & to_slv(result));
+				sign_sig <= fract_in_sign;
 				stage_full(1) <= env_rdy;
 			end if;
 		end if;
