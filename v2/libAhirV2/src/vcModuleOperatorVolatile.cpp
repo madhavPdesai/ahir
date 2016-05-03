@@ -155,7 +155,7 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 
 	}
 
-	if(at_least_one_non_constant &&  this->Get_Pipeline_Flag() && !this->Get_Volatile_Flag())
+	if(!at_least_one_non_constant &&  this->Get_Pipeline_Flag() && !this->Get_Volatile_Flag())
 	{
 		vcSystem::Error("Pipelined operator module " + this->Get_Label() + " must have at least one non-constant output.");
 	}
