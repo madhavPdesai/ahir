@@ -30,9 +30,9 @@ void Sender()
 	{
 		int32_t u = rand();
 
-		val[idx] = u;
+		val[idx] = -u;
 
-		int64_t u64 = u;
+		int64_t u64 = -u;
 		int64_t pu64 = u64*u64;
 
 		uint64_t upu64 = pu64;
