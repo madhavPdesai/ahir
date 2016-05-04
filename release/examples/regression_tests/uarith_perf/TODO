@@ -1,0 +1,2 @@
+The new pipelined modules need to have adequate buffering
+to ensure fullrate behaviour.  Need to understand this better.

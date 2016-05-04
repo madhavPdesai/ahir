@@ -2160,8 +2160,8 @@ package BaseComponents is
   end component PipelineSynchBuffer;
 
   component ReceiveBuffer  is
-    generic (name: string; buffer_size: integer := 2; data_width : integer := 32;
-	   		full_rate : boolean := false);
+    generic (name: string; buffer_size: integer ; data_width : integer ;
+	   		full_rate : boolean );
     port ( write_req: in boolean;
          write_ack: out boolean;
          write_data: in std_logic_vector(data_width-1 downto 0);
@@ -2229,9 +2229,9 @@ package BaseComponents is
   end component;
 
   component UnloadBuffer 
-    generic (name: string; buffer_size: integer := 2; data_width : integer := 32; 
+    generic (name: string; buffer_size: integer; data_width : integer; 
 				bypass_flag: boolean := false; nonblocking_read_flag: boolean := false;
-	   				full_rate : boolean := false);
+	   				full_rate : boolean);
     port (write_req: in std_logic;
           write_ack: out std_logic;
           write_data: in std_logic_vector(data_width-1 downto 0);

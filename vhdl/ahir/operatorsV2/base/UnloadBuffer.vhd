@@ -8,7 +8,7 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity UnloadBuffer is
-  generic (name: string; buffer_size: integer := 2; data_width : integer := 32; 
+  generic (name: string; buffer_size: integer ; data_width : integer ; 
 			bypass_flag : boolean := false; 
 			nonblocking_read_flag : boolean := false;
 			full_rate: boolean);

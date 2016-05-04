@@ -797,11 +797,15 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	}
 	else
 	{
-		//int input_buffering  = (this->_pipeline_flag ? 2 : 1);
-		int input_buffering  = 1;
+		// in the full-rate case, we will double buffer the input
+		// to isolate the interior of the called function from
+		// the exterior.  Note that bypass-flag is set to true.
+		int input_buffering  = ( (this->_pipeline_flag  && this->_pipeline_full_rate_flag) ? 2 : 1);
 		ofile << "in_buffer: UnloadBuffer -- { " << endl;
 		ofile << " generic map(name => \"" << this->Get_VHDL_Id() << "_input_buffer\", -- {" << endl
 			<< " buffer_size => " << input_buffering << "," <<  endl 
+			<< " full_rate => false," <<  endl // no need, double buffering.
+			<< " bypass_flag => true," << endl // cut the latency.. 
 			<< " data_width => tag_length + " << this->Get_In_Arg_Width() << ") -- } " << endl;
 		ofile << " port map(write_req => in_buffer_write_req, -- { " << endl
 			<< " write_ack => in_buffer_write_ack, " << endl
@@ -905,11 +909,14 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	}
 	else
 	{
-		int output_buffering = (this->_pipeline_flag ? 2 : 1);
+		// output buffering to 2 in pipeline full-rate case.
+		int output_buffering = ( (this->_pipeline_flag && this->_pipeline_full_rate_flag) ? 2 : 1);
+
 		// instantiate receive-buffer for each input.
 		ofile <<  "out_buffer: ReceiveBuffer -- {" << endl
 			<< " generic map(name => \"" << this->Get_VHDL_Id() << "_out_buffer\", -- {" << endl
 			<< " buffer_size => " << output_buffering << "," << endl
+			<< " full_rate => false," << endl // no need, double buffering.
 			<< " data_width => tag_length + " << this->Get_Out_Arg_Width() << ") --} " << endl;
 		ofile << " port map(write_req => out_buffer_write_req_symbol, -- {" << endl
 			<< " write_ack => out_buffer_write_ack_symbol, " << endl

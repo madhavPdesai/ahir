@@ -12,7 +12,7 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity ReceiveBuffer  is
-  generic (name: string; buffer_size: integer := 2; data_width : integer := 32; full_rate: boolean);
+  generic (name: string; buffer_size: integer ; data_width : integer ; full_rate: boolean);
   port ( write_req: in boolean;
          write_ack: out boolean;
          write_data: in std_logic_vector(data_width-1 downto 0);
