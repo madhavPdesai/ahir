@@ -695,7 +695,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		}
 	}
 
-	if(at_least_one_non_constant &&  this->Get_Pipeline_Flag() && !volatile_form)
+	if(!at_least_one_non_constant &&  this->Get_Pipeline_Flag() && !volatile_form)
 	{
 		vcSystem::Error("Pipelined module " + this->Get_Label() + " must have at least one non-constant output.");
 	}

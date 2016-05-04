@@ -624,7 +624,9 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 		string joined_symbol = this->Get_VHDL_Id();
 		string join_name = module_name + "_cp_element_group_" + IntToStr(this->Get_Group_Index());
 	  
-		_and2_count += (_predecessors.size() - 1);
+		if(_predecessors.size() > 1)
+			_and2_count += (_predecessors.size() - 1);
+
 		for(set<vcCPElementGroup*>::iterator iter = _predecessors.begin(),
 				fiter = _predecessors.end();
 				iter != fiter;

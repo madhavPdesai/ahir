@@ -11,7 +11,7 @@
 #endif
 
 #define ORDER 16
-uint32_t expected_result[ORDER];
+uint64_t expected_result[ORDER];
 
 void Exit(int sig)
 {
@@ -24,12 +24,28 @@ void Sender()
 {
 	int idx;
 	uint32_t val[ORDER];
+	uint64_t T2 = 32;
 	srand(49);
 	for(idx = 0; idx < ORDER; idx++)
 	{
-		uint32_t u = rand();
+		int32_t u = rand();
+
 		val[idx] = u;
-		expected_result[idx] = ((u*u) << 1) + 1;
+
+		int64_t u64 = u;
+		int64_t pu64 = u64*u64;
+
+		uint64_t upu64 = pu64;
+		uint32_t upu32 = (upu64 & 0xffffffff);
+
+		upu64 = (upu64 >> T2);
+
+
+		uint64_t er  =  (upu32 << 1) + 1; 
+
+		er = (er << 32) |  upu64;
+		expected_result[idx] = er;
+
 	}
 	write_uint32_n("in_data",val,ORDER);
 }
@@ -38,7 +54,7 @@ DEFINE_THREAD(Sender)
 
 int main(int argc, char* argv[])
 {
-	uint32_t result[ORDER];
+	uint64_t result[ORDER];
 	signal(SIGINT,  Exit);
   	signal(SIGTERM, Exit);
 
@@ -47,11 +63,11 @@ int main(int argc, char* argv[])
 
 	uint8_t idx;
 	
-	read_uint32_n("out_data",result,ORDER);
+	read_uint64_n("out_data",result,ORDER);
 
 	for(idx = 0; idx < ORDER; idx++)
 	{
-		fprintf(stdout,"Result = %x, expected = %x.\n", result[idx],expected_result[idx]);
+		fprintf(stdout,"Result = %llx, expected = %llx.\n", result[idx],expected_result[idx]);
 	}
 	PTHREAD_CANCEL(Sender);
 	return(0);

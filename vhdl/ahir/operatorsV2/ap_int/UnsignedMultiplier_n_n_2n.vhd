@@ -1,11 +1,7 @@
 -------------------------------------------------------------------------------
 -- a basic unsigned multiplier.
---
--- for the moment, this just does a multiply and adds delay stages at
--- the end; presumably, the synthesis tool will retime things
--- appropriately..
---
--- TODO: pipeline this explicitly!
+--    basic architecture
+--    pipelined array multiplier
 -------------------------------------------------------------------------------
 
 library ieee;

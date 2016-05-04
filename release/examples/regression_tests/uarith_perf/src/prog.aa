@@ -1,24 +1,50 @@
 $pipe in_data : $uint<32> $depth 2
-$pipe out_data : $uint<32> $depth 2
+$pipe out_data : $uint<64> $depth 2
 
 $constant O1: $uint<1> := 1
 $constant Z1: $uint<1> := 0
 $constant O32: $uint<32> := 1
 
+$pipeline $depth 31 $fullrate
+	$module [mul32] $in (L R: $uint<32> S: $uint<1>)
+				$out (Y: $uint<64>) $is
+{
+  $call umul32 (L R) (tY)
+
+  // correction for signed case, computed
+  // in parallel with the multiplication.
+  $volatile tY_H := ($slice tY 63 32)
+  $volatile tY_L := ($slice tY 31 0)
+  $volatile Corr := (($mux (S & (L [] 31)) (~L) 0)  +
+  			($mux (S & (R [] 31)) (~R) 0))
+  $volatile sCorr := ($prioritymux ($reduce & S (L [] 31) (R [] 31)) 2
+  			      	   (S & ((L [] 31) | (R [] 31)))     1
+				   $default 0)
+  Corr_d := (Corr + sCorr) $buffering 16
+  cY_L   := tY_L $buffering 2
+  cY_H := (tY_H + Corr_d) $buffering 2
+
+  // final Y with correction in top-half.
+  Y := (cY_H && cY_L) $buffering 2
+}
+
 $module [run_daemon] $in() $out () $is
 {
 	$branchblock[lOoP] {
-		$dopipeline $depth 16 $buffering 2 $fullrate
+		$dopipeline $depth 63 $buffering 2 $fullrate
 		$merge $entry $loopback $endmerge
 		X := in_data
 
-		$call umul32 (X X) (Y64)
-		Y := ($slice Y64 31 0)
+		$call mul32 (X X O1) (Y64)
 
-		$call ushift32 (Y O32 Z1 Z1) (YS)
+		YL := ($slice Y64 31 0)
+		YH := ($slice Y64 63 32) $buffering 16
+
+		$call ushift32 (YL O32 Z1 Z1) (YS)
 
 		$call uaddsub32 (YS O32 Z1 Z1) (R C)
-		out_data := R
+
+		out_data := ($concat R YH)
 
 		$while 1
 	}

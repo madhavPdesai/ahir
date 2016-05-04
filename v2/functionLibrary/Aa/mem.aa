@@ -1,24 +1,24 @@
 // 
-// 1024x160 single port RAM.
+// 1024x256x32 single port RAM.
 // 16kB to be used in direct mapped caches.
 //
-// 16kB cache organized into 1024 128-bit lines.
+// 16kB cache organized into 1024 256-bit lines.
 //
 // We also keep a 32-bit tag to keep track
 // of line status (index, dirty/clean etc.)
 //
 //
-$operator $module [ram_1xRW_1024x128x32]
-		$in (addr: $uint<10> din: $uint<128> tagin: $uint<32> wr_bar: $uint<1>)
-		$out (dout: $uint<128> tagout : $uint<32>) 
+$operator $module [ram_1xRW_1024x256_32]
+		$in (addr: $uint<10> din: $uint<256> tagin: $uint<32> wr_bar: $uint<1>)
+		$out (dout: $uint<256> tagout : $uint<32>) 
 $is
 {
-	$storage MEMARRAY: $array [1024] $of $uint<160>
+	$storage MEMARRAY: $array [1024] $of $uint<288>
 
 	$guard (wr_bar) read_data := MEMARRAY[addr]
 	$guard (~wr_bar) MEMARRAY[addr] := ($concat din tagin)
 
-	dout := ($mux wr_bar ($slice read_data 159 32) 0)
+	dout := ($mux wr_bar ($slice read_data 287 32) 0)
 	tagout := ($mux wr_bar ($slice read_data 31 0) 0)
 }
 
@@ -28,7 +28,7 @@ $is
 //  (specialize for other widths, number-of-entries etc.).
 //  (to be used in TLB inside the MMU)
 //
-$operator $module [cam_64_32x40] 
+$operator $module [cam_64x32_40] 
 	$in (in_tag: $uint<32> in_value: $uint<40>   in_index: $uint<6>
 		init_flag erase_flag insert_flag lookup_flag index_flag: $uint<1>)
 	$out (out_value: $uint<40>   hit_flag: $uint<1>)
