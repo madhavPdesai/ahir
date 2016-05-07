@@ -53,6 +53,8 @@ int main(int argc, char* argv[])
 	
 	srand48(rng_seed);
 
+
+	double dX, dY, dhZ, dsZ;
 	float X,Y, hZ, sZ;
 	int counter;
 	int err_flag = 0;
@@ -66,9 +68,15 @@ int main(int argc, char* argv[])
 
 	while(counter > 0) {
 		counter--;
+		
+		int32_t IVAL = rand();
 
-		X = drand48() / scale_factor;
-		Y = drand48() * scale_factor;
+		dX = drand48() / scale_factor;
+		dY = drand48() * scale_factor;
+
+		X = dX;
+		Y = dY;
+
 		scale_factor = 1.1 * scale_factor;
 
 #ifdef FLOATRESIZE
@@ -120,7 +128,26 @@ int main(int argc, char* argv[])
 			fprintf(stdout,"Info: (double) %e = %le.\n",-fX,nddfX);
 		}
 		
-		
+
+#endif
+
+
+#ifdef INTTOFLOAT
+		float fIVAL = int2float(IVAL);
+		float rfIVAL = (float) IVAL;
+		if(fIVAL != rfIVAL)
+		{
+			fprintf(stdout,"Error: (float) %d = %f, expected %f.\n", IVAL, fIVAL, rfIVAL);
+			err_flag = 1;
+		}
+
+		double dIVAL = int2double(IVAL);
+		double rdIVAL = (double) IVAL;
+		if(dIVAL != rdIVAL)
+		{
+			fprintf(stdout,"Error: (double) %d = %le, expected %le.\n", IVAL, dIVAL, rdIVAL);
+			err_flag = 1;
+		}
 #endif
 			
 
@@ -149,6 +176,30 @@ int main(int argc, char* argv[])
 		{
 			fprintf(stdout,"Info: (uint32_t) %f = %u.\n", Y,uiY);
 		}
+
+		iY = fpd2int(Y);
+		eiY = (int32_t) ((double) Y);
+		if(iY != eiY)
+		{
+			fprintf(stdout,"Error: (int32_t) %le = %d, expected %d.\n", ((double) Y),iY,eiY);
+			err_flag = 1;
+		}
+		else
+		{
+			fprintf(stdout,"Info: (int32_t) %f = %d.\n", Y,iY);
+		}
+
+		uiY = fpd2uint(Y);
+		ueiY = (uint32_t) ((double) Y);
+		if(uiY != ueiY)
+		{
+			fprintf(stdout,"Error: (uint32_t) %le = %u, expected %u.\n", ((double) Y),uiY,ueiY);
+			err_flag = 1;
+		}
+		else
+		{
+			fprintf(stdout,"Info: (uint32_t) %le = %u.\n", ((double) Y),uiY);
+		}
 #endif
 
 #ifdef MUL
@@ -170,6 +221,26 @@ int main(int argc, char* argv[])
 			fprintf(stdout,"Info:  %x * %x = %x.\n", *((uint32_t*) &X),
 					*((uint32_t*) &Y),
 					*((uint32_t*) &hZ));
+		}
+
+		dhZ = fpmuld(dX,dY);
+		dsZ = (dX*dY);
+		if(dhZ != dsZ)
+		{
+
+			fprintf(stdout,"Error: %le * %le = %le, expected %le.\n", dX,dY,dhZ,dsZ);
+			fprintf(stdout,"Error:  %llx * %llx = %llx, expected %llx.\n", *((uint64_t*) &dX),
+					*((uint64_t*) &dY),
+					*((uint64_t*) &dhZ),
+					*((uint64_t*) &dsZ));
+			err_flag = 1;
+		}
+		else
+		{
+			fprintf(stdout,"Info: %le * %le = %le.\n", dX,dY,dhZ);
+			fprintf(stdout,"Info:  %llx * %llx = %llx.\n", *((uint64_t*) &dX),
+					*((uint64_t*) &dY),
+					*((uint64_t*) &dhZ));
 		}
 #endif
 
@@ -193,6 +264,25 @@ int main(int argc, char* argv[])
 			fprintf(stdout,"Info:  %x + %x = %x.\n", *((uint32_t*) &X),
 					*((uint32_t*) &Y),
 					*((uint32_t*) &hZ));
+		}
+
+		dhZ = fpaddd(dX,dY);
+		dsZ = (dX + dY);
+		if(dhZ != dsZ)
+		{
+			fprintf(stdout,"Error: %le + %le = %le, expected %le.\n", dX,dY,dhZ,dsZ);
+			fprintf(stdout,"Error: %llx + %llx = %llx, expected %llx.\n", *((uint64_t*) &dX),
+					*((uint64_t*) &dY),
+					*((uint64_t*) &dhZ),
+					*((uint64_t*) &dsZ));
+			err_flag = 1;
+		}
+		else
+		{
+			fprintf(stdout,"Info: %le + %le = %le.\n", dX,dY,dhZ);
+			fprintf(stdout,"Info:  %llx + %llx = %llx.\n", *((uint64_t*) &dX),
+					*((uint64_t*) &dY),
+					*((uint64_t*) &dhZ));
 		}
 
 		hZ = fpincr(X);

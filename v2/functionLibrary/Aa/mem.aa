@@ -9,11 +9,21 @@
 //
 //
 $operator $module [ram_1xRW_1024x256_32]
-		$in (addr: $uint<10> din: $uint<256> tagin: $uint<32> wr_bar: $uint<1>)
+		$in (addr: $uint<10> din: $uint<256> tagin: $uint<32> init_flag wr_bar: $uint<1>)
 		$out (dout: $uint<256> tagout : $uint<32>) 
 $is
 {
 	$storage MEMARRAY: $array [1024] $of $uint<288>
+
+	$branchblock[InitBlock] {
+		$if (init_flag) $then
+			$merge $entry loopback 
+				$phi I := ($bitcast ($uint<10>) 0) $on $entry NI $on $loopback
+			$endmerge
+			NI := (I+1)
+			MEMARRAY[I] := _b0
+		$endif
+	}
 
 	$guard (wr_bar) read_data := MEMARRAY[addr]
 	$guard (~wr_bar) MEMARRAY[addr] := ($concat din tagin)
@@ -31,13 +41,14 @@ $is
 $operator $module [cam_64x32_40] 
 	$in (in_tag: $uint<32> in_value: $uint<40>   in_index: $uint<6>
 		init_flag erase_flag insert_flag lookup_flag index_flag: $uint<1>)
-	$out (out_value: $uint<40>   hit_flag: $uint<1>)
+	$out (out_value: $uint<40>   number_of_entries : $uint<7> hit_flag: $uint<1>)
 $is
 {
 	$storage TAGARRAY: $array [64] $of $uint<33> 
 	$storage VALUEARRAY: $array [64] $of $uint<40> 
+	$storage NENTRIES : $uint<7>
 
-
+	
 	$branchblock[BehaveBlock] {
 			$merge $entry loopback 
 				$phi I := ($bitcast ($uint<6>) 0) $on $entry NI $on $loopback
@@ -50,14 +61,17 @@ $is
 			$if (I < 63) $then
 				$if init_flag $then
 					TAGARRAY[I] := 0
+					NENTRIES := 0
 				$else $if erase_flag $then
 			     		$if (($slice tv 31 0) == erase_tag) $then
 						TAGARRAY[I] := 0
+						NENTRIES := (NENTRIES - 1)
 			     		$endif
 				$else $if insert_flag $then
 			     		$if (~(tv [] 32)) $then
 						TAGARRAY[I] := ($concat One_1 insert_tag)
 						VALUEARRAY[I] := in_value
+						NENTRIES := (NENTRIES + 1)
 						$place [InsertHit]
 					$endif
 				$else $if lookup_flag $then
@@ -87,4 +101,6 @@ $is
 							
 			$endmerge
 	}
+
+	number_of_entries := NENTRIES
 }

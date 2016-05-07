@@ -62,10 +62,40 @@ uint8_t fpcmpeq(float x, float y)
 	return(x == y);
 }
 
+double fpaddd(double x, double y)
+{
+	return(x+y);
+}
+
+double fpsubd(double x, double y)
+{
+	return(x-y);
+}
+
 
 double fpmuld (double x, double y)
 {
 	return(x*y);
+}
+
+int32_t fpd2int(double x)
+{
+	return((int32_t) x);
+}
+
+uint32_t fpd2uint(double x)
+{
+	return((uint32_t) x);
+}
+
+float int2float(int32_t x)
+{
+  return((float) x);
+}
+
+double int2double(int32_t x)
+{
+  return((double) x);
 }
 
 //
@@ -88,3 +118,13 @@ float double_to_float (double x)
 	return((float)x);
 }
 
+
+uint32_t double_to_int(double x)
+{
+	return((uint32_t) x);
+}
+
+uint32_t float_to_int(float x)
+{
+	return((uint32_t) x);
+}

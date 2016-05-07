@@ -4,17 +4,20 @@ SOCKETLIB_LIB=$(AHIR_RELEASE)/lib
 PIPEHANDLER_INCLUDE=$(AHIR_RELEASE)/include
 PIPEHANDLER_LIB=$(AHIR_RELEASE)/lib
 VHDL_LIB=$(AHIR_RELEASE)/vhdl/
-FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
+FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary
+
+DEFS= -DADD -DMUL -DFLOATRESIZE -DTOINT
+TOPMODULES= -t fpadd -tfpaddd -t fpincr -t fpmul -t fpmuld -t double_to_float -t float_to_double -t fp2int -t fpd2int  -t fp2uint -t fpd2uint -t int2float -t int2double 
+
 #DEFS= -DADD -DMUL -DDOT -DCMP
-DEFS= -DADD -DMUL -DFLOATRESIZE
+#TOPMODULES=-t fpmul -t fpmuld  -t fpadd -t fpaddd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
+
 #DEFS= -DADD -DMUL -DSUB -DTOINT
 #DEFS= -DCMP
 #DEFS=-DBUG
 #DEFS=-DDOUBLEBUG
 
 
-#TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
-TOPMODULES= -t fpadd -t fpincr -t fpmul -t double_to_float -t float_to_double
 #TOPMODULES= -t fpadd -t fpmul -t fpsub -t fpincr -t fp2int -t fp2uint -t fpincrd
 #TOPMODULES= -t fpsub
 #TOPMODULES= -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
