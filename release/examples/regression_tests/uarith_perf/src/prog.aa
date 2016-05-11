@@ -5,7 +5,7 @@ $constant O1: $uint<1> := 1
 $constant Z1: $uint<1> := 0
 $constant O32: $uint<32> := 1
 
-$pipeline $depth 31 $buffering 2 $fullrate
+$pipeline $depth 15 $buffering 2 $fullrate
 	$module [mul32] $in (L R: $uint<32> S: $uint<1>)
 				$out (Y: $uint<64>) $is
 {
@@ -18,13 +18,13 @@ $pipeline $depth 31 $buffering 2 $fullrate
   $volatile sCorr := ($prioritymux ($reduce & S (L [] 31) (R [] 31)) 2
   			      	   (S & ((L [] 31) | (R [] 31)))     1
 				   $default 0)
-  Corr_d := (Corr + sCorr) $buffering 20
+  Corr_d := (Corr + sCorr) $buffering 8
 
   //  correction..
   $volatile tY_H := ($slice tY 63 32)
   $volatile tY_L := ($slice tY 31 0)
-  cY_L   := tY_L  $buffering 4
-  cY_H := (tY_H + Corr_d) $buffering 4
+  $volatile cY_L   := tY_L  
+  $volatile cY_H := (tY_H + Corr_d) 
 
   // final Y with correction in top-half.
   // double buffered.

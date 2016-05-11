@@ -42,7 +42,7 @@ begin
 		generic map (name => name & "-mul", 
 				tag_width => tag_width,
 				    operand_width => in_operand_width,
-					chunk_width => 8)
+					chunk_width => 16)
 		port map (
     				slv_L => inA,
 				slv_R => inB,
