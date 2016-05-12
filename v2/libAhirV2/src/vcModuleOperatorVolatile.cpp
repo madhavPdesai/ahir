@@ -187,7 +187,10 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 					+ " is not volatile/operator");
 		}
 
-		mc->Print_VHDL_Component(ofile);
+		if(!mc->Get_Is_Function_Library_Module())
+			mc->Print_VHDL_Component(ofile);
+		else
+			ofile << "-- function library module " << mc->Get_Label() << " component not printed." << endl;
 	}
 
 	// print link signals between CP and DP
