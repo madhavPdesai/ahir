@@ -581,9 +581,9 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
 
 		// partial sums..
 		int num_to_be_added = (non_constant_indices.size()  - 1);
-		if(num_to_be_added > 1)
+		if(num_to_be_added > 0)
 		{
-			for(int idx = 1; idx < num_to_be_added; idx++)
+			for(int idx = 1; idx <= num_to_be_added; idx++)
 			{
 				Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Name() + "_index_partial_sum_" +
 						IntToStr(idx),

@@ -9,11 +9,15 @@
 //
 //
 $operator $module [ram_1xRW_1024x256_32]
-		$in (addr: $uint<10> 
-			din: $uint<256> 
-			tagin: $uint<32> 
-			byte_mask: $uint<32>
-			init_flag wr_tag wr_bar: $uint<1>)
+		$in (addr: $uint<10>   		// line address
+			din: $uint<256> 	// line data
+			tagin: $uint<32> 	// line tag
+			byte_mask: $uint<32>	// byte-mask (for line-data write)
+			init_flag 		// init-flag (if set, all tags will be initialized
+						// to tagin
+			wr_tag 			// write-tag
+			wr_bar: 		// read/write-bar 
+				$uint<1>)
 		$out (dout: $uint<256> tagout : $uint<32>) 
 $is
 {
@@ -55,15 +59,15 @@ $is
 			TRD := MEMDATAARRAY[addr][I]
 			NRD := ($concat ($slice (RD << 8) 255 8) TRD)
 		$else
-			$if (byte_mask [] I) $then
-				MEMDATAARRAY[addr][I] := ($slice (din >> I) 7 0)
+			$if (byte_mask [] ($bitcast ($uint<32>) I)) $then
+				MEMDATAARRAY[addr][I] := ($slice (din >> ($bitcast ($uint<256>) I)) 7 0)
 			$endif 
 		$endif
 
 		$if (I < 31) $then $place [loopback] $endif
-	} (TRD => TRD RTG => RTG)
+	} (NRD => NRD RTG => RTG)
 
-	dout := ($mux wr_bar TRD 0)
+	dout := ($mux wr_bar NRD 0)
 	tagout := ($mux wr_bar RTG 0)
 }
 

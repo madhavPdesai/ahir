@@ -3211,8 +3211,8 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 			for(int idx = 1; idx <= num_index_adds; idx++)
 			{
 				string prefix = this->Get_VC_Name() + "_partial_sum_" + IntToStr(idx);
-				string sample_regn = prefix + "_sample";
-				string update_regn = prefix + "_update";
+				string sample_regn = prefix + "_Sample";
+				string update_regn = prefix + "_Update";
 				reqs.push_back(hier_id + "/" + sample_regn + "/rr");
 				reqs.push_back(hier_id + "/" + update_regn + "/cr");
 				acks.push_back(hier_id + "/" + sample_regn + "/ra");

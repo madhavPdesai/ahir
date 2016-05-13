@@ -1,6 +1,7 @@
 $constant O1: $uint<1> := 1
 $constant Z1: $uint<1>  := 0
 $constant O32: $uint<32> := 1
+$constant Z32: $uint<32> := 0
 $constant MAXCNT : $uint<32> := 16
 
 
@@ -21,7 +22,7 @@ $module [mem_test] $in () $out (Y: $uint<8>) $is
 		tagin  := ($bitcast ($uint<32>) addr)
 	
 		$call ram_1xRW_1024x256_32
-			(addr din tagin init_flag (~write_flag)) (dout tagout)
+			(addr din tagin (~Z32) init_flag O1 (~write_flag)) (dout tagout)
 
 		err_flag := ((~write_flag) & ((din != dout) | (tagin != tagout)))
 
