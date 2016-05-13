@@ -1,0 +1,71 @@
+$constant O1: $uint<1> := 1
+$constant Z1: $uint<1>  := 0
+$constant O32: $uint<32> := 1
+$constant MAXCNT : $uint<32> := 16
+
+
+// mem-test
+$module [mem_test] $in () $out (Y: $uint<8>) $is
+{
+	$branchblock[Loop] {
+		$merge $entry loopback 
+			$phi I := ($bitcast ($uint<32>) 0) $on $entry NI $on loopback
+		$endmerge
+		NI := (I+1)
+		init_flag := (I == 0)
+		write_flag := (I < MAXCNT)
+
+		II := (I - MAXCNT)
+		addr := ($mux write_flag ($bitcast ($uint<10>) I) ($bitcast ($uint<10>) II))
+		din  := ($concat II II II II II II II II)
+		tagin  := ($bitcast ($uint<32>) addr)
+	
+		$call ram_1xRW_1024x256_32
+			(addr din tagin init_flag (~write_flag)) (dout tagout)
+
+		err_flag := ((~write_flag) & ((din != dout) | (tagin != tagout)))
+
+		$if (NI < (2*MAXCNT)) $then
+			$place [loopback]
+		$endif
+
+	} (err_flag => err_flag)
+
+	Y := ($bitcast ($uint<8>) err_flag)
+}
+
+// cam-test
+$module [cam_test] $in () $out (Y: $uint<8>) $is
+{
+	$branchblock[Loop] {
+		$merge $entry loopback 
+			$phi I := ($bitcast ($uint<32>) 0) $on $entry NI $on loopback
+		$endmerge
+		NI := (I+1)
+		init_flag := (I == 0)
+		write_flag := (I < MAXCNT)
+
+		addr := ($mux write_flag ($bitcast ($uint<10>) I) ($bitcast ($uint<10>) (I-MAXCNT)))
+		in_value  := ($bitcast ($uint<40>) addr)
+		in_tag  := ($bitcast ($uint<32>) addr)
+		in_index := 0
+		erase_flag := 0
+		insert_flag := write_flag
+		lookup_flag := (~write_flag)
+		index_flag := 0
+	
+		$call cam_64x32_40
+			(in_tag in_value in_index init_flag erase_flag insert_flag lookup_flag index_flag)
+				(out_value number_of_entries hit_flag)
+
+
+		err_flag := ((~write_flag) & (out_value != in_value))
+
+		$if (NI < (2*MAXCNT)) $then
+			$place [loopback]
+		$endif
+
+	} (err_flag => err_flag)
+
+	Y := ($bitcast ($uint<8>) err_flag)
+}
