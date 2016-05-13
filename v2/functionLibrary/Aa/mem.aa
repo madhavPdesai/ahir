@@ -9,27 +9,62 @@
 //
 //
 $operator $module [ram_1xRW_1024x256_32]
-		$in (addr: $uint<10> din: $uint<256> tagin: $uint<32> init_flag wr_bar: $uint<1>)
+		$in (addr: $uint<10> 
+			din: $uint<256> 
+			tagin: $uint<32> 
+			byte_mask: $uint<32>
+			init_flag wr_tag wr_bar: $uint<1>)
 		$out (dout: $uint<256> tagout : $uint<32>) 
 $is
 {
-	$storage MEMARRAY: $array [1024] $of $uint<288>
+	$storage MEMDATAARRAY: $array [1024][32] $of $uint<8>  // to model byte-access.
+	$storage MEMTAGARRAY:  $array [1024] $of $uint<32>     // one block.
 
-	$branchblock[InitBlock] {
-		$if (init_flag) $then
+	// initialize tags..
+	$branchblock[InitTagBlock] {
+		$if init_flag $then
 			$merge $entry loopback 
-				$phi I := ($bitcast ($uint<10>) 0) $on $entry NI $on $loopback
+				$phi I := ($bitcast ($uint<10>) 0) $on $entry NI $on loopback
 			$endmerge
+
 			NI := (I+1)
-			MEMARRAY[I] := _b0
+			MEMTAGARRAY[I]  := tagin 
+
+			$if (I < 1023) $then $place [loopback] $endif
 		$endif
 	}
 
-	$guard (wr_bar) read_data := MEMARRAY[addr]
-	$guard (~wr_bar) MEMARRAY[addr] := ($concat din tagin)
 
-	dout := ($mux wr_bar ($slice read_data 287 32) 0)
-	tagout := ($mux wr_bar ($slice read_data 31 0) 0)
+	$branchblock[Access] {
+		// tag is written in one step.
+		$if ((~wr_bar) & wr_tag) $then
+			MEMTAGARRAY[addr] := tagin
+		$else
+			RTG := MEMTAGARRAY[addr]
+		$endif
+
+
+		// byte read/writes.
+		$merge $entry loopback 
+			$phi I := ($bitcast ($uint<10>) 0) $on $entry NI $on loopback
+			$phi RD := ($bitcast ($uint<256>) _b0) $on $entry NRD $on loopback
+		$endmerge
+		NI := (I+1)
+
+		$if wr_bar $then
+			TRD := MEMDATAARRAY[addr][I]
+			NRD := ($concat ($slice (RD << 8) 255 8) TRD)
+		$else
+			$if (byte_mask [] I) $then
+				MEMDATAARRAY[addr][I] := ($slice (din >> I) 7 0)
+			$endif 
+		$endif
+
+		$if (I < 31) $then $place [loopback] $endif
+	} (TRD => TRD RTG => RTG)
+
+	dout := ($mux wr_bar TRD 0)
+	tagout := ($mux wr_bar RTG 0)
 }
 
 
