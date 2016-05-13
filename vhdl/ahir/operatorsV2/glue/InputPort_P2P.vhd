@@ -94,7 +94,8 @@ begin
 				data_width => data_width,
 				   buffer_size => queue_depth, 
 					bypass_flag => true, 
-						nonblocking_read_flag => nonblocking_read_flag)
+						nonblocking_read_flag => nonblocking_read_flag,
+							full_rate => false)
 	port map (write_req => oack, write_ack => oreq, 
 					write_data => odata,
 				unload_req => update_req,

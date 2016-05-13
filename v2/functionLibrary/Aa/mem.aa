@@ -82,11 +82,12 @@ $is
 	$storage TAGARRAY: $array [64] $of $uint<33> 
 	$storage VALUEARRAY: $array [64] $of $uint<40> 
 	$storage NENTRIES : $uint<7>
+	$constant One_1 : $uint<1> := 1
 
 	
 	$branchblock[BehaveBlock] {
 			$merge $entry loopback 
-				$phi I := ($bitcast ($uint<6>) 0) $on $entry NI $on $loopback
+				$phi I := ($bitcast ($uint<6>) 0) $on $entry NI $on loopback
 			$endmerge
 			NI := (I+1)
 
@@ -97,29 +98,35 @@ $is
 				$if init_flag $then
 					TAGARRAY[I] := 0
 					NENTRIES := 0
-				$else $if erase_flag $then
-			     		$if (($slice tv 31 0) == erase_tag) $then
+				$endif
+				$if erase_flag $then
+			     		$if (($slice tv 31 0) == in_tag) $then
 						TAGARRAY[I] := 0
 						NENTRIES := (NENTRIES - 1)
 			     		$endif
-				$else $if insert_flag $then
+				$endif
+				$if insert_flag $then
 			     		$if (~(tv [] 32)) $then
-						TAGARRAY[I] := ($concat One_1 insert_tag)
+						TAGARRAY[I] := ($concat One_1 in_tag)
 						VALUEARRAY[I] := in_value
 						NENTRIES := (NENTRIES + 1)
 						$place [InsertHit]
 					$endif
-				$else $if lookup_flag $then
-					$if ((tv [] 32) & (($slice tv 31 0) == lookup_tag)) $then
+				$endif
+				$if lookup_flag $then
+					$if ((tv [] 32) & (($slice tv 31 0) == in_tag)) $then
 						l_out_value := VALUEARRAY[I]
 						$place [LookupHit]
 					$endif
-				$else $if index_flag $then
+				$endif
+				$if index_flag $then
 					$if ((I == in_index) & (tv [] 32)) $then
 						i_out_value := VALUEARRAY[I]
 						$place [IndexHit]
-					$else $if (I == in_index) $then
-						$place [IndexMiss]
+					$else 
+						$if (I == in_index) $then
+							$place [IndexMiss]
+						$endif
 					$endif
 				$endif
 

@@ -135,7 +135,8 @@ begin  -- default_arch
         name =>  name & " buffer ",
         data_width => data_width,
         buffer_size => buffer_size, 
-        bypass_flag => bypass_flag)
+        bypass_flag => bypass_flag,
+        full_rate => full_rate)
         port map (
           write_req   => buf_write_req,
           write_ack   => buf_write_ack,

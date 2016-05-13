@@ -924,18 +924,16 @@ void AaModule::Set_Statement_Sequence(AaStatementSequence* statement_sequence)
 		{
 			if(!(s->Is("AaAssignmentStatement") || s->Is_Null_Like_Statement()))
 			{
-				if(!s->Is("AaCallStatement"))
+				if(!s->Is("AaCallStatement") && this->Get_Volatile_Flag())
 				{
-					AaRoot::Error("operator/volatile module can contain only assignment/null statements.", s);
+					AaRoot::Error("volatile module can contain only assignment/null statements.", s);
 					err_flag = true;
 				}
-				else
+				else if(s->Is("AaCallStatement"))
 				{
 					AaRoot::Warning("volatile/operator module " + this->Get_Label() + "  has call statement.", s);
 				}
 			}
-			else
-				s->Set_Pipeline_Parent(this);
 		}
 	}	
 
@@ -970,12 +968,12 @@ void AaModule::Check_Statements()
 		{
 			if(!(s->Is("AaAssignmentStatement") ||  s->Is_Null_Like_Statement()))
 			{
-				if(!s->Is("AaCallStatement"))
+				if(!s->Is("AaCallStatement") && this->Get_Volatile_Flag())
 				{
-					AaRoot::Error("operator/volatile module can contain only assignment/null statements.", s);
+					AaRoot::Error("volatile module can contain only assignment/null statements.", s);
 					err_flag = true;
 				}
-				else
+				else if(s->Is("AaCallStatement"))
 				{
 					AaCallStatement* as = (AaCallStatement*) s;
 					if(this->Get_Volatile_Flag() && !as->Get_Called_Module()->Get_Volatile_Flag())
