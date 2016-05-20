@@ -67,7 +67,7 @@ begin
 				if(reset = '1') then 
 				elsif (lr_req_in(I) = '1') then
 					busy <= '1';
-					lc_tag_out <= lr_tag_in;
+					lc_tag_out(((I+1)*tag_width)-1 downto (I*tag_width)) <= lr_tag_in;
 				elsif (lc_req_in(I) = '1') then
 					busy <= '0';
 				end if;

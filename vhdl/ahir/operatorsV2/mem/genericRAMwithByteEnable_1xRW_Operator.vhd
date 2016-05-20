@@ -18,7 +18,7 @@ entity genericRAMwithByteEnable_1xRW_Operator is
 		init_flag, wr_bar: in std_logic_vector(0 downto 0);
 		dout: out std_logic_vector(data_width-1 downto 0);
 		sample_req, update_req: in Boolean;
-		sample_ack, update_ack: out Boolean;
+		sample_ack, update_ack: out Boolean
 		);
 end entity;
 
