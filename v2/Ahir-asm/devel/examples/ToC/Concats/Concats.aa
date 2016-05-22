@@ -8,6 +8,12 @@ $constant O4 : $uint<4> := _b1111
 $constant O8 : $uint<8> := _b11111111
 
 
+$volatile $module [cc] $in (u1 u2: $uint<1>)
+	$out (cu: $uint<2>) $is
+{
+	cu := ($concat u1 u2 )
+}
+
 $module [Test] $in () $out (ret_val : $uint<32>) $is
 {
 	cval := ($concat
@@ -15,5 +21,6 @@ $module [Test] $in () $out (ret_val : $uint<32>) $is
 	$split (cval 1 1 2 2 4 4 8 8 2)
 		(u1 u2 u3 u4 u5 u6 u7 u8 u9)
 	
-	ret_val := ($concat u1 u2 u3 u4 u5 u6 u7 u8 u9)
+	$volatile $call cc (u1 u2) (uu)
+	ret_val := ($concat uu u3 u4 u5 u6 u7 u8 u9)
 }

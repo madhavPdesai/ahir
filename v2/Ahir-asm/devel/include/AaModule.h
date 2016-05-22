@@ -153,7 +153,7 @@ class AaModule: public AaSeriesBlockStatement
   // copies of a module e.g. if there is a multiple use
   // of an operator..  
   // 
-  bool Static_Flag_In_C() {return(!_volatile_flag);}
+  bool Static_Flag_In_C() {return(true);}
 	//{return(!(_inline_flag || _macro_flag || _volatile_flag || _operator_flag));}
 
   void Add_Argument(AaInterfaceObject* obj);
