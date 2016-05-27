@@ -8,15 +8,15 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity DelayCell is
+entity DelayCellX is
    generic (operand_width: integer; delay: natural);
    port (Din: in unsigned(operand_width-1 downto 0);
 	 Dout: out unsigned(operand_width-1 downto 0);
 	 clk: in std_logic;
 	 stall: in std_logic);
-end entity DelayCell;
+end entity DelayCellX;
 
-architecture Behave of DelayCell is
+architecture Behave of DelayCellX is
 	type DArray is array (natural range <>) of unsigned(operand_width-1 downto 0);
 	signal data_array: DArray(0 to delay);
 begin
@@ -43,7 +43,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity SumCell is
+entity SumCellX is
  	generic (operand_width: integer; ignore_diag: boolean; ignore_right: boolean);
 	port (SU,SDiagIn: in unsigned(operand_width-1 downto 0);
               SR: in unsigned(1 downto 0);
@@ -51,9 +51,9 @@ entity SumCell is
 	      SL: out unsigned(1 downto 0);
 	      stall: in std_logic;
 	      clk: in std_logic);
-end entity SumCell;
+end entity SumCellX;
 
-architecture Behave of SumCell is
+architecture Behave of SumCellX is
 begin
 
 	process(clk)
@@ -91,15 +91,15 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity MultiplierCell is
+entity MultiplierCellX is
   generic (operand_width: integer);
   port (MT, MR, ST, DiagIn: in unsigned(operand_width-1 downto 0);
         ML, MD, SD, DiagOut: out unsigned(operand_width-1 downto 0);
         stall: in std_logic;
 	clk: in std_logic);
-end entity MultiplierCell;
+end entity MultiplierCellX;
 
-architecture Simple of MultiplierCell is
+architecture Simple of MultiplierCellX is
 	constant zero_const : unsigned(operand_width-2 downto 0) := (others => '0');
 begin
 
@@ -252,27 +252,27 @@ architecture ArrayMul of UnsignedMultiplier_n_n_2n is
 	signal rdy_array: std_logic_vector(0 to 2*NumChunks);
 
         -- the multiplier cells are arranged in a NumChunk X NumChunk array.
-        -- Cell (I,J) receives R(I) (MT),  L(J) (MR) and a partial sum from above (ST).
-	-- Cell (I,J) receives an incoming diagonal sum from Cell (I-1,J+1) and
-        -- passes on its sum to the diagonal block Cell (I+1,J-1).
+        -- CellX (I,J) receives R(I) (MT),  L(J) (MR) and a partial sum from above (ST).
+	-- CellX (I,J) receives an incoming diagonal sum from CellX (I-1,J+1) and
+        -- passes on its sum to the diagonal block CellX (I+1,J-1).
 	--
-	component DelayCell 
+	component DelayCellX 
    		generic (operand_width: integer; delay: natural);
    		port (Din: in unsigned(operand_width-1 downto 0);
 	 		Dout: out unsigned(operand_width-1 downto 0);
 	 		clk: in std_logic;
 	 		stall: in std_logic);
-	end component DelayCell;
+	end component DelayCellX;
 
-	component MultiplierCell is
+	component MultiplierCellX is
   		generic (operand_width: integer);
   		port (MT, MR, ST, DiagIn: in unsigned(operand_width-1 downto 0);
         		ML, MD, SD, DiagOut: out unsigned(operand_width-1 downto 0);
         		stall: in std_logic;
 			clk: in std_logic);
-	end component MultiplierCell;
+	end component MultiplierCellX;
 
-	component SumCell is
+	component SumCellX is
  		generic (operand_width: integer; ignore_diag: boolean; ignore_right: boolean);
 		port (SU,SDiagIn: in unsigned(operand_width-1 downto 0);
               		SR: in unsigned(1 downto 0);
@@ -280,7 +280,7 @@ architecture ArrayMul of UnsignedMultiplier_n_n_2n is
 	      		SL: out unsigned(1 downto 0);
 	      		stall: in std_logic;
 	      		clk: in std_logic);
-	end component SumCell;
+	end component SumCellX;
 
 	type OneDChunkArray is array (natural range <>) of unsigned(chunk_width-1 downto 0);
 	signal SU,SDiagIn,SDiagOut: OneDChunkArray(0 to NumChunks-1);
@@ -357,7 +357,7 @@ begin
 			-- from the right, R values enter with each row 
 			-- getting an appropriate delay.
 			COLBC2: if COL = 0 generate
-				delInst: DelayCell generic map(operand_width => chunk_width,
+				delInst: DelayCellX generic map(operand_width => chunk_width,
 								delay => ROW)
 					port map(Din => Rpadded(((ROW+1)*chunk_width)-1 downto (ROW*chunk_width)),
 						 Dout => MR(ROW,COL),
@@ -382,7 +382,7 @@ begin
 				end generate Cols2;
 			end generate ConnectArray;
 
-			mulCell: MultiplierCell generic map(operand_width => chunk_width)
+			mulCellX: MultiplierCellX generic map(operand_width => chunk_width)
 				port map(MT => MT(ROW,COL),
 					 ML => ML(ROW,COL),
 					 ST => ST(ROW,COL),
@@ -401,7 +401,7 @@ begin
 	--  care of the SD correction.
 	sumArray: for Cols in 0 to NumChunks-1 generate
 	
-		scell: SumCell generic map (operand_width => chunk_width,
+		scell: SumCellX generic map (operand_width => chunk_width,
 						ignore_diag => (Cols = NumChunks-1),
 						ignore_right => (Cols = 0))
 			port map(SU => SU(Cols),
@@ -426,7 +426,7 @@ begin
 		--   propagation.
 
 		--  sum coming down..
-		dSU: DelayCell generic map(operand_width => chunk_width, delay => Cols)
+		dSU: DelayCellX generic map(operand_width => chunk_width, delay => Cols)
 			port map(Din => SD(NumChunks-1,Cols),
 				 Dout => SU(Cols),
 				 clk => clk,
@@ -438,7 +438,7 @@ begin
 		
 		Cntr2: if (Cols < NumChunks-1) generate
 			-- diagonal coming in..  the leftmost cell has no incoming diagonal.
-			dSDiagIn: DelayCell generic map(operand_width => chunk_width, delay => Cols)
+			dSDiagIn: DelayCellX generic map(operand_width => chunk_width, delay => Cols)
 				port map(Din => DiagOut(NumChunks-1,Cols+1),
 				 Dout => SDiagIn(Cols),
 				 clk => clk,
@@ -454,7 +454,7 @@ begin
 
 	-- the right column and 2*N-1 delays inserted.
 	RightColumn:  for Rows in 0 to NumChunks-1 generate
-		dRc: DelayCell generic map(operand_width => chunk_width, delay => ((2*NumChunks)-1)-Rows)
+		dRc: DelayCellX generic map(operand_width => chunk_width, delay => ((2*NumChunks)-1)-Rows)
 			port map(Din => DiagOut(Rows,0),
 				 Dout => result_array(Rows),
 				 stall => stall,
@@ -463,7 +463,7 @@ begin
 
 	-- the bottom row as N-C delays inserted as C goes from 0 to N-2
 	BottomRow: for Cols in 0 to NumChunks-2 generate
-		dBr: DelayCell generic map(operand_width => chunk_width, delay => NumChunks-(Cols+1))
+		dBr: DelayCellX generic map(operand_width => chunk_width, delay => NumChunks-(Cols+1))
 			port map(Din => SDiagOut(Cols),
 				 Dout => result_array(Cols+NumChunks),
 				 stall => stall,

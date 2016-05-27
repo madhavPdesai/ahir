@@ -14,16 +14,16 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Utilities.all;
 
-entity AddSubCell  is
+entity AddSubCellX  is
 	generic (operand_width: integer);
 	port (A,B: in unsigned(operand_width-1 downto 0);
 		Sum: out unsigned(operand_width-1 downto 0);
 		BP,BG: out std_logic;
 		stall: in std_logic;
 		clk, reset: in std_logic);
-end entity AddSubCell;
+end entity AddSubCellX;
 
-architecture Behave of AddSubCell is
+architecture Behave of AddSubCellX is
 begin
 	process(clk)
 		variable sumv: unsigned(operand_width-1 downto 0);
@@ -106,14 +106,14 @@ architecture Pipelined of UnsignedAdderSubtractor_n_n_n is
   signal block_carries: std_logic_vector(0 to num_chunks);
   signal subtract_op_1, subtract_op_2: std_logic;
 
-  component AddSubCell  is
+  component AddSubCellX  is
 	generic ( operand_width: integer);
 	port (A,B: in unsigned(operand_width-1 downto 0);
 		Sum: out unsigned(operand_width-1 downto 0);
 		BP,BG: out std_logic;
 		stall: in std_logic;
 		clk, reset: in std_logic);
-  end component AddSubCell;
+  end component AddSubCellX;
    
   signal L             : unsigned(operand_width-1 downto 0);
   signal R             : unsigned(operand_width-1 downto 0);
@@ -159,10 +159,10 @@ begin  -- Pipelined
   
   Stage1:  for I in  0 to num_chunks-1 generate
 
-	addsubCell_A(I) <= Lpadded(((I+1)*chunk_width)-1 downto (I*chunk_width));
-	addsubCell_B(I) <= Rpadded(((I+1)*chunk_width)-1 downto (I*chunk_width));
+	addsubcell_A(I) <= Lpadded(((I+1)*chunk_width)-1 downto (I*chunk_width));
+	addsubcell_B(I) <= Rpadded(((I+1)*chunk_width)-1 downto (I*chunk_width));
 
-	asCell: AddSubCell generic map(operand_width => chunk_width)
+	asCellX: AddSubCellX generic map(operand_width => chunk_width)
 		port  map( A => addsubcell_A(I),
 			   B => addsubcell_B(I),	
 			   Sum => addsubcell_Sum(I),

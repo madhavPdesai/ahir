@@ -46,7 +46,7 @@ begin  -- default_arch
   -- the input pipe.
   blocking_read: if (not nonblocking_read_flag) generate
     bufPipe : PipeBase generic map (
-        name =>  name & " fifo ",
+        name =>  name & "-fifo",
         num_reads  => 1,
         num_writes => 1,
         data_width => data_width,
@@ -68,7 +68,7 @@ begin  -- default_arch
 
   nonblocking_read: if (nonblocking_read_flag) generate
     bufPipe : NonBlockingReadPipeBase generic map (
-        name =>  name & " non-blocking-read-fifo ",
+        name =>  name & "-non-blocking-read-fifo ",
         num_reads  => 1,
         num_writes => 1,
         data_width => data_width,

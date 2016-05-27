@@ -134,7 +134,7 @@ begin  -- default_arch
     
    notShiftReg: if (not shift_register_mode) generate
     queue : SynchFifo generic map (
-      name => name & ":Queue:", 
+      name => name & "-synch-fifo", 
       queue_depth => depth,
       data_width       => data_width)
       port map (
@@ -151,7 +151,7 @@ begin  -- default_arch
     
    shiftReg: if shift_register_mode generate
       srqueue : ShiftRegisterQueue generic map (	
-        name => name & ":Queue:",	
+        name => name & "-shift-register-fifo",	
         queue_depth => depth,
         data_width       => data_width)
         port map (
@@ -169,7 +169,7 @@ begin  -- default_arch
 
   Lifo: if (not signal_mode) and  lifo_mode generate
     stack : SynchLifo generic map (
-      name => name & ":LIFO:",
+      name => name & "-synch-lifo",
       queue_depth => depth,
       data_width       => data_width)
       port map (

@@ -9,7 +9,7 @@ use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 
 entity SynchFifo is
-  generic(name: string := "anon"; queue_depth: integer := 3; data_width: integer := 72);
+  generic(name: string; queue_depth: integer := 3; data_width: integer := 72);
   port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(data_width-1 downto 0);

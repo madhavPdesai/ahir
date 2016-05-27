@@ -89,7 +89,7 @@ begin
   q_pop_req  <= read_req;
   read_ack   <= q_pop_ack;
   read_data  <= q_data_out;
-  oQ:  QueueBase generic map(queue_depth => 2, data_width => data_width)
+  oQ:  QueueBase generic map(name => "-level-mux-queue", queue_depth => 2, data_width => data_width)
 	port map( clk => clk, reset => reset,
 			data_in => q_data_in,
 			push_req => q_push_req,

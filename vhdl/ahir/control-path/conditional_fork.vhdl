@@ -13,7 +13,7 @@ use ahir.Utilities.all;
 -- if the trigger is enabled (disable all triggers when the out-transition is fired).
 entity conditional_fork is
        generic (place_capacity: integer := 1; 
-			ntriggers: integer; name : string := "anonConditionalRepeater");
+			ntriggers: integer; name : string);
        port (triggers: in BooleanArray(0 to ntriggers-1);
 			in_transition: in Boolean;
 			out_transitions: out BooleanArray(0 to ntriggers-1);

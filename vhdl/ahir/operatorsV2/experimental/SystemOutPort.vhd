@@ -50,7 +50,7 @@ begin
     --
     -- pipe.. to provide interlock so only one writer succeeds at a time.
     --
-    opipe: PipeBase generic map(name => name & " opipe", 
+    opipe: PipeBase generic map(name => name & "-opipe", 
 				    num_reads => 1,
 					num_writes => num_writes, data_width => min_width,
 						lifo_mode => false, signal_mode => true, depth => 1, full_rate => full_rate)

@@ -153,7 +153,7 @@ package BaseComponents is
   component marked_join is
      generic(place_capacity : integer := 1;
 		bypass: boolean := true;
-      		name : string := "anon";
+      		name : string;
 		marked_predecessor_bypass: BooleanArray);
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
@@ -165,7 +165,7 @@ package BaseComponents is
   component marked_join_with_input is
      generic(place_capacity : integer := 1;
 		bypass: boolean := false;
-      		name : string := "anon");
+      		name : string);
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
            symbol_in : in boolean;
@@ -175,7 +175,7 @@ package BaseComponents is
   end component;
 
   component phi_sequencer
-    generic (place_capacity: integer; nreqs : integer; nenables : integer; name : string := "anonPhiSequencer");
+    generic (place_capacity: integer; nreqs : integer; nenables : integer; name : string);
     port (
       selects : in BooleanArray(0 to nreqs-1); -- one out of nreqs..
       reqs : out BooleanArray(0 to nreqs-1); -- one out of nreqs
@@ -188,7 +188,7 @@ package BaseComponents is
   component phi_sequencer_v2  is
     generic (place_capacity : integer; 
 	      ntriggers : integer; 
-	      name : string := "anonPhiSequencer");
+	      name : string);
     port (
   	triggers : in BooleanArray(0 to ntriggers-1); 	    -- there are nreq triggers.
   	src_sample_starts : out BooleanArray(0 to ntriggers-1);   -- sample starts for sources.
@@ -206,7 +206,7 @@ package BaseComponents is
 
    component conditional_fork is
        generic (place_capacity: integer := 1; 
-			ntriggers: integer; name : string := "anonConditionalRepeater");
+			ntriggers: integer; name : string);
        port  (triggers: in BooleanArray(0 to ntriggers-1);
 			in_transition: in Boolean;
 			out_transitions: out BooleanArray(0 to ntriggers-1);
@@ -437,7 +437,7 @@ package BaseComponents is
         input_data_width: integer := 8;
         output_data_width: integer := 1;
         num_ips : integer := 2;
-        tb_id : string := "anonymous"
+        tb_id : string
         );
   end component SplitOperatorSharedTB;
 
@@ -458,7 +458,7 @@ package BaseComponents is
   -----------------------------------------------------------------------------
   
   component QueueBase 
-    generic(name : string := "anon"; queue_depth: integer := 2; data_width: integer := 32);
+    generic(name : string; queue_depth: integer := 2; data_width: integer := 32);
     port(clk: in std_logic;
          reset: in std_logic;
          data_in: in std_logic_vector(data_width-1 downto 0);
@@ -470,7 +470,7 @@ package BaseComponents is
   end component QueueBase;
 
   component QueueBaseWithBypass
-    generic(name : string := "anon"; queue_depth: integer := 2; data_width: integer := 32);
+    generic(name : string; queue_depth: integer := 2; data_width: integer := 32);
     port(clk: in std_logic;
          reset: in std_logic;
          data_in: in std_logic_vector(data_width-1 downto 0);
@@ -482,7 +482,7 @@ package BaseComponents is
   end component QueueBaseWithBypass;
 
   component SynchFifo 
-    generic(name: string := "anon"; queue_depth: integer := 3; data_width: integer := 72);
+    generic(name: string; queue_depth: integer := 3; data_width: integer := 72);
     port(clk: in std_logic;
          reset: in std_logic;
          data_in: in std_logic_vector(data_width-1 downto 0);
@@ -495,7 +495,7 @@ package BaseComponents is
   end component SynchFifo;
 
   component SynchLifo 
-    generic(name : string := "anon"; queue_depth: integer := 3; data_width: integer := 72);
+    generic(name : string; queue_depth: integer := 3; data_width: integer := 72);
     port(clk: in std_logic;
          reset: in std_logic;
          data_in: in std_logic_vector(data_width-1 downto 0);
@@ -523,7 +523,7 @@ package BaseComponents is
   end component SynchToAsynchReadInterface;
 
   component ShiftRegisterQueue is
-    generic(name : string := "anon"; queue_depth: integer := 1; data_width: integer := 32);
+    generic(name : string ; queue_depth: integer := 1; data_width: integer := 32);
     port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(data_width-1 downto 0);

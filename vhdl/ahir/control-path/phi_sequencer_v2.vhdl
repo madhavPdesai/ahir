@@ -15,7 +15,7 @@ use ahir.GlobalConstants.all;
 entity phi_sequencer_v2  is
   generic (place_capacity : integer; 
 	   ntriggers : integer; 
-	   name : string := "anonPhiSequencer");
+	   name : string);
   port (
   	triggers : in BooleanArray(0 to ntriggers-1); 	    -- there are nreq triggers.
   	src_sample_starts : out BooleanArray(0 to ntriggers-1);   -- sample starts for sources.

@@ -71,7 +71,7 @@ begin  -- Behave
      end process;
 
 
-     rxBuf: ReceiveBuffer generic map(name => name & " receive-buffer " & Convert_To_String(I),
+     rxBuf: ReceiveBuffer generic map(name => name & "-receive-buffer-" & Convert_To_String(I),
 					buffer_size =>  buffering(I),
 					data_width => owidth,
 					full_rate => full_rate)
@@ -143,6 +143,7 @@ begin  -- Behave
   ifReg: if registered_output generate
         
       oqueue : QueueBase generic map (
+	name => name & "-output-reg-queue",
         queue_depth => 2,
         data_width  => twidth + owidth)
         port map (

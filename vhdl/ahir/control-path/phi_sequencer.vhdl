@@ -10,7 +10,7 @@ use ahir.Utilities.all;
 
 
 entity phi_sequencer  is
-  generic (place_capacity : integer; nreqs : integer; nenables : integer; name : string := "anonPhiSequencer");
+  generic (place_capacity : integer; nreqs : integer; nenables : integer; name : string);
   port (
   selects : in BooleanArray(0 to nreqs-1); -- there are nreq triggers.
   reqs : out BooleanArray(0 to nreqs-1);   -- generated reqs for the phis. one for each trigger.
