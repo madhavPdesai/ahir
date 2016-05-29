@@ -20,7 +20,7 @@ use ahir.BaseComponents.all;
 
 
 entity GenericFloatingPointAdderSubtractor is
-  generic (tag_width : integer := 8;
+  generic (name: string; tag_width : integer := 8;
            exponent_width: integer := 8;
            fraction_width : integer := 23;
            round_style : round_type := float_round_style;  -- rounding option
@@ -543,7 +543,8 @@ begin
 	shifter_tag_in(0) <= use_shifter_2;
  end process;
 
-  shifter: UnsignedShifter generic map(shift_right_flag => true,
+  shifter: UnsignedShifter generic map(name => name & "-shifter", 
+					shift_right_flag => true,
 					tag_width => shifter_tag_in'length,
 					operand_width => shifter_in_2'length,
 					shift_amount_width => shift_amount_2'length)
@@ -675,7 +676,8 @@ begin
   end process;
 
   adder: UnsignedAdderSubtractor
-		generic map(tag_width => adder_tag_in'length,
+		generic map(name => name & "-adder",
+				tag_width => adder_tag_in'length,
 				operand_width => addL_4'length,
 				chunk_width => 8)
 		port map( L => addL_4, R => addR_4, RESULT => ufract_5,
@@ -721,7 +723,8 @@ begin
     normalizer_tag_in(0) <= exceptional_result;
 
     normalizer: GenericFloatingPointNormalizer
-		generic map (tag_width => normalizer_tag_in'length,
+		generic map (name => name & "-normalizer",
+				tag_width => normalizer_tag_in'length,
 				exponent_width => exponent_width,
 				fraction_width => fraction_width,
 				round_style => float_round_style,

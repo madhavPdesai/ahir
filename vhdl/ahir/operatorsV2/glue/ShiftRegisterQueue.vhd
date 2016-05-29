@@ -39,7 +39,7 @@ begin  -- SimModel
 
      stageGen: for I in 0 to n_stages-1 generate
 	qinst: QueueBase 
-		generic map (name => name & "-stage-" & Convert_To_String(I),
+		generic map (name => name & "-stageGen-qinst-" & Convert_To_String(I),
 				queue_depth => 2, data_width => data_width)
 		port map ( reset => reset, clk => clk, 
 			data_in => intermediate_data(I),

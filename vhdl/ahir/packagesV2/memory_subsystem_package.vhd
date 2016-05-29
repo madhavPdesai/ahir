@@ -6,6 +6,7 @@ package memory_subsystem_package is
 
   component memory_subsystem
     generic (
+      name: string;
       num_loads       : natural;
       num_stores      : natural;
       addr_width      : natural;
@@ -39,7 +40,8 @@ package memory_subsystem_package is
 
 
   component register_bank 
-    generic(num_loads             : natural := 5;
+    generic(name: string;
+             num_loads             : natural := 5;
             num_stores            : natural := 10;
             addr_width            : natural := 9;
             data_width            : natural := 5;
@@ -106,7 +108,8 @@ package memory_subsystem_package is
   end component register_bank;
 
   component  dummy_read_only_memory_subsystem 
-  generic(num_loads             : natural := 5;
+  generic(name:string;
+	  num_loads             : natural := 5;
           addr_width            : natural := 9;
           data_width            : natural := 5;
           tag_width             : natural := 7);
@@ -146,7 +149,8 @@ package memory_subsystem_package is
    end component dummy_read_only_memory_subsystem;
 
    component dummy_write_only_memory_subsystem is
-  	generic( num_stores            : natural := 10;
+  	generic( name:string;
+	  num_stores            : natural := 10;
           addr_width            : natural := 9;
           data_width            : natural := 5;
           tag_width             : natural := 7);
@@ -185,7 +189,8 @@ package memory_subsystem_package is
     end component dummy_write_only_memory_subsystem;
 
 component ordered_memory_subsystem is
-  generic(num_loads             : natural := 5;
+  generic(name: string;
+          num_loads             : natural := 5;
           num_stores            : natural := 10;
           addr_width            : natural := 9;
           data_width            : natural := 5;
@@ -257,7 +262,8 @@ component ordered_memory_subsystem is
 end component ordered_memory_subsystem;
 
 component UnorderedMemorySubsystem is
-  generic(num_loads             : natural := 5;
+  generic(name: string;
+          num_loads             : natural := 5;
           num_stores            : natural := 10;
           addr_width            : natural := 9;
           data_width            : natural := 5;

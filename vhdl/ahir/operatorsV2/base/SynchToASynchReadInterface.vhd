@@ -10,6 +10,7 @@ use ahir.BaseComponents.all;
 
 entity SynchToAsynchReadInterface is
   generic (
+    name: string;
     data_width : integer);
   port (
     clk : in std_logic;

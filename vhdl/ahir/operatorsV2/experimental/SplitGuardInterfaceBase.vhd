@@ -26,7 +26,7 @@ use ahir.BaseComponents.all;
 --   2. cr_in -> cr_in without intervening ca_out is not possible.
 --
 entity SplitGuardInterfaceBase is
-	generic (buffering:integer);
+	generic (name: string; buffering:integer);
 	port (sr_in: in Boolean;
 	      sa_out: out Boolean;
 	      sr_out: out Boolean;
@@ -61,7 +61,7 @@ begin
 	qdata_in(0) <= guard_interface;
 
 	qI: QueueBase  -- dont bypass.. combinational cycle alert!
-		generic map(name => "-sgi-queue", queue_depth => buffering, data_width => 1)
+		generic map(name => name & "-qI", queue_depth => buffering, data_width => 1)
 		port map(clk => clk, reset => reset,
 				data_in => qdata_in,
 				push_req => push,

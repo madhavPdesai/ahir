@@ -7,6 +7,7 @@ use ahir.mem_component_pack.all;
 
 entity memory_bank is
    generic (
+     name: string;
      g_addr_width: natural;
      g_data_width: natural;
      g_write_tag_width : natural;
@@ -166,7 +167,7 @@ begin  -- behave
   addr_base <= write_addr when write_enable_base = '1' else read_addr when read_enable_base = '1' else (others => '0');
   enable_sig <= write_enable_base or read_enable_base;
   
-  memBase: memory_bank_base generic map(g_addr_width => g_addr_width,
+  memBase: memory_bank_base generic map(name => name & "-memBase", g_addr_width => g_addr_width,
                                         g_data_width => g_data_width,
 					g_base_bank_addr_width => g_base_bank_addr_width,
 					g_base_bank_data_width => g_base_bank_data_width)

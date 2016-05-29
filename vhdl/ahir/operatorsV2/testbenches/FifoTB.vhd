@@ -64,13 +64,13 @@ begin
     end process;
 
     Lifo: if lifo_mode generate
-	stack: SynchLifo generic map (queue_depth => 16, data_width => 8)
+	stack: SynchLifo generic map (name => "Lifo", queue_depth => 16, data_width => 8)
 		port map(clk => clk, reset => reset, data_in => data_in, push_req => push_req,
 				push_ack => push_ack, pop_req => pop_req, pop_ack => pop_ack,
 				nearly_full => nearly_full, data_out => data_out);
     end generate Lifo;
     Fifo: if not lifo_mode generate
-	queue: SynchFifo generic map (queue_depth => 16, data_width => 8)
+	queue: SynchFifo generic map (name => "Fifo", queue_depth => 16, data_width => 8)
 		port map(clk => clk, reset => reset, data_in => data_in, push_req => push_req,
 				push_ack => push_ack, pop_req => pop_req, pop_ack => pop_ack,
 				nearly_full => nearly_full, data_out => data_out);

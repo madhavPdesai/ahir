@@ -17,7 +17,7 @@ use ahir.Utilities.all;
 -- from reqIn to reqOut if reqIn_register is 0..  This
 -- prevents a useless latency.
 entity NobodyLeftBehind is
-  generic ( num_reqs : integer := 1);
+  generic ( name: string; num_reqs : integer := 1);
   port (
     clk,reset : in std_logic;
     reqIn : in std_logic_vector(num_reqs-1 downto 0);

@@ -7,7 +7,7 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
 entity BinaryEncoder is
-  generic (iwidth: integer := 3; owidth: integer := 3);
+  generic (name:string; iwidth: integer := 3; owidth: integer := 3);
   port(din: in std_logic_vector(iwidth-1 downto 0);
        dout: out std_logic_vector(owidth-1 downto 0));
 end BinaryEncoder;

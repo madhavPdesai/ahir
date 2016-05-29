@@ -5,7 +5,7 @@ use ahir.Utilities.all;
 use ahir.SubPrograms.all;
 
 entity BranchBase is
-  generic (condition_width: integer := 1);
+  generic (name: string; condition_width: integer := 1);
   port (condition: in std_logic_vector(condition_width-1 downto 0);
         clk,reset: in std_logic;
         req: in Boolean;

@@ -159,6 +159,7 @@ use ahir.Utilities.all;
 entity UnsignedMultiplier is
   
   generic (
+    name: string;
     tag_width     : integer;
     operand_width : integer;
     chunk_width   : integer := 8);

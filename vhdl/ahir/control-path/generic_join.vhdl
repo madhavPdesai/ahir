@@ -32,12 +32,12 @@ begin  -- default_arch
     placeBlock: block
 	signal place_pred: BooleanArray(0 downto 0);
     begin
-      dly: control_delay_element generic map(delay_value => pdelays(I))
+      dly: control_delay_element generic map(name => name & "-placegen-dly-" & Convert_To_String(I), delay_value => pdelays(I))
                    port map(req => ppreds(I), ack => place_pred(0), clk => clk, reset => reset);
       pI: place_with_bypass
         generic map(capacity => pcapacities(I),
                     marking => pmarkings(I),
-                    name => name & ":(bypass):" & Convert_To_String(I) )
+                    name => name & "-placegen-pI-" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;

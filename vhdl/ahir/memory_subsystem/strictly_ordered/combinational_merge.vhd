@@ -7,6 +7,7 @@ use ahir.merge_functions.all;
 
 entity combinational_merge is
   generic (
+    name: string;
     g_data_width       : natural;
     g_number_of_inputs: natural;
     g_time_stamp_width : natural);

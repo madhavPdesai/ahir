@@ -21,7 +21,7 @@ use ahir.Utilities.all;
 -- number of entries=2**index_width.
 --
 entity genericCamOperator is
-	generic (index_width: integer; tag_width: integer; data_width: integer);
+	generic (name: string; index_width: integer; tag_width: integer; data_width: integer);
 	port (clk, reset: in std_logic;
 		tag_in: in std_logic_vector(tag_width-1 downto 0);
 		  data_in: in std_logic_vector(data_width-1 downto 0);

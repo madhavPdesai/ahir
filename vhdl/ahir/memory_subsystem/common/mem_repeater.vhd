@@ -8,7 +8,7 @@ use ieee.numeric_std.all;
 -- at the cost of a single cycle delay from input
 -- to output.
 entity mem_repeater is
-    generic(g_data_width: integer := 32);
+    generic(name: string; g_data_width: integer := 32);
     port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(g_data_width-1 downto 0);

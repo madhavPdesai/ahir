@@ -9,7 +9,7 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity InputMuxBase is
-  generic ( iwidth: integer := 10;
+  generic (name: string; iwidth: integer := 10;
 	   owidth: integer := 10;
 	   twidth: integer := 3;
 	   nreqs: integer := 1;
@@ -58,7 +58,7 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   -- "fairify" the level-reqs.
   -----------------------------------------------------------------------------
-  fairify: NobodyLeftBehind generic map (num_reqs => nreqs)
+  fairify: NobodyLeftBehind generic map (name=> name & "-fairify", num_reqs => nreqs)
 		port map (clk => clk, reset => reset, reqIn => reqP, ackOut => ackP,
 					reqOut => fair_reqP, ackIn => fair_ackP);
 
@@ -80,6 +80,7 @@ begin  -- Behave
 
         
       oqueue : QueueBase generic map (
+        name => name & "-oqueue",
         queue_depth => 2,
         data_width  => twidth + owidth)
         port map (
@@ -109,6 +110,7 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   P2L: for I in nreqs-1 downto 0 generate
     p2Linstance: Pulse_To_Level_Translate_Entity
+      generic map (name => name & "-p2Linstance-" & Convert_To_String(I))
       port map(rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),
                clk => clk, reset => reset);     
 
@@ -154,6 +156,7 @@ begin  -- Behave
   -- tag generation
   -----------------------------------------------------------------------------
   taggen : BinaryEncoder generic map (
+    name => name & "-taggen",
     iwidth => nreqs,
     owidth => twidth)
     port map (

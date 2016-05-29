@@ -46,6 +46,7 @@ begin  -- default_arch
 
   manyWriters: if (num_writes > 1) generate
     wmux : OutputPortLevel generic map (
+      name => name & "-wmux",
       num_reqs       => num_writes,
       data_width     => data_width,
       no_arbitration => false)
@@ -99,7 +100,7 @@ begin  -- default_arch
 
     singleBufferedFullRateCase: if((depth = 1) and full_rate) generate
        preg: PipelineRegister
-		generic map (name => name & ":PipelineRegister:", 
+		generic map (name => name & "-preg", 
 				data_width => data_width)
 		port map(
         		write_req   => pipe_req,
@@ -115,7 +116,7 @@ begin  -- default_arch
 
     notSingleBufferedOrFullRateCase: if ((not full_rate) or (depth /= 1)) generate
       queue : QueueBase generic map (	
-        name => name & ":Queue:",	
+        name => name & "-queue",	
         queue_depth => depth,
         data_width       => data_width)
         port map (
@@ -134,7 +135,7 @@ begin  -- default_arch
     
    notShiftReg: if (not shift_register_mode) generate
     queue : SynchFifo generic map (
-      name => name & "-synch-fifo", 
+      name => name & "-queue", 
       queue_depth => depth,
       data_width       => data_width)
       port map (
@@ -151,7 +152,7 @@ begin  -- default_arch
     
    shiftReg: if shift_register_mode generate
       srqueue : ShiftRegisterQueue generic map (	
-        name => name & "-shift-register-fifo",	
+        name => name & "-srqueue",	
         queue_depth => depth,
         data_width       => data_width)
         port map (
@@ -169,7 +170,7 @@ begin  -- default_arch
 
   Lifo: if (not signal_mode) and  lifo_mode generate
     stack : SynchLifo generic map (
-      name => name & "-synch-lifo",
+      name => name & "-stack",
       queue_depth => depth,
       data_width       => data_width)
       port map (
@@ -187,6 +188,7 @@ begin  -- default_arch
 
   manyReaders: if  (not signal_mode) and (num_reads > 1) generate
     rmux : InputPortLevel generic map (
+	name => name & "-rmux",
       num_reqs       => num_reads,
       data_width     => data_width,
       no_arbitration => false)

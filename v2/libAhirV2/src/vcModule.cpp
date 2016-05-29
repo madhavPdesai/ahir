@@ -1263,7 +1263,7 @@ void vcModule::Print_VHDL_Call_Arbiter_Instantiation(ostream& ofile)
 			call_arbiter_id = "SplitCallArbiterNoInargsNoOutargs";
 	}
 	ofile << prefix << "arbiter: " << call_arbiter_id << " -- {" << endl;
-	ofile << "generic map( --{\n num_reqs => " << this->_num_calls << "," << endl;
+	ofile << "generic map( --{\n name => \"" << call_arbiter_id << "\", num_reqs => " << this->_num_calls << "," << endl;
 	if(in_args)
 		ofile << " call_data_width => " << (this->Get_In_Arg_Width()) << "," << endl;
 	if(out_args)

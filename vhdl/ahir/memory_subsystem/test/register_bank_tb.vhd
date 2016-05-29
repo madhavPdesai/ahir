@@ -60,6 +60,7 @@ begin
       iteration_count => iteration_count,
       block_id   => I)
       port map (
+	name => "TestBlock-" & Convert_To_String(I),
         lr_addr   => lr_addr_in((I+1)*addr_width-1 downto I*addr_width),
         lr_tag    => lr_tag_in((I+1)*tag_width-1 downto I*tag_width),
         lr_req    => lr_req_in(I),
@@ -82,6 +83,7 @@ begin
 
   regbank: register_bank
     generic map (
+      name => name & "-regbank",
       data_width => data_width,
       addr_width => addr_width,
       tag_width  => tag_width,

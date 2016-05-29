@@ -288,6 +288,7 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 	  // instantiate a register bank..
 	  ofile << "dummyWOM_" << this->Get_VHDL_Id() << ": dummy_write_only_memory_subsystem -- {" << endl;
 	  ofile << "generic map(-- {" << endl;
+	  ofile << "name => \"" << this->Get_VHDL_Id() << "\"," << endl;
 	  ofile << "num_stores => " << this->Get_Num_Stores() << "," << endl
 		<< "addr_width => " << this->Get_Address_Width() << "," << endl
 		<< "data_width => " << this->Get_Word_Size() << "," << endl
@@ -320,6 +321,7 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 	  // instantiate a register bank..
 	  ofile << "dummyROM_" << this->Get_VHDL_Id() << ": dummy_read_only_memory_subsystem -- {" << endl;
 	  ofile << "generic map(-- {" << endl;
+	  ofile << "name => \"" << this->Get_VHDL_Id() << "\"," << endl;
 	  ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
 		<< "addr_width => " << this->Get_Address_Width() << "," << endl
 		<< "data_width => " << this->Get_Word_Size() << "," << endl
@@ -349,6 +351,7 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 	  // instantiate a register bank..
 	  ofile << "RegisterBank_" << this->Get_VHDL_Id() << ": register_bank -- {" << endl;
 	  ofile << "generic map(-- {" << endl;
+	  ofile << "name => \"" << this->Get_VHDL_Id() << "\"," << endl;
 	  ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
 		<< "num_stores => " << this->Get_Num_Stores() << "," << endl
 		<< "addr_width => " << this->Get_Address_Width() << "," << endl
@@ -383,6 +386,7 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 	  string mem_entity = (_ordered_flag ? "ordered_memory_subsystem" : "UnorderedMemorySubsystem");
 	  ofile << "MemorySpace_" << this->Get_VHDL_Id() << ": " << mem_entity << " -- {" << endl;
 	  ofile << "generic map(-- {" << endl;
+	  ofile << "name => \"" << this->Get_VHDL_Id() << "\"," << endl;
 	  ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
 		<< "num_stores => " << this->Get_Num_Stores() << "," << endl
 		<< "addr_width => " << this->Get_Address_Width() << "," << endl

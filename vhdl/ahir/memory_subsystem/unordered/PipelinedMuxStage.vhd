@@ -8,7 +8,8 @@ use ahir.mem_component_pack.all;
 use ahir.BaseComponents.all;
 
 entity PipelinedMuxStage is 
-  generic (g_data_width: integer := 10;
+  generic (name: string;
+	   g_data_width: integer := 10;
            g_number_of_inputs: integer := 8;
            g_number_of_outputs: integer := 1;
            g_tag_width : integer := 3  -- width of tag
@@ -71,7 +72,8 @@ begin  -- behave
     genLogic: for J in 0 to g_number_of_outputs-2 generate
 
       cmerge: CombinationalMux
-        generic map(g_data_width        => g_data_width,
+        generic map(name => name & "-cmerge-" & Convert_To_String(J), 
+		    g_data_width        => g_data_width,
                     g_number_of_inputs  => c_num_inputs_per_tree)
         port map(in_data    => in_data    (((J+1)*c_num_inputs_per_tree*g_data_width)-1
                                            downto
@@ -82,7 +84,8 @@ begin  -- behave
                  out_req    => out_req    (J),
                  out_ack    => out_ack    (J));
 
-      Rptr: QueueBase generic map(queue_depth => 2, data_width => g_data_width)
+      Rptr: QueueBase generic map(name => name & "-Rptr-" & Convert_To_String(J),
+		  			queue_depth => 2, data_width => g_data_width)
         port map(clk      => clock,
                  reset    => reset,
                  data_in  => repeater_in      ((J+1)*(g_data_width) -1 downto (J*(g_data_width))),
@@ -98,7 +101,8 @@ begin  -- behave
 
   -- residual block
   cmerge: CombinationalMux
-    generic map(g_data_width        => g_data_width,
+    generic map(name => name & "-cmerge-residual",
+		g_data_width        => g_data_width,
                 g_number_of_inputs  => c_residual_num_inputs_per_tree)
     port map(in_data    => in_data    ((g_number_of_inputs*g_data_width-1) downto
                                        ((g_number_of_inputs*g_data_width) -
@@ -113,7 +117,8 @@ begin  -- behave
              out_ack    => out_ack    (g_number_of_outputs-1));
 
   -- residual repeater
-  Rptr: QueueBase generic map(queue_depth => 2, data_width => g_data_width)
+  Rptr: QueueBase generic map(name => name & "-Rptr-residual",
+				queue_depth => 2, data_width => g_data_width)
     port map(clk      => clock,
              reset    => reset,
              data_in  => repeater_in      ((g_number_of_outputs)*(g_data_width) -1 downto ((g_number_of_outputs-1)*(g_data_width))),

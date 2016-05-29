@@ -7,7 +7,8 @@ use ahir.merge_functions.all;
 use ahir.mem_component_pack.all;
 
 entity mem_demux is
-  generic ( g_data_width: natural := 10;
+  generic ( name: string;
+	    g_data_width: natural := 10;
             g_id_width : natural := 3;
             g_number_of_outputs: natural := 8;
 	    g_delay_count: natural := 1);
@@ -55,7 +56,7 @@ begin  -- behave
       end if;
     end process;
       
-    Repeater : mem_shift_repeater generic map(g_data_width => g_data_width, g_number_of_stages => g_delay_count)
+    Repeater : mem_shift_repeater generic map(name => name & "-Repeater", g_data_width => g_data_width, g_number_of_stages => g_delay_count)
     port map (
       clk      => clk,
       reset    => reset,

@@ -4,9 +4,10 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.mem_function_pack.all;
 
 entity mem_shift_repeater is
-    generic(g_data_width: integer := 32; g_number_of_stages: natural := 16);
+    generic(name: string; g_data_width: integer := 32; g_number_of_stages: natural := 16);
     port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(g_data_width-1 downto 0);
@@ -37,6 +38,7 @@ begin  -- SimModel
 
     RepGen: for I in 0 to g_number_of_stages-1 generate
       rptr : mem_repeater generic map (
+	name => name & "-RepGen-rptr-" & Convert_To_String(I),
         g_data_width => g_data_width)
         port map (
           clk      => clk,

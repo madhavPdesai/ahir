@@ -3,7 +3,8 @@ use ieee.std_logic_1164.all;
 
 package mem_component_pack is
 component mem_demux 
-  generic ( g_data_width: natural;
+  generic ( name: string;
+	    g_data_width: natural;
             g_id_width : natural;
             g_number_of_outputs: natural;
 	    g_delay_count: natural);
@@ -19,7 +20,8 @@ component mem_demux
 end component;
 
 component mem_repeater 
-    generic(g_data_width: natural);
+    generic(name: string;
+	    g_data_width: natural);
     port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(g_data_width-1 downto 0);
@@ -31,7 +33,8 @@ component mem_repeater
 end component mem_repeater;
 
 component mem_shift_repeater
-    generic(g_data_width: natural; g_number_of_stages: natural);
+    generic(name: string;
+	    g_data_width: natural; g_number_of_stages: natural);
     port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(g_data_width-1 downto 0);
@@ -45,6 +48,7 @@ end component mem_shift_repeater;
 
 component memory_bank 
    generic (
+     name: string;
      g_addr_width: natural;
      g_data_width: natural;
      g_write_tag_width : natural;
@@ -76,7 +80,8 @@ component memory_bank
 end component memory_bank;
 
 component memory_bank_base 
-   generic ( g_addr_width: natural; 
+   generic ( name: string;
+	g_addr_width: natural; 
 	g_data_width : natural;
         g_base_bank_addr_width: natural;
         g_base_bank_data_width: natural);
@@ -91,7 +96,8 @@ component memory_bank_base
 end component memory_bank_base;
 
 component base_bank 
-   generic ( g_addr_width: natural; g_data_width : natural);
+   generic ( name: string;
+	g_addr_width: natural; g_data_width : natural);
    port (datain : in std_logic_vector(g_data_width-1 downto 0);
          dataout: out std_logic_vector(g_data_width-1 downto 0);
          addrin: in std_logic_vector(g_addr_width-1 downto 0);
@@ -103,7 +109,8 @@ end component base_bank;
 
 
 component merge_box_with_repeater 
-  generic (g_data_width: natural;
+  generic (name: string;
+	   g_data_width: natural;
            g_number_of_inputs: natural;
            g_number_of_outputs: natural;
            g_time_stamp_width : natural;   -- width of timestamp
@@ -125,6 +132,7 @@ end component merge_box_with_repeater;
 
 component merge_tree 
   generic (
+    name: string;
     g_number_of_inputs: natural;          
     g_data_width: natural;          -- total width of data
                                           -- (= actual-data & timestamp)
@@ -150,6 +158,7 @@ end component merge_tree;
 component demerge_tree 
   
   generic (
+     name: string;
     g_demux_degree: natural;
     g_number_of_outputs: natural;
     g_data_width: natural;              -- total width of data
@@ -174,6 +183,7 @@ end component demerge_tree;
 component demerge_tree_wrap
   
   generic (
+     name: string;
     g_demux_degree: natural;
     g_number_of_outputs: natural;
     g_data_width: natural;              -- total width of data
@@ -197,6 +207,7 @@ end component demerge_tree_wrap;
 
 component combinational_merge 
   generic (
+     name: string;
     g_data_width       : natural;
     g_number_of_inputs: natural;
     g_time_stamp_width : natural);
@@ -213,6 +224,7 @@ end component combinational_merge;
 
 component combinational_merge_with_repeater
   generic (
+     name: string;
     g_data_width       : natural;
     g_number_of_inputs: natural;
     g_time_stamp_width : natural);
@@ -232,6 +244,7 @@ end component combinational_merge_with_repeater;
 
 component memory_subsystem_core
   generic (
+    name: string;
     num_loads       : natural;
     num_stores      : natural;
     addr_width      : natural;
@@ -268,6 +281,7 @@ end component;
 
 component CombinationalMux is
   generic (
+     name: string;
     g_data_width       : integer := 32;
     g_number_of_inputs: integer := 2);
   port(
@@ -281,6 +295,7 @@ end component CombinationalMux;
 
 component PipelinedMux is
   generic (
+     name: string;
     g_number_of_inputs: natural;          
     g_data_width: natural;          -- total width of data
                                         -- (= actual-data & tag & port_id)
@@ -301,7 +316,8 @@ component PipelinedMux is
 end component PipelinedMux;
 
 component PipelinedMuxStage is 
-  generic (g_data_width: integer := 10;
+  generic (name: string;
+	   g_data_width: integer := 10;
            g_number_of_inputs: integer := 8;
            g_number_of_outputs: integer := 1;
            g_tag_width : integer := 3  -- width of tag
@@ -319,7 +335,8 @@ component PipelinedMuxStage is
 end component PipelinedMuxStage;
 
 component PipelinedDemux is
-  generic ( g_data_width: natural := 10;
+  generic ( name: string;
+	    g_data_width: natural := 10;
             g_destination_id_width : natural := 3;
             g_number_of_outputs: natural := 8);
   port(data_in: in std_logic_vector(g_data_width-1 downto 0);  -- data & destination-id 

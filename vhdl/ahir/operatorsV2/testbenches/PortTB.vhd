@@ -178,7 +178,7 @@ begin
 	signal ip_to_op_ack, op_to_ip_req: std_logic;
 	signal op_to_ip_data: std_logic_vector(data_width-1 downto 0);
      begin
-     	op: OutputPort generic map(num_reqs => num_req, data_width => data_width , no_arbitration => false)
+     	op: OutputPort generic map(name => tb_id & "-op", num_reqs => num_req, data_width => data_width , no_arbitration => false)
 		port map(req => reqL,
 		 	ack => ackL,
 		 	data => din,
@@ -188,7 +188,7 @@ begin
 		 	clk => clock,
 		 	reset => reset);
         
-     	ip: InputPort generic map (num_reqs => num_req, data_width => data_width , no_arbitration => false)
+     	ip: InputPort generic map (name => tb_id & "-ip", num_reqs => num_req, data_width => data_width , no_arbitration => false)
  		port map (req => reqR,
                   	ack => ackR,
                   	data => dout,

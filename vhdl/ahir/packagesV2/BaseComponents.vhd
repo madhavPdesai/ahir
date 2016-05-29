@@ -45,6 +45,7 @@ package BaseComponents is
   end component;
 
   component transition
+    generic (name: string);
     port (
       preds      : in BooleanArray;
       symbol_in  : in boolean;
@@ -52,12 +53,13 @@ package BaseComponents is
   end component;
 
   component out_transition
+    generic (name: string);
       port (preds      : in   BooleanArray;
               symbol_out : out  boolean);
   end component;
 
   component level_to_pulse 
-    generic (forward_delay: integer; backward_delay: integer);
+    generic (name: string; forward_delay: integer; backward_delay: integer);
     port (clk   : in  std_logic;
           reset : in  std_logic;
           lreq: in std_logic;
@@ -67,7 +69,7 @@ package BaseComponents is
   end component;
   
   component control_delay_element 
-    generic (delay_value: integer := 0);
+    generic (name: string; delay_value: integer := 0);
     port (
       req   : in Boolean;
       ack   : out Boolean;
@@ -76,7 +78,7 @@ package BaseComponents is
   end component;
 
   component pipeline_interlock 
-    port (trigger: in boolean;
+    port (name: string; trigger: in boolean;
           enable : in boolean;
           symbol_out : out  boolean;
           clk: in std_logic;
@@ -139,7 +141,7 @@ package BaseComponents is
   end component;
 
   component loop_terminator 
-      generic (max_iterations_in_flight : integer := 4);
+      generic (name: string; max_iterations_in_flight : integer := 4);
       port(loop_body_exit: in boolean;
        loop_continue: in boolean;
        loop_terminate: in boolean;
@@ -205,8 +207,8 @@ package BaseComponents is
    end component;
 
    component conditional_fork is
-       generic (place_capacity: integer := 1; 
-			ntriggers: integer; name : string);
+       generic (name: string; place_capacity: integer := 1; 
+			ntriggers: integer);
        port  (triggers: in BooleanArray(0 to ntriggers-1);
 			in_transition: in Boolean;
 			out_transitions: out BooleanArray(0 to ntriggers-1);
@@ -214,7 +216,9 @@ package BaseComponents is
    end component;
 
   component transition_merge 
-      port (preds      : in   BooleanArray;
+      generic (name: string);
+      port (
+	   preds      : in   BooleanArray;
           symbol_out : out  boolean);
   end component;
   
@@ -257,7 +261,8 @@ package BaseComponents is
   -----------------------------------------------------------------------------
 
   component RigidRepeater
-    generic(data_width: integer := 32);
+    generic(name: string;
+	   data_width: integer := 32);
     port(clk: in std_logic;
          reset: in std_logic;
          data_in: in std_logic_vector(data_width-1 downto 0);
@@ -269,7 +274,8 @@ package BaseComponents is
   end component RigidRepeater;
   
   component BypassRegister 
-  generic(data_width: integer; enable_bypass: boolean); 
+  generic(name: string;
+	   data_width: integer; enable_bypass: boolean); 
   port (
     clk, reset : in  std_logic;
     enable     : in  std_logic;
@@ -284,7 +290,8 @@ package BaseComponents is
   component GenericCombinationalOperator 
   generic
     (
-      operator_id   : string;          -- operator id
+      name: string;
+	   operator_id   : string;          -- operator id
       input1_is_int : Boolean := true; -- false means float
       input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
       input1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
@@ -311,7 +318,8 @@ package BaseComponents is
   component UnsharedOperatorBase 
     generic
       (
-        operator_id   : string;          -- operator id
+        name: string;
+	   operator_id   : string;          -- operator id
         input1_is_int : Boolean := true; -- false means float
         input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
         input1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
@@ -345,7 +353,8 @@ package BaseComponents is
   component SplitOperatorBase
     generic
       (
-        operator_id   : string;          -- operator id
+        name: string;
+	   operator_id   : string;          -- operator id
         input1_is_int : Boolean := true; -- false means float
         input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
         input1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
@@ -431,7 +440,8 @@ package BaseComponents is
 
   component SplitOperatorSharedTB 
     generic
-      ( g_num_req: integer := 2;
+      ( name: string;
+	   g_num_req: integer := 2;
         operator_id: string := "ApIntSle";
         verbose_mode: boolean := false;
         input_data_width: integer := 8;
@@ -445,7 +455,8 @@ package BaseComponents is
   -- register operator
   -----------------------------------------------------------------------------
   component RegisterBase 
-      generic(in_data_width: integer; out_data_width : integer);
+      generic(name: string;
+	   in_data_width: integer; out_data_width : integer);
       port(din: in std_logic_vector(in_data_width-1 downto 0);
            dout: out std_logic_vector(out_data_width-1 downto 0);
            req: in boolean;
@@ -509,6 +520,7 @@ package BaseComponents is
   
   component SynchToAsynchReadInterface 
     generic (
+      name: string;
       data_width : integer);
     port (
       clk : in std_logic;
@@ -579,6 +591,7 @@ package BaseComponents is
 
   component PhiBase 
     generic (
+      name: string;
       num_reqs   : integer;
       data_width : integer;
       bypass_flag: boolean := false);
@@ -610,6 +623,7 @@ package BaseComponents is
 
   component BranchBase
     generic (
+      name: string;
       condition_width : integer);
     port (condition: in std_logic_vector(condition_width-1 downto 0);
           clk,reset: in std_logic;
@@ -619,7 +633,7 @@ package BaseComponents is
   end component;
 
   component SelectBase 
-    generic(data_width: integer; flow_through: boolean := false);
+    generic(name: string; data_width: integer; flow_through: boolean := false);
     port(x,y: in std_logic_vector(data_width-1 downto 0);
          sel: in std_logic_vector(0 downto 0);
          req: in boolean;
@@ -629,7 +643,7 @@ package BaseComponents is
   end component SelectBase;
 
   component Slicebase 
-    generic(in_data_width : integer; high_index: integer; low_index : integer; flow_through : boolean := false);
+    generic(name: string; in_data_width : integer; high_index: integer; low_index : integer; flow_through : boolean := false);
     port(din: in std_logic_vector(in_data_width-1 downto 0);
          dout: out std_logic_vector(high_index-low_index downto 0);
          req: in boolean;
@@ -660,7 +674,7 @@ package BaseComponents is
   -----------------------------------------------------------------------------
   
   component InputMuxBase 
-    generic ( iwidth: integer;
+    generic ( name: string; iwidth: integer;
               owidth: integer;
               twidth: integer;
               nreqs: integer;
@@ -681,7 +695,7 @@ package BaseComponents is
   end component InputMuxBase;
 
   component InputMuxBaseNoData 
-    generic ( twidth: integer;
+    generic ( name: string; twidth: integer;
               nreqs: integer;
               no_arbitration: Boolean);
     port (
@@ -718,7 +732,7 @@ package BaseComponents is
   end component OutputDeMuxBaseNoData;
 
   component OutputDeMuxBase
-    generic(iwidth: integer;
+    generic(name: string; iwidth: integer;
             owidth: integer;
             twidth: integer;
             nreqs: integer;
@@ -775,7 +789,7 @@ package BaseComponents is
   -- called function (in-args+out-args, in-args, out-args, no args)
   -----------------------------------------------------------------------------
   component CallArbiter
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             call_data_width: integer;
             return_data_width: integer;
             tag_length: integer);
@@ -806,7 +820,7 @@ package BaseComponents is
   end component CallArbiter;
 
   component CallArbiterNoInargs
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             return_data_width: integer;
             tag_length: integer);
     port ( -- ready/ready handshake on all ports
@@ -834,7 +848,7 @@ package BaseComponents is
   end component CallArbiterNoInargs;
 
   component CallArbiterNoOutargs
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             call_data_width: integer;
             tag_length: integer);
     port ( -- ready/ready handshake on all ports
@@ -864,7 +878,7 @@ package BaseComponents is
 
 
   component CallArbiterNoInargsNoOutargs
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             tag_length: integer);
     port ( -- ready/ready handshake on all ports
       -- ports for the caller
@@ -890,7 +904,7 @@ package BaseComponents is
 
 
   component CallArbiterUnitary
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             call_data_width: integer;
             return_data_width: integer;
             caller_tag_length: integer;
@@ -920,7 +934,7 @@ package BaseComponents is
 
 
   component CallArbiterUnitaryNoInargs
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             return_data_width: integer;
             caller_tag_length: integer;
             callee_tag_length: integer);
@@ -946,7 +960,7 @@ package BaseComponents is
   end component CallArbiterUnitaryNoInargs;
 
   component CallArbiterUnitaryNoOutargs
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             call_data_width: integer;
             caller_tag_length: integer;
             callee_tag_length: integer);
@@ -973,7 +987,7 @@ package BaseComponents is
 
 
   component CallArbiterUnitaryNoInargsNoOutargs
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             caller_tag_length: integer;
             callee_tag_length: integer);
     port ( -- ready/ready handshake on all ports
@@ -1016,7 +1030,7 @@ package BaseComponents is
   --   encoding.  currently used in split-call arbiters.
   -----------------------------------------------------------------------------
   component  NobodyLeftBehind 
-     generic ( num_reqs : integer := 1);
+     generic (name: string;  num_reqs : integer := 1);
      port (
        clk,reset : in std_logic;
        reqIn : in std_logic_vector(num_reqs-1 downto 0);
@@ -1031,7 +1045,7 @@ package BaseComponents is
   --   (just like operators)
   -----------------------------------------------------------------------------
   component SplitCallArbiter
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
 	  call_data_width: integer;
 	  return_data_width: integer;
 	  caller_tag_length: integer;
@@ -1062,7 +1076,7 @@ package BaseComponents is
   end component SplitCallArbiter;
 
   component SplitCallArbiterNoInargs
-  generic(num_reqs: integer;
+  generic(name: string; num_reqs: integer;
 	  return_data_width: integer;
 	  caller_tag_length: integer;
           callee_tag_length: integer);
@@ -1090,7 +1104,7 @@ package BaseComponents is
   end component SplitCallArbiterNoInargs;
 
   component SplitCallArbiterNoOutargs
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
 	  call_data_width: integer;
 	  caller_tag_length: integer;
           callee_tag_length: integer);
@@ -1120,7 +1134,7 @@ package BaseComponents is
 
 
   component SplitCallArbiterNoInargsNoOutargs
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             caller_tag_length: integer;
             callee_tag_length: integer);
   port ( -- ready/ready handshake on all ports
@@ -1149,7 +1163,7 @@ package BaseComponents is
   -- IO ports
   -----------------------------------------------------------------------------
   component InputPort
-    generic (num_reqs: integer;
+    generic (name: string; num_reqs: integer;
              data_width: integer;
              no_arbitration: boolean);
     port (
@@ -1165,7 +1179,7 @@ package BaseComponents is
   end component;
 
   component InputPortNoData
-    generic (num_reqs: integer;
+    generic (name: string; num_reqs: integer;
              no_arbitration: boolean);
     port (
       -- pulse interface with the data-path
@@ -1179,7 +1193,7 @@ package BaseComponents is
 
 
   component InputPortLevel
-    generic (num_reqs: integer; 
+    generic (name: string; num_reqs: integer; 
              data_width: integer;  
              no_arbitration: boolean);
     port (
@@ -1196,7 +1210,7 @@ package BaseComponents is
 
 
   component InputPortLevelNoData 
-    generic (num_reqs: integer; 
+    generic (name: string; num_reqs: integer; 
              no_arbitration: boolean);
     port (
       -- ready/ready interface with the requesters
@@ -1226,7 +1240,7 @@ package BaseComponents is
   end component;
 
   component OutputPort
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             data_width: integer;
             no_arbitration: boolean);
     port (
@@ -1241,7 +1255,7 @@ package BaseComponents is
 
 
   component OutputPortNoData
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             no_arbitration: boolean);
     port (
       req        : in  BooleanArray(num_reqs-1 downto 0);
@@ -1252,7 +1266,7 @@ package BaseComponents is
   end component;
   
   component OutputPortLevel
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             data_width: integer;
             no_arbitration: boolean);
     port (
@@ -1266,7 +1280,7 @@ package BaseComponents is
   end component;
 
   component OutputPortLevelNoData 
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
             no_arbitration: boolean);
     port (
       req       : in  std_logic_vector(num_reqs-1 downto 0);
@@ -1296,7 +1310,7 @@ package BaseComponents is
   component LoadReqShared
     generic
       (
-	addr_width: integer;
+	name: string; 	addr_width: integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
 	no_arbitration: Boolean;
@@ -1321,6 +1335,7 @@ package BaseComponents is
   component StoreReqShared
     generic
       (
+	name: string;
 	addr_width: integer;
 	data_width : integer;
 	time_stamp_width: integer;
@@ -1405,6 +1420,7 @@ package BaseComponents is
   -- protocol translation, priority encoding
   -----------------------------------------------------------------------------
   component Pulse_To_Level_Translate_Entity 
+    generic (name: string);
     port( rL : in boolean;
           rR : out std_logic;
           aL : out boolean;
@@ -1414,6 +1430,7 @@ package BaseComponents is
   end component;
 
   component Sample_Pulse_To_Level_Translate_Entity 
+    generic (name: string);
     port( rL : in boolean;
           rR : out std_logic;
           aL : out boolean;
@@ -1423,6 +1440,7 @@ package BaseComponents is
   end component;
 
   component Level_To_Pulse_Translate_Entity is
+    generic (name: string);
     port( rL : out std_logic;
         rR : in  boolean;
         aL : in std_logic;
@@ -1432,7 +1450,7 @@ package BaseComponents is
   end component;
 
   component Request_Priority_Encode_Entity
-    generic (num_reqs : integer := 1);
+    generic (name:string; num_reqs : integer := 1);
     port (
       clk,reset : in std_logic;
       reqR : in std_logic_vector;
@@ -1446,7 +1464,7 @@ package BaseComponents is
   -- BinaryEncoder: introduced because Xilinx ISE 13.1 barfs on To_Unsigned
   -----------------------------------------------------------------------------
   component BinaryEncoder
-    generic (iwidth: integer := 3; owidth: integer := 3);
+    generic (name: string; iwidth: integer := 3; owidth: integer := 3);
     port(din: in std_logic_vector(iwidth-1 downto 0);
          dout: out std_logic_vector(owidth-1 downto 0));
   end component;
@@ -1457,7 +1475,8 @@ package BaseComponents is
   -----------------------------------------------------------------------------
   
   component GenericFloatToFloat is
-    generic (tag_width : integer;
+    generic (name: string;
+	   tag_width : integer;
            in_exponent_width: integer;
            in_fraction_width : integer;
            out_exponent_width: integer;
@@ -1479,7 +1498,8 @@ package BaseComponents is
   end component;
 
   component GenericFloatingPointAdderSubtractor
-    generic (tag_width : integer;
+    generic (name: string;
+	     tag_width : integer;
              exponent_width: integer;
              fraction_width : integer;
              round_style : round_type := float_round_style;  -- rounding option
@@ -1499,7 +1519,8 @@ package BaseComponents is
   end component;
 
   component GenericFloatingPointMultiplier
-    generic (tag_width : integer;
+    generic (name: string;
+	     tag_width : integer;
              exponent_width: integer;
              fraction_width : integer;
              round_style : round_type := float_round_style;  -- rounding option
@@ -1518,7 +1539,8 @@ package BaseComponents is
   end component;
   
   component SinglePrecisionMultiplier 
-    generic (tag_width : integer);
+    generic (name: string;
+	     tag_width : integer);
     port(
       INA, INB: in std_logic_vector(31 downto 0);
       OUTM: out std_logic_vector(31 downto 0);
@@ -1531,7 +1553,8 @@ package BaseComponents is
   end component;
 
   component DoublePrecisionMultiplier 
-    generic (tag_width : integer);
+    generic (name: string;
+	     tag_width : integer);
     port(
       INA, INB: in std_logic_vector(63 downto 0);   
       OUTM: out std_logic_vector(63 downto 0);
@@ -1571,7 +1594,8 @@ package BaseComponents is
   end component;
 
   component GenericFloatingPointNormalizer is
-    generic (tag_width : integer := 8;
+    generic (name: string;
+	     tag_width : integer := 8;
              exponent_width: integer := 11;
              fraction_width : integer := 52;
              round_style : round_type := float_round_style;  -- rounding option
@@ -1601,7 +1625,8 @@ package BaseComponents is
   component UnsignedMultiplier 
     
     generic (
-      tag_width     : integer;
+      name: string;
+	     tag_width     : integer;
       operand_width : integer;
       chunk_width   : integer := 8);
 
@@ -1619,7 +1644,8 @@ package BaseComponents is
   component UnsignedShifter 
   
   generic (
-    shift_right_flag   : boolean;
+    name: string;
+	     shift_right_flag   : boolean;
     tag_width     : integer;
     operand_width : integer;
     shift_amount_width: integer);
@@ -1639,7 +1665,8 @@ package BaseComponents is
   component UnsignedAdderSubtractor 
   
   generic (
-    tag_width          : integer;
+    name: string;
+	     tag_width          : integer;
     operand_width      : integer;
     chunk_width        : integer
 	);
@@ -1660,7 +1687,8 @@ package BaseComponents is
 
 
   component GuardInterface is
-	generic (nreqs: integer; delay_flag: boolean);
+	generic (name: string;
+	     nreqs: integer; delay_flag: boolean);
 	port (reqL: in BooleanArray(nreqs-1 downto 0);
 	      ackL: out BooleanArray(nreqs-1 downto 0); 
 	      reqR: out BooleanArray(nreqs-1 downto 0);
@@ -1670,7 +1698,8 @@ package BaseComponents is
   end component;
 
   component SplitGuardInterfaceBase is
-	generic (buffering:integer);
+	generic (name: string;
+	     buffering:integer);
 	port (sr_in: in Boolean;
 	      sa_out: out Boolean;
 	      sr_out: out Boolean;
@@ -1685,7 +1714,8 @@ package BaseComponents is
   end component;
 
   component SplitSampleGuardInterfaceBase is
-	generic (buffering:integer);
+	generic (name: string;
+	     buffering:integer);
 	port (sr_in: in Boolean;
 	      sa_out: out Boolean;
 	      sr_out: out Boolean;
@@ -1700,7 +1730,8 @@ package BaseComponents is
   end component;
 
   component SplitUpdateGuardInterfaceBase is
-	generic (buffering:integer);
+	generic (name: string;
+	     buffering:integer);
 	port (sr_in: in Boolean;
 	      sa_out: out Boolean;
 	      sr_out: out Boolean;
@@ -1715,7 +1746,8 @@ package BaseComponents is
   end component;
 
   component SplitGuardInterface is
-	generic (nreqs: integer; buffering: IntegerArray; use_guards: BooleanArray;
+	generic (name: string;
+	     		nreqs: integer; buffering: IntegerArray; use_guards: BooleanArray;
 			sample_only: Boolean; update_only: Boolean);
 	port (sr_in: in BooleanArray(nreqs-1 downto 0);
 	      sa_out: out BooleanArray(nreqs-1 downto 0); 
@@ -2211,7 +2243,7 @@ package BaseComponents is
 
 
   component LevelMux 
-    generic(num_reqs: integer;
+    generic(name: string; num_reqs: integer;
 	  data_width: integer;
 	  no_arbitration: boolean := true);
     port (
@@ -2224,7 +2256,7 @@ package BaseComponents is
     clk, reset      : in  std_logic);
   end component;
 
-  component CounterBase generic(data_width : integer);
+  component CounterBase generic(name: string; data_width : integer);
 	port(clk, reset: in std_logic; count_out: out std_logic_vector(data_width-1 downto 0));
   end component;
 

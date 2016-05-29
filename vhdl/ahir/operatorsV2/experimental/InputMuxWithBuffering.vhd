@@ -71,7 +71,7 @@ begin  -- Behave
      end process;
 
 
-     rxBuf: ReceiveBuffer generic map(name => name & "-receive-buffer-" & Convert_To_String(I),
+     rxBuf: ReceiveBuffer generic map(name => name & "-rxBuf-" & Convert_To_String(I),
 					buffer_size =>  buffering(I),
 					data_width => owidth,
 					full_rate => full_rate)
@@ -91,7 +91,7 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   -- second-stage "fairify" the level-reqs (to avoid starvation).
   -----------------------------------------------------------------------------
-  fairify: NobodyLeftBehind generic map (num_reqs => nreqs)
+  fairify: NobodyLeftBehind generic map (name => name & "-fairify", num_reqs => nreqs)
 		port map (clk => clk, reset => reset, reqIn => reqFromRx, ackOut => ackToRx,
 					reqOut => reqFair, ackIn => ackFair);
 
@@ -129,6 +129,7 @@ begin  -- Behave
   -- tag generation
   -----------------------------------------------------------------------------
   taggen : BinaryEncoder generic map (
+    name => name & "-taggen",
     iwidth => nreqs,
     owidth => twidth)
     port map (
@@ -143,7 +144,7 @@ begin  -- Behave
   ifReg: if registered_output generate
         
       oqueue : QueueBase generic map (
-	name => name & "-output-reg-queue",
+	name => name & "-oqueue",
         queue_depth => 2,
         data_width  => twidth + owidth)
         port map (

@@ -8,6 +8,7 @@ use ahir.mem_component_pack.all;
 
 entity demerge_tree_wrap is
   generic (
+    name: string;
     g_demux_degree: natural;
     g_number_of_outputs: natural;
     g_data_width: natural;
@@ -35,6 +36,7 @@ begin
       
       demTree: component demerge_tree
         generic map (
+          name => name & "-demTree", 
           g_data_width => g_data_width,
           g_id_width   => g_id_width,
           g_number_of_outputs => g_number_of_outputs,

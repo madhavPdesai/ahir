@@ -54,6 +54,7 @@ begin
 
   TbGen: for I in 0 to num_loads-1 generate
     TestBlock : Unordered_Mem_Test_Block generic map (
+      name => "-TestBlock" & Convert_To_String(I),
       data_width => data_width,
       addr_width => addr_width,
       tag_width  => tag_width,
@@ -82,6 +83,7 @@ begin
 
   memsys: UnorderedMemorySubsystem
     generic map (
+      name => "-memsys",
       data_width => data_width,
       addr_width => addr_width,
       tag_width  => tag_width,

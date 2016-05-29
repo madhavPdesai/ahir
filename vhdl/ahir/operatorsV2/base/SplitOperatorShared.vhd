@@ -78,7 +78,7 @@ begin  -- Behave
   -- end generate DebugGen;
   
    imuxWithInputBuf: InputMuxWithBuffering
-      generic map(name => name & " imux " , 
+      generic map(name => name & "-imux " , 
 		iwidth => iwidth*num_reqs,
                 owidth => iwidth, 
                 twidth => tag_length,
@@ -100,6 +100,7 @@ begin  -- Behave
 
   op: SplitOperatorBase
     generic map (
+      name => name & "-op",
       operator_id   => operator_id,
       input1_is_int => input1_is_int,
       input1_characteristic_width => input1_characteristic_width,
@@ -134,7 +135,7 @@ begin  -- Behave
 
   odemux: OutputDeMuxBaseWithBuffering
     generic map (
-        name => name & " odemux ",
+        name => name & "-odemux ",
   	iwidth => owidth,
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,

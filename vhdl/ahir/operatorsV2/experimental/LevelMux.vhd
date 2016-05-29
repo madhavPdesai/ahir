@@ -12,7 +12,8 @@ use ahir.BaseComponents.all;
 -- a simple multiplexor with output
 -- queue.
 entity LevelMux is
-  generic(num_reqs: integer;
+  generic(name:string;
+	  num_reqs: integer;
 	  data_width: integer;
 	  no_arbitration: boolean := true);
   port (
@@ -36,7 +37,7 @@ architecture Base of LevelMux is
 begin
 
   -- input arbitration.
-  fairify: NobodyLeftBehind generic map(num_reqs => num_reqs)
+  fairify: NobodyLeftBehind generic map(name => name & "-fairify", num_reqs => num_reqs)
 		port map(clk => clk, reset => reset,
 				reqIn => write_req,
 				ackOut => write_ack,
@@ -89,7 +90,7 @@ begin
   q_pop_req  <= read_req;
   read_ack   <= q_pop_ack;
   read_data  <= q_data_out;
-  oQ:  QueueBase generic map(name => "-level-mux-queue", queue_depth => 2, data_width => data_width)
+  oQ:  QueueBase generic map(name => "-oQ", queue_depth => 2, data_width => data_width)
 	port map( clk => clk, reset => reset,
 			data_in => q_data_in,
 			push_req => q_push_req,

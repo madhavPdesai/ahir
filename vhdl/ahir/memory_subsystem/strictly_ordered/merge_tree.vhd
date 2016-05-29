@@ -8,6 +8,7 @@ use ahir.mem_component_pack.all;
 
 entity merge_tree is
   generic (
+    name: string;
     g_number_of_inputs: natural;          
     g_data_width: natural;          -- total width of data
                                         -- (= actual-data & timestamp)
@@ -65,6 +66,7 @@ begin  -- behave
     -- mbox with repeater has multiple outputs, with tree driving
     -- each output and repeater present at each output.
     mBoxPipeStage : merge_box_with_repeater generic map (
+      name => name & "-mBoxPipeState-" & Convert_To_String(LEVEL),
       g_data_width => g_data_width,
       g_number_of_inputs => Stage_Width(LEVEL,g_mux_degree,g_number_of_inputs),
       g_number_of_outputs => Stage_Width(LEVEL+1,g_mux_degree,g_number_of_inputs),
@@ -102,6 +104,7 @@ begin  -- behave
 
   -- to the right (pad the required number of shifts)
   finalRptr : mem_shift_repeater generic map (
+    name => name & "-finalRptr",
     g_data_width => g_data_width,
     g_number_of_stages => c_residual_num_stages)
     port map (

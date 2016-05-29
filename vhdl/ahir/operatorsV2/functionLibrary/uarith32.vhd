@@ -32,10 +32,12 @@ begin
    tag_in(0) <= '0';
 
    p2l: Sample_Pulse_To_Level_Translate_Entity
+		generic map(name => "uaddsub32-Operator-p2l")
 		port map (rL => sample_req, rR => start_req,
 				aL => sample_ack, aR => start_ack,
 					clk => clk, reset => reset);
    l2p: Level_To_Pulse_Translate_Entity
+		generic map(name => "uaddsub32-Operator-l2p")
 		port map (rL => fin_req, rR => update_req,
 				aL => fin_ack, aR => update_ack, clk => clk, reset => reset);
 				
@@ -142,10 +144,12 @@ begin
    tag_in(0) <= '0';
 
    p2l: Sample_Pulse_To_Level_Translate_Entity
+		generic map(name => "umul32_Operator_p2l")
 		port map (rL => sample_req, rR => start_req,
 				aL => sample_ack, aR => start_ack,
 					clk => clk, reset => reset);
    l2p: Level_To_Pulse_Translate_Entity
+		generic map(name => "umul32_Operator_l2p")
 		port map (rL => fin_req, rR => update_req,
 				aL => fin_ack, aR => update_ack, clk => clk, reset => reset);
 				
@@ -153,7 +157,7 @@ begin
 
    mul_inst: GenericApIntArithOperator
 		generic map(op_id => "ApIntMul",
-				name => "umul32-mul",
+				name => "umul32-Operator-mul",
 				tag_width => 1,
 				in_operand_width => 32,
 				num_non_constant_inputs => 2,
@@ -254,10 +258,12 @@ begin
    tag_in(0) <= '0';
 
    p2l: Sample_Pulse_To_Level_Translate_Entity
+		generic map (name => "ushift32_Operator_p2l")
 		port map (rL => sample_req, rR => start_req,
 				aL => sample_ack, aR => start_ack,
 					clk => clk, reset => reset);
    l2p: Level_To_Pulse_Translate_Entity
+		generic map (name => "ushift32_Operator_l2p")
 		port map (rL => fin_req, rR => update_req,
 				aL => fin_ack, aR => update_ack, clk => clk, reset => reset);
 				

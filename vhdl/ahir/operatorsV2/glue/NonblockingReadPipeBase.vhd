@@ -42,7 +42,7 @@ architecture default_arch of NonblockingReadPipeBase is
 begin  -- default_arch
 
  
-	pb: PipeBase generic map (name => name & "-core-blocking-pipe" ,
+	pb: PipeBase generic map (name => name & "-pb" ,
 				    num_reads => num_reads,
 					num_writes => num_writes,
 				         data_width => data_width,

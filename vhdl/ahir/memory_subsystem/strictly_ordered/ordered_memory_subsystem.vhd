@@ -12,7 +12,8 @@ use ahir.mem_component_pack.all;
 -- point of acceptance of an access request.
 
 entity ordered_memory_subsystem is
-  generic(num_loads             : natural := 5;
+  generic(name: string;
+	  num_loads             : natural := 5;
           num_stores            : natural := 10;
           addr_width            : natural := 9;
           data_width            : natural := 5;
@@ -126,6 +127,7 @@ begin
     lr_tag_in_core((LOAD+1)*tag_width-1 downto LOAD*tag_width) <= load_repeater_data_out(LOAD)(tag_width+time_stamp_width-1 downto time_stamp_width);
     
     Rptr : mem_shift_repeater generic map (
+      name => name & "-load-Rptr-" & Convert_To_String(LOAD),
       g_data_width => time_stamp_width+ addr_width + tag_width,
 	g_number_of_stages => 1)
       port map (
@@ -156,6 +158,7 @@ begin
     sr_tag_in_core((STORE+1)*tag_width-1 downto STORE*tag_width) <= store_repeater_data_out(STORE)(tag_width+time_stamp_width-1 downto time_stamp_width);
     
     Rptr : mem_shift_repeater generic map (
+      name => name & "-store-Rptr-" & Convert_To_String(STORE),
       g_data_width => time_stamp_width+data_width + addr_width + tag_width,
       g_number_of_stages => 1)
       port map (
@@ -172,6 +175,7 @@ begin
 
   core: memory_subsystem_core
     generic map (
+      name => name & "-core",
       num_loads            => num_loads,
       num_stores           => num_stores,
       addr_width           => addr_width,

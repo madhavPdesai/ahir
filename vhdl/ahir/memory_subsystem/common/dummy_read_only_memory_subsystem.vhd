@@ -10,7 +10,8 @@ use ahir.mem_component_pack.all;
 -- a dummy ROM  which is never initialized.
 -- any load to it returns 0.
 entity dummy_read_only_memory_subsystem is
-  generic(num_loads             : natural := 5;
+  generic(name: string;
+	  num_loads             : natural := 5;
           addr_width            : natural := 9;
           data_width            : natural := 5;
           tag_width             : natural := 7);

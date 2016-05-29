@@ -9,7 +9,8 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity InputMuxBaseNoData is
-  generic ( twidth: integer;
+  generic (name: string;
+	   twidth: integer;
 	   nreqs: integer;
 	   no_arbitration: Boolean := false);
   port (
@@ -45,6 +46,7 @@ begin  -- Behave
       P2LBlk: block
       begin  -- block P2L          
         p2Linst: Pulse_To_Level_Translate_Entity
+	   generic map (name => name & "-p2Linst-" & Convert_To_String(I))
           port map (rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),
                                  clk => clk, reset => reset);
       end block P2LBlk;
@@ -64,7 +66,7 @@ begin  -- Behave
 
   Arbitration: if not no_arbitration generate
     rpeInst: Request_Priority_Encode_Entity
-      generic map (num_reqs => reqP'length)
+      generic map (name => name & "-rpeInst", num_reqs => reqP'length)
       port map( clk => clk,
                 reset => reset,
                 reqR => reqP,
@@ -79,6 +81,7 @@ begin  -- Behave
   -- tag generation
   -----------------------------------------------------------------------------
   taggen : BinaryEncoder generic map (
+    name => name & "-taggen", 
     iwidth => nreqs,
     owidth => twidth)
     port map (

@@ -115,6 +115,7 @@ begin
   end generate ProTx;
 
   demux : InputPortLevel generic map (
+    name => name & "-demux",
     num_reqs       => num_reqs,
     data_width     => data_width,
     no_arbitration => no_arbitration)

@@ -12,7 +12,8 @@ use ahir.mem_component_pack.all;
 -- point of acceptance of an access request.
 
 entity UnorderedMemorySubsystem is
-  generic(num_loads             : natural := 5;
+  generic(name: string;
+	  num_loads             : natural := 5;
           num_stores            : natural := 10;
           addr_width            : natural := 9;
           data_width            : natural := 5;
@@ -204,7 +205,7 @@ begin
    end process;
  
    -- Readmux instantiation.
-   rmux: PipelinedMux generic map(g_number_of_inputs => num_loads,
+   rmux: PipelinedMux generic map(name => name & "-rmux", g_number_of_inputs => num_loads,
 				g_data_width => rd_mux_data_width,
 			        g_mux_degree => mux_degree,
 				g_port_id_width => c_load_port_id_width)
@@ -225,7 +226,7 @@ begin
     
 				
    -- Writemux instantiation.
-   wmux: PipelinedMux generic map(g_number_of_inputs => num_stores,
+   wmux: PipelinedMux generic map(name => name & "-wmux", g_number_of_inputs => num_stores,
 				g_data_width => wr_mux_data_width,
 			        g_mux_degree => mux_degree,
 				g_port_id_width => c_store_port_id_width)
@@ -248,7 +249,8 @@ begin
 
 
     -- the memory bank..
-    mbank: memory_bank generic map(g_addr_width => addr_width,
+    mbank: memory_bank generic map(name => name & "-mbank", 
+				   g_addr_width => addr_width,
 				   g_data_width => data_width,
 				   g_write_tag_width => (tag_width + c_store_port_id_width),
 				   g_read_tag_width => (tag_width + c_load_port_id_width),
@@ -281,7 +283,8 @@ begin
     rd_demux_in_req <= mem_bank_read_result_ready;
     mem_bank_read_result_accept <= rd_demux_in_ack;
  
-    rd_demux: PipelinedDemux generic map (g_data_width => data_width+tag_width,
+    rd_demux: PipelinedDemux generic map (name => name & "-rd_demux",
+					g_data_width => data_width+tag_width,
 				       g_destination_id_width => c_load_port_id_width,
 				       g_number_of_outputs => num_loads)
 		port map(data_in => rd_demux_data_in,
@@ -313,7 +316,8 @@ begin
     wr_demux_in_req <= mem_bank_write_result_ready;
     mem_bank_write_result_accept <= wr_demux_in_ack;
     
-    wr_demux: PipelinedDemux generic map (g_data_width => tag_width,
+    wr_demux: PipelinedDemux generic map (name => name & "-wr_demux",
+					g_data_width => tag_width,
 				       g_destination_id_width => c_store_port_id_width,
 				       g_number_of_outputs => num_stores)
 		port map(data_in => wr_demux_data_in,

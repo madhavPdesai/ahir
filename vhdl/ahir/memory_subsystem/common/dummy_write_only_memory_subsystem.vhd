@@ -9,7 +9,8 @@ use ahir.mem_component_pack.all;
 -- a dummy write-only memory (perfectly useless,
 -- but plug-in for corner cases).
 entity dummy_write_only_memory_subsystem is
-  generic( num_stores            : natural := 10;
+  generic(name: string;
+	  num_stores            : natural := 10;
           addr_width            : natural := 9;
           data_width            : natural := 5;
           tag_width             : natural := 7);

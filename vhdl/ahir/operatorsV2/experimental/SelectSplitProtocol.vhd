@@ -36,7 +36,7 @@ begin
 
      noFlowThrough: if (not flow_through) generate
     	ilb: InterlockBuffer 
-		generic map(name => name & " ilb ",
+		generic map(name => name & "-ilb",
 				buffer_size => buffering,
 				in_data_width => data_width,
 				out_data_width => data_width, full_rate => full_rate)

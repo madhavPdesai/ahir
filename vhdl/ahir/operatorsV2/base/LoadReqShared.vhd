@@ -11,6 +11,7 @@ use ahir.BaseComponents.all;
 entity LoadReqShared is
   generic
     (
+	name: string;
 	addr_width: integer := 8;
       	num_reqs : integer := 1; -- how many requesters?
 	tag_length: integer := 1;
@@ -88,7 +89,8 @@ begin  -- Behave
 
   
   imux: InputMuxBase
-    generic map(iwidth => iwidth,
+    generic map(name => name & "-imux",
+		iwidth => iwidth,
                 owidth => owidth, 
                 twidth => tag_length,
                 nreqs => num_reqs,

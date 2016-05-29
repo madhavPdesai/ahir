@@ -72,6 +72,7 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   comb_block: GenericCombinationalOperator
     generic map (
+      name => name & "-comb_block",
       operator_id                 => operator_id,
       input1_is_int               => input1_is_int,
       input1_characteristic_width => input1_characteristic_width,
@@ -98,7 +99,7 @@ begin  -- Behave
     -----------------------------------------------------------------------------
     ilb: InterlockBuffer 
 
-	  generic map(name => name & " ilb ",
+	  generic map(name => name & "-ilb",
 			  buffer_size => buffering,
 			  in_data_width => owidth,
 			  out_data_width => owidth, 

@@ -1369,7 +1369,7 @@ void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 		}
 		ofile << ";" << endl;
 		ofile << "branch_instance: BranchBase -- {" << endl;
-		ofile << " generic map( condition_width => " << in_width << ")" << endl;
+		ofile << " generic map( name => \"" << s->Get_VHDL_Id() << "\", condition_width => " << in_width << ")" << endl;
 		ofile << " port map( -- { " << endl << " condition => condition_sig";
 		ofile << "," << endl;
 		ofile << "req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() << "," <<  endl
@@ -1779,7 +1779,6 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	      int bufv = ( (max_inbuf > max_outbuf) ? max_inbuf : max_outbuf);
 	      ofile << "UnsharedOperator: UnsharedOperatorWithBuffering -- {" << endl;
 	      ofile << "generic map ( -- { " ;
-	  
 	      // a ton of generics..
 	      ofile << " operator_id => " << vhdl_op_id << "," << endl  // operator-id
 		    << " name => " << iname << "," << endl
@@ -3096,14 +3095,13 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 		bool use_in_buffering = (called_module->Get_In_Arg_Width() > 0);
 
 		ofile << "CallReq: " << imux_name << " -- {" << endl;
-		ofile << "generic map ( ";
+		ofile << "generic map (name => \"" << imux_name << "\"," << endl;
 
 		if(use_in_buffering)
 		{
 			ofile << " iwidth => " << in_width << "," << endl
 				<< " owidth => " << in_width/num_reqs << "," << endl;
 
-			ofile << " name => " << '"' << imux_name << '"' << ","  << endl;
 			ofile << " buffering => inBUFs,"  << endl;
 
 			ofile << " full_rate => " << (full_rate ? " true," : " false,") << endl;
@@ -3615,7 +3613,7 @@ string vcDataPath::Print_VHDL_Call_Interface_Port_Map(string comma, ostream& ofi
   void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, string req, string ack, bool delay_flag, ostream& ofile)
   {
 
-	  ofile << inst_id << ": GuardInterface generic map(nreqs => " << num_reqs 
+	  ofile << inst_id << ": GuardInterface generic map(name => \"" << inst_id << "\", nreqs => " << num_reqs 
 		  << ", delay_flag => " << (delay_flag ? "true" : "false") << ") -- { " << endl
 		  << "port map(reqL => " << req_unguarded << "," << endl
 		  << "ackL => " << ack_unguarded << "," << endl
@@ -3631,7 +3629,7 @@ string vcDataPath::Print_VHDL_Call_Interface_Port_Map(string comma, ostream& ofi
 		  string sr_in, string sa_out,  string sr_out, string sa_in,
 		  string cr_in, string ca_out,  string cr_out, string ca_in, ostream& ofile)
   {
-	  ofile << inst_id << ": SplitGuardInterface generic map(nreqs => " << num_reqs
+	  ofile << inst_id << ": SplitGuardInterface generic map(name => \"" << inst_id << "\", nreqs => " << num_reqs
 		  << ", buffering => " << buffering << ", use_guards => " << guard_flags << ", "
 		  << " sample_only => " << (sample_only ? "true" : "false" ) << ", " 
 		  << " update_only => " << (update_only ? "true" : "false" ) 

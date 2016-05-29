@@ -89,7 +89,7 @@ begin  -- Behave
 	Tsb: block 
 		signal time_stamp: std_logic_vector(time_stamp_width-1 downto 0);
 	begin
-		tsc: CounterBase generic map(data_width => time_stamp_width)
+		tsc: CounterBase generic map(name => name & "-TstampGen-Tsb", data_width => time_stamp_width)
 			port map(clk => clk, reset => reset, count_out => time_stamp);
 
 		rxInDataGen: for I in 0 to num_reqs-1 generate
@@ -106,7 +106,7 @@ begin  -- Behave
 
   -- receive buffers.
   RxGen: for I in 0 to num_reqs-1 generate
-	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
+	rb: ReceiveBuffer generic map(name => name & "-RxGen-rb-" & Convert_To_String(I),
 					buffer_size => Maximum(2,input_buffering(I)),
 					data_width => rx_word_length,
 					full_rate => false) -- Load-data-path will be double buffered.
@@ -133,7 +133,8 @@ begin  -- Behave
   -- the multiplexor.
   NonTrivTstamp: if time_stamp_width > 0 generate
   	imux: merge_tree
-    	   generic map(g_number_of_inputs => num_reqs,
+    	   generic map(name => name & "-NonTrivTstamp-imux",
+		g_number_of_inputs => num_reqs,
 		g_data_width => rx_word_length,
                 g_time_stamp_width => time_stamp_width, 
                 g_tag_width => tag_length,
@@ -151,7 +152,8 @@ begin  -- Behave
   end generate NonTrivTstamp;
 
   TrivTstamp: if time_stamp_width < 1 generate
-	imux: LevelMux generic map (num_reqs => num_reqs, data_width => rx_word_length, no_arbitration => false)
+	imux: LevelMux generic map (name => name & "-TrivTstamp-imux",
+				num_reqs => num_reqs, data_width => rx_word_length, no_arbitration => false)
 		port map(write_req => imux_data_in_valid,
 			 write_ack => imux_data_in_accept,
 			 write_data => imux_data_in,

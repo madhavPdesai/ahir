@@ -42,7 +42,7 @@ begin  -- Behave
 
   odemux: OutputDemuxBaseNoData
     generic map (
-      name => name & " odemux in StoreComplete",
+      name => name & "-odemux",
       twidth =>  tag_length,
       nreqs  => num_reqs,
       detailed_buffering_per_output => detailed_buffering_per_output)

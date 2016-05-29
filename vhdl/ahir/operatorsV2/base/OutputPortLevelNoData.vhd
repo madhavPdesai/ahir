@@ -9,7 +9,7 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity OutputPortLevelNoData is
-  generic(num_reqs: integer;
+  generic(name: string; num_reqs: integer;
 	no_arbitration: boolean := false);
   port (
     req       : in  std_logic_vector(num_reqs-1 downto 0);
@@ -23,7 +23,7 @@ architecture Base of OutputPortLevelNoData is
   signal req_active, ack_sig , fair_reqs, fair_acks : std_logic_vector(num_reqs-1 downto 0);
 begin
   
-  fairify: NobodyLeftBehind generic map(num_reqs => num_reqs)
+  fairify: NobodyLeftBehind generic map(name => name & "-fairify", num_reqs => num_reqs)
 		port map(clk => clk, reset => reset,
 				reqIn => req,
 				ackOut => ack,

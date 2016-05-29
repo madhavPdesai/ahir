@@ -40,7 +40,7 @@ begin  -- default_arch
  
 
   -- join.
-    reqJoin: join2 generic map (name => name & " synch-buf-req-join", bypass => true)
+    reqJoin: join2 generic map (name => name & "-reqJoin", bypass => true)
 			port map (pred0 => write_req, pred1 => read_req, symbol_out => joined_req,
 					clk => clk, reset => reset);
 

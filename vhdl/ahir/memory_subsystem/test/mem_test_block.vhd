@@ -7,7 +7,7 @@ use ahir.merge_functions.all;
 use ahir.mem_component_pack.all;
 
 entity Mem_Test_Block is
-  generic(data_width, addr_width,tag_width, block_id, iteration_count : natural := 0);
+  generic(name: generic; data_width, addr_width,tag_width, block_id, iteration_count : natural := 0);
   port(lr_addr: out std_logic_vector(addr_width-1 downto 0);
        lr_tag : out std_logic_vector(tag_width-1 downto 0);
        lr_req : out std_logic;

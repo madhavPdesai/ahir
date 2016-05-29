@@ -648,7 +648,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
 		ofile << "-- Delay element." << endl;
 		vcCPElement* pred = this->Get_Predecessor(0);
 		ofile << this->Get_Exit_Symbol() << "_delay: control_delay_element "
-			<< " generic map(delay_value => 1) " 
+			<< " generic map(name => \" " << this->Get_Exit_Symbol() << "_delay\", delay_value => 1) " 
 			<< " port map(req => " << pred->Get_Exit_Symbol() 
 			<< ", ack => " << this->Get_Exit_Symbol()
 			<< ", clk => clk, reset =>reset);" << endl;
@@ -889,7 +889,7 @@ void vcTransition::Print_DP_To_CP_VHDL_Link(ostream& ofile)
 
 	string delay_str = "0";
 	ofile << this->Get_Exit_Symbol() << "_link_from_dp: control_delay_element -- { "  << endl
-		<< "generic map (delay_value => " << delay_str << ")" << endl
+		<< "generic map (name => \" " << this->Get_Exit_Symbol() << "_delay\", delay_value => " << delay_str << ")" << endl
 		<< "port map(clk => clk, reset => reset, req => " << this->Get_DP_To_CP_Symbol()
 		<< ", ack => " << this->Get_Exit_Symbol() << "); -- } " << endl;
 }
@@ -910,7 +910,7 @@ void vcTransition::Print_CP_To_DP_VHDL_Link(ostream& ofile)
 	delay_str = "0";
 
 	ofile << this->Get_Exit_Symbol() << "_link_to_dp: control_delay_element -- { "  << endl
-		<< "generic map (delay_value => " << delay_str << ")" << endl
+		<< "generic map (name => \" " << this->Get_Exit_Symbol() << "_delay\", delay_value => " << delay_str << ")" << endl
 		<< "port map(clk => clk, reset => reset, ack => " << this->Get_CP_To_DP_Symbol()
 		<< ", req => " << this->Get_Exit_Symbol() << "); -- } " << endl;
 }
@@ -1853,6 +1853,7 @@ void vcTransitionMerge::Print_VHDL(vcControlPath* cp, ostream& ofile)
 	}
 
 	ofile << this->Get_VHDL_Id() << " : transition_merge -- { " << endl;;
+        ofile << "generic map(name => \" " << this->Get_VHDL_Id() << "\")" << endl;
 	ofile << "port map (preds => preds, symbol_out => " << _out_transition->Get_Exit_Symbol(cp) << ");" << endl;
 	ofile << " -- } } } " << endl;
 	ofile << "end block;" << endl;

@@ -16,7 +16,7 @@ use ieee.numeric_std.all;
 
 
 entity SinglePrecisionMultiplier is
-  generic (tag_width : integer);
+  generic (name: string; tag_width : integer);
   port(
     INA, INB: in std_logic_vector(31 downto 0);
     OUTM: out std_logic_vector(31 downto 0);

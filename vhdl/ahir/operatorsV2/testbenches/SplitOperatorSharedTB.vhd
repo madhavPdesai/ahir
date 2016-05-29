@@ -172,6 +172,7 @@ begin
      op2: SplitOperatorShared
        -- generic map needs to be redone..
        generic map (
+        name => tb_id & "-op2", 
          operator_id  => operator_id,
         input1_is_int => true,
         input1_characteristic_width => 0,

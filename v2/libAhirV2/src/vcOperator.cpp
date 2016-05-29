@@ -398,6 +398,7 @@ void vcPhi::Print_VHDL(ostream& ofile)
 
 	ofile << "phi: PhiBase -- {" << endl
 		<< "generic map( -- { " << endl 
+	        << "name => \"" << this->Get_VHDL_Id() << "\"," << endl
 		<< "num_reqs => " << num_reqs << "," << endl
 		<< "bypass_flag => " << this->Get_Bypass_String() << "," << endl
 		<< "data_width => " << odata_width << ") -- }"  << endl
@@ -1649,7 +1650,7 @@ void vcRegister::Print_VHDL(ostream& ofile)
 		ofile << "req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
 			<< " when " << this->Get_Guard_Wire()->Get_VHDL_Signal_Id() 
 			<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else false;" << endl; 
-		ofile << " ackDelay: control_delay_element generic map(delay_value => 1) "
+		ofile << " ackDelay: control_delay_element generic map(name => \"ackDelay\", delay_value => 1) "
 			<< " port map(req => " 
 			<< this->Get_Req(0)->Get_CP_To_DP_Symbol() 
 			<< ", ack => ack_no_guard, clk => clk, reset => reset);" << endl;
@@ -1666,7 +1667,7 @@ void vcRegister::Print_VHDL(ostream& ofile)
 	}
 
 	ofile << this->Get_VHDL_Id() << ": RegisterBase --{" << endl
-		<< "generic map(in_data_width => " << this->Get_Din()->Get_Size()  << "," 
+		<< "generic map(name => \"" << this->Get_VHDL_Id() << "\", in_data_width => " << this->Get_Din()->Get_Size()  << "," 
 		<< "out_data_width => " << this->Get_Dout()->Get_Size() << ") "
 		<< endl;
 	ofile << " port map( din => " << this->Get_Din()->Get_VHDL_Signal_Id() << "," 

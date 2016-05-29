@@ -9,6 +9,7 @@ use ahir.Utilities.all;
 
 entity Request_Priority_Encode_Entity is
   generic (
+    name: string;
     num_reqs : integer := 1;
     pull_mode : boolean := false);
   port (

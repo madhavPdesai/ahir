@@ -7,7 +7,7 @@ use ahir.Subprograms.all;
 
 -- a simple register
 entity RegisterBase is
-  generic(in_data_width: integer; out_data_width: integer);
+  generic(name: string; in_data_width: integer; out_data_width: integer);
   port(din: in std_logic_vector(in_data_width-1 downto 0);
        dout: out std_logic_vector(out_data_width-1 downto 0);
        req: in boolean;

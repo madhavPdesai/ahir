@@ -3,15 +3,14 @@ use ieee.std_logic_1164.all;
 
 library ahir;
 use ahir.BaseComponents.all;
-use ahir.Utilities.all;
 use ahir.Subprograms.all;
 use ahir.mem_function_pack.all;
 use ahir.merge_functions.all;
 use ahir.mem_component_pack.all;
-use ahir.Utilities.all;
 
 entity PipelinedDemux is
-  generic ( g_data_width: natural := 10;
+  generic ( name: string;
+	    g_data_width: natural := 10;
             g_destination_id_width : natural := 3;
             g_number_of_outputs: natural := 8);
   port(data_in: in std_logic_vector(g_data_width-1 downto 0);  -- data & destination-id 
@@ -52,7 +51,9 @@ begin  -- behave
       end if;
     end process;
       
-    Repeater : QueueBase generic map(queue_depth => 2, data_width => g_data_width)
+    Repeater : QueueBase generic map(
+      				name => name & "-Repeater-" & Convert_To_String(I),
+				queue_depth => 2, data_width => g_data_width)
     port map (
       clk      => clk,
       reset    => reset,

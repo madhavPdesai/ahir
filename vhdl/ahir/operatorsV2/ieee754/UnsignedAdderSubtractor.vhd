@@ -59,6 +59,7 @@ use ahir.Utilities.all;
 entity UnsignedAdderSubtractor is
   
   generic (
+    name: string;
     tag_width          : integer;
     operand_width      : integer;
     chunk_width        : integer

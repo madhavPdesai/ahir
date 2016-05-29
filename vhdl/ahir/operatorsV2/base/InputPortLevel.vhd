@@ -8,7 +8,8 @@ use ahir.Utilities.all;
 
 entity InputPortLevel is
   
-  generic (num_reqs: integer := 5; 
+  generic (name: string;
+	num_reqs: integer := 5; 
 	data_width: integer := 8;  
 	no_arbitration: boolean := false);
   port (

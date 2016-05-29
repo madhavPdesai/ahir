@@ -8,6 +8,7 @@ use ahir.subprograms.all;
 
 entity CombinationalMux is
   generic (
+    name : string;
     g_data_width       : integer := 32;
     g_number_of_inputs: integer := 2);
   port(

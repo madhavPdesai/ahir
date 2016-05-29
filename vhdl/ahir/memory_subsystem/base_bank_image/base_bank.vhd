@@ -6,7 +6,7 @@ library pl_mirage;
 use pl_mirage.pl_mirage_component_package.all;
 
 entity base_bank is
-   generic ( g_addr_width: natural := 10; g_data_width : natural := 16);
+   generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
    port (datain : in std_logic_vector(g_data_width-1 downto 0);
          dataout: out std_logic_vector(g_data_width-1 downto 0);
          addrin: in std_logic_vector(g_addr_width-1 downto 0);

@@ -19,7 +19,8 @@ use ahir.BaseComponents.all;
 
 
 entity GenericFloatingPointNormalizer is
-  generic (tag_width : integer := 8;
+  generic (name:string; 
+	   tag_width : integer := 8;
            exponent_width: integer := 11;
            fraction_width : integer := 52;
            round_style : round_type := float_round_style;  -- rounding option
@@ -297,7 +298,7 @@ begin
   end process;
   
   -- stage 5: shifter:  sfract := fract srl shiftr;   
-  us: UnsignedShifter generic map(shift_right_flag => true,
+  us: UnsignedShifter generic map(name=> name & "-us", shift_right_flag => true,
 					tag_width => shift_tag_in'length,
 					operand_width => shift_in'length,
 					shift_amount_width => shift_amount'length)

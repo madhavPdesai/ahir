@@ -7,7 +7,7 @@ use ahir.Subprograms.all;
 
 -- a simple slicing element.
 entity Slicebase is
-  generic(in_data_width : integer; high_index: integer; low_index : integer; flow_through : boolean := false);
+  generic(name: string; in_data_width : integer; high_index: integer; low_index : integer; flow_through : boolean := false);
   port(din: in std_logic_vector(in_data_width-1 downto 0);
        dout: out std_logic_vector(high_index-low_index downto 0);
        req: in boolean;

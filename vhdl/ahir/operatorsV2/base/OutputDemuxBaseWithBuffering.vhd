@@ -47,7 +47,7 @@ architecture Behave of OutputDeMuxBaseWithBuffering is
   --alias buffer_sizes: IntegerArray(detailed_buffering_per_output'length-1 downto 0) is detailed_buffering_per_output;
 
 begin  -- Behave
-  assert(owidth = iwidth*nreqs) report "word-length mismatch in output demux" severity failure;
+  assert(owidth = iwidth*nreqs) report "word-length mismatch in output demux " & name severity failure;
 
   bufGen: for I in 0 to nreqs-1 generate
 

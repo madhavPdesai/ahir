@@ -15,7 +15,8 @@ use ahir.mem_component_pack.all;
 -------------------------------------------------------------------------------
 
 entity register_bank is
-  generic(num_loads             : natural := 5;
+  generic(name: string;
+	  num_loads             : natural := 5;
           num_stores            : natural := 10;
           addr_width            : natural := 9;
           data_width            : natural := 5;

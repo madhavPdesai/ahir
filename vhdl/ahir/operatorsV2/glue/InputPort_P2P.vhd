@@ -71,7 +71,7 @@ begin
 	   update_ack <= ua(0);
 
 	   ipr: InputPortRevised
-			generic map (name => name & "-input-port-revised",
+			generic map (name => name & "-ipr",
 							num_reqs => 1, 
 							data_width => data_width,
 							output_buffering => bufs,
@@ -90,7 +90,7 @@ begin
   bufGtOne: if (queue_depth > 1) generate
      sample_ack <= sample_req; -- sacrificial
      ub: UnloadBuffer
-	generic map (name => name & "-unload-buffer", 
+	generic map (name => name & "-ub", 
 				data_width => data_width,
 				   buffer_size => queue_depth, 
 					bypass_flag => true, 

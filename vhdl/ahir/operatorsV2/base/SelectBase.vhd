@@ -5,7 +5,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 
 entity SelectBase is
-  generic(data_width: integer; flow_through: boolean := false);
+  generic(name: string; data_width: integer; flow_through: boolean := false);
   port(x,y: in std_logic_vector(data_width-1 downto 0);
        sel: in std_logic_vector(0 downto 0);
        req: in boolean;

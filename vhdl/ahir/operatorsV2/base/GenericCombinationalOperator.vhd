@@ -15,6 +15,7 @@ use ahir_ieee_proposed.float_pkg.all;
 entity GenericCombinationalOperator is
   generic
     (
+      name: string;
       operator_id   : string := "ApIntAdd";          -- operator id
       input1_is_int : Boolean := true; -- false means float
       input1_characteristic_width : integer := 0; -- characteristic width if input1 is float

@@ -13,7 +13,7 @@ use ahir.BaseComponents.all;
 -- the update.  (used on input ports).
 --  Madhav P. Desai.
 entity SplitUpdateGuardInterfaceBase is
-	generic (buffering:integer);
+	generic (name: string; buffering:integer);
 	port (sr_in: in Boolean;
 	      sa_out: out Boolean;
 	      sr_out: out Boolean;

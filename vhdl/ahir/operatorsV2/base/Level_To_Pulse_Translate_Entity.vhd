@@ -6,7 +6,9 @@ use ieee.std_logic_1164.all;
 -- to interface to the control path.
 -- Madhav Desai.
 entity Level_To_Pulse_Translate_Entity is
-  port( rL : out std_logic;
+  generic (name : string);
+  port(
+	rL : out std_logic;
         rR : in  boolean;
         aL : in std_logic;
         aR : out boolean;

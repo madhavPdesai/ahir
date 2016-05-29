@@ -8,7 +8,8 @@ use ahir.mem_component_pack.all;
 -- TODO: some bug here.
 
 entity merge_box_with_repeater is 
-  generic (g_data_width: natural := 10;
+  generic (name: string;
+	   g_data_width: natural := 10;
            g_number_of_inputs: natural := 8;
            g_number_of_outputs: natural := 1;
            g_time_stamp_width : natural := 3;   -- width of timestamp
@@ -91,7 +92,8 @@ begin  -- behave
     genLogic: for J in 0 to g_number_of_outputs-2 generate
 
       cmerge: combinational_merge
-        generic map(g_data_width        => c_actual_data_width,
+        generic map(name => name & "-cmerge" & Convert_To_String(J), 
+		    g_data_width        => c_actual_data_width,
                     g_number_of_inputs  => c_num_inputs_per_tree,
                     g_time_stamp_width  => g_time_stamp_width)
         port map(in_data    => in_data    (((J+1)*c_num_inputs_per_tree*c_actual_data_width)-1
@@ -107,7 +109,8 @@ begin  -- behave
                  out_req    => out_req    (J),
                  out_ack    => out_ack    (J));
 
-      Rptr: mem_shift_repeater generic map(g_data_width => g_data_width, g_number_of_stages => shift_delay)
+      Rptr: mem_shift_repeater generic map(name => name & "-Rptr",
+						g_data_width => g_data_width, g_number_of_stages => shift_delay)
         port map(clk      => clock,
                  reset    => reset,
                  data_in  => repeater_in      ((J+1)*(g_data_width) -1 downto (J*(g_data_width))),
@@ -123,7 +126,7 @@ begin  -- behave
 
   -- residual block
   cmerge: combinational_merge
-    generic map(g_data_width        => c_actual_data_width,
+    generic map(name => name & "-residual-cmerge", g_data_width        => c_actual_data_width,
                 g_number_of_inputs  => c_residual_num_inputs_per_tree,
                 g_time_stamp_width  => g_time_stamp_width)
     port map(in_data    => in_data    ((g_number_of_inputs*c_actual_data_width-1) downto
@@ -144,7 +147,7 @@ begin  -- behave
              out_ack    => out_ack    (g_number_of_outputs-1));
 
   -- residual repeater
-  Rptr: mem_shift_repeater generic map(g_data_width => g_data_width, g_number_of_stages => shift_delay)
+  Rptr: mem_shift_repeater generic map(name => name & "-residual-Rptr", g_data_width => g_data_width, g_number_of_stages => shift_delay)
     port map(clk      => clock,
              reset    => reset,
              data_in  => repeater_in      ((g_number_of_outputs)*(g_data_width) -1 downto ((g_number_of_outputs-1)*(g_data_width))),

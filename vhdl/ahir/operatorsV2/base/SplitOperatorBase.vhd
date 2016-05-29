@@ -12,6 +12,7 @@ use ahir.BaseComponents.all;
 entity SplitOperatorBase is
   generic
     (
+      name: string;
       operator_id   : string := "ApIntAdd";          -- operator id
       input1_is_int : Boolean := true; -- false means float
       input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
@@ -63,6 +64,7 @@ begin  -- Behave
   f2f: if (operator_id = "ApFloatResize") generate
 	f2f_inst: GenericFloatToFloat
 			generic map (
+					name => name & "-f2f_inst",
 					tag_width => twidth,
 					in_exponent_width => input1_characteristic_width,
 					in_fraction_width => input1_mantissa_width,
@@ -86,6 +88,7 @@ begin  -- Behave
     
     comb_block: GenericCombinationalOperator
       generic map (
+	name => name & "-comb_block",
         operator_id                 => operator_id,
         input1_is_int               => input1_is_int,
         input1_characteristic_width => input1_characteristic_width,

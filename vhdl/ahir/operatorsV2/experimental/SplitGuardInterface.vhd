@@ -9,7 +9,7 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity SplitGuardInterface is
-	generic (nreqs: integer; buffering:IntegerArray; use_guards: BooleanArray; 
+	generic (name: string; nreqs: integer; buffering:IntegerArray; use_guards: BooleanArray; 
 			sample_only: Boolean; update_only: Boolean);
 	port (sr_in: in BooleanArray(nreqs-1 downto 0);
 	      sa_out: out BooleanArray(nreqs-1 downto 0); 
@@ -34,7 +34,7 @@ begin
 	     gCase: if gFlags(I) generate
 		SampleOnly: if sample_only generate
 		   sgis: SplitSampleGuardInterfaceBase
-			generic map (buffering => gBufs(I))
+			generic map (name => name & "-gCase-SampleOnly-sgis-" & Convert_To_String(I), buffering => gBufs(I))
 			port map(sr_in => sr_in(I),
 				 sr_out => sr_out(I),
 				 sa_in => sa_in(I),
@@ -49,7 +49,7 @@ begin
 
 		UpdateOnly: if update_only generate
 		   sgiu: SplitUpdateGuardInterfaceBase
-			generic map (buffering => gBufs(I))
+			generic map (name => name & "-gCase-UpdateOnly-sgiu-" & Convert_To_String(I), buffering => gBufs(I))
 			port map(sr_in => sr_in(I),
 				 sr_out => sr_out(I),
 				 sa_in => sa_in(I),
@@ -64,7 +64,7 @@ begin
 
 		SampleAndUpdate: if (not (sample_only or update_only)) generate
 		   sgi: SplitGuardInterfaceBase
-			generic map (buffering => gBufs(I))
+			generic map (name => name & "-gCase-SampleAndUpdate-sgiu-" & Convert_To_String(I), buffering => gBufs(I))
 			port map(sr_in => sr_in(I),
 				 sr_out => sr_out(I),
 				 sa_in => sa_in(I),

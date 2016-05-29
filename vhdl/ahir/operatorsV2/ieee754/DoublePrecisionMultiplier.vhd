@@ -8,7 +8,7 @@ use ieee.numeric_std.all;
 
 
 entity DoublePrecisionMultiplier is
-  generic (tag_width : integer);
+  generic (name: string; tag_width : integer);
   port(
     INA, INB: in std_logic_vector(63 downto 0);   
     OUTM: out std_logic_vector(63 downto 0);

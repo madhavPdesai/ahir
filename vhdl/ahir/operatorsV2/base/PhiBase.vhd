@@ -9,6 +9,7 @@ use ahir.Utilities.all;
 
 entity PhiBase is
   generic (
+    name: string;
     num_reqs   : integer;
     data_width : integer;
     bypass_flag : boolean := false);
@@ -29,7 +30,7 @@ architecture Behave of PhiBase is
    signal req_registered, final_req : BooleanArray(num_reqs-1 downto 0);
 begin  -- Behave
 
-  assert(idata'length = (odata'length * req'length)) report "data size mismatch" severity failure;
+  assert(idata'length = (odata'length * req'length)) report "data size mismatch in PhiBase " & name severity failure;
 
   -- muxed data..
   odata <= MuxOneHot(idata,final_req);

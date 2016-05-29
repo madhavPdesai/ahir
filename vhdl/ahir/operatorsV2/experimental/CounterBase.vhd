@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 
 entity CounterBase is 
-	generic(data_width : integer);
+	generic(name: string; data_width : integer);
 	port(clk, reset: in std_logic; count_out: out std_logic_vector(data_width-1 downto 0));
 end CounterBase;
 

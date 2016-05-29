@@ -8,6 +8,7 @@ use ahir.mem_component_pack.all;
 
 entity combinational_merge_with_repeater is
   generic (
+    name: string;
     g_data_width       : natural;
     g_number_of_inputs: natural;
     g_time_stamp_width : natural);
@@ -34,7 +35,7 @@ architecture Struct of combinational_merge_with_repeater is
 begin  
 
    cmerge: combinational_merge 
-		generic map (g_data_width => g_data_width,
+		generic map (name => name & "-cmerge", g_data_width => g_data_width,
 			 g_number_of_inputs => g_number_of_inputs,
 			 g_time_stamp_width => g_time_stamp_width)
 		port map(in_data => in_data,
@@ -46,7 +47,7 @@ begin
 			 out_req => rep_req_in,
 			 out_ack => rep_ack_out);
 
-    rptr:  mem_repeater generic map (g_data_width => g_data_width)
+    rptr:  mem_repeater generic map (name => name & "-rptr", g_data_width => g_data_width)
 		port map(clk => clk, reset => reset,
 			 data_in => rep_data_in,
 			 req_in => rep_req_in,

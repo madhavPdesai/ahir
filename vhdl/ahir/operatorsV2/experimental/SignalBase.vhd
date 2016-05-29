@@ -36,6 +36,7 @@ begin  -- default_arch
 
   manyWriters: if (num_writes > 1) generate
     wmux : OutputPortLevel generic map (
+      name => name & "-wmux",
       num_reqs       => num_writes,
       data_width     => data_width,
       no_arbitration => false)

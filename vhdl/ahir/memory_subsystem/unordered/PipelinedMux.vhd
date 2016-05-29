@@ -9,6 +9,7 @@ use ahir.mem_component_pack.all;
 
 entity PipelinedMux is
   generic (
+    name : string;
     g_number_of_inputs: natural;          
     g_data_width: natural;          -- total width of data
                                         -- (= actual-data & tag & port_id)
@@ -61,6 +62,7 @@ begin  -- behave
 
     -- Each stage has multiple inputs and multiple outputs..
     mBoxPipeStage : PipelinedMuxStage generic map (
+      name => name & "-mBoxPipeState-" & Convert_To_String(LEVEL),
       g_data_width => g_data_width,
       g_number_of_inputs => Stage_Width(LEVEL,g_mux_degree,g_number_of_inputs),
       g_number_of_outputs => Stage_Width(LEVEL+1,g_mux_degree,g_number_of_inputs))

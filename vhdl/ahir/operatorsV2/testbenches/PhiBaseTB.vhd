@@ -57,6 +57,7 @@ begin  -- Behave
 
         phi : PhiBase
           generic map (
+	    name => "phi",
             num_reqs   => 5,
             data_width => 5)
           port map ( req => req,

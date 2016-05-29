@@ -10,7 +10,7 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpadd32 is -- 
-    generic (tag_length : integer);
+    generic (name: string := "fpadd32"; tag_length : integer);
     port ( -- 
       L : in  std_logic_vector(31 downto 0);
       R : in  std_logic_vector(31 downto 0);
@@ -30,7 +30,8 @@ architecture Struct of fpadd32 is
 begin
 
    adder: GenericFloatingPointAdderSubtractor
-		generic map(tag_width => tag_length,
+		generic map(name => name & "-adder",
+				tag_width => tag_length,
 				exponent_width => 8,
 				fraction_width => 23,
                    		round_style => round_nearest,
@@ -59,7 +60,7 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpadd64 is -- 
-    generic (tag_length : integer);
+    generic (name: string:= "fpadd64"; tag_length : integer);
     port ( -- 
       L : in  std_logic_vector(63 downto 0);
       R : in  std_logic_vector(63 downto 0);
@@ -79,7 +80,7 @@ architecture Struct of fpadd64 is
 begin
 
    adder: GenericFloatingPointAdderSubtractor
-		generic map(tag_width => tag_length,
+		generic map(name => name & "-adder", tag_width => tag_length,
 				exponent_width => 11,
 				fraction_width => 52,
                    		round_style => round_nearest,
@@ -108,7 +109,7 @@ use aHiR_ieee_proposed.float_pkg.all;
 
 
 entity fpmul32 is -- 
-    generic (tag_length : integer);
+    generic (name: string:= "fpmul32"; tag_length : integer);
     port ( -- 
       L : in  std_logic_vector(31 downto 0);
       R : in  std_logic_vector(31 downto 0);
@@ -128,7 +129,7 @@ architecture Struct of fpmul32 is
 begin
 
    mul: GenericFloatingPointMultiplier
-		generic map(tag_width => tag_length,
+		generic map(name => name & "-mul", tag_width => tag_length,
 				exponent_width => 8,
 				fraction_width => 23,
                    		round_style => round_nearest,
@@ -156,7 +157,7 @@ use aHiR_ieee_proposed.float_pkg.all;
 
 
 entity fpmul64 is -- 
-    generic (tag_length : integer);
+    generic (name: string:= "fpmul64"; tag_length : integer);
     port ( -- 
       L : in  std_logic_vector(63 downto 0);
       R : in  std_logic_vector(63 downto 0);
@@ -176,7 +177,7 @@ architecture Struct of fpmul64 is
 begin
 
    mul: GenericFloatingPointMultiplier
-		generic map(tag_width => tag_length,
+		generic map(name => name & "-mul", tag_width => tag_length,
 				exponent_width => 11,
 				fraction_width => 52,
                    		round_style => round_nearest,
@@ -204,7 +205,7 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpsub32 is -- 
-    generic (tag_length : integer);
+    generic (name: string := "fpsub32"; tag_length : integer);
     port ( -- 
       L : in  std_logic_vector(31 downto 0);
       R : in  std_logic_vector(31 downto 0);
@@ -223,8 +224,8 @@ end entity fpsub32;
 architecture Struct of fpsub32 is
 begin
 
-   mul: GenericFloatingPointAdderSubtractor
-		generic map(tag_width => tag_length,
+   sub: GenericFloatingPointAdderSubtractor
+		generic map(name => name & "-sub", tag_width => tag_length,
 				exponent_width => 8,
 				fraction_width => 23,
                    		round_style => round_nearest,
@@ -253,7 +254,7 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpsub64 is -- 
-    generic (tag_length : integer);
+    generic (name: string := "fpsub64"; tag_length : integer);
     port ( -- 
       L : in  std_logic_vector(63 downto 0);
       R : in  std_logic_vector(63 downto 0);
@@ -272,8 +273,8 @@ end entity fpsub64;
 architecture Struct of fpsub64 is
 begin
 
-   mul: GenericFloatingPointAdderSubtractor
-		generic map(tag_width => tag_length,
+   sub: GenericFloatingPointAdderSubtractor
+		generic map(name => name & "-sub", tag_width => tag_length,
 				exponent_width => 11,
 				fraction_width => 52,
                    		round_style => round_nearest,
@@ -302,7 +303,7 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpu32 is -- 
-    generic (tag_length : integer);
+    generic (name: string := "fpu32"; tag_length : integer);
     port ( -- 
       L : in  std_logic_vector(31 downto 0);
       R : in  std_logic_vector(31 downto 0);
@@ -358,7 +359,7 @@ begin
    end process;
 
    addsub: GenericFloatingPointAdderSubtractor
-		generic map(tag_width => tag_length,
+		generic map(name => name & "-addsub", tag_width => tag_length,
 				exponent_width => 8,
 				fraction_width => 23,
                    		round_style => round_nearest,
@@ -374,7 +375,7 @@ begin
 				addi_rdy => addsubi_ack, addo_rdy => addsubo_ack);
 
    mul: GenericFloatingPointMultiplier
-		generic map(tag_width => tag_length,
+		generic map(name => name & "-mul", tag_width => tag_length,
 				exponent_width => 8,
 				fraction_width => 23,
                    		round_style => round_nearest,
@@ -395,7 +396,7 @@ begin
    mulo_req <= acki_omux(0);
 
 
-   omux:  OutputPortLevel generic map(num_reqs => 2,
+   omux:  OutputPortLevel generic map(name => name & "-omux", num_reqs => 2,
 					data_width => data_from_omux'length,
 					no_arbitration => false)
 			port map(req => reqi_omux,
@@ -424,7 +425,7 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpu64 is -- 
-    generic (tag_length : integer);
+    generic (name: string := "fpu64"; tag_length : integer);
     port ( -- 
       L : in  std_logic_vector(63 downto 0);
       R : in  std_logic_vector(63 downto 0);
@@ -478,7 +479,7 @@ begin
    end process;
 
    addsub: GenericFloatingPointAdderSubtractor
-		generic map(tag_width => tag_length,
+		generic map(name => name & "-addsub", tag_width => tag_length,
 				exponent_width => 11,
 				fraction_width => 52,
                    		round_style => round_nearest,
@@ -494,7 +495,7 @@ begin
 				addi_rdy => addsubi_ack, addo_rdy => addsubo_ack);
 
    mul: GenericFloatingPointMultiplier
-		generic map(tag_width => tag_length,
+		generic map(name => name & "-mul", tag_width => tag_length,
 				exponent_width => 11,
 				fraction_width => 52,
                    		round_style => round_nearest,
@@ -515,7 +516,7 @@ begin
    mulo_req <= acki_omux(0);
 
 
-   omux:  OutputPortLevel generic map(num_reqs => 2,
+   omux:  OutputPortLevel generic map(name => name & "-omux", num_reqs => 2,
 					data_width => data_from_omux'length,
 					no_arbitration => false)
 			port map(req => reqi_omux,

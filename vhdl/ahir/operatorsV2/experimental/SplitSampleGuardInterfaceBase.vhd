@@ -13,7 +13,7 @@ use ahir.BaseComponents.all;
 -- the sample.  (used on output ports).
 --  Madhav P. Desai.
 entity SplitSampleGuardInterfaceBase is
-	generic (buffering:integer);
+	generic (name: string; buffering:integer);
 	port (sr_in: in Boolean;
 	      sa_out: out Boolean;
 	      sr_out: out Boolean;

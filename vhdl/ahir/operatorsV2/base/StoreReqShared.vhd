@@ -12,6 +12,7 @@ use ahir.BaseComponents.all;
 entity StoreReqShared is
     generic
     (
+	name: string;
 	addr_width: integer;
 	data_width : integer;
 	time_stamp_width : integer;
@@ -104,7 +105,8 @@ begin  -- Behave
   -- end generate debugCase;
   
   imux: InputMuxBase
-  	generic map(iwidth => (addr_width+data_width)*num_reqs ,
+  	generic map(name => name & "-imux",
+		    iwidth => (addr_width+data_width)*num_reqs ,
                     owidth => addr_width+data_width, 
                     twidth => tag_length,
                     nreqs => num_reqs,

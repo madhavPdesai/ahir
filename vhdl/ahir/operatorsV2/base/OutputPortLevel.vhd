@@ -9,7 +9,7 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity OutputPortLevel is
-  generic(num_reqs: integer;
+  generic(name: string; num_reqs: integer;
 	data_width: integer;
 	no_arbitration: boolean := true);
   port (
@@ -30,7 +30,7 @@ architecture Base of OutputPortLevel is
   
 begin
 
-  fairify: NobodyLeftBehind generic map(num_reqs => num_reqs)
+  fairify: NobodyLeftBehind generic map(name => name & "-fairify", num_reqs => num_reqs)
 		port map(clk => clk, reset => reset,
 				reqIn => req,
 				ackOut => ack,

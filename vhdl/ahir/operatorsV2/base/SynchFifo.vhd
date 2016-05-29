@@ -149,7 +149,8 @@ begin  -- SimModel
 
 
   opReg: SynchToAsynchReadInterface 
-		generic map(data_width => data_width)
+		generic map(name => name & "-opReg", 
+			data_width => data_width)
 		port map(clk => clk, reset => reset,
 			 synch_req => pop_ack_int,
 			 synch_ack => pop_req_int,

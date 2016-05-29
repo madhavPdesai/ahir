@@ -37,7 +37,7 @@ begin
 
     ilb_data_in <= din(high_index downto low_index);
     ilb: InterlockBuffer 
-		generic map(name => name & " ilb ",
+		generic map(name => name & "-ilb",
 				buffer_size => buffering,
 				in_data_width => (high_index - low_index) + 1,
 				out_data_width => (high_index - low_index) + 1, full_rate => full_rate)

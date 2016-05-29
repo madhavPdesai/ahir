@@ -58,6 +58,7 @@ begin
       iteration_count => iteration_count,
       block_id   => I)
       port map (
+        name => "TestBlock-" & Convert_To_String(I), 
         lr_addr   => lr_addr_in((I+1)*addr_width-1 downto I*addr_width),
         lr_tag    => lr_tag_in((I+1)*tag_width-1 downto I*tag_width),
         lr_req    => lr_req_in(I),
@@ -91,6 +92,7 @@ begin
 	base_bank_addr_width => 10,
 	base_bank_data_width => 7)
     port map (
+        name => "-memsys",
         lr_addr_in   => lr_addr_in,
         lr_tag_in    => lr_tag_in,
         lr_req_in    => lr_req_in,

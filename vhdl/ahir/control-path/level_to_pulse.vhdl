@@ -10,7 +10,7 @@ use ahir.BaseComponents.all;
 -- path and also in the pack -> lack path in order
 -- to control the clock period...
 entity level_to_pulse is
-  generic (forward_delay: integer; backward_delay: integer);
+  generic (name: string; forward_delay: integer; backward_delay: integer);
   port (clk   : in  std_logic;
     	reset : in  std_logic;
         lreq: in std_logic;
@@ -63,10 +63,10 @@ begin
     
   end process;
 
-  fDelay: control_delay_element generic map(delay_value => forward_delay)
+  fDelay: control_delay_element generic map(name => name & "-fDelay", delay_value => forward_delay)
 	port map(req => preq_sig, ack => preq, clk => clk, reset => reset);
 
-  bDelay: control_delay_element generic map(delay_value => backward_delay)
+  bDelay: control_delay_element generic map(name => name & "-bDelay", delay_value => backward_delay)
 	port map(req => pack, ack => pack_sig, clk => clk, reset => reset);
 
   

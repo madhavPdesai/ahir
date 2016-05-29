@@ -8,7 +8,8 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity SplitCallArbiter is
-  generic(num_reqs: integer;
+  generic(name: string;
+	  num_reqs: integer;
 	  call_data_width: integer;
 	  return_data_width: integer;
 	  caller_tag_length: integer;
@@ -65,7 +66,7 @@ begin
   -----------------------------------------------------------------------------
   -- "fairify" the call-reqs.
   -----------------------------------------------------------------------------
-  fairify: NobodyLeftBehind generic map (num_reqs => num_reqs)
+  fairify: NobodyLeftBehind generic map (name => name & "-fairify", num_reqs => num_reqs)
 		port map (clk => clk, reset => reset, reqIn => call_reqs, ackOut => call_acks,
 					reqOut => fair_call_reqs, ackIn => fair_call_acks);
 
@@ -147,7 +148,7 @@ begin
  
 
    -- tag generation.
-   tagGen : BinaryEncoder generic map (iwidth => num_reqs,
+   tagGen : BinaryEncoder generic map (name => name & "-tagGen", iwidth => num_reqs,
                                        owidth => callee_tag_length)
      port map (din => pe_call_reqs, dout => callee_mtag_prereg);
 

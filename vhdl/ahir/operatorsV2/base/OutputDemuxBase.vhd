@@ -14,7 +14,7 @@ use ahir.Utilities.all;
 -- reqL -> ackL has at least a unit delay.
 -------------------------------------------------------------------------------
 entity OutputDeMuxBase is
-  generic(iwidth: integer := 4;
+  generic(name: string; iwidth: integer := 4;
 	  owidth: integer := 12;
 	  twidth: integer := 2;
 	  nreqs: integer := 3;
@@ -47,7 +47,7 @@ architecture Behave of OutputDeMuxBase is
   
 begin  -- Behave
 
-  assert(owidth = iwidth*nreqs) report "word-length mismatch in output demux" severity failure;
+  assert(owidth = iwidth*nreqs) report "word-length mismatch in output demux " & name severity failure;
 
   
   -----------------------------------------------------------------------------
@@ -90,7 +90,7 @@ begin  -- Behave
             end if;
 
 	    -- to track down some mixup issues!
-	    assert (valid = '0') report "In Outputdemux: stalled request " & Convert_To_String(I)
+	    assert (valid = '0') report "In Outputdemux " & name & ": stalled request " & Convert_To_String(I)
 			severity warning;
 
           when others => null;

@@ -10,7 +10,7 @@ use ahir.Utilities.all;
 
 
 entity genericRAMwithByteEnable_1xRW_Operator is
-	generic (addr_width: integer; data_width: integer);
+	generic (name: string; addr_width: integer; data_width: integer);
 	port (clk, reset: in std_logic;
 		addr: in std_logic_vector(addr_width-1 downto 0);
 		din:  in std_logic_vector(data_width-1 downto 0);

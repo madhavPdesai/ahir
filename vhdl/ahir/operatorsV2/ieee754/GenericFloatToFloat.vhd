@@ -19,7 +19,8 @@ use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 
 entity GenericFloatToFloat is
-  generic (tag_width : integer := 8;
+  generic (name: string; 
+	   tag_width : integer := 8;
            in_exponent_width: integer := 11;
            in_fraction_width : integer := 52;
            out_exponent_width: integer := 8;

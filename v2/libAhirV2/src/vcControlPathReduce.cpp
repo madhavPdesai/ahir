@@ -547,7 +547,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	  assert(_marked_predecessors.size() == 0);
 	  ofile << "-- Element group " << this->Get_VHDL_Id() << " is a control-delay." << endl;
 	  ofile << "cp_element_" << this->Get_Group_Index() << "_delay: control_delay_element "
-		  << " generic map(delay_value => 1) " 
+		  << " generic map(name => \" " << this->Get_Group_Index() << "_delay\", delay_value => 1) " 
 		  << " port map(req => " << (*(_predecessors.begin()))->Get_VHDL_Id()
 		  << ", ack => " << this->Get_VHDL_Id()
 		  << ", clk => clk, reset =>reset);" << endl;
@@ -680,7 +680,8 @@ void vcCPElementGroup::Print_DP_To_CP_VHDL_Link(ostream& ofile)
 
 	string delay_str = "0";
 	ofile << this->_input_transition->Get_Exit_Symbol() << "_link_from_dp: control_delay_element -- { "  << endl
-		<< "generic map (delay_value => " << delay_str << ")" << endl
+		<< " generic map(name => \" " << this->Get_Group_Index() << "_delay\","
+		<< "delay_value => " << delay_str << ")" << endl
 		<< "port map(clk => clk, reset => reset, req => " << req_str
 		<< ", ack => " << ack_str << "); -- } " << endl;
 }
@@ -701,7 +702,8 @@ void vcCPElementGroup::Print_CP_To_DP_VHDL_Link(int idx, ostream& ofile)
 	//     }
 
 	ofile << this->_output_transitions[idx]->Get_Exit_Symbol() << "_link_to_dp: control_delay_element -- { "  << endl
-		<< "generic map (delay_value => " << delay_str << ")" << endl
+		<< " generic map(name => \" " << this->_output_transitions[idx]->Get_Exit_Symbol() << "_delay\","
+		<< "delay_value => " << delay_str << ")" << endl
 		<< "port map(clk => clk, reset => reset, req => " << req_str
 		<< ", ack => " << ack_str << "); -- } " << endl;
 }
@@ -1427,7 +1429,8 @@ void vcCPSimpleLoopBlock::Construct_CPElement_Group_Graph_Vertices(vcControlPath
 void vcCPSimpleLoopBlock::Print_VHDL_Terminator(vcControlPath* cp, ostream& ofile)
 {
 	ofile <<  _terminator->Get_VHDL_Id() << ": loop_terminator -- {" << endl;
-	ofile <<  "generic map (max_iterations_in_flight =>" <<  this->Get_Pipeline_Depth() << ") " << endl;
+	ofile <<  "generic map (name => \" " << _terminator->Get_VHDL_Id() 
+		<< "\", max_iterations_in_flight =>" <<  this->Get_Pipeline_Depth() << ") " << endl;
 	ofile <<  "port map(loop_body_exit => " << _terminator->_loop_body->Get_Exit_Symbol(cp) << ","
 		<< "loop_continue => " << _terminator->_loop_taken->Get_Exit_Symbol(cp) << ","
 		<< "loop_terminate => " << _terminator->_loop_exit->Get_Exit_Symbol(cp) << ","

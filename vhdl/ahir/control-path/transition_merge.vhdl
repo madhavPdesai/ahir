@@ -5,6 +5,7 @@ use ahir.subprograms.all;
 -- a short-hand model to implement a merge
 -- from transitions to transitions.entity
 entity transition_merge is
+  generic (name: string);
   port (
     preds      : in   BooleanArray;
     symbol_out : out  boolean);

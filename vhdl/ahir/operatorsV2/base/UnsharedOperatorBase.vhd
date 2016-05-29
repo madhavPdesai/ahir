@@ -18,6 +18,7 @@ use ahir.FloatOperatorPackage.all;
 entity UnsharedOperatorBase is
   generic
     (
+      name: string;
       operator_id   : string;          -- operator id
       input1_is_int : Boolean := true; -- false means float
       input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
@@ -65,11 +66,11 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   -- join the two reqs..
   -----------------------------------------------------------------------------
-  rJ: join2 generic map (name => operator_id & ":join2:", bypass => true)
+  rJ: join2 generic map (name => operator_id & "-join2", bypass => true)
 		port map(pred0 => reqL, pred1 => reqR, symbol_out => fReq, clk => clk, reset => reset);
 
   
-  dE: control_delay_element generic map(delay_value  => 1)
+  dE: control_delay_element generic map(name => name & "-dE", delay_value  => 1)
 		port map(req => fReq, ack => fAck, clk => clk, reset => reset);
   
   -- same ack to both.
@@ -81,6 +82,7 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   comb_block: GenericCombinationalOperator
     generic map (
+      name => name & "-comb_block", 
       operator_id                 => operator_id,
       input1_is_int               => input1_is_int,
       input1_characteristic_width => input1_characteristic_width,

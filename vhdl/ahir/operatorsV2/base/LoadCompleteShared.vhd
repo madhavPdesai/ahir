@@ -39,7 +39,7 @@ begin  -- Behave
 
   odemux: OutputDeMuxBaseWithBuffering
     generic map (
-      name => name & " odemux ",
+      name => name & "-odemux ",
       iwidth => data_width,
       owidth =>  data_width*num_reqs,
       twidth =>  tag_length,

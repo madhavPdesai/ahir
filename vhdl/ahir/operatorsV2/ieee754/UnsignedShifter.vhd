@@ -20,6 +20,7 @@ use ahir.Utilities.all;
 entity UnsignedShifter is
   
   generic (
+    name:string;
     shift_right_flag   : boolean;
     tag_width          : integer;
     operand_width      : integer;

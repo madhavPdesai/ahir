@@ -5,7 +5,7 @@ library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 entity control_delay_element is
-  generic (delay_value: integer := 0);
+  generic (name: string; delay_value: integer := 0);
   port (
     req   : in Boolean;
     ack   : out Boolean;

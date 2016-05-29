@@ -10,7 +10,7 @@ use ahir.BaseComponents.all;
 
 entity loop_terminator is
   
-  generic (max_iterations_in_flight : integer := 4);
+  generic (name: string; max_iterations_in_flight : integer := 4);
   port(loop_body_exit: in boolean;
        loop_continue: in boolean;
        loop_terminate: in boolean;

@@ -69,7 +69,7 @@ begin
 	end process;
 
 	rxB: ReceiveBuffer 
-		generic map( name => name & " rxBuf " & Convert_To_String(I),
+		generic map( name => name & "-rxB" & Convert_To_String(I),
 				buffer_size => input_buf_sizes(I),
 				data_width => data_width,
 				full_rate => full_rate)
@@ -93,6 +93,7 @@ begin
 
 
   mux : OutputPortLevel generic map (
+    name => name & "-mux",
     num_reqs       => num_reqs,
     data_width     => data_width,
     no_arbitration => no_arbitration)

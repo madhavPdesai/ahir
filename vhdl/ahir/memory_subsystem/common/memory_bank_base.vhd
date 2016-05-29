@@ -8,7 +8,8 @@ use ahir.mem_function_pack.all;
 use ahir.mem_component_pack.all;
 
 entity memory_bank_base is
-   generic ( g_addr_width: natural; 
+   generic ( name: string;
+	g_addr_width: natural; 
 	g_data_width : natural;
         g_base_bank_addr_width: natural;
         g_base_bank_data_width: natural);
@@ -101,6 +102,7 @@ process(data_in)
       end process;
 
       baseMem : base_bank generic map (
+        name => name & "-baseMem", 
         g_addr_width => g_base_bank_addr_width,
         g_data_width => g_base_bank_data_width)
         port map (

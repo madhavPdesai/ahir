@@ -76,7 +76,8 @@ begin  -- Behave
   -- end generate DebugGen;
   NoInBuffers : if not use_input_buffering generate 
     imux: InputMuxBase
-      generic map(iwidth => iwidth*num_reqs,
+      generic map(name => name & "-imux",
+		  iwidth => iwidth*num_reqs,
                   owidth => iwidth, 
                   twidth => tag_length,
                   nreqs => num_reqs,
@@ -96,7 +97,7 @@ begin  -- Behave
 
   InBuffers: if use_input_buffering generate
     imuxWithInputBuf: InputMuxWithBuffering
-      generic map(name => name & " imux " , 
+      generic map(name => name & "-imux" , 
 		iwidth => iwidth*num_reqs,
                 owidth => iwidth, 
                 twidth => tag_length,
@@ -120,7 +121,7 @@ begin  -- Behave
   IEEE754xMul:  if operator_id = "ApFloatMul" generate
     useGeneric: if use_generic_multiplier generate
     op: GenericFloatingPointMultiplier
-      generic map( tag_width     => tag_length,
+      generic map(name => name & "-IEEE754-mul", tag_width     => tag_length,
                    exponent_width => exponent_width,
                    fraction_width => fraction_width,
                    round_style => round_nearest,
@@ -143,7 +144,8 @@ begin  -- Behave
     
     SinglePrecision: if operand_width = 32 and (not use_generic_multiplier) generate 
     	op: SinglePrecisionMultiplier
-          generic map( tag_width     => tag_length)
+          generic map(name => name & "-SinglePrecision-op",
+					 tag_width     => tag_length)
           port map (
             env_rdy => ireq,
             muli_rdy => iack,
@@ -164,7 +166,8 @@ begin  -- Behave
 
     DoublePrecision: if operand_width = 64 and (not use_generic_multiplier) generate 
     	op: DoublePrecisionMultiplier
-          generic map ( tag_width     => tag_length)
+          generic map ( name => name & "-DoublePrecision-op",
+					tag_width     => tag_length)
           port map (
             env_rdy => ireq,
             muli_rdy => iack,
@@ -185,7 +188,7 @@ begin  -- Behave
 
   IEEE754xAdd:  if ((operator_id = "ApFloatAdd") or (operator_id = "ApFloatSub")) generate
     op: GenericFloatingPointAdderSubtractor
-      generic map( tag_width     => tag_length,
+      generic map(name => name & "-IEEE754-add", tag_width     => tag_length,
                    exponent_width => exponent_width,
                    fraction_width => fraction_width,
                    round_style => round_nearest,
@@ -210,7 +213,7 @@ begin  -- Behave
 
   odemux: OutputDeMuxBaseWithBuffering
     generic map (
-        name => name & " odemux ",
+        name => name & "-odemux",
   	iwidth => owidth,
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,

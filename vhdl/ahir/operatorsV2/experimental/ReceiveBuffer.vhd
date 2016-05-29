@@ -39,7 +39,7 @@ begin  -- default_arch
 
   -- the output pipe.
   bufPipe : PipeBase generic map (
-    name =>  name & "-fifo",
+    name =>  name & "-bufPipe",
     num_reads  => 1,
     num_writes => 1,
     data_width => data_width,

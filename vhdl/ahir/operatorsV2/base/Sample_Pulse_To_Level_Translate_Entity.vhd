@@ -9,6 +9,7 @@ use ahir.Utilities.all;
 
 -- rL -> aL delay can be 0
 entity Sample_Pulse_To_Level_Translate_Entity is
+  generic (name: string);
   port( rL : in boolean;
         rR : out std_logic;
         aL : out boolean;

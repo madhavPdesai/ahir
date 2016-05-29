@@ -65,7 +65,8 @@ begin  -- Behave
   -- end generate DebugGen;
   NoInBuffers : if not use_input_buffering generate 
     imux: InputMuxBase
-      generic map(iwidth => iwidth*num_reqs,
+      generic map(name => name & "-imux",
+		  iwidth => iwidth*num_reqs,
                   owidth => iwidth, 
                   twidth => tag_length,
                   nreqs => num_reqs,
@@ -85,7 +86,7 @@ begin  -- Behave
 
   InBuffers: if use_input_buffering generate
     imuxWithInputBuf: InputMuxWithBuffering
-      generic map(name => name & " imux " , 
+      generic map(name => name & "-imux" , 
 		iwidth => iwidth*num_reqs,
                 owidth => iwidth, 
                 twidth => tag_length,
@@ -129,7 +130,7 @@ begin  -- Behave
 
   odemux: OutputDeMuxBaseWithBuffering
     generic map (
-        name => name & " odemux ",
+        name => name & "-odemux",
   	iwidth => owidth,
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,

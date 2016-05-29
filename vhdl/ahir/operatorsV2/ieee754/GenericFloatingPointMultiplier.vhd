@@ -20,7 +20,8 @@ use ahir.BaseComponents.all;
 
 
 entity GenericFloatingPointMultiplier is
-  generic (tag_width : integer := 8;
+  generic (name:string;
+	  tag_width : integer := 8;
            exponent_width: integer := 11;
            fraction_width : integer := 52;
            round_style : round_type := float_round_style;  -- rounding option
@@ -281,7 +282,7 @@ begin
   end process;
   
   amul : UnsignedMultiplier
-    generic map (tag_width => tag_width+operand_width+(exponent_width+2)+2,
+    generic map (name => name & "-amul", tag_width => tag_width+operand_width+(exponent_width+2)+2,
                  operand_width => fraction_width+1,
 		 chunk_width => 8)
     port map (
@@ -328,7 +329,7 @@ begin
     normalizer_tag_in(0) <= exceptional_result;
    	
     normalizer: GenericFloatingPointNormalizer
-		generic map (tag_width => normalizer_tag_in'length,
+		generic map (name => name & "-normalizer", tag_width => normalizer_tag_in'length,
 				exponent_width => exponent_width,
 				fraction_width => fraction_width,
 				round_style => float_round_style,
