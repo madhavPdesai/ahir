@@ -127,7 +127,7 @@ void print_bit_vector(bit_vector* t, FILE* ofile)
 	for(I=t->width-1; I>=0; I--)
 	{
 		if(bit_vector_get_undefined_bit(t,I))
-			fprintf(ofile,"?", bit_vector_get_bit(t,I));
+			fprintf(ofile,"?");
 		else
 			fprintf(ofile,"%u", bit_vector_get_bit(t,I));
 	}
@@ -1227,3 +1227,8 @@ void read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv)
 }
 
 
+// to enable setting break point in gdb.
+void __trace()
+{
+	fprintf(stderr,"----TRACE----\n");
+}

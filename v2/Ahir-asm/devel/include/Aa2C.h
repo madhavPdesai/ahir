@@ -13,6 +13,7 @@ class AaObject;
 class AaPipeObject;
 
 
+void Print_C_Trace(ostream& ofile);
 void Print_C_Assert_If_Bitvector_Undefined(string var_name, ostream& ofile);
 		
 void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, bool signal_mode, bool lifo_mode, bool noblock_flag, ofstream& ofile);

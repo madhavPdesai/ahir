@@ -9,6 +9,11 @@
 
 #define __endl__  "\\\n" 
 
+void Print_C_Trace(ostream& ofile)
+{
+	ofile << "__trace();" << __endl__;
+}
+
 void Print_C_Assert_If_Bitvector_Undefined(string var_name, ostream& ofile)
 {
 	ofile << "if (has_undefined_bit(&" << var_name << ")) {";
