@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <assert.h>
 #include <BitVectors.h>
 #include <string.h>
@@ -87,6 +88,7 @@ void allocate_sized_u8_array(sized_u8_array* a, uint32_t sz)
 	int I;
 	for(I = 0; I < sz; I++)
 	{
+		a->byte_array[I] = rand(); // initialize with random string.
 		a->undefined_byte_array[I] = 0xff;
 	}
 
