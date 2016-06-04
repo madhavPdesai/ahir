@@ -915,6 +915,61 @@ void AaUnlockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	srcfile << "MUTEX_UNLOCK(" << _mutex_id << ");" << endl;
 }
 
+//---------------------------------------------------------------------
+// AaTraceStatement: public AaNullStatement
+//---------------------------------------------------------------------
+void AaTraceStatement::Print(ostream& ofile)
+{
+	if(this->Get_Guard_Expression())
+	{
+		ofile << "$guard (";
+		if(this->Get_Guard_Complement())
+		{
+			ofile << "~";
+		}
+		this->Get_Guard_Expression()->Print(ofile);
+		ofile << ") ";
+	}
+	ofile << "$trace " << endl;
+}
+
+  	
+void AaTraceStatement::Map_Source_References()
+{
+	if(this->Get_Guard_Expression())
+	{
+		this->Get_Guard_Expression()->Map_Source_References(this->_source_objects);
+		if(!this->_guard_expression->Is_Implicit_Variable_Reference())
+		{
+			AaRoot::Error("guard variable must be implicit (SSA)", this);
+		}
+	}
+}
+
+  	
+void AaTraceStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
+{
+	srcfile << "// " << this->To_String();
+	headerfile << "\n#define " << this->Get_C_Macro_Name() << " " ;
+	srcfile << this->Get_C_Macro_Name() << "; " << endl ;
+	if(this->Get_Guard_Expression())
+	{
+		this->Get_Guard_Expression()->PrintC_Declaration(headerfile);
+		this->Get_Guard_Expression()->PrintC(headerfile);
+	}
+	if(this->Get_Guard_Expression())
+	{
+		headerfile << "if (" ;
+		if(this->Get_Guard_Complement())
+			headerfile << "!";
+		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), headerfile);
+		headerfile << ") {\\" << endl;
+	}
+	headerfile << "__trace();\\" <<  endl;
+	headerfile << "}\\" << endl;
+}
+
+
 //
 //---------------------------------------------------------------------
 // AaReportStatement: public AaNullStatement

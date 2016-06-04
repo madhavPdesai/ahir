@@ -446,6 +446,18 @@ class AaNullStatement: public AaStatement
   }
 };
 
+
+class AaTraceStatement: public AaNullStatement
+{
+	public:
+	AaTraceStatement(AaScope* prnt):AaNullStatement(prnt) {}
+        virtual void Print(ostream& ofile);
+  	virtual void Map_Source_References();
+
+  	virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
+        virtual string Kind() {return("AaTraceStatement");}
+};
+
 class AaReportStatement: public AaNullStatement
 {
 	public:

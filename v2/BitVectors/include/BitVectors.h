@@ -6,6 +6,8 @@
 #include <stdint.h>
 
 
+void __trace();
+
 typedef struct sized_u8_array_
 {
  	uint8_t* byte_array;

@@ -295,7 +295,8 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 		// NOTE: the split statement can create a group of statements..
 		//       Thus, we put the created statement(s) in a list.
 	   (aA_Assignment_Statement[scope,llist] |  aA_Call_Statement[scope,llist] | aA_Split_Statement[scope,llist]
-			| aA_Report_Statement[scope,llist] | aA_Lock_Statement[scope,llist] | aA_Unlock_Statement[scope,llist]) 
+			| aA_Report_Statement[scope,llist] | aA_Trace_Statement[scope,llist] |
+					aA_Lock_Statement[scope,llist] | aA_Unlock_Statement[scope,llist]) 
 	   (MARK mid: SIMPLE_IDENTIFIER 
 		{
 			mark_flag = true;
@@ -396,6 +397,18 @@ aA_Unlock_Statement[AaScope* scope, vector<AaStatement*>& slist]
 			slist.push_back(ls);
 		}
 ;
+
+//-----------------------------------------------------------------------------------------------
+// aA_Trace_Statement : TRACE
+//-----------------------------------------------------------------------------------------------
+aA_Trace_Statement[AaScope* scope, vector<AaStatement*>& slist]
+:
+	TRACE {
+		AaTraceStatement* tstmt = new AaTraceStatement(scope);
+		slist.push_back(tstmt);
+	      }
+;
+
 
 //-----------------------------------------------------------------------------------------------
 // aA_Report_Statement : $report LPAREN synopsys-string (descr-string descr-expr)* RPAREN
@@ -2170,6 +2183,7 @@ SPLIT : "$split";
 ASSERT  : "$assert";
 REPORT   : "$report";
 RREPORT   : "$rreport";
+TRACE   : "$trace";
 
 
 
