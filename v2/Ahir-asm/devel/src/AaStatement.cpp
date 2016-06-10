@@ -966,7 +966,8 @@ void AaTraceStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 		headerfile << ") {\\" << endl;
 	}
 	headerfile << "__trace();\\" <<  endl;
-	headerfile << "}\\" << endl;
+	if(this->Get_Guard_Expression())
+		headerfile << "}\\" << endl;
 }
 
 
