@@ -111,10 +111,25 @@ void init_bit_vector(bit_vector* t, uint32_t width)
 
 void init_static_bit_vector(bit_vector* t, uint32_t width)
 {
+	int asize = __nbytes(width);
 	if(t->width == 0)
 	{
-		allocate_sized_u8_array(&(t->val), __nbytes(width));;
+		allocate_sized_u8_array(&(t->val), asize);
 		t->width = width;
+	}
+	else
+	{
+		// if the width changes, something is horribly 
+		// wrong.
+		assert(width == t->width);
+
+		// initialize with random string.
+		int I;
+		for(I = 0; I < asize; I++)
+		{
+			t->val.byte_array[I] = rand(); // initialize with random string.
+			t->val.undefined_byte_array[I] = 0xff;
+		}
 	}
 }
 
