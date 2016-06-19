@@ -19,6 +19,8 @@ struct StringCompare:public binary_function
 
 int CeilLog2(int n);
 
+uint32_t uLog2(uint32_t n);
+
 
 bool Is_Compare_Operation(AaOperation op);
 bool Is_Shift_Operation(AaOperation op);

@@ -5184,7 +5184,8 @@ void AaIfStatement::Propagate_Constants()
 {
 	if(this->_test_expression->Get_Type() == NULL)
 	{
-		AaRoot::Warning("Could not determine type of test expression in if statement.. will assume that it is $uint<1> ", this);
+		if(AaProgram::_verbose_flag)
+			AaRoot::Warning("Could not determine type of test expression in if statement.. will assume that it is $uint<1> ", this);
 		this->_test_expression->Set_Type(AaProgram::Make_Uinteger_Type(1));
 	}
 	this->_test_expression->Evaluate();
@@ -5626,7 +5627,8 @@ void AaDoWhileStatement::Propagate_Constants()
 {
 	if(this->_test_expression->Get_Type() == NULL)
 	{
-		AaRoot::Warning("Could not determine type of test expression in do-while statement.. will assume that it is $uint<1> ", this);
+		if(AaProgram::_verbose_flag)
+			AaRoot::Warning("Could not determine type of test expression in do-while statement.. will assume that it is $uint<1> ", this);
 		this->_test_expression->Set_Type(AaProgram::Make_Uinteger_Type(1));
 	}
 	this->_test_expression->Evaluate();

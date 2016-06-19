@@ -862,7 +862,14 @@ vc_UnaryOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
    (fu_assign_id: FtoU_ASSIGN_OP {op_id = fu_assign_id->getText();}) |
    (sf_assign_id: StoF_ASSIGN_OP {op_id = sf_assign_id->getText();}) |
    (uf_assign_id: UtoF_ASSIGN_OP {op_id = uf_assign_id->getText();}) |
-   (ff_assign_id: FtoF_ASSIGN_OP {op_id = ff_assign_id->getText();}) )
+   (ff_assign_id: FtoF_ASSIGN_OP {op_id = ff_assign_id->getText();}) |
+   (dec_assign_id: DECODE_OP     {op_id = dec_assign_id->getText();}) |
+   (enc_assign_id: ENCODE_OP     {op_id = enc_assign_id->getText();}) |
+   (p_enc_assign_id: P_ENCODE_OP {op_id = p_enc_assign_id->getText();}) |
+   (bitreduce_or_assign_id: BITREDUCE_OR_OP {op_id = bitreduce_or_assign_id->getText();}) |
+   (bitreduce_and_assign_id: BITREDUCE_AND_OP {op_id = bitreduce_and_assign_id->getText();}) |
+   (bitreduce_xor_assign_id: BITREDUCE_XOR_OP {op_id = bitreduce_xor_assign_id->getText();}) |
+  )
     id = vc_Label 
  lpid: LPAREN 
     wid = vc_Identifier {
@@ -1852,6 +1859,15 @@ UtoF_ASSIGN_OP : "$F:=$U";
 
 // FP <-> FP conversions.
 FtoF_ASSIGN_OP : "$F:=$F";
+
+// DECODE,ENCODE, etc.
+DECODE_OP: "$decode";
+ENCODE_OP: "$encode";
+P_ENCODE_OP: "$priority_encode";
+BITREDUCE_OR_OP:  "!|";
+BITREDUCE_AND_OP: "!&";
+BITREDUCE_XOR_OP: "!^";
+
 
 // dead transitions..
 DEAD : "$dead";

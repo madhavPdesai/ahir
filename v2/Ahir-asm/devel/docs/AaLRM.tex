@@ -850,6 +850,7 @@ Expressions in \Aa fall into the following classes
 \item Pointer de-reference expressions.
 \item Address-of expressions.
 \item Unary expressions.
+\item Useful Unary logical expressions.
 \item Slice expressions.
 \item Bitmap (bit permutation) expressions.
 \item Binary expressions.
@@ -1060,6 +1061,38 @@ usual way.
 
 The parentheses around a unary expression are
 {\bf required}.
+
+\subsection{Useful Unary Logical expressions}
+
+Some very useful logical building blocks are decoders,
+encoders and bit-reduction operators.
+
+\begin{itemize}
+\item The unary expression
+\begin{verbatim}
+($encode x)
+\end{verbatim}
+expresses the encoded version of $x$ (produces a \$uint 
+whose length is $\log{length(x)}$).  It operates only on \$uint types,
+and produces an encoding of $x$ under the assumption that only
+one of the bits in $x$ is $1$.
+\item The unary expression 
+\begin{verbatim}
+($p_encode x)
+\end{verbatim}
+expresses the priority-encoded version of $x$ (produces a \$uint which
+whose length is $length(x)$).  It operates only on \$uint types,
+and identifies the highest bit position of $x$ which is $1$. For example
+if $x$ is $01010$, then the expression will evaluate to $01000$.
+\item The unary expressions
+\begin{verbatim}
+($bitreduce | x)
+($bitreduce & x)
+($bitreduce ^ x)
+\end{verbatim}
+produce the reduced single-bit version of $x$ with the specified operation.
+For example, the bit-reduced OR is the OR of all the bits of $x$.
+\end{itemize}
 
 \subsection{Slice expressions}
 

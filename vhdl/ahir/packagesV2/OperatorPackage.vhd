@@ -376,6 +376,18 @@ package body OperatorPackage is
       ApIntToApIntSigned_proc(x, result_var);
     elsif id = "ApIntToApIntUnsigned" then					
       ApIntToApIntUnsigned_proc(x, result_var);
+    elsif id = "ApIntDecode" then					
+      result_var := GenericDecode(x);
+    elsif id = "ApIntEncode" then					
+      result_var := GenericEncode(x);
+    elsif id = "ApIntPriorityEncode" then					
+      result_var := PriorityEncode(x);
+    elsif id = "ApIntBitreduceOr" then					
+      result_var(result_var'low) := OrReduce(x);
+    elsif id = "ApIntBitreduceAnd" then					
+      result_var(result_var'low) := AndReduce(x);
+    elsif id = "ApIntBitreduceXor" then					
+      result_var(result_var'low) := XorReduce(x);
     else	
       assert false report "Unsupported operator-id " & id severity failure;	
     end if;	

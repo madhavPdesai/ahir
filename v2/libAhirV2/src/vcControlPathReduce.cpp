@@ -840,7 +840,8 @@ void vcControlPath::Collapse_Pure_Transition_Set(set<void*>& tset)
 	if(tset.size() > 1)
 	{
 
-		vcSystem::Info("collapsing pure transition set of size " + IntToStr(tset.size()));
+		if(vcSystem::_verbose_flag)
+			vcSystem::Info("collapsing pure transition set of size " + IntToStr(tset.size()));
 		vcCPElementGroup* cg = new vcCPElementGroup(this);
 		_cpelement_groups.insert(cg);
 
@@ -865,13 +866,13 @@ void vcControlPath::Collapse_Pure_Transition_Set(set<void*>& tset)
 				this->_cpelement_to_group_map.erase(*eiter);
 				this->Add_To_Group(*eiter,cg);
 			}
-		
+
 			// disconnect e from all predecessors of e
 			// if the predecessor of e is not in tset,
 			// add it to the predecessor set.
 			for(set<vcCPElementGroup*>::iterator pred_iter = e->_predecessors.begin(), 
 					fpred_iter = e->_predecessors.end();
-						pred_iter != fpred_iter; pred_iter++)
+					pred_iter != fpred_iter; pred_iter++)
 			{
 				vcCPElementGroup* pe = *pred_iter;
 				pe->_successors.erase(e);
@@ -884,7 +885,7 @@ void vcControlPath::Collapse_Pure_Transition_Set(set<void*>& tset)
 			// add it to the successor set.
 			for(set<vcCPElementGroup*>::iterator succ_iter = e->_successors.begin(), 
 					fsucc_iter = e->_successors.end();
-						succ_iter != fsucc_iter; succ_iter++)
+					succ_iter != fsucc_iter; succ_iter++)
 			{
 				vcCPElementGroup* se = *succ_iter;
 				se->_predecessors.erase(e);

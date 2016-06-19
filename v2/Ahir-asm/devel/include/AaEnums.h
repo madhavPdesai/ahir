@@ -29,7 +29,13 @@ enum AaOperation
     __BITSEL,
     __NOP,
     __BITMAP,
-    __UNORDERED
+    __UNORDERED,
+    __DECODE,
+    __ENCODE,
+    __PRIORITYENCODE,
+    __BITREDUCEOR,
+    __BITREDUCEAND,
+    __BITREDUCEXOR
   };
 
 

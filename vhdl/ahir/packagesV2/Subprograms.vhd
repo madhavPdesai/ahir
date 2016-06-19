@@ -121,6 +121,7 @@ package Subprograms is
   procedure Insert(x: out ApIntArray; idx: in integer; w: in ApInt );
   procedure Insert(x: out ApFloatArray; idx: in integer; w: in ApFloat );
 
+
   function PriorityEncode(x: BooleanArray) return BooleanArray;
   function PriorityEncode(x: std_logic_vector) return std_logic_vector;
 
@@ -130,6 +131,12 @@ package Subprograms is
 
   function AndReduce(x: BooleanArray) return boolean;
   function AndReduce(x: std_logic_vector) return std_logic;
+
+  function XorReduce(x: std_logic_vector) return std_logic;
+
+  -- generic encoders/decoders
+  function GenericEncode(x: std_logic_vector) return std_logic_vector;
+  function GenericDecode(x: std_logic_vector) return std_logic_vector;
 
   function MuxOneHot (
     constant din : StdLogicArray2D;     -- input data
@@ -1248,6 +1255,21 @@ package body Subprograms is
   end AndReduce;
 
   -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function XorReduce(x: std_logic_vector) return std_logic is
+    alias lx  : std_logic_vector(1 to x'length) is x;
+    variable ret_var  : std_logic;
+  begin
+    if(lx'length = 1) then
+      ret_var := lx(1);
+    else
+      ret_var:= XorReduce(lx(1 to x'length/2)) xor XorReduce(lx((x'length/2)+1 to x'length));
+    end if;
+    return(ret_var);
+  end XorReduce;
+
+  -----------------------------------------------------------------------------
   -- sel is one-hot coded, build a balanced mux to
   -- pick row indicated by sel from din
   -----------------------------------------------------------------------------
@@ -1326,4 +1348,34 @@ package body Subprograms is
      return(ret_var);
   end Swap_Bytes;
 
+  -- to be called only if x'length > 1
+  function GenericEncode (x: std_logic_vector)
+	return std_logic_vector is
+      alias lx: std_logic_vector(x'length-1 downto 0) is x;
+      variable ret_var: std_logic_vector(Ceil_Log2(x'length)-1 downto 0);
+      variable TMP: unsigned(Ceil_Log2(x'length)-1 downto 0);
+  begin
+      ret_var := (others => '0');
+      for I in 1 to x'length loop
+	TMP := to_unsigned(I-1, Ceil_Log2(x'length));
+        for J in 0 to Ceil_Log2(x'length)-1 loop
+           if(TMP(J) = '1') then
+             ret_var(J) := ret_var(J) or lx(I-1);
+           end if;
+        end loop;
+      end loop;
+      return(ret_var);
+  end GenericEncode;
+
+  function GenericDecode(x: std_logic_vector) return std_logic_vector is
+     alias lx: std_logic_vector(x'length-1 downto 0) is x;
+     variable ret_var: std_logic_vector((2**x'length)-1 downto 0);
+     variable I : integer range 0 to (2**x'length)-1;
+  begin
+     ret_var := (others => '0');
+     I := to_integer(to_unsigned(lx));
+     ret_var(I) := '1';
+     return(ret_var);
+  end GenericDecode;
+      
 end package body Subprograms;

@@ -1200,6 +1200,10 @@ aA_Unary_Expression[AaScope* scope] returns [AaExpression* expr]
 	(expr = aA_Not_Expression[scope]) | (expr = aA_Cast_Expression[scope])
 			| (expr = aA_Slice_Expression[scope]) 
 			| (expr = aA_Bitmap_Expression[scope])
+			| (expr = aA_Decode_Expression[scope])
+			| (expr = aA_Priority_Encode_Expression[scope])
+			| (expr = aA_Encode_Expression[scope])
+			| (expr = aA_Bitreduce_Expression[scope])
 ;
 
  
@@ -1440,6 +1444,86 @@ aA_ExclusiveMux_Expression[AaScope* scope] returns [AaExpression* expr]
 	(aA_Expression_Buffering_Spec[expr])?
   RPAREN
 ;   
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Decode_Exression: LPAREN $decode aA_Expression RPAREN
+//----------------------------------------------------------------------------------------------------------
+aA_Decode_Expression[AaScope* scope] returns [AaExpression* expr]
+{
+	AaOperation op = __DECODE;
+	AaExpression* rest = NULL;
+	expr = NULL;
+}:
+	lpid: LPAREN 
+		 DECODE (rest = aA_Expression[scope])
+			{
+				expr = new AaUnaryExpression(scope,op,rest);
+			}
+		(aA_Expression_Buffering_Spec[expr])?
+		
+	RPAREN
+;
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Encode_Exression: LPAREN $encode aA_Expression RPAREN
+//----------------------------------------------------------------------------------------------------------
+aA_Encode_Expression[AaScope* scope] returns [AaExpression* expr]
+{
+	AaOperation op = __ENCODE;
+	AaExpression* rest = NULL;
+	expr = NULL;
+}:
+	lpid: LPAREN 
+		 ENCODE (rest = aA_Expression[scope])
+			{
+				expr = new AaUnaryExpression(scope,op, rest);
+			}
+		(aA_Expression_Buffering_Spec[expr])?
+		
+	RPAREN
+;
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Priority_Encode_Exression: LPAREN $priorityencode aA_Expression RPAREN
+//----------------------------------------------------------------------------------------------------------
+aA_Priority_Encode_Expression[AaScope* scope] returns [AaExpression* expr]
+{
+	AaExpression* rest = NULL;
+	AaOperation op = __PRIORITYENCODE;
+	expr = NULL;
+}:
+	lpid: LPAREN 
+		 PRIORITYENCODE (rest = aA_Expression[scope])
+			{
+				expr = new AaUnaryExpression(scope,op,rest);
+			}
+		(aA_Expression_Buffering_Spec[expr])?
+		
+	RPAREN
+;
+
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Bitreduce_Exression: LPAREN $bitreduce [| or & or ^] aA_Expression RPAREN
+//----------------------------------------------------------------------------------------------------------
+aA_Bitreduce_Expression[AaScope* scope] returns [AaExpression* expr]
+{
+	AaOperation op;
+	AaExpression* rest = NULL;
+	expr = NULL;
+}:
+	lpid: LPAREN 
+		 BITREDUCE  
+		 ((OR {op = __BITREDUCEOR;}) |  (AND {op = __BITREDUCEAND;}) | (XOR {op = __BITREDUCEXOR;}))
+		(rest = aA_Expression[scope])
+			{
+				expr = new AaUnaryExpression(scope,op,rest);
+			}
+		(aA_Expression_Buffering_Spec[expr])?
+		
+	RPAREN
+;
+
 
 
 //----------------------------------------------------------------------------------------------------------
@@ -2178,6 +2262,17 @@ REDUCE : "$reduce";
 // split
 SPLIT : "$split";
 
+// bit-reduce
+BITREDUCE: "$bitreduce";
+
+// decode
+DECODE: "$decode";
+
+// encode
+ENCODE: "$encode";
+
+// priority-encode
+PRIORITYENCODE: "$p_encode";
 
 // report-statement
 ASSERT  : "$assert";

@@ -267,25 +267,25 @@ vcCPElement::vcCPElement(vcCPElement* parent, string id):vcRoot(id)
 }
 
 /*
-void  vcCPElement::Set_Pipeline_Parent()
-{
-	if(this->_pipeline_parent != NULL)
-		return;
+   void  vcCPElement::Set_Pipeline_Parent()
+   {
+   if(this->_pipeline_parent != NULL)
+   return;
 
-	vcCPElement* p = this->Get_Parent();
-	while(p != NULL)
-	{
-		if(p->Is("vcCPPipelinedLoopBody") || p->Is("vcCPPipelinedForkBlock") || p->Is("vcCPSimpleLoopBlock")
-				|| (p->Is("vcControlPath") && ((vcControlPath*)p)->Get_Is_Pipelined()) )
-		{
-			this->_pipeline_parent = (vcCPBlock*) p;
-			break;
-		}
-		p = p->Get_Parent();
-	}
-	this->_pipeline_parent = p;
-}
-*/
+   vcCPElement* p = this->Get_Parent();
+   while(p != NULL)
+   {
+   if(p->Is("vcCPPipelinedLoopBody") || p->Is("vcCPPipelinedForkBlock") || p->Is("vcCPSimpleLoopBlock")
+   || (p->Is("vcControlPath") && ((vcControlPath*)p)->Get_Is_Pipelined()) )
+   {
+   this->_pipeline_parent = (vcCPBlock*) p;
+   break;
+   }
+   p = p->Get_Parent();
+   }
+   this->_pipeline_parent = p;
+   }
+ */
 
 void vcCPElement::Set_Associated_CP_Function(vcCPElement* c)
 {
@@ -1605,7 +1605,8 @@ bool vcCPBranchBlock::Check_Structure()
 		if(num_visited != this->Number_Of_Elements_Reachable_From_Entry())
 		{
 			vcSystem::Warning("some elements are not reachable from the entry point of branch region " + this->Get_Hierarchical_Id());
-			this->Print_Missing_Elements(visited_set);
+			if(vcSystem::_verbose_flag)
+				this->Print_Missing_Elements(visited_set);
 		}
 
 		reachable_elements.clear();
@@ -1616,7 +1617,8 @@ bool vcCPBranchBlock::Check_Structure()
 		if(num_visited != this->Number_Of_Elements_That_Can_Reach_Exit())
 		{
 			vcSystem::Warning("region exit not reachable from some elements in branch region " + this->Get_Hierarchical_Id());
-			this->Print_Missing_Elements(visited_set);
+			if(vcSystem::_verbose_flag)
+				this->Print_Missing_Elements(visited_set);
 		}
 	}
 
@@ -1718,11 +1720,11 @@ void vcPhiSequencer::Print_VHDL(vcControlPath* cp, ostream& ofile)
 		string sig_id = _triggers[idx]->Get_Exit_Symbol(cp);
 		ofile << "triggers(" << idx << ")  <= " << sig_id << ";" << endl;
 		ofile <<  _src_sample_reqs[idx]->Get_Exit_Symbol(cp) 
-				<< "<= src_sample_reqs(" << idx << ");" << endl;
+			<< "<= src_sample_reqs(" << idx << ");" << endl;
 		ofile << "src_sample_acks(" << idx << ")  <= " << 
 			_src_sample_acks[idx]->Get_Exit_Symbol(cp) << ";" << endl;
 		ofile <<  _src_update_reqs[idx]->Get_Exit_Symbol(cp) 
-				<< "<= src_update_reqs(" << idx << ");" << endl;
+			<< "<= src_update_reqs(" << idx << ");" << endl;
 		ofile << "src_update_acks(" << idx << ")  <= " << 
 			_src_update_acks[idx]->Get_Exit_Symbol(cp) << ";" << endl;
 
@@ -1787,7 +1789,7 @@ void vcPhiSequencer::Print_Dot_Entry(vcControlPath* cp, ostream& ofile)
 
 	dest = cp->Get_Group(_phi_update_req)->Get_Dot_Id();
 	ofile << tnode_id << " -> " << dest << ";" << endl;
-	
+
 	src = cp->Get_Group(_phi_mux_ack)->Get_Dot_Id();
 	ofile << src << " -> " << tnode_id << ";" << endl;
 
@@ -1814,7 +1816,7 @@ void vcPhiSequencer::Update_Predecessor_Successor_Links()
 
 		_phi_update_req->Connect(_src_update_reqs[idx]);
 		_src_update_acks[idx]->Connect(_phi_mux_reqs[idx]);
-		
+
 		// suppress this.. not a true join.
 		//_phi_mux_reqs[idx]->Connect(_phi_mux_ack); 
 	}
@@ -1853,7 +1855,7 @@ void vcTransitionMerge::Print_VHDL(vcControlPath* cp, ostream& ofile)
 	}
 
 	ofile << this->Get_VHDL_Id() << " : transition_merge -- { " << endl;;
-        ofile << "generic map(name => \" " << this->Get_VHDL_Id() << "\")" << endl;
+	ofile << "generic map(name => \" " << this->Get_VHDL_Id() << "\")" << endl;
 	ofile << "port map (preds => preds, symbol_out => " << _out_transition->Get_Exit_Symbol(cp) << ");" << endl;
 	ofile << " -- } } } " << endl;
 	ofile << "end block;" << endl;
@@ -2414,8 +2416,9 @@ void vcCPForkBlock::Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int>
 					//if(!((vcTransition*)v)->Get_Is_Delay_Element())
 					//{
 					this->Remove_Join_Point((vcTransition*)v,u);
-					vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
-							+ u->Get_Label());
+					if(vcSystem::_verbose_flag)
+						vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
+								+ u->Get_Label());
 					//}
 				}
 				if(u->Is_Transition())
@@ -2423,8 +2426,9 @@ void vcCPForkBlock::Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int>
 					//if(!((vcTransition*)u)->Get_Is_Delay_Element())
 					//{
 					this->Remove_Fork_Point((vcTransition*)u,v);
-					vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
-							+ v->Get_Label());
+					if(vcSystem::_verbose_flag)
+						vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
+								+ v->Get_Label());
 					//}
 				}
 			}
@@ -2447,8 +2451,9 @@ void vcCPForkBlock::Eliminate_Redundant_Dependencies()
 			//if(!((vcTransition*)u)->Get_Is_Delay_Element())
 			//{
 			this->Remove_Fork_Point((vcTransition*)u,v);
-			vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
-					+ v->Get_Label());
+			if(vcSystem::_verbose_flag)
+				vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
+						+ v->Get_Label());
 			//}
 		}
 
@@ -2457,8 +2462,9 @@ void vcCPForkBlock::Eliminate_Redundant_Dependencies()
 			//if(!((vcTransition*)v)->Get_Is_Delay_Element())
 			//{
 			this->Remove_Join_Point((vcTransition*)v,u);
-			vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
-					+ u->Get_Label());
+			if(vcSystem::_verbose_flag)
+				vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
+						+ u->Get_Label());
 			//}
 		}
 	}
@@ -2534,7 +2540,8 @@ bool vcCPForkBlock::Check_Structure()
 			//
 			vcSystem::Warning("all elements not reachable from entry in region " + this->Get_Hierarchical_Id());
 
-			this->Print_Missing_Elements(visited_set);
+			if(vcSystem::_verbose_flag)
+				this->Print_Missing_Elements(visited_set);
 		}
 
 		if(cycle_flag)
@@ -2563,7 +2570,8 @@ bool vcCPForkBlock::Check_Structure()
 			//       searches need to be performed.
 			//       
 			vcSystem::Warning("exit not reachable from every element in region " + this->Get_Hierarchical_Id());
-			this->Print_Missing_Elements(visited_set);
+			if(vcSystem::_verbose_flag)
+				this->Print_Missing_Elements(visited_set);
 		}
 
 
@@ -2988,8 +2996,9 @@ void vcCPPipelinedForkBlock::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map
 			vcCPElement* v = *eiter;
 			u->Remove_Marked_Predecessor(v);
 			v->Remove_Marked_Successor(u);
-			vcSystem::Info("removed redundant marked link: " + u->Get_Label() + " o<-& "
-					+ v->Get_Label());
+			if(vcSystem::_verbose_flag)
+				vcSystem::Info("removed redundant marked link: " + u->Get_Label() + " o<-& "
+						+ v->Get_Label());
 		}
 	}
 }
@@ -3192,27 +3201,27 @@ void vcCPPipelinedLoopBody::Print_VHDL(ostream& ofile)
 // A bit of a heavy function.. But the phi-sequencer hides a lot 
 // of ugliness.
 void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id, 
-				vector<string>& triggers, 
-				vector<string>& src_sample_reqs, 
-				vector<string>& src_sample_acks, 
-				vector<string>& src_update_reqs, 
-				vector<string>& src_update_acks, 
-				string& phi_sample_req,
-				string& phi_sample_ack,
-				string& phi_update_req,
-				string& phi_update_ack,
-				vector<string>& phi_mux_reqs,
-				string& phi_mux_ack)
+		vector<string>& triggers, 
+		vector<string>& src_sample_reqs, 
+		vector<string>& src_sample_acks, 
+		vector<string>& src_update_reqs, 
+		vector<string>& src_update_acks, 
+		string& phi_sample_req,
+		string& phi_sample_ack,
+		string& phi_update_req,
+		string& phi_update_ack,
+		vector<string>& phi_mux_reqs,
+		string& phi_mux_ack)
 {
 
 	vcPhiSequencer* new_phi_seq = new vcPhiSequencer(this, phi_id);
 	new_phi_seq->Set_Place_Capacity(this->Get_Max_Iterations_In_Flight());
 
-        assert(triggers.size() == src_sample_reqs.size());
-        assert(triggers.size() == src_sample_acks.size());
-        assert(triggers.size() == src_update_reqs.size());
-        assert(triggers.size() == src_update_acks.size());
-        assert(triggers.size() == phi_mux_reqs.size());
+	assert(triggers.size() == src_sample_reqs.size());
+	assert(triggers.size() == src_sample_acks.size());
+	assert(triggers.size() == src_update_reqs.size());
+	assert(triggers.size() == src_update_acks.size());
+	assert(triggers.size() == phi_mux_reqs.size());
 
 	// add per-trigger stuff.
 	for(int idx = 0, fidx = triggers.size(); idx < fidx; idx++)
@@ -3271,7 +3280,7 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id,
 		new_phi_seq->Add_Src_Sample_Ack((vcTransition*) rte);
 		((vcTransition*) rte)->Set_Is_Bound_As_Input_To_CP_Function(true);
 		rte->Set_Associated_CP_Function(new_phi_seq);
-		
+
 
 		rte = this->Find_CPElement(src_update_acks[idx]);
 		if((rte == NULL) || (!rte->Is_Transition()))
@@ -3410,7 +3419,7 @@ vcControlPath::vcControlPath(string id):vcCPSeriesBlock(NULL, id)
 	_parent_module = NULL;
 }
 
-  
+
 void  vcControlPath::Set_Parent_Module(vcModule* m) 
 {
 	_parent_module = m;

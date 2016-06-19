@@ -1314,10 +1314,9 @@ class AaSliceExpression: public AaTypeCastExpression
 	virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
 };
 
-
 //
 // unary expressions
-// not B, <type-name> B
+// not B, <type-name> B, $decode B, $encode B, $bitreduce | B, $priorityencode B.
 //
 class AaUnaryExpression: public AaExpression
 {
@@ -1362,6 +1361,7 @@ class AaUnaryExpression: public AaExpression
 		_rest->Get_Leaf_Expression_Set(leaf_expression_set);
 	}
 
+	virtual void Update_Type();
 
 	virtual void Evaluate();
 	virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
@@ -1420,6 +1420,8 @@ class AaBitmapExpression: public AaUnaryExpression
 	virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
 
 };
+
+
 // 
 // binary expression: q + r
 //

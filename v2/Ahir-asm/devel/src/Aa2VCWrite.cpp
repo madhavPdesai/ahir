@@ -138,10 +138,30 @@ void Write_VC_Unary_Operator(AaOperation op,
 	    op_name = "$" + dest_kind + ":=$" + src_kind;
 
 	}
-      else
+      else if(op == __DECODE)
 	{
-	  assert(0);
+	    op_name = "$decode";
 	}
+      else if(op == __ENCODE)
+        {
+	    op_name = "$encode";
+        }
+      else if(op == __PRIORITYENCODE)
+        {
+	    op_name = "$priority_encode";
+        }
+      else if(op == __BITREDUCEOR)
+        {
+	    op_name = "!|";
+        }
+      else if(op == __BITREDUCEAND)
+        {
+	    op_name = "!&";
+        }
+      else if(op == __BITREDUCEXOR)
+        {
+	    op_name = "!^";
+        }
     }
 
   string sflow_through = (flow_through ? " $flowthrough" : "");
@@ -720,6 +740,12 @@ string Get_Op_Ascii_Name(AaOperation op, AaType* src_type, AaType* dest_type)
 	else if(op == __BITSEL) ret_val = "BITSEL";
 	else if(op == __BITMAP) ret_val = "BITMAP";
 	else if(op == __UNORDERED) ret_val = "UNORDERED";
+	else if(op == __DECODE) ret_val = "DECODE";
+	else if(op == __ENCODE) ret_val = "ENCODE";
+	else if(op == __PRIORITYENCODE) ret_val = "PENCODE";
+	else if(op == __BITREDUCEOR) ret_val = "BITREDUCEOR";
+	else if(op == __BITREDUCEAND) ret_val = "BITREDUCEAND";
+	else if(op == __BITREDUCEXOR) ret_val = "BITREDUCEXOR";
 	else
 		assert(0);
 

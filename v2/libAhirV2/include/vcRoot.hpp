@@ -141,6 +141,12 @@ enum vcLexerKeytags
     __StoF_ASSIGN_OP ,
     __UtoF_ASSIGN_OP ,
     __FtoF_ASSIGN_OP ,
+    __DECODE_OP,
+    __ENCODE_OP,
+    __PRIORITY_ENCODE_OP,
+    __BITREDUCE_OR_OP,
+    __BITREDUCE_AND_OP,
+    __BITREDUCE_XOR_OP,
     __DEAD,
     __TIED_HIGH,
     __LEFT_OPEN,
@@ -289,6 +295,12 @@ static string vcLexerKeywords[] =
       "$F:=$S",
       "$F:=$U",
       "$F:=$F",
+      "$decode",
+      "$encode",
+      "$priority_encode",
+      "!|", // reduce OR
+      "!&", // reduce AND
+      "!^", // reduce XOR
       "$dead",
       "$tied_high",
       "$left_open",

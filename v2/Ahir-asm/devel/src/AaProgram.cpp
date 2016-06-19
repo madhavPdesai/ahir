@@ -784,101 +784,107 @@ void AaProgram::Coalesce_Storage()
       AaObject* top_obj = (*(AaProgram::_recoalesce_map.begin())).first;
       set<AaStorageObject*> addr_obj_set = (*(AaProgram::_recoalesce_map.begin())).second;
       AaProgram::_recoalesce_map.erase(top_obj);
-      for(set<AaStorageObject*>::iterator siter = addr_obj_set.begin(), fsiter = addr_obj_set.end();
-	  siter != fsiter;
-	  siter++)
-	{
-	  AaRoot::Info("Recoalescing from " + top_obj->Get_Name() + " with addressable-object " + (*siter)->Get_Name());
-	}
+
+      if(AaProgram::_verbose_flag)
+      {
+	      for(set<AaStorageObject*>::iterator siter = addr_obj_set.begin(), fsiter = addr_obj_set.end();
+			      siter != fsiter;
+			      siter++)
+	      {
+
+		      AaRoot::Info("Recoalescing from " + top_obj->Get_Name() + 
+						" with addressable-object " + (*siter)->Get_Name());
+	      }
+      }
       top_obj->Coalesce_Storage();
     }
 
   // all "unknown" memory access will be assumed to point to
   // _extmem_object if this object is not null..
   if(AaProgram::_extmem_object != NULL)
-    {
-      for(set<AaPointerDereferenceExpression*>::iterator piter = AaProgram::_pointer_dereferences.begin(),
-	    fpiter = AaProgram::_pointer_dereferences.end();
-	  piter != fpiter;
-	  piter++)
-	{
-	  AaPointerDereferenceExpression* pu = (*piter);
-	  
-	  if(pu->Get_Addressed_Object_Representative() == NULL)
-	    {
-	      pu->Set_Addressed_Object_Representative(AaProgram::_extmem_object);
-	      AaRoot::Warning("pointer dereference linked to extmem-pool :", pu);
-	      AaProgram::Add_Storage_Dependency(pu,AaProgram::_extmem_object);
-	    }
-	}
-    }
+  {
+	  for(set<AaPointerDereferenceExpression*>::iterator piter = AaProgram::_pointer_dereferences.begin(),
+			  fpiter = AaProgram::_pointer_dereferences.end();
+			  piter != fpiter;
+			  piter++)
+	  {
+		  AaPointerDereferenceExpression* pu = (*piter);
+
+		  if(pu->Get_Addressed_Object_Representative() == NULL)
+		  {
+			  pu->Set_Addressed_Object_Representative(AaProgram::_extmem_object);
+			  AaRoot::Warning("pointer dereference linked to extmem-pool :", pu);
+			  AaProgram::Add_Storage_Dependency(pu,AaProgram::_extmem_object);
+		  }
+	  }
+  }
   else
-    {
+  {
 
-      for(set<AaPointerDereferenceExpression*>::iterator piter = AaProgram::_pointer_dereferences.begin(),
-	    fpiter = AaProgram::_pointer_dereferences.end();
-	  piter != fpiter;
-	  piter++)
-	{
-	  AaPointerDereferenceExpression* pu = (*piter);
-	  
-	  AaObject* obj = pu->Get_Addressed_Object_Representative();
+	  for(set<AaPointerDereferenceExpression*>::iterator piter = AaProgram::_pointer_dereferences.begin(),
+			  fpiter = AaProgram::_pointer_dereferences.end();
+			  piter != fpiter;
+			  piter++)
+	  {
+		  AaPointerDereferenceExpression* pu = (*piter);
 
-	  if(obj == NULL || obj->Is_Foreign_Storage_Object())
-	    {
-	      AaProgram::Add_ExtMem_Access_Type(pu->Get_Type());
-	    }
-	}
-    }
+		  AaObject* obj = pu->Get_Addressed_Object_Representative();
+
+		  if(obj == NULL || obj->Is_Foreign_Storage_Object())
+		  {
+			  AaProgram::Add_ExtMem_Access_Type(pu->Get_Type());
+		  }
+	  }
+  }
 
   int num_comps = AaProgram::_storage_dependency_graph.Connected_Components(AaProgram::_storage_eq_class_map);
   AaRoot::Info("Finished coalescing storage.. identified " + IntToStr(num_comps) + " disjoint memory space(s)");
   AaProgram::Print_Memory_Space_Info();
 
   for(int idx = 0; idx < AaProgram::_storage_eq_class_map.size(); idx++)
-    {
-      set<int> lau_set;
-      int total_size = 0;
+  {
+	  set<int> lau_set;
+	  int total_size = 0;
 
-      AaMemorySpace* new_ms = new AaMemorySpace(idx);
-      new_ms->Set_Is_Ordered(!AaProgram::_unordered_memory_flag);
+	  AaMemorySpace* new_ms = new AaMemorySpace(idx);
+	  new_ms->Set_Is_Ordered(!AaProgram::_unordered_memory_flag);
 
-      AaProgram::_memory_space_map[idx] = new_ms;
-      bool soltero = (AaProgram::_storage_eq_class_map[idx].size() == 1);
+	  AaProgram::_memory_space_map[idx] = new_ms;
+	  bool soltero = (AaProgram::_storage_eq_class_map[idx].size() == 1);
 
-      for(set<AaRoot*>::iterator iter = AaProgram::_storage_eq_class_map[idx].begin();
-	  iter !=  AaProgram::_storage_eq_class_map[idx].end();
-	  iter++)
-	{
+	  for(set<AaRoot*>::iterator iter = AaProgram::_storage_eq_class_map[idx].begin();
+			  iter !=  AaProgram::_storage_eq_class_map[idx].end();
+			  iter++)
+	  {
 
-	  AaRoot* u = (*iter);
-	  if(u->Is("AaStorageObject"))
-	    {
-	      
-	      new_ms->_objects.insert((AaStorageObject*)u);
+		  AaRoot* u = (*iter);
+		  if(u->Is("AaStorageObject"))
+		  {
 
-	      if(((AaStorageObject*)u)->Get_Is_Written_Into())
-		{
-		  new_ms->_is_written_into = true;
-		}
-	      if(((AaStorageObject*)u)->Get_Is_Read_From())
-		{
-		  new_ms->_is_read_from = true;
-		}
-	      
-	      ((AaStorageObject*)u)->Set_Mem_Space_Index(idx);
-	      for(set<int>::iterator witer = ((AaStorageObject*)u)->Get_Access_Widths().begin(),
-		    fwiter = ((AaStorageObject*)u)->Get_Access_Widths().end();
-		  witer != fwiter;
-		  witer++)
-		{
-		  lau_set.insert(*witer);
-		}
+			  new_ms->_objects.insert((AaStorageObject*)u);
 
-	      // overly conservative..
-	      // ((AaStorageObject*)u)->Get_Type()->Fill_LAU_Set(lau_set);
-	      
-	      total_size += ((AaStorageObject*)u)->Get_Type()->Size();
+			  if(((AaStorageObject*)u)->Get_Is_Written_Into())
+			  {
+				  new_ms->_is_written_into = true;
+			  }
+			  if(((AaStorageObject*)u)->Get_Is_Read_From())
+			  {
+				  new_ms->_is_read_from = true;
+			  }
+
+			  ((AaStorageObject*)u)->Set_Mem_Space_Index(idx);
+			  for(set<int>::iterator witer = ((AaStorageObject*)u)->Get_Access_Widths().begin(),
+					  fwiter = ((AaStorageObject*)u)->Get_Access_Widths().end();
+					  witer != fwiter;
+					  witer++)
+			  {
+				  lau_set.insert(*witer);
+			  }
+
+			  // overly conservative..
+			  // ((AaStorageObject*)u)->Get_Type()->Fill_LAU_Set(lau_set);
+
+			  total_size += ((AaStorageObject*)u)->Get_Type()->Size();
 
 	      AaScope* p_scope = ((AaStorageObject*)u)->Get_Scope();
 	      if(p_scope != NULL)

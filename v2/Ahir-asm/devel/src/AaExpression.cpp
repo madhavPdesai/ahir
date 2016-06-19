@@ -4285,12 +4285,26 @@ AaUnaryExpression::AaUnaryExpression(AaScope* parent_tpr,AaOperation op, AaExpre
 	this->_operation  = op;
 	this->_rest       = rest;
 
+	//
 	// type of result is the same as the type of
-	// the operand.
-	AaProgram::Add_Type_Dependency(this,rest);
+	// the operand, only if the operation is a NOT
+	// operation.
+	//
+	// added: Priority encode also!
+	//
+	if((op == __NOT) || (op == __PRIORITYENCODE))
+		AaProgram::Add_Type_Dependency(this,rest);
 
 	if(rest)
 		rest->Add_Target(this);
+
+	if((this->_operation == __BITREDUCEOR) ||
+			(this->_operation == __BITREDUCEAND) ||
+			(this->_operation == __BITREDUCEXOR))
+	{
+		AaType* nt = AaProgram:: Make_Uinteger_Type(1);
+		this->AaExpression::Set_Type(nt);
+	}
 
 	this->Set_Delay(1);
 }
@@ -4683,6 +4697,94 @@ void AaBinaryExpression::PrintC(ofstream& ofile)
 			this->Get_Operation(), 
 			ofile);
 }
+
+void AaUnaryExpression::Update_Type()
+{
+	AaType* rest_type = _rest->Get_Type();
+	AaType* this_type = this->Get_Type();
+
+	if(this->_operation == __DECODE)
+	{
+		if(rest_type != NULL)
+		{
+			if(rest_type->Is("AaUintType"))
+			{
+				int rest_width = ((AaUintType*) rest_type)->Get_Width();
+				if(this_type == NULL)
+				{		
+					AaType* nt = AaProgram::Make_Uinteger_Type(1 << rest_width);
+					this->AaExpression::Set_Type(nt);
+				}
+				else 
+				{
+					if(!this_type->Is("AaUintType"))
+					{
+						AaRoot::Error("type of decode expression must be $uint",this);
+					}
+					else if((((AaUintType*)this_type)->Get_Width()) != (1 << rest_width))
+					{
+						AaRoot::Error("width of decode type does not match type being decoded.",this);
+					}
+
+				}
+			}
+			else
+			{
+				AaRoot::Error("type of rest-expr in decode expr must be $uint",this);
+			}
+		}
+	}
+	else if(this->_operation == __ENCODE)
+	{
+		if(rest_type != NULL)
+		{
+			if(rest_type->Is("AaUintType"))
+			{
+				uint32_t rest_width = ((AaUintType*) rest_type)->Get_Width();
+				if((rest_width < 2) || (rest_width != (1 << uLog2(rest_width))))
+				{
+					AaRoot::Error("in encode expression, rest-expr width must be > 1, and a power of 2",
+							this);
+				}
+				else
+				{
+					if(this_type == NULL)
+					{		
+						AaType* nt = AaProgram::Make_Uinteger_Type(uLog2(rest_width));
+						this->AaExpression::Set_Type(nt);
+					}
+					else 
+					{
+						if(!this_type->Is("AaUintType"))
+						{
+							AaRoot::Error("type of decode expression must be $uint",this);
+						}
+						else if((((AaUintType*)this_type)->Get_Width()) != CeilLog2(rest_width)) 
+						{
+							AaRoot::Error("width of decode type does not match type being decoded.",this);
+						}
+
+					}
+				}
+			}
+			else
+			{
+				AaRoot::Error("type of rest-expr in encode expr must be $uint",this);
+			}
+		}
+	}
+	else if((this->_operation == __BITREDUCEOR) ||
+			(this->_operation == __BITREDUCEAND) ||
+			(this->_operation == __BITREDUCEXOR))
+	{
+		if(this_type == NULL)
+		{
+			AaType* nt = AaProgram:: Make_Uinteger_Type(1);
+			this->AaExpression::Set_Type(nt);
+		}
+	}
+}
+
 
 void AaBinaryExpression::Update_Type()
 {

@@ -765,48 +765,76 @@ void vcUnarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
 {
 	string X = this->Get_X()->Get_VHDL_Signal_Id();
 	string Z = this->Get_Z()->Get_VHDL_Signal_Id();
-	bool ip_is_float = (this->Get_X()->Get_Type()->Is("vcFloatType")); 
-	bool op_is_float = (this->Get_Z()->Get_Type()->Is("vcFloatType")); 
 
-	int ip_exponent_width, ip_fraction_width;
-	if(ip_is_float)
+	if(this->_op_id == "$decode")
 	{
-		ip_exponent_width = ((vcFloatType*) (this->Get_X()->Get_Type()))->Get_Characteristic_Width();
-		ip_fraction_width = ((vcFloatType*) (this->Get_X()->Get_Type()))->Get_Mantissa_Width();
+		ofile << Z << " <= GenericDecode("   << X << ");" << endl;
 	}
-	int op_exponent_width, op_fraction_width;
-	if(op_is_float)
+	else if(this->_op_id == "$encode")
 	{
-		op_exponent_width = ((vcFloatType*) (this->Get_Z()->Get_Type()))->Get_Characteristic_Width();
-		op_fraction_width = ((vcFloatType*) (this->Get_Z()->Get_Type()))->Get_Mantissa_Width();
+		ofile << Z << " <= GenericEncode("   << X << ");" << endl;
 	}
-
-	ofile << "-- unary operator " << this->Get_VHDL_Id() << endl;
-	ofile << "process(" << this->Get_X()->Get_VHDL_Signal_Id() << ") -- {" << endl;
-	ofile << "variable tmp_var : " << this->Get_Output_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
-	ofile << "begin -- { " << endl;
-	string vhdl_op_id  = Get_VHDL_Op_Id(this->_op_id, this->Get_Input_Type(), this->Get_Output_Type(), false);
-
-	if(ip_is_float & op_is_float)
+	else if(this->_op_id == "$priority_encode")
 	{
-		X = StdLogicToFloatConversion(X, this->Get_X()->Get_Type());
-		ofile << "ApFloatResize_proc(" << X << ", " << op_exponent_width << ", " 
-			<< op_fraction_width << ", tmp_var);" << endl;
+		ofile << Z << " <= PriorityEncode("   << X << ");" << endl;
 	}
-	else if(ip_is_float || op_is_float)
+	else if(this->_op_id == "!|")
 	{
-		ofile << "SingleInputFloatOperation(\"" << vhdl_op_id << "\", "
-			<< X << ", " 
-			<< (ip_is_float ? ip_exponent_width : op_exponent_width) << ", " 
-			<< (ip_is_float ? ip_fraction_width : op_fraction_width) 
-			<< ", tmp_var);" << endl;
+		ofile << Z << " <= OrReduce("   << X << ");" << endl;
+	}
+	else if(this->_op_id == "!&")
+	{
+		ofile << Z << " <= AndReduce("   << X << ");" << endl;
+	}
+	else if(this->_op_id == "!^")
+	{
+		ofile << Z << " <= XorReduce("   << X << ");" << endl;
 	}
 	else
 	{
-		ofile << "SingleInputOperation(\"" << vhdl_op_id << "\", " << X << ", tmp_var);" << endl;
+		bool ip_is_float = (this->Get_X()->Get_Type()->Is("vcFloatType")); 
+		bool op_is_float = (this->Get_Z()->Get_Type()->Is("vcFloatType")); 
+
+		int ip_exponent_width, ip_fraction_width;
+		if(ip_is_float)
+		{
+			ip_exponent_width = ((vcFloatType*) (this->Get_X()->Get_Type()))->Get_Characteristic_Width();
+			ip_fraction_width = ((vcFloatType*) (this->Get_X()->Get_Type()))->Get_Mantissa_Width();
+		}
+		int op_exponent_width, op_fraction_width;
+		if(op_is_float)
+		{
+			op_exponent_width = ((vcFloatType*) (this->Get_Z()->Get_Type()))->Get_Characteristic_Width();
+			op_fraction_width = ((vcFloatType*) (this->Get_Z()->Get_Type()))->Get_Mantissa_Width();
+		}
+
+		ofile << "-- unary operator " << this->Get_VHDL_Id() << endl;
+		ofile << "process(" << this->Get_X()->Get_VHDL_Signal_Id() << ") -- {" << endl;
+		ofile << "variable tmp_var : " << this->Get_Output_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
+		ofile << "begin -- { " << endl;
+		string vhdl_op_id  = Get_VHDL_Op_Id(this->_op_id, this->Get_Input_Type(), this->Get_Output_Type(), false);
+
+		if(ip_is_float & op_is_float)
+		{
+			X = StdLogicToFloatConversion(X, this->Get_X()->Get_Type());
+			ofile << "ApFloatResize_proc(" << X << ", " << op_exponent_width << ", " 
+				<< op_fraction_width << ", tmp_var);" << endl;
+		}
+		else if(ip_is_float || op_is_float)
+		{
+			ofile << "SingleInputFloatOperation(\"" << vhdl_op_id << "\", "
+				<< X << ", " 
+				<< (ip_is_float ? ip_exponent_width : op_exponent_width) << ", " 
+				<< (ip_is_float ? ip_fraction_width : op_fraction_width) 
+				<< ", tmp_var);" << endl;
+		}
+		else
+		{
+			ofile << "SingleInputOperation(\"" << vhdl_op_id << "\", " << X << ", tmp_var);" << endl;
+		}
+		ofile <<  Z  << " <= tmp_var; -- }" << endl;
+		ofile << "end process;" << endl; 
 	}
-	ofile <<  Z  << " <= tmp_var; -- }" << endl;
-	ofile << "end process;" << endl; 
 }
 
 void vcUnarySplitOperator::Print(ostream& ofile)
@@ -1787,7 +1815,14 @@ bool Is_Unary_Op(string vc_op_id)
 			(vc_op_id == vcLexerKeywords[__FtoU_ASSIGN_OP]) ||
 			(vc_op_id == vcLexerKeywords[__UtoF_ASSIGN_OP]) ||
 			(vc_op_id == vcLexerKeywords[__StoF_ASSIGN_OP]) ||
-			(vc_op_id == vcLexerKeywords[__FtoF_ASSIGN_OP]));
+			(vc_op_id == vcLexerKeywords[__FtoF_ASSIGN_OP]) ||
+			(vc_op_id == vcLexerKeywords[__DECODE_OP]) ||
+			(vc_op_id == vcLexerKeywords[__ENCODE_OP]) ||
+			(vc_op_id == vcLexerKeywords[__PRIORITY_ENCODE_OP]) ||
+			(vc_op_id == vcLexerKeywords[__BITREDUCE_OR_OP]) ||
+			(vc_op_id == vcLexerKeywords[__BITREDUCE_AND_OP]) ||
+			(vc_op_id == vcLexerKeywords[__BITREDUCE_XOR_OP])
+		);
 }
 
 string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type, bool add_quotes)
@@ -1829,6 +1864,13 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type, bool a
 		else if(vc_op_id == vcLexerKeywords[__NOR_OP]           ) { ret_string = "ApIntNor"  ;}
 		else if(vc_op_id == vcLexerKeywords[__NAND_OP]          ) { ret_string = "ApIntNand"  ;}
 		else if(vc_op_id == vcLexerKeywords[__XNOR_OP]          ) { ret_string = "ApIntXnor"  ;}
+		else if(vc_op_id == vcLexerKeywords[__XNOR_OP]          ) { ret_string = "ApIntXnor"  ;}
+		else if(vc_op_id == vcLexerKeywords[__DECODE_OP]          ) { ret_string = "ApIntDecode"  ;}
+		else if(vc_op_id == vcLexerKeywords[__ENCODE_OP]          ) { ret_string = "ApIntEncode"  ;}
+		else if(vc_op_id == vcLexerKeywords[__PRIORITY_ENCODE_OP]) { ret_string = "ApIntPriorityEncode"  ;}
+		else if(vc_op_id == vcLexerKeywords[__BITREDUCE_OR_OP]) { ret_string = "ApIntBitreduceOr"  ;}
+		else if(vc_op_id == vcLexerKeywords[__BITREDUCE_AND_OP]) { ret_string = "ApIntBitreduceAnd"  ;}
+		else if(vc_op_id == vcLexerKeywords[__BITREDUCE_XOR_OP]) { ret_string = "ApIntBitreduceXor"  ;}
 		else { vcSystem::Error("unsupported int X int -> int operation " + vc_op_id);}
 	}
 

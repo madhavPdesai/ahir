@@ -39,6 +39,20 @@ int CeilLog2(int n)
   return(ret_val);
 }
 
+uint32_t uLog2(uint32_t n)
+{
+  uint32_t ret_val = 0;
+
+  while( n > 1)
+    {
+      n = n/2;
+      ret_val++;
+    }
+
+
+  return(ret_val);
+}
+
 
 bool StringCompare::operator() (string s11, string s21) const
 {
@@ -233,6 +247,24 @@ string Aa_Name(AaOperation op)
       break;
     case __UNORDERED:
       ret_string = "><";
+      break;
+    case __DECODE:
+      ret_string = " $decode ";
+      break;
+    case __ENCODE:
+      ret_string = " $encode ";
+      break;
+    case __PRIORITYENCODE:
+      ret_string = " $p_encode ";
+      break;
+    case __BITREDUCEOR:
+      ret_string = " $bitreduce | ";
+      break;
+    case __BITREDUCEAND:
+      ret_string = " $bitreduce & ";
+      break;
+    case __BITREDUCEXOR:
+      ret_string = " $bitreduce ^ ";
       break;
     default:
       cerr << "Error: unrecognized operation" << endl;
