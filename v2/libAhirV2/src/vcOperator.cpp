@@ -780,15 +780,15 @@ void vcUnarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
 	}
 	else if(this->_op_id == "!|")
 	{
-		ofile << Z << " <= OrReduce("   << X << ");" << endl;
+		ofile << Z << "(0) <= OrReduce("   << X << ");" << endl;
 	}
 	else if(this->_op_id == "!&")
 	{
-		ofile << Z << " <= AndReduce("   << X << ");" << endl;
+		ofile << Z << "(0) <= AndReduce("   << X << ");" << endl;
 	}
 	else if(this->_op_id == "!^")
 	{
-		ofile << Z << " <= XorReduce("   << X << ");" << endl;
+		ofile << Z << "(0) <= XorReduce("   << X << ");" << endl;
 	}
 	else
 	{
