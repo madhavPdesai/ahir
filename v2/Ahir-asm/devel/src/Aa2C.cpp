@@ -466,6 +466,24 @@ void Print_C_Unary_Operation(string src, AaType* src_type, string tgt, AaType* t
 			case __NOP:
 				ofile << "bit_vector_cast_to_bit_vector( " << (!src_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << tgt << "), &(" << src << "));" << __endl__;
 				break;
+			case __DECODE:
+				ofile << "bit_vector_decode( &(" << src << "), &(" << tgt << "));" << __endl__;
+				break;
+			case __ENCODE:
+				ofile << "bit_vector_encode( &(" << src << "), &(" << tgt << "));" << __endl__;
+				break;
+			case __PRIORITYENCODE:
+				ofile << "bit_vector_priority_encode( &(" << src << "), &(" << tgt << "));" << __endl__;
+				break;
+			case __BITREDUCEOR:
+				ofile << "bit_vector_reduce_or( &(" << src << "), &(" << tgt << "));" << __endl__;
+				break;
+			case __BITREDUCEAND:
+				ofile << "bit_vector_reduce_and( &(" << src << "), &(" << tgt << "));" << __endl__;
+				break;
+			case __BITREDUCEXOR:
+				ofile << "bit_vector_reduce_xor( &(" << src << "), &(" << tgt << "));" << __endl__;
+				break;
 			default:
 				AaRoot::Error("Aa2C: unsupported unary operation", NULL);
 				assert(0);

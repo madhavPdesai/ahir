@@ -161,7 +161,7 @@ char* to_string(bit_vector* t)
 	int QUAD = 4;
 	int I;
 
-	sprintf(to_string_buffer,"");
+	sprintf(to_string_buffer," ");
 
 	for(I=t->width-1; I>=0; I--)
 	{
@@ -588,6 +588,28 @@ void bit_vector_set(bit_vector* s)
 	}
 }
 
+void bit_vector_clear_undefined(bit_vector* s)
+{
+	uint32_t asize = __array_size(s);
+	uint32_t i;
+	for(i = 0; i < asize; i++)
+	{
+		__set_byte(s,i,0);
+		__set_undefined_byte(s,i,0);
+	}
+}
+
+void bit_vector_set_undefined(bit_vector* s)
+{
+	uint32_t asize = __array_size(s);
+	uint32_t i;
+	for(i = 0; i < asize; i++)
+	{
+		__set_byte(s,i,0xff);
+		__set_undefined_byte(s,i,0xff);
+	}
+}
+
 // ------------------            bit-wise operations
 void bit_vector_or(bit_vector* r, bit_vector* s, bit_vector* t)
 {
@@ -692,6 +714,144 @@ void  bit_vector_not(bit_vector* src, bit_vector* dest)
 	bit_vector_clear_unused_bits(dest);
 }
 
+void  bit_vector_reduce_or(bit_vector* src, bit_vector* dest)
+{
+	assert(dest->width == 1);
+
+	uint8_t val = 0;
+	uint8_t uval = 0;
+	int I;
+	for(I=0; I < src->width; I++)
+	{
+		uint8_t x = bit_vector_get_bit(src,I);
+		uint8_t ux = bit_vector_get_undefined_bit(src,I);
+
+		uint8_t n_uval = ((!val && ux)  || (!x && uval) || (ux && uval));
+		uint8_t n_val  = (val | x);
+
+		uval = n_uval;
+		val = n_val;
+	}
+	bit_vector_set_bit(dest,0,val);
+	bit_vector_set_undefined_bit(dest,0,uval);
+}
+
+void  bit_vector_reduce_and(bit_vector* src, bit_vector* dest)
+{
+	assert(dest->width == 1);
+
+	uint8_t val = 1;
+	uint8_t uval = 0;
+	int I;
+	for(I=0; I < src->width; I++)
+	{
+		uint8_t x = bit_vector_get_bit(src,I);
+		uint8_t ux = bit_vector_get_undefined_bit(src,I);
+
+		uint8_t n_uval = ((val & ux)  | (x & uval) | (ux & uval));
+		uint8_t n_val  = (val & x);
+
+		uval = n_uval;
+		val = n_val;
+	}
+	bit_vector_set_bit(dest,0,val);
+	bit_vector_set_undefined_bit(dest,0,uval);
+}
+
+void  bit_vector_reduce_xor(bit_vector* src, bit_vector* dest)
+{
+	assert(dest->width == 1);
+
+	uint8_t val = 0;
+	uint8_t uval = 0;
+	int I;
+	for(I=0; I < src->width; I++)
+	{
+		uint8_t x = bit_vector_get_bit(src,I);
+		uint8_t ux = bit_vector_get_undefined_bit(src,I);
+
+		uint8_t n_uval = (uval | ux);
+		uint8_t n_val  = (val ^ x);
+
+		uval = n_uval;
+		val = n_val;
+	}
+	bit_vector_set_bit(dest,0,val);
+	bit_vector_set_undefined_bit(dest,0,uval);
+}
+
+void  bit_vector_decode(bit_vector* src, bit_vector* dest)
+{
+	if(has_undefined_bit(src))
+	{
+		bit_vector_set_undefined(dest);
+	}
+	else
+	{
+		bit_vector_clear_undefined(dest);
+		int I;
+		uint64_t src_val = bit_vector_to_uint64(0,src);
+		for(I = 0; I < dest->width; I++)
+		{
+			if(src_val == I)
+				bit_vector_set_bit(dest, I, 1);
+			else
+				bit_vector_set_bit(dest, I, 0);
+		}
+	}
+}
+
+void  bit_vector_encode(bit_vector* src, bit_vector* dest)
+{
+	int count = 0;
+	if(has_undefined_bit(src))
+	{
+		bit_vector_set_undefined(dest);
+	}
+	else
+	{
+		bit_vector_clear_undefined(dest);
+		int I;
+		uint64_t src_val = bit_vector_to_uint64(0,src);
+		for(I = 0; I < src->width; I++)
+		{
+			if(bit_vector_get_bit(src,I))
+			{
+				bit_vector_assign_uint64(0, dest, I);
+				count++;
+			}
+		}
+	}
+	if(count > 1)
+	{
+		fprintf(stderr,"Error:bit_vector_encode: src has more than one bit set.\n");
+		assert(0);
+	}
+}
+
+void  bit_vector_priority_encode(bit_vector* src, bit_vector* dest)
+{
+	assert(src->width == dest->width);
+
+	if(has_undefined_bit(src))
+	{
+		bit_vector_set_undefined(dest);
+	}
+	else
+	{
+		bit_vector_clear_undefined(dest);
+		bit_vector_clear(dest);
+		int I;
+		for(I = src->width-1; I >= 0; I--)
+		{
+			if(bit_vector_get_bit(src,I))
+			{
+				bit_vector_set_bit(dest,I,1);
+				break;
+			}
+		}
+	}
+}
 
 // -----------------------------------  arithmetic ---------------------
 // ++

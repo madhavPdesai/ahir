@@ -72,6 +72,102 @@ int check_bitsel(uint64_t bit_width)
 	return(ret_val);
 }
 
+int check_decode_encode()
+{
+	int ret_val = 0;
+
+	__declare_bit_vector(u_256, 256);
+	bit_vector_clear(&u_256);
+	
+	__declare_bit_vector(u_8, 8);
+	bit_vector_clear(&u_8);
+
+
+
+	int I;
+	__declare_bit_vector(uu_256, 256);
+
+	for(I=0; I < 256; I++)
+	{
+		bit_vector_clear(&u_256);
+		bit_vector_set_bit(&u_256,I,1);
+
+		bit_vector_encode(&u_256,&u_8);
+		if(bit_vector_to_uint64(0,&u_8) != I)
+		{
+			fprintf(stderr,"Error: encode %s = %llx, expected %d\n",
+					to_hex_string(&u_256), bit_vector_to_uint64(0,&u_8),
+							I);
+			ret_val = 1;
+		}
+
+		bit_vector_assign_uint64(0,&u_8, I);
+		bit_vector_decode(&u_8, &uu_256);
+		if((bit_vector_compare(0,&u_256, &uu_256) != IS_EQUAL))
+		{
+			fprintf(stderr,"Error: decode %d = %s, expected %s\n", I,
+					to_hex_string(&uu_256), to_hex_string(&u_256));
+			ret_val = 1;
+		}
+	}
+	return(ret_val);
+}
+
+int check_reduce_operations()
+{
+	int ret_val = 0;
+	__declare_bit_vector(u_8,8);	
+
+	__declare_bit_vector(a_1,1);	
+	__declare_bit_vector(o_1,1);	
+	__declare_bit_vector(x_1,1);	
+
+	int I;
+	for(I=0; I < 256; I++)
+	{
+		bit_vector_assign_uint64(0, &u_8, I);
+
+		uint8_t aI = (I == 255);
+		uint8_t oI = (I != 0);
+		uint8_t xI = ((I & 0x1) 
+				^ ((I >> 1) & 0x1) 
+				^ ((I >> 2) & 0x1) 
+				^ ((I >> 3) & 0x1) 
+				^ ((I >> 4) & 0x1) 
+				^ ((I >> 5) & 0x1) 
+				^ ((I >> 6) & 0x1) 
+				^ ((I >> 7) & 0x1) );
+
+		
+		bit_vector_reduce_or(&u_8, &o_1);
+		bit_vector_reduce_and(&u_8, &a_1);
+		bit_vector_reduce_xor(&u_8, &x_1);
+
+		if(bit_vector_to_uint64(0,&o_1) !=  oI)
+		{
+			fprintf(stderr,"Error: reduce | %s = %x, expected %x\n",
+					to_string(&u_8), bit_vector_to_uint64(0,&o_1), oI); 
+			ret_val = 1;
+		}
+		
+		if(bit_vector_to_uint64(0,&a_1) !=  aI)
+		{
+			fprintf(stderr,"Error: reduce & %s = %x, expected %x\n",
+					to_string(&u_8), bit_vector_to_uint64(0,&a_1), aI); 
+			ret_val = 1;
+		}
+
+		if(bit_vector_to_uint64(0,&x_1) !=  xI)
+		{
+			fprintf(stderr,"Error: reduce & %s = %x, expected %x\n",
+					to_string(&u_8), bit_vector_to_uint64(0,&x_1), xI); 
+			ret_val = 1;
+		}
+	}
+	return(ret_val);
+}
+
+
 //
 // concatenate two numbers to produce a larger one.
 //
@@ -363,6 +459,18 @@ int main(int argc, char* argv[])
 
 	if(argc > 2)
 		H = atoi(argv[2]);
+
+	if(check_decode_encode())
+	{
+	    fprintf(stderr,"Error: decode-encode tests failed.\n");
+	    fail_count++;
+	}
+
+	if(check_reduce_operations())
+	{
+	    fprintf(stderr,"Error: reduce-op tests failed.\n");
+	    fail_count++;
+	}
 
 	for(def_size = L; def_size <= H; def_size++)
 	{

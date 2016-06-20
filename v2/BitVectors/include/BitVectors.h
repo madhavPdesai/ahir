@@ -106,6 +106,10 @@ void double_bitcast_to_bit_vector(bit_vector* s, double* f);
 void bit_vector_clear(bit_vector* s); // clear all bits.
 void bit_vector_set(bit_vector* s);   // set all bits to 1.
 
+// mark as undefined, etc.
+void bit_vector_set_undefined(bit_vector* s);     // set all undefined bits to 1.
+void bit_vector_clear_undefined(bit_vector* s);   // clear all undefined bits to 0.
+
 
 //  --------------  bitwise operations -----------------------------------
 // (r op s) = t.
@@ -116,6 +120,17 @@ void bit_vector_nand(bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_xor(bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_xnor(bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_not(bit_vector* src, bit_vector* dest);
+
+void bit_vector_reduce_or(bit_vector* src, bit_vector* dest);
+void bit_vector_reduce_and(bit_vector* src, bit_vector* dest);
+void bit_vector_reduce_xor(bit_vector* src, bit_vector* dest);
+
+void bit_vector_decode(bit_vector* src, bit_vector* dest);
+void bit_vector_encode(bit_vector* src, bit_vector* dest);
+void bit_vector_priority_encode(bit_vector* src, bit_vector* dest);
+
+
+
 
 // ---------------  2s complement arithmetic operations -------------------
 void bit_vector_increment(bit_vector* s);      

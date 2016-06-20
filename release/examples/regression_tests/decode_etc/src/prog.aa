@@ -1,0 +1,43 @@
+$pipe in_data : $uint<8> $depth 2
+$pipe out_data : $uint<8> $depth 2
+
+$constant Z8: $uint<8> := 0
+$constant Z5: $uint<5> := 0
+
+$module [combi_block] $in (X: $uint<8>) $out (Y: $uint<8>) $is
+{
+ dX  := ($decode X)
+ $volatile ddX := ($decode X)
+
+ pdX := ($p_encode dX)
+ $volatile ppdX := ($p_encode (dX | ddX))
+
+ cY   := ($encode (pdX | ppdX))
+ $volatile ccY   := ($encode (pdX | ppdX))
+
+ Y := (cY | ccY)
+}
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] 
+	{
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+
+		X := in_data
+		$call combi_block (X) (Y)
+
+		aX := ($bitreduce & Y)
+		oX := ($bitreduce | Y)
+		xX := ($bitreduce ^ Y)
+		$volatile aaX := ($bitreduce & Y)
+		$volatile ooX := ($bitreduce | Y)
+		$volatile xxX := ($bitreduce ^ Y)
+
+		$rreport (daemon tVals Y aX aaX oX ooX xX xxX)
+
+		out_data := ($concat Z5 (aaX | aX)  (ooX | oX)  (xxX | xX))
+		$while 1
+	}
+}
