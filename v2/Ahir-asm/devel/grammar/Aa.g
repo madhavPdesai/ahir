@@ -280,11 +280,14 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
     bool guard_flag = false; 
     bool not_flag   = false;
     bool mark_flag  = false;	
-    bool synch_flag = false;
     string ms;
     string gs;
     string ss;
     vector<AaStatement*> llist;
+
+    vector<string> synch_stmts;
+    vector<pair<string,int> > delay_stmts;
+
     bool volatile_flag = false;
 }
     :  
@@ -303,7 +306,16 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 			ms = mid->getText();
 		}
 	   )?
-	   (SYNCH LPAREN (syid: SIMPLE_IDENTIFIER {synch_flag = true; ss = syid->getText();})+ RPAREN )? 
+	   (SYNCH LPAREN (syid: SIMPLE_IDENTIFIER 
+			{
+				ss = syid->getText();
+				synch_stmts.push_back(ss);
+			})+ RPAREN )? 
+	   (DELAY LPAREN (dlid: SIMPLE_IDENTIFIER dint: UINTEGER 
+				{
+					ss = dlid->getText();
+					int delay_val = atoi(dint->getText().c_str());
+					delay_stmts.push_back(pair<string,int>(ss, delay_val));})+ RPAREN )? 
 	   {
 		for(int I = 0, fI = llist.size(); I < fI; I++)
 		{
@@ -330,15 +342,19 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 				if(scope->Is_Statement())
 					((AaStatement*)scope)->Mark_Statement(ms_ext, stmt);
 			}
-			if(synch_flag)
+			int J,fJ;
+			for(J = 0,fJ = synch_stmts.size(); J < fJ; J++)
 			{	
-				stmt->Add_Synch(ss);
+				stmt->Add_Synch_Or_Marked_Delay(true, synch_stmts[J],0);
+			}
+			for(J = 0,fJ = delay_stmts.size(); J < fJ; J++)
+			{	
+				stmt->Add_Synch_Or_Marked_Delay(false, delay_stmts[J].first, delay_stmts[J].second);
 			}
 
 			// add the statement!
 			slist.push_back(stmt);
 		}  
-		
 	   }
 	) | 
 	(
@@ -402,11 +418,16 @@ aA_Unlock_Statement[AaScope* scope, vector<AaStatement*>& slist]
 // aA_Trace_Statement : TRACE
 //-----------------------------------------------------------------------------------------------
 aA_Trace_Statement[AaScope* scope, vector<AaStatement*>& slist]
+{
+	string t_string = "";
+}
 :
-	TRACE {
-		AaTraceStatement* tstmt = new AaTraceStatement(scope);
+	TRACE sid: SIMPLE_IDENTIFIER 
+	     {
+		t_string = sid->getText(); 
+		AaTraceStatement* tstmt = new AaTraceStatement(scope, t_string);
 		slist.push_back(tstmt);
-	      }
+	     }
 ;
 
 
@@ -1528,7 +1549,7 @@ aA_Bitreduce_Expression[AaScope* scope] returns [AaExpression* expr]
 
 //----------------------------------------------------------------------------------------------------------
 //  aA_Expression_Buffering_Spec:
-//      DELAY uinteger
+//      BUFFERING uinteger
 //----------------------------------------------------------------------------------------------------------
 //
 aA_Expression_Buffering_Spec[AaExpression* expr] 
@@ -2307,6 +2328,7 @@ VOID            : "$void";
 // mark, synch
 MARK            : "$mark";
 SYNCH           : "$synch";
+DELAY		: "$delay";
 
 // point-to-point pipe attribute.
 P2P		: "$p2p";

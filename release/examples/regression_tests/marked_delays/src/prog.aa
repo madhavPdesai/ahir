@@ -1,0 +1,40 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe U V: $uint<32> $depth 2
+
+$pipe out_data : $uint<32> $depth 2
+
+$module [ping_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+
+		$merge $entry $loopback $endmerge
+		
+		X := U
+		V := X
+
+		$while 1
+	}
+}
+
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback $endmerge
+
+		X := in_data
+		U := X  $mark SEND
+		pX := V $delay (SEND 4)
+
+		Y := (X + pX)
+		out_data := Y
+
+		$while 1
+	}
+}

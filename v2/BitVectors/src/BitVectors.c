@@ -1405,7 +1405,7 @@ void read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv)
 
 
 // to enable setting break point in gdb.
-void __trace()
+void __trace(const char* trace_string)
 {
-	fprintf(stderr,"----TRACE----\n");
+	fprintf(stderr,"TRACE %s\n", trace_string);
 }

@@ -39,6 +39,7 @@ class AaStatement: public AaScope
   // mark
   string _mark;
   set<AaStatement*> _synch_statements;
+  map<AaStatement*,int> _marked_delay_statements;
 
   map<string,AaStatement*> _marked_statement_map;
 
@@ -69,14 +70,21 @@ class AaStatement: public AaScope
 	else
 		return(NULL);
   }
-  virtual void Add_Synch(string syid)
+  virtual void Add_Synch_Or_Marked_Delay(bool synch_flag, string syid, int delay_value)
   {
 	if(this->Get_Scope()->Is_Statement())
 	{
 		AaStatement* ss = (AaStatement*) this->Get_Scope();
 		AaStatement* synch = ss->Get_Marked_Statement(syid);
 		if(synch != NULL)
-			_synch_statements.insert(synch);
+		{
+			if(synch_flag)
+				_synch_statements.insert(synch);
+			else
+				_marked_delay_statements[synch] = delay_value;
+
+	
+		}
 	}	
   }
   virtual bool Is_Phi_Statement() {return(false);}
@@ -249,6 +257,8 @@ class AaStatement: public AaScope
   }
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 	{ assert(0);}
+  void Update_Marked_Delay_Adjacencies(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+				set<AaRoot*>& visited_elements);
   void Print_Slacks(set<AaRoot*>& visited_elements,
 	map<AaRoot*, vector< pair<AaRoot*, int> > > adjacency_map,
 	map<AaRoot*, int> longest_paths_from_root_map);
@@ -449,8 +459,9 @@ class AaNullStatement: public AaStatement
 
 class AaTraceStatement: public AaNullStatement
 {
+	string _trace_identifier;
 	public:
-	AaTraceStatement(AaScope* prnt):AaNullStatement(prnt) {}
+	AaTraceStatement(AaScope* prnt, string tid):AaNullStatement(prnt) {_trace_identifier = tid;}
         virtual void Print(ostream& ofile);
   	virtual void Map_Source_References();
 

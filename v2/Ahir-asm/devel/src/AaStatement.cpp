@@ -930,7 +930,7 @@ void AaTraceStatement::Print(ostream& ofile)
 		this->Get_Guard_Expression()->Print(ofile);
 		ofile << ") ";
 	}
-	ofile << "$trace " << endl;
+	ofile << "$trace " << this->_trace_identifier <<  endl;
 }
 
   	
@@ -965,7 +965,7 @@ void AaTraceStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), headerfile);
 		headerfile << ") {\\" << endl;
 	}
-	headerfile << "__trace();\\" <<  endl;
+	headerfile << "__trace(\"" << this->_trace_identifier << "\");\\" <<  endl;
 	if(this->Get_Guard_Expression())
 		headerfile << "}\\" << endl;
 }
@@ -1289,6 +1289,20 @@ void AaAssignmentStatement::Print(ostream& ofile)
 			      siter != fiter; siter++)
 	      {
 		      ofile << (*siter)->Get_Mark();
+		      ofile << " ";
+	      }
+	      ofile << ")  ";
+      }
+      if(this->_marked_delay_statements.size() > 0)
+      {
+	      ofile << " $delay (";
+	      for(map<AaStatement*,int>::iterator miter = _marked_delay_statements.begin(), 
+					fmiter = _marked_delay_statements.end();
+			      		miter != fmiter; miter++)
+	      {
+		      ofile << (*miter).first->Get_Mark();
+		      ofile << " ";
+		      ofile << (*miter).second;
 		      ofile << " ";
 	      }
 	      ofile << ")  ";
@@ -5691,7 +5705,7 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 	src_expression->Update_Adjacency_Map(adjacency_map, visited_elements);
 	__InsMap(adjacency_map,src_expression,this,0);
 
-	visited_elements.insert(this);
+
 
 	AaExpression* tgt_expression = this->Get_Target();
 	tgt_expression->Update_Adjacency_Map(adjacency_map,visited_elements);
@@ -5716,6 +5730,32 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 
 	// arc from root to tgt_expression.
 	__InsMap(adjacency_map,this,tgt_expression,delay);
+
+	this->Update_Marked_Delay_Adjacencies(adjacency_map, visited_elements);
+	visited_elements.insert(this);
+
+}
+
+
+// specified delays.
+void AaStatement::Update_Marked_Delay_Adjacencies(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+				set<AaRoot*>& visited_elements)
+{
+      if(this->_marked_delay_statements.size() > 0)
+      {
+	      for(map<AaStatement*,int>::iterator miter = _marked_delay_statements.begin(), 
+					fmiter = _marked_delay_statements.end();
+			      		miter != fmiter; miter++)
+	      {
+		      AaStatement* ss =  (*miter).first;
+		      int marked_delay  = (*miter).second;
+		      if(visited_elements.find(ss) != visited_elements.end())
+			{
+				__InsMap(adjacency_map,ss,this,marked_delay);
+			}
+	      }
+      }
+	
 }
 
 void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
@@ -5745,6 +5785,8 @@ void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, in
 		// guard has dependency to statement.
 		__InsMap(adjacency_map, this->_guard_expression, this, this->_guard_expression->Get_Delay());
 	}
+
+	this->Update_Marked_Delay_Adjacencies(adjacency_map, visited_elements);
 	visited_elements.insert(this);
 }
 

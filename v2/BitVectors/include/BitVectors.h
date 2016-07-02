@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 
-void __trace();
+void __trace(const char* trace_string);
 
 typedef struct sized_u8_array_
 {
