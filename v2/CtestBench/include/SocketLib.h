@@ -94,7 +94,7 @@ int can_write_to_socket(int socket_id);
 
 
 // receive string from socket and put it inside buffer.
-int receive_string(int n, char* buffer);
+int receive_string(int n, char* buffer, int max_byte_count);
 
 //
 // will establish a connection, send the

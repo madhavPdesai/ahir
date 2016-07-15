@@ -94,7 +94,7 @@ vhdlsim: TB GHDL
 TB:   $(SRC)/MatMulDriver.c vhdlCStubs.h vhdlCStubs.c
 	gcc -c -g vhdlCStubs.c  -I$(SRC) -I./ -I$(SOCKETLIB_INCLUDE)
 	gcc -c -g $(SRC)/MatMulDriver.c -I$(PTHREADUTILS_INCLUDE) -I$(SRC) -I./ -I$(SOCKETLIB_INCLUDE)
-	gcc -o testbench_hw MatMulDriver.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
+	gcc -o testbench_hw MatMulDriver.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLibPipeHandler -lpthread
 
 GHDL:  ahir_system.vhdl ahir_system_test_bench.vhdl $(SRC)/MatMulDriver.c vhdlCStubs.h vhdlCStubs.c
 	ghdl --clean

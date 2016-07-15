@@ -1,6 +1,7 @@
 // Author: Madhav Desai
 // 
 #include <string.h>
+#include <assert.h>
 #ifdef USE_GNUPTH
 #include <pth.h>
 #endif
@@ -354,7 +355,9 @@ int connect_to_client(int server_fd)
 
       if (newsockfd >= 0)
 	{
+#ifdef DEBUG
 	  fprintf(stderr,"Info: new client connection %d \n",newsockfd);
+#endif
 	}
       else
 	{
@@ -407,9 +410,11 @@ int can_write_to_socket(int socket_id)
 
 
 // receive string from socket and put it inside buffer.
-int receive_string(int sock_id, char* buffer)
+int receive_string(int sock_id, char* buffer, int max_byte_count)
 {
   int nbytes = 0;
+
+  assert(max_byte_count <= MAX_BUF_SIZE);
 
   while(1)
     {
@@ -421,9 +426,9 @@ int receive_string(int sock_id, char* buffer)
 
   
 #ifdef USE_GNUPTH
-  nbytes = pth_recv(sock_id,buffer,MAX_BUF_SIZE,0);
+  nbytes = pth_recv(sock_id,buffer,max_byte_count,0);
 #else
-  nbytes = recv(sock_id,buffer,MAX_BUF_SIZE,0);
+  nbytes = recv(sock_id,buffer,max_byte_count,0);
 #endif
 
   return(nbytes);
@@ -512,7 +517,7 @@ void send_packet_and_wait_for_response(char* buffer, int send_len, char* server_
       if(pl > 0)
 	print_payload(stderr,payload,8,pl);
 #endif
-      while( (n = receive_string(sockfd,buffer)) <= 0)
+      while( (n = receive_string(sockfd,buffer, MAX_BUF_SIZE)) <= 0)
 	{
 		__SLEEP__(1000);
 	}

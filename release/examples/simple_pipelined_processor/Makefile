@@ -47,7 +47,7 @@ vc2vhdl: processor.opt.o.aa.vc processorSuper.vc attr.vc
 vhdlsim: ghdlsim testbench.c vhdlCStubs.h vhdlCStubs.c
 	gcc -c vhdlCStubs.c -I./ -I$(SOCKETLIB_INCLUDE)
 	gcc -c testbench.c -I./ -I$(SOCKETLIB_INCLUDE)
-	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
+	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLibPipeHandler -lpthread
 
 ghdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl 
 	ghdl --clean

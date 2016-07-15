@@ -34,7 +34,7 @@ vhdltb:  ./Stage1/stage1.aa ./Stage2/stage2.aa ./Testbench/testbench.c
 	rm -rf objhw
 	mkdir objhw
 	gcc -c ./Testbench/testbench.c -I$(AHIR_INCLUDE) -I./Testbench -I./aa2c/ -o objhw/testbench.o
-	gcc -o ./bin/TopHW  ./objhw/testbench.o  -L$(AHIR_LIB) -lSocketLib -lpthread
+	gcc -o ./bin/TopHW  ./objhw/testbench.o  -L$(AHIR_LIB) -lSocketLibPipeHandler -lpthread
 
 vhdlsim:
 	ghdl --clean

@@ -40,7 +40,7 @@ vhdlsim: TB GHDL
 TB:  testbench.c vhdlCStubs.h vhdlCStubs.c
 	gcc -g -c vhdlCStubs.c -I./ -I$(SOCKETLIB_INCLUDE)
 	gcc -g -c testbench.c $(DEFS) -I./ -I$(SOCKETLIB_INCLUDE)
-	gcc -g -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
+	gcc -g -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLibPipeHandler -lpthread
 
 GHDL:	ahir_system.vhdl ahir_system_test_bench.vhdl 	
 	ghdl --clean

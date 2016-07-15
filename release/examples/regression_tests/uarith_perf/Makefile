@@ -43,7 +43,7 @@ vc2vhdl: prog.vc
 vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl $(SRC)/testbench.c vhdlCStubs.h vhdlCStubs.c
 	gcc -g -c vhdlCStubs.c  -I$(SRC) -I./ -I$(AHIR_INCLUDE)
 	gcc -g -c $(SRC)/testbench.c -I$(AHIR_INCLUDE) -I$(SRC) -I./
-	gcc -g -o testbench_hw testbench.o vhdlCStubs.o  -L$(AHIR_LIB) -lSocketLib -lpthread
+	gcc -g -o testbench_hw testbench.o vhdlCStubs.o  -L$(AHIR_LIB) -lSocketLibPipeHandler -lpthread
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl

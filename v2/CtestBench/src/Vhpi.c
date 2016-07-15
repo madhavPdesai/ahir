@@ -690,7 +690,7 @@ void  Vhpi_Listen()
 	  	fprintf(log_file,"Info: waiting for message from client %d\n", new_sock);
   fflush(log_file);
 #endif
-      		int n = receive_string(new_sock,receive_buffer);
+      		int n = receive_string(new_sock,receive_buffer,MAX_BUF_SIZE);
 		
       		if(n > 0)
 		{

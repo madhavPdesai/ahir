@@ -39,7 +39,7 @@ vhdltb:  src/shift_register.hsys src/testbench.c
 	rm -rf objhw
 	mkdir objhw
 	gcc -c ./src/testbench.c -I$(AHIR_INCLUDE) -I./src  -o objhw/testbench.o
-	gcc -o ./bin/exec_hw  ./objhw/testbench.o  -L$(AHIR_LIB) -lSocketLib -lpthread
+	gcc -o ./bin/exec_hw  ./objhw/testbench.o  -L$(AHIR_LIB) -lSocketLibPipeHandler -lpthread
 
 vhdlsim:
 	ghdl --clean

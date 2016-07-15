@@ -74,7 +74,7 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl $(SRC)/testBestFit.c $(SRC
 	gcc -c vhdlCStubs.c  -I$(SRC) -I./ -I$(SOCKETLIB_INCLUDE)
 	gcc -c $(SRC)/testBestFit.c -I$(PTHREADUTILS_INCLUDE) -I$(SRC) -I./ -I$(SOCKETLIB_INCLUDE)
 	gcc -c $(SRC)/hermite.c -I$(PTHREADUTILS_INCLUDE) -I$(SRC) -I./ -I$(SOCKETLIB_INCLUDE)
-	gcc -o testbench_hw testBestFit.o hermite.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread -lm
+	gcc -o testbench_hw testBestFit.o hermite.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLibPipeHandler -lpthread -lm
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl

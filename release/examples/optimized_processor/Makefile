@@ -72,7 +72,7 @@ processor: processor.hsys common/pipes.aa
 vhdltb: testbench/testbench.c vhdlCStubs.h vhdlCStubs.c
 	gcc -c -o objhw/vhdlCStubs.o vhdlCStubs.c -I./ -I$(AHIR_INCLUDE)
 	gcc -c -o objhw/testbench.o testbench/testbench.c -I./ -I$(AHIR_INCLUDE)
-	gcc -o testbench_hw objhw/testbench.o objhw/vhdlCStubs.o  -L$(AHIR_LIB) -lSocketLib -lpthread
+	gcc -o testbench_hw objhw/testbench.o objhw/vhdlCStubs.o  -L$(AHIR_LIB) -lSocketLibPipeHandler -lpthread
 
 ghdlsim: vhdl/processor.vhdl vhdl/processor_test_bench.vhdl 
 	ghdl --clean
