@@ -58,7 +58,7 @@ begin  -- default_arch
 
     if clk'event and clk = '1' then  -- rising clock edge
 
-      if reset = '1' then            -- asynchronous reset (active high)
+      if reset = '1' then            -- synchronous reset (active high)
         token_latch <= marking;
       elsif decr then
 
