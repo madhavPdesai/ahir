@@ -2,6 +2,7 @@
 #define __pthreadUtils_h__
 
 #define MUTEX_DECL(x) static pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER;
+#define MUTEX_DECL_NONSTATIC(x) pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER;
 #define MUTEX_LOCK(x) pthread_mutex_lock(&x);
 #define MUTEX_UNLOCK(x) pthread_mutex_unlock(&x);
 
