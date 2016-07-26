@@ -77,16 +77,20 @@ public:
 
 class vcCall: public vcSplitOperator
 {
+  vcModule* _parent_module;
   vcModule* _called_module;
   bool _inline_flag;
 public:
 
-  vcCall(string id, vcModule* m, vector<vcWire*>& in_wires, vector<vcWire*> out_wires, bool inline_flag);
+
+  vcCall(string id, vcModule* parent,  vcModule* called_module, vector<vcWire*>& in_wires, vector<vcWire*> out_wires, bool inline_flag);
   virtual void Check_Consistency() {assert(0);}
 
   bool Get_Inline() {return(this->_inline_flag);}
   vcModule* Get_Called_Module() {return(this->_called_module);}
 
+
+  virtual bool Is_Part_Of_Pipeline();
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcCall");}

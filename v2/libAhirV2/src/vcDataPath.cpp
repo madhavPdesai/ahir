@@ -3518,19 +3518,16 @@ string vcDataPath::Print_VHDL_Call_Interface_Port_Map(string comma, ostream& ofi
 			  guard_flag_const += IntToStr(lidx) + " => false";
 		  }
 
-		  int D,S,B;
 		  vcDatapathElement* dpe = ops[idx];
-		  if(dpe->Is_Part_Of_Pipelined_Loop(D,S))
+
+		  int B = 0;
+		  if(dpe->Is_Part_Of_Pipeline())
 		  {
-			  B = dpe->Get_Delay();
-			  if (B < 2) 
-				B = 2;
+		  	B = dpe->Get_Delay();
 		  }
-		  else
-		  {
-			// double buffering.. to cut combinational paths.
-			  B = 2;
-		  }
+		  if (B < 2) 
+			  B = 2; // to cut combi paths.
+
 		  buffering_const +=  IntToStr(lidx)  + " => " + IntToStr(B);
 		  if(idx != 0)
 		  {

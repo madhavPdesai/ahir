@@ -1117,7 +1117,7 @@ vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp] returns[vcDatapathElement* 
                                     NOT_FOUND__("wire",w,mid,lpid2)
                                     outwires.push_back(w);})* RPAREN
        	{ 
-	 nc = new vcCall(id, m, inwires, outwires, inline_flag); dp->Add_Call(nc); 
+	 nc = new vcCall(id, dp->Get_Parent(), m, inwires, outwires, inline_flag); dp->Add_Call(nc); 
 	 dpe = (vcDatapathElement*) nc;
 	}
 ;

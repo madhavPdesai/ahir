@@ -457,8 +457,9 @@ void vcPhiPipelined::Print(ostream& ofile)
 }
 
 
-vcCall::vcCall(string id, vcModule* m, vector<vcWire*>& in_wires, vector<vcWire*> out_wires, bool inline_flag):vcSplitOperator(id)
+vcCall::vcCall(string id, vcModule* pm, vcModule* m, vector<vcWire*>& in_wires, vector<vcWire*> out_wires, bool inline_flag):vcSplitOperator(id)
 {
+	_parent_module = pm;
 	_called_module = m;
 	this->Set_Input_Wires(in_wires);
 	this->Set_Output_Wires(out_wires);
@@ -466,6 +467,14 @@ vcCall::vcCall(string id, vcModule* m, vector<vcWire*>& in_wires, vector<vcWire*
 	_inline_flag = inline_flag;
 }
 
+
+bool vcCall::Is_Part_Of_Pipeline()
+{
+	bool ret_val = ((this->_parent_module != NULL) &&
+			this->_parent_module->Get_Pipeline_Flag()) ||
+			this->vcDatapathElement::Is_Part_Of_Pipeline();
+	return(ret_val);
+}
 
 string vcCall::Get_Logger_Description()
 {
@@ -490,18 +499,27 @@ bool vcCall::Is_Shareable_With(vcDatapathElement* other)
 
 int vcCall::Get_Delay()
 {
-	bool is_lib_mod = _called_module->Get_Is_Function_Library_Module();
-
+	// volatiles.. no delay.
 	if(this->_called_module->Get_Volatile_Flag())
 		return(0);
 
-	if(this->_called_module->Get_Operator_Flag())
-		return(_called_module->Get_Delay());
 
+	// if delay from attribute is specified to be > 0, take it.
+	int spec_delay = this->_delay;
+	if(spec_delay > 0)
+		return(spec_delay);
+
+
+	bool is_lib_mod = _called_module->Get_Is_Function_Library_Module();
 	if(is_lib_mod)
 		return(_called_module->Get_Delay());
 	else
 		return(_delay);
+
+	if(this->_called_module->Get_Operator_Flag())
+		return(_called_module->Get_Delay());
+
+	return(_delay);
 }
 
 // Calls will use a value for the input wire buffering which

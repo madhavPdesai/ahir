@@ -117,7 +117,10 @@ class AaModule: public AaSeriesBlockStatement
 	if(_attribute_map.find("delay") != _attribute_map.end())
 		return(atoi(_attribute_map["delay"].c_str()));
 	else
-		return(this->Get_Longest_Path());
+	{
+		int dly = this->Get_Longest_Path();
+		return(this->_operator_flag ? dly : (dly+2));
+	}
   }
 
   void Increment_Number_Of_Times_Called()

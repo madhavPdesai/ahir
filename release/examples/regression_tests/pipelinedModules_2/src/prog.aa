@@ -1,0 +1,45 @@
+$pipe guard_pipe : $uint<8> $depth 2
+$pipe in_data    : $float<8,23> $depth 2
+$pipe out_data   : $float<8,23> $depth 2
+
+$pipeline $depth 28 $buffering 2 $fullrate
+$module [fp_add] $in (X Y: $float <8,23>) $out (Z: $float <8,23>) $is
+{
+	Z := (X + Y)
+}
+
+$pipeline $depth 28 $buffering 2 $fullrate $operator
+$module [fp_mul] $in (X Y: $float <8,23>) $out (Z: $float <8,23>) $is
+{
+	Z := (X * Y)
+}
+
+$pipeline $depth 84 $buffering 2 $fullrate
+$module [fp_dot] $in (X: $float <8,23>) $out (Z: $float <8,23>) $is
+{
+	Z0 := X 
+	$call fp_mul (X X) (X2)
+	Z := (Z0 + X2)
+}
+
+$module [fp_check_daemon] $in() $out () $is
+{
+
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 127 $buffering 2 
+		$fullrate
+		$merge $entry $loopback $endmerge
+
+		X := in_data
+		g := guard_pipe
+
+		$guard (g) $call fp_add (X X) (Y)
+		$guard (g) $call fp_mul (Y Y) (Z)
+		$guard (g) $call fp_dot (Z) (U)
+
+		out_data := U
+
+		$while 1
+	}
+}

@@ -130,6 +130,11 @@ void AaModule::Print(ostream& ofile)
 
 void AaModule::Print_Body(ostream& ofile)
 {
+	if(this->_pipeline_flag && AaProgram::_balance_loop_pipeline_bodies)
+	{
+		this->Equalize_Paths_For_Pipelining();
+	}
+	
   	// print objects
   	this->Print_Objects(ofile);
 
@@ -141,12 +146,19 @@ void AaModule::Print_Body(ostream& ofile)
 
 void AaModule::Print_Attributes(ostream& ofile)
 {
+  bool delay_found = false;
   for(map<string,string>::iterator iter = _attribute_map.begin(), fiter =_attribute_map.end();
       iter != fiter;
       iter++)
     {
       ofile << "$attribute " << (*iter).first << " " << (*iter).second << endl;
+      if((*iter).first == "delay")
+		delay_found = true;
     }
+    
+    // print if calculated and not already attributed.
+    if(!delay_found && this->_pipeline_flag && AaProgram::_balance_loop_pipeline_bodies)
+	ofile << "$attribute delay " << this->Get_Delay() << endl;
 }
 
 AaRoot* AaModule::Find_Child(string tag)
