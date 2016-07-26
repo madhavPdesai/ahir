@@ -1818,6 +1818,7 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 		int lineno): AaStatement(parent_tpr)
 {
 	_is_volatile = false;
+	_buffering = 0;
 
 	this->_function_name = func_name;
 	this->Set_Line_Number(lineno);
