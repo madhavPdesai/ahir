@@ -1,0 +1,48 @@
+$pipe guard_pipe : $uint<8> $depth 2
+$pipe in_data    : $float<8,23> $depth 2
+$pipe out_data   : $float<8,23> $depth 2
+$pipe mid_data    : $float<8,23> $depth 2
+$pipe end_data   : $float<8,23> $depth 2
+
+$pipeline $depth 31 $buffering 2 $fullrate 
+$module [exec_op] $in (X: $float <8,23>) $out (Z: $float <8,23>) $is
+{
+	mid_data := X 
+	Z := end_data
+	$attribute delay 31
+}
+
+$module [operator_daemon] $in () $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 31 $buffering 2 
+		$fullrate
+		$merge $entry $loopback $endmerge
+
+		X := mid_data
+		Y := (X*X)
+		end_data := Y
+
+		$while 1
+	}
+}
+
+
+$module [fp_check_daemon] $in() $out () $is
+{
+
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 127 $buffering 2 
+		$fullrate
+		$merge $entry $loopback $endmerge
+
+		X := in_data
+
+		$call exec_op (X) (Y)
+
+		out_data := Y
+
+		$while 1
+	}
+}
