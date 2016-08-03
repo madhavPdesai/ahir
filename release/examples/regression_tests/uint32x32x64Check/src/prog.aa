@@ -1,0 +1,37 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+$constant ONE_32 : $uint<32> := 1
+
+
+$module [umul32_check] $in(A B : $uint<32>) $out (P64 : $uint<64>) $is
+{
+	$call umul32  (A B) (P64)
+}
+
+$module [smul32_check] $in(A B : $uint<32>) $out (P64 : $uint<64>) $is
+{
+
+	//
+	// let A*B=TMP64
+	// negative numbers
+	//  (111..1,A)*(111..1,B)
+ 	// = (TMP64[63:32] + (11...1)*A + (11...1)*B), TMP64[31:0]
+	// = (TMP64[63:32] + (-A) + (-B)), ....
+	//
+	$call umul32  (A B) (TMP)
+	sA := (A [] 31)
+	sB := (B [] 31)
+
+ 	signed_correction := ($mux (sA | sB)
+					((~(($mux sA B 0) + ($mux sB A 0))) + 1)
+					0)
+
+	P64 := ($concat (($slice TMP 63 32) + signed_correction) ($slice TMP 31 0))
+	//P64 :=  ($bitcast ($uint<64>) 
+			//(
+				//($cast ($int<64>) ($bitcast ($int<32>) A))
+					//*
+				//($cast ($int<64>) ($bitcast ($int<32>) B))
+			//)
+		//)
+}
