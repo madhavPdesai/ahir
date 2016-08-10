@@ -263,24 +263,28 @@ begin
         variable shiftu: unsigned(Ceil_Log2(fract'length)-1 downto 0);
         variable tmp: natural;
   begin 
+   -- some variables depend on shift_3.
+   if(shiftr_3 <= 0) then
+	reverse_flag := '1';
+        tmp := - shiftr_3;
+	shiftu := to_unsigned(tmp,shiftu'length);
+	stickyx := sticky_3;
+   else 
+        reverse_flag := '0';
+	tmp := shiftr_3;
+	shiftu := to_unsigned(tmp, shiftu'length);
+	stickyx := sticky_3 or smallfract(fract_3, shiftr_3-1);
+   end if;
     
-    reverse_flag := '0';
     --- break 3 -----
     if(clk'event and clk = '1') then
 	if(reset = '1') then
 		stage_full(4) <= '0';
 	elsif(stall = '0') then
 		if(shiftr_3 <= 0) then
-			reverse_flag := '1';
-                        tmp := - shiftr_3;
 			shift_in <= reverse(fract_3);
-	 		shiftu := to_unsigned(tmp,shiftu'length);
-			stickyx := sticky_3;
 		else
 			shift_in <= fract_3;
-			tmp := shiftr_3;
-	 		shiftu := to_unsigned(tmp, shiftu'length);
-			stickyx := sticky_3 or smallfract(fract_3, shiftr_3-1);
 		end if;
    
 		shift_amount <= shiftu;

@@ -172,9 +172,10 @@ begin  -- Pipelined
   end process;
 
   -- stage two: calculate the block carries.
-  process(clk)	
+  MoreThanOneChunk: if (num_chunks > 1) generate
+     process(clk)	
 	variable cin: std_logic_vector(0 to num_chunks);
-  begin
+     begin
 	cin := addsubcell_Cin;
 	for I in 1 to num_chunks loop
 		cin(I) := (cin(I-1) and addsubcell_BP(I-1))  or addsubcell_BG(I-1);
@@ -191,14 +192,16 @@ begin  -- Pipelined
 			stage_active(2) <= stage_active(1);
 		end if;
 	end if;
-  end process;
+    end process;
+
+
 
 
   -- stage three: final sums
-  process(clk)
+    process(clk)
 	variable correction, tmp: unsigned(chunk_width-1 downto 0);
 	variable is_negative: boolean;
-  begin
+    begin
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			stage_active(3) <= '0';
@@ -216,8 +219,20 @@ begin  -- Pipelined
 			stage_active(3) <= stage_active(2);
 		end if;
 	end if;
-  end process;
+    end process;
 
+  end generate MoreThanOneChunk;
+
+  OnlyOneChunk: if (num_chunks = 1) generate
+     stage_tags(2) <= stage_tags(1);
+     stage_active(2) <= stage_active(1);
+     addsubcell_Sum_Delayed <= addsubcell_Sum;
+
+     stage_tags(3) <= stage_tags(2);
+     stage_active(3) <= stage_active(2);
+     final_sums(0) <= addsubcell_Sum_Delayed(0);
+
+  end generate OnlyOneChunk;
 
   -- collect final-sums into RESULT
   process(final_sums)
@@ -226,7 +241,5 @@ begin  -- Pipelined
 		ResultPadded(((I+1)*chunk_width)-1 downto (I*chunk_width)) <= final_sums(I);
 	end loop;
   end process;
-
-
 
 end Pipelined;

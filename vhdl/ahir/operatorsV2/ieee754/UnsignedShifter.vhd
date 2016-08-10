@@ -41,7 +41,7 @@ end entity;
 
 architecture Pipelined of UnsignedShifter is
 
-  constant phases_per_stage: integer := 4;
+  constant phases_per_stage: integer := 8;
   constant num_sig_bits: integer := Maximum(1,Minimum(shift_amount_width, Ceil_Log2(operand_width)));
   constant pipe_depth : integer := Ceil(num_sig_bits,phases_per_stage);
 
