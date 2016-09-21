@@ -30,6 +30,7 @@ AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
   
   _writes_to_shared_pipe = false;
   _reads_from_shared_pipe = false;
+  _pipelined_bodies_have_been_equalized = false;
 
   _number_of_times_called = 0;
   this->Set_Delay(2);
@@ -130,9 +131,10 @@ void AaModule::Print(ostream& ofile)
 
 void AaModule::Print_Body(ostream& ofile)
 {
-	if(this->_pipeline_flag && AaProgram::_balance_loop_pipeline_bodies)
+	if(this->_pipeline_flag && AaProgram::_balance_loop_pipeline_bodies && !this->Get_Has_Been_Equalized())
 	{
 		this->Equalize_Paths_For_Pipelining();
+		this->Set_Has_Been_Equalized(true);
 	}
 	
   	// print objects

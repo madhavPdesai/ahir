@@ -26,6 +26,7 @@ class AaModule: public AaSeriesBlockStatement
   bool _pipeline_full_rate_flag;
 
 
+  bool _pipelined_bodies_have_been_equalized;
   // memory spaces and pipes accessed by
   // this module.
   vector<AaMemorySpace*> _memory_spaces;
@@ -69,6 +70,9 @@ class AaModule: public AaSeriesBlockStatement
 
 
   virtual bool Is_Module() {return(true);}
+
+  virtual void Set_Has_Been_Equalized(bool v) {_pipelined_bodies_have_been_equalized = v;}
+  virtual bool Get_Has_Been_Equalized() {return(_pipelined_bodies_have_been_equalized);}
 
   virtual void Set_Pipeline_Depth(int v) {_pipeline_depth = v;}
   virtual int Get_Pipeline_Depth() {return(_pipeline_depth);}

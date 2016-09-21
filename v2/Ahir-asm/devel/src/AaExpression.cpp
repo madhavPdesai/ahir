@@ -752,7 +752,7 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 	if(this->Is_Implicit_Variable_Reference() || obj->Is_Interface_Object())
 		this->Set_Delay(0);
 	else
-		this->Set_Delay(1);
+		this->Set_Delay(2);
 
 }
 
@@ -2037,7 +2037,7 @@ void AaArrayObjectReference::Set_Object(AaRoot* obj)
 		this->Set_Type(obj_type->Get_Element_Type(0,_indices));
 	}
 
-	this->Set_Delay(2);
+	this->Set_Delay(4);
 
 }
 
@@ -3080,7 +3080,7 @@ AaPointerDereferenceExpression::AaPointerDereferenceExpression(AaScope* scope,
 	AaProgram::Add_Storage_Dependency_Graph_Vertex(this);
 	AaProgram::_pointer_dereferences.insert(this);
 
-	this->Set_Delay(2);
+	this->Set_Delay(4);
 
 }
 

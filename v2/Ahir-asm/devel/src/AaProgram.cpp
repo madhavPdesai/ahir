@@ -1055,7 +1055,11 @@ void AaProgram::Equalize_Paths_Of_Pipelined_Modules()
 	  AaModule* m = ((AaModule*)(AaProgram::_ordered_module_vector[idx]));
 	  if(m->Is_Pipelined())
 	  {
-		m->Equalize_Paths_For_Pipelining();
+		if(!m->Get_Has_Been_Equalized())
+		{
+			m->Equalize_Paths_For_Pipelining();
+			m->Set_Has_Been_Equalized(true);
+		}
           }
 	  else  if(m->Get_Operator_Flag())
 	  {
