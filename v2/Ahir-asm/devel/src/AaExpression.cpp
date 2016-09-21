@@ -674,6 +674,15 @@ void AaExpression::Replace_Uses_By(AaExpression* used_expr, AaExpression* r_expr
 	}
 }
 
+
+//
+// TODO: technically, the guard adjacency is from the
+// guard-expression to this expression.  Instead, we
+// are introducing the guard adjacency from the root 
+// object of the guard expression to this expression.
+//
+// This needs a fresh look.
+//
 void AaExpression::Update_Guard_Adjacency(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
 	AaExpression* ge = this->Get_Guard_Expression();
