@@ -622,6 +622,14 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 			return;
 		}
 
+
+		// if curr-expr has no users, then skip it.
+		//
+		//if(curr_expr->Get_Source_References().size() == 0)
+		//{
+			//return;
+		//}
+
 		vector<AaStatement*> delayed_versions;
 
 
@@ -3033,23 +3041,12 @@ void AaSeriesBlockStatement::Add_Delayed_Versions( map<AaRoot*, vector< pair<AaR
 	if(this->_statement_sequence == NULL)
 		return;
 
-	set<AaRoot*> covered_set;
 	for(set<AaRoot*>::iterator iter = visited_elements.begin(), fiter = visited_elements.end();
 			iter != fiter; iter++)
 	{
 		AaRoot* curr = *iter;
-		if(covered_set.find(curr) != covered_set.end())
-		{
-			AaRoot::Error("Repetition of root element in visited-elements set", curr);
-		}
-		else
-		{
-
-			covered_set.insert(curr);
-
-			// add delayed versions of curr if required..
-			this->AaStatement::Add_Delayed_Versions(curr, adjacency_map, longest_paths_from_root_map, this->_statement_sequence);
-		}
+		// add delayed versions of curr if required..
+		this->AaStatement::Add_Delayed_Versions(curr, adjacency_map, longest_paths_from_root_map, this->_statement_sequence);
 	}
 }
 

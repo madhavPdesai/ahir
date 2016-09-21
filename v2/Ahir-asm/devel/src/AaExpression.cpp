@@ -700,7 +700,12 @@ void AaExpression::Update_Guard_Adjacency(map<AaRoot*, vector< pair<AaRoot*, int
 				assert(0);
 
 			assert(root_target != NULL);
+
 			__InsMap(adjacency_map,root_target,this,ge->Get_Delay());
+		}
+		else
+		{
+			__InsMap(adjacency_map,ge,this,ge->Get_Delay());
 		}
 	}
 }
@@ -750,9 +755,18 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 	}
 
 	if(this->Is_Implicit_Variable_Reference() || obj->Is_Interface_Object())
+	{
+		//
+		// TODO: delays are more subtle than they appear to be.
+		//       They should be set using the logic of the data-path
+		//       operators which implement these expressions!
+		//
 		this->Set_Delay(0);
+	}
 	else
+	{
 		this->Set_Delay(2);
+	}
 
 }
 
