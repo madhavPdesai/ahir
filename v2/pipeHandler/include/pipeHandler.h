@@ -134,6 +134,10 @@ void init_pipe_handler_with_log(char* log_file);
 // close after your app finishes using the pipehandler
 void close_pipe_handler();
 // returns 0 on success, 1 if something went wrong..
+//   pipe-modes: 
+//      PIPE_FIFO_MODE  0
+//      PIPE_LIFO_MODE  1
+//      PIPE_FIFO_NON_BLOCK_READ 2
 uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int pipe_mode);
 // set pipe status.. this tells the pipe-handler that the pipe
 // will be written into or read from 

@@ -39,6 +39,7 @@ int main(int argc, char* argv[])
       cerr << "    -I <extmem-obj-name> : specify the name of the memory object target for external references." << endl
 	   << "    -r <module-name>     : specify roots of the module hierarchy." << endl
 	   << "    -B                   : select option to balance do-while loop pipelines." << endl
+	   << "    -v                   : verbose... lots of junk printed." << endl
            << "     <filename> (<filename>) ... " << endl;
       exit(1);
     }
@@ -58,7 +59,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "I:r:B",
+		      "I:r:Bv",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -74,6 +75,9 @@ int main(int argc, char* argv[])
 	  break;
         case 'B':
 	  AaProgram::_balance_loop_pipeline_bodies = true;
+	  break;
+	case 'v':
+	  AaProgram::_verbose_flag = true;
 	  break;
 	default:
 	  cerr << "Error: unknown option " << opt << endl;

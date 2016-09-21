@@ -502,6 +502,12 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 	if(!curr_expr->Is_Implicit_Variable_Reference())
 		return;
 
+	AaRoot* curr_expr_root_object = NULL;
+	if(curr_expr->Is("AaSimpleObjectReference"))
+	{
+		curr_expr_root_object = ((AaSimpleObjectReference*) curr_expr)->Get_Root_Object();
+	}
+
 	//
 	// Is curr-expression acting as a guard to some statement?
 	// In this case, only the guarded statement is affected.
@@ -609,7 +615,7 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 		// should this case also be considered?  Why should
 		// the interface references not get delayed?
 		//
-		if(stmt == NULL)
+		if((stmt == NULL) & (!curr_expr_root_object->Is("AaInterfaceObject")))
 		{
 			// This can happen if there is a reference to
 			// an interface object.

@@ -8,10 +8,12 @@ $pipeline $depth 8 $fullrate $operator $module
 {
 	$storage MEMARRAY: $array [256] $of $uint<32>
 
-	wr_bar_d := wr_bar
+	//wr_bar_d := wr_bar
+	//din_d    := din
+	//addr_d   := addr
 
 	$guard (wr_bar) dout := MEMARRAY[addr] 
-	$guard (~wr_bar_d) MEMARRAY[addr] := din
+	$guard (~wr_bar) MEMARRAY[addr] := din
 }
 
 
