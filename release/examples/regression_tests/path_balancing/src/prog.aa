@@ -1,0 +1,33 @@
+$pipe in_data: $uint<32> $depth 2
+$pipe out_data: $uint<32> $depth 2
+
+$pipeline $depth 8 $fullrate $operator $module 
+	[compute_function] 
+	$in (din: $uint<32>)
+	$out (dout: $uint<32>) $is
+{
+	a := (din + 1)  // din +  1
+	b := (din + a)  // 2din + 1
+	c := (din + b)  // 3din + 1
+	e := (b + c)	// 5din + 2
+	f := (din + e)  // 6din + 2
+	dout := (din + f) // 7din + 2
+}
+
+
+$module [check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] 
+	{
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+
+		din := in_data
+
+		$call compute_function (din) (dout)
+
+		out_data := dout
+
+		$while 1
+	}
+}

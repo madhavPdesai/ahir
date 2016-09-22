@@ -13,6 +13,7 @@ using namespace std;
 #include <AaProgram.h>
 #include <Aa2VC.h>
 #include <Aa2C.h>
+#include <AaDelays.h>
 
 /***************************************** EXPRESSION  ****************************/
 //---------------------------------------------------------------------
@@ -772,9 +773,14 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 		//
 		this->Set_Delay(0);
 	}
+	else if(obj->Is_Pipe_Object())
+	{
+		this->Set_Delay(PIPE_ACCESS_DELAY);
+	}
 	else
 	{
-		this->Set_Delay(2);
+		
+		this->Set_Delay(MEMORY_ACCESS_DELAY);
 	}
 
 }
@@ -2060,7 +2066,7 @@ void AaArrayObjectReference::Set_Object(AaRoot* obj)
 		this->Set_Type(obj_type->Get_Element_Type(0,_indices));
 	}
 
-	this->Set_Delay(4);
+	this->Set_Delay(MEMORY_ACCESS_DELAY);
 
 }
 
@@ -3103,7 +3109,7 @@ AaPointerDereferenceExpression::AaPointerDereferenceExpression(AaScope* scope,
 	AaProgram::Add_Storage_Dependency_Graph_Vertex(this);
 	AaProgram::_pointer_dereferences.insert(this);
 
-	this->Set_Delay(4);
+	this->Set_Delay(MEMORY_ACCESS_DELAY);
 
 }
 
@@ -3583,7 +3589,7 @@ AaAddressOfExpression::AaAddressOfExpression(AaScope* scope, AaObjectReference* 
 	_reference_to_object = obj_ref;
 	obj_ref->Add_Target(this);
 	this->_storage_object = NULL; // filled in during Map Source References.
-	this->Set_Delay(2);
+	this->Set_Delay(ADDRESS_CALCULATION_DELAY);
 }
 
 
@@ -3970,7 +3976,10 @@ AaTypeCastExpression::AaTypeCastExpression(AaScope* parent, AaType* ref_type,AaE
 	if(rest)
 		rest->Add_Target(this);
 
-	this->Set_Delay(1);
+	if((ref_type != NULL) && ref_type->Is("AaFloatType"))
+		this->Set_Delay(TO_FLOAT_CONVERSION_DELAY);
+	else
+		this->Set_Delay(TO_INTEGER_CONVERSION_DELAY);
 }
 
 AaTypeCastExpression::~AaTypeCastExpression() {};
@@ -4329,8 +4338,9 @@ AaUnaryExpression::AaUnaryExpression(AaScope* parent_tpr,AaOperation op, AaExpre
 		this->AaExpression::Set_Type(nt);
 	}
 
-	this->Set_Delay(1);
+	this->Set_Delay(UNARY_INTEGER_OPERATION_DELAY);
 }
+
 AaUnaryExpression::~AaUnaryExpression() {};
 void AaUnaryExpression::Print(ostream& ofile)
 {
@@ -4670,7 +4680,7 @@ AaBinaryExpression::AaBinaryExpression(AaScope* parent_tpr,AaOperation op, AaExp
 
 	this->Update_Type();
 
-	this->Set_Delay(1);
+	this->Set_Delay(BINARY_INTEGER_OPERATION_DELAY);
 }
 
 AaBinaryExpression::~AaBinaryExpression() {};
@@ -4878,9 +4888,9 @@ void AaBinaryExpression::Update_Type()
 		// float add/sub operations will have higher delay!
 		if((this->_operation == __PLUS)  || (this->_operation == __MINUS)
 				|| (this->_operation == __MUL) || (this->_operation == __DIV))
-			this->Set_Delay(24);
+			this->Set_Delay(BINARY_FLOAT_OPERATION_DELAY);
 		else
-			this->Set_Delay(2);
+			this->Set_Delay(BINARY_INTEGER_OPERATION_DELAY);
 	}
 }
 
@@ -5164,7 +5174,7 @@ AaTernaryExpression::AaTernaryExpression(AaScope* parent_tpr,
 	this->_if_true = iftrue;
 	this->_if_false = iffalse;
 
-	this->Set_Delay(1);
+	this->Set_Delay(TERNARY_OPERATION_DELAY);
 }
 AaTernaryExpression::~AaTernaryExpression() {};
 
