@@ -1,6 +1,7 @@
 #include <AaProgram.h>
 #include <Aa2VC.h>
 #include <Aa2C.h>
+#include <AaDelays.h>
 
 
 //---------------------------------------------------------------------
@@ -502,11 +503,7 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 	if(!curr_expr->Is_Implicit_Variable_Reference())
 		return;
 
-	AaRoot* curr_expr_root_object = NULL;
-	if(curr_expr->Is("AaSimpleObjectReference"))
-	{
-		curr_expr_root_object = ((AaSimpleObjectReference*) curr_expr)->Get_Root_Object();
-	}
+	AaRoot* curr_expr_root =  curr_expr->Get_Root_Object();
 
 	//
 	// Is curr-expression acting as a guard to some statement?
@@ -615,20 +612,13 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 		// should this case also be considered?  Why should
 		// the interface references not get delayed?
 		//
-		if((stmt == NULL) & (!curr_expr_root_object->Is("AaInterfaceObject")))
+		if((stmt == NULL) && 
+			((curr_expr_root == NULL) || (!curr_expr_root->Is("AaInterfaceObject"))))
 		{
 			// This can happen if there is a reference to
 			// an interface object.
 			return;
 		}
-
-
-		// if curr-expr has no users, then skip it.
-		//
-		//if(curr_expr->Get_Source_References().size() == 0)
-		//{
-			//return;
-		//}
 
 		vector<AaStatement*> delayed_versions;
 
@@ -3045,6 +3035,7 @@ void AaSeriesBlockStatement::Add_Delayed_Versions( map<AaRoot*, vector< pair<AaR
 			iter != fiter; iter++)
 	{
 		AaRoot* curr = *iter;
+
 		// add delayed versions of curr if required..
 		this->AaStatement::Add_Delayed_Versions(curr, adjacency_map, longest_paths_from_root_map, this->_statement_sequence);
 	}
@@ -5730,7 +5721,7 @@ void AaPhiStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int
 	// delays start from phi-statements.. so no need for sources.
 	AaExpression* tgt_expression = this->Get_Target();
 	__InsMap(adjacency_map,NULL,this,0);
-	__InsMap(adjacency_map,this,tgt_expression,1);
+	__InsMap(adjacency_map,this,tgt_expression,PHI_OPERATOR_DELAY);
 	visited_elements.insert(this);
 }
 
@@ -5758,7 +5749,7 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 	if(!this->Get_Is_Volatile())
 	{
 		if(src_expression->Is_Implicit_Variable_Reference())
-			delay = 2;
+			delay = INTERLOCK_DELAY;
 		else
 			delay = src_expression->Get_Delay();
 	}
