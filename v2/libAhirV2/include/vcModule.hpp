@@ -49,6 +49,9 @@ class vcModule: public vcRoot
   int _delay;
 
   map<string,vcPipe*> _pipe_map;
+
+  string _function_library_vhdl_lib;
+
   bool _inline;
   bool _foreign_flag; 
   bool _pipeline_flag; 
@@ -56,6 +59,8 @@ class vcModule: public vcRoot
   bool _volatile_flag; 
   bool _pipeline_full_rate_flag;
   bool _is_function_library_module;
+
+  
 
  public:
   vcModule(vcSystem* sys, string module_name);
@@ -88,6 +93,9 @@ class vcModule: public vcRoot
 
   void Set_Is_Function_Library_Module(bool d) {_is_function_library_module = d;}
   int  Get_Is_Function_Library_Module() {return(_is_function_library_module);}
+
+  void Set_Function_Library_Vhdl_Lib(string d) {_function_library_vhdl_lib = d;}
+  string  Get_Function_Library_Vhdl_Lib() {return(_function_library_vhdl_lib);}
 
   void Register_Call_Group(vcModule* m, int g_id, int g_size) 
   {

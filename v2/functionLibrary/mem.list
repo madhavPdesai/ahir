@@ -1,3 +1,3 @@
-#mod-name:mode-delay (VHDL not yet implemented).
-ram_1xRW_1024x256_32:2
-cam_64x32_40:2
+#vhdl-lib:mod-name:mode-delay (VHDL not yet implemented).
+ahir:ram_1xRW_1024x256_32:2
+ahir:cam_64x32_40:2

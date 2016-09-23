@@ -163,12 +163,14 @@ void vcSystem::Add_Module(vcModule* module)
   this->_modules[module->Get_Id()] = module;
 
   string mod_id = module->Get_Id();
+  string lib_id;
   int D;
-  bool is_lib_mod = this->Is_Function_Library_Module(D,mod_id);
+  bool is_lib_mod = this->Is_Function_Library_Module(D,mod_id, lib_id);
   if(is_lib_mod)
   {
 	module->Set_Is_Function_Library_Module(true);
 	module->Set_Delay(D);
+	module->Set_Function_Library_Vhdl_Lib(lib_id);
   }
 }
 
@@ -411,8 +413,9 @@ void  vcSystem::Print_VHDL(ostream& ofile)
     {
 
       int D;
+      string vhdl_lib;
       string mod_name = (*moditer).first;
-      bool is_fn_mod = this->Is_Function_Library_Module(D,mod_name);
+      bool is_fn_mod = this->Is_Function_Library_Module(D,mod_name,vhdl_lib);
 
       if(!is_fn_mod)
 	{
@@ -1002,14 +1005,15 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
  
       vcModule* m = (*moditer).second;
       string mod_name = (*moditer).first;
+      string vhdl_lib;
       int D;
-      bool is_function_library_module = this->Is_Function_Library_Module(D,mod_name);
+      bool is_function_library_module = this->Is_Function_Library_Module(D,mod_name, vhdl_lib);
       bool is_volatile_or_operator = (m->Get_Volatile_Flag() ||  m->Get_Operator_Flag());
 
       ofile << "-- declarations related to module " << m->Get_VHDL_Id() << endl;
 
       // module component declarations
-      if(!is_function_library_module && !is_volatile_or_operator)
+      if((vhdl_lib == "work") || (!is_function_library_module && !is_volatile_or_operator))
       	m->Print_VHDL_Component(ofile);
 
 	// volatile/operators are instantiated in module data-paths.
@@ -1153,29 +1157,40 @@ void vcSystem::Add_Function_Library(string& file_name)
 	    while (ifile.good()) {
 	      std::string line;
 	      std::getline(ifile, line);
-              if(line[0] != '#')
+              if((line.size() > 0)  && (line[0] != '#'))
 	      {
 
+		// Each line contains
+		// 	<vhdl-lib>:<module-name>:<integer-delay>
+		//
 		int M = line.find(delimiter);
-		string mod_name = "";
+		assert(M != string::npos);
 
-		int D = 1;
-		if(M != string::npos)
-		{
-			mod_name = line.substr(0, M);
-			line.erase(0, M + delimiter.size());
-			D = atoi(line.c_str());
-		}
-		else if (line.size() > 1)
-			mod_name = line.substr(0,line.find(" "));
+		string lib_name = line.substr(0,M);
+		line.erase(0, M + delimiter.size());
+
+		M = line.find(delimiter);
+		assert(M != string::npos);
+		string mod_name = line.substr(0,M);
+		line.erase(0, M + delimiter.size());
+
+			
+		M = line.find(delimiter);
+		string delay_string = line.substr(0,M);
+
+		int D = atoi (delay_string.c_str());
 
 		if(mod_name != "")
 		{
-			_function_library_module_map[mod_name] = D;
+			_function_library_module_map[mod_name] = pair<string,int> (lib_name,D);
 
 			std::cerr << "Info: vcSystem::Add_Function_Library: added function library module " 
-				<< mod_name << " with delay " << D << std::endl;
+				<< mod_name 
+				<< " in VHDL library " 
+				<< lib_name 
+				<< " with delay " << D << std::endl;
 		}
+
 
 		vcSystem::_uses_function_library = true;
 	      }
@@ -1188,11 +1203,14 @@ void vcSystem::Add_Function_Library(string& file_name)
 
 // return true if mod_name is a function library
 // module, false otherwise.
-bool vcSystem::Is_Function_Library_Module(int& delay, string& mod_name)
+bool vcSystem::Is_Function_Library_Module(int& delay, string& mod_name, string& lib_name)
 {
 	if(_function_library_module_map.find(mod_name) != _function_library_module_map.end())
 	{
-		delay = _function_library_module_map[mod_name];
+		
+		lib_name = _function_library_module_map[mod_name].first;
+		delay = _function_library_module_map[mod_name].second;
+
 		return(true);
 	}
 	else
@@ -1207,8 +1225,9 @@ void vcSystem::Print_Reduced_Control_Paths_As_Dot_Files()
 	{
 
 		string mod_name = (*moditer).first;
+		string lib_name;
 		int D;
-		bool is_fn_mod = this->Is_Function_Library_Module(D,mod_name);
+		bool is_fn_mod = this->Is_Function_Library_Module(D,mod_name, lib_name);
 
 		if(!is_fn_mod)
 		{

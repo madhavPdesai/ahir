@@ -30,7 +30,7 @@ class vcSystem: public vcRoot
   // pipe-related stuff.
   map<string,vcPipe*> _pipe_map;
 
-  map<string,int> _function_library_module_map;
+  map<string, pair<string,int> >  _function_library_module_map;
 
   static bool _error_flag;
 
@@ -169,7 +169,7 @@ class vcSystem: public vcRoot
   }
 
   void Add_Function_Library(string& file_name);
-  bool Is_Function_Library_Module(int& delay, string& mod_name);
+  bool Is_Function_Library_Module(int& delay, string& mod_name, string& lib_name);
 
   void Print_Reduced_Control_Paths_As_Dot_Files();
 };
