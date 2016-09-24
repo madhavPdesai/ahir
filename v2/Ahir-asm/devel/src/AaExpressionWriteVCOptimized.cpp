@@ -733,39 +733,11 @@ bool AaSimpleObjectReference::Is_Pipe_Read()
 void AaSimpleObjectReference::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {
-	if(this->Is_Pipe_Read())
-	{
-		//
-		// for pipe reads, release guard from update complete.
-		//
-		expr->Write_VC_Update_Reenables(this, __UCT(this), true, visited_elements, ofile);
-	}
-	else 
-	{
-		//
-		// else do the usual thing.
-		//
-		this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
-	}
-	/*  Not necessary..  split release will take care of this..
-	    if(this->_object->Is("AaPipeObject"))
-	    {
-	    if(this->Get_Is_Target())
-	    {
-	// update from sample complete.
-	expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
-	}
-	else
-	{
-	// update complete has delay, so bypass reenable if possible..
-	expr->Write_VC_Update_Reenables(__UCT(this), true, visited_elements, ofile);
-	}
-	}
-	else
-	{
+	// Simplified.  Earlier, a pipe read had to be handled specially
+	// (reenable guard-update from update-complete instead of sample-complete).
+	// The SplitUpdateGuardInterface was modified to internally sample
+	// the guard signal, so the simple case works.
 	this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
-	}
-	 */
 }
 
 // AaArrayObjectReference

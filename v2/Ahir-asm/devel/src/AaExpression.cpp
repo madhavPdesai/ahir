@@ -350,8 +350,11 @@ bool AaExpression::Used_Only_In_Address_Of_Expression()
 
 void AaExpression::Set_Guard_Expression(AaExpression* expr)
 {
-	_guard_expression = expr;
-	expr->Set_Guarded_Expression(this);
+	if(this != expr)  // expression cannot guard itself!
+	{
+		_guard_expression = expr;
+		expr->Set_Guarded_Expression(this);
+	}
 }
 
 void AaExpression::Set_Guard_Complement(bool v)
