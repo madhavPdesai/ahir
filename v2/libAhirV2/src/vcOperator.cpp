@@ -660,7 +660,7 @@ void vcSplitOperator::Print_VHDL_Instantiation_Preamble(bool flow_through_flag, 
 		string guards = "guard_vector";
 		vector<vcWire*> gwires;
 		gwires.push_back(this->_guard_wire);
-		Print_VHDL_Guard_Instance(false, false, "gI", 1, "guardBuffering", "guardFlags", "guard_vector",
+		Print_VHDL_Guard_Instance(false, false, this->Get_VHDL_Id() + ":gI", 1, "guardBuffering", "guardFlags", "guard_vector",
 				"sample_req_ug", "sample_ack_ug", "sample_req", "sample_ack",
 				"update_req_ug", "update_ack_ug", "update_req", "update_ack", ofile);
 	}
@@ -1184,7 +1184,7 @@ void vcSelect::Print_VHDL(ostream& ofile)
 		string guards = "guard_vector";
 		vector<vcWire*> gwires;
 		gwires.push_back(this->_guard_wire);
-		Print_VHDL_Guard_Instance(false, false, "gI", 1, "guardBuffering", "guardFlags", "guard_vector",
+		Print_VHDL_Guard_Instance(false, false, this->Get_VHDL_Id() + ":gI", 1, "guardBuffering", "guardFlags", "guard_vector",
 				"sample_req_ug", "sample_ack_ug", "sample_req", "sample_ack",
 				"update_req_ug", "update_ack_ug", "update_req", "update_ack", ofile);
 	}
@@ -1297,7 +1297,7 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 		string guards = "guard_vector";
 		vector<vcWire*> gwires;
 		gwires.push_back(this->_guard_wire);
-		Print_VHDL_Guard_Instance(false, false, "gI", 1, "guardBuffering", "guardFlags", "guard_vector",
+		Print_VHDL_Guard_Instance(false, false, this->Get_VHDL_Id() + ":gI", 1, "guardBuffering", "guardFlags", "guard_vector",
 				"wreq_ug", "wack_ug", "wreq", "wack",
 				"rreq_ug", "rack_ug", "rreq", "rack", ofile);
 	}
@@ -1446,7 +1446,7 @@ void vcSlice::Print_VHDL(ostream& ofile)
 		string guards = "guard_vector";
 		vector<vcWire*> gwires;
 		gwires.push_back(this->_guard_wire);
-		Print_VHDL_Guard_Instance(false, false, "gI", 1, "guardBuffering", "guardFlags", "guard_vector",
+		Print_VHDL_Guard_Instance(false, false, this->Get_VHDL_Id() + ":gI", 1, "guardBuffering", "guardFlags", "guard_vector",
 				"sample_req_ug", "sample_ack_ug", "sample_req", "sample_ack",
 				"update_req_ug", "update_ack_ug", "update_req", "update_ack", ofile);
 	}
@@ -1601,7 +1601,7 @@ void vcPermutation::Print_VHDL(ostream& ofile)
 		string guards = "guard_vector";
 		vector<vcWire*> gwires;
 		gwires.push_back(this->_guard_wire);
-		Print_VHDL_Guard_Instance(false, false, "gI", 1, "guardBuffering", "guardFlags", "guard_vector",
+		Print_VHDL_Guard_Instance(false, false, this->Get_VHDL_Id() + ":gI", 1, "guardBuffering", "guardFlags", "guard_vector",
 				"sample_req_ug", "sample_ack_ug", "sample_req", "sample_ack",
 				"update_req_ug", "update_ack_ug", "update_req", "update_ack", ofile);
 	}
