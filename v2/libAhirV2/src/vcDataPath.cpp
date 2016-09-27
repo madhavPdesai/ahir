@@ -1624,7 +1624,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 			Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
 
 			this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
-			Print_VHDL_Guard_Instance(false, false, group_name + ":gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+			Print_VHDL_Guard_Instance(false, false, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 					"reqL_unguarded", "ackL_unguarded",
 					"reqL_unregulated", "ackL_unregulated",
 					"reqR_unguarded", "ackR_unguarded",
@@ -1641,7 +1641,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 
 			if(!flow_through)
 			{
-				Print_VHDL_Guard_Instance(false,false,group_name + ":gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+				Print_VHDL_Guard_Instance(false,false,group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 						"reqL_unguarded", "ackL_unguarded",
 						"reqL", "ackL",
 						"reqR_unguarded", "ackR_unguarded",
@@ -2140,7 +2140,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
       // from a particular request point.
       this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
 
-      Print_VHDL_Guard_Instance(false,false,group_name + ":gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+      Print_VHDL_Guard_Instance(false,false,group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 		      "reqL_unguarded", "ackL_unguarded",
 		      "reqL_unregulated", "ackL_unregulated",
 		      "reqR_unguarded", "ackR_unguarded",
@@ -2372,7 +2372,7 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
       this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
 
 
-      Print_VHDL_Guard_Instance(false,false,group_name + ":gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+      Print_VHDL_Guard_Instance(false,false,group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 		      "reqL_unguarded", "ackL_unguarded",
 		      "reqL_unregulated", "ackL_unregulated",
 		      "reqR_unguarded", "ackR_unguarded",
@@ -2571,7 +2571,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 		string group_name = p->Get_VHDL_Id() + "_read_" + IntToStr(idx);
 		string name = '"' + group_name + '"';
 
-		Print_VHDL_Guard_Instance(false, true, group_name + ":gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+		Print_VHDL_Guard_Instance(false, true, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 				"reqL_unguarded", "ackL_unguarded",
 				"reqL", "ackL",
 				"reqR_unguarded", "ackR_unguarded",
@@ -2760,7 +2760,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 		string group_name = p->Get_VHDL_Id() + "_write_" + IntToStr(idx);
 		string name = '"' + p->Get_VHDL_Id() + '"';
 
-		Print_VHDL_Guard_Instance(true, false, group_name + ":gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+		Print_VHDL_Guard_Instance(true, false, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 				"sample_req_unguarded", "sample_ack_unguarded",
 				"sample_req", "sample_ack",
 				"update_req_unguarded", "update_ack_unguarded",
@@ -3047,7 +3047,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
 		this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements,  ofile);
 
-		Print_VHDL_Guard_Instance(false, false, group_name + ":gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+		Print_VHDL_Guard_Instance(false, false, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 				"reqL_unguarded", "ackL_unguarded",
 				"reqL_unregulated", "ackL_unregulated",
 				"reqR_unguarded", "ackR_unguarded",
