@@ -282,7 +282,7 @@ void Print_VHDL_Join(string join_name,
     ofile << "preds <= " << GenConcatenation(preds) << ";" << endl;
   else
     ofile << "preds(1) <= " << preds[0] << ";" << endl;
-  ofile << " gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {"
+  ofile << " gj_" << join_name << " : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {"
 	<< endl
 	<< " port map(preds => preds, symbol_out => " << joined_symbol << ", clk => clk, reset => reset); --}}" << endl;
   ofile << "end block;" << endl;
@@ -305,7 +305,7 @@ void Print_VHDL_Simple_Join(string join_name,
     ofile << "preds <= " << GenConcatenation(preds) << ";" << endl;
   else
     ofile << "preds(0) <= " << preds[0] << ";" << endl;
-  ofile << " jn : join generic map(name => joinName, place_capacity => 1, bypass => " << bypass_str << ") -- {"
+  ofile << " jn_" << join_name << " : join generic map(name => joinName, place_capacity => 1, bypass => " << bypass_str << ") -- {"
 	<< endl
 	<< " port map(preds => preds, symbol_out => " << joined_symbol << ", clk => clk, reset => reset); --}}" << endl;
   ofile << "end block;" << endl;
