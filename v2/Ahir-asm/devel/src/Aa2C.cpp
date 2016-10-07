@@ -117,7 +117,7 @@ void Print_C_Global_Initialization(string obj_name, AaType* obj_type, ofstream& 
 {
 	if(obj_type->Is_Integer_Type())
 	{	
-		ofile << "init_bit_vector(&(" << obj_name << "), " << obj_type->Size() << ");" << __endl__;
+		ofile << "init_static_bit_vector(&(" << obj_name << "), " << obj_type->Size() << ");" << __endl__;
 	}
 	else if(obj_type->Is_Array_Type())
 	{
