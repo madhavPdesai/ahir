@@ -728,7 +728,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 					+ " is not volatile");
 		}
 
-		if(!mc->Get_Is_Function_Library_Module())
+		if(!mc->Get_Is_Function_Library_Module() || (mc->Get_Function_Library_Vhdl_Lib() == "work"))
 			mc->Print_VHDL_Component(ofile);
 		else
 			ofile << "-- function library module " << mc->Get_Label() << " component not printed." << endl;

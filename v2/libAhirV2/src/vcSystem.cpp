@@ -398,6 +398,8 @@ void vcSystem::Print_VHDL_Global_Package(ostream& ofile)
 	<< "use ieee.std_logic_1164.all;" << endl;
   ofile << "package " << sys_package << " is -- { " << endl;
   this->Print_VHDL_Constant_Declarations(ofile);
+  if(vcSystem::_vhdl_work_library != "work")
+	this->Print_VHDL_Component(ofile);
   ofile << "-- } " << endl <<  "end package " << sys_package << ";" << endl;
 }
 
@@ -454,7 +456,10 @@ void vcSystem::Print_VHDL_Test_Bench(ostream& ofile)
 
   string arch_name = this->Get_VHDL_Id() + "_test_bench_arch";
   ofile << "architecture " << arch_name <<  " of " << this->Get_VHDL_Id() << "_Test_Bench is -- {" << endl;
-  this->Print_VHDL_Component(ofile);
+
+  if (vcSystem::_vhdl_work_library == "work")
+  	this->Print_VHDL_Component(ofile);
+
   this->Print_VHDL_Test_Bench_Signals(ofile);
   ofile << "-- }\n begin --{" << endl;
 
@@ -522,7 +527,9 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
   ofile << "-- }\n end entity;" << endl;
 
   ofile << "architecture VhpiLink of " << this->Get_VHDL_Id() << "_Test_Bench is -- {" << endl;
-  this->Print_VHDL_Component(ofile);
+  if (vcSystem::_vhdl_work_library == "work")
+  	this->Print_VHDL_Component(ofile);
+
   this->Print_VHDL_Test_Bench_Signals(ofile);
   ofile << "-- }\n begin --{" << endl;
 

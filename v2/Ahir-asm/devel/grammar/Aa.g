@@ -527,7 +527,7 @@ aA_Call_Statement[AaScope* scope, vector<AaStatement*>& slist]
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Split_Statement: SPLIT  ( UINTEGER+ ) ( SIMPLE_IDENTIFIER+ ) 
+// aA_Split_Statement: SPLIT  ( SIMPLE-IDENTIFIER UINTEGER+ ) ( EXPR+ ) 
 //-----------------------------------------------------------------------------------------------
 aA_Split_Statement[AaScope* scope, vector<AaStatement*>& slist]
 {

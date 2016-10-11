@@ -112,6 +112,7 @@ begin  -- SimModel
            queue_size <= 0;
            read_pointer <= 0;
            write_pointer <= 0;
+           queue_array(0) <= (others => '0'); -- initially 0.
 	else
            if(push) then
           	queue_array(write_pointer) <= data_in;

@@ -122,27 +122,26 @@ begin  -- SimModel
     nearly_full <= nearly_full_v;
     
     if(clk'event and clk = '1') then
-      
       if(reset = '1') then
         pop_ack_int  <=  '0';        
 	queue_size <= 0;
         read_pointer <= 0;
         write_pointer <= 0;
+	data_out_int <= (others => '0');
       else
         pop_ack_int  <=  pop_ack_v and pop_req_int;        
         queue_size <= qsize;
         read_pointer <= next_read_ptr;
         write_pointer <= next_write_ptr;
-      end if;
 
-      if(push) then
-        queue_array(write_pointer) <= data_in;
-      end if;
+        if(push) then
+          queue_array(write_pointer) <= data_in;
+        end if;
       
-      if(pop) then
-        data_out_int <= queue_array(read_pointer);
+        if(pop) then
+          data_out_int <= queue_array(read_pointer);
+        end if;
       end if;
-      
     end if;
     
   end process;
