@@ -1577,6 +1577,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   __T(__UCT(this) + "_ps");
   __F((__UCT(this) + "_ps"), "aggregated_phi_update_ack");
   __F("aggregated_phi_update_ack", __UCT(this));
+  if(pipeline_flag)
+  {
+	__MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true); // bypass...  All phi's must update to reenable..
+  }
 
   // the active, completed and the active transitions
   string trigger_from_loop_back = this->Get_VC_Name() + "_loopback_trigger";
