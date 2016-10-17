@@ -1577,9 +1577,14 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   __T(__UCT(this) + "_ps");
   __F((__UCT(this) + "_ps"), "aggregated_phi_update_ack");
   __F("aggregated_phi_update_ack", __UCT(this));
+
   if(pipeline_flag)
+	//
+	// This bypass is technically not necessary, Why are we doing it?
+	//
   {
-	__MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true); // bypass...  All phi's must update to reenable..
+	  // bypass...  All phi's must update to reenable..
+	  __MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true); 
   }
 
   // the active, completed and the active transitions
@@ -1659,6 +1664,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				      ofile);
 
 			__J(__SST(sge), (__SST(source_expr) + "_ps"));
+      			//__J((__SCT(source_expr) + "_ps"), __SCT(sge));
 			
 	      }
 
@@ -1698,11 +1704,11 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		}
 	
 
-	      if(sge != NULL)
-	      {
+	      if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr))
+		{
 		      ofile << "// Guard dependency in PHI alternative.." << endl;
 		      __J(__SST(source_expr), __UCT(sge));
-	      }
+		}
 
 	      if(pipeline_flag)
 	      {

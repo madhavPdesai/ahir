@@ -96,7 +96,7 @@ begin
 			if(reset = '1') then
 				update_ack(I) <= false;
 				fsm_state <= Idle;
-				data_reg <= write_data(I);
+				data_reg <= (others => '0');
 			else
 				fsm_state <= next_fsm_state;
 				update_ack(I) <= latch_v;

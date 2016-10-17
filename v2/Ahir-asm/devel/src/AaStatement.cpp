@@ -4026,8 +4026,13 @@ void AaPhiStatement::Set_Pipeline_Parent(AaStatement* dws)
 	{
 		this->_source_pairs[idx].second->Set_Pipeline_Parent(dws);
 
-		// buffering set to 2.
-		//if(dws != NULL) this->_source_pairs[idx].second->Set_Buffering(2);
+		//
+		// buffering set to 2 in pipelined case.... this is not really required.
+		//   revisit this...
+		/*
+		if(dws != NULL) 
+			this->_source_pairs[idx].second->Set_Buffering(2);
+		*/
 	}
 }
 
@@ -4298,6 +4303,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 					src_driver_name, "", false, full_rate,  ofile);
 			if(dws != NULL)
 			{
+				int src_buffering = src_expr->Get_Buffering();
 				ofile << "$buffering $out " << dpe_name <<  " " << 
 					src_driver_name  << "  " << src_expr->Get_Buffering()  << endl;
 			}
