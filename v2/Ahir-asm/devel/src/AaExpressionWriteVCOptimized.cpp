@@ -612,12 +612,6 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 				// however other logic depends on strict reenabling.
 				// 
 				__SelfReleaseSplitProtocolPattern
-
-				//
-				// to prevent sr->sa from running away from
-				// cr->ca, we add this dependency.
-				//
-				__MJ(__SST(this), __UCT(this), true);
 			}
 		}
 
@@ -728,10 +722,6 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 			// correct sequencing to guard logic.
 			//
 			__SelfReleaseSplitProtocolPattern
-
-			// add this dependency to prevent empty cr->ca
-			// from running away from sr->sa.
-			__MJ(__SST(this), __UCT(this), true);
 		}
 
 
