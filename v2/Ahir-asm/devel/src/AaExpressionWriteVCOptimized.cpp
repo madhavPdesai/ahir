@@ -594,6 +594,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			ofile << "$T [cr] $T [ca] " << endl;
 			ofile << "}" << endl;
 
+			// for simplifying the guard interface, we treat this
+			// as a special case (since sr->sa an empty operation for an
+			// input pipe).
 			__ConnectChainedSplitProtocolPattern;
 
 			// record the pipe!  Introduce pipe related dependencies 
@@ -609,6 +612,12 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 				// however other logic depends on strict reenabling.
 				// 
 				__SelfReleaseSplitProtocolPattern
+
+				//
+				// to prevent sr->sa from running away from
+				// cr->ca, we add this dependency.
+				//
+				__MJ(__SST(this), __UCT(this), true);
 			}
 		}
 
@@ -665,11 +674,18 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 		this->Write_VC_Store_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,NULL,NULL,NULL,barrier,ofile);
 		ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
 
+		//
+		// SelfRelease (only the UST part is needed..).
+		// the sample part does not need to be reenabled.
+		// __MJ(__UST(this),__UCT(this),true);
+		// however other logic depends on strict reenabling.
+		// 
 		__ConnectSplitProtocolPattern;
 
 		if(pipeline_flag)
 		{
 			__SelfReleaseSplitProtocolPattern
+
 		}
 
 	}
@@ -712,6 +728,10 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 			// correct sequencing to guard logic.
 			//
 			__SelfReleaseSplitProtocolPattern
+
+			// add this dependency to prevent empty cr->ca
+			// from running away from sr->sa.
+			__MJ(__SST(this), __UCT(this), true);
 		}
 
 

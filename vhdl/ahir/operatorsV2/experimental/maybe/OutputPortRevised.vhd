@@ -56,24 +56,12 @@ begin
 	
 	in_data_array(I) <= data(((I+1)*data_width)-1 downto (I*data_width));
 	
-	--  
-	-- update ack..
-        --   Note: to prevent runaway,  the following dependencies must be
-	--    imposed in the control path.
-        --  
-        --   sa -> cr
-        --   ca -o-> sr (0-delay)
-        --
-	process(clk,reset)
-        begin
-		if(clk'event and clk = '1') then
-			if(reset = '1') then
-				update_ack(I) <= false;
-			else
-				update_ack(I) <= update_req(I); -- sacrificial.. to maintain pretense of split protocol.
-			end if;
-		end if;
-	end process;
+	-- ensure that update-ack is synched to sample-req as well.
+	uackJoin: join2 
+			generic map (bypass => false, name => name & ":uackJoin")
+				port map (pred0 => update_req(I), pred1 => sample_req(I),
+						symbol_out => update_ack(I),
+							clk => clk, reset => reset);
 
 	rxB: ReceiveBuffer 
 		generic map( name => name & "-rxB" & Convert_To_String(I),

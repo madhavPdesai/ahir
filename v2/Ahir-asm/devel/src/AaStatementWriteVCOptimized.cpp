@@ -1578,13 +1578,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   __F((__UCT(this) + "_ps"), "aggregated_phi_update_ack");
   __F("aggregated_phi_update_ack", __UCT(this));
 
+  // added dependency to prevent run-away..
   if(pipeline_flag)
-	//
-	// This bypass is technically not necessary, Why are we doing it?
-	//
   {
-	  // bypass...  All phi's must update to reenable..
-	  __MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true); 
+  	__MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true);
   }
 
   // the active, completed and the active transitions

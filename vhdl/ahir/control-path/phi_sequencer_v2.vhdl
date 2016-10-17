@@ -70,6 +70,14 @@ begin  -- Behave
     end process;
   end generate ErrorFlag;
  
+  --
+  -- the sample/update pairs are totally independent.
+  -- If the phi-sequencer drives an operator which does
+  -- not couple the sample-req/ack pair with the
+  -- update req/ack pair (as can happen if the operation
+  -- is guarded, for example), then we need to introduce an additional
+  -- external dependency in the control-path...
+  --
   trigForkSample: conditional_fork
 		generic map (place_capacity => place_capacity,
 				ntriggers => ntriggers,

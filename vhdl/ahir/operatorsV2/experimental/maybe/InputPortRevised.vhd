@@ -56,22 +56,36 @@ begin
   -----------------------------------------------------------------------------
   ProTx : for I in 0 to num_reqs-1 generate
 
+   Genblock: block
+     signal sample_join_sig, update_join_sig, update_ack_sig: Boolean;
+   begin
 
     --
-    -- Note: for correct functioning of this input port
-    --   external dependencies on the control-path side
-    --   must be correctly setup.
-    --     sr->sa->cr->ca chain
-    --     ca -o-> sr  (0-delay_ dependency.
+    -- even though sample-req and sample-ack do nothing, we want to
+    -- maintain the interlock illusion.  That is, between two 
+    -- successive sample-acks, there must be an update-ack.
     --
-    sample_ack(I) <= sample_req(I); -- to maintain illusion of split protocol.
+    sJ: generic_join2  generic map (marking_0 => 0, marking_1 => 1,
+					delay_0 => 0, delay_1 => 0,
+					  capacity_0 => 1, capacity_1 => 1,
+						name => name & ":sJ:" & Convert_To_String(I))
+			port map (pred_0 => sample_req(I), 
+					pred_1 => update_ack_sig, symbol_out => sample_join_sig,
+							 clk => clk , reset => reset);
+    sample_ack(I) <= sample_join_sig;
+
+
+    uJ: join2 generic map (bypass => true, name => name & ":uJ:" & Convert_To_String(I))
+			port map (pred0 => sample_join_sig, pred1 => update_req(I),
+					symbol_out => update_join_sig, 
+						clk => clk, reset => reset);
 
     -- FSM.
-    fsm: block
+    updateFsm: block
 	signal fsm_state: FsmState;
 	signal data_reg : std_logic_vector(data_width-1 downto 0);
     begin
-	process(clk, reset, fsm_state, update_req(I),  write_enable(I))
+	process(clk, reset, fsm_state, update_join_sig,  write_enable(I))
 		variable next_fsm_state: FsmState;
 		variable has_room_v : std_logic;
 		variable latch_v : boolean;
@@ -81,7 +95,7 @@ begin
 		latch_v        := false;
 		case fsm_state is
 			when Idle  =>
-				if(update_req(I)) then
+				if(update_join_sig) then
 					has_room_v := '1';
 					if(write_enable(I) = '1') then
 						latch_v := true;
@@ -102,12 +116,12 @@ begin
 		
 		if(clk'event and clk = '1') then
 			if(reset = '1') then
-				update_ack(I) <= false;
+				update_ack_sig <= false;
 				fsm_state <= Idle;
 				data_reg <= (others => '0');
 			else
 				fsm_state <= next_fsm_state;
-				update_ack(I) <= latch_v;
+				update_ack_sig <= latch_v;
 				if(latch_v) then
 					data_reg <= write_data(I);
 				end if;
@@ -116,10 +130,13 @@ begin
 		end if;
 	end process;
 
+	-- update ack!
+	update_ack(I) <= update_ack_sig;
+
 	-- read-data I
 	read_data(I) <= data_reg;
     end block;
-
+   end block;
   end generate ProTx;
 
   demux : InputPortLevel generic map (

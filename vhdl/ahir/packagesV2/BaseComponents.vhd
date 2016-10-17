@@ -103,6 +103,17 @@ package BaseComponents is
            reset: in std_logic);
   end component;
 
+  component generic_join2 
+    generic( marking_0: integer; marking_1: integer;
+		  delay_0: integer; delay_1: integer;
+		    capacity_0: integer; capacity_1: integer; 
+			name : string);
+    port ( pred_0, pred_1      : in   Boolean;
+    		symbol_out : out  boolean;
+		clk: in std_logic;
+		reset: in std_logic);
+  end component;
+
   component join3 
     generic (bypass : boolean := true; name: string);
     port ( pred0, pred1, pred2      : in   Boolean;
