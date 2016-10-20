@@ -62,7 +62,7 @@ begin
     --   external dependencies on the control-path side
     --   must be correctly setup.
     --     sr->sa->cr->ca chain
-    --     ca -o-> sr  (0-delay_ dependency.
+    --     ca -o-> sr  (0-delay) dependency.
     --
     sample_ack(I) <= sample_req(I); -- to maintain illusion of split protocol.
 

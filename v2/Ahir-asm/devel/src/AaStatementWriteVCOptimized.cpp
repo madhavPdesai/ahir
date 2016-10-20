@@ -1701,7 +1701,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		}
 	
 
-	      if(sge != NULL)
+	      //if(sge != NULL)
+	      if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr))
 		{
 		      ofile << "// Guard dependency in PHI alternative.." << endl;
 		      __J(__SST(source_expr), __UCT(sge));
