@@ -1085,6 +1085,7 @@ void AaProgram::Write_C_Model()
   header_file << "#include <assert.h>" << endl;
   header_file << "#include <stdio.h>" << endl;
   header_file << "#include <BitVectors.h>" << endl;
+  header_file << "#include <pipeHandler.h>" << endl;
   // declare all the record types that you have encountered.
 
   if(AaProgram::_use_gnu_pth) 
