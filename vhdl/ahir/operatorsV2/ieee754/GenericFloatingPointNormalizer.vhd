@@ -114,6 +114,9 @@ begin
 
   normalized_result <= result_6;
 
+  -------------------------------------------------------------------------------------------------------------
+  -- stage 1: left-most 1
+  -------------------------------------------------------------------------------------------------------------
   -- stage 1: find leftmost 1.
   process(clk)
     variable sfract     : UNSIGNED (fract'high downto 0);  -- shifted fraction
@@ -154,8 +157,10 @@ begin
   end process;
 
   
-  -- stage 2: a bit light!
-  process(clk)
+  -------------------------------------------------------------------------------------------------------------
+  -- stage 2,3,4: merged
+  -------------------------------------------------------------------------------------------------------------
+  process(fract_1, zerores_1, infres_1, round_1, shiftr_1, exp_1, expon_1, stage_full(1), stage_tags(1))
     variable sfract     : UNSIGNED (fract'high downto 0);  -- shifted fraction
     variable rfract     : UNSIGNED (fraction_width-1 downto 0);   -- fraction
     variable exp        : SIGNED (exponent_width+1 downto 0);  -- exponent
@@ -188,26 +193,22 @@ begin
     elsif (exp > expon_base-1) then     -- infinity
       infres := true;
     end if;
-    if(clk'event and clk = '1') then
-	if(reset = '1') then
-		stage_full(2) <= '0';
-	elsif(stall = '0') then
-		zerores_2 <= zerores;
-		infres_2 <= infres;
-		round_2 <= round;
-		shiftr_2 <= shiftr;
-		exp_2 <= exp;
-		fract_2 <= fract_1;
-                sticky_2 <= sticky_1;
-		sign_2 <= sign_1;
-		stage_full(2) <= stage_full(1);
-		stage_tags(2) <= stage_tags(1);
-	end if;
-    end if;
+
+    -- pass it to the next stage, combinationally..
+    zerores_2 <= zerores;
+    infres_2 <= infres;
+    round_2 <= round;
+    shiftr_2 <= shiftr;
+    exp_2 <= exp;
+    fract_2 <= fract_1;
+    sticky_2 <= sticky_1;
+    sign_2 <= sign_1;
+    stage_full(2) <= stage_full(1);
+    stage_tags(2) <= stage_tags(1);
   end process;
 
   -- stage 3: exceptional cases
-  process(clk)
+  process(zerores_2, infres_2, round_2, shiftr_2, exp_2, fract_2, sticky_2, stage_full(2), stage_tags(2))
     variable sfract     : UNSIGNED (fract'high downto 0);  -- shifted fraction
     variable rfract     : UNSIGNED (fraction_width-1 downto 0);   -- fraction
     variable exp        : SIGNED (exponent_width+1 downto 0);  -- exponent
@@ -239,26 +240,20 @@ begin
                            exponent_width => exponent_width);
     end if;
   
-    if(clk'event and clk = '1') then
-	if(reset = '1') then
-		stage_full(3) <= '0';
-	elsif(stall ='0') then
-		fract_3 <= fract_2;	
-		sticky_3 <= sticky_2;
-		shiftr_3 <= shiftr;
-		exp_3 <= exp;
-		exceptional_result_flag_3 <= exceptional_result_flag;
-		result_3 <= result;
-		sign_3 <= sign_2;
-		stage_full(3) <= stage_full(2);
-		stage_tags(3) <= stage_tags(2);
-	end if;
-    end if;
+    fract_3 <= fract_2;	
+    sticky_3 <= sticky_2;
+    shiftr_3 <= shiftr;
+    exp_3 <= exp;
+    exceptional_result_flag_3 <= exceptional_result_flag;
+    result_3 <= result;
+    sign_3 <= sign_2;
+    stage_full(3) <= stage_full(2);
+    stage_tags(3) <= stage_tags(2);
   end process;
 
   
   -- stage 4:  prepare data for shifter.
-  process(clk)
+  process(fract_3, sticky_3, shiftr_3, exp_3, exceptional_result_flag_3, result_3, sign_3, stage_full(3), stage_tags(3))
         variable reverse_flag, stickyx: std_ulogic;
         variable shiftu: unsigned(Ceil_Log2(fract'length)-1 downto 0);
         variable tmp: natural;
@@ -277,31 +272,27 @@ begin
    end if;
     
     --- break 3 -----
-    if(clk'event and clk = '1') then
-	if(reset = '1') then
-		stage_full(4) <= '0';
-	elsif(stall = '0') then
-		if(shiftr_3 <= 0) then
-			shift_in <= reverse(fract_3);
-		else
-			shift_in <= fract_3;
-		end if;
-   
-		shift_amount <= shiftu;
+   if(shiftr_3 <= 0) then
+	shift_in <= reverse(fract_3);
+   else
+	shift_in <= fract_3;
+   end if;
+  
+   shift_amount <= shiftu;
 
-		shift_tag_in(shift_tag_in'high downto 4) <= std_logic_vector(stage_tags(3)) & 
+   shift_tag_in(shift_tag_in'high downto 4) <= std_logic_vector(stage_tags(3)) & 
 			std_logic_vector(exp_3) & Float_To_SLV(result_3);
-		shift_tag_in(3) <=  sign_3;
-		shift_tag_in(2) <=  exceptional_result_flag_3;
-		shift_tag_in(1) <=  reverse_flag;
-		shift_tag_in(0) <=  stickyx;
-		stage_full(4) <= stage_full(3);
-		stage_tags(4) <= stage_tags(3);
-	end if;
-    end if;
+   shift_tag_in(3) <=  sign_3;
+   shift_tag_in(2) <=  exceptional_result_flag_3;
+   shift_tag_in(1) <=  reverse_flag;
+   shift_tag_in(0) <=  stickyx;
+   stage_full(4) <= stage_full(3);
+   stage_tags(4) <= stage_tags(3);
   end process;
   
+  ----------------------------------------------------------------------------------------------------------------
   -- stage 5: shifter:  sfract := fract srl shiftr;   
+  ----------------------------------------------------------------------------------------------------------------
   us: UnsignedShifter generic map(name=> name & "-us", shift_right_flag => true,
 					tag_width => shift_tag_in'length,
 					operand_width => shift_in'length,
@@ -315,7 +306,9 @@ begin
 				tag_out => shift_tag_out);
 
 
+  ----------------------------------------------------------------------------------------------------------------
   -- stage 6: round.
+  ----------------------------------------------------------------------------------------------------------------
   process(clk)
     variable sfract     : UNSIGNED (fract'high downto 0);  -- shifted fraction
     variable rfract     : UNSIGNED (fraction_width-1 downto 0);   -- fraction

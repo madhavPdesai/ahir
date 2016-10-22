@@ -679,7 +679,7 @@ begin
 		generic map(name => name & "-adder",
 				tag_width => adder_tag_in'length,
 				operand_width => addL_4'length,
-				chunk_width => 24)
+				chunk_width => 32)
 		port map( L => addL_4, R => addR_4, RESULT => ufract_5,
 				subtract_op => subtract_4,
 				clk => clk, reset => reset,

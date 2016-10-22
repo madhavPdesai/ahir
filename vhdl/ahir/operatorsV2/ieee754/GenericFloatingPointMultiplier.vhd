@@ -284,7 +284,7 @@ begin
   amul : UnsignedMultiplier
     generic map (name => name & "-amul", tag_width => tag_width+operand_width+(exponent_width+2)+2,
                  operand_width => fraction_width+1,
-		 chunk_width => 16)
+		 chunk_width => 32)
     port map (
       L       => fractl_1,
       R       => fractR_1,
