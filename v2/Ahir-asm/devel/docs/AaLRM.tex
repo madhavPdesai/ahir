@@ -122,9 +122,15 @@ Variables in  the program can belong to the following classes:
 a certain extent.  These are 32-bit integers declared as
 \begin{verbatim}
 $parameter PIPEDEPTH 16
-$parameter PIPEDEPTH2  (2 * PIPEDEPTH) 
+$parameter PIPEDEPTH2  {2 * PIPEDEPTH} 
 \end{verbatim}
-for example.  
+for example.    Note that the parameter
+PIPEDEPTH2 is obtained by evaluating the
+parameter expression 
+\begin{verbatim}
+{2 * PIPEDEPTH} 
+\end{verbatim}
+Parameter expressions  are described in more detail Section \ref{sec:ParamExprs}.
 Parameters can be used to specify some 
 constants inside
 the program (this will be indicated whenever relevant).
@@ -915,6 +921,10 @@ listed as
 \begin{verbatim}
 a[0][0] a[0][1] a[1][0] a[1][1]
 \end{verbatim}
+\item Parameters can be used as simple identifiers.
+These are converted to integers (whose width as a uint
+is unknown) provided they are defined at the point
+of reference.
 \end{itemize}
 
 \subsection{Simple object references} 
@@ -1225,6 +1235,7 @@ For example
 \end{verbatim}
 
 
+
 \section{Specifying buffering for expressions}
 
 By default, the result of each expression may be
@@ -1243,6 +1254,29 @@ For example
 means that the expression $A$ has buffering $2$,
 the expression $(B+C)$ has buffering $3$ and the
 overall expression $(A + (B+C))$ has buffering $2$.
+
+\section{Parameter Expressions} \label{sec:ParamExprs}
+
+Parameters are like constants, but have an implicit
+integer types.  They are to be used in lieu of
+constants in order to provide a measure of configurability
+to the Aa program, as well as to improve readability of
+the code. 
+
+Pararmeters can be combined in expressions in the
+much the same way as other objects.  The only difference
+is that the delimitations is done using curly braces
+instead of parenthesis, for example
+\begin{verbatim}
+{ a + {b + c} }
+\end{verbatim}
+Here, $a,b,c$ must be parameters, and the expression
+is evaluated as soon as it is encountered and replaced
+by its equivalent integer value.
+
+All operations which are relevant for integers
+are supported (including the ternary operation).
+
 
 \section{Storage variables and Memory Spaces}
 

@@ -1,16 +1,17 @@
 $parameter PDEPTH 2
 $parameter PWIDTH 32
-$parameter LPDEPTH (~(~(PDEPTH + 2)))
+$parameter LPDEPTH {~{~{PDEPTH + 2}}}
 $parameter PZERO 0
 $parameter INCREMENT 1
 
+$constant ZERO8: $uint<8> := {PDEPTH - PDEPTH}
 
 $pipe out_data : $uint<PWIDTH> $depth PDEPTH
 
 $module [phi_check_daemon] $in() $out () $is
 {
 	$branchblock[lOoP] {
-		$dopipeline $depth (PWIDTH/2)  $buffering LPDEPTH $fullrate
+		$dopipeline $depth {PWIDTH/2}  $buffering LPDEPTH $fullrate
 		$merge $entry $loopback 
 			$phi COUNT := ($bitcast ($uint<32>) PZERO) $on $entry NCOUNT $on $loopback
 		$endmerge

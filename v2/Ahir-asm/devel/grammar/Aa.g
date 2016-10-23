@@ -78,8 +78,8 @@ options {
 class AaParser extends Parser;
 
 options {
-	// go with LL(4) grammar
-	k=4;
+	// go with LL(6) grammar
+	k=6;
 	defaultErrorHandler=true;
 } 
 {
@@ -1713,6 +1713,10 @@ aA_Storage_Object_Declaration_List[AaBlockStatement* scope]
 // aA_Object_Declaration_List_Base: SIMPLE_IDENTIFIER+ COLON aA_Type_Reference (ASSIGNEQUAL aA_Constant_Literal_Reference)?
 //----------------------------------------------------------------------------------------------------------
 aA_Object_Declaration_List_Base[AaBlockStatement* scope, vector<string>& oname_list, AaType*& otype, AaConstantLiteralReference*& initial_value]
+{
+	int param_value;
+	int lno;
+}
         : (id:SIMPLE_IDENTIFIER { oname_list.push_back(id->getText()); })+ COLON
             ((otype = aA_Type_Reference[scope]) | (otype = aA_Named_Type_Reference[scope]))
             (ASSIGNEQUAL initial_value = aA_Constant_Literal_Reference[scope])?
@@ -2115,6 +2119,7 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
         string full_name;
         vector<string> literals;
         int line_number;
+	int param_value;
         int dlno;
         bool scalar_flag = true;
     }
@@ -2131,7 +2136,7 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
            (llid:LESS { full_name += llid->getText(); line_number = llid->getLine();}
               (aA_Float_Literal_Reference[full_name,literals,dlno])+ ggid:GREATER 
                       {full_name += ggid->getText(); scalar_flag = false;})
-         )
+          )
 
         {
                 obj_ref = new AaConstantLiteralReference(scope,full_name,literals);
@@ -2147,13 +2152,23 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
 //----------------------------------------------------------------------------------------------------------
 aA_Integer_Literal_Reference[string& full_name, vector<string>& literals, int& line_number]
 { 
-  string sign_char;
+  string sign_str = "";
   string this_lit;
+  int param_val, lno;
 }
 :
-   (( (MINUS {sign_char = "-";})?   uid: UINTEGER
+	
+   ((MINUS {sign_str = "-";})?
+		uid: UINTEGER 
+	  	{
+			this_lit = sign_str + uid->getText();
+			full_name += this_lit + " ";
+                        literals.push_back(this_lit);
+		})
+	|
+   (param_val = aA_Integer_Parameter_Expression_Nontrivial[lno]
                  {
-                       	this_lit = sign_char +  uid->getText();
+                       	this_lit = IntToStr(param_val);
 			full_name += this_lit + " ";
                         literals.push_back(this_lit);
                  }) |
@@ -2168,7 +2183,7 @@ aA_Integer_Literal_Reference[string& full_name, vector<string>& literals, int& l
                        line_number = hidv->getLine();
                        literals.push_back(hidv->getText());
                        full_name += hidv->getText() + " ";
-                 }))
+                 })
 ;
                
 
@@ -2206,14 +2221,9 @@ PARAMETER sid:SIMPLE_IDENTIFIER param_value = aA_Integer_Parameter_Expression[ln
 //----------------------------------------------------------------------------------------------------------
 aA_Integer_Parameter_Expression[int& line_number]  returns [int expr_value]
 {
-	int val_1;
-	int val_2;
-	int val_3;
-	AaOperation opid;
-	int  lno;
-	
+  int lno;	
 }:
-  ((iid: UINTEGER {expr_value = atoi(iid->getText().c_str());
+  (iid: UINTEGER {expr_value = atoi(iid->getText().c_str());
 				line_number = iid->getLine();})
 	| 
   (hid: HEXCSTYLEINTEGER  {expr_value = atoi(hid->getText().c_str());
@@ -2222,9 +2232,23 @@ aA_Integer_Parameter_Expression[int& line_number]  returns [int expr_value]
   (sid: SIMPLE_IDENTIFIER {expr_value = AaProgram::Get_Integer_Parameter_Value(sid->getText());
 				line_number = sid->getLine();})
 	|
-  (lpid: LPAREN
+  (expr_value = aA_Integer_Parameter_Expression_Nontrivial[lno])
+;
+
+
+aA_Integer_Parameter_Expression_Nontrivial[int& line_number]  returns [int expr_value]
+{
+    int val_1;
+    int val_2;
+    int val_3;
+    AaOperation opid;
+    int  lno;
+}:
+  lpid: LBRACE
      ( 
 	(NOT val_1 = aA_Integer_Parameter_Expression [lno] {expr_value = (~ val_1);}) 
+	|
+	(MINUS val_1 = aA_Integer_Parameter_Expression [lno] {expr_value = (- val_1);}) 
 	|
 	(val_1 = aA_Integer_Parameter_Expression  [lno]
 			opid = aA_Binary_Op
@@ -2301,10 +2325,10 @@ aA_Integer_Parameter_Expression[int& line_number]  returns [int expr_value]
 	|
   	(MUX val_1 = aA_Integer_Parameter_Expression [lno]
 		val_2 = aA_Integer_Parameter_Expression [lno]
-		   val_3 = aA_Integer_Parameter_Expression [lno] RPAREN
+		   val_3 = aA_Integer_Parameter_Expression [lno] 
 		{expr_value = (val_1 ? val_2 : val_3);}
 	))
-					RPAREN))
+					RBRACE
 ;
 
 //----------------------------------------------------------------------------------------------------------
