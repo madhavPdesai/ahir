@@ -325,6 +325,12 @@ void AaProgram::Add_ExtMem_Access_Type(AaType* t)
 
 void AaProgram::Add_Object(AaObject* obj) 
 { 
+	if(AaProgram::Is_Integer_Parameter(obj->Get_Name()))
+	{
+		AaRoot::Error("Object " + obj->Get_Name() + " shadows parameter name. ", obj);
+		return;
+	}
+
 	AaObject* prev_obj = AaProgram::Find_Object(obj->Get_Name());
 	if(prev_obj != NULL)
 	{
@@ -1484,4 +1490,15 @@ int AaProgram::Get_Integer_Parameter_Value(string pid)
 	{
 		return((*iter).second);
 	}
+}
+
+bool AaProgram::Is_Integer_Parameter(string pid)
+{
+	bool ret_val = false;
+	map<string,int>::iterator iter = AaProgram::_integer_parameter_map.find(pid);
+	if(iter != AaProgram::_integer_parameter_map.end())
+	{
+		ret_val = true;
+	}
+	return(ret_val);
 }

@@ -626,6 +626,12 @@ AaConstantLiteralReference::AaConstantLiteralReference(AaScope* parent_tpr,
 		this->_literals.push_back(literals[i]);
 
 };
+AaConstantLiteralReference::AaConstantLiteralReference(AaScope* parent_tpr, int param_value):
+	AaObjectReference(parent_tpr,IntToStr(param_value)) 
+{
+		string lit_val = IntToStr(param_value);
+		this->_literals.push_back(lit_val);
+};
 AaConstantLiteralReference::~AaConstantLiteralReference() {};
 
 

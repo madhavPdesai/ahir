@@ -2632,6 +2632,12 @@ AaBlockStatement::~AaBlockStatement() {}
 
 void AaBlockStatement::Add_Object(AaObject* obj) 
 { 
+	if(AaProgram::Is_Integer_Parameter(obj->Get_Name()))
+	{
+		AaRoot::Error("Object " + obj->Get_Name() + " shadows parameter name. ", obj);
+		return;
+	}
+
 	if(this->Find_Child_Here(obj->Get_Name()) == NULL)
 	{ 
 		this->_objects.push_back(obj);

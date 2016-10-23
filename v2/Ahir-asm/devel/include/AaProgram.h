@@ -273,6 +273,7 @@ class AaProgram
 
   static void Add_Integer_Parameter(string pid, int pval);
   static int  Get_Integer_Parameter_Value(string pid);
+  static bool  Is_Integer_Parameter(string pid);
 
 };
 

@@ -150,11 +150,12 @@ aA_Module returns [AaModule* new_module]
     int buffering = 1;
     bool full_rate_flag = false;
     bool macro_flag = false;
+    int lno;
 }
     : ((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true; } 
-		(DEPTH (depth = aA_Integer_Parameter_Expression))?
-		(BUFFERING (buffering = aA_Integer_Parameter_Expression))?
+		(DEPTH (depth = aA_Integer_Parameter_Expression [lno] ))?
+		(BUFFERING (buffering = aA_Integer_Parameter_Expression [lno] ))?
 		(FULLRATE {full_rate_flag = true;})? 
 	) | (INLINE {inline_flag = true;}) | (MACRO {macro_flag = true;}) )? 
 	((OPERATOR {operator_flag = true;}) | (VOLATILE {volatile_flag = true;}))?
@@ -294,6 +295,7 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 
     bool volatile_flag = false;
     int delay_val;
+    int lno;
 }
     :  
       ( 
@@ -316,7 +318,7 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 				ss = syid->getText();
 				synch_stmts.push_back(ss);
 			})+ RPAREN )? 
-	   (DELAY LPAREN (dlid: SIMPLE_IDENTIFIER delay_val = aA_Integer_Parameter_Expression
+	   (DELAY LPAREN (dlid: SIMPLE_IDENTIFIER delay_val = aA_Integer_Parameter_Expression[lno]
 				{
 					ss = dlid->getText();
 					delay_stmts.push_back(pair<string,int>(ss, delay_val));})+ RPAREN )? 
@@ -490,9 +492,10 @@ aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
 aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
 {
     AaStatement* new_stmt = NULL;
-    AaObjectReference* target = NULL;
+    AaExpression* target = NULL;
     AaExpression* source = NULL;
     int buf_val;
+    int lno;
 }
     : 
 
@@ -503,8 +506,13 @@ aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
             new_stmt = new AaAssignmentStatement(scope,target,source, al->getLine());
             new_stmt->Set_Line_Number(al->getLine());
 	    slist.push_back(new_stmt);
+	    if(target->Is_Constant_Literal_Reference())
+	    {
+		AaRoot::Error("illegal object reference as target: on line "  + IntToStr(al->getLine()),
+					NULL);
+	    }
         }
-	(BUFFERING buf_val = aA_Integer_Parameter_Expression 
+	(BUFFERING buf_val = aA_Integer_Parameter_Expression [lno]
 		{ ((AaAssignmentStatement*)new_stmt)->Set_Buffering(buf_val);}
 	)?
     ;
@@ -519,6 +527,7 @@ aA_Call_Statement[AaScope* scope, vector<AaStatement*>& slist]
     vector<AaObjectReference*> output_args;
     string func_name = "";
     int buf_val;
+    int lno;
 }
     : 
         cl: CALL
@@ -531,7 +540,7 @@ aA_Call_Statement[AaScope* scope, vector<AaStatement*>& slist]
             new_stmt = new AaCallStatement(scope,func_name,input_args,output_args,cl->getLine());
 	    slist.push_back(new_stmt);
         }
-	(BUFFERING buf_val = aA_Integer_Parameter_Expression 
+	(BUFFERING buf_val = aA_Integer_Parameter_Expression [lno]
 		{((AaCallStatement*)new_stmt)->Set_Buffering(buf_val);})?
     ;
 
@@ -548,17 +557,18 @@ aA_Split_Statement[AaScope* scope, vector<AaStatement*>& slist]
     vector<AaExpression*> targets;
     int buffering = 1;
     int curr_size;
+	int lno;
 }
     : 
         cl: SPLIT
 	LPAREN
 	srcid: SIMPLE_IDENTIFIER {src = srcid->getText();}
-	(curr_size = aA_Integer_Parameter_Expression {sizes.push_back(curr_size);})+
+	(curr_size = aA_Integer_Parameter_Expression[lno] {sizes.push_back(curr_size);})+
 	RPAREN
 	LPAREN
         (expr = aA_Expression[scope]  { targets.push_back(expr); })+
 	RPAREN
-	(BUFFERING buffering = aA_Integer_Parameter_Expression)?
+	(BUFFERING buffering = aA_Integer_Parameter_Expression[lno])?
         {
 		bool err = Make_Split_Statement(scope, src, sizes, targets, slist, buffering, cl->getLine());
 		if(err)
@@ -854,10 +864,18 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
 }
     : pl: PHI tgt:SIMPLE_IDENTIFIER 
         {
-            target = new AaSimpleObjectReference(scope,tgt->getText());
-            target->Set_Object_Root_Name(tgt->getText());
-            new_ps->Set_Target(target);
-            new_ps->Set_Line_Number(pl->getLine());
+	    if(AaProgram::Is_Integer_Parameter(tgt->getText()))
+	    {
+		AaRoot::Error("target of phi statement is a parameter: on line " +
+			 		pl->getLine(), NULL);
+            }
+	    else
+	    {
+            	target = new AaSimpleObjectReference(scope,tgt->getText());
+            	target->Set_Object_Root_Name(tgt->getText());
+            	new_ps->Set_Target(target);
+            	new_ps->Set_Line_Number(pl->getLine());
+	    }
         }
         ASSIGNEQUAL 
         ( 
@@ -1086,10 +1104,11 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
     int pdepth = 1;
     int buffering_depth = 1;
     bool full_rate_flag = false;
+    int lno;
 }: 
      il:DO 
-	(DEPTH (pdepth = aA_Integer_Parameter_Expression))?
-	(BUFFERING (buffering_depth = aA_Integer_Parameter_Expression))?
+	(DEPTH (pdepth = aA_Integer_Parameter_Expression[lno]))?
+	(BUFFERING (buffering_depth = aA_Integer_Parameter_Expression[lno]))?
 	(FULLRATE {full_rate_flag = true;})? 
         ms = aA_Merge_Statement[scope]
         { 
@@ -1148,13 +1167,22 @@ aA_Argv_Out[AaScope* scope, vector<AaObjectReference*>& args]
 {       
     AaObjectReference* obj = NULL;
 }       
-    :LPAREN 
+:
+	LPAREN 
             (id:SIMPLE_IDENTIFIER
-                {
-                    obj = new AaSimpleObjectReference(scope,id->getText());
-                    obj->Set_Object_Root_Name(id->getText());
-                    args.push_back(obj); 
-                }
+		{
+			if(AaProgram::Is_Integer_Parameter(id->getText()))
+			{
+				AaRoot::Error("Call statement out-arg is a parameter: on line " + 
+							id->getLine(), NULL);
+			}
+			else
+                	{
+                    		obj = new AaSimpleObjectReference(scope,id->getText());
+                    		obj->Set_Object_Root_Name(id->getText());
+                    		args.push_back(obj); 
+                	}
+		}
         )* 
         RPAREN
 ;
@@ -1189,13 +1217,23 @@ aA_Expression[AaScope* scope] returns [AaExpression* expr]
 //----------------------------------------------------------------------------------------------------------
 aA_Pointer_Dereference_Expression[AaScope* scope] returns [AaObjectReference* expr]
 {
-   AaObjectReference* obj_ref;
+   AaExpression* obj_ref;
 }
 :
     did: DEREFERENCE_OP LPAREN obj_ref = aA_Object_Reference[scope] RPAREN 
      {
-         expr = new AaPointerDereferenceExpression(scope, obj_ref);
-         expr->Set_Line_Number(did->getLine());
+
+	 if(obj_ref->Is_Constant_Literal_Reference())
+	 {
+		AaRoot::Error("illegal object reference in pointer expression on line "  + IntToStr(did->getLine()),
+					NULL);
+		expr = NULL;
+	 }
+	else
+	{
+         	expr = new AaPointerDereferenceExpression(scope, (AaObjectReference*)obj_ref);
+         	expr->Set_Line_Number(did->getLine());
+	}
      }
 ; 
 
@@ -1205,13 +1243,22 @@ aA_Pointer_Dereference_Expression[AaScope* scope] returns [AaObjectReference* ex
 //----------------------------------------------------------------------------------------------------------
 aA_Address_Of_Expression[AaScope* scope] returns [AaExpression* expr]
 {
-   AaObjectReference* obj_ref;
+   AaExpression* obj_ref;
 }
 :
     aid: ADDRESS_OF_OP LPAREN obj_ref = aA_Object_Reference[scope] RPAREN 
      {
-         expr = new AaAddressOfExpression(scope, obj_ref);
-         expr->Set_Line_Number(aid->getLine());
+	 if(obj_ref->Is_Constant_Literal_Reference())
+	 {
+		AaRoot::Error("illegal object reference in pointer expression on line "  + IntToStr(aid->getLine()),
+					NULL);
+		expr = NULL;
+	 }
+	else
+	{
+         	expr = new AaAddressOfExpression(scope, (AaObjectReference*)obj_ref);
+         	expr->Set_Line_Number(aid->getLine());
+	}
      }
 ; 
 
@@ -1292,10 +1339,11 @@ aA_Slice_Expression[AaScope* scope] returns [AaExpression* expr]
 {       
     AaExpression* rest = NULL;
 	int hindex, lindex;
+  	int lno;
 }:
 		lpid: LPAREN SLICE rest=aA_Expression[scope] 
-			hindex = aA_Integer_Parameter_Expression
-			lindex = aA_Integer_Parameter_Expression
+			hindex = aA_Integer_Parameter_Expression [lno]
+			lindex = aA_Integer_Parameter_Expression [lno]
 		{
 			pair<int,int> slice;
 			slice.first = hindex;
@@ -1570,9 +1618,10 @@ aA_Bitreduce_Expression[AaScope* scope] returns [AaExpression* expr]
 aA_Expression_Buffering_Spec[AaExpression* expr] 
 {
    int spec_delay = 1;
+    int lno;
 }:
 
-	BUFFERING  spec_delay  = aA_Integer_Parameter_Expression 
+	BUFFERING  spec_delay  = aA_Integer_Parameter_Expression [lno]
         {expr->Set_Buffering(spec_delay);}
 ;
 
@@ -1719,11 +1768,12 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 	    bool noblock_flag = false;
 	    bool is_shift_reg = false;
 	    bool full_rate = false;
+		int lno;
         }
         : ((LIFO { lifo_flag = true; }) | (NOBLOCK {noblock_flag = true;}))? 
 	  (SHIFTREG {is_shift_reg = true;})?
 		(st:PIPE aA_Object_Declaration_List_Base[scope,oname_list,otype,initial_value]) 
-		(DEPTH (pipe_depth = aA_Integer_Parameter_Expression))?
+		(DEPTH (pipe_depth = aA_Integer_Parameter_Expression[lno]))?
 		(IN {in_mode = true;} | OUT {out_mode = true;})? 
 		(SIGNAL {is_signal = true;})?
 		(SYNCH {is_synch = true;})?
@@ -1832,8 +1882,9 @@ aA_Void_Type_Reference[AaScope* scope] returns [AaType* ret_type]
 aA_Uint_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
     uint32_t width;
+	int lno;
 }
-    : UINT LESS width = aA_Integer_Parameter_Expression GREATER 
+    : UINT LESS width = aA_Integer_Parameter_Expression[lno] GREATER 
         { 
             ref_type = AaProgram::Make_Uinteger_Type(width);
         }
@@ -1845,8 +1896,9 @@ aA_Uint_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 aA_Int_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
     uint32_t width;
+    int lno;
 }
-    : INT LESS width = aA_Integer_Parameter_Expression  GREATER 
+    : INT LESS width = aA_Integer_Parameter_Expression[lno]  GREATER 
         { 
             ref_type = AaProgram::Make_Integer_Type(width);
         }
@@ -1859,10 +1911,11 @@ aA_Int_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 aA_Float_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
     uint32_t c,m;
+	int lno;
 }
-    : FLOAT LESS c = aA_Integer_Parameter_Expression
+    : FLOAT LESS c = aA_Integer_Parameter_Expression[lno]
         COMMA
-         m = aA_Integer_Parameter_Expression
+         m = aA_Integer_Parameter_Expression[lno]
         GREATER 
         { 
             ref_type = AaProgram::Make_Float_Type(c,m);
@@ -1894,9 +1947,10 @@ aA_Array_Type_Reference[AaScope* scope] returns [AaType* ref_type]
     vector<unsigned int> dims;
     AaType* element_type;
     unsigned int d;
+	int lno;
 }
     : ARRAY 
-        (LBRACKET d = aA_Integer_Parameter_Expression {dims.push_back(d);} RBRACKET)+
+        (LBRACKET d = aA_Integer_Parameter_Expression[lno] {dims.push_back(d);} RBRACKET)+
         OF 
         ((element_type = aA_Type_Reference[scope]) | (element_type = aA_Named_Type_Reference[scope]))
         {
@@ -1958,7 +2012,7 @@ aA_Named_Record_Type_Declaration[AaScope* scope] returns [AaType* ref_type]
 //----------------------------------------------------------------------------------------------------------
 // aA_Object_Reference : HIERARCHICAL_ENTIFIER (LBRACKET Aa_Object_Reference RBRACKET)*
 //----------------------------------------------------------------------------------------------------------
-aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
+aA_Object_Reference[AaScope* scope] returns [AaExpression* obj_ref]
 {
     string prefix_name;
     vector<string> hier_ids;
@@ -1997,7 +2051,7 @@ aA_Object_Reference_Prefix[vector<string>& hier_ids, unsigned int& search_ancest
                     }
 ;
 
-aA_Object_Reference_Base[string prefix_name, vector<string>& hier_ids, unsigned int search_ancestor_level, AaScope* scope] returns [AaObjectReference* obj_ref]
+aA_Object_Reference_Base[string prefix_name, vector<string>& hier_ids, unsigned int search_ancestor_level, AaScope* scope] returns [AaExpression* obj_ref]
 {
     string full_name = prefix_name;
 
@@ -2009,6 +2063,7 @@ aA_Object_Reference_Base[string prefix_name, vector<string>& hier_ids, unsigned 
 
     AaExpression* index_expr;
     string root_name;
+    bool is_obj_ref = false;
 }:
         (sid:SIMPLE_IDENTIFIER {full_name += sid->getText(); root_name = sid->getText(); })
         (
@@ -2020,16 +2075,34 @@ aA_Object_Reference_Base[string prefix_name, vector<string>& hier_ids, unsigned 
        	)*
         {
             if(array_flag)
+	    {
                 obj_ref = new AaArrayObjectReference(scope,full_name,indices);
+		is_obj_ref = true;
+            }
             else
-                obj_ref = new AaSimpleObjectReference(scope,full_name);
+	    {
+		if((hier_ids.size() == 0) && AaProgram::Is_Integer_Parameter(full_name))
+		{
+			int param_value = AaProgram::Get_Integer_Parameter_Value(full_name);
+                	obj_ref = new AaConstantLiteralReference(scope,param_value);
+		}
+		else
+		{	
+                	obj_ref = new AaSimpleObjectReference(scope,full_name);
+			is_obj_ref = true;
+		}
+            }
 
-            for(unsigned int i=0; i < hier_ids.size(); i++)
-                obj_ref->Add_Hier_Id(hier_ids[i]);
+	    if(is_obj_ref)
+		{
+			AaObjectReference* oobj_ref = (AaObjectReference*)obj_ref;
+            		for(unsigned int i=0; i < hier_ids.size(); i++)
+				oobj_ref->Add_Hier_Id(hier_ids[i]);
 
-            obj_ref->Set_Object_Root_Name(root_name);
-            obj_ref->Set_Line_Number(sid->getLine());
-            obj_ref->Set_Search_Ancestor_Level(search_ancestor_level);
+            		oobj_ref->Set_Object_Root_Name(root_name);
+            		oobj_ref->Set_Line_Number(sid->getLine());
+            		oobj_ref->Set_Search_Ancestor_Level(search_ancestor_level);
+		}
         }
     ;
 
@@ -2041,8 +2114,8 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
     {
         string full_name;
         vector<string> literals;
-        unsigned int line_number;
-        unsigned int dlno;
+        int line_number;
+        int dlno;
         bool scalar_flag = true;
     }
     : 
@@ -2072,16 +2145,17 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
 //----------------------------------------------------------------------------------------------------------
 // aA_Integer_Literal_Reference : (MINUS)? UINTEGER
 //----------------------------------------------------------------------------------------------------------
-aA_Integer_Literal_Reference[string& full_name, vector<string>& literals, unsigned int& line_number]
+aA_Integer_Literal_Reference[string& full_name, vector<string>& literals, int& line_number]
 { 
   string sign_char;
+  string this_lit;
 }
 :
-   (( (MINUS {sign_char = "-";})?  iid: UINTEGER 
+   (( (MINUS {sign_char = "-";})?   uid: UINTEGER
                  {
-                       line_number = iid->getLine();
-                       full_name += sign_char +  iid->getText() + " "; 
-                       literals.push_back(sign_char + iid->getText());
+                       	this_lit = sign_char +  uid->getText();
+			full_name += this_lit + " ";
+                        literals.push_back(this_lit);
                  }) |
    (bidv:BINARY
                  { 
@@ -2101,7 +2175,7 @@ aA_Integer_Literal_Reference[string& full_name, vector<string>& literals, unsign
 //----------------------------------------------------------------------------------------------------------
 // aA_Float_Literal_Reference : FLOAT
 //----------------------------------------------------------------------------------------------------------
-aA_Float_Literal_Reference[string& full_name, vector<string>& literals, unsigned int& line_number]
+aA_Float_Literal_Reference[string& full_name, vector<string>& literals, int& line_number]
 :
    iid: FLOATCONST 
            { 
@@ -2118,8 +2192,9 @@ aA_Integer_Parameter_Declaration
 {
 	string param_name;
 	int param_value;
+	int lno;
 }:
-PARAMETER sid:SIMPLE_IDENTIFIER param_value = aA_Integer_Parameter_Expression
+PARAMETER sid:SIMPLE_IDENTIFIER param_value = aA_Integer_Parameter_Expression[lno]
    {
  	param_name = sid->getText();
 	AaProgram::Add_Integer_Parameter(param_name, param_value);
@@ -2129,25 +2204,33 @@ PARAMETER sid:SIMPLE_IDENTIFIER param_value = aA_Integer_Parameter_Expression
 //----------------------------------------------------------------------------------------------------------
 // aA_Integer_Parameter_Expression returns int
 //----------------------------------------------------------------------------------------------------------
-aA_Integer_Parameter_Expression  returns [int expr_value]
+aA_Integer_Parameter_Expression[int& line_number]  returns [int expr_value]
 {
 	int val_1;
 	int val_2;
 	int val_3;
 	AaOperation opid;
+	int  lno;
+	
 }:
-  (iid: UINTEGER {expr_value = atoi(iid->getText().c_str());})
+  ((iid: UINTEGER {expr_value = atoi(iid->getText().c_str());
+				line_number = iid->getLine();})
 	| 
-  (hid: HEXCSTYLEINTEGER  {expr_value = atoi(hid->getText().c_str());})
+  (hid: HEXCSTYLEINTEGER  {expr_value = atoi(hid->getText().c_str());
+				line_number = hid->getLine();})
 	|
-  (sid: SIMPLE_IDENTIFIER {expr_value = AaProgram::Get_Integer_Parameter_Value(sid->getText());})
+  (sid: SIMPLE_IDENTIFIER {expr_value = AaProgram::Get_Integer_Parameter_Value(sid->getText());
+				line_number = sid->getLine();})
 	|
   (lpid: LPAREN
      ( 
-	(val_1 = aA_Integer_Parameter_Expression  
+	(NOT val_1 = aA_Integer_Parameter_Expression [lno] {expr_value = (~ val_1);}) 
+	|
+	(val_1 = aA_Integer_Parameter_Expression  [lno]
 			opid = aA_Binary_Op
-              			val_2 = aA_Integer_Parameter_Expression    
+              			val_2 = aA_Integer_Parameter_Expression    [lno]
 		{ 
+			line_number = lpid->getLine();
 			if(opid == __PLUS)
 			{
 				expr_value = val_1 + val_2;
@@ -2216,12 +2299,12 @@ aA_Integer_Parameter_Expression  returns [int expr_value]
 		}
    	)
 	|
-  	(MUX val_1 = aA_Integer_Parameter_Expression 
-		val_2 = aA_Integer_Parameter_Expression 
-		   val_3 = aA_Integer_Parameter_Expression RPAREN
+  	(MUX val_1 = aA_Integer_Parameter_Expression [lno]
+		val_2 = aA_Integer_Parameter_Expression [lno]
+		   val_3 = aA_Integer_Parameter_Expression [lno] RPAREN
 		{expr_value = (val_1 ? val_2 : val_3);}
 	))
-					RPAREN)
+					RPAREN))
 ;
 
 //----------------------------------------------------------------------------------------------------------

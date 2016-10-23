@@ -163,6 +163,7 @@ class AaExpression: public AaRoot
 	virtual void Map_Source_References_As_Target(set<AaRoot*>& source_objects) { assert(0); }
 	virtual bool Is_Expression() {return(true); }
 	virtual bool Is_Object_Reference() {return(false);}
+	virtual bool Is_Constant_Literal_Reference() {return(false);}
 
         virtual string C_Reference_String() {return (this->Get_VC_Name());}
         virtual void PrintC( ofstream& ofile) {assert(0);}
@@ -702,6 +703,7 @@ class AaConstantLiteralReference: public AaObjectReference
 	AaConstantLiteralReference(AaScope* scope_tpr, 
 			string literal_string,  
 			vector<string>& literals);
+	AaConstantLiteralReference(AaScope* scope, int param_val);
 	~AaConstantLiteralReference();
 	vector<string>& Get_Literals() {return(_literals);}
 	void Set_Scalar_Flag(bool v) {_scalar_flag = v;}
@@ -713,6 +715,7 @@ class AaConstantLiteralReference: public AaObjectReference
 	virtual void Write_VC_Control_Path( ostream& ofile);
 
 
+	virtual bool Is_Constant_Literal_Reference() {return(true);}
 	virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
 	{
 		leaf_expression_set.insert(this);
