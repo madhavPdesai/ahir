@@ -118,6 +118,20 @@ in Section \ref{sec:Scopes}.
 
 Variables in  the program can belong to the following classes:
 \begin{itemize}
+\item {\bf Parameters} can be used to configure the Aa program to
+a certain extent.  These are 32-bit integers declared as
+\begin{verbatim}
+$parameter PIPEDEPTH 16
+$parameter PIPEDEPTH2  (2 * PIPEDEPTH) 
+\end{verbatim}
+for example.  
+Parameters can be used to specify some 
+constants inside
+the program (this will be indicated whenever relevant).
+Parameters
+should be known at the point at which they are used.  Also,
+parameters can be declared only at global program scope (that is
+not inside a module).
 \item {\bf Storage} variables declared in the program
 can be written into from multiple
 points in the program.  When declared at the program
@@ -185,6 +199,8 @@ that the pipe is a read-only (respectively write-only) object.
 like a variable.  That is, it remembers the last value
 that was written to it.    
 \end{itemize}
+Pipe depths can be specified by parameters or parameter
+expressions.
 \item {\bf Constant} variables declared at
 the program scope are globally visible and have
 initial values which can never be altered in the program.
@@ -658,6 +674,8 @@ Note that it is always possible to describe
 a do-while loop using a branch-block, and this is what should be done
 if loop-pipelining is not desired.
 
+Note that the pipeline depth and buffering can be
+specified as parameters or parameter expressions.
 
 To summarize, an \Aa program is constructed as a collection of modules,
 each of which is a sequence of statements.  The use of series,
@@ -747,7 +765,8 @@ has a width parameter and is specified as
 \begin{verbatim}
 $uint<width>
 \end{verbatim}
-The width parameter can be any positive number.
+The width can be any positive integer (or a parameter
+expression that evaluated to a positive integer).
 Values corresponding to this type are to be
 viewed as unsigned integers represented by 
 a binary sequence of the specified width.
@@ -780,7 +799,8 @@ The specification is
 $float<exponent,mantissa>
 \end{verbatim} %$
 where the exponent and mantissa must be positive
-integers.  The float is represented by 
+integers (or parameter expressions that evaluate
+to positive integers).  The float is represented by 
 a word with $exponent+mantissa+1$ bits
 (with the additional bit needed for the sign).
 The standard IEEE 754 float and double
@@ -1103,7 +1123,8 @@ following syntax:
 LPAREN $slice <expression> <high-index> <low-index> RPAREN
 \end{verbatim}
 where high-index and low-index are constant non-negative
-integers.  The result of executing the expression is
+integers (or parameter expressions that evaluate to
+non-negative integers).  The result of executing the expression is
 an unsigned integer whose width is $(high-index - low-index)+1$.
 The value produced by expression may be of any type, but
 for the slicing, it is flattened in the natural manner
@@ -1127,8 +1148,11 @@ to the information provided by the $(from,to)$ pairs (result(to) = source(from))
 
 For example
 \begin{verbatim}
-( $slice ($bitcast ($uint<4>) _h3) 0 3 1 2 2 1 3 0 ) = _he
+( $bitmap ($bitcast ($uint<4>) _h3) 0 3 1 2 2 1 3 0 ) = _he
 \end{verbatim}
+
+Note: this expression is not currently supported in hardware,
+but will eventually be, maybe.
 
 
 \subsection{Binary expressions}

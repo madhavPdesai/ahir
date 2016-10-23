@@ -75,6 +75,7 @@ class AaProgram
   static std::map<int,set<AaModule*> > _storage_index_module_coverage_map;
   static std::map<int,AaMemorySpace*> _memory_space_map;
   static std::map<AaType*,AaForeignStorageObject*> _foreign_storage_map;
+  static std::map<string, int> _integer_parameter_map;
 
   static std::set<AaType*> _extmem_access_types;
   static std::set<int> _extmem_access_widths;
@@ -269,6 +270,9 @@ class AaProgram
   static void Mark_As_Root_Module(string& mod_name);
   static void Mark_Reachable_Modules(set<AaModule*>& reachable_modules);
 
+
+  static void Add_Integer_Parameter(string pid, int pval);
+  static int  Get_Integer_Parameter_Value(string pid);
 
 };
 

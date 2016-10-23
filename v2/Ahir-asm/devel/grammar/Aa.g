@@ -114,6 +114,10 @@ aA_Program
 	    ( 
 		aA_Mutex_Declaration
             )
+	    |
+	    (
+		aA_Integer_Parameter_Declaration
+	    )
         )*
     ;
 
@@ -149,8 +153,8 @@ aA_Module returns [AaModule* new_module]
 }
     : ((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true; } 
-		(DEPTH did: UINTEGER {depth = atoi(did->getText().c_str());})? 
-		(BUFFERING bid: UINTEGER {buffering = atoi(did->getText().c_str());})? 
+		(DEPTH (depth = aA_Integer_Parameter_Expression))?
+		(BUFFERING (buffering = aA_Integer_Parameter_Expression))?
 		(FULLRATE {full_rate_flag = true;})? 
 	) | (INLINE {inline_flag = true;}) | (MACRO {macro_flag = true;}) )? 
 	((OPERATOR {operator_flag = true;}) | (VOLATILE {volatile_flag = true;}))?
@@ -289,6 +293,7 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
     vector<pair<string,int> > delay_stmts;
 
     bool volatile_flag = false;
+    int delay_val;
 }
     :  
       ( 
@@ -311,10 +316,9 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 				ss = syid->getText();
 				synch_stmts.push_back(ss);
 			})+ RPAREN )? 
-	   (DELAY LPAREN (dlid: SIMPLE_IDENTIFIER dint: UINTEGER 
+	   (DELAY LPAREN (dlid: SIMPLE_IDENTIFIER delay_val = aA_Integer_Parameter_Expression
 				{
 					ss = dlid->getText();
-					int delay_val = atoi(dint->getText().c_str());
 					delay_stmts.push_back(pair<string,int>(ss, delay_val));})+ RPAREN )? 
 	   {
 		for(int I = 0, fI = llist.size(); I < fI; I++)
@@ -488,6 +492,7 @@ aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
     AaStatement* new_stmt = NULL;
     AaObjectReference* target = NULL;
     AaExpression* source = NULL;
+    int buf_val;
 }
     : 
 
@@ -499,7 +504,9 @@ aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
             new_stmt->Set_Line_Number(al->getLine());
 	    slist.push_back(new_stmt);
         }
-	(BUFFERING bid: UINTEGER {int buf_val = atoi(bid->getText().c_str());  ((AaAssignmentStatement*)new_stmt)->Set_Buffering(buf_val);})?
+	(BUFFERING buf_val = aA_Integer_Parameter_Expression 
+		{ ((AaAssignmentStatement*)new_stmt)->Set_Buffering(buf_val);}
+	)?
     ;
 
 //-----------------------------------------------------------------------------------------------
@@ -511,6 +518,7 @@ aA_Call_Statement[AaScope* scope, vector<AaStatement*>& slist]
     vector<AaExpression*> input_args;
     vector<AaObjectReference*> output_args;
     string func_name = "";
+    int buf_val;
 }
     : 
         cl: CALL
@@ -523,7 +531,8 @@ aA_Call_Statement[AaScope* scope, vector<AaStatement*>& slist]
             new_stmt = new AaCallStatement(scope,func_name,input_args,output_args,cl->getLine());
 	    slist.push_back(new_stmt);
         }
-	(BUFFERING bid: UINTEGER {int buf_val = atoi(bid->getText().c_str());  ((AaCallStatement*)new_stmt)->Set_Buffering(buf_val);})?
+	(BUFFERING buf_val = aA_Integer_Parameter_Expression 
+		{((AaCallStatement*)new_stmt)->Set_Buffering(buf_val);})?
     ;
 
 //-----------------------------------------------------------------------------------------------
@@ -538,17 +547,18 @@ aA_Split_Statement[AaScope* scope, vector<AaStatement*>& slist]
     AaExpression* expr  = NULL;
     vector<AaExpression*> targets;
     int buffering = 1;
+    int curr_size;
 }
     : 
         cl: SPLIT
 	LPAREN
 	srcid: SIMPLE_IDENTIFIER {src = srcid->getText();}
-	(sid: UINTEGER {sizes.push_back(atoi(sid->getText().c_str()));})+
+	(curr_size = aA_Integer_Parameter_Expression {sizes.push_back(curr_size);})+
 	RPAREN
 	LPAREN
         (expr = aA_Expression[scope]  { targets.push_back(expr); })+
 	RPAREN
-	(BUFFERING bid: UINTEGER {buffering = atoi(bid->getText().c_str());})?
+	(BUFFERING buffering = aA_Integer_Parameter_Expression)?
         {
 		bool err = Make_Split_Statement(scope, src, sizes, targets, slist, buffering, cl->getLine());
 		if(err)
@@ -1077,8 +1087,10 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
     int buffering_depth = 1;
     bool full_rate_flag = false;
 }: 
-     il:DO DEPTH did: UINTEGER BUFFERING bid: UINTEGER  (FULLRATE {full_rate_flag = true;})? 
-	{ pdepth = atoi(did->getText().c_str());  buffering_depth = atoi(bid->getText().c_str());}
+     il:DO 
+	(DEPTH (pdepth = aA_Integer_Parameter_Expression))?
+	(BUFFERING (buffering_depth = aA_Integer_Parameter_Expression))?
+	(FULLRATE {full_rate_flag = true;})? 
         ms = aA_Merge_Statement[scope]
         { 
             new_dws->Set_Merge_Statement(ms);
@@ -1279,24 +1291,27 @@ aA_Cast_Expression[AaScope* scope] returns [AaExpression* expr]
 aA_Slice_Expression[AaScope* scope] returns [AaExpression* expr]
 {       
     AaExpression* rest = NULL;
+	int hindex, lindex;
 }:
-		lpid: LPAREN SLICE rest=aA_Expression[scope] hid:UINTEGER lid:UINTEGER 
+		lpid: LPAREN SLICE rest=aA_Expression[scope] 
+			hindex = aA_Integer_Parameter_Expression
+			lindex = aA_Integer_Parameter_Expression
 		{
 			pair<int,int> slice;
-			slice.first = atoi(hid->getText().c_str());
-			slice.second = atoi(lid->getText().c_str());
+			slice.first = hindex;
+			slice.second = lindex;
 
 			if(slice.first < slice.second)
 			{
 				AaRoot::Error("Slice specification error: high-index < low-index. line " 
-							+ IntToStr(hid->getLine()), NULL);
+							+ IntToStr(lpid->getLine()), NULL);
 			}
 	
 		
 	    		int tw = (slice.first - slice.second) + 1;
 	    		AaType* t = AaProgram::Make_Uinteger_Type(tw);
 	    		expr = new AaSliceExpression(scope, t, slice.second, rest);
-            		if(expr) expr->Set_Line_Number(hid->getLine());
+            		if(expr) expr->Set_Line_Number(lpid->getLine());
         	}
 	        (aA_Expression_Buffering_Spec[expr])?
 		RPAREN
@@ -1557,8 +1572,8 @@ aA_Expression_Buffering_Spec[AaExpression* expr]
    int spec_delay = 1;
 }:
 
-	BUFFERING  did:UINTEGER 
-        {spec_delay = atoi(did->getText().c_str()); expr->Set_Buffering(spec_delay);}
+	BUFFERING  spec_delay  = aA_Integer_Parameter_Expression 
+        {expr->Set_Buffering(spec_delay);}
 ;
 
 //----------------------------------------------------------------------------------------------------------
@@ -1708,7 +1723,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
         : ((LIFO { lifo_flag = true; }) | (NOBLOCK {noblock_flag = true;}))? 
 	  (SHIFTREG {is_shift_reg = true;})?
 		(st:PIPE aA_Object_Declaration_List_Base[scope,oname_list,otype,initial_value]) 
-        (DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
+		(DEPTH (pipe_depth = aA_Integer_Parameter_Expression))?
 		(IN {in_mode = true;} | OUT {out_mode = true;})? 
 		(SIGNAL {is_signal = true;})?
 		(SYNCH {is_synch = true;})?
@@ -1818,58 +1833,11 @@ aA_Uint_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
     uint32_t width;
 }
-    : UINT LESS width = aA_Uinteger_Constant_Expression[scope] GREATER 
+    : UINT LESS width = aA_Integer_Parameter_Expression GREATER 
         { 
             ref_type = AaProgram::Make_Uinteger_Type(width);
         }
     ;
-
-// --------------------------------------------------------------------------------------------------------
-// aA_Uinteger_Constant_Expression: UINTEGER | SIMPLE_IDENTIFIER
-// --------------------------------------------------------------------------------------------------------
-aA_Uinteger_Constant_Expression[AaScope* scope] returns [uint32_t width]
-{
-	width = 0;
-}:
-	(w: UINTEGER {width = atoi(w->getText().c_str());} )
-	|
-	(sid: SIMPLE_IDENTIFIER
-		{
-			string const_id = sid->getText();
-			AaRoot* obj = NULL;
-			if(scope != NULL)
-				obj = scope->Find_Child(const_id);
-			else
-				obj = AaProgram::Find_Object(const_id);
-			if(obj == NULL)
-			{
-				AaRoot::Error("did not find object with identifier " + const_id + " at line " + 
-						IntToStr(sid->getLine()), NULL);
-			}
-			else if(!(obj->Is_Object() && obj->Is_Constant()))
-			{
-				AaRoot::Error("in constant expression, found a reference to non-constant/object " + const_id + " at line " + 
-						IntToStr(sid->getLine()), NULL);
-			}
-			else
-			{
-				AaConstantObject* cobj  = (AaConstantObject*) obj;
-				if(cobj->Get_Type()->Is_Uinteger_Type())
-				{
-					cobj->Evaluate();
-					width = cobj->Get_Value()->Get_Expression_Value()->To_Integer();
-				}
-				else
-				{
-					AaRoot::Error("in constant expression, non-constant/object " + 
-							const_id + "must have uint type,  at line " + 
-						IntToStr(sid->getLine()), NULL);
-				}
-			}
-			
-		}
-	)
-;
 
 //----------------------------------------------------------------------------------------------------------
 // aA_Int_Type_Reference: INT LESS UINTEGER GREATER
@@ -1878,7 +1846,7 @@ aA_Int_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
     uint32_t width;
 }
-    : INT LESS width = aA_Uinteger_Constant_Expression[scope]  GREATER 
+    : INT LESS width = aA_Integer_Parameter_Expression  GREATER 
         { 
             ref_type = AaProgram::Make_Integer_Type(width);
         }
@@ -1892,9 +1860,9 @@ aA_Float_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
     uint32_t c,m;
 }
-    : FLOAT LESS c = aA_Uinteger_Constant_Expression[scope] 
+    : FLOAT LESS c = aA_Integer_Parameter_Expression
         COMMA
-         m = aA_Uinteger_Constant_Expression[scope] 
+         m = aA_Integer_Parameter_Expression
         GREATER 
         { 
             ref_type = AaProgram::Make_Float_Type(c,m);
@@ -1928,7 +1896,7 @@ aA_Array_Type_Reference[AaScope* scope] returns [AaType* ref_type]
     unsigned int d;
 }
     : ARRAY 
-        (LBRACKET d = aA_Uinteger_Constant_Expression[scope] {dims.push_back(d);} RBRACKET)+
+        (LBRACKET d = aA_Integer_Parameter_Expression {dims.push_back(d);} RBRACKET)+
         OF 
         ((element_type = aA_Type_Reference[scope]) | (element_type = aA_Named_Type_Reference[scope]))
         {
@@ -2143,6 +2111,118 @@ aA_Float_Literal_Reference[string& full_name, vector<string>& literals, unsigned
            } 
 ;
 
+//----------------------------------------------------------------------------------------------------------
+// aA_Integer_Parameter_Declaration returns int
+//----------------------------------------------------------------------------------------------------------
+aA_Integer_Parameter_Declaration 
+{
+	string param_name;
+	int param_value;
+}:
+PARAMETER sid:SIMPLE_IDENTIFIER param_value = aA_Integer_Parameter_Expression
+   {
+ 	param_name = sid->getText();
+	AaProgram::Add_Integer_Parameter(param_name, param_value);
+   }
+;
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Integer_Parameter_Expression returns int
+//----------------------------------------------------------------------------------------------------------
+aA_Integer_Parameter_Expression  returns [int expr_value]
+{
+	int val_1;
+	int val_2;
+	int val_3;
+	AaOperation opid;
+}:
+  (iid: UINTEGER {expr_value = atoi(iid->getText().c_str());})
+	| 
+  (hid: HEXCSTYLEINTEGER  {expr_value = atoi(hid->getText().c_str());})
+	|
+  (sid: SIMPLE_IDENTIFIER {expr_value = AaProgram::Get_Integer_Parameter_Value(sid->getText());})
+	|
+  (lpid: LPAREN
+     ( 
+	(val_1 = aA_Integer_Parameter_Expression  
+			opid = aA_Binary_Op
+              			val_2 = aA_Integer_Parameter_Expression    
+		{ 
+			if(opid == __PLUS)
+			{
+				expr_value = val_1 + val_2;
+			}
+			else if(opid == __MINUS)
+			{
+				expr_value = val_1 - val_2;
+			}
+			else if(opid == __MUL)
+			{
+				expr_value = val_1 * val_2;
+			}
+			else if(opid == __DIV)
+			{
+				expr_value = val_1 / val_2;
+			}
+			else if(opid == __EQUAL)
+			{
+				expr_value = val_1 == val_2;
+			}
+			else if(opid == __NOTEQUAL)
+			{
+				expr_value = val_1 != val_2;
+			}
+			else if(opid == __LESS)
+			{
+				expr_value = val_1 < val_2;
+			}
+			else if(opid == __LESSEQUAL)
+			{
+				expr_value = val_1 <= val_2;
+			}
+			else if(opid == __GREATER)
+			{
+				expr_value = val_1 > val_2;
+			}
+			else if(opid == __GREATEREQUAL)
+			{
+				expr_value = val_1 >= val_2;
+			}
+			else if(opid == __SHL)
+			{
+				expr_value = val_1 << val_2;
+			}
+			else if(opid == __SHR)
+			{
+				expr_value = val_1 >> val_2;
+			}
+			else if(opid == __OR)
+			{
+				expr_value = val_1 | val_2;
+			}
+			else if(opid == __AND)
+			{
+				expr_value = val_1 & val_2;
+			}
+			else if(opid == __XOR)
+			{
+				expr_value = val_1 ^ val_2;
+			}
+			else
+			{
+				AaRoot::Error("Unsupported binary operation in parameter expression on line "
+							+ IntToStr(lpid->getLine()), NULL);
+			}
+		}
+   	)
+	|
+  	(MUX val_1 = aA_Integer_Parameter_Expression 
+		val_2 = aA_Integer_Parameter_Expression 
+		   val_3 = aA_Integer_Parameter_Expression RPAREN
+		{expr_value = (val_1 ? val_2 : val_3);}
+	))
+					RPAREN)
+;
 
 //----------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------
@@ -2217,6 +2297,7 @@ BITMAP        : "$bitmap";
 MUTEX         : "$mutex";
 LOCK          : "$lock";
 UNLOCK        : "$unlock";
+PARAMETER     : "$parameter";
 
 
 // Special symbols
@@ -2348,6 +2429,7 @@ UINTEGER          : DIGIT (DIGIT)*;
 FLOATCONST : "_f" ('-')? DIGIT '.' (DIGIT)+ 'e' ('+' | '-') (DIGIT)+;
 BINARY : "_b"  ('0' | '1')+ ;
 HEXADECIMAL: "_h" (DIGIT | ('a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' ))+ ;
+HEXCSTYLEINTEGER          : "0x" DIGIT (DIGIT)*;
 
 
 // White spaces (only "\n" is newline)

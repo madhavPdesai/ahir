@@ -45,6 +45,7 @@ std::set<string> AaProgram::_root_module_names;
 std::set<string> AaProgram::_top_level_daemons;
 std::set<AaModule*> AaProgram::_reachable_modules;
 std::set<string> AaProgram::_mutex_set;
+std::map<string, int> AaProgram::_integer_parameter_map;
 
 //
 // prefix to be attached to c/vhdl modules.
@@ -1458,3 +1459,29 @@ void AaProgram::Mark_Reachable_Modules(set<AaModule*>& reachable_modules)
    }
 }
 
+
+void AaProgram::Add_Integer_Parameter(string pid, int pval)
+{
+	if(AaProgram::_integer_parameter_map.find(pid) != AaProgram::_integer_parameter_map.end())
+	{
+		AaRoot::Error("redefinition of integer parameter " + pid, NULL);
+	}
+	else
+	{
+		AaProgram::_integer_parameter_map[pid] = pval;
+	}
+}
+
+int AaProgram::Get_Integer_Parameter_Value(string pid)
+{
+	map<string,int>::iterator iter = AaProgram::_integer_parameter_map.find(pid);
+	if(iter == AaProgram::_integer_parameter_map.end())
+	{
+		AaRoot::Error("did not find integer parameter " + pid, NULL);
+		return(-1);
+	}
+	else
+	{
+		return((*iter).second);
+	}
+}
