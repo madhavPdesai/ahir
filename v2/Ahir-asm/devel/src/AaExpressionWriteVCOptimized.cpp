@@ -191,6 +191,11 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				// This is conservative.
 				if((read_stmt != write_stmt) && 
 						(!(read_is_dependent_on_phi && write_stmt_is_dependent_on_phi)))
+				//
+				// Note: phi-phi WAR dependencies are taken care of through
+				//         aggregated-phi symbols.  See 
+				// void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
+				//
 				{
 					__J(__UST(write_stmt), __SCT(read_stmt));
 				}

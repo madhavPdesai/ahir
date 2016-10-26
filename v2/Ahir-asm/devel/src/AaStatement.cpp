@@ -5481,6 +5481,15 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 		// do not loop-back unless all phi's have used
 		// up their triggering tokens.
 		__F("aggregated_phi_update_req", "condition_evaluated");
+
+		//
+		// do not re-sample unless the result of the previous
+		// sample has been updated at the output.
+		//
+		// This is REQUIRED to take care of a WAR dependency
+		// across the PHI's.
+		//
+  		__MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true);
 	}
 
 	// write the PHI statements.

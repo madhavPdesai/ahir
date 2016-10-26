@@ -458,7 +458,12 @@ protected:
     return(true);
   }
 
-  virtual void Set_Guard_Wire(vcWire* gw) { _guard_wire = gw;}
+  virtual void Set_Guard_Wire(vcWire* gw) 
+	{ 
+		_guard_wire = gw;
+		if(gw != NULL)
+			gw->Connect_Receiver(this);
+	}
   virtual vcWire* Get_Guard_Wire() { return(_guard_wire);}
 
   virtual bool Set_Guard_Complement(bool gw) { _guard_complement = gw;}

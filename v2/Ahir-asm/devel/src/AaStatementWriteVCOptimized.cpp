@@ -1578,12 +1578,6 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   __F((__UCT(this) + "_ps"), "aggregated_phi_update_ack");
   __F("aggregated_phi_update_ack", __UCT(this));
 
-  // added dependency to prevent run-away..
-  if(pipeline_flag)
-  {
-  	__MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true);
-  }
-
   // the active, completed and the active transitions
   string trigger_from_loop_back = this->Get_VC_Name() + "_loopback_trigger";
   string sample_from_loop_back = this->Get_VC_Name() + "_loopback_sample_req";
@@ -1730,7 +1724,6 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	// delay needed from UST -> UCT.
 	ofile << "$T [" << __UCT(source_expr) << "] $delay " << endl;
 	__J(__UCT(source_expr), __UST(source_expr));
-
       }
 
 	// relayed to i/o of phi-sequencer.
@@ -1778,7 +1771,10 @@ ofile << "     ";
 
   // sample-ack from phi must join with condition-evaluated so that
   // loop-back is delayed until the present PHI has sampled.
-  __J("condition_evaluated", __SCT(this));
+  // 
+  // Note: this is handled at the do-while level using the
+  //    aggregated phi-sample-ack.
+  //__J("condition_evaluated", __SCT(this));
 
   // take care of the guard
   if(this->_guard_expression)
