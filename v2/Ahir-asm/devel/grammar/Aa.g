@@ -1651,7 +1651,8 @@ aA_Binary_Op returns [AaOperation op] :
         ( id_greaterequal:GREATEREQUAL { op = __GREATEREQUAL;}) | 
         ( id_bitsel:BITSEL { op = __BITSEL;}) | 
         ( id_concat:CONCAT { op = __CONCAT;})  |
-	( id_unordered: UNORDERED {op = __UNORDERED;})  
+	( id_unordered: UNORDERED {op = __UNORDERED;})  |
+	( id_power: POWER {op = __POW;})  
     ;
 
 
@@ -2315,6 +2316,10 @@ aA_Integer_Parameter_Expression_Nontrivial[int& line_number]  returns [int expr_
 			{
 				expr_value = val_1 ^ val_2;
 			}
+			else if(opid == __POW)
+			{
+				expr_value = IntPower(val_1, val_2);
+			}
 			else
 			{
 				AaRoot::Error("Unsupported binary operation in parameter expression on line "
@@ -2436,6 +2441,7 @@ PERCENT          : '%' ;
 CONCAT           : "&&" ; // concatenation
 BITSEL           : "[]" ; // bit-select
 UNORDERED        : "><" ; // FP unordered operation.
+POWER            : "**" ; // powering operation.
 
 
 // arithmetic operators

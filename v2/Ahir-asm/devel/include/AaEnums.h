@@ -35,7 +35,8 @@ enum AaOperation
     __PRIORITYENCODE,
     __BITREDUCEOR,
     __BITREDUCEAND,
-    __BITREDUCEXOR
+    __BITREDUCEXOR,
+    __POW
   };
 
 

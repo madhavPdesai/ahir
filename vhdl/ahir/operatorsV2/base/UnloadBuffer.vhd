@@ -39,6 +39,7 @@ architecture default_arch of UnloadBuffer is
 
   signal unload_ack_no_byp, unload_ack_byp : boolean;
   
+  constant inferred_bypass_flag : Boolean := ((full_rate and (buffer_size > 1)) or bypass_flag);
 begin  -- default_arch
 
   assert (buffer_size > 0) report "Unload buffer size must be > 0" & ": buffer = " & name  severity error;
@@ -118,7 +119,7 @@ begin  -- default_arch
 	        if(pop_ack(0) = '1') then
 		    -- ack the unload-req.
 		    loadv := true;
-		    bypassv := bypass_flag;
+		    bypassv := inferred_bypass_flag;
 		    -- if a new unload req arrives
 		    -- stay in idle.
 		    if(not unload_req) then	
@@ -148,16 +149,16 @@ begin  -- default_arch
   end process;
 
   -- explicit logic here to show that unload-ack does NOT depend on unload-req.
-  unload_ack_byp <=  bypass_flag and ((fsm_state = waiting) and (pop_ack(0) = '1'));
+  unload_ack_byp <=  inferred_bypass_flag and ((fsm_state = waiting) and (pop_ack(0) = '1'));
 
-  -- without bypass
-  bypassGen: if bypass_flag generate
+  -- with bypass.
+  bypassGen: if inferred_bypass_flag generate
   	read_data <= pipe_data_out when unload_ack_byp else output_register;
 	unload_ack <= unload_ack_byp or unload_ack_no_byp;
   end generate bypassGen;
 
-  -- with bypass.
-  nobypassGen: if not bypass_flag generate
+  -- without bypass
+  nobypassGen: if not inferred_bypass_flag generate
 	read_data <= output_register;
 	unload_ack <= unload_ack_no_byp;
   end generate nobypassGen;
