@@ -736,6 +736,7 @@ AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, string obj
 {
 	_guarded_statement = NULL;
 	_guarded_expression = NULL;
+	_in_collect_roots_stack = false;
 };
 AaSimpleObjectReference::~AaSimpleObjectReference() {};
 void AaSimpleObjectReference::Set_Object(AaRoot* obj)
@@ -854,9 +855,16 @@ bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObjec
 
 void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
+	if(this->_in_collect_roots_stack)
+	{
+		AaRoot::Error("Cycle in collect-root-sources", this);
+		return;
+	}
+	
 	if(this->Is_Constant())
 		return;
 
+	this->_in_collect_roots_stack = true;
 	// if it is an implicit reference
 	if(this->Get_Is_Target())
 	{
@@ -906,6 +914,7 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 		// signal reads are ignored.
 		root_set.insert(this);
 	}
+	this->_in_collect_roots_stack = false;
 }
 
 void AaSimpleObjectReference::Set_Type(AaType* t)

@@ -740,6 +740,7 @@ class AaSimpleObjectReference: public AaObjectReference
 	AaStatement* _guarded_statement;
 	AaExpression* _guarded_expression;
 
+	bool _in_collect_roots_stack;
 	public:
 
 	virtual void Set_Guarded_Statement(AaStatement* stmt) {_guarded_statement = stmt;}
