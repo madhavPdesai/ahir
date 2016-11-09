@@ -367,7 +367,6 @@ void AaModule::Write_C_Source(ofstream& srcfile, ofstream& headerfile)
   for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
     {
 	string o_name =  this->_output_args[i]->Get_C_Name();
-	string n_name = "__p" + o_name;
 	Print_C_Declaration(o_name, static_flag,  this->_output_args[i]->Get_Type(), headerfile);
     }
 
