@@ -262,7 +262,7 @@ begin  -- Pipelined
 
      stage_tags(3) <= stage_tags(2);
      stage_active(3) <= stage_active(2);
-     final_sums(0) <= addsubcell_Sum_Delayed(0);
+     final_sums(0) <= addsubcell_Sum_Delayed(0) when (subtract_op = '0') else (addsubcell_Sum_Delayed(0) + 1);
 
   end generate OnlyOneChunk;
 

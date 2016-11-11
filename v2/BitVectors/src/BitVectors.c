@@ -146,12 +146,6 @@ void init_static_bit_vector(bit_vector* t, uint32_t width)
 	{
 		allocate_sized_u8_array(&(t->val), asize);
 		t->width = width;
-	}
-	else
-	{
-		// if the width changes, something is horribly 
-		// wrong.
-		assert(width == t->width);
 
 		// initialize with random string.
 		int I;
@@ -160,6 +154,12 @@ void init_static_bit_vector(bit_vector* t, uint32_t width)
 			t->val.byte_array[I] = rand(); // initialize with random string.
 			t->val.undefined_byte_array[I] = 0xff;
 		}
+	}
+	else
+	{
+		// if the width changes, something is horribly 
+		// wrong.
+		assert(width == t->width);
 	}
 }
 
