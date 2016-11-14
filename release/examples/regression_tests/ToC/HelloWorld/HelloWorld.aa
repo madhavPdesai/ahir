@@ -1,0 +1,33 @@
+// a simple example.. which 
+// uses storage, pipe variables
+$storage M: $uint<20>
+$pipe    TM: $uint<32>
+$module [sum_mod_wrap]
+    $in (a: $uint<16> b: $uint<16>)
+    $out (c: $uint<32>) $is
+{
+	$storage aaa: $array [2] $of $uint<10>
+	aaa[0] := ($bitcast ($uint<10>) a)
+	aaa[1] := ($bitcast ($uint<10>) b)
+	$call sum_mod (aaa[0] aaa[1]) (c20)
+	c   := ($bitcast($uint<32>) c20)
+}
+
+$module [sum_mod]
+    $in (a: $uint<10> b: $uint<10>)
+    $out (c: $uint<20>)
+$is
+{
+	// note that q,r,s,c are
+	// all implicitly declared
+	// variables
+        $parallelblock[Race] {
+	    q := (a + b)
+            r := (q + b)
+        } (q => q r => r)
+	$rreport (sum_mod interim_report a b q r)
+
+        TM := ($bitcast ($uint<32>) (r && b))
+        M  := ($bitcast ($uint<20>) TM)
+        c := M
+}

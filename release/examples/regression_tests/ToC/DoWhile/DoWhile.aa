@@ -1,0 +1,21 @@
+$pipe in_data: $uint<32>
+$pipe out_data: $uint<32>
+
+$storage T: $array [4][4] $of $uint<32>
+
+$module [Daemon] $in () $out () $is
+{
+	$branchblock[main] {
+		$dopipeline
+		$depth 8
+		$buffering 1
+		$merge $entry $loopback 
+			$phi I := ($bitcast ($uint<8>) 0) $on $entry NI $on $loopback
+		$endmerge
+			T[I][I] := in_data
+                        gflag := (I >= 0)
+			$guard (gflag) out_data := (T[I][I] * T[I][I])
+			NI := (I + 1)
+		$while (NI < 4)
+	}
+}

@@ -1,0 +1,18 @@
+// a simple example.. of the use of a branch block
+$module [sum_mod]
+    $in (a: $uint<16> b: $uint<16>)
+    $out (c: $uint<16>)
+$is
+{
+	$storage I: $uint<16> 
+	I := b
+	$branchblock[bb] {
+		$merge $entry loopback
+			$phi s1 := ($bitcast($uint<16>) 0) $on $entry s $on loopback
+		$endmerge	
+		s := (s1 + a)
+		I := (I - 1)
+		$switch (I > 0) $when 1 $then $place [loopback] $default $null $endswitch 
+	} (s => sexp)
+	c := sexp
+}
