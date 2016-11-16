@@ -58,11 +58,11 @@ using namespace std;
 #include <stdint.h>
 
 
-
 class rtlObject;
 class rtlThread;
 class rtlString;
 
+uint32_t IntPower(uint32_t A, uint32_t B); // return A**B
 class hierRoot
 {
 	public:

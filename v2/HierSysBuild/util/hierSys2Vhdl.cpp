@@ -53,6 +53,7 @@ struct option long_options[] = {
   
 // globals
 map<string, hierPipe* > __pmap;
+map<string, int > __parameter_map;
 
 void Handle_Segfault(int signal)
 {
@@ -94,7 +95,7 @@ int  Parse(string filename, vector<hierSystem*>& sys_vec)
   
   try
     {
-      parser->sys_Description(sys_vec, __pmap);
+      parser->sys_Description(sys_vec, __pmap, __parameter_map);
     }
   catch(ANTLR_USE_NAMESPACE(antlr)RecognitionException& re)
     {

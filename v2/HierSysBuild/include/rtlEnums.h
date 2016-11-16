@@ -80,7 +80,8 @@ enum rtlOperation {
 	__MINUS,
 	__MUL,
 	__DIV,
-	__CONCAT
+	__CONCAT,
+	__POW
 };
 
 enum rtlPipeSignalAccessType {

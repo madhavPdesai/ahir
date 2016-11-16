@@ -37,6 +37,22 @@
 #include <rtlStatement.h>
 #include <rtlThread.h>
 
+uint32_t IntPower(uint32_t A, uint32_t B)
+{
+	uint32_t ret_val = 1;
+	uint32_t curr_power = A;
+	int I;
+	for(I = 0; I < 32; I++)
+	{
+		if(B & 0x1)
+		{
+			ret_val = ret_val * curr_power;
+		}
+		curr_power = (curr_power * curr_power);
+		B = (B >> 1);
+	}
+	return(ret_val);
+}
 int hierRoot::_error_count = 0;
 int hierRoot::_warning_count = 0;
 

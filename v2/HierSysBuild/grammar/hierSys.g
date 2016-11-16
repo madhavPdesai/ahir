@@ -52,13 +52,14 @@ options {
 //---------------------------------------------------------------------------------------------------------------
 // hier_System :  "hier_system" SIMPLE_IDENTIFIER in-pipe-decls out-pipe-decls internal-pipe decls subsystem decls
 //---------------------------------------------------------------------------------------------------------------
-sys_Description [vector<hierSystem*>& sys_vec, map<string,hierPipe*>&  global_pipe_map]
+sys_Description [vector<hierSystem*>& sys_vec, map<string,hierPipe*>&  global_pipe_map, map<string, int>& global_parameter_map]
 {
 
 	hierSystem* sys = NULL;
 }
 :
-      (hier_system_Pipe_Declaration[global_pipe_map] )*
+      (aA_Integer_Parameter_Declaration[global_parameter_map])*
+      (hier_system_Pipe_Declaration[global_pipe_map,global_parameter_map] )*
       (sys = hier_System [sys_vec, global_pipe_map] {sys_vec.push_back(sys); })*
 ;
 
@@ -248,7 +249,7 @@ hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<strin
 			}
 ;
 
-hier_system_Pipe_Declaration[map<string, hierPipe* >& pipe_map]
+hier_system_Pipe_Declaration[map<string, hierPipe* >& pipe_map, map<string, int>& global_parameter_map]
 {
     vector<string> oname_list;
     int pipe_depth = 1;
@@ -263,6 +264,7 @@ hier_system_Pipe_Declaration[map<string, hierPipe* >& pipe_map]
     bool is_signal = false;
     bool is_synch  = false;
     bool is_p2p   = false;
+   
 }
     :       ((lid:LIFO { std::cerr << "Warning: lifo flag ignored.. line number " << lid->getLine() << endl; }) |
 			(nid: NOBLOCK {noblock_mode = true;}))? 
@@ -270,7 +272,7 @@ hier_system_Pipe_Declaration[map<string, hierPipe* >& pipe_map]
 		(psid:SIMPLE_IDENTIFIER {oname_list.push_back(psid->getText());})+
 		COLON UINT LESS wid:UINTEGER GREATER  
         {pipe_width = atoi(wid->getText().c_str());} 
-        (DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
+        (DEPTH pipe_depth = aA_Integer_Parameter_Expression[global_parameter_map])?
 		(SIGNAL {is_signal = true;})?
 		(P2P    {is_p2p = true;})?
         {
@@ -731,8 +733,7 @@ rtl_Binary_Operation returns [rtlOperation op]
         ( id_less:LESS { op = __LESS;}) | 
         ( id_lessequal:LESSEQUAL { op = __LESSEQUAL;}) | 
         ( id_greater:GREATER { op = __GREATER;}) | 
-        ( id_greaterequal:GREATEREQUAL { op = __GREATEREQUAL;}) | 
-        ( id_concat:CONCAT { op = __CONCAT;})  
+        ( id_greaterequal:GREATEREQUAL { op = __GREATEREQUAL;})  
 ;
 
 rtl_Label returns [string label]
@@ -800,6 +801,183 @@ rtl_ArrayType_Declaration[rtlThread* thrd] returns [rtlType* t]
 		t = Find_Or_Make_Array_Type(dims, ele_type);
 	}
 ;
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Integer_Parameter_Declaration returns int
+//----------------------------------------------------------------------------------------------------------
+aA_Integer_Parameter_Declaration [map<string, int>& global_parameter_map]
+{
+	string param_name;
+	int param_value;
+	int lno;
+}:
+
+PARAMETER sid:SIMPLE_IDENTIFIER param_value = aA_Integer_Parameter_Expression [global_parameter_map]
+   {
+ 	param_name = sid->getText();
+	if(global_parameter_map.find(param_name) != global_parameter_map.end())
+	{
+		cerr << "Error: parameter " << param_name << " redeclared on line " <<
+			sid->getLine() << endl;
+	}
+	global_parameter_map[param_name] = param_value;
+   }
+;
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Integer_Parameter_Expression returns int
+//----------------------------------------------------------------------------------------------------------
+aA_Integer_Parameter_Expression[map<string, int>& global_parameter_map]  returns [int expr_value]
+{
+  int line_number = 0;	
+}:
+  (iid: UINTEGER {expr_value = atoi(iid->getText().c_str()); line_number = iid->getLine();})
+	| 
+  (hid: HEXCSTYLEINTEGER  {expr_value = atoi(hid->getText().c_str());
+				line_number = hid->getLine();})
+	|
+  (sid: SIMPLE_IDENTIFIER { 
+				map<string,int>::iterator iter = global_parameter_map.find(sid->getText());
+				line_number = sid->getLine();
+				if(iter == global_parameter_map.end())
+				{
+					cout << "Error: parameter " << sid->getText() << " not found (line " << line_number 
+						<< ")" << endl;	
+				}
+				else
+					expr_value = (*iter).second;	
+			    })
+	|
+  (expr_value = aA_Integer_Parameter_Expression_Nontrivial [global_parameter_map])
+;
+
+
+aA_Integer_Parameter_Expression_Nontrivial [map<string,int>& global_parameter_map] returns [int expr_value]
+{
+    int val_1;
+    int val_2;
+    int val_3;
+    rtlOperation opid;
+    int  line_number;
+}:
+  lpid: LBRACE
+     ( 
+	(NOT val_1 = aA_Integer_Parameter_Expression [global_parameter_map] {expr_value = (~ val_1);}) 
+	|
+	(MINUS val_1 = aA_Integer_Parameter_Expression [global_parameter_map] {expr_value = (- val_1);}) 
+	|
+	(val_1 = aA_Integer_Parameter_Expression [global_parameter_map]
+			opid = rtl_Binary_Op
+              			val_2 = aA_Integer_Parameter_Expression [global_parameter_map] 
+		{ 
+			line_number = lpid->getLine();
+			if(opid == __PLUS)
+			{
+				expr_value = val_1 + val_2;
+			}
+			else if(opid == __MINUS)
+			{
+				expr_value = val_1 - val_2;
+			}
+			else if(opid == __MUL)
+			{
+				expr_value = val_1 * val_2;
+			}
+			else if(opid == __DIV)
+			{
+				expr_value = val_1 / val_2;
+			}
+			else if(opid == __EQUAL)
+			{
+				expr_value = val_1 == val_2;
+			}
+			else if(opid == __NOTEQUAL)
+			{
+				expr_value = val_1 != val_2;
+			}
+			else if(opid == __LESS)
+			{
+				expr_value = val_1 < val_2;
+			}
+			else if(opid == __LESSEQUAL)
+			{
+				expr_value = val_1 <= val_2;
+			}
+			else if(opid == __GREATER)
+			{
+				expr_value = val_1 > val_2;
+			}
+			else if(opid == __GREATEREQUAL)
+			{
+				expr_value = val_1 >= val_2;
+			}
+			else if(opid == __SHL)
+			{
+				expr_value = val_1 << val_2;
+			}
+			else if(opid == __SHR)
+			{
+				expr_value = val_1 >> val_2;
+			}
+			else if(opid == __OR)
+			{
+				expr_value = val_1 | val_2;
+			}
+			else if(opid == __AND)
+			{
+				expr_value = val_1 & val_2;
+			}
+			else if(opid == __XOR)
+			{
+				expr_value = val_1 ^ val_2;
+			}
+			else if(opid == __POW)
+			{
+				expr_value = IntPower(val_1, val_2);
+			}
+			else
+			{
+				cerr << "Unsupported binary operation in parameter expression on line " << lpid->getLine() << endl;
+			}
+		}
+   	)
+	|
+  	(MUX val_1 = aA_Integer_Parameter_Expression [global_parameter_map]
+		val_2 = aA_Integer_Parameter_Expression [global_parameter_map]
+		   val_3 = aA_Integer_Parameter_Expression [global_parameter_map]
+		{expr_value = (val_1 ? val_2 : val_3);}
+	))
+					RBRACE
+;
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Binary_Op : OR | AND | NOR | NAND | XOR | XNOR | SHL | SHR | ROL | ROR | PLUS | MINUS | DIV | MUL | EQUAL | NOTEQUAL | LESS | LESSEQUAL | GREATER | GREATEREQUAL 
+//----------------------------------------------------------------------------------------------------------
+rtl_Binary_Op returns [rtlOperation op] : 
+        ( id_or:OR {op = __OR;}) |
+        ( id_and:AND {op = __AND;}) | 
+        ( id_nor:NOR { op = __NOR;}) | 
+        ( id_nand:NAND { op = __NAND;}) | 
+        ( id_xor:XOR { op = __XOR;}) | 
+        ( id_xnor:XNOR { op = __XNOR;}) | 
+        ( id_shl:SHL { op = __SHL;}) |
+        ( id_shr:SHR { op = __SHR;}) | 
+        ( id_rol:ROL { op = __ROL;}) | 
+        ( id_ror:ROR { op = __ROR;}) | 
+        ( id_plus:PLUS { op = __PLUS;}) | 
+        ( id_minus:MINUS { op = __MINUS;}) | 
+        ( id_div:DIV { op = __DIV;}) | 
+        ( id_mul:MUL { op = __MUL;}) | 
+        ( id_EQUAL:EQUAL { op = __EQUAL;}) | 
+        ( id_notequal:NOTEQUAL { op = __NOTEQUAL;}) | 
+        ( id_less:LESS { op = __LESS;}) | 
+        ( id_lessequal:LESSEQUAL { op = __LESSEQUAL;}) | 
+        ( id_greater:GREATER { op = __GREATER;}) | 
+        ( id_greaterequal:GREATEREQUAL { op = __GREATEREQUAL;}) | 
+	( id_power: POWER {op = __POW;})  
+    ;
+
+
 
 // lexer rules
 class hierSysLexer extends Lexer;
@@ -893,6 +1071,9 @@ DEFAULT:"$default";
 REQ: "$req";
 ACK: "$ack";
 SLICE: "$slice";
+PARAMETER     : "$parameter";
+
+POWER            : "**" ; // powering operation.
 
 
 BINARY : "_b"  ('0' | '1')+ ;

@@ -1,4 +1,10 @@
-$pipe A :$uint<16>
+
+$parameter PPPP 8
+$parameter QQQQ 8
+$parameter DDDD { PPPP  + QQQQ }
+
+$pipe A :$uint<16> $depth DDDD
+
 $system Left  $library LLIB
 	$in 
 		$pipe A 
