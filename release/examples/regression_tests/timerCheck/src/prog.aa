@@ -1,0 +1,17 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$module [timer_check_daemon] $in() $out () $is
+{
+
+
+	$branchblock[lOoP] {
+		$merge $entry loopback $endmerge
+
+			X := in_data
+			$call countDownTimer (X) ()
+			out_data := X
+
+		$place [loopback]
+	}
+}
