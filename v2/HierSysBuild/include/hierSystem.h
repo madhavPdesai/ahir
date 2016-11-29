@@ -127,6 +127,7 @@ class hierPipe: public hierRoot
 	int    _depth;
 	bool   _is_signal;
 	bool   _is_noblock;
+	bool   _is_shiftreg;
 	bool   _is_p2p;
 	bool   _is_input;
 	bool   _is_output;
@@ -135,6 +136,7 @@ class hierPipe: public hierRoot
 	hierPipe(string name, int width, int depth);
 	void Set_Is_Signal(bool v) {_is_signal = v;}
 	void Set_Is_Noblock(bool v) {_is_noblock = v;}
+	void Set_Is_Shiftreg(bool v) {_is_shiftreg = v;}
 	void Set_Is_P2P(bool v) {_is_p2p = v;}
 	void Set_Is_Input(bool v) {_is_input = v;}
 	void Set_Is_Output(bool v) {_is_output = v;}
@@ -142,6 +144,7 @@ class hierPipe: public hierRoot
 
 	bool Get_Is_Signal() {return(_is_signal);}
 	bool Get_Is_Noblock() {return(_is_noblock);}
+	bool Get_Is_Shiftreg() {return(_is_shiftreg);}
 	bool Get_Is_P2P() {return(_is_p2p);}
 	bool Get_Is_Input() {return(_is_input);}
 	bool Get_Is_Output() {return(_is_output);}
@@ -822,6 +825,7 @@ bool getPipeInfoFromGlobals(string pname,
 void addPipeToGlobalMaps(string oname, 
 				map<string, hierPipe*>& pipe_map, 
 					int pipe_width, int pipe_depth, bool is_signal, bool noblock_mode, 
+						bool shiftreg_mode,
 						bool p2p_mode);
 
 

@@ -1,5 +1,5 @@
 $parameter PDEPTH 2
-$parameter LOG_PWIDTH 5
+$parameter LOG_PWIDTH 0x00000005
 $parameter PWIDTH {2 ** LOG_PWIDTH }
 $parameter LPDEPTH {~{~{PDEPTH + 2}}}
 $parameter PZERO 0
@@ -7,6 +7,7 @@ $parameter INCREMENT 1
 
 $constant ZERO8: $uint<8> := {PDEPTH - PDEPTH}
 $constant FFF : $uint<10> := { 5 ** 5 }
+$constant FFFF : $uint<8> := {0 + LOG_PWIDTH}
 
 $pipe out_data : $uint<PWIDTH> $depth PDEPTH
 

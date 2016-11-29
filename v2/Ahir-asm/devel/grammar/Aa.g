@@ -2167,6 +2167,10 @@ aA_Integer_Literal_Reference[string& full_name, vector<string>& literals, int& l
                         literals.push_back(this_lit);
 		})
 	|
+   //
+   // Has to be non-trivial because simple-identifier can be
+   // an integer-parameter expression or an object reference.
+   //
    (param_val = aA_Integer_Parameter_Expression_Nontrivial[lno]
                  {
                        	this_lit = IntToStr(param_val);
@@ -2227,7 +2231,7 @@ aA_Integer_Parameter_Expression[int& line_number]  returns [int expr_value]
   (iid: UINTEGER {expr_value = atoi(iid->getText().c_str());
 				line_number = iid->getLine();})
 	| 
-  (hid: HEXCSTYLEINTEGER  {expr_value = atoi(hid->getText().c_str());
+  (hid: HEXCSTYLEINTEGER  {sscanf(hid->getText().c_str(),"0x%x", &expr_value);
 				line_number = hid->getLine();})
 	|
   (sid: SIMPLE_IDENTIFIER {expr_value = AaProgram::Get_Integer_Parameter_Value(sid->getText());
@@ -2542,7 +2546,7 @@ UINTEGER          : DIGIT (DIGIT)*;
 FLOATCONST : "_f" ('-')? DIGIT '.' (DIGIT)+ 'e' ('+' | '-') (DIGIT)+;
 BINARY : "_b"  ('0' | '1')+ ;
 HEXADECIMAL: "_h" (DIGIT | ('a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' ))+ ;
-HEXCSTYLEINTEGER          : "0x" DIGIT (DIGIT)*;
+HEXCSTYLEINTEGER          : "0x" (DIGIT | ('a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' ))+ ;
 
 
 // White spaces (only "\n" is newline)

@@ -81,6 +81,7 @@ begin  -- default_arch
 						lifo_mode => lifo_mode, 
 							depth => depth,
 								signal_mode => signal_mode, 
+								     shift_register_mode => shift_register_mode,
 									full_rate => full_rate)
 		port map(read_req => write_ack_nb,
 			   read_ack => write_req_nb,

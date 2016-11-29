@@ -89,6 +89,7 @@ hierPipe::hierPipe(string pname, int w, int d):hierRoot(pname)
 	_depth = d;
 	_is_signal = false;
 	_is_noblock = false;
+	_is_shiftreg = false;
 	_is_p2p = false;
 	_is_input = false;
 	_is_output = false;
@@ -119,6 +120,7 @@ void hierPipe::Print_Vhdl_Instance(hierSystem* sys, ostream& ofile)
 	ofile << "data_width => " << pipe_width << "," << endl;
 	ofile << "lifo_mode => false," << endl;
 	ofile << "signal_mode => false," << endl;
+	ofile << "shift_register_mode => " << (this->Get_Is_Shiftreg() ? "true," : "false,") << endl;
 	ofile << "depth => " << pipe_depth << " --}\n)" << endl;
 	ofile << "port map( -- { " << endl;
 	ofile << "read_req => " << sys->Get_Pipe_Vhdl_Read_Req_Name(pipe_name) << "," << endl 
@@ -1175,6 +1177,7 @@ bool getPipeInfoFromGlobals(string pname, map<string, hierPipe*>& pmap,
 
 void addPipeToGlobalMaps(string oname, map<string, hierPipe*>& pipe_map, 
 					int pipe_width, int pipe_depth, bool is_signal, bool noblock_mode,
+						bool shiftreg_mode,
 						bool p2p_mode)
 {
 		std::cerr << "Info: adding pipe " << oname << " width = " << pipe_width << ", depth = " 
@@ -1204,6 +1207,11 @@ void addPipeToGlobalMaps(string oname, map<string, hierPipe*>& pipe_map,
 		{
 			std::cerr << "Info: marking pipe " << oname << " as a noblock-pipe in global set." << endl;
 			p->Set_Is_Noblock(true);
+		}
+		if(shiftreg_mode)
+		{
+			std::cerr << "Info: marking pipe " << oname << " as a shiftreg-pipe in global set." << endl;
+			p->Set_Is_Shiftreg(true);
 		}
 		if(p2p_mode)
 		{

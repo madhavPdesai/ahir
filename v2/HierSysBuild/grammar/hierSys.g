@@ -264,10 +264,13 @@ hier_system_Pipe_Declaration[map<string, hierPipe* >& pipe_map, map<string, int>
     bool is_signal = false;
     bool is_synch  = false;
     bool is_p2p   = false;
+    bool shiftreg_mode = false;
    
 }
     :       ((lid:LIFO { std::cerr << "Warning: lifo flag ignored.. line number " << lid->getLine() << endl; }) |
-			(nid: NOBLOCK {noblock_mode = true;}))? 
+			(nid: NOBLOCK {noblock_mode = true;}) |
+			(srid: SHIFTREG {shiftreg_mode = true;})
+	    )?  
 		PIPE 
 		(psid:SIMPLE_IDENTIFIER {oname_list.push_back(psid->getText());})+
 		COLON UINT LESS wid:UINTEGER GREATER  
@@ -280,7 +283,8 @@ hier_system_Pipe_Declaration[map<string, hierPipe* >& pipe_map, map<string, int>
                 {
                     string oname = oname_list[I];
                     
-                    addPipeToGlobalMaps(oname, pipe_map, pipe_width, pipe_depth, is_signal, noblock_mode, is_p2p);
+                    addPipeToGlobalMaps(oname, pipe_map, pipe_width, pipe_depth, is_signal, noblock_mode, 
+						shiftreg_mode, is_p2p);
 
                 }
 
@@ -833,7 +837,7 @@ aA_Integer_Parameter_Expression[map<string, int>& global_parameter_map]  returns
 }:
   (iid: UINTEGER {expr_value = atoi(iid->getText().c_str()); line_number = iid->getLine();})
 	| 
-  (hid: HEXCSTYLEINTEGER  {expr_value = atoi(hid->getText().c_str());
+  (hid: HEXCSTYLEINTEGER  {sscanf(hid->getText().c_str(),"0x%x", &expr_value);
 				line_number = hid->getLine();})
 	|
   (sid: SIMPLE_IDENTIFIER { 
@@ -1046,6 +1050,7 @@ OUT: "$out";
 PIPE: "$pipe";
 LIFO: "$lifo";
 NOBLOCK: "$noblock";
+SHIFTREG: "$shiftreg";
 P2P: "$p2p";
 SIGNAL: "$signal";
 INSTANCE: "$instance";
@@ -1078,6 +1083,7 @@ POWER            : "**" ; // powering operation.
 
 BINARY : "_b"  ('0' | '1')+ ;
 HEXADECIMAL: "_h" (DIGIT | ('a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' ))+ ;
+HEXCSTYLEINTEGER          : "0x" (DIGIT | ('a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' ))+ ;
 
 // language keywords (all start with $)
 UINTEGER          : DIGIT (DIGIT)*;
