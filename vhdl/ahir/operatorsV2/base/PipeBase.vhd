@@ -166,7 +166,7 @@ begin  -- default_arch
   DeepFifo: if (not signal_mode) and (depth > 2) and (not lifo_mode) generate
     
    notShiftReg: if (not shift_register_mode) generate
-    queue : SynchFifo generic map (
+    queue : SynchFifoWithDPRAM generic map (
       name => name & "-queue", 
       queue_depth => depth,
       data_width       => data_width)
