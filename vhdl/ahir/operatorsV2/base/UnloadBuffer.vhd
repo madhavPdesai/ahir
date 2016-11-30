@@ -84,7 +84,7 @@ begin  -- default_arch
         num_writes => 1,
         data_width => data_width,
         lifo_mode  => false,
-	shift_register_mode => true,
+	shift_register_mode => false,
         depth      => buffer_size,
 	full_rate  => full_rate)
       port map (
@@ -107,7 +107,7 @@ begin  -- default_arch
         num_writes => 1,
         data_width => data_width,
         lifo_mode  => false,
-	shift_register_mode => true,
+	shift_register_mode => false,
         depth      => buffer_size,
         full_rate  => full_rate)
       port map (
