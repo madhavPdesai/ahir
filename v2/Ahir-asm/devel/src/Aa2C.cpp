@@ -68,7 +68,7 @@ void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, 
 	{
 		if(nwords != 1)
 		{
-			AaRoot::Error("Aa2C: signal-mode pipes can be either 8/16/32/64 bits-wide or must have width at most 8", NULL);
+			AaRoot::Error("Aa2C: signal-mode pipe " + pipe_name + " can be either 8/16/32/64 bits-wide or must have width at most 8", NULL);
 			return;
 		}
 		ofile << "register_signal(\"" << pipe_name << "\", " <<  wsize  << ");" << __endl__;
