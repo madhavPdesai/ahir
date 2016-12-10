@@ -1,4 +1,4 @@
 #mod-name:mod-delay
-vhdl:umul32:6
-vhdl:ushift32:4
-vhdl:uaddsub32:4
+ahir:umul32:6
+ahir:ushift32:4
+ahir:uaddsub32:4

@@ -55,6 +55,7 @@ int vcSystem::_bypass_stride = 1;
 
 // uses library?
 bool vcSystem::_uses_function_library = false;
+set<string> vcSystem::_non_ahir_function_library_libs;
 
 // set on error.
 bool vcSystem::_error_flag = false;
@@ -1166,6 +1167,20 @@ use ahir.utilities.all;\n";
 	ofile << "use ahir.functionLibraryComponents.all;" << endl;
   }
 
+  for(set<string>::iterator iter = vcSystem::_non_ahir_function_library_libs.begin();
+			iter != vcSystem::_non_ahir_function_library_libs.end();
+			iter++)
+  {
+	string lib_name = *iter;
+	if(lib_name != "work")
+	{
+		// by convention, each non-ahir function library should
+		// also provide a <lib-name>Components package.
+		ofile << "library " << lib_name << ";" << endl;
+		ofile << "use " << lib_name << "." << lib_name << "Components.all;" << endl;
+	}
+  }
+
   if(vcSystem::_enable_logging)
   {
   	ofile << "library " << vcSystem::_simulator_link_library << ";"  << endl;
@@ -1204,6 +1219,10 @@ void vcSystem::Add_Function_Library(string& file_name)
 		assert(M != string::npos);
 
 		string lib_name = line.substr(0,M);
+		if(lib_name != "ahir")
+		{
+			vcSystem::_non_ahir_function_library_libs.insert(lib_name);
+		}
 		line.erase(0, M + delimiter.size());
 
 		M = line.find(delimiter);

@@ -81,6 +81,7 @@ class vcSystem: public vcRoot
   static bool _enable_logging;
 
   static bool _uses_function_library;
+  static set<string> _non_ahir_function_library_libs;
 
   static string _top_entity_name;
 
