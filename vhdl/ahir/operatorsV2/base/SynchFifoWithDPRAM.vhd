@@ -166,6 +166,7 @@ begin  -- SimModel
     
 
     push_ack <= push_ack_v;
+    pop_ack_int  <=  pop_ack_v;
 
     nearly_full <= nearly_full_v;
     
@@ -176,7 +177,6 @@ begin  -- SimModel
         read_pointer <= (others => '0');
         write_pointer <= (others => '0');
       else
-        pop_ack_int  <=  pop_ack_v and pop_req_int;        
         queue_size <= qsize;
         read_pointer <= next_read_ptr;
         write_pointer <= next_write_ptr;

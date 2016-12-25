@@ -45,13 +45,43 @@ int main(int argc, char* argv[])
 	PTHREAD_CREATE(Sender);
 
 	uint8_t idx;
+	uint8_t err = 0;
 	
 	read_uint32_n("out_data",result,ORDER);
 
 	for(idx = 0; idx < ORDER; idx++)
 	{
-		fprintf(stdout,"Result = %x, expected = %x.\n", result[idx],expected_result[idx]);
+		if(result[idx] != expected_result[idx])
+		{
+			err = 1;
+			fprintf(stdout,"Error:Result = %x, expected = %x.\n", result[idx],expected_result[idx]);
+		}
+		else
+			fprintf(stdout,"Result = %x, expected = %x.\n", result[idx],expected_result[idx]);
 	}
+
+	for(idx = 0; idx < ORDER; idx++)
+	{
+		write_uint32("in_data", expected_result[idx]);
+		usleep (1000);
+		uint32_t rval = read_uint32("out_data");
+		if(rval != expected_result[idx])
+		{
+			err = 1;
+			fprintf(stdout,"Error: Result = %x, expected = %x.\n", rval,expected_result[idx]);
+		}
+		else
+			fprintf(stdout,"Result = %x, expected = %x.\n", rval,expected_result[idx]);
+
+	}
+	
 	PTHREAD_CANCEL(Sender);
+
+	if(err)
+		fprintf(stdout,"FAILURE :-(\n");
+	else
+		fprintf(stdout,"SUCCESS :-)\n");
+
 	return(0);
+
 }

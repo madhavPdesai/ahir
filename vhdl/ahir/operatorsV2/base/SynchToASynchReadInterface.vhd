@@ -34,11 +34,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ahir;
-use ahir.Utilities.all;
-use ahir.Subprograms.all;
-use ahir.BaseComponents.all;
-
 
 entity SynchToAsynchReadInterface is
   generic (
@@ -47,78 +42,92 @@ entity SynchToAsynchReadInterface is
   port (
     clk : in std_logic;
     reset  : in std_logic;
-    synch_req : in std_logic;
-    synch_ack : out std_logic;
-    asynch_req : out std_logic;
-    asynch_ack: in std_logic;
-    synch_data: in std_logic_vector(data_width-1 downto 0);
-    asynch_data : out std_logic_vector(data_width-1 downto 0));
+    synch_req : in std_logic;  -- indicates that synch side has data.
+    synch_ack : out std_logic; -- indicates that synch-side should do a read 
+				-- (there is a 1-cycle delay between the assertion of this signal
+				--   and availability of synch data).
+    asynch_req : out std_logic; --  indicates that asynch side wishes to forward data
+    asynch_ack: in std_logic;  -- indicates that forwarded data is accepte.
+    synch_data: in std_logic_vector(data_width-1 downto 0); -- synch data in
+    asynch_data : out std_logic_vector(data_width-1 downto 0)); -- forwarded data out.
 end SynchToAsynchReadInterface;
 
 
 architecture Behave of SynchToAsynchReadInterface is
 
-  type InMatchingFSMState is (idle,waiting);
+  type InMatchingFSMState is (Idle,LatchSynchData,WaitForAsynchAck);
   signal in_fsm_state : InMatchingFSMState;
+
+  signal synch_data_reg: std_logic_vector(data_width-1 downto 0);
   
 begin
 
   process(clk,reset, in_fsm_state, synch_req, asynch_ack)
     variable next_state: InMatchingFSMState;
     variable synch_ack_var, asynch_req_var: std_logic;
+    variable latch_var: std_logic;
     
   begin
     next_state := in_fsm_state;
 
     synch_ack_var := '0';
     asynch_req_var := '0';
+    latch_var := '0';
     
     case in_fsm_state is
       when idle =>
-        synch_ack_var := '1';          -- this is the only state where we req..
-        
         if(synch_req = '1') then
-          asynch_req_var := '1';
-
-          -- synch-ack is withdrawn immediately
-          -- unless asynch acks.
-          synch_ack_var := '0';          
-          if(asynch_ack = '1')  then
-            -- if asynch-ack, continue ack to synch
             synch_ack_var := '1';
-          else
-            -- neither acked
-            next_state := waiting;
-          end if;
+	    next_state := LatchSynchData;
 	end if;
-      when waiting =>
-        -- keep requesting to the asynch-pipe
+      when LatchSynchData =>
+	-- latch the data from the synch side
+        -- because that data is guarateed to be valid
+        -- only in this cycle.
+        latch_var := '1';
+        asynch_req_var := '1';
+        if(asynch_ack = '1') then
+          synch_ack_var := '1';
+	  -- if synch-req is '1', then stay
+          -- here... 
+          if(synch_req = '0') then
+          	next_state :=  Idle;
+	  end if;
+        else
+           next_state := WaitForAsynchAck;
+        end if;
+      when WaitForAsynchAck =>
+	-- wait for ack from asynch-side
         asynch_req_var := '1';
         if(asynch_ack = '1')  then
-          -- asynch ack, continue synch-ack.
-            synch_ack_var := '1';
-            next_state := idle;
-        else
-          -- neither acked
-          next_state := waiting;
+            -- if synch-requests then latch
+            -- synch data.
+	    if(synch_req = '1') then
+               synch_ack_var := '1';
+               next_state := LatchSynchData;
+            else
+               next_state := Idle;
+            end if;
         end if;
       when others => null;
     end case;
-
     
     synch_ack <= synch_ack_var;
     asynch_req <= asynch_req_var;
 
     if(clk'event and clk = '1') then
        if(reset = '1') then
-         in_fsm_state <= idle;
+         in_fsm_state <= Idle;
+         synch_data_reg <= (others => '0');
        else 
          in_fsm_state <= next_state;
-      end if;
+	 if(latch_var = '1') then
+		synch_data_reg <= synch_data;
+	 end if;
+       end if;
     end if;
   end process;
 
-  -- data is simply forwarded..
-  asynch_data <= synch_data;
+  asynch_data <= synch_data when (in_fsm_state = LatchSynchData) else synch_data_reg; 
   
 end Behave;

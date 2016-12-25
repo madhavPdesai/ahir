@@ -80,6 +80,6 @@ begin  -- XilinxBramInfer
       	
 	-- use the registered read enable with the registered address to 
 	-- describe the read
-  dataout <= mem_array(To_Integer(unsigned(addr_reg))) when (rd_enable_reg = '1') else (others => '0');
+  dataout <= mem_array(To_Integer(unsigned(addr_reg))) when (rd_enable_reg = '1');
 
 end XilinxBramInfer;

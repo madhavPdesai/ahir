@@ -67,15 +67,15 @@ architecture XilinxBramInfer of base_bank_dual_port is
 begin  -- XilinxBramInfer
 
   -- read/write process
-  process(clk,addrin_0,enable_0,writebar_0)
+  process(clk, addrin_0,enable_0,writebar_0, addrin_1,enable_1,writebar_1)
   begin
 
     -- synch read-write memory
     if(clk'event and clk ='1') then
 
-     	-- register the address
-	-- and use it in a separate assignment
-	-- for the delayed read.
+      -- register the address
+      -- and use it in a separate assignment
+      -- for the delayed read.
       addr_reg_0 <= addrin_0;
       addr_reg_1 <= addrin_1;
 
@@ -101,7 +101,7 @@ begin  -- XilinxBramInfer
       	
   -- use the registered read enable with the registered address to 
   -- describe the read
-  dataout_0 <= mem_array(To_Integer(unsigned(addr_reg_0))) when (rd_enable_reg_0 = '1') else (others => '0');
-  dataout_1 <= mem_array(To_Integer(unsigned(addr_reg_1))) when (rd_enable_reg_1 = '1') else (others => '0');
+  dataout_0 <= mem_array(To_Integer(unsigned(addr_reg_0)));
+  dataout_1 <= mem_array(To_Integer(unsigned(addr_reg_1)));
 
 end XilinxBramInfer;

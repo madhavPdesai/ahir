@@ -1,6 +1,6 @@
 $pipe in_data  : $uint<32> $depth 2
 $pipe mid_pipe: $uint<32> $depth 16
-$pipe out_data : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 1
 
 $module [shiftreg_check_daemon] $in() $out () $is
 {
@@ -14,7 +14,8 @@ $module [shiftreg_check_daemon] $in() $out () $is
 			X := in_data
 			mid_pipe := X
 			Y := mid_pipe
-			out_data := Y
+			Y_d := Y $buffering 16
+			out_data := Y_d
 
 		$while 1
 	}
