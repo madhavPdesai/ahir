@@ -1,17 +1,24 @@
 $pipe in_data  : $uint<32> $depth 2
 $pipe out_data : $uint<32> $depth 2
 
+
+$pipeline $depth 8 $buffering 2 $fullrate
+	$module [delay_element]  $in (X: $uint<32>) $out (Xd : $uint<32>) $is
+{
+	Xd := X
+}
+
 $pipeline $depth 8 $buffering 2 $fullrate
 	$module [delay_line]  $in (X: $uint<32>) $out (Xd : $uint<32>) $is
 {
-	T_0 := X
-        T_1 := T_0
-        T_2 := T_1
-        T_3 := T_2
-        T_4 := T_3
-        T_5 := T_4
-        T_6 := T_5
-        Xd  := T_6
+	$call delay_element (X) (T_0)
+        $call delay_element (T_0) (T_1)
+        $call delay_element (T_1) (T_2)
+        $call delay_element (T_2) (T_3)
+        $call delay_element (T_3) (T_4)
+        $call delay_element (T_4) (T_5)
+        $call delay_element (T_5) (T_6)
+        $call delay_element (T_6) (Xd)
 
 	$attribute delay 8
 }

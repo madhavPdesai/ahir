@@ -158,7 +158,7 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
     : ((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true;} 
 		(DEPTH did: UINTEGER {depth = atoi(did->getText().c_str());})? 
-		(BUFFERING bid: UINTEGER {buffering = atoi(did->getText().c_str());})? 
+		(BUFFERING bid: UINTEGER {buffering = atoi(bid->getText().c_str());})? 
 		(FULLRATE {full_rate_flag = true;})? 
 	))?
 	( (OPERATOR {operator_flag = true;} ) | (VOLATILE {volatile_flag = true;}) )?
