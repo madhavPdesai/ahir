@@ -59,7 +59,7 @@ entity access_regulator_base is
     -- transitions on the next two will
     -- open up a slot.
     release_req   : in Boolean;
-    release_ack   : in Boolean;
+    release_ack   : in Boolean; -- this is superfluous..
     clk   : in  std_logic;
     reset : in  std_logic);
 
@@ -91,8 +91,10 @@ begin  -- default_arch
 
    -- the next two places manage the slots
    -- note that the capacity must be num_slots+1, because
-   -- the release request may arrive earlier than the 
-   -- unregulated request.
+   -- a release requests may arrive earlier than the 
+   -- unregulated request.  However at most one release-request
+   -- can arrive before the first request (because of the way the
+   -- CP is constructed).
    release_req_place_preds(0) <= release_req;
    releaseReqPlace: place 
 	generic map(capacity => num_slots+1, marking => num_slots, name => name & ":release_req_place:")
@@ -101,28 +103,9 @@ begin  -- default_arch
 			token => release_req_place_token,
 			clk => clk, reset => reset);
 
-   release_ack_place_preds(0) <= release_ack;
-
-   -- note that the capacity can be num_slots, because
-   -- the release ack-request should never arrive earlier than the 
-   -- unregulated request.
-   -- 
-   -- Check: capacity must be num_slots+1 because req->ack
-   --        turnaround from operator can be 0-delay?
-   --
-   -- The token is returned to the place by release-ack.  
-   --  
-   releaseAckPlace: place 
-	generic map(capacity => num_slots, marking => num_slots, name => name & ":release_ack_place:")
-	port map(preds => release_ack_place_preds, 
-			succs => release_ack_place_succs, 
-			token => release_ack_place_token,
-				clk => clk, reset => reset);
-   
 
    -- the join fires when all places have tokens. 
-   regulated_req_join <= release_ack_place_token and release_req_place_token and req_place_token;
-   release_ack_place_succs(0) <= regulated_req_join;
+   regulated_req_join <= release_req_place_token and req_place_token;
    release_req_place_succs(0) <= regulated_req_join;
    req_place_succs(0) <= regulated_req_join;
 

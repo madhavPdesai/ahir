@@ -283,7 +283,7 @@ package BaseComponents is
   end component;
 
   component access_regulator 
-    generic (name: string; num_reqs : integer := 1; num_slots: integer := 1);
+    generic (name: string; num_reqs : integer := 1; num_slots: integer := 1; pipeline_depth: integer := 1);
     port (
       -- the req-ack pair being regulated.
       req   : in BooleanArray(num_reqs-1 downto 0);

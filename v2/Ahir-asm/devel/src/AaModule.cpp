@@ -127,7 +127,7 @@ void AaModule::Print(ostream& ofile)
   if(this->Get_Pipeline_Flag())
   {
     ofile << "$pipeline $depth " << this->Get_Pipeline_Depth() << " ";
-    ofile << "$buffering " << this->Get_Pipeline_Depth() << " ";
+    ofile << "$buffering " << this->Get_Pipeline_Buffering() << " ";
     if(this->Get_Pipeline_Full_Rate_Flag())
 	ofile << "$fullrate ";
   }
@@ -684,7 +684,7 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
   if(this->Get_Pipeline_Flag())
   {
     ofile << "$pipeline $depth " << this->Get_Pipeline_Depth() << " ";
-    ofile << "$buffering " << this->Get_Pipeline_Depth() << " ";
+    ofile << "$buffering " << this->Get_Pipeline_Buffering() << " ";
     if(this->Get_Pipeline_Full_Rate_Flag())
 	ofile << "$fullrate ";
   }

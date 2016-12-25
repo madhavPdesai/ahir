@@ -1,0 +1,46 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$pipeline $depth 8 $buffering 2 $fullrate
+	$module [delay_line]  $in (X: $uint<32>) $out (Xd : $uint<32>) $is
+{
+	T_0 := X
+        T_1 := T_0
+        T_2 := T_1
+        T_3 := T_2
+        T_4 := T_3
+        T_5 := T_4
+        T_6 := T_5
+        Xd  := T_6
+
+	$attribute delay 8
+}
+
+
+$module [access_regulator_check_daemon] $in() $out () $is
+{
+
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 31 $buffering 2 $fullrate
+
+		     	$merge $entry $loopback $endmerge
+
+			X0 := in_data
+			X1 := in_data
+			X2 := in_data
+			X3 := in_data
+
+			$call delay_line (X0) (X0d)
+			$call delay_line (X1) (X1d)
+			$call delay_line (X2) (X2d)
+			$call delay_line (X3) (X3d)
+
+			out_data := X0d
+			out_data := X1d
+			out_data := X2d
+			out_data := X3d
+
+		$while 1
+	}
+}
