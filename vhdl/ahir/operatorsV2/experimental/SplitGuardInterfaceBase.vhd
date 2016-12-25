@@ -50,8 +50,6 @@ use ahir.BaseComponents.all;
 -- The benefit is that the guard-expression can be reevaluated
 -- as soon as the operation starts (instead of waiting
 -- for the operation to finish...).  This helps pipelining.
--- TODO: QueueBase can be replaced with a simpler shift-stage?
---       (maybe not.., because this slows down the guard=0 case).
 --
 -- Assumptions
 --   1. sr_in -> sr_in without intervening sa_out is not possible.
