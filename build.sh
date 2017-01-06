@@ -4,6 +4,7 @@ echo "setting boost version" to $BOOST_VERSION
 echo "Making vhdl release."
 cd vhdl/release
 . cat.sh
+#. catForAsic.sh
 cd -
 echo "Running scons to build tools."
 cd v2

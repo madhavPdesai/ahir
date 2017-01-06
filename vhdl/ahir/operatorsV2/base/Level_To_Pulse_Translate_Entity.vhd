@@ -53,7 +53,7 @@ architecture Behave of Level_To_Pulse_Translate_Entity is
   signal l2p_state : L2PState;
 begin  -- Behave
 
-  process(clk, aL, rR, l2p_state)
+  process(clk, reset, aL, rR, l2p_state)
     variable nstate : L2PState;
   begin
     nstate := l2p_state;
