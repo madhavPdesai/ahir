@@ -533,6 +533,11 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 	if(!curr_expr->Is_Implicit_Variable_Reference())
 		return;
 
+	// TODO: even if the current expression is not an implicit
+	// variable reference, we still may need to 
+	// match delays.   The simple solution will be to break
+	// all complex expressions into simple expressions..
+
 	AaRoot* curr_expr_root =  curr_expr->Get_Root_Object();
 
 	//

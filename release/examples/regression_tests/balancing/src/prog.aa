@@ -1,0 +1,8 @@
+$pipeline $depth 7 $buffering 2 $fullrate
+	$operator $module [balancing_check] $in(a: $uint<8>) $out (c : $uint<8> ) $is
+{
+	y := a
+	$volatile z := (($bitcast ($uint<8>) a) + y) // should delay a.
+	c := z
+}
+
