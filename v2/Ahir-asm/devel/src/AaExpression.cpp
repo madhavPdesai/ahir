@@ -422,12 +422,12 @@ bool AaExpression::Get_Guard_Complement()
 }
 int AaExpression::Get_Delay()
 {
+	this->Evaluate();
+
 	// flow-through operators should have 0 delay.
-	if((this->_is_intermediate && this->Is_Trivial()) ||
-		( (this->Get_Associated_Statement() != NULL) &&
-			this->Get_Associated_Statement()->Get_Is_Volatile()))	
+	if(this->Is_Constant() || (this->Get_Is_Intermediate() && this->Is_Trivial()))
 		return(0);
-	else
+	else 
 		return(this->AaRoot::Get_Delay());
 }
 

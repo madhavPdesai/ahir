@@ -530,8 +530,9 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 
 	// continue from here only if it is an implicit variable
 	// reference or an intermediate expression.
-	if(!curr_expr->Is_Implicit_Variable_Reference()
-		&& !curr_expr->Get_Is_Intermediate())
+	if((curr_expr != NULL) &&
+		(curr_expr->Is_Constant() ||
+			(!curr_expr->Is_Implicit_Variable_Reference() && !curr_expr->Get_Is_Intermediate())))
 		return;
 
 	AaRoot* curr_expr_root =  curr_expr->Get_Root_Object();
@@ -5823,6 +5824,10 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 			delay = INTERLOCK_DELAY;
 		else
 			delay = src_expression->Get_Delay();
+	}
+	else if(!src_expression->Is_Trivial())
+	{
+		delay = src_expression->Get_Delay();
 	}
 
 	// arc from root to tgt_expression.
