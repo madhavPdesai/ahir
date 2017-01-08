@@ -72,6 +72,8 @@ architecture default_arch of PipeBase is
   signal pipe_req, pipe_ack, pipe_req_repeated, pipe_ack_repeated: std_logic;
   signal signal_data : std_logic_vector(data_width-1 downto 0); 
   signal written_at_least_once: std_logic;
+
+  constant shallow_flag : boolean := ((data_width <= 4) and (depth <= 16)) or ((data_width > 4) and (depth <= 4));
   
 begin  -- default_arch
 
@@ -128,7 +130,7 @@ begin  -- default_arch
 
   end generate SignalMode;
 
-  Shallow: if (not signal_mode) and (depth < 3) and (not lifo_mode) generate
+  Shallow: if (not signal_mode) and shallow_flag and (not lifo_mode) generate
 
     singleBufferedFullRateCase: if((depth = 1) and full_rate) generate
        preg: PipelineRegister
@@ -163,7 +165,7 @@ begin  -- default_arch
     end generate notSingleBufferedOrFullRateCase; 
   end generate Shallow;
 
-  DeepFifo: if (not signal_mode) and (depth > 2) and (not lifo_mode) generate
+  DeepFifo: if (not signal_mode) and (not shallow_flag) and (not lifo_mode) generate
     
    notShiftReg: if (not shift_register_mode) generate
     queue : SynchFifoWithDPRAM generic map (
