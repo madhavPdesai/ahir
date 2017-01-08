@@ -510,7 +510,7 @@ int AaStatement::Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >&
 	return(ret_val);
 }
 
-// Add delayed versions of curr (if curr is an implicit object reference)
+// Add delayed versions of curr (if curr is an implicit object reference or an intermediate expression)
 void AaStatement::Add_Delayed_Versions(AaRoot* curr, 
 		map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
 		map<AaRoot*, int>& longest_paths_from_root_map,
@@ -529,14 +529,10 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 	}
 
 	// continue from here only if it is an implicit variable
-	// reference.
-	if(!curr_expr->Is_Implicit_Variable_Reference())
+	// reference or an intermediate expression.
+	if(!curr_expr->Is_Implicit_Variable_Reference()
+		&& !curr_expr->Get_Is_Intermediate())
 		return;
-
-	// TODO: even if the current expression is not an implicit
-	// variable reference, we still may need to 
-	// match delays.   The simple solution will be to break
-	// all complex expressions into simple expressions..
 
 	AaRoot* curr_expr_root =  curr_expr->Get_Root_Object();
 
@@ -546,6 +542,9 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 	//
 	if(curr_expr->Get_Guarded_Statement() != NULL)
 	{
+
+		assert (curr_expr->Is_Implicit_Variable_Reference());
+
 		AaStatement* gstmt = curr_expr->Get_Guarded_Statement();
 		int curr_slack = longest_paths_from_root_map[gstmt] - longest_paths_from_root_map[curr];
 		if (curr_slack > 0)
@@ -647,13 +646,16 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 		// should this case also be considered?  Why should
 		// the interface references not get delayed?
 		//
-		if((stmt == NULL) && 
-			((curr_expr_root == NULL) || (!curr_expr_root->Is("AaInterfaceObject"))))
+		/*
+		if(curr_expr->Is_Implicit_Variable_Reference() &&
+			((stmt == NULL) && 
+				((curr_expr_root == NULL) || (!curr_expr_root->Is("AaInterfaceObject")))))
 		{
 			// This can happen if there is a reference to
 			// an interface object.
 			return;
 		}
+		*/
 
 		vector<AaStatement*> delayed_versions;
 
@@ -676,8 +678,18 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 			AaSimpleObjectReference* new_target = new AaSimpleObjectReference(prnt_scope, delayed_name);
 			new_target->Set_Type(curr_expr->Get_Type());
 
-			AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(prnt_scope, root_name);
-			new_src->Set_Type(curr_expr->Get_Type());
+			AaExpression* new_src    = NULL;
+
+			bool linked_to_stmt = curr_expr->Is_Implicit_Variable_Reference() && !curr_expr->Get_Is_Intermediate();
+			if(linked_to_stmt)
+			{
+				new_src =  new AaSimpleObjectReference(prnt_scope, root_name);
+				new_src->Set_Type(curr_expr->Get_Type());
+			}
+			else
+			{
+				new_src = curr_expr;
+			}
 
 			AaAssignmentStatement* new_stmt = new AaAssignmentStatement(prnt_scope,
 					new_target,
@@ -689,7 +701,10 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 				buf_val = ((buf_val < 2) ? 2 : buf_val);
 			new_stmt->Set_Buffering(buf_val);
 
-			new_stmt->Map_Source_References();
+			if(linked_to_stmt)
+			{
+				new_stmt->Map_Source_References();
+			}
 
 			delayed_versions.push_back(new_stmt);
 			slack_to_stmt_map[curr_slack] = new_stmt;
