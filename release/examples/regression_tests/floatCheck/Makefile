@@ -77,7 +77,7 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 # build testbench and ghdl executable
 # note the use of SOCKETLIB in building the testbench.
 UNISIM=$(AHIR_RELEASE)/vhdl/ghdl/unisim
-postsynthvhdlsim: ahir_system_synth.vhd ahir_system_test_bench.vhdl 
+postsynthvhdlsim: ahir_system_synth.vhdl ahir_system_test_bench.vhdl 
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl
