@@ -13,6 +13,8 @@ cat ../ahir/packagesV2/memory_subsystem_package.vhd >> ahirForAsic.vhdl
 cat ../ahir/packagesV2/merge_functions.vhd >> ahirForAsic.vhdl
 cat ../ahir/packagesV2/functionLibraryComponents.vhd >> ahirForAsic.vhdl
 cat ../ahir/packagesV2/ApIntComponents.vhd >> ahirForAsic.vhdl
+cat ../ahir/packagesV2/mem_ASIC_components.vhd >> ahirForAsic.vhdl
+cat ../ahir/packagesV2/MemcutsPackage.vhd >> ahirForAsic.vhdl
 cat ../ahir/memory_subsystem/common/*.vhd >> ahirForAsic.vhdl
 cat ../ahir/memory_subsystem/base_bank_asic/*.vhd >> ahirForAsic.vhdl
 cat ../ahir/memory_subsystem/strictly_ordered/*.vhd >> ahirForAsic.vhdl
