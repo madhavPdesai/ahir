@@ -218,4 +218,6 @@ uint8_t fp64_unordered(double a, double b);
 // pipe accesses.
 void write_bit_vector_to_pipe(char* pipe_name, bit_vector* bv);
 void read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv);
+void sock_write_bit_vector_to_pipe(char* pipe_name, bit_vector* bv);
+void sock_read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv);
 #endif
