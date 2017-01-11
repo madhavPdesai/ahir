@@ -4,3 +4,5 @@ echo "Running scons to clean tools."
 cd v2
 source build_bashrc
 scons -c
+cd -
+make -f ReleaseMakefile Clean
