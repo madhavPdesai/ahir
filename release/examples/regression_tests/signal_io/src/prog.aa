@@ -1,0 +1,18 @@
+$pipe in_data  : $uint<32> $signal
+$pipe out_data : $uint<32> $signal
+
+
+$module [signal_io_daemon] $in() $out () $is
+{
+
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+
+		A := in_data
+		out_data := A
+
+		$while 1
+	}
+}
