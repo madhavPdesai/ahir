@@ -78,7 +78,11 @@ architecture struct of dpmem_column is
   signal resized_addrin_0: std_logic_vector(resized_addr_width-1 downto 0);  
   signal resized_addrin_1: std_logic_vector(resized_addr_width-1 downto 0);  
 
+  signal ZZZ_1 : std_logic;
+
 begin
+
+  ZZZ_1 <= '0';
   
   process (addrin_0, addrin_1)
 	begin 
@@ -91,14 +95,14 @@ begin
   -- if only one cut is required to satisfy the address width
   n_rows_1: if (n_rows = 1) generate
 	row_1_blk: block
-	  signal enb_0: std_logic := '1';
-	  signal enb_1: std_logic := '1';
+	  signal enb_0 : std_logic;
+	  signal enb_1: std_logic;
 	begin 
-	  process (enable_0, reset)
+	  process (enable_0, reset, clk)
 	    begin
 		enb_0 <= not (enable_0 and not(reset));
  	  end process;
-	  process (enable_1, reset)
+	  process (enable_1, reset, clk)
 	    begin 
 		enb_1 <= not (enable_1 and not(reset));
 	  end process;
@@ -111,8 +115,8 @@ begin
 			CE2 => clk,
 			WEB1 => writebar_0,
 			WEB2 => writebar_1,
-			OEB1 => enb_0,
-			OEB2 => enb_1,
+			OEB1 => ZZZ_1,
+			OEB2 => ZZZ_1,
 			CSB1 => enb_0,
 			CSB2 => enb_1,
 			I1 => datain_0,
@@ -125,30 +129,42 @@ begin
   --if more than one cuts are required to satisfy the address width
   n_rows_gt_1: if (n_rows > 1) generate
 	row_gt_1_blk: block
-	  signal decoded_CS_0: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
-	  signal decoded_CS_1: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
+	  signal decoded_CS_0, decoded_CS_0_d: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
+	  signal decoded_CS_1, decoded_CS_1_d: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
 	  
 	  --chipselect is made low only when enable is high and reset is low.
 	  --memory will not be read or written when enable is low.
 	begin
-	  process(addrin_0, enable_0)
+	  process(addrin_0, enable_0, clk, reset)
+	  	variable decoded_CS_0_var: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
 	    begin
 		if (enable_0 = '1' and reset = '0') then
-		  decoded_CS_0 <= MemDecoder(resized_addrin_0(resized_addr_width-1
+		  decoded_CS_0_var := MemDecoder(resized_addrin_0(resized_addr_width-1
 		  downto resized_addr_width - Ceil_log2(n_rows)));
 		else 
-		  decoded_CS_0 <= (others=>'1');
+		  decoded_CS_0_var := (others=>'1');
 		end if;
+		
+		decoded_CS_0 <= decoded_CS_0_var;
+		if(clk'event and clk = '1') then
+			decoded_CS_0_d <= decoded_CS_0_var;
+	 	end if;
+
 	  end process;
 	  
-	  process(addrin_1, enable_1)
+	  process(addrin_1, enable_1, clk, reset)
+	  	variable decoded_CS_1_var: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
 	    begin
 		if (enable_1 = '1' and reset = '0') then
-		  decoded_CS_1 <= MemDecoder(resized_addrin_1(resized_addr_width-1
+		  decoded_CS_1_var := MemDecoder(resized_addrin_1(resized_addr_width-1
 		  downto resized_addr_width - Ceil_log2(n_rows)));
 		else 
-		  decoded_CS_1 <= (others=>'1');
+		  decoded_CS_1_var := (others=>'1');
 		end if;
+		decoded_CS_1 <= decoded_CS_1_var;
+		if(clk'event and clk = '1') then
+			decoded_CS_1_d <= decoded_CS_1_var;
+	 	end if;
 	  end process;
 
 	  row_gen: for j in 0 to n_rows-1 generate
@@ -160,8 +176,8 @@ begin
 			CE2 => clk,
 			WEB1 => writebar_0,
 			WEB2 => writebar_1,
-			OEB1 => decoded_CS_0(j),
-			OEB2 => decoded_CS_1(j),
+			OEB1 => decoded_CS_0_d(j),
+			OEB2 => decoded_CS_1_d(j),
 			CSB1 => decoded_CS_0(j),
 			CSB2 => decoded_CS_1(j),
 			I1 => datain_0,

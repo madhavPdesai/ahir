@@ -71,6 +71,7 @@ constant n_rows: integer := 2**(Maximum(0, g_addr_width-g_base_bank_addr_width))
 constant resized_addr_width: integer := Maximum(g_addr_width, g_base_bank_addr_width);
 signal resized_addrin: std_logic_vector(resized_addr_width-1 downto 0);  
 
+  signal ZZZ_1 : std_logic := '0';
 begin
   process (addrin)
 	begin 
@@ -92,7 +93,7 @@ begin
 		port map(A => resized_addrin(g_base_bank_addr_width-1 downto 0),
 			CE => clk,
 			WEB => writebar,
-			OEB => enb,
+			OEB => ZZZ_1,
 			CSB => enb,
 			I => datain,
 			O => dataout );
@@ -102,18 +103,24 @@ begin
   --if more than one cuts are required to satisfy the address width
   n_rows_gt_1: if (n_rows > 1) generate
 	row_gt_1_blk: block
-	  signal decoded_CS: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
+	  signal decoded_CS, decoded_CS_d: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
 	  
 	  --chipselect is made low only when enable is high and reset is low.
 	  --memory will not be read or written when enable is low.
 	begin
-	  process(addrin, enable)
+	  process(addrin, enable, clk, reset)
+	     variable decoded_CS_var: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
 	    begin
 		if (enable = '1' and reset = '0') then
-		  decoded_CS <= MemDecoder(resized_addrin(resized_addr_width-1
+		  decoded_CS_var := MemDecoder(resized_addrin(resized_addr_width-1
 		  downto resized_addr_width-Ceil_log2(n_rows)));
 		else 
-		  decoded_CS<=(others=>'1');
+		  decoded_CS_var :=(others=>'1');
+		end if;
+
+		decoded_CS <= decoded_CS_var;
+		if(clk'event and clk = '1') then
+			decoded_CS_d <= decoded_CS_var;
 		end if;
 	  end process;
 	  row_gen: for j in 0 to n_rows-1 generate
@@ -122,7 +129,7 @@ begin
 			port map(A => resized_addrin(g_base_bank_addr_width-1 downto 0),
 				CE => clk,
 				WEB => writebar,
-				OEB => decoded_CS(j),
+				OEB => decoded_CS_d(j),
 				CSB => decoded_CS(j),
 				I => datain,
 				O => dataout );

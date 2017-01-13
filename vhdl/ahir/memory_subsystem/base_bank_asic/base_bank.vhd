@@ -77,7 +77,20 @@ architecture struct of base_bank is
   signal resized_datain: std_logic_vector(total_data_width-1 downto 0);
   signal resized_dataout: std_logic_vector(total_data_width-1 downto 0);
 
+  signal latch_dataout : std_logic;
+  signal dataout_reg : std_logic_vector(g_data_width-1 downto 0);
 begin
+
+  process(clk, reset)
+  begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			latch_dataout <= '0';
+		else
+			latch_dataout <= enable and writebar;
+		end if;
+	end if;
+  end process;
 
   process (datain)
   begin
@@ -108,8 +121,15 @@ begin
 	end generate gen_cols;
   end generate mem_gen;		
 
-  process (resized_dataout)
+
+  process (clk, latch_dataout, resized_dataout)
   begin
-	dataout <= resized_dataout(dataout'length-1 downto 0);
+	if(clk'event and clk = '1') then
+		if(latch_dataout = '1') then
+			dataout_reg <= resized_dataout(dataout'length-1 downto 0);
+		end if;
+	end if;
   end process;
+  dataout <= dataout_reg when (latch_dataout = '0') else resized_dataout(dataout'length-1 downto 0);
+
 end struct;

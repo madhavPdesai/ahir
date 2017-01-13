@@ -83,7 +83,23 @@ architecture struct of base_bank_dual_port is
   signal resized_datain_1: std_logic_vector(total_data_width-1 downto 0);
   signal resized_dataout_1: std_logic_vector(total_data_width-1 downto 0);
 
+  signal latch_dataout_0, latch_dataout_1: std_logic;
+  signal dataout_reg_0, dataout_reg_1: std_logic_vector(g_data_width-1 downto 0);
+
 begin
+
+  process(clk, reset)
+  begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			latch_dataout_0 <= '0';
+			latch_dataout_1 <= '0';
+		else
+			latch_dataout_0 <= enable_0 and writebar_0;
+			latch_dataout_1 <= enable_1 and writebar_1;
+		end if;
+	end if;
+  end process;
 
   process (datain_0)
   begin
@@ -133,12 +149,19 @@ begin
 	end generate gen_cols;
   end generate mem_gen;		
 
-  process (resized_dataout_0)
+  process (clk, latch_dataout_0, resized_dataout_0, latch_dataout_1, resized_dataout_1)
   begin
-	dataout_0 <= resized_dataout_0(dataout_0'length-1 downto 0);
+	if(clk'event and clk = '1') then
+		if(latch_dataout_0 = '1') then
+			dataout_reg_0 <= resized_dataout_0(dataout_0'length-1 downto 0);
+		end if;
+		if(latch_dataout_1 = '1') then
+			dataout_reg_1 <= resized_dataout_1(dataout_1'length-1 downto 0);
+		end if;
+	end if;
   end process;
-  process (resized_dataout_1)
-  begin
-	dataout_1 <= resized_dataout_1(dataout_1'length-1 downto 0);
-  end process;
+  dataout_0 <= dataout_reg_0 when (latch_dataout_0 = '0') else resized_dataout_0(dataout_0'length-1 downto 0);
+  dataout_1 <= dataout_reg_1 when (latch_dataout_1 = '0') else resized_dataout_1(dataout_1'length-1 downto 0);
+
+
 end struct;
