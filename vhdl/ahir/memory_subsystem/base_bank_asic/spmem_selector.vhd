@@ -36,7 +36,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
-use work.mem_ASIC_components.all;
+use ahir.mem_ASIC_components.all;
 
 -- Entity to instantiate different available memory cuts based on the 
 -- address_width and data_width generics passed.

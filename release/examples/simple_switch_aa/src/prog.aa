@@ -1,0 +1,47 @@
+$pipe input_port_0 : $uint<32> $depth 2
+$pipe input_port_1 : $uint<32> $depth 2
+
+$pipe output_port_0 : $uint<32> $depth 8
+$pipe output_port_1 : $uint<32> $depth 8
+
+
+// useful operations
+// a := ($slice b 8 0)
+// b := ($concat p q r)
+// c := ($split c 4 3 1) (c3 c2 c1)
+// 
+
+$module [inputPort_0] $in () $out () $is
+{
+	$branchblock[Loop] {
+		$dopipeline $depth 7 $buffering 2 $fullrate 
+
+			$merge $entry $loopback $endmerge
+
+
+			in_data := input_port_0
+			$volatile p0 := (in_data [] 0)
+			$guard (p0)  output_port_1 := in_data
+			$guard (~p0) output_port_0 := in_data
+
+		$while 1
+	}	
+}
+
+$module [inputPort_1] $in () $out () $is
+{
+	$branchblock[Loop] {
+		$dopipeline $depth 7 $buffering 2 $fullrate 
+
+			$merge $entry $loopback $endmerge
+
+
+			in_data := input_port_1
+			$volatile p0 := (in_data [] 0)
+			$guard (p0)  output_port_1 := in_data
+			$guard (~p0) output_port_0 := in_data
+
+		$while 1
+	}	
+}
+

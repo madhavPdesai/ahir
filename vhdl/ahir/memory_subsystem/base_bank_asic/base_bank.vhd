@@ -48,8 +48,8 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 use aHiR_ieee_proposed.float_pkg.all;
 
 library ahir;
-use work.MemCutsPackage.all;
-use work.mem_ASIC_components.all;
+use ahir.MemCutsPackage.all;
+use ahir.mem_ASIC_components.all;
 
 entity base_bank is
    generic ( name: string:="mem"; g_addr_width: natural := 5; 

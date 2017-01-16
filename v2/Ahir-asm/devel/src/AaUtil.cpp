@@ -55,6 +55,20 @@ string Int64ToStr(int64_t x)
   return(string_stream.str());
 }
 
+string UintToStr(uint32_t x)
+{
+  ostringstream string_stream(ostringstream::out);
+  string_stream << x;
+  return(string_stream.str());
+}
+
+string Uint64ToStr(uint64_t x)
+{
+  ostringstream string_stream(ostringstream::out);
+  string_stream << x;
+  return(string_stream.str());
+}
+
 int CeilLog2(int n)
 {
   int ret_val = 1;

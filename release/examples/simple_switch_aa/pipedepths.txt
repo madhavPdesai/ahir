@@ -1,0 +1,4 @@
+input_port_0 2
+input_port_1 2
+output_port_0 2
+output_port_1 2

@@ -40,8 +40,8 @@ use ahir.Subprograms.all;
 use ahir.mem_function_pack.all;
 use ahir.memory_subsystem_package.all;
 
-use work.MemCutsPackage.all;
-use work.mem_ASIC_components.all;
+use ahir.MemCutsPackage.all;
+use ahir.mem_ASIC_components.all;
 
 library aHiR_ieee_proposed;
 use aHiR_ieee_proposed.math_utility_pkg.all;

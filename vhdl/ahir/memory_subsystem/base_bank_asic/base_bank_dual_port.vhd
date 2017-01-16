@@ -48,8 +48,8 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 use aHiR_ieee_proposed.float_pkg.all;
 
 library ahir;
-use work.MemCutsPackage.all;
-use work.mem_ASIC_components.all;
+use ahir.MemCutsPackage.all;
+use ahir.mem_ASIC_components.all;
 
 entity base_bank_dual_port is
    generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
