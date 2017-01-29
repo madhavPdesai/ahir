@@ -485,6 +485,8 @@ void bit_vector_cast_to_bit_vector(uint8_t signed_flag, bit_vector* dest, bit_ve
 
 	for(J=0; J < min_width; J++)
 	{
+	  undef_flag = 0;
+
 	  uint8_t tb = bit_vector_get_bit(src,J);
 	  uint8_t u_tb = bit_vector_get_undefined_bit(src,J);
 	  if(u_tb)
