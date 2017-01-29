@@ -129,10 +129,9 @@ begin
 		if(there_is_a_call = '1') then
 			call_mreq <= '1';
 			latch_call_data <=  '1';
+			call_accept_bypass_var := '1';
 			if(call_mack /= '1') then
 				nstate := busy;
-			else
-				call_accept_bypass_var := '1';
 			end if;
 		end if;
 	elsif (call_state = busy) then
@@ -307,6 +306,7 @@ begin
 
 			-- if I is selected, then ack = '1'.
 			ack_var := '1';
+			bypass_flag_var := '1';
 
 
 			-- if requester I reqs (wants to pick up)
@@ -316,8 +316,6 @@ begin
 			if (return_reqs(I) = '0') then
 				latch_var := '1';
 				nstate := Busy;
-			else
-				bypass_flag_var := '1';
 			end if;
 		end if;		
 	 else 

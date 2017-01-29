@@ -299,8 +299,8 @@ vc_Controlpath[vcSystem* sys, vcModule* m]
 			cp->Set_Pipeline_Buffering(m->Get_Pipeline_Buffering());
 			cp->Set_Pipeline_Full_Rate_Flag(m->Get_Pipeline_Full_Rate_Flag());
 		}
-        (cpe = vc_CPPlace[cp] { cp->Add_CPElement(cpe); })+
-        (vc_CPBind[cp])+ ) | 
+        (cpe = vc_CPPlace[cp] { cp->Add_CPElement(cpe); })*
+        (vc_CPBind[cp])* ) | 
 	((vc_CPRegion[cp])+ (vc_AttributeSpec[cp])*) )? RBRACE 
 {
 	m->Set_Control_Path(cp);
@@ -441,7 +441,7 @@ vc_CPSimpleLoopBlock[vcCPBlock* cp]
         (vc_CPMerge[sb])+  // merge places.
         (vc_CPBranch[sb])+ // a branch places
         // all special elements from here on..
-        (vc_CPBind[sb])+
+        (vc_CPBind[sb])*
         vc_CPLoopTerminate[sb]  
   RBRACE
          { cp->Add_CPElement(sb);  sb->Set_Pipeline_Full_Rate_Flag(true); sb->Set_Pipeline_Parent(sb); }
@@ -646,8 +646,8 @@ vc_CPPipelinedLoopBody[vcCPBlock* cp]
             ( vc_CPTransitionMerge[fb]) |
             (vc_AttributeSpec[fb]) )* RBRACE
 { cp->Add_CPElement(fb); fb->Set_Pipeline_Parent(fb);}
-( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})+ RPAREN ) 
-( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Output(internal_id);})+ RPAREN ) 
+( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})* RPAREN ) 
+( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Output(internal_id);})* RPAREN ) 
 ;
 
 
