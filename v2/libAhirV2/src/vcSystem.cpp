@@ -719,7 +719,21 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 
 
 		string arg_name = pipe_id + "_pipe_write_data";
-		ofile << arg_name << " <= Unpack_String(port_val_string," << pipe_width << ");" << endl;
+		if(p->Get_Signal())
+		// after reading the pipe in VHPI, the pipe value drops back to 
+		// 0.  To prevent this, we create a latch..
+		{
+			ofile << "wait for 1 ns;" << endl; // let write_req settle to its new value.
+			ofile << "if (" << pipe_id << "_pipe_write_req(0) = '1') then " << endl;
+			ofile << " -- { " << endl;
+			ofile << arg_name << " <= Unpack_String(port_val_string," << pipe_width << ");" << endl;
+			ofile << "-- } " << endl;
+			ofile << "end if;" << endl;
+		}
+		else
+		{
+			ofile << arg_name << " <= Unpack_String(port_val_string," << pipe_width << ");" << endl;
+		}
 	}
       else if(num_reads == 0 && num_writes >  0)
       {

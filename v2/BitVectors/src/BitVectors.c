@@ -34,6 +34,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <Pipes.h>
+#include <SockPipes.h>
 
 #define __nbytes(x) ((x % 8 == 0) ? x/8 : (x/8) + 1)
 // ---------------  local functions --------------------------------------
@@ -1431,6 +1432,57 @@ void read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv)
 			break;
 		default:
 			read_uint8_n(pipe_name, bv->val.byte_array, bv->val.array_size);	
+			break;
+	}
+}
+
+void sock_write_bit_vector_to_pipe(char* pipe_name, bit_vector* bv)
+{
+	switch(bv->width)
+	{
+		case 8:
+			sock_write_uint8(pipe_name, (uint8_t) bit_vector_to_uint64(0,bv));
+			break;
+		case 16:
+			sock_write_uint16(pipe_name, (uint16_t) bit_vector_to_uint64(0,bv));
+			break;
+		case 32:
+			sock_write_uint32(pipe_name, (uint32_t) bit_vector_to_uint64(0,bv));
+			break;
+		case 64:
+			sock_write_uint64(pipe_name, (uint64_t) bit_vector_to_uint64(0,bv));
+			break;
+		default:
+			sock_write_uint8_n(pipe_name, bv->val.byte_array, bv->val.array_size);	
+			break;
+	}
+}
+
+
+void sock_read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv)
+{
+	uint64_t val;
+	bit_vector_clear(bv);
+	switch(bv->width)
+	{
+		case 8:
+			val = sock_read_uint8(pipe_name);
+			bit_vector_assign_uint64(0,bv,val);
+			break;
+		case 16:
+			val = sock_read_uint16(pipe_name);
+			bit_vector_assign_uint64(0,bv,val);
+			break;
+		case 32:
+			val = sock_read_uint32(pipe_name);
+			bit_vector_assign_uint64(0,bv,val);
+			break;
+		case 64:
+			val = sock_read_uint64(pipe_name);
+			bit_vector_assign_uint64(0,bv,val);
+			break;
+		default:
+			sock_read_uint8_n(pipe_name, bv->val.byte_array, bv->val.array_size);	
 			break;
 	}
 }

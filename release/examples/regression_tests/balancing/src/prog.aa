@@ -1,0 +1,32 @@
+$constant ZERO_8 : $uint<8> := _b0
+
+$pipeline $depth 7 $buffering 2 $fullrate
+	$operator $module [balancing_check] $in(a b: $uint<8>) $out (c : $uint<8> ) $is
+{
+	y := (a + b)
+	$volatile z := (($bitcast ($uint<8>) a) + y) // should delay a.
+	c := z
+}
+
+
+$pipe in_data : $uint<8>
+$pipe out_data: $uint<8>
+
+$module [balancing_check_daemon] $in () $out () $is
+{
+	$branchblock[loop]
+	{
+		$dopipeline $depth 7 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+
+		X := in_data
+		$volatile XX := ((X + ZERO_8)  + ($bitcast ($uint<8>) _b0))
+		$call balancing_check (XX ZERO_8) (Y)
+		$volatile YY := Y
+		out_data := YY
+		$while 1
+	}
+
+}
+
+

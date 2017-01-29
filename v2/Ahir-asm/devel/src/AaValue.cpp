@@ -673,7 +673,7 @@ string To_VC_String(unsigned int val, unsigned int size)
 {
   AaType* t = AaProgram::Make_Uinteger_Type(size);
   AaValue* v = Make_Aa_Value(NULL,t);
-  v->Set_Value(IntToStr(val));
+  v->Set_Value(UintToStr(val));
   string ret_string = v->To_VC_String();
   delete v;
   return(ret_string);

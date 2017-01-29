@@ -7,7 +7,7 @@ VHDL_LIB=$(AHIR_RELEASE)/vhdl/
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary
 
 DEFS= -DADD -DMUL -DSUB -DFLOATRESIZE -DTOINT
-TOPMODULES= -t fpadd -tfpaddd  -t fpsub -t fpincr -t fpmul -t fpmuld -t double_to_float -t float_to_double -t fp2int -t fpd2int  -t fp2uint -t fpd2uint -t int2float -t int2double 
+TOPMODULES= -t fpadd -t fpaddd  -t fpsub -t fpincr -t fpmul -t fpmuld -t double_to_float -t float_to_double -t fp2int -t fpd2int  -t fp2uint -t fpd2uint -t int2float -t int2double 
 
 #DEFS= -DADD -DMUL -DDOT -DCMP
 #TOPMODULES=-t fpmul -t fpmuld  -t fpadd -t fpaddd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
@@ -77,7 +77,7 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 # build testbench and ghdl executable
 # note the use of SOCKETLIB in building the testbench.
 UNISIM=$(AHIR_RELEASE)/vhdl/ghdl/unisim
-postsynthvhdlsim: ahir_system_synth.vhd ahir_system_test_bench.vhdl 
+postsynthvhdlsim: ahir_system_synth.vhdl ahir_system_test_bench.vhdl 
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl

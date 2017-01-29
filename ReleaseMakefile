@@ -18,73 +18,73 @@ all: Release
 
 Release:
 	#license
-	cp ./LICENSE  $(RELEASE)
-	cp ./CONTRIBUTORS $(RELEASE)
+	cp -f ./LICENSE  $(RELEASE)
+	cp -f ./CONTRIBUTORS $(RELEASE)
 	#  copy the tools
-	cp $(AA)/bin/Aa2C $(RELEASE)/bin/
-	cp $(AA)/bin/Aa2VC $(RELEASE)/bin/
-	cp $(AA)/bin/AaLinkExtMem $(RELEASE)/bin/
-	cp $(AA)/bin/AaOpt $(RELEASE)/bin/AaOpt
-	cp $(VC)/bin/vc2vhdl $(RELEASE)/bin/
-	cp $(VC)/bin/vcAnalyze $(RELEASE)/bin/vcAnalyze
-	cp $(VC)/bin/vcFormat $(RELEASE)/bin/
-	cp $(VC)/bin/vcParse $(RELEASE)/bin/
-	cp $(VC)/bin/vhdlFormat $(RELEASE)/bin/
-	cp $(LLVM2AA)/bin/llvm2aa $(RELEASE)/bin/
-	cp $(HIERSYSBUILD)/bin/hierSys2Vhdl $(RELEASE)/bin/
-	cp $(HIERSYSBUILD)/bin/hierSys2C $(RELEASE)/bin/
-	cp $(HIERSYSBUILD)/bin/hierSysPartition $(RELEASE)/bin/
-	cp $(HIERSYSBUILD)/bin/hierSysCheck $(RELEASE)/bin/
+	cp -f $(AA)/bin/Aa2C $(RELEASE)/bin/
+	cp -f $(AA)/bin/Aa2VC $(RELEASE)/bin/
+	cp -f $(AA)/bin/AaLinkExtMem $(RELEASE)/bin/
+	cp -f $(AA)/bin/AaOpt $(RELEASE)/bin/AaOpt
+	cp -f $(VC)/bin/vc2vhdl $(RELEASE)/bin/
+	cp -f $(VC)/bin/vcAnalyze $(RELEASE)/bin/vcAnalyze
+	cp -f $(VC)/bin/vcFormat $(RELEASE)/bin/
+	cp -f $(VC)/bin/vcParse $(RELEASE)/bin/
+	cp -f $(VC)/bin/vhdlFormat $(RELEASE)/bin/
+	cp -f $(LLVM2AA)/bin/llvm2aa $(RELEASE)/bin/
+	cp -f $(HIERSYSBUILD)/bin/hierSys2Vhdl $(RELEASE)/bin/
+	cp -f $(HIERSYSBUILD)/bin/hierSys2C $(RELEASE)/bin/
+	cp -f $(HIERSYSBUILD)/bin/hierSysPartition $(RELEASE)/bin/
+	cp -f $(HIERSYSBUILD)/bin/hierSysCheck $(RELEASE)/bin/
 	# copy the IOLIB
-	#cp $(IOLIB)/*.h $(RELEASE)/iolib/include/
-	cp $(IOLIB)/*.h $(RELEASE)/include/
-	#cp $(IOLIB)/libio.a $(RELEASE)/iolib/lib/
-	cp $(IOLIB)/libio.a $(RELEASE)/lib/
-	#cp $(IOLIB)/libio.so $(RELEASE)/iolib/lib/
-	cp $(IOLIB)/libio.so $(RELEASE)/lib/
+	#cp -f $(IOLIB)/*.h $(RELEASE)/iolib/include/
+	cp -f $(IOLIB)/*.h $(RELEASE)/include/
+	#cp -f $(IOLIB)/libio.a $(RELEASE)/iolib/lib/
+	cp -f $(IOLIB)/libio.a $(RELEASE)/lib/
+	#cp -f $(IOLIB)/libio.so $(RELEASE)/iolib/lib/
+	cp -f $(IOLIB)/libio.so $(RELEASE)/lib/
 	# copy the pipeHandler
-	#cp $(PIPEHANDLER)/include/*.h $(RELEASE)/pipeHandler/include/
-	cp $(PIPEHANDLER)/include/*.h $(RELEASE)/include/
-	#cp $(PIPEHANDLER)/lib/* $(RELEASE)/pipeHandler/lib/
-	cp $(PIPEHANDLER)/lib/* $(RELEASE)/lib/
-	#cp $(PIPEHANDLER)/pipeHandlerTest/* $(RELEASE)/pipeHandler/examples/
+	#cp -f $(PIPEHANDLER)/include/*.h $(RELEASE)/pipeHandler/include/
+	cp -f $(PIPEHANDLER)/include/*.h $(RELEASE)/include/
+	#cp -f $(PIPEHANDLER)/lib/* $(RELEASE)/pipeHandler/lib/
+	cp -f $(PIPEHANDLER)/lib/* $(RELEASE)/lib/
+	#cp -f $(PIPEHANDLER)/pipeHandlerTest/* $(RELEASE)/pipeHandler/examples/
 	# copy the BitVectors
-	#cp $(BITVECTORS)/include/*.h $(RELEASE)/BitVectors/include/
-	cp $(BITVECTORS)/include/*.h $(RELEASE)/include/
-	#cp $(BITVECTORS)/lib/* $(RELEASE)/BitVectors/lib/
-	cp $(BITVECTORS)/lib/* $(RELEASE)/lib/
+	#cp -f $(BITVECTORS)/include/*.h $(RELEASE)/BitVectors/include/
+	cp -f $(BITVECTORS)/include/*.h $(RELEASE)/include/
+	#cp -f $(BITVECTORS)/lib/* $(RELEASE)/BitVectors/lib/
+	cp -f $(BITVECTORS)/lib/* $(RELEASE)/lib/
 	# copy RTL2AAMATCHER
-	cp $(RTL2AAMATCHER)/include/*.h $(RELEASE)/include/
-	cp $(RTL2AAMATCHER)/lib/*.so $(RELEASE)/lib/
+	cp -f $(RTL2AAMATCHER)/include/*.h $(RELEASE)/include/
+	cp -f $(RTL2AAMATCHER)/lib/*.so $(RELEASE)/lib/
 	# copy the pthreadUtils.
-	#cp $(PTHREADUTILS)/include/*.h $(RELEASE)/pthreadUtils/include/
-	cp $(PTHREADUTILS)/include/*.h $(RELEASE)/include/
-	cp $(GNUPTHUTILS)/include/*.h $(RELEASE)/include/
+	#cp -f $(PTHREADUTILS)/include/*.h $(RELEASE)/pthreadUtils/include/
+	cp -f $(PTHREADUTILS)/include/*.h $(RELEASE)/include/
+	cp -f $(GNUPTHUTILS)/include/*.h $(RELEASE)/include/
 	# copy the testbench
-	#cp $(CTESTBENCH)/include/*.h $(RELEASE)/CtestBench/include/
-	cp $(CTESTBENCH)/include/SockPipes.h $(RELEASE)/include/
-	cp $(CTESTBENCH)/include/SocketLib.h $(RELEASE)/include/
-	cp $(CTESTBENCH)/include/Vhpi.h $(RELEASE)/include/
-	#cp $(CTESTBENCH)/lib/* $(RELEASE)/CtestBench/lib/
-	cp $(CTESTBENCH)/lib/* $(RELEASE)/lib/
+	#cp -f $(CTESTBENCH)/include/*.h $(RELEASE)/CtestBench/include/
+	cp -f $(CTESTBENCH)/include/SockPipes.h $(RELEASE)/include/
+	cp -f $(CTESTBENCH)/include/SocketLib.h $(RELEASE)/include/
+	cp -f $(CTESTBENCH)/include/Vhpi.h $(RELEASE)/include/
+	#cp -f $(CTESTBENCH)/lib/* $(RELEASE)/CtestBench/lib/
+	cp -f $(CTESTBENCH)/lib/* $(RELEASE)/lib/
 	# copy the VHDL files
-	cp $(VHDL)/release/*.vhdl $(RELEASE)/vhdl/
-	cp -r $(VHDL)/unisims $(RELEASE)/vhdl/
-	#cp $(VHDL)/unisims/*.cf $(RELEASE)/vhdl/
-	#cp $(VHDL)/unisims/*.o $(RELEASE)/vhdl/
-	#cp $(VHDL)/simprims/*.vhd* $(RELEASE)/vhdl/
+	cp -f $(VHDL)/release/*.vhdl $(RELEASE)/vhdl/
+	cp -f -r $(VHDL)/unisims $(RELEASE)/vhdl/
+	#cp -f $(VHDL)/unisims/*.cf $(RELEASE)/vhdl/
+	#cp -f $(VHDL)/unisims/*.o $(RELEASE)/vhdl/
+	#cp -f $(VHDL)/simprims/*.vhd* $(RELEASE)/vhdl/
 	# copy the function library
 	rm -rf $(RELEASE)/functionLibrary
-	cp -r $(FUNCTIONLIB) $(RELEASE)/
+	cp -f -r $(FUNCTIONLIB) $(RELEASE)/
 	# copy the documents..
-	cp ./Documents/AhirV2/AhirV2.pdf $(RELEASE)/docs/pdf/Overview.pdf
-	cp $(AA)/docs/*.pdf $(RELEASE)/docs/pdf/
-	cp $(AA)/docs/*.html $(RELEASE)/docs/html/
-	cp $(LLVM2AA)/docs/llvm2aa.pdf $(RELEASE)/docs/pdf/
-	cp $(CTESTBENCH)/docs/*.pdf $(RELEASE)/docs/pdf/
+	cp -f ./Documents/AhirV2/AhirV2.pdf $(RELEASE)/docs/pdf/Overview.pdf
+	cp -f $(AA)/docs/*.pdf $(RELEASE)/docs/pdf/
+	cp -f $(AA)/docs/*.html $(RELEASE)/docs/html/
+	cp -f $(LLVM2AA)/docs/llvm2aa.pdf $(RELEASE)/docs/pdf/
+	cp -f $(CTESTBENCH)/docs/*.pdf $(RELEASE)/docs/pdf/
 	# scripts
-	cp $(SCRIPTS)/ghdlSanitize.sh $(RELEASE)/bin/
-	cp $(SCRIPTS)/formatVhdlFiles.py $(RELEASE)/bin/
+	cp -f $(SCRIPTS)/ghdlSanitize.sh $(RELEASE)/bin/
+	cp -f $(SCRIPTS)/formatVhdlFiles.py $(RELEASE)/bin/
 
 Clean:
 	rm -f $(RELEASE)/bin/*

@@ -967,19 +967,13 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> 
 
 				AaExpression* first = write_expr_vector[I-1];
 				AaExpression* second = write_expr_vector[I];
-				string delay_trans_name = "delay_transition_" +
-								Int64ToStr(first->Get_Index()) + "_" +
-								Int64ToStr(second->Get_Index());
-
-				ofile << "$T [" << delay_trans_name << "] $delay" <<  endl;
-				__J(delay_trans_name, __SCT(first));	
-				__J(__SST(second), delay_trans_name);
+				__J(__SST(second), __UCT(first));
 				if(pipeline_flag && (I == (fI-1)))
 				{
 					AaExpression* last = write_expr_vector[I];
 
 					ofile << "// ring dependency in pipeline." << endl;
-					__MJ(__SST(first_expr), __SCT(last),  false); // no-bypass.
+					__MJ(__SST(first_expr), __UCT(last),  true); // bypass.
 				}
 			}
 
@@ -998,7 +992,7 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> 
 			if(pipeline_flag)
 			{
 				ofile << "// ring dependency in pipeline." << endl;
-				__MJ(__SST(first_expr), __UCT(last_expr),  false); // no-bypass.
+				__MJ(__SST(first_expr), __UCT(last_expr),  true); // bypass.
 			}
 		}
 	}

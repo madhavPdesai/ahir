@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------------------------
 --
--- Copyright (C) 2010-: Madhav P. Desai
+-- Copyright (C) 2010-: Madhav P. Desai, Ch. V. Kalyani
 -- All Rights Reserved.
 --  
 -- Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,61 +29,58 @@
 -- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 -- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+
 ------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
--- a level to pulse translator used at the
--- output end of a data-path operator in order
--- to interface to the control path.
--- Madhav Desai.
-entity Level_To_Pulse_Translate_Entity is
-  generic (name : string);
-  port(
-	rL : out std_logic;
-        rR : in  boolean;
-        aL : in std_logic;
-        aR : out boolean;
-        clk : in std_logic;
-        reset : in std_logic);
+entity SPRAM_GENERIC is
+	generic (address_width: integer := 4; data_width: integer := 4);
+	port(A : in std_logic_vector(address_width-1 downto 0 );
+	CE : in std_logic;
+	WEB: in std_logic;
+	OEB: in std_logic;
+	CSB: in std_logic;
+	I  : in std_logic_vector(data_width-1 downto 0);
+	O  : out std_logic_vector(data_width-1 downto 0));
 end entity;
 
-architecture Behave of Level_To_Pulse_Translate_Entity is
-  type L2PState is (Idle,WaitForAckL);
-  signal l2p_state : L2PState;
-begin  -- Behave
+architecture XilinxBramInfer of SPRAM_GENERIC is
+  type MemArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
+  signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
+  signal address_reg : std_logic_vector(address_width-1 downto 0);
+  signal rd_enable_reg : std_logic;
+  signal dataout : std_logic_vector(data_width-1 downto 0);
+begin  -- XilinxBramInfer
 
-  process(clk, reset, aL, rR, l2p_state)
-    variable nstate : L2PState;
+  -- read/write process
+  process(CE, A, CSB, WEB)
   begin
-    nstate := l2p_state;
-    rL <= '0';
-    aR <= false;
 
-    case l2p_state is
-        when Idle =>
-          if(rR) then
-              nstate := WaitForAckL;
-          end if;
-        when WaitForAckL =>
-          rL <= '1';
-          if(aL = '1') then
-            aR <= true;
-	    if(rR)  then
-               nstate := WaitForAckL;
-            else
-               nstate := Idle;
-	    end if;
-          end if; 
-        when others => null;
-      end case;
+    -- synch read-write memory
+    if(CE'event and CE ='1') then
 
-    if(clk'event and clk = '1') then
-	if reset = '1' then
-		l2p_state <= Idle;
-	else
-      		l2p_state <= nstate;
-	end if;
+     	-- register the address
+	-- and use it in a separate assignment
+	-- for the delayed read.
+      address_reg <= A;
+
+      rd_enable_reg <= not(CSB) and WEB;
+
+      if(CSB = '0' and WEB = '0') then
+        mem_array(To_Integer(unsigned(A))) <= I;
+      end if;
     end if;
   end process;
-end Behave;
+      	
+	-- use the registered read enable with the registered address to 
+	-- describe the read
+  dataout <= mem_array(To_Integer(unsigned(address_reg))) when (rd_enable_reg = '1');
+
+  O <= dataout when (OEB = '0') else (others => 'Z');
+end XilinxBramInfer;
+
+
+
+

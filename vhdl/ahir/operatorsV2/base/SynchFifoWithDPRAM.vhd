@@ -172,7 +172,6 @@ begin  -- SimModel
     
     if(clk'event and clk = '1') then
       if(reset = '1') then
-        pop_ack_int  <=  '0';        
 	queue_size <= 0;
         read_pointer <= (others => '0');
         write_pointer <= (others => '0');

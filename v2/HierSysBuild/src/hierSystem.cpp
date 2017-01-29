@@ -836,7 +836,8 @@ void Write_Signal_Interface_Assignments(int num_reads, int num_writes, string pi
 	}
 }
 
-void Write_Pipe_Access_Process(string sim_link_prefix, string pipe_id, int pipe_width, int num_reads, int num_writes, ostream& ofile)
+void Write_Pipe_Access_Process(bool is_signal,
+				string sim_link_prefix, string pipe_id, int pipe_width, int num_reads, int num_writes, ostream& ofile)
 {
 	if(num_reads > 0 && num_writes > 0)
 		return;
@@ -864,7 +865,22 @@ void Write_Pipe_Access_Process(string sim_link_prefix, string pipe_id, int pipe_
 
 
 		string arg_name = pipe_id + "_pipe_write_data";
-		ofile << arg_name << " <= Unpack_String(val_string," <<  pipe_width << ");" << endl;
+
+		if(is_signal)
+		// after reading the pipe in VHPI, the pipe value drops back to 
+		// 0.  To prevent this, we create a latch..
+		{
+			ofile << "wait for 1 ns;" << endl; // let write_req settle to its new value.
+			ofile << "if (" << pipe_id << "_pipe_write_req(0) = '1') then " << endl;
+			ofile << " -- { " << endl;
+			ofile << arg_name << " <= Unpack_String(val_string," << pipe_width << ");" << endl;
+			ofile << "-- } " << endl;
+			ofile << "end if;" << endl;
+		}
+		else
+		{
+			ofile << arg_name << " <= Unpack_String(val_string," << pipe_width << ");" << endl;
+		}
 	}
 	else if(num_reads == 0 && num_writes >  0)
 	{
@@ -1004,10 +1020,11 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		int num_reads = 1;
 		int num_writes = 0;
 
-		if(this->Is_Signal(pipe_id))
+		bool is_signal = this->Is_Signal(pipe_id);
+		if(is_signal)
 			Write_Signal_Interface_Assignments(num_reads, num_writes, pipe_id, ofile);
 
-		Write_Pipe_Access_Process(sim_link_prefix, pipe_id, pipe_width, num_reads, num_writes,ofile); 
+		Write_Pipe_Access_Process(is_signal, sim_link_prefix, pipe_id, pipe_width, num_reads, num_writes,ofile); 
 	}
 
 	// output pipe related code.
@@ -1019,10 +1036,11 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		int num_reads = 0;
 		int num_writes = 1;
 
-		if(this->Is_Signal(pipe_id))
+		bool is_signal = this->Is_Signal(pipe_id);
+		if(is_signal)
 			Write_Signal_Interface_Assignments(num_reads, num_writes, pipe_id, ofile);
 
-		Write_Pipe_Access_Process(sim_link_prefix, pipe_id, pipe_width, num_reads, num_writes,ofile); 
+		Write_Pipe_Access_Process(is_signal, sim_link_prefix, pipe_id, pipe_width, num_reads, num_writes,ofile); 
 	}
 
 	this->Print_Vhdl_Instance_In_Testbench("dut", ofile);

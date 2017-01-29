@@ -1,0 +1,5 @@
+An example to illustrate that current balancing
+implementation fails on complex expressions.
+We will need to break complex expressions into
+simple expressions in order to do balancing.
+

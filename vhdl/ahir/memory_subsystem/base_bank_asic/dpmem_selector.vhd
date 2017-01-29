@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------------------------
 --
--- Copyright (C) 2010-: Madhav P. Desai
+-- Copyright (C) 2010-: Madhav P. Desai, Ch. V. Kalyani
 -- All Rights Reserved.
 --  
 -- Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,61 +29,50 @@
 -- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 -- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
-------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
+
+
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
--- a level to pulse translator used at the
--- output end of a data-path operator in order
--- to interface to the control path.
--- Madhav Desai.
-entity Level_To_Pulse_Translate_Entity is
-  generic (name : string);
-  port(
-	rL : out std_logic;
-        rR : in  boolean;
-        aL : in std_logic;
-        aR : out boolean;
-        clk : in std_logic;
-        reset : in std_logic);
-end entity;
+library ahir;
+use ahir.mem_ASIC_components.all;
 
-architecture Behave of Level_To_Pulse_Translate_Entity is
-  type L2PState is (Idle,WaitForAckL);
-  signal l2p_state : L2PState;
-begin  -- Behave
+-- Entity to instantiate different available memory cuts based on the 
+-- address_width and data_width generics passed.
+entity dpmem_selector is
+	generic(address_width: integer:=8; data_width: integer:=8);
+	port (A1 : in std_logic_vector(address_width-1 downto 0 );
+	A2 : in std_logic_vector(address_width-1 downto 0 );
+	CE1 : in std_logic;
+	CE2 : in std_logic;
+	WEB1: in std_logic;
+	WEB2: in std_logic;
+	OEB1: in std_logic;
+	OEB2: in std_logic;
+	CSB1: in std_logic;
+	CSB2: in std_logic;
+	I1  : in std_logic_vector(data_width-1 downto 0);
+	I2  : in std_logic_vector(data_width-1 downto 0);
+	O1  : out std_logic_vector(data_width-1 downto 0);
+	O2  : out std_logic_vector(data_width-1 downto 0));
+end entity dpmem_selector;
 
-  process(clk, reset, aL, rR, l2p_state)
-    variable nstate : L2PState;
-  begin
-    nstate := l2p_state;
-    rL <= '0';
-    aR <= false;
+architecture behave of dpmem_selector is
 
-    case l2p_state is
-        when Idle =>
-          if(rR) then
-              nstate := WaitForAckL;
-          end if;
-        when WaitForAckL =>
-          rL <= '1';
-          if(aL = '1') then
-            aR <= true;
-	    if(rR)  then
-               nstate := WaitForAckL;
-            else
-               nstate := Idle;
-	    end if;
-          end if; 
-        when others => null;
-      end case;
+begin
 
-    if(clk'event and clk = '1') then
-	if reset = '1' then
-		l2p_state <= Idle;
-	else
-      		l2p_state <= nstate;
-	end if;
-    end if;
-  end process;
-end Behave;
+  c1: if (address_width = 4 and data_width = 4) generate 
+	u1: DPRAM_16x4 port map(A1, A2, CE1, CE2, WEB1, WEB2, OEB1, OEB2, CSB1, CSB2, I1, I2, O1, O2);
+	end generate;
+
+  c2: if (address_width = 4 and data_width = 8) generate 
+	u1: obc11_dpram_16x8 port map(A1, A2, CE1, CE2, WEB1, WEB2, OEB1, OEB2, CSB1, CSB2, I1, I2, O1, O2);
+	end generate;
+
+  c3: if (address_width = 5 and data_width = 8) generate
+	u1: DPRAM_32x8 port map(A1, A2, CE1, CE2, WEB1, WEB2, OEB1, OEB2, CSB1, CSB2, I1, I2, O1, O2);
+	end generate;
+
+end behave;

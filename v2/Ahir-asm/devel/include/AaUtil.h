@@ -39,6 +39,8 @@ string Tab_(unsigned int n);
 // IntToStr
 string IntToStr(int x);
 string Int64ToStr(int64_t x);
+string UintToStr(uint32_t x);
+string Uint64ToStr(uint64_t x);
 
 // string compare
 struct StringCompare:public binary_function

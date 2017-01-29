@@ -1,0 +1,26 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$module [dependency_check_daemon] $in() $out () $is
+{
+
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+
+		$merge $entry $loopback $endmerge
+
+		X0 := in_data
+		X1 := in_data
+		X2 := in_data
+		X3 := in_data
+
+		out_data := X0
+		out_data := X1
+		out_data := X2
+		out_data := X3
+
+		$while 1
+	}
+}
