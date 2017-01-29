@@ -827,10 +827,13 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	}
 	else
 	{
-		// in the full-rate case, we will double buffer the input
-		// to isolate the interior of the called function from
-		// the exterior.  Note that bypass-flag is set to true.
-		int input_buffering  = ( (this->_pipeline_flag  && this->_pipeline_full_rate_flag) ? 2 : 1);
+		//
+		// int input_buffering  = ( (this->_pipeline_flag  && this->_pipeline_full_rate_flag) ? 2 : 1);
+		//
+		
+		
+		int input_buffering  = 0; // no need to buffer here!
+
 		ofile << "in_buffer: UnloadBuffer -- { " << endl;
 		ofile << " generic map(name => \"" << this->Get_VHDL_Id() << "_input_buffer\", -- {" << endl
 			<< " buffer_size => " << input_buffering << "," <<  endl 
@@ -940,7 +943,10 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	else
 	{
 		// output buffering to 2 in pipeline full-rate case.
-		int output_buffering = ( (this->_pipeline_flag && this->_pipeline_full_rate_flag) ? 2 : 1);
+		//int output_buffering = ( (this->_pipeline_flag && this->_pipeline_full_rate_flag) ? 2 : 1);
+
+
+		int output_buffering = 0; // no need to buffer here!
 
 		// instantiate receive-buffer for each input.
 		ofile <<  "out_buffer: ReceiveBuffer -- {" << endl
@@ -1101,11 +1107,13 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 void vcModule::Print_VHDL_Tag_Logic(ostream& ofile)
 {
 	int ilock_depth = (this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1);
+	bool bypass_flag = this->_pipeline_flag; // cut a clock cycle.
 
 	ofile << "-- interlock buffer for TAG.. to provide required buffering." << endl;
 	ofile << "tagIlock: InterlockBuffer -- { " << endl
 		<< " generic map(name => \"tag-interlock-buffer\", -- {" << endl
 		<< " buffer_size => " << ilock_depth << "," << endl
+		<< " bypass_flag => " << (bypass_flag ? "true" : "false") << "," << endl
 		<< " in_data_width => tag_length," << endl
 		<< " out_data_width => tag_length) -- }" << endl;
 	ofile << " port map(write_req => " << "tag_ilock_write_req_symbol, -- {" << endl
