@@ -219,6 +219,7 @@ class AaModule: public AaSeriesBlockStatement
   }
 
   void Print_Attributes(ostream& ofile);
+  void Write_VC_Attributes(ostream& ofile);
 
   unsigned int Get_Number_Of_Input_Arguments() {return(this->_input_args.size());}
   AaInterfaceObject* Get_Input_Argument(unsigned int index)

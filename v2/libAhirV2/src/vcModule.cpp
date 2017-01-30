@@ -830,9 +830,14 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		//
 		// int input_buffering  = ( (this->_pipeline_flag  && this->_pipeline_full_rate_flag) ? 2 : 1);
 		//
-		
-		
-		int input_buffering  = 0; // no need to buffer here!
+		int input_buffering  = 0;
+		if(this->Has_Attribute("input_buffering"))
+		{
+			string qstring = this->Find_Attribute_Value("input_buffering");
+			string iqstring = qstring.substr(1,qstring.size()-1);
+			input_buffering = atoi(iqstring.c_str());
+			vcSystem::Info("input buffering set to " + IntToStr(input_buffering) + " in module " + this->Get_VHDL_Id());
+		}
 
 		ofile << "in_buffer: UnloadBuffer -- { " << endl;
 		ofile << " generic map(name => \"" << this->Get_VHDL_Id() << "_input_buffer\", -- {" << endl
@@ -943,10 +948,17 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	else
 	{
 		// output buffering to 2 in pipeline full-rate case.
-		//int output_buffering = ( (this->_pipeline_flag && this->_pipeline_full_rate_flag) ? 2 : 1);
-
+		// int output_buffering = ( (this->_pipeline_flag && this->_pipeline_full_rate_flag) ? 2 : 1);
 
 		int output_buffering = 0; // no need to buffer here!
+		if(this->Has_Attribute("output_buffering"))
+		{
+			string qstring = this->Find_Attribute_Value("output_buffering");
+			string iqstring = qstring.substr(1,qstring.size()-1);
+			output_buffering = atoi(iqstring.c_str());
+
+			vcSystem::Info("output buffering set to " + IntToStr(output_buffering) + " in module " + this->Get_VHDL_Id());
+		}
 
 		// instantiate receive-buffer for each input.
 		ofile <<  "out_buffer: ReceiveBuffer -- {" << endl

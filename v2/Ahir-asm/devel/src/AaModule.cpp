@@ -731,6 +731,8 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
       this->Write_VC_Links(opt_flag, ofile);
     }
 
+  this->Write_VC_Attributes(ofile);
+
   ofile << "}" << endl;
 }
 
@@ -803,6 +805,17 @@ void AaModule::Write_VC_Memory_Spaces(bool opt_flag, ostream& ofile)
 {
 	for(int idx = 0; idx < _memory_spaces.size(); idx++)
 		_memory_spaces[idx]->Write_VC_Model(opt_flag, ofile);
+}
+
+
+void AaModule::Write_VC_Attributes(ostream& ofile)
+{
+  for(map<string,string>::iterator iter = _attribute_map.begin(), fiter =_attribute_map.end();
+      iter != fiter;
+      iter++)
+    {
+      ofile << "$attribute " << (*iter).first << " => \"" << (*iter).second << "\"" << endl;
+    }
 }
 
 

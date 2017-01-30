@@ -10,6 +10,8 @@ $pipeline $depth 5 $buffering 2 $fullrate
 {
 	b := a $buffering 2
 	$attribute delay 4
+	$attribute input_buffering  0
+	$attribute output_buffering 0
 }
 
 

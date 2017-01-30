@@ -367,6 +367,7 @@ protected:
 
   bool Has_Attribute(string tag);
   string Find_Attribute_Value(string tag);
+  int QuotedStringToInt (string qstring);
 
   string Get_Id();
   virtual string Get_VHDL_Id() {return(To_VHDL(this->Get_Id()));}
