@@ -207,6 +207,7 @@ begin
 	variable latch_caller_tag_var : std_logic;
    begin
       latch_caller_tag_var := '0';
+      tvar := (others => '0');
       for T in 0 to num_reqs-1 loop
          if(pe_call_reqs(T) = '1' and latch_call_data = '1') then
             latch_caller_tag_var := '1';
