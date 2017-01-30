@@ -27,13 +27,20 @@ int main(int argc, char* argv[])
 	uint8_t idx;
 	for(idx = 0; idx < ORDER; idx++)
 	{
-		uint8_t val = rand();
+		uint8_t val = idx;
 		expected_result = 3*val;
 		write_uint8("in_data",val);
-		result = read_uint8("out_data");
-		fprintf(stdout,"Result = %x, expected = %x.\n", result,expected_result);
 		
 	}
+
+	for(idx = 0; idx < ORDER; idx++)
+	{
+		uint8_t val = idx;
+		expected_result = 3*val;
+		result = read_uint8("out_data");
+		fprintf(stdout,"Result = %x, expected = %x.\n", result,expected_result);
+	}
+
 
 	return(0);
 }

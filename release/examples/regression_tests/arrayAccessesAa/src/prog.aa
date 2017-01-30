@@ -22,9 +22,17 @@ $module [run_daemon] $in () $out () $is
 
 		D[I][I][I][1] := ((A[I] + B[I][I]) + C[I][0][I])
 
-		out_data := D[I][I][I][1]
-
 		$while (I < 3)
+
+		$dopipeline $depth 3 $buffering 2 $fullrate
+		$merge $entry $loopback
+			$phi J := ($bitcast ($uint<2>) 0) $on $entry NJ $on $loopback
+		$endmerge
+		$volatile NJ := (J+1)
+		
+		out_data := D[J][J][J][1]
+
+		$while (J < 3)
 	}
 }
 

@@ -51,6 +51,7 @@ architecture XilinxBramInfer of base_bank is
   signal mem_array : MemArray((2**g_addr_width)-1 downto 0) := (others => (others => '0'));
   signal addr_reg : std_logic_vector(g_addr_width-1 downto 0);
   signal rd_enable_reg : std_logic;
+  signal read_data, read_data_reg: std_logic_vector(g_data_width-1 downto 0);
 begin  -- XilinxBramInfer
 
   -- read/write process
@@ -77,9 +78,8 @@ begin  -- XilinxBramInfer
       end if;
     end if;
   end process;
-      	
-	-- use the registered read enable with the registered address to 
-	-- describe the read
-  dataout <= mem_array(To_Integer(unsigned(addr_reg))) when (rd_enable_reg = '1');
+
+  -- read data.
+  dataout <= mem_array(To_Integer(unsigned(addr_reg)));
 
 end XilinxBramInfer;
