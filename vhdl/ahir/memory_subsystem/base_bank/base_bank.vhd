@@ -80,6 +80,17 @@ begin  -- XilinxBramInfer
   end process;
 
   -- read data.
-  dataout <= mem_array(To_Integer(unsigned(addr_reg)));
+  read_data <= mem_array(To_Integer(unsigned(addr_reg)));
+  process(clk) 
+  begin
+	if(clk'event and clk = '1') then
+		if(rd_enable_reg = '1') then
+			read_data_reg <= read_data;
+		end if;
+	end if;
+  end process;
+
+  -- to maintain dataout to the last value that was read!
+  dataout <= read_data when (rd_enable_reg = '1') else read_data_reg;
 
 end XilinxBramInfer;
