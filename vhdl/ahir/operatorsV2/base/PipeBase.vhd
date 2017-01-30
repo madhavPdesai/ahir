@@ -73,7 +73,12 @@ architecture default_arch of PipeBase is
   signal signal_data : std_logic_vector(data_width-1 downto 0); 
   signal written_at_least_once: std_logic;
 
-  constant shallow_flag : boolean := ((data_width <= 4) and (depth <= 16)) or ((data_width > 4) and (depth <= 4));
+  --
+  -- shallow => will be implemented using flip-flops.  Can be expensive!
+  --
+  constant shallow_flag : boolean :=    (data_width < 8) or          -- narrow queue
+					(depth = 1) or		     -- shallow queue
+					((data_width*depth) < 256);  -- at most 256 bits?
   
 begin  -- default_arch
 
