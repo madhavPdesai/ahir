@@ -86,7 +86,7 @@ begin  -- SimModel
   tied_to_high <= '1';
   data_tied_to_low <= (others => '0');
 
-  assert(queue_depth > 2) report "Synch FIFO depth must be greater than 2" severity failure;
+  assert(queue_depth > 1) report "Synch FIFO depth must be greater than 1" severity failure;
   assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
 
   qD1: if (queue_depth = 1) generate
