@@ -4,6 +4,17 @@ $pipe out_data : $uint<32> $depth 2
 $pipe spl_in_data  : $uint<32> $depth 2
 $pipe spl_out_data : $uint<32> $depth 2
 
+$module  [echo4] $in (a b c d: $uint<32>) $out (p q r s: $uint<32>) $is
+{
+	p := a $buffering 2
+	q := b $buffering 2
+	r := c $buffering 2
+	s := d $buffering 2
+	$attribute delay 4
+	$attribute input_buffering  0
+	$attribute output_buffering 0
+}
+
 
 $pipeline $depth 5 $buffering 2 $fullrate
 	$module  [echo] $in (a: $uint<32>) $out (b: $uint<32>) $is
@@ -30,10 +41,7 @@ $module [call_dependency_check_daemon] $in() $out () $is
 		X2 := in_data
 		X3 := in_data
 
-		$call echo (X0) (X00)
-		$call echo (X1) (X11)
-		$call echo (X2) (X22)
-		$call echo (X3) (X33)
+		$call echo4 (X0 X1 X2 X3) (X00 X11 X22 X33)
 
 		out_data := X00
 		out_data := X11
@@ -48,12 +56,18 @@ $storage p q: $uint<32>
 
 $module [setp] $in (X: $uint<32>) $out () $is {
 	p := X
+	$attribute input_buffering  0
+	$attribute output_buffering 0
 }
 $module [copyp] $in () $out () $is {
 	q := p 
+	$attribute input_buffering  0
+	$attribute output_buffering 0
 }
 $module [getq] $in () $out (X: $uint<32>) $is {
 	X := q
+	$attribute input_buffering  0
+	$attribute output_buffering 0
 }
 
 
