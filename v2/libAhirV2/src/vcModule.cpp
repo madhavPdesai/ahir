@@ -827,10 +827,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	}
 	else
 	{
-		//
-		// int input_buffering  = ( (this->_pipeline_flag  && this->_pipeline_full_rate_flag) ? 2 : 1);
-		//
-		int input_buffering  = 0;
+		int input_buffering  = ( (this->_pipeline_flag  && this->_pipeline_full_rate_flag) ? 2 : 1);
 		if(this->Has_Attribute("input_buffering"))
 		{
 			string qstring = this->Find_Attribute_Value("input_buffering");
@@ -843,7 +840,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		ofile << " generic map(name => \"" << this->Get_VHDL_Id() << "_input_buffer\", -- {" << endl
 			<< " buffer_size => " << input_buffering << "," <<  endl 
 			<< " full_rate => false," <<  endl // no need, double buffering.
-			<< " bypass_flag => true," << endl // cut the latency.. 
+			<< " bypass_flag => false," << endl  // lets not be over-aggressive!
 			<< " data_width => tag_length + " << this->Get_In_Arg_Width() << ") -- } " << endl;
 		ofile << " port map(write_req => in_buffer_write_req, -- { " << endl
 			<< " write_ack => in_buffer_write_ack, " << endl
@@ -948,9 +945,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	else
 	{
 		// output buffering to 2 in pipeline full-rate case.
-		// int output_buffering = ( (this->_pipeline_flag && this->_pipeline_full_rate_flag) ? 2 : 1);
-
-		int output_buffering = 0; // no need to buffer here!
+		int output_buffering = ( (this->_pipeline_flag && this->_pipeline_full_rate_flag) ? 2 : 1);
 		if(this->Has_Attribute("output_buffering"))
 		{
 			string qstring = this->Find_Attribute_Value("output_buffering");
