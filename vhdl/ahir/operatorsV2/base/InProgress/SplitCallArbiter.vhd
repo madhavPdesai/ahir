@@ -73,7 +73,7 @@ end SplitCallArbiter;
 
 
 architecture Struct of SplitCallArbiter is
-   signal pe_call_reqs, pe_call_reqs_reg: std_logic_vector(num_reqs-1 downto 0);
+   signal pe_call_reqs:  std_logic_vector(num_reqs-1 downto 0);
    signal return_acks_sig: std_logic_vector(num_reqs-1 downto 0);
 
    type TwordArray is array (natural range <>) of std_logic_vector(return_mdata'length-1 downto 0);
@@ -87,12 +87,15 @@ architecture Struct of SplitCallArbiter is
 
 
    signal latch_call_data : std_logic;
-   signal call_mdata_prereg  : std_logic_vector(call_data_width-1 downto 0);
-   signal callee_mtag_prereg, callee_mtag_reg  : std_logic_vector(callee_tag_length-1 downto 0);
-   signal caller_mtag_reg  : std_logic_vector(caller_tag_length-1 downto 0);
+   signal call_mdata_prereg, call_mdata_reg  : std_logic_vector(call_data_width-1 downto 0);
+   signal callee_mtag_prereg, callee_mtag_reg, callee_mtag_forwarded  : 
+					std_logic_vector(callee_tag_length-1 downto 0);
+   signal caller_mtag_prereg, caller_mtag_reg, caller_mtag_forwarded  : 
+					std_logic_vector(caller_tag_length-1 downto 0);
 
    signal fair_call_reqs, fair_call_acks: std_logic_vector(num_reqs-1 downto 0);
    signal return_mreq_sig : std_logic_vector(num_reqs-1 downto 0); 
+   signal call_accept_bypass, latch_caller_tag: std_logic;
 
 begin
   -----------------------------------------------------------------------------
@@ -112,17 +115,24 @@ begin
    ----------------------------------------------------------------------------
    process(clk,pe_call_reqs,call_state,call_mack,reset)
         variable nstate: CallStateType;
-        variable there_is_a_call : std_logic;
+        variable there_is_a_call, call_accept_bypass_var : std_logic;
+
    begin
 	nstate := call_state;
         there_is_a_call := OrReduce(pe_call_reqs);
+	call_accept_bypass_var := '0';
+
 	latch_call_data <= '0';
 	call_mreq <= '0';
 
 	if(call_state = idle) then
 		if(there_is_a_call = '1') then
+			call_mreq <= '1';
 			latch_call_data <=  '1';
-			nstate := busy;
+			call_accept_bypass_var := '1';
+			if(call_mack /= '1') then
+				nstate := busy;
+			end if;
 		end if;
 	elsif (call_state = busy) then
 		call_mreq <= '1';
@@ -135,10 +145,11 @@ begin
 		end if;
 	end if;
 	
+        call_accept_bypass <= call_accept_bypass_var;
+
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			call_state <= idle;
-			pe_call_reqs_reg <= (others => '0');
 		else
 			call_state <= nstate;
 		end if;
@@ -149,7 +160,7 @@ begin
 
    -- combinational process.. generate fair_call_acks, and also
    -- mux to input of call data register.
-   process(pe_call_reqs,latch_call_data,call_data)
+   process(pe_call_reqs,call_accept_bypass, latch_call_data, call_data)
 	variable out_data : std_logic_vector(call_data_width-1 downto 0);
    begin
 	fair_call_acks <= (others => '0');
@@ -158,8 +169,7 @@ begin
        		if(pe_call_reqs(I) = '1') then
 			out_data := call_data(((I+1)*call_data_width)-1 downto
 							I*call_data_width);
-       			-- Extract(call_data,I,out_data);
-			if(latch_call_data = '1') then
+			if((call_accept_bypass = '1') or (latch_call_data = '1')) then
 				fair_call_acks(I) <= '1';
 			end if;
        		end if;
@@ -172,12 +182,18 @@ begin
    begin
      if(clk'event and clk = '1') then
      	if(latch_call_data = '1') then
-		call_mdata <= call_mdata_prereg;
+		call_mdata_reg  <= call_mdata_prereg;
 		callee_mtag_reg <= callee_mtag_prereg;
         end if;  -- I
      end if;
    end process;
- 
+
+
+   --
+   -- forwarded data
+   --
+   call_mdata <= call_mdata_prereg when call_accept_bypass = '1' else call_mdata_reg;
+   callee_mtag_forwarded <= callee_mtag_prereg when call_accept_bypass = '1' else callee_mtag_reg;
 
    -- tag generation.
    tagGen : BinaryEncoder generic map (name => name & "-tagGen", iwidth => num_reqs,
@@ -188,20 +204,32 @@ begin
    -- side..
    process(clk)
 	variable tvar : std_logic_vector(caller_tag_length-1 downto 0);
+	variable latch_caller_tag_var : std_logic;
    begin
-       if(clk'event and clk = '1') then
-	for T in 0 to num_reqs-1 loop
+      latch_caller_tag_var := '0';
+      tvar := (others => '0');
+      for T in 0 to num_reqs-1 loop
          if(pe_call_reqs(T) = '1' and latch_call_data = '1') then
-           tvar := call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
+            latch_caller_tag_var := '1';
+            tvar := call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
          end if;
-        end loop;
-	caller_mtag_reg <= tvar;
+       end loop;
+
+       caller_mtag_prereg <= tvar;
+       latch_caller_tag <= latch_caller_tag_var;
+
+       if(clk'event and clk = '1') then
+        if(latch_caller_tag_var = '1') then
+		caller_mtag_reg <= tvar;
+	end if;
        end if;
    end process;     
 
    -- call tag.
-   call_mtag <= callee_mtag_reg & caller_mtag_reg;
+   caller_mtag_forwarded <= caller_mtag_prereg when call_accept_bypass = '1' else caller_mtag_reg;
 
+   -- mtag forwarded to called function.
+   call_mtag <= callee_mtag_forwarded & caller_mtag_forwarded;
 
    ----------------------------------------------------------------------------
    -- reverse path
@@ -230,10 +258,8 @@ begin
      return_tag <= lreturn_tag;
    end process;
 
-   -- always ready to accept return data!
-   -- Sorry, this is broken..  What if successive returns
-   -- arrive from a pipelined module aimed at the same destination?
-   -- Back-pressure is needed!
+   -- return mreq is '1' if any of the requesters is 
+   -- accepting the return..
    return_mreq <= OrReduce(return_mreq_sig);
 
    -- return to caller.
@@ -247,6 +273,7 @@ begin
        signal data_reg : std_logic_vector(return_mdata'length-1 downto 0);
        signal tag_reg  : std_logic_vector(caller_tag_length-1 downto 0);
        signal return_state : CallStateType;
+       signal bypass_flag: std_logic;
      begin  -- block fsm
 
        -- valid = '1' implies this index is incoming
@@ -258,27 +285,59 @@ begin
        process(clk,return_state,return_reqs(I),valid_flag,reset)
 	variable nstate: CallStateType;
 	variable latch_var: std_logic;
+	variable bypass_flag_var: std_logic;
+	variable ack_var: std_logic;
        begin
 
 	 nstate := return_state;
+
 	 latch_var := '0';
-	 return_acks_sig(I) <= '0';
+	 bypass_flag_var := '0';
+
+ 	-- indicate to the requester that it can
+	-- pick up return data I.
+	 ack_var := '0';
+
+	-- indicate to the function that I
+	-- is picking up the return data.
+	 return_mreq_sig(I) <= '0';
 
 	 if(return_state = Idle) then
 		if(valid_flag = '1') then
-			latch_var := '1';
-			nstate := Busy;
+
+			-- if I is selected, then ack = '1'.
+			ack_var := '1';
+			bypass_flag_var := '1';
+
+
+			-- if requester I reqs (wants to pick up)
+			-- stay here, since the transfer is completed.
+			-- Otherwise, latch the return data (goto busy)
+			-- so the function can go on.
+			if (return_reqs(I) = '0') then
+				latch_var := '1';
+				nstate := Busy;
+			end if;
 		end if;		
 	 else 
-		return_acks_sig(I) <= '1';
+
+		-- registered data.. keep acking!
+		ack_var := '1';
+
+		-- next returned data is arriving...
+		-- latch it if reqs is accepting.
 		if((valid_flag = '1') and (return_reqs(I) = '1')) then
+			-- registered data is picked up, put the 
+			-- incoming valid data into the latch and hang on.
 			latch_var := '1';
 		elsif (return_reqs(I) = '1') then
 			nstate := Idle;
 		end if;
 	 end if;
 
-	 return_mreq_sig(I) <= latch_var;
+	 bypass_flag <= bypass_flag_var;
+	 return_mreq_sig(I) <= (bypass_flag_var or latch_var);
+	 return_acks_sig(I) <= ack_var;
 
          if clk'event and clk= '1' then
            if(reset = '1') then
@@ -294,8 +353,8 @@ begin
        end process;
 
        -- pass info out of the generate
-       return_data_sig(I) <= data_reg;
-       return_tag_sig(I)  <= tag_reg;
+       return_data_sig(I) <= return_mdata when bypass_flag = '1' else data_reg;
+       return_tag_sig(I)  <= return_mtag (caller_tag_length-1 downto 0) when bypass_flag = '1' else tag_reg;
 
      end block fsm;
      
