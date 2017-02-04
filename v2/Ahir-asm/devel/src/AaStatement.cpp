@@ -2604,10 +2604,11 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	AaStatement* dws = this->Get_Pipeline_Parent();
 	if((dws != NULL)  && (dws->Get_Pipeline_Full_Rate_Flag()))
 	{
+		//
+		// input buffering is used to decouple the
+		// two sides.
+		//
 		/*
-		//
-		// input buffering is not really needed.
-		//
 		for(int i = 0; i < inargs.size(); i++)
 		{
 			string src_name = inargs[i].first;
@@ -2616,6 +2617,10 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 		}
 		*/
 
+		//
+		// output buffering is used to decouple the
+		// two sides.
+		//
 		for(int i = 0; i < outargs.size(); i++)
 		{
 			string tgt_name = outargs[i].first;

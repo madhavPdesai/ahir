@@ -203,7 +203,9 @@ These additional keywords mean the following things:
 that the pipe is a read-only (respectively write-only) object.
 \item The ``\$signal'' keyword means that the pipe behaves
 like a variable.  That is, it remembers the last value
-that was written to it.    
+that was written to it\footnote{    
+Note that a read from a signal will block until the
+signal has been written into at least once!}.
 \end{itemize}
 Pipe depths can be specified by parameters or parameter
 expressions.

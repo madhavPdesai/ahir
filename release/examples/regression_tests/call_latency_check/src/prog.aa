@@ -4,12 +4,14 @@ $pipe out_data : $uint<32> $depth 2
 $pipe spl_in_data  : $uint<32> $depth 2
 $pipe spl_out_data : $uint<32> $depth 2
 
-$module  [echo4] $in (a b c d: $uint<32>) $out (p q r s: $uint<32>) $is
+$pipeline $depth 15 $buffering 2 $fullrate $module  [echo4] $in (t a b c d: $uint<32>) $out (ct p q r s: $uint<32>) $is
 {
-	p := a $buffering 2
-	q := b $buffering 2
-	r := c $buffering 2
-	s := d $buffering 2
+	p := a  $buffering 2
+	q := b  $buffering 2
+	r := c  $buffering 2
+	s := d  $buffering 2
+	ct := t $buffering 2
+
 	$attribute delay 4
 	$attribute input_buffering  0
 	$attribute output_buffering 0
@@ -34,14 +36,18 @@ $module [call_dependency_check_daemon] $in() $out () $is
 		$dopipeline $depth 15 $buffering 4 
 		$fullrate
 
-		$merge $entry $loopback $endmerge
+		$merge $entry $loopback 
+			$phi T := ($bitcast ($uint<32>) 0) $on $entry next_T $on $loopback
+		$endmerge
 
 		X0 := in_data
 		X1 := in_data
 		X2 := in_data
 		X3 := in_data
 
-		$call echo4 (X0 X1 X2 X3) (X00 X11 X22 X33)
+		$volatile next_T := (T + 1)
+
+		$call echo4 (T X0 X1 X2 X3) (cT X00 X11 X22 X33)
 
 		out_data := X00
 		out_data := X11

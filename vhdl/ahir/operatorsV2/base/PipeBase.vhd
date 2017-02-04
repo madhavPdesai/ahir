@@ -76,9 +76,8 @@ architecture default_arch of PipeBase is
   --
   -- shallow => will be implemented using flip-flops.  Can be expensive!
   --
-  constant shallow_flag : boolean :=    (data_width < 8) or          -- narrow queue
-					(depth = 1) or		     -- shallow queue
-					((data_width*depth) < 256);  -- at most 256 bits?
+  constant shallow_flag : boolean :=    (depth < 3) or		     -- shallow queue
+					((data_width*depth) < 64);   -- narrow but not too deep queue..
   
 begin  -- default_arch
 

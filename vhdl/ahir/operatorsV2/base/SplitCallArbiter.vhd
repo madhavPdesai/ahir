@@ -94,7 +94,29 @@ architecture Struct of SplitCallArbiter is
    signal fair_call_reqs, fair_call_acks: std_logic_vector(num_reqs-1 downto 0);
    signal return_mreq_sig : std_logic_vector(num_reqs-1 downto 0); 
 
+   constant ztag: std_logic_vector(callee_tag_length-1 downto 0) := (others => '0');
 begin
+
+  --
+  -- cut through when there is no contention.
+  --
+  singleRequester: if num_reqs = 1 generate
+
+	call_mreq <= call_reqs(0);
+	call_acks(0) <= call_mack;
+	call_mdata <= call_data;
+	call_mtag <= ztag & call_tag;
+
+	return_mreq <= return_reqs(0);
+	return_acks(0) <= return_mack;
+	return_data <= return_mdata;
+        return_tag <= return_mtag (caller_tag_length - 1 downto 0);
+
+  end generate singleRequester;
+
+
+ multipleRequesters: if num_reqs > 1 generate
+
   -----------------------------------------------------------------------------
   -- "fairify" the call-reqs.
   -----------------------------------------------------------------------------
@@ -301,4 +323,5 @@ begin
      
    end generate RetGen;
 
+  end generate multipleRequesters;
 end Struct;

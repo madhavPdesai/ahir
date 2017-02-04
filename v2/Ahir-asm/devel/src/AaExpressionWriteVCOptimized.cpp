@@ -266,14 +266,14 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						set<AaRoot*> root_set;
 						write_stmt->Collect_Root_Sources(root_set);
 
-						for(set<AaRoot*>::iterator iter = root_set.begin(), fiter = root_set.end();
-							iter != fiter; iter++)
+						for(set<AaRoot*>::iterator piter = root_set.begin(), fpiter = root_set.end();
+							piter != fpiter; piter++)
 						{
 							bool forward_dependency = false;
-							if((*iter)->Is_Expression())
+							if((*piter)->Is_Expression())
 							{
 
-								AaExpression* root_write_expr = (AaExpression*) *iter;
+								AaExpression* root_write_expr = (AaExpression*) *piter;
 								AaRoot* root = root_write_expr->Get_Root_Object();
 
 								ofile << "// CHECK THIS." << endl;
@@ -286,19 +286,32 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 										root->Is("AaPhiStatement") && 
 										read_stmt->Is("AaPhiStatement"));
 
-								if (root_is_stmt && (visited_elements.find(root) != visited_elements.end()))
+								bool visited_flag = (visited_elements.find(root) != visited_elements.end()) || (visited_elements.find(root_write_expr) != visited_elements.end());
+										
+								if (visited_flag)
 								{
 									forward_dependency = true;
+									AaRoot* reenabler = NULL;
+
+									if(root == NULL)
+										reenabler = root_write_expr;
+									else
+										reenabler = root;
+					
 									if(!both_are_phi)
 									{
-										ofile << "// root-writer is " << root->To_String() << endl;
-										__J(__UST(root), __SCT(read_stmt));
-										__MJ(__SST(read_stmt), __UCT(root), true);
+										ofile << "// root-writer is " << reenabler->To_String() << endl;
+										__J(__UST(reenabler),
+												 __SCT(read_stmt));
+										__MJ(__SST(read_stmt), __UCT(reenabler), true);
 
-										int rb = ((AaStatement*)root)->Get_Buffering();
-										if(full_rate && (rb < 2))
+										if(root && root->Is_Statement())
 										{
-											((AaStatement*) root)->Set_Buffering(2);
+											int rb = ((AaStatement*)root)->Get_Buffering();
+											if(full_rate && (rb < 2))
+											{
+												((AaStatement*) root)->Set_Buffering(2);
+											}
 										}
 									}
 									else
