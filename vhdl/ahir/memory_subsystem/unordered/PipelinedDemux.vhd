@@ -84,7 +84,7 @@ begin  -- behave
     end process;
       
     Repeater : QueueBase generic map(
-      				name => name & "-Repeater-" & Convert_To_String(I),
+      				name => name & "-Repeater-" & Convert_Integer_To_String(I),
 				queue_depth => 2, data_width => g_data_width)
     port map (
       clk      => clk,

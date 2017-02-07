@@ -70,7 +70,7 @@ begin  -- SimModel
 
     RepGen: for I in 0 to g_number_of_stages-1 generate
       rptr : mem_repeater generic map (
-	name => name & "-RepGen-rptr-" & Convert_To_String(I),
+	name => name & "-RepGen-rptr-" & Convert_Integer_To_String(I),
         g_data_width => g_data_width)
         port map (
           clk      => clk,

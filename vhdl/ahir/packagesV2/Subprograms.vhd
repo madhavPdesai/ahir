@@ -84,7 +84,7 @@ package Subprograms is
   function To_SLV( x : Boolean) return std_logic_vector;  
   function To_SLV( x : Signed) return std_logic_vector;
   function To_SLV( x : Unsigned) return std_logic_vector;
-  function Float_To_SLV( x : float) return std_logic_vector;  
+  function Float_To_SLV( x : UNRESOLVED_float) return std_logic_vector;  
   
   function To_SLV (x : StdLogicArray2D) return std_logic_vector; 
   function To_SLV_Shuffle(x : StdLogicArray2D) return std_logic_vector;
@@ -535,8 +535,8 @@ package body Subprograms is
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
-  function Float_To_SLV (x: float) return std_logic_vector is
-    alias lx: float(1 to x'length) is x;
+  function Float_To_SLV (x: UNRESOLVED_float) return std_logic_vector is
+    alias lx: UNRESOLVED_float(1 to x'length) is x;
     variable rv: std_logic_vector(1 to x'length);
   begin
     for I in 1 to x'length loop

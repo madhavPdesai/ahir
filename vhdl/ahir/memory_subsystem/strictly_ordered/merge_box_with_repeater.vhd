@@ -124,7 +124,7 @@ begin  -- behave
     genLogic: for J in 0 to g_number_of_outputs-2 generate
 
       cmerge: combinational_merge
-        generic map(name => name & "-cmerge" & Convert_To_String(J), 
+        generic map(name => name & "-cmerge" & Convert_Integer_To_String(J), 
 		    g_data_width        => c_actual_data_width,
                     g_number_of_inputs  => c_num_inputs_per_tree,
                     g_time_stamp_width  => g_time_stamp_width)

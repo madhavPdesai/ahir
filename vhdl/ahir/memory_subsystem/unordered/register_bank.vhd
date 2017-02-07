@@ -117,7 +117,7 @@ end entity register_bank;
 
 -- architecture: synchronous R/W.
 --               on destination conflict, writer with lowest index wins.
-architecture Default of register_bank is
+architecture Default_arch of register_bank is
   type DataArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
   type AddrArray is array (natural range <>) of std_logic_vector(addr_width-1 downto 0);
 
@@ -281,5 +281,5 @@ begin
   lc_tag_out <= lc_tag_out_sig;
   sc_tag_out <= sc_tag_out_sig;
   
-end Default;
+end Default_arch;
 

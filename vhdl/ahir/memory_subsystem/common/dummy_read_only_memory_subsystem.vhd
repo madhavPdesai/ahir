@@ -83,7 +83,7 @@ entity dummy_read_only_memory_subsystem is
 end entity dummy_read_only_memory_subsystem;
 
 
-architecture Default of dummy_read_only_memory_subsystem is
+architecture Default_arch of dummy_read_only_memory_subsystem is
 begin
 
      gen: for I in 0 to num_loads-1 generate
@@ -109,5 +109,5 @@ begin
 	end block;
      end generate gen;
 
-end Default;
+end Default_arch;
 

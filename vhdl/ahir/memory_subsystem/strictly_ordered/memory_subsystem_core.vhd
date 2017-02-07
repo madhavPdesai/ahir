@@ -364,7 +364,7 @@ begin
     -- merge for load-complete
     ---------------------------------------------------------------------------
     mergeComplete : combinational_merge_with_repeater generic map (
-      name => name & "-load-mergeComplete-" & Convert_To_String(I), 
+      name => name & "-load-mergeComplete-" & Convert_Integer_To_String(I), 
       g_data_width       => data_width + tag_width,
       g_number_of_inputs => number_of_banks,
       g_time_stamp_width => time_stamp_width)
@@ -447,7 +447,7 @@ begin
     -- merge for store-complete
     ---------------------------------------------------------------------------
     mergeComplete : combinational_merge_with_repeater generic map (
-      name => name & "-store-mergeComplete-" & Convert_To_String(I), 
+      name => name & "-store-mergeComplete-" & Convert_Integer_To_String(I), 
       g_data_width       => tag_width,
       g_number_of_inputs => number_of_banks,
       g_time_stamp_width => time_stamp_width)
@@ -474,7 +474,7 @@ begin
     -- todo: instantiate merge trees for load and store
     ---------------------------------------------------------------------------
     loadMerge : merge_tree
-      generic map(name => name & "-loadMerge-" & Convert_To_String(BANK),
+      generic map(name => name & "-loadMerge-" & Convert_Integer_To_String(BANK),
 	     	  g_mux_degree => c_mux_degree,
                   g_number_of_inputs => num_loads,
                   g_data_width => c_load_merge_data_width,
@@ -495,7 +495,7 @@ begin
     -- store merge (from ports to bank)
     ---------------------------------------------------------------------------
     storeMerge : merge_tree
-      generic map(name => name & "-storeMerge-" & Convert_To_String(BANK),
+      generic map(name => name & "-storeMerge-" & Convert_Integer_To_String(BANK),
 		  g_mux_degree => c_mux_degree,
                   g_number_of_inputs => num_stores,
                   g_data_width => c_store_merge_data_width,
@@ -547,7 +547,7 @@ begin
 
                                                     
     memBank : memory_bank generic map (
-      name => name & "-memory-bank-" & Convert_To_String(BANK), 
+      name => name & "-memory-bank-" & Convert_Integer_To_String(BANK), 
       g_data_width       => data_width,
       g_read_tag_width        => tag_width+c_load_port_id_width+time_stamp_width,
       g_write_tag_width        => tag_width+c_store_port_id_width+time_stamp_width,
@@ -593,7 +593,7 @@ begin
     ---------------------------------------------------------------------------
     
     storeDemerge: demerge_tree
-      generic map (name => name & "-storeDemerge-" & Convert_To_String(BANK),
+      generic map (name => name & "-storeDemerge-" & Convert_Integer_To_String(BANK),
 		   g_demux_degree => c_demux_degree,
                    g_number_of_outputs => num_stores,
                    g_data_width => c_store_demerge_data_width,
@@ -622,7 +622,7 @@ begin
     -- load demerge tree
     ---------------------------------------------------------------------------
     loadDemerge: demerge_tree
-      generic map (name => name & "-loadDemerge-" & Convert_To_String(BANK),
+      generic map (name => name & "-loadDemerge-" & Convert_Integer_To_String(BANK),
 		   g_demux_degree => c_demux_degree,
                    g_number_of_outputs => num_loads,
                    g_data_width => c_load_demerge_data_width,

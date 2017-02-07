@@ -152,37 +152,38 @@ begin  -- behave
       ack_in => merge_ack_in);
 end pipelined;
 
--- architecture combinational of merge_tree is
---   constant actual_data_width : natural := g_data_width - (g_time_stamp_width);
---   signal data_sig : std_logic_vector(g_number_of_inputs*actual_data_width-1 downto 0);
+architecture combinational_arch of merge_tree is
+  constant actual_data_width : natural := g_data_width - (g_time_stamp_width);
+  signal data_sig : std_logic_vector(g_number_of_inputs*actual_data_width-1 downto 0);
 
---   signal out_data_sig : std_logic_vector(actual_data_width-1 downto 0);
---   signal out_tstamp_sig : std_logic_vector(g_time_stamp_width-1 downto 0);
---   signal tstamp_sig : std_logic_vector(g_number_of_inputs*g_time_stamp_width -1  downto 0);
+  signal out_data_sig : std_logic_vector(actual_data_width-1 downto 0);
+  signal out_tstamp_sig : std_logic_vector(g_time_stamp_width-1 downto 0);
+  signal tstamp_sig : std_logic_vector(g_number_of_inputs*g_time_stamp_width -1  downto 0);
   
--- begin  -- combinational
---   assert g_data_width > g_time_stamp_width report "data width smaller than time-stamp in merge?" severity error;
---   packGen: for P in 0 to g_number_of_inputs-1 generate
---     data_sig((P+1)*actual_data_width-1 downto P*actual_data_width) <=
---       merge_data_in((P+1)*g_data_width-1 downto (P+1)*g_data_width - (actual_data_width));
---     tstamp_sig((P+1)*g_time_stamp_width-1 downto P*g_time_stamp_width) <=
---       merge_data_in((P*g_data_width)+g_time_stamp_width-1 downto P*g_data_width);
---   end generate packGen;
+begin  
+  assert g_data_width > g_time_stamp_width report "data width smaller than time-stamp in merge?" severity error;
+  packGen: for P in 0 to g_number_of_inputs-1 generate
+    data_sig((P+1)*actual_data_width-1 downto P*actual_data_width) <=
+      merge_data_in((P+1)*g_data_width-1 downto (P+1)*g_data_width - (actual_data_width));
+    tstamp_sig((P+1)*g_time_stamp_width-1 downto P*g_time_stamp_width) <=
+      merge_data_in((P*g_data_width)+g_time_stamp_width-1 downto P*g_data_width);
+  end generate packGen;
 
---   cMerge : combinational_merge generic map (
---     g_data_width       => actual_data_width,
---     g_number_of_inputs => g_number_of_inputs,
---     g_time_stamp_width => g_time_stamp_width)
---     port map (
---       in_data    => data_sig,
---       out_data   => out_data_sig,
---       in_tstamp  => tstamp_sig,
---       out_tstamp => out_tstamp_sig,
---       in_req     => merge_req_in,
---       in_ack     => merge_ack_out,
---       out_req    => merge_req_out,
---       out_ack    => merge_ack_in);
+  cMerge : combinational_merge generic map (
+    name => name & ":cMerge:", 
+    g_data_width       => actual_data_width,
+    g_number_of_inputs => g_number_of_inputs,
+    g_time_stamp_width => g_time_stamp_width)
+    port map (
+      in_data    => data_sig,
+      out_data   => out_data_sig,
+      in_tstamp  => tstamp_sig,
+      out_tstamp => out_tstamp_sig,
+      in_req     => merge_req_in,
+      in_ack     => merge_ack_out,
+      out_req    => merge_req_out,
+      out_ack    => merge_ack_in);
 
---   merge_data_out <= out_data_sig & out_tstamp_sig;
--- end combinational;
+  merge_data_out <= out_data_sig & out_tstamp_sig;
+end combinational_arch;
   

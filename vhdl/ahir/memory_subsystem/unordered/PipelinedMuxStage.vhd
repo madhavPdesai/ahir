@@ -104,7 +104,7 @@ begin  -- behave
     genLogic: for J in 0 to g_number_of_outputs-2 generate
 
       cmerge: CombinationalMux
-        generic map(name => name & "-cmerge-" & Convert_To_String(J), 
+        generic map(name => name & "-cmerge-" & Convert_Integer_To_String(J), 
 		    g_data_width        => g_data_width,
                     g_number_of_inputs  => c_num_inputs_per_tree)
         port map(in_data    => in_data    (((J+1)*c_num_inputs_per_tree*g_data_width)-1
@@ -116,7 +116,7 @@ begin  -- behave
                  out_req    => out_req    (J),
                  out_ack    => out_ack    (J));
 
-      Rptr: QueueBase generic map(name => name & "-Rptr-" & Convert_To_String(J),
+      Rptr: QueueBase generic map(name => name & "-Rptr-" & Convert_Integer_To_String(J),
 		  			queue_depth => 2, data_width => g_data_width)
         port map(clk      => clock,
                  reset    => reset,

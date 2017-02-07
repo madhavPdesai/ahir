@@ -83,7 +83,7 @@ end entity dummy_write_only_memory_subsystem;
 
 -- architecture: synchronous R/W.
 --               on destination conflict, writer with lowest index wins.
-architecture Default of dummy_write_only_memory_subsystem is
+architecture Default_arch of dummy_write_only_memory_subsystem is
 begin
 
 
@@ -110,5 +110,5 @@ begin
 	end block;
      end generate gen;
 
-end Default;
+end Default_arch;
 

@@ -408,8 +408,10 @@ package body OperatorPackage is
       ApIntToApIntSigned_proc(x, result_var);
     elsif id = "ApIntToApIntUnsigned" then					
       ApIntToApIntUnsigned_proc(x, result_var);
+-- synopsys translate_off
     elsif id = "ApIntDecode" then					
       result_var := GenericDecode(x);
+-- synopsys translate_on
     elsif id = "ApIntEncode" then					
       result_var := GenericEncode(x);
     elsif id = "ApIntPriorityEncode" then					
