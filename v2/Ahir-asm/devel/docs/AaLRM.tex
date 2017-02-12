@@ -319,6 +319,34 @@ or
 $guard (~ sel_add) $call afun (a b) (r)
 \end{verbatim}
 
+Complete atomic statements can be explicitly sequenced using
+the \$mark and \$synch constructs.  For example
+\begin{verbatim}
+a := (b + c) $mark FIRST
+e := (f + g) $mark SECOND $synch (FIRST)
+h := (i + j) $synch (FIRST SECOND)
+\end{verbatim}
+means that the second statement will be {\em started}
+only after the first statement has {\em started}.  The
+third statement will be started only after the first
+two have started. This
+is necessary in some cases where dependency analysis
+says that two statements are independent, but you wish
+to force explicit ordering.
+
+A related construct is \$delay which explicitly sets
+the delay between the completion of two statements
+(which otherwise seem unrelated)
+\begin{verbatim}
+// from_pipe, to_pipe are pipes.
+to_pipe := (a + b) $mark WPIPE
+e := from_pipe  $delay (WPIPE 10)
+\end{verbatim}
+This says that there is delay of 10 units (clock cycles)
+between the write to to\_pipe and the read from from\_pipe.
+This delay information is used by the compiler to 
+balance pipelines.
+
 
 More details of the syntax are provided in 
 Section \ref{sec:Syntax}.
