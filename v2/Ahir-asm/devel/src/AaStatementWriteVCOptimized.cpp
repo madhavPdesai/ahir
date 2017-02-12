@@ -49,11 +49,16 @@ void AaStatement::Write_VC_Synch_Dependency(set<AaRoot*>& visited_elements, bool
 			AaStatement* stmt = *siter;
 			if(visited_elements.find(stmt) != visited_elements.end())
 			{
-				ofile << "// forced synch" << endl;
-				__J(__SST(this), __UCT(stmt));
+				ofile << "// forced synch: synched statement will start after marked statement" 
+						<< endl;
+				string synch_transition_name = 
+					string ("synch_") + __SST(this) + "_" + __SCT(stmt);
+				ofile << "$T [" << synch_transition_name <<"] $delay" << endl;
+				__J(synch_transition_name, __SCT(stmt))
+				__J(__SST(this), synch_transition_name);
 				if(pipeline_flag)
 				{
-					__MJ(__UST(stmt), __SCT(this), true); // bypass
+					__MJ(__SST(stmt), __SCT(this), true); // bypass
 				}
 			}
 		}
