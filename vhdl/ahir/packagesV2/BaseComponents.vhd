@@ -548,6 +548,19 @@ package BaseComponents is
          pop_req: in std_logic);
   end component SynchFifoWithDPRAM;
 
+  component CompositeFifo is
+    generic(name: string; queue_depth: integer := 5; data_width: integer := 72);
+    port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack : out std_logic;
+       nearly_full: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+  end component CompositeFifo;
+
   component SynchLifo 
     generic(name : string; queue_depth: integer := 3; data_width: integer := 72);
     port(clk: in std_logic;

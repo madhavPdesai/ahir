@@ -76,7 +76,7 @@ architecture default_arch of PipeBase is
   --
   -- shallow => will be implemented using flip-flops.  Can be expensive!
   --
-  constant shallow_flag : boolean :=    (depth < 3) or		     -- shallow queue
+  constant shallow_flag : boolean :=    (depth < 5) or		     -- shallow queue
 					((data_width*depth) < 64);   -- narrow but not too deep queue..
   
 begin  -- default_arch
@@ -172,7 +172,7 @@ begin  -- default_arch
   DeepFifo: if (not signal_mode) and (not shallow_flag) and (not lifo_mode) generate
     
    notShiftReg: if (not shift_register_mode) generate
-    queue : SynchFifoWithDPRAM generic map (
+    queue : CompositeFifo generic map (
       name => name & "-queue", 
       queue_depth => depth,
       data_width       => data_width)

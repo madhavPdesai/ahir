@@ -1,6 +1,6 @@
 $pipe in_data  : $uint<32> $depth 2
 $pipe mid_pipe: $uint<32> $depth 16  // will use synch-fifo dpram
-$pipe out_data : $uint<32> $depth 1
+$pipe out_data : $uint<32> $depth 1  // slow it down on purpose so you exercise the deep fifo.
 
 $module [shiftreg_check_daemon] $in() $out () $is
 {
