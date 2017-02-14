@@ -2608,14 +2608,12 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 		// input buffering is used to decouple the
 		// two sides.
 		//
-		/*
 		for(int i = 0; i < inargs.size(); i++)
 		{
 			string src_name = inargs[i].first;
 			ofile << "$buffering  $in " << dpe_name << " "
 				<< src_name << " 2" << endl;
 		}
-		*/
 
 		//
 		// output buffering is used to decouple the
