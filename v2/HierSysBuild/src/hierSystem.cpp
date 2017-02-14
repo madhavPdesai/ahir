@@ -107,6 +107,12 @@ void hierPipe::Print_Vhdl_Instance(hierSystem* sys, ostream& ofile)
 	int pipe_width = this->Get_Width();
 	int pipe_depth = this->Get_Depth();
 
+	if(this->Get_Is_P2P())
+	{
+		pipe_depth = 0;
+		ofile << "-- pipe " << pipe_name << " depth set to 0 since it is a P2P pipe." << endl;
+	}
+
 	string inst_name = pipe_name + "_inst";
 	ofile << inst_name << ": ";
 	if(this->Get_Is_Noblock())

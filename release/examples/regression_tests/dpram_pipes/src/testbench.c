@@ -20,44 +20,36 @@ void Exit(int sig)
 }
 
 	
-void Sender()
-{
-	int idx;
-	uint32_t val[ORDER];
-	for(idx = 0; idx < ORDER; idx++)
-	{
-		uint32_t r = rand();
-		val[idx] = r;
-		expected_result[idx] = r;
-	}
-	write_uint32_n("in_data",val,ORDER);
-}
-
-DEFINE_THREAD(Sender)
 
 int main(int argc, char* argv[])
 {
 	uint32_t result[ORDER];
+	uint32_t val[ORDER];
 	signal(SIGINT,  Exit);
   	signal(SIGTERM, Exit);
 
-	PTHREAD_DECL(Sender);
-	PTHREAD_CREATE(Sender);
-
 	uint8_t idx;
 	uint8_t err = 0;
+
+	srand(48);
 	
+	for(idx = 0; idx < ORDER; idx++)
+	{
+		val[idx] = rand();
+	}
+
+	write_uint32_n("in_data",val,ORDER);
 	read_uint32_n("out_data",result,ORDER);
 
 	for(idx = 0; idx < ORDER; idx++)
 	{
-		if(result[idx] != expected_result[idx])
+		if(result[idx] != val[idx])
 		{
 			err = 1;
-			fprintf(stdout,"Error:Result = %x, expected = %x.\n", result[idx],expected_result[idx]);
+			fprintf(stdout,"Error:Result = %x, expected = %x.\n", result[idx],val[idx]);
 		}
 		else
-			fprintf(stdout,"Result = %x, expected = %x.\n", result[idx],expected_result[idx]);
+			fprintf(stdout,"Result = %x, expected = %x.\n", result[idx],val[idx]);
 	}
 
 	for(idx = 0; idx < ORDER; idx++)
@@ -75,7 +67,6 @@ int main(int argc, char* argv[])
 
 	}
 	
-	PTHREAD_CANCEL(Sender);
 
 	if(err)
 		fprintf(stdout,"FAILURE :-(\n");

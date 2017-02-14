@@ -57,7 +57,7 @@ end entity CompositeFifo;
 
 architecture behave of CompositeFifo is
 
-  signal dq_size: integer range 0 to queue_depth-2;
+  signal dq_size: integer range 0 to queue_depth-1;
   signal sq_size: integer range 0 to 2;
 
   signal dq_push_req, dq_push_ack, sq_push_req, sq_push_ack: std_logic;
