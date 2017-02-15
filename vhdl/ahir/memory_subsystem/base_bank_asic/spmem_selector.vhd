@@ -67,7 +67,7 @@ begin
 
   c3: if (address_width = 8 and data_width = 8) generate
 	CEB <= not(CE); 
-	u1: obc11_256x81 port map(A, CEB, WEB, OEB, CSB, I, O);
+	u1: obc11_256x8 port map(A, CEB, WEB, OEB, CSB, I, O);
 	end generate;
 
   c4: if (address_width = 9 and data_width = 24) generate 

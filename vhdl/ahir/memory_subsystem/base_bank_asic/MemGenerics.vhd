@@ -101,7 +101,7 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_ASIC_components.all;
 
-entity obc11_256x81 is
+entity obc11_256x8 is
 	port(A : in std_logic_vector(7 downto 0 );
 	CEB : in std_logic;
 	WEB: in std_logic;
@@ -111,7 +111,7 @@ entity obc11_256x81 is
 	O  : out std_logic_vector(7 downto 0));
 end entity;
 
-architecture struct of obc11_256x81 is
+architecture struct of obc11_256x8 is
   signal CE: std_logic;
 begin 
   

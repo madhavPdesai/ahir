@@ -124,10 +124,10 @@ package body MemCutsPackage is
   -- 	in the given input array x, provided the element at the corresponding 
   -- 	position in the input array y is greater than 50.
   -- Inputs:
-  -- 	x: array containing the number of columns of each cut
+  -- 	x: array containing the number of replications of each cut
   --	y: array containing the utilization of each cut
   -- Outputs:
-  -- 	min: minimum number of columns having the cut utilization > 50%
+  -- 	min: minimum number of cuts having the cut utilization > 50%
   --	index: index of the minimum element in the input array x
 
   procedure Min_array(x: in IntegerArray;
@@ -186,7 +186,7 @@ package body MemCutsPackage is
 		n_cols: out natural;
 		extra_cols: out integer) is
 	
-	variable n_row_array, n_col_array, extra_col_array: IntegerArray(1 to cut_address_widths'length):= (others => 0);
+	variable n_row_array, n_col_array, extra_col_array, n_cuts_array: IntegerArray(1 to cut_address_widths'length):= (others => 0);
 	variable location, n_col: integer;
 	variable Util_array: IntegerArray(1 to cut_address_widths'length);
   begin 
@@ -207,10 +207,11 @@ package body MemCutsPackage is
 		n_row_array(i) := 2**(Maximum(0, addr_width-cut_address_widths(i)));
 		Util_array(i) := 2**(addr_width)*data_width*100/
 		(n_row_array(i)*cut_row_heights(i)*n_col_array(i)*cut_data_widths(i));	
+		n_cuts_array(i) := n_row_array(i)*n_col_array(i);
 	end loop;
 	
-	Min_array(n_col_array, Util_array, n_col, location);
-	n_cols := n_col;
+	Min_array(n_cuts_array, Util_array, n_col, location);
+	n_cols := n_col_array(location);
 	index := location;	
 	extra_cols := extra_col_array(location);
 	
