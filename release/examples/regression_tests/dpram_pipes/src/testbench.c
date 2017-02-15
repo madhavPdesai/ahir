@@ -54,16 +54,16 @@ int main(int argc, char* argv[])
 
 	for(idx = 0; idx < ORDER; idx++)
 	{
-		write_uint32("in_data", expected_result[idx]);
+		write_uint32("in_data", val[idx]);
 		usleep (1000);
 		uint32_t rval = read_uint32("out_data");
-		if(rval != expected_result[idx])
+		if(rval != val[idx])
 		{
 			err = 1;
-			fprintf(stdout,"Error: Result = %x, expected = %x.\n", rval,expected_result[idx]);
+			fprintf(stdout,"Error: Result = %x, expected = %x.\n", rval,val[idx]);
 		}
 		else
-			fprintf(stdout,"Result = %x, expected = %x.\n", rval,expected_result[idx]);
+			fprintf(stdout,"Result = %x, expected = %x.\n", rval,val[idx]);
 
 	}
 	

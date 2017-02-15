@@ -32,4 +32,5 @@
 ------------------------------------------------------------------------------------------------
 package GlobalConstants is
     constant global_debug_flag: boolean := false;
+    constant global_pipe_report_flag: boolean := true;
 end package GlobalConstants;

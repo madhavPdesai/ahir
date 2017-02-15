@@ -38,6 +38,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
+use ahir.GlobalConstants.all;
 
 --
 -- base Pipe.
@@ -78,9 +79,45 @@ architecture default_arch of PipeBase is
   --
   constant shallow_flag : boolean :=    (depth < 5) or		     -- shallow queue
 					((data_width*depth) < 64);   -- narrow but not too deep queue..
+
   
+  signal write_ack_sig: std_logic_vector(num_writes-1 downto 0);
+  signal read_ack_sig: std_logic_vector(num_reads-1 downto 0);
+  signal read_data_sig: std_logic_vector((num_reads*data_width)-1 downto 0);
+
 begin  -- default_arch
 
+ write_ack <= write_ack_sig;
+ read_ack  <= read_ack_sig;
+  
+ read_data <= read_data_sig;
+ debugGen: if global_pipe_report_flag generate
+	-- super useful for tracing.
+
+  process (clk)
+	variable wvar : std_logic_vector(data_width-1 downto 0);
+	variable rvar : std_logic_vector(data_width-1 downto 0);
+  begin
+	if(clk'event and clk = '1') then
+		if(reset = '0') then
+			for I in  0 to num_writes-1 loop
+				wvar := write_data (((I+1)*data_width)-1 downto  I*data_width);
+				if(write_req(I)= '1' and  write_ack_sig(I) = '1') then
+					assert false report "WPIPE " & name & " requester=" & Convert_To_String(I) & " data= " & 
+								Convert_SLV_to_Hex_String(wvar) severity note;
+				end if;
+			end loop;
+			for J in  0 to num_reads-1 loop
+				rvar := read_data_sig (((J+1)*data_width)-1 downto  J*data_width);
+				if(read_req(J)= '1' and  read_ack_sig(J) = '1') then
+					assert false report "RPIPE " & name & " requester=" & Convert_To_String(J) & " data= " & 
+								Convert_SLV_to_Hex_String(rvar) severity note;
+				end if;
+			end loop;
+		end if;
+	end if;
+  end process;
+  end generate debugGen;
 
   manyWriters: if (num_writes > 1) generate
     wmux : OutputPortLevel generic map (
@@ -90,7 +127,7 @@ begin  -- default_arch
       no_arbitration => false)
       port map (
         req   => write_req,
-        ack   => write_ack,
+        ack   => write_ack_sig,
         data  => write_data,
         oreq  => pipe_req,                -- no cross-over, drives req
         oack  => pipe_ack,                -- no cross-over, receives ack
@@ -101,7 +138,7 @@ begin  -- default_arch
 
   singleWriter: if (num_writes = 1) generate
     pipe_req <= write_req(0);
-    write_ack(0) <= pipe_ack;
+    write_ack_sig(0) <= pipe_ack;
     pipe_data <= write_data;
   end generate singleWriter;
  
@@ -128,8 +165,8 @@ begin  -- default_arch
 	-- read always succeeds, provided that it has been written
 	-- into at least once.
      ReaderGen: for R in 0 to num_reads-1 generate
-	read_ack(R) <= written_at_least_once;
-	read_data(((R+1)*data_width)-1 downto (R*data_width)) <= signal_data;
+	read_ack_sig(R) <= written_at_least_once;
+	read_data_sig(((R+1)*data_width)-1 downto (R*data_width)) <= signal_data;
      end generate ReaderGen;
 
   end generate SignalMode;
@@ -232,8 +269,8 @@ begin  -- default_arch
       no_arbitration => false)
       port map (
         req => read_req,
-        ack => read_ack,
-        data => read_data,
+        ack => read_ack_sig,
+        data => read_data_sig,
         oreq => pipe_req_repeated,       
         oack => pipe_ack_repeated,       
         odata => pipe_data_repeated,
@@ -242,9 +279,9 @@ begin  -- default_arch
   end generate manyReaders;
 
   singleReader: if  (not signal_mode) and (num_reads = 1) generate
-    read_ack(0) <= pipe_ack_repeated;
+    read_ack_sig(0) <= pipe_ack_repeated;
     pipe_req_repeated <= read_req(0);
-    read_data <= pipe_data_repeated;
+    read_data_sig <= pipe_data_repeated;
   end generate singleReader;
   
 end default_arch;
