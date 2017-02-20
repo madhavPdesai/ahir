@@ -261,10 +261,14 @@ UWord Unsigned::AtoI(string ival)
 	return((UWord)(atoi(ival.c_str())));
 }
 
+//
+// fill it from the least-significant bit to the MSB
+// throwing away higher bits.
+//
 void Unsigned::Initialize_From_Binary_String(string& init_value)
 {
 	int bit_count = 0;
-	for(int idx = 2; idx < init_value.size(); idx++)
+	for(int idx = init_value.size()-1; idx >= 2; idx--)
 	{
 		bit_count++;
 		int actual_index = (init_value.size()-1) - idx;
