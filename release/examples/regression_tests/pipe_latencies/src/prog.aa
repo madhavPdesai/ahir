@@ -1,0 +1,104 @@
+$pipe in_data  : $uint<32> $depth 2  $p2p
+$pipe s01 s12 s23 s34 : $uint<32> $depth 2  $p2p
+$pipe s01_1 s12_1 s23_1 s34_1 : $uint<32> $depth 2  $p2p
+$pipe out_data : $uint<32> $depth 2  $p2p
+
+$module [first_stage_daemon] $in() $out () $is
+{
+
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+
+		     	$merge $entry $loopback $endmerge
+
+			X := in_data
+			s01 := X
+			s01_1 := X
+
+		$while 1
+	}
+}
+
+$module [second_stage_daemon] $in() $out () $is
+{
+
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+
+		     	$merge $entry $loopback 
+				$phi X  := _b0 $on $entry s01 $on $loopback
+				$phi X1 := _b0 $on $entry s01_1 $on $loopback
+				$phi init_flag := ($bitcast ($uint<1>) 1) $on $entry _b0 $on $loopback
+			$endmerge
+
+			$volatile tX := (X & X1) 
+			$guard (~init_flag) s12 := tX
+			$guard (~init_flag) s12_1 := tX
+
+		$while 1
+	}
+}
+
+$module [third_stage_daemon] $in() $out () $is
+{
+
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+
+		     	$merge $entry $loopback 
+				$phi X  := _b0 $on $entry s12 $on $loopback
+				$phi X1 := _b0 $on $entry s12_1 $on $loopback
+				$phi init_flag := ($bitcast ($uint<1>) 1) $on $entry _b0 $on $loopback
+			$endmerge
+
+			$volatile tX := (X & X1) 
+			$guard (~init_flag) s23 := tX
+			$guard (~init_flag) s23_1 := tX
+
+		$while 1
+	}
+}
+
+$module [fourth_stage_daemon] $in() $out () $is
+{
+
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+
+		     	$merge $entry $loopback 
+				$phi X  := _b0 $on $entry s23 $on $loopback
+				$phi X1 := _b0 $on $entry s23_1 $on $loopback
+				$phi init_flag := ($bitcast ($uint<1>) 1) $on $entry _b0 $on $loopback
+			$endmerge
+
+			$volatile tX := (X & X1) 
+			$guard (~init_flag) s34 := tX
+			$guard (~init_flag) s34_1 := tX
+
+		$while 1
+	}
+}
+
+$module [final_stage_daemon] $in() $out () $is
+{
+
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+
+		     	$merge $entry $loopback 
+				$phi X  := _b0 $on $entry s34 $on $loopback
+				$phi X1 := _b0 $on $entry s34_1 $on $loopback
+				$phi init_flag := ($bitcast ($uint<1>) 1) $on $entry _b0 $on $loopback
+			$endmerge
+
+			$volatile tX := (X & X1) 
+			$guard (~init_flag) out_data := tX
+
+		$while 1
+	}
+}
