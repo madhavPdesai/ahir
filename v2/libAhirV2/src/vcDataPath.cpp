@@ -152,6 +152,7 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 	bool is_unused_pipe = ((num_reads == 0) && (num_writes == 0));
 
 	bool is_no_block = this->Get_No_Block_Mode();
+	bool p2p_flag = this->Get_P2P();
 
 	if(!is_unused_pipe)
 	{
@@ -188,8 +189,12 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 			num_reads = MAX(num_reads,1);
 			num_writes = MAX(num_writes,1);
 
-			if(is_no_block)
+			if(is_no_block && !p2p_flag)
 			{
+				//
+				// if non-blocking and if it is a p2p, then the nonblocking
+				// behaviour is handled by the input port.
+				//
 				ofile << pipe_id << "_Pipe: NonBlockingReadPipeBase -- {" << endl;
 			}
 			else

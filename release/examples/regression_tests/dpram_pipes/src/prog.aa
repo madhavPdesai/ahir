@@ -1,5 +1,6 @@
 $pipe in_data  : $uint<32> $depth 2
-$pipe mid_pipe: $uint<32> $depth 16  $p2p // will use synch-fifo dpram
+$pipe mid_pipe_1: $uint<32> $depth 16        // will use synch-fifo dpram
+$pipe mid_pipe_2: $uint<32> $depth 16  $p2p  // will use synch-fifo dpram with buffering in inport..
 $pipe out_data : $uint<32> $depth 1  // slow it down on purpose so you exercise the deep fifo.
 
 $module [shiftreg_check_daemon] $in() $out () $is
@@ -12,10 +13,12 @@ $module [shiftreg_check_daemon] $in() $out () $is
 		     	$merge $entry $loopback $endmerge
 
 			X := in_data
-			mid_pipe := X
-			Y := mid_pipe
-			Y_d := Y $buffering 16
-			out_data := Y_d
+			mid_pipe_1 := X
+			Y := mid_pipe_1
+			mid_pipe_2 := Y
+			Z := mid_pipe_2
+			Z_d := Z $buffering 16
+			out_data := Z_d
 
 		$while 1
 	}
