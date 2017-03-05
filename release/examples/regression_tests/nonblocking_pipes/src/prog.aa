@@ -1,4 +1,4 @@
-$noblock $pipe read_command: $uint<8>   $depth 2
+$noblock $pipe read_command: $uint<8>   $depth 2 $p2p
 $noblock $pipe write_command : $uint<8> $depth 2
 $pipe out_data: $uint<8> $depth 2
 $constant ONE_1: $uint<1> := 1

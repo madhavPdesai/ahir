@@ -70,12 +70,36 @@ architecture default_arch of UnloadBuffer is
   signal load_reg: boolean;
 
   signal unload_ack_no_byp, unload_ack_byp : boolean;
+  signal number_of_elements_in_pipe: integer range 0 to buffer_size+1;
+
   
   constant inferred_bypass_flag : Boolean := ((full_rate and (buffer_size > 1)) or bypass_flag);
   constant zero_data: std_logic_vector(data_width-1 downto 0) := (others => '0');
+  
+  signal pipe_has_data: boolean;
 begin  -- default_arch
 
   assert (buffer_size > 0) report "Unload buffer size must be > 0" & ": buffer = " & name  severity error;
+
+  -- count number of elements in pipe.
+  process(clk, reset)
+  begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			number_of_elements_in_pipe <= 0;
+		else
+			if((pop_req(0) = '1') and (pop_ack(0) = '1')) then
+				if(not ((push_req(0) = '1') and (push_ack(0) = '1'))) then
+					number_of_elements_in_pipe <= number_of_elements_in_pipe - 1;
+				end if;
+			elsif((push_req(0) = '1') and (push_ack(0) = '1')) then
+				number_of_elements_in_pipe <= number_of_elements_in_pipe + 1;
+			end if;
+		end if;
+	end if;
+  end process;
+
+  pipe_has_data <= (number_of_elements_in_pipe > 0);
   
   -- the input pipe.
   bufPipe : PipeBase generic map (
@@ -101,7 +125,7 @@ begin  -- default_arch
 
   -- FSM
   --   Two states: Idle, Waiting
-  process(clk,unload_req, pop_ack, write_req, write_data, pipe_data_out)
+  process(clk,unload_req, pipe_has_data, pop_ack, write_req, write_data, pipe_data_out)
      variable nstate: UnloadFsmState;
      variable loadv : boolean;
      variable bypassv : boolean;
@@ -121,21 +145,19 @@ begin  -- default_arch
                	 pop_reqv := '1';   
                  if (pop_ack(0) = '1') then
 		    -- load output register.
-		    loadv := true;
-		    datav := pipe_data_out;
-                 else
-		    if(write_req = '1') then
+		    	loadv := true;
+		    	datav := pipe_data_out;
+		 elsif ((not pipe_has_data) and (write_req = '1')) then
 			loadv := true;
 			datav := write_data;
 			-- write-data forwarded to output, don't push into queue.
 			push_reqv := '0';
-		    elsif (nonblocking_read_flag) then
+		 elsif (nonblocking_read_flag) then
 			loadv := true; -- load zero into output register.
-		    else 
+		 else 
 		        -- desire to unload, but nothing present.
 			nstate := waiting;
-		    end if;
-                 end if;
+		 end if;
                end if;
 	 when waiting =>
 		pop_reqv := '1';
@@ -149,7 +171,7 @@ begin  -- default_arch
 		    if(not unload_req) then	
 		    	nstate := idle;
 		    end if;
-		elsif (write_req = '1') then
+		elsif ((not pipe_has_data) and (write_req = '1')) then
 
 		    -- lets not add an in->out combinational
 		    -- path which can really bite us later.
