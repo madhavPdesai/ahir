@@ -155,11 +155,8 @@ begin  -- default_arch
 		    -- ack the unload-req.
 		    loadv := true;
 		    datav := pipe_data_out;
-		    -- if no new unload req arrives
-		    -- stay in idle.
-		    if(not unload_req) then	
-		    	nstate := idle;
-		    end if;
+		    nstate := idle;
+
 		elsif ((not pipe_has_data) and (write_req = '1')) then
 
 		    -- lets not add an in->out combinational
@@ -168,10 +165,7 @@ begin  -- default_arch
 		    loadv := true;
 		    datav := write_data;
 		    push_reqv := '0';
-
-		    if(not unload_req) then	
-		    	nstate := idle;
-		    end if;
+		    nstate := idle;
 		end if;
      end case;
  
