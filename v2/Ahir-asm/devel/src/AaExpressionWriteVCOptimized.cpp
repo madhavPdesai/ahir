@@ -656,7 +656,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 				//
 				// Close the ring.
 				// 
-				__SelfReleaseChainedSplitProtocolPattern
+				__SelfReleaseSplitProtocolPattern
 			}
 		}
 
@@ -763,7 +763,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 			//
 			// Close the ring.
 			//
-			__SelfReleaseChainedSplitProtocolPattern
+			__SelfReleaseSplitProtocolPattern
 		}
 
 
