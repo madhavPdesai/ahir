@@ -782,6 +782,38 @@ bool AaSimpleObjectReference::Is_Pipe_Read()
 	}
 }
 
+//
+// from guard expression guard_expr to this.
+//
+void AaSimpleObjectReference::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* guard_expr, set<AaRoot*>& visited_elements, ostream& ofile)
+{
+	AaRoot* root = guard_expr->Get_Root_Object();
+	if(visited_elements.find(root) != visited_elements.end())
+	{
+		if((this->Get_Associated_Phi_Statement() == NULL) ||
+				(guard_expr->Get_Associated_Phi_Statement() == NULL))
+		{
+			// No Phi-Phi dependencies
+			if(this->_object->Is("AaPipeObject") && !this->Get_Is_Target() && !this->Is_Signal_Read())
+			{
+				__J(__UST(this), __UCT(guard_expr));
+			}
+			else
+			{
+				__J(__SST(this), __UCT(guard_expr));
+			}
+
+			// Note: with new SplitGuardInterface
+			// this dependency is no longer necessary.
+			//__J(__UST(this), __UCT(root));
+		}
+	}
+	else
+	{
+		ofile << "// root " << root->Get_VC_Name() << " of guard-expression " << guard_expr->Get_VC_Name() << " not in visited elements." << endl;
+	}
+}
+
 void AaSimpleObjectReference::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {

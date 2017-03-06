@@ -804,6 +804,7 @@ class AaSimpleObjectReference: public AaObjectReference
 		leaf_expression_set.insert(this);
 	}
 
+	virtual void Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
 	virtual void Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile);
 
 	virtual void Write_VC_Output_Buffering(string dpe_name, string tgt_name, ostream& ofile);
