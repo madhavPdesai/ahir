@@ -789,7 +789,17 @@ void AaSimpleObjectReference::Write_VC_Guard_Backward_Dependency(AaExpression* e
 	// (reenable guard-update from update-complete instead of sample-complete).
 	// The SplitUpdateGuardInterface was modified to internally sample
 	// the guard signal, so the simple case works.
-	this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
+	//
+	
+	// Added: special case for pipe read!
+	if(this->_object->Is("AaPipeObject") && !this->Get_Is_Target() && !this->Is_Signal_Read())
+	{
+		expr->Write_VC_Update_Reenables (this, __UST(this), true, visited_elements, ofile);
+	}
+	else
+	{
+		this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
+	}
 }
 
 // AaArrayObjectReference
