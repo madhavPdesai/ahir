@@ -817,11 +817,6 @@ void AaSimpleObjectReference::Write_VC_Guard_Forward_Dependency(AaSimpleObjectRe
 void AaSimpleObjectReference::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {
-	// Simplified.  Earlier, a pipe read had to be handled specially
-	// (reenable guard-update from update-complete instead of sample-complete).
-	// The SplitUpdateGuardInterface was modified to internally sample
-	// the guard signal, so the simple case works.
-	//
 	
 	// Added: special case for pipe read!
 	if(this->_object->Is("AaPipeObject") && !this->Get_Is_Target() && !this->Is_Signal_Read())

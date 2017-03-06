@@ -59,23 +59,15 @@ architecture default_arch of UnloadBuffer is
   signal pop_req, pop_ack, push_req, push_ack: std_logic_vector(0 downto 0);
   signal pipe_data_out:  std_logic_vector(data_width-1 downto 0);
 
-  signal output_register_prereg, output_register : std_logic_vector(data_width-1 downto 0);
-
-  signal unload_req_reg, unload_req_token, unload_req_clear  : boolean;
-  signal unload_ack_sig : boolean;
+  -- for waveforms..
+  signal output_register_prereg: std_logic_vector(data_width-1 downto 0);
+  signal load_reg: boolean;
 
   type UnloadFsmState is (idle, waiting);
   signal fsm_state : UnloadFsmState;
 
-  signal load_reg: boolean;
 
-  signal unload_ack_no_byp, unload_ack_byp : boolean;
   signal number_of_elements_in_pipe: integer range 0 to buffer_size+1;
-
-  
-  constant inferred_bypass_flag : Boolean := ((full_rate and (buffer_size > 1)) or bypass_flag);
-  constant zero_data: std_logic_vector(data_width-1 downto 0) := (others => '0');
-  
   signal pipe_has_data: boolean;
 begin  -- default_arch
 
@@ -128,7 +120,6 @@ begin  -- default_arch
   process(clk,unload_req, pipe_has_data, pop_ack, write_req, write_data, pipe_data_out)
      variable nstate: UnloadFsmState;
      variable loadv : boolean;
-     variable bypassv : boolean;
      variable pop_reqv, push_reqv : std_logic;
      variable datav: std_logic_vector(data_width-1 downto 0);
   begin
@@ -136,7 +127,6 @@ begin  -- default_arch
      pop_reqv := '0';
      push_reqv := write_req;
      loadv := false;
-     bypassv := false;
      datav := (others => '0');
   
      case fsm_state is
@@ -164,7 +154,6 @@ begin  -- default_arch
 	        if(pop_ack(0) = '1') then
 		    -- ack the unload-req.
 		    loadv := true;
-		    bypassv := inferred_bypass_flag;
 		    datav := pipe_data_out;
 		    -- if no new unload req arrives
 		    -- stay in idle.
@@ -192,35 +181,20 @@ begin  -- default_arch
      output_register_prereg <= datav;
 
      -- help XST out..  write the function explicitly below.
-     -- unload_ack_byp <= bypassv;
 
      if(clk'event and clk = '1') then
 	if(reset = '1') then
 		fsm_state <= idle;
-		unload_ack_no_byp <= false;
+		unload_ack <= false;
 	else
 		fsm_state <= nstate;
-		unload_ack_no_byp <= (loadv and (not bypassv));
+		unload_ack <= loadv;
 	end if;
 
 	if(loadv) then
-           output_register <= datav;
+           read_data <= datav;
         end if;
      end if;
   end process;
-
-  -- explicit logic here to show that unload-ack does NOT depend on unload-req.
-  unload_ack_byp <=  inferred_bypass_flag and ((fsm_state = waiting) and (pop_ack(0) = '1'));
-  -- with bypass.
-  bypassGen: if inferred_bypass_flag generate
-  	read_data <= pipe_data_out when unload_ack_byp else output_register;
-	unload_ack <= unload_ack_byp or unload_ack_no_byp;
-  end generate bypassGen;
-
-  -- without bypass
-  nobypassGen: if not inferred_bypass_flag generate
-	read_data <= output_register;
-	unload_ack <= unload_ack_no_byp;
-  end generate nobypassGen;
 
 end default_arch;
