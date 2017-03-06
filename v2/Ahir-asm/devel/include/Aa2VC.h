@@ -85,6 +85,10 @@
   __MJ(__SST(this),__SCT(this),false);\
   __MJ(__UST(this),__UCT(this),true);}
 
+#define __SelfReleaseChainedSplitProtocolPattern {\
+  ofile << "// self-release-chained-split-protocol: " << endl;\
+  __MJ(__SST(this),__UCT(this),true);}
+
 void Write_VC_Equivalence_Operator(string inst_name,
 				   string input,
 				   string output,

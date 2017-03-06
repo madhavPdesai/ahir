@@ -654,12 +654,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			if(pipeline_flag && !this->_object->Is_Signal())
 			{
 				//
-				// SelfRelease (only the UST part is needed..).
-				// the sample part does not need to be reenabled.
-				// __MJ(__UST(this),__UCT(this),true);
-				// however other logic depends on strict reenabling.
+				// Close the ring.
 				// 
-				__SelfReleaseSplitProtocolPattern
+				__SelfReleaseChainedSplitProtocolPattern
 			}
 		}
 
@@ -764,12 +761,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 		if(pipeline_flag)
 		{
 			//
-			// only the sample pair is needed..
-			// __MJ(__SST(this),__SCT(this),false);
-			// However, both are released to guarantee
-			// correct sequencing to guard logic.
+			// Close the ring.
 			//
-			__SelfReleaseSplitProtocolPattern
+			__SelfReleaseChainedSplitProtocolPattern
 		}
 
 
