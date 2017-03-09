@@ -991,6 +991,8 @@ void AaSimpleObjectReference::Print(ostream& ofile)
 		ofile << this->_object->Get_Name();
 	else
 		ofile << this->Get_Object_Ref_String();
+
+	this->Print_Buffering(ofile);
 }
 
 
