@@ -71,7 +71,7 @@ architecture default_arch of UnloadBuffer is
   signal pipe_has_data: boolean;
 begin  -- default_arch
 
-  assert (buffer_size > 0) report "Unload buffer size must be > 0" & ": buffer = " & name  severity error;
+  --assert (buffer_size > 0) report "Unload buffer size must be > 0" & ": buffer = " & name  severity error;
 
   -- count number of elements in pipe.
   process(clk, reset)
