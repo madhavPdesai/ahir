@@ -46,6 +46,7 @@ void vcPipe::Register_Pipe_Read(vcModule* m, int idx)
 	if(this->Get_P2P() && (_pipe_read_count > 1))
 	{
 		vcSystem::Error("P2P pipe " + this->Get_VHDL_Id() + " cannot have multiole readers.");
+		this->Set_P2P(false);
 	}
 }
 
@@ -56,6 +57,7 @@ void vcPipe::Register_Pipe_Write(vcModule* m, int idx)
 	if(this->Get_P2P() && (_pipe_write_count > 1))
 	{
 		vcSystem::Error("P2P pipe " + this->Get_VHDL_Id() + " cannot have multiple writers.");
+		this->Set_P2P(false);
 	}
 }
 

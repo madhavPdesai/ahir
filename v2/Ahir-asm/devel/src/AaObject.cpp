@@ -484,7 +484,7 @@ void AaPipeObject::Add_Reader(AaModule* m)
 	if(this->Get_P2P() && (_reader_modules.size() > 1))
 	{
 		AaRoot::Warning("pipe " + this->Get_Name() + " is marked as P2P.. cannot have multiple readers.", this);
-		this->Set_P2P(false);
+		//this->Set_P2P(false);
 	}
 }
 
@@ -500,7 +500,7 @@ void AaPipeObject::Add_Writer(AaModule* m)
 	if(this->Get_P2P() && (_writer_modules.size() > 1))
 	{
 		AaRoot::Warning("pipe " + this->Get_Name() + " is marked as P2P.. cannot have multiple writers.", this);
-		this->Set_P2P(false);
+		//this->Set_P2P(false);
 	}
 }
 
