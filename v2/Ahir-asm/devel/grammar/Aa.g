@@ -133,7 +133,7 @@ aA_Mutex_Declaration
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
+// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE)? (NOOPT)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 aA_Module returns [AaModule* new_module]
 {
@@ -150,6 +150,7 @@ aA_Module returns [AaModule* new_module]
     int buffering = 1;
     bool full_rate_flag = false;
     bool macro_flag = false;
+    bool noopt_flag = false;
     int lno;
 }
     : ((FOREIGN {foreign_flag = true;}) | 
@@ -159,6 +160,7 @@ aA_Module returns [AaModule* new_module]
 		(FULLRATE {full_rate_flag = true;})? 
 	) | (INLINE {inline_flag = true;}) | (MACRO {macro_flag = true;}) )? 
 	((OPERATOR {operator_flag = true;}) | (VOLATILE {volatile_flag = true;}))?
+	(NOOPT {noopt_flag = true;})?
 	mt: MODULE 
         lbl = aA_Label 
         {
@@ -168,6 +170,7 @@ aA_Module returns [AaModule* new_module]
             new_module->Set_Inline_Flag(inline_flag);
             new_module->Set_Macro_Flag(macro_flag);
             new_module->Set_Pipeline_Flag(pipeline_flag);
+	    new_module->Set_Noopt_Flag(noopt_flag);
 
 	    if(!foreign_flag)
 	    {
@@ -2539,6 +2542,7 @@ SHIFTREG        : "$shiftreg";
 // combinational/operator module types.
 VOLATILE   : "$volatile";
 OPERATOR   : "$operator";
+NOOPT      : "$noopt";
 
 
 // data format

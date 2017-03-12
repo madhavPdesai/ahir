@@ -62,6 +62,8 @@ AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
   _reads_from_shared_pipe = false;
   _pipelined_bodies_have_been_equalized = false;
 
+  _noopt_flag = false;
+
   _number_of_times_called = 0;
   this->Set_Delay(2);
 
@@ -136,6 +138,10 @@ void AaModule::Print(ostream& ofile)
   else if(this->Get_Volatile_Flag())
 	ofile << "$volatile ";
 
+  if(this->Get_Noopt_Flag())
+	ofile << "$noopt ";
+ 
+
   ofile << "$module [" << this->Get_Label() << "]" << endl;
   ofile << "\t $in (";
   for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
@@ -163,7 +169,8 @@ void AaModule::Print_Body(ostream& ofile)
 {
 	if(this->_pipeline_flag && AaProgram::_balance_loop_pipeline_bodies && !this->Get_Has_Been_Equalized())
 	{
-		this->Equalize_Paths_For_Pipelining();
+		if(!this->Get_Noopt_Flag())
+			this->Equalize_Paths_For_Pipelining();
 		this->Set_Has_Been_Equalized(true);
 	}
 	
