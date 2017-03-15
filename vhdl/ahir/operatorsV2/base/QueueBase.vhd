@@ -83,6 +83,9 @@ begin  -- SimModel
   begin
  
     assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
+    assert (queue_size < (3*queue_depth/4)) report "Queue " & name & " is three-quarters-full." severity note;
+    assert (queue_size < (queue_depth/2)) report "Queue " & name & " is half-full." severity note;
+    assert (queue_size < (queue_depth/4)) report "Queue " & name & " is quarter-full." severity note;
 
     qD1: if (queue_depth = 1) generate
      incr_read_pointer <= read_pointer;
