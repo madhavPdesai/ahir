@@ -5384,7 +5384,9 @@ void AaDoWhileStatement::Print(ostream& ofile)
 
 	if(AaProgram::_balance_loop_pipeline_bodies)
 	{
-		this->Equalize_Paths_For_Pipelining();
+		AaModule* m = this->Get_Module();
+		if((m != NULL) && (!m->Get_Noopt_Flag()))
+			this->Equalize_Paths_For_Pipelining();
 	}
 
 	ofile << this->Tab();
