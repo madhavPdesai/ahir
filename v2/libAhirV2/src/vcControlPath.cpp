@@ -296,6 +296,22 @@ vcCPElement::vcCPElement(vcCPElement* parent, string id):vcRoot(id)
 	_pipeline_parent = NULL;
 }
 
+vcModule* vcCPElement::Get_Root_Parent_Module()
+{
+	vcCPElement* root = this->Get_Parent();
+	vcModule* ret_module = NULL;
+	while ((root != NULL) && !root->Is_Control_Path())
+	{
+		root = root->Get_Parent();
+	}
+	if(root != NULL)
+	{
+		vcControlPath* cp = (vcControlPath*) root;
+		ret_module = cp->Get_Parent_Module();
+	}
+	return(ret_module);
+}
+
 /*
    void  vcCPElement::Set_Pipeline_Parent()
    {

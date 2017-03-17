@@ -271,6 +271,7 @@ public:
   virtual bool Is_In_Transition(vcTransition* p) {return(false);}
   virtual bool Is_Out_Transition(vcTransition* p) {return(false);}
 
+  virtual vcModule* Get_Root_Parent_Module();
 };
 
 
