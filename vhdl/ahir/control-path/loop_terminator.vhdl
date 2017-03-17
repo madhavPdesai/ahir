@@ -195,15 +195,5 @@ begin  -- Behave
     end if;
   end process;
 
-  dbgGen: if (global_debug_flag) generate
-    process(clk)
-    begin
-      if(clk'event and clk = '1') then
-         if(available_iterations = 0) then
-           assert false report "available_iterations = 0 in " & name  severity note;
-         end if;
-      end if;
-   end process;
- end generate dbgGen;
-  
+  assert (available_iterations > 0)  report "available_iterations = 0 in " & name  severity note;
 end Behave;

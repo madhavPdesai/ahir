@@ -1459,8 +1459,15 @@ void vcCPSimpleLoopBlock::Construct_CPElement_Group_Graph_Vertices(vcControlPath
 
 void vcCPSimpleLoopBlock::Print_VHDL_Terminator(vcControlPath* cp, ostream& ofile)
 {
-	ofile <<  _terminator->Get_VHDL_Id() << ": loop_terminator -- {" << endl;
-	ofile <<  "generic map (name => \" " << _terminator->Get_VHDL_Id() 
+	vcModule* m = this->Get_Root_Parent_Module();
+	string t_name;
+	if(m != NULL)
+		t_name = m->Get_VHDL_Id() + "_" + _terminator->Get_VHDL_Id();
+	else
+		t_name =  _terminator->Get_VHDL_Id();
+		
+	ofile <<  t_name << ": loop_terminator -- {" << endl;
+	ofile <<  "generic map (name => \" " << t_name 
 		<< "\", max_iterations_in_flight =>" <<  this->Get_Pipeline_Depth() << ") " << endl;
 	ofile <<  "port map(loop_body_exit => " << _terminator->_loop_body->Get_Exit_Symbol(cp) << ","
 		<< "loop_continue => " << _terminator->_loop_taken->Get_Exit_Symbol(cp) << ","
@@ -1472,7 +1479,14 @@ void vcCPSimpleLoopBlock::Print_VHDL_Terminator(vcControlPath* cp, ostream& ofil
 
 void vcCPSimpleLoopBlock::Print_Terminator_Dot_Entry(vcControlPath* cp, ostream& ofile)
 {
-	string tnode_id = this->_terminator->Get_VHDL_Id();
+	// TODO: repeated code... put it in a function.
+	vcModule* m = this->Get_Root_Parent_Module();
+	string tnode_id;
+	if(m != NULL)
+		tnode_id = m->Get_VHDL_Id() + "_" + _terminator->Get_VHDL_Id();
+	else
+		tnode_id =  _terminator->Get_VHDL_Id();
+
 	ofile << "  " << tnode_id << " [shape=rectangle];" << endl;
 	ofile << cp->Get_Group(this->_terminator->_loop_body)->Get_Dot_Id()
 		<< " -> " << tnode_id << ";" << endl;
