@@ -6,7 +6,7 @@ $constant ADDOP: $uint<8> := 0
 $constant SUBOP: $uint<8> := 1
 $constant MULOP: $uint<8> := 2
 
-$pipeline $fullrate $module [fpmul32] 
+$pipeline $depth 15 $buffering 2 $fullrate $module [fpmul32] 
 $in (L : $float<8,23> R : $float<8,23> )
 $out (ret_val_x_x : $float<8,23>)
 $is 
@@ -14,7 +14,7 @@ $is
     ret_val_x_x := (L * R)
 }
 
-$pipeline $fullrate $module [fpadd32] 
+$pipeline $depth 15 $buffering 2 $fullrate $module [fpadd32] 
 $in (L : $float<8,23> R : $float<8,23> )
 $out (ret_val_x_x : $float<8,23>)
 $is 
@@ -22,7 +22,7 @@ $is
     ret_val_x_x := (L + R)
 }
 
-$pipeline $fullrate $module [fpsub32] 
+$pipeline $depth 15 $buffering 2  $fullrate $module [fpsub32] 
 $in (L : $float<8,23> R : $float<8,23> )
 $out (ret_val_x_x : $float<8,23>)
 $is 
@@ -30,7 +30,7 @@ $is
     ret_val_x_x := (L - R)
 }
 
-$pipeline $fullrate $module [fpu32] 
+$pipeline  $depth 15 $buffering 2 $fullrate $module [fpu32] 
 $in (L : $float<8,23> R : $float<8,23> OP_ID : $uint<8> )
 $out (ret_val_x_x : $float<8,23>)
 $is 
@@ -46,7 +46,7 @@ $is
 
 // double precision..
 
-$pipeline $fullrate $module [fpmul64] 
+$pipeline  $depth 15 $buffering 2 $fullrate $module [fpmul64] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
@@ -54,7 +54,7 @@ $is
 	$call fpmul64_inner (L R) (ret_val_x_x)
 }
 
-$pipeline $fullrate $module [fpmul64_inner] 
+$pipeline  $depth 15 $buffering 2 $fullrate $module [fpmul64_inner] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
@@ -62,7 +62,7 @@ $is
     ret_val_x_x := (L * R)
 }
 
-$pipeline $fullrate $module [fpadd64] 
+$pipeline  $depth 15 $buffering 2 $fullrate $module [fpadd64] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
@@ -70,7 +70,7 @@ $is
 	$call fpadd64_inner (L R) (ret_val_x_x)
 }
 
-$pipeline $fullrate $module [fpadd64_inner] 
+$pipeline  $depth 15 $buffering 2 $fullrate $module [fpadd64_inner] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
@@ -78,7 +78,7 @@ $is
     ret_val_x_x := (L + R)
 }
 
-$pipeline $fullrate $module [fpsub64] 
+$pipeline  $depth 15 $buffering 2 $fullrate $module [fpsub64] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
@@ -86,7 +86,7 @@ $is
 	$call fpsub64_inner (L R) (ret_val_x_x)
 }
 
-$pipeline $fullrate $module [fpsub64_inner] 
+$pipeline  $depth 15 $buffering 2 $fullrate $module [fpsub64_inner] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
@@ -94,7 +94,7 @@ $is
     ret_val_x_x := (L - R)
 }
 
-$pipeline $fullrate $module [fpu64] 
+$pipeline  $depth 15 $buffering 2 $fullrate $module [fpu64] 
 $in (L : $float<11,52> R : $float<11,52> OP_ID : $uint<8> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
