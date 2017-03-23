@@ -1,0 +1,26 @@
+$pipe in_data: $uint<32> $depth 2
+$pipe out_data: $uint<32> $depth 2
+
+$pipeline $depth 3 $fullrate $operator $module 
+	[foo_bar] 
+	$in (X: $uint<32>)
+	$out (Y: $uint<32>) $is
+{
+	Y := (X + 1) $buffering 2
+}
+
+
+$module [operator_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] 
+	{
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+	
+		X := in_data
+		$call foo_bar (X) (Y)
+		out_data := Y
+
+		$while 1
+	}
+}
