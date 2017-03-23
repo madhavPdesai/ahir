@@ -418,31 +418,7 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 			vcSystem::Error("in pipelined operator module " + this->Get_Id() + ", no output is actually driven in the module");
 		}
 
-		vector<string> preds;
-		vector<int>    pred_markings;
-		vector<int>    pred_capacities;
-		vector<int>    pred_delays;
-
-		preds.push_back(cp_exit_symbol);
-		pred_capacities.push_back(this->Get_Pipeline_Depth());
-		pred_markings.push_back(0);
-		pred_delays.push_back(0);
-
-		preds.push_back("update_req");
-		pred_capacities.push_back(this->Get_Pipeline_Depth());
-		pred_markings.push_back(0);
-		pred_delays.push_back(1);  // must have unit delay!
-
-		string joined_symbol = "update_ack_symbol";
-		Print_VHDL_Join(joined_symbol + "_join", 
-				preds,
-				pred_markings,
-				pred_capacities, 
-				pred_delays, 
-				joined_symbol,
-				ofile);
-
-		ofile << "-- update ack. " << endl;
+		ofile << "update_ack_symbol <= " << cp_exit_symbol << ";" << endl;
 		ofile << "update_ack <= update_ack_symbol;" << endl;
 	}
 	ofile << endl;

@@ -954,6 +954,8 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 		// signal reads are ignored.
 		root_set.insert(this);
 	}
+
+
 	this->_in_collect_roots_stack = false;
 }
 
@@ -4452,6 +4454,7 @@ void AaUnaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 			_rest->Collect_Root_Sources(root_set);
 		else
 			root_set.insert(this);
+
 	}
 }
 
@@ -5008,6 +5011,7 @@ void AaBinaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 		}
 		else
 			root_set.insert(this);
+
 	}
 }
 
@@ -5503,6 +5507,7 @@ void AaTernaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 		}
 		else
 			root_set.insert(this);
+
 	}
 }
 

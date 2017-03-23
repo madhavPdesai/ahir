@@ -78,6 +78,7 @@ architecture default_arch of PipeBase is
   -- shallow => will be implemented using flip-flops.  Can be expensive!
   --
   constant shallow_flag : boolean :=    (depth < 8);
+  -- constant shallow_flag : boolean :=   true;
   
   signal write_ack_sig: std_logic_vector(num_writes-1 downto 0);
   signal read_ack_sig: std_logic_vector(num_reads-1 downto 0);

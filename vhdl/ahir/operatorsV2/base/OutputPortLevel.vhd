@@ -39,6 +39,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
+use ahir.GlobalConstants.all;
 
 entity OutputPortLevel is
   generic(name: string; num_reqs: integer;
@@ -90,6 +91,21 @@ begin
   end process;
 
   gen: for I in num_reqs-1 downto 0 generate
+
+       debugGen: if global_pipe_report_flag generate
+	process(clk)
+	begin
+		if(clk'event and clk = '1') then
+			if (reset = '0') then
+				if((req_active(I) = '1')  and (ack_sig(I) = '1')) then
+					assert false report "RPIPE " & name & "requester=" &
+						Convert_To_String(I) & " data=" &
+							Convert_SLV_to_Hex_String(data_array(I)) severity note;
+				end if;
+			end if;
+		end if;
+	end process;
+       end generate debugGen;
 
        SingleReq: if (num_reqs = 1) generate
           ack_sig(I) <=  oack; 

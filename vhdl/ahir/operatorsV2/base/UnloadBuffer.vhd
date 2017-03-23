@@ -60,39 +60,17 @@ architecture default_arch of UnloadBuffer is
   signal pipe_data_out:  std_logic_vector(data_width-1 downto 0);
 
   -- for waveforms..
-  signal output_register_prereg: std_logic_vector(data_width-1 downto 0);
-  signal load_reg: boolean;
+  signal output_register: std_logic_vector(data_width-1 downto 0);
+
+  signal unload_ack_reg: boolean;
 
   type UnloadFsmState is (idle, waiting);
   signal fsm_state : UnloadFsmState;
 
-
-  signal number_of_elements_in_pipe: integer range 0 to buffer_size+1;
-  signal pipe_has_data: boolean;
 begin  -- default_arch
 
-  --assert (buffer_size > 0) report "Unload buffer size must be > 0" & ": buffer = " & name  severity error;
+  assert (buffer_size > 0) report "Unload buffer size must be > 0" & ": buffer = " & name  severity error;
 
-  -- count number of elements in pipe.
-  process(clk, reset)
-  begin
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			number_of_elements_in_pipe <= 0;
-		else
-			if((pop_req(0) = '1') and (pop_ack(0) = '1')) then
-				if(not ((push_req(0) = '1') and (push_ack(0) = '1'))) then
-					number_of_elements_in_pipe <= number_of_elements_in_pipe - 1;
-				end if;
-			elsif((push_req(0) = '1') and (push_ack(0) = '1')) then
-				number_of_elements_in_pipe <= number_of_elements_in_pipe + 1;
-			end if;
-		end if;
-	end if;
-  end process;
-
-  pipe_has_data <= (number_of_elements_in_pipe > 0);
-  
   -- the input pipe.
   bufPipe : PipeBase generic map (
         name =>  name & "-blocking_read-bufPipe",
@@ -112,82 +90,76 @@ begin  -- default_arch
         write_data => write_data,
         clk        => clk,
         reset      => reset);
+
+  -- Input protocol.
   write_ack <= push_ack(0);
+  push_req(0) <= write_req;
 
 
   -- FSM
   --   Two states: Idle, Waiting
-  process(clk,unload_req, pipe_has_data, pop_ack, write_req, write_data, pipe_data_out)
+  process(clk, reset, fsm_state, unload_req, pop_ack, pipe_data_out, output_register)
      variable nstate: UnloadFsmState;
-     variable loadv : boolean;
-     variable pop_reqv, push_reqv : std_logic;
-     variable datav: std_logic_vector(data_width-1 downto 0);
+     variable pop_reqv : std_logic;
+     variable next_output_register_var, read_data_var: std_logic_vector(data_width-1 downto 0);
+     variable unload_ack_var, next_unload_ack_reg_var : Boolean;
   begin
      nstate :=  fsm_state;
      pop_reqv := '0';
-     push_reqv := write_req;
-     loadv := false;
-     datav := (others => '0');
+
+     next_output_register_var := output_register;
+     read_data_var := output_register;
+     next_unload_ack_reg_var := false;
+     unload_ack_var := unload_ack_reg;
   
      case fsm_state is
          when idle => 
                if(unload_req) then
                	 pop_reqv := '1';   
                  if (pop_ack(0) = '1') then
-		    -- load output register.
-		    	loadv := true;
-		    	datav := pipe_data_out;
-		 elsif ((not pipe_has_data) and (write_req = '1')) then
-			loadv := true;
-			datav := write_data;
-			-- write-data forwarded to output, don't push into queue.
-			push_reqv := '0';
+		    	next_output_register_var := pipe_data_out;
+			next_unload_ack_reg_var := true;
 		 elsif (nonblocking_read_flag) then
-			loadv := true; -- load zero into output register.
+		    	next_output_register_var := (others => '0');
+			next_unload_ack_reg_var := true;
 		 else 
-		        -- desire to unload, but nothing present.
 			nstate := waiting;
 		 end if;
                end if;
 	 when waiting =>
 		pop_reqv := '1';
 	        if(pop_ack(0) = '1') then
-		    -- ack the unload-req.
-		    loadv := true;
-		    datav := pipe_data_out;
+		    unload_ack_var := true;
+		    read_data_var := pipe_data_out;
+		    next_output_register_var := pipe_data_out;
 		    nstate := idle;
-
-		elsif ((not pipe_has_data) and (write_req = '1')) then
-
-		    -- lets not add an in->out combinational
-		    -- path which can really bite us later.
-
-		    loadv := true;
-		    datav := write_data;
-		    push_reqv := '0';
+		elsif (nonblocking_read_flag) then
+		    unload_ack_var := true;
+		    next_output_register_var := (others => '0');
 		    nstate := idle;
+		end if;
+		if(unload_req) then
+		    nstate := waiting;
 		end if;
      end case;
  
      pop_req(0) <= pop_reqv;
-     push_req(0) <= push_reqv;
-     load_reg <= loadv;
-     output_register_prereg <= datav;
+     unload_ack <= unload_ack_var;
+     read_data <= read_data_var;
+
 
      -- help XST out..  write the function explicitly below.
 
      if(clk'event and clk = '1') then
 	if(reset = '1') then
 		fsm_state <= idle;
-		unload_ack <= false;
+		unload_ack_reg <= false;
+		output_register <= (others => '0');
 	else
 		fsm_state <= nstate;
-		unload_ack <= loadv;
+		unload_ack_reg <= next_unload_ack_reg_var;
+		output_register <= next_output_register_var;
 	end if;
-
-	if(loadv) then
-           read_data <= datav;
-        end if;
      end if;
   end process;
 

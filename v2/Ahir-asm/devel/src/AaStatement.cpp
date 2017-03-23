@@ -5913,7 +5913,10 @@ void AaCallStatement::Collect_Root_Sources(set<AaRoot*>& root_sources)
 		}
 	}
 	else
+	{
 		root_sources.insert(this);
+	}
+
 }
 
 
