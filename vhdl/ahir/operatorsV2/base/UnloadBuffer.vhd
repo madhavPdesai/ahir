@@ -117,7 +117,7 @@ begin  -- default_arch
 
   -- FSM
   --   Two states: Idle, Waiting
-  process(clk,unload_req, pipe_has_data, pop_ack, write_req, write_data, pipe_data_out)
+  process(clk,fsm_state, unload_req, pipe_has_data, pop_ack, write_req, write_data, pipe_data_out)
      variable nstate: UnloadFsmState;
      variable loadv : boolean;
      variable pop_reqv, push_reqv : std_logic;
