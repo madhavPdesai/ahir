@@ -1127,7 +1127,8 @@ void AaModule::Write_VC_Control_Path_Optimized_Base(ostream& ofile)
 	  	trans_decls += "$null &-> (" + tname + ")\n";
 	  	trans_decls +=  "$null <-& (" + tname + "_in) \n";
 	  	trans_decls += "$null &-> (" + tname + ")\n";
-	  	trans_decls += tname + " o<-& (" + tname + "_in  0) \n"; // 0-delay, else wasted cycle.
+		// note simplification!
+	  	trans_decls += tname + " <-& (" + tname + "_in) \n"; // 0-delay, else wasted cycle.
 	  	binding_string += "$bind " + tname + " => " + region_name + " : " + tname + "_in\n"; 
 	  }
 	}

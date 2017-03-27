@@ -69,126 +69,191 @@ architecture default_arch of UnloadBuffer is
 
   signal number_of_elements_in_pipe: integer range 0 to buffer_size+1;
   signal pipe_has_data: boolean;
+
 begin  -- default_arch
 
-  --assert (buffer_size > 0) report "Unload buffer size must be > 0" & ": buffer = " & name  severity error;
+  -- assert (buffer_size > 0) report "Unload buffer size must be > 0" & ": buffer = " & name  severity error;
 
-  -- count number of elements in pipe.
-  process(clk, reset)
-  begin
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			number_of_elements_in_pipe <= 0;
-		else
-			if((pop_req(0) = '1') and (pop_ack(0) = '1')) then
-				if(not ((push_req(0) = '1') and (push_ack(0) = '1'))) then
-					number_of_elements_in_pipe <= number_of_elements_in_pipe - 1;
+  bufGt0: if buffer_size > 0 generate
+  
+	-- count number of elements in pipe.
+  	process(clk, reset)
+  	begin
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				number_of_elements_in_pipe <= 0;
+			else
+				if((pop_req(0) = '1') and (pop_ack(0) = '1')) then
+					if(not ((push_req(0) = '1') and (push_ack(0) = '1'))) then
+						number_of_elements_in_pipe <= number_of_elements_in_pipe - 1;
+					end if;
+				elsif((push_req(0) = '1') and (push_ack(0) = '1')) then
+					number_of_elements_in_pipe <= number_of_elements_in_pipe + 1;
 				end if;
-			elsif((push_req(0) = '1') and (push_ack(0) = '1')) then
-				number_of_elements_in_pipe <= number_of_elements_in_pipe + 1;
 			end if;
 		end if;
-	end if;
-  end process;
+  	end process;
+	
+  	pipe_has_data <= (number_of_elements_in_pipe > 0);
+  	
+  	-- the input pipe.
+  	bufPipe : PipeBase generic map (
+        	name =>  name & "-blocking_read-bufPipe",
+        	num_reads  => 1,
+        	num_writes => 1,
+        	data_width => data_width,
+        	lifo_mode  => false,
+		shift_register_mode => false,
+        	depth      => buffer_size,
+		full_rate  => full_rate)
+      	port map (
+        	read_req   => pop_req,
+        	read_ack   => pop_ack,
+        	read_data  => pipe_data_out,
+        	write_req  => push_req,
+        	write_ack  => push_ack,
+        	write_data => write_data,
+        	clk        => clk,
+        	reset      => reset);
+	
+		write_ack <= push_ack(0);
+  	
+	-- FSM
+  	--   Two states: Idle, Waiting
+  	process(clk,fsm_state, unload_req, pipe_has_data, push_ack, pop_ack, write_req, write_data, pipe_data_out)
+     		variable nstate: UnloadFsmState;
+     		variable loadv : boolean;
+     		variable pop_reqv, push_reqv: std_logic;
+     		variable datav: std_logic_vector(data_width-1 downto 0);
+        begin
+     		nstate :=  fsm_state;
 
-  pipe_has_data <= (number_of_elements_in_pipe > 0);
-  
-  -- the input pipe.
-  bufPipe : PipeBase generic map (
-        name =>  name & "-blocking_read-bufPipe",
-        num_reads  => 1,
-        num_writes => 1,
-        data_width => data_width,
-        lifo_mode  => false,
-	shift_register_mode => false,
-        depth      => buffer_size,
-	full_rate  => full_rate)
-      port map (
-        read_req   => pop_req,
-        read_ack   => pop_ack,
-        read_data  => pipe_data_out,
-        write_req  => push_req,
-        write_ack  => push_ack,
-        write_data => write_data,
-        clk        => clk,
-        reset      => reset);
-  write_ack <= push_ack(0);
+     		pop_reqv   := '0';
+     		push_reqv  := write_req;
 
+     		loadv := false;
+     		datav := (others => '0');
+  		
+     		case fsm_state is
+         		when idle => 
+               			if(unload_req) then
+               	 			pop_reqv := '1';   
+                 			if (pop_ack(0) = '1') then
+		    			-- load output register.
+		    				loadv := true;
+		    				datav := pipe_data_out;
+		 			elsif ((not pipe_has_data) and (write_req = '1')) then
+						loadv := true;
+						datav := write_data;
+						-- write-data forwarded to output, don't push into queue.
+						push_reqv := '0';
+					elsif (nonblocking_read_flag) then
+						loadv := true; -- load zero into output register.
+		 			else 
+		        			-- desire to unload, but nothing present.
+						nstate := waiting;
+		 			end if;
+               			end if;
+	 		when waiting =>
+				pop_reqv := '1';
+	        		if(pop_ack(0) = '1') then
+		    			-- ack the unload-req.
+		    			loadv := true;
+		    			datav := pipe_data_out;
+		    			nstate := idle;
+				elsif ((not pipe_has_data) and (write_req = '1')) then
+		    			-- lets not add an in->out combinational
+		    			-- path which can really bite us later.
 
-  -- FSM
-  --   Two states: Idle, Waiting
-  process(clk,fsm_state, unload_req, pipe_has_data, pop_ack, write_req, write_data, pipe_data_out)
-     variable nstate: UnloadFsmState;
-     variable loadv : boolean;
-     variable pop_reqv, push_reqv : std_logic;
-     variable datav: std_logic_vector(data_width-1 downto 0);
-  begin
-     nstate :=  fsm_state;
-     pop_reqv := '0';
-     push_reqv := write_req;
-     loadv := false;
-     datav := (others => '0');
-  
-     case fsm_state is
-         when idle => 
-               if(unload_req) then
-               	 pop_reqv := '1';   
-                 if (pop_ack(0) = '1') then
-		    -- load output register.
-		    	loadv := true;
-		    	datav := pipe_data_out;
-		 elsif ((not pipe_has_data) and (write_req = '1')) then
-			loadv := true;
-			datav := write_data;
-			-- write-data forwarded to output, don't push into queue.
-			push_reqv := '0';
-		 elsif (nonblocking_read_flag) then
-			loadv := true; -- load zero into output register.
-		 else 
-		        -- desire to unload, but nothing present.
-			nstate := waiting;
-		 end if;
-               end if;
-	 when waiting =>
-		pop_reqv := '1';
-	        if(pop_ack(0) = '1') then
-		    -- ack the unload-req.
-		    loadv := true;
-		    datav := pipe_data_out;
-		    nstate := idle;
-
-		elsif ((not pipe_has_data) and (write_req = '1')) then
-
-		    -- lets not add an in->out combinational
-		    -- path which can really bite us later.
-
-		    loadv := true;
-		    datav := write_data;
-		    push_reqv := '0';
-		    nstate := idle;
-		end if;
-     end case;
+		    			loadv := true;
+		    			datav := write_data;
+		    			push_reqv := '0';
+		    			nstate := idle;
+				end if;
+     		end case;
  
-     pop_req(0) <= pop_reqv;
-     push_req(0) <= push_reqv;
-     load_reg <= loadv;
-     output_register_prereg <= datav;
+     		pop_req(0) <= pop_reqv;
+     		push_req(0) <= push_reqv;
+		
+     		load_reg <= loadv;
+     		output_register_prereg <= datav;
+		
+     		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				fsm_state <= idle;
+				unload_ack <= false;
+			else
+				fsm_state <= nstate;
+				unload_ack <= loadv;
+			end if;
+		
+			if(loadv) then
+           			read_data <= datav;
+        		end if;
+     		end if;
+  	end process;
 
-     -- help XST out..  write the function explicitly below.
+  end generate bufGt0;
 
-     if(clk'event and clk = '1') then
-	if(reset = '1') then
-		fsm_state <= idle;
-		unload_ack <= false;
-	else
-		fsm_state <= nstate;
-		unload_ack <= loadv;
-	end if;
+  bufEq0: if buffer_size = 0 generate
+	-- FSM
+  	--   Two states: Idle, Waiting
+  	process(clk,fsm_state, unload_req, pipe_has_data, push_ack, pop_ack, write_req, write_data, pipe_data_out)
+     		variable nstate: UnloadFsmState;
+     		variable loadv : boolean;
+     		variable write_ackv: std_logic;
+     		variable datav: std_logic_vector(data_width-1 downto 0);
+        begin
+     		nstate :=  fsm_state;
+     		write_ackv := '0';
 
-	if(loadv) then
-           read_data <= datav;
-        end if;
-     end if;
-  end process;
+     		loadv := false;
+     		datav := (others => '0');
+  		
+     		case fsm_state is
+         		when idle => 
+               			if(unload_req) then
+					write_ackv := '1';
+		 			if (write_req = '1') then
+						loadv := true;
+						datav := write_data;
+					elsif (nonblocking_read_flag) then
+						loadv := true; -- load zero into output register.
+		 			else 
+		        			-- desire to unload, but nothing present.
+						nstate := waiting;
+		 			end if;
+               			end if;
+	 		when waiting =>
+		    		write_ackv := '1';
+				if (write_req = '1') then
+		    			-- lets not add an in->out combinational
+		    			-- path which can really bite us later.
+		    			loadv := true;
+		    			datav := write_data;
+		    			nstate := idle;
+				end if;
+     		end case;
+ 
+     		write_ack <= write_ackv;
+		
+     		load_reg <= loadv;
+     		output_register_prereg <= datav;
+		
+     		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				fsm_state <= idle;
+				unload_ack <= false;
+			else
+				fsm_state <= nstate;
+				unload_ack <= loadv;
+			end if;
+		
+			if(loadv) then
+           			read_data <= datav;
+        		end if;
+     		end if;
+  	end process;
+  end generate bufEq0;
 
 end default_arch;

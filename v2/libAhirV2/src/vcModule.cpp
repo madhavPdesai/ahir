@@ -1033,7 +1033,23 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 			{
 				vcWire* w = outarg_wires[idx];
 				if(!w->Is_Constant())
-					ofile << w->Get_VHDL_Id() + "_update_enable <= " << "out_buffer_write_ack_symbol;" << endl;
+				{
+					//
+					// this should have a marking of 1.
+					//
+					preds.clear();
+					preds.push_back("out_buffer_write_ack_symbol");
+					pred_markings.clear();
+					pred_markings.push_back(1);
+					pred_capacities.clear();
+					pred_capacities.push_back(1);
+					pred_delays.clear();
+					pred_delays.push_back(0);
+					string lj_name = w->Get_VHDL_Id() + "_update_enable_join";
+					string lj_symbol = w->Get_VHDL_Id() + "_update_enable";
+					Print_VHDL_Join(lj_name, preds, pred_markings, pred_capacities, pred_delays, lj_symbol, ofile);
+					//ofile << w->Get_VHDL_Id() + "_update_enable <= " << "out_buffer_write_ack_symbol;" << endl;
+				}
 			}
 		}
 	}
