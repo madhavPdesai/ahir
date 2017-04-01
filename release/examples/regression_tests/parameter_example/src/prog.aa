@@ -22,4 +22,8 @@ $module [phi_check_daemon] $in() $out () $is
 		out_data := COUNT
 		$while 1
 	}
+
+	$attribute a1 PDEPTH
+	$attribute a2 {PDEPTH + 1}
+	$attribute a3 4
 }

@@ -222,11 +222,11 @@ aA_Module returns [AaModule* new_module]
 aA_Module_Attribute[AaModule* m]
 {
     string name, val;
+    int int_val = 1;
+    int lno;
 }
     :
-        ATTRIBUTE nameid:SIMPLE_IDENTIFIER 
-		((valid:SIMPLE_IDENTIFIER {val = valid->getText();}) | 
-			(pid: UINTEGER {val = pid->getText();})) ?
+        ATTRIBUTE nameid:SIMPLE_IDENTIFIER (int_val = aA_Integer_Parameter_Expression[lno] {val = IntToStr(int_val);})
         { 
             name = nameid->getText();
             m->Add_Attribute(name,val);
