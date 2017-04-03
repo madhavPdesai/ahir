@@ -226,7 +226,7 @@ aA_Module_Attribute[AaModule* m]
     int lno;
 }
     :
-        ATTRIBUTE nameid:SIMPLE_IDENTIFIER (int_val = aA_Integer_Parameter_Expression[lno] {val = IntToStr(int_val);})
+        ATTRIBUTE nameid:SIMPLE_IDENTIFIER (int_val = aA_Integer_Parameter_Expression[lno] {val = IntToStr(int_val);})?
         { 
             name = nameid->getText();
             m->Add_Attribute(name,val);
