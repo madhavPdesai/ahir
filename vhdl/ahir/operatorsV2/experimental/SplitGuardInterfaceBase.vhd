@@ -90,8 +90,8 @@ begin
 
 	qdata_in(0) <= guard_interface;
 
-	qI: QueueBase  -- dont bypass.. combinational cycle alert!
-		generic map(name => name & "-qI", queue_depth => buffering, data_width => 1)
+	qI: SingleBitQueueBase  -- dont bypass.. combinational cycle alert!
+		generic map(name => name & "-qI", queue_depth => buffering)
 		port map(clk => clk, reset => reset,
 				data_in => qdata_in,
 				push_req => push,
