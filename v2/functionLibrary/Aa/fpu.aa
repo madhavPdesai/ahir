@@ -46,7 +46,7 @@ $is
 
 // double precision..
 
-$pipeline  $depth 15 $buffering 2 $fullrate $module [fpmul64] 
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpmul64] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
@@ -54,15 +54,16 @@ $is
 	$call fpmul64_inner (L R) (ret_val_x_x)
 }
 
-$pipeline  $depth 15 $buffering 2 $fullrate $module [fpmul64_inner] 
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpmul64_inner] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
 {
     ret_val_x_x := (L * R)
+    $attribute delay 24
 }
 
-$pipeline  $depth 15 $buffering 2 $fullrate $module [fpadd64] 
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpadd64] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
@@ -70,31 +71,33 @@ $is
 	$call fpadd64_inner (L R) (ret_val_x_x)
 }
 
-$pipeline  $depth 15 $buffering 2 $fullrate $module [fpadd64_inner] 
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpadd64_inner] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
 {
     ret_val_x_x := (L + R)
+    $attribute delay 24
 }
 
-$pipeline  $depth 15 $buffering 2 $fullrate $module [fpsub64] 
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpsub64] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
 {
-	$call fpsub64_inner (L R) (ret_val_x_x)
+    $call fpsub64_inner (L R) (ret_val_x_x)
 }
 
-$pipeline  $depth 15 $buffering 2 $fullrate $module [fpsub64_inner] 
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpsub64_inner] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
 {
     ret_val_x_x := (L - R)
+    $attribute delay 24
 }
 
-$pipeline  $depth 15 $buffering 2 $fullrate $module [fpu64] 
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpu64] 
 $in (L : $float<11,52> R : $float<11,52> OP_ID : $uint<8> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
@@ -106,6 +109,7 @@ $is
     	$guard (is_sub) osub := (L - R)
         $guard (is_mul) omul := (L * R)
 	ret_val_x_x := ($mux is_add oadd ($mux is_sub osub ($mux is_mul omul 0)))
+    	$attribute delay 28
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
