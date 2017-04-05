@@ -3,7 +3,7 @@ ahir:fpu32:20
 ahir:fpadd32:16
 ahir:fpsub32:16
 ahir:fpmul32:16
-ahir:fpu64:22
-ahir:fpadd64:18
-ahir:fpsub64:18
-ahir:fpmul64:18
+ahir:fpu64:28
+ahir:fpadd64:24
+ahir:fpsub64:24
+ahir:fpmul64:24
