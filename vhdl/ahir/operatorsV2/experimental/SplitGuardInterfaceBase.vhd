@@ -39,6 +39,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
+use ahir.GlobalConstants.all;
 
 
 -- a guard-interface to conform with the split protocol.
@@ -85,13 +86,22 @@ architecture Behave of SplitGuardInterfaceBase is
   signal s_counter, c_counter: integer;
 
   signal ca_out_d, ca_out_u: Boolean;
+
+
+  -- number of stages!  This will cause
+  -- the minimum latency of sr -> ca to
+  -- increase to this number...  Be careful..
+  constant g_queue_number_of_stages : integer := Ceil(buffering, max_single_bit_queue_depth_per_stage);
+
+  -- constant g_queue_number_of_stages : integer := 1;
+
 begin
 	ca_out <= ca_out_d or ca_out_u;
 
 	qdata_in(0) <= guard_interface;
 
-	qI: SingleBitQueueBase  -- dont bypass.. combinational cycle alert!
-		generic map(name => name & "-qI", queue_depth => buffering)
+	qI: ShiftRegisterSingleBitQueue  -- dont bypass.. combinational cycle alert!
+		generic map(name => name & "-qI", queue_depth => buffering, number_of_stages => g_queue_number_of_stages)
 		port map(clk => clk, reset => reset,
 				data_in => qdata_in,
 				push_req => push,

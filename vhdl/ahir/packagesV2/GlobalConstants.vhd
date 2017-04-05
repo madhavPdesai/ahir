@@ -33,4 +33,10 @@
 package GlobalConstants is
     constant global_debug_flag: boolean := false;
     constant global_pipe_report_flag: boolean := true;
+
+    --
+    -- for guarded statements... increase this with care!
+    --
+    constant max_single_bit_queue_depth_per_stage : integer := 512;  -- this is huge.. make it smaller for effect (carefully)
+
 end package GlobalConstants;
