@@ -194,6 +194,23 @@ element in the right list, a token will enter
 the left (transition) and \&-> signifies that a token leaving the left
 (transition) will be replicated so that a
 token enters each of the elements in the list on the right.
+\item A pipelined-fork block defines a fork block which can support
+several active instantiations at the same time.
+\begin{verbatim}
+:|: [<name>] {
+   same-structure-as-fork
+   but-can-have-marked-joins
+}
+\end{verbatim}
+This uses a special join called a marked-join
+\begin{verbatim}
+jT o<- (s1 1 s2 1)
+(s1 can be $entry)
+\end{verbatim}
+Which says that jT is a join of s1 and s2, with a pre-condition
+that s1 is assumed to have fired twice and s2 is assumed to have fired
+twice before time began.  As a result it is possible for jT to fire
+twice before s1 and s2 fire in normal operation. 
 \end{itemize}
 
 The control-path itself is a series region. It syntax is
@@ -319,13 +336,24 @@ handshakes) or a unitary protocol (single request/ack handshake).
 
 Operator nodes are instantiated by the syntax
 \begin{verbatim}
-<op-code> [operator-name] ( <input-wires> )  ( <output-wires>)
+($guard (~)? guard-wire)? <op-code> [operator-name] ( <input-wires> )  ( <output-wires>)
 \end{verbatim}
 For example, an add operator node instantiation is 
 \begin{verbatim}
 + [wadd] (a b)  (c)
 \end{verbatim}
 The add operation takes two inputs and produces a single output.
+Some other variants:
+\begin{verbatim}
+$guard (p) + [wadd1] (a b)  (c)
+\end{verbatim}
+signifies that the wadd1 operation is actually executed only if
+the wire $p$ is 1.
+\begin{verbatim}
+$guard (~p) + [wadd2] (a b)  (c)
+\end{verbatim}
+signifies that the wadd2 operation is actually executed only if
+the wire $p$ is 0.
 
 
 Other binary operators with two inputs and a single
@@ -354,6 +382,7 @@ $S<=$S  signed less-than-or-equal
 ~|      logical-bitwise-nor
 ~&      logical-bitwise-nand
 ~^      logical-bitwise-xnor
+&&      concatenate
 \end{verbatim}
 
 Operators with a single input and a single
@@ -386,16 +415,10 @@ and one output.  The syntax is
 \begin{verbatim}
 $phi [oname] (u1 u2 u3 .. un) (y)
 \end{verbatim}
-This operator has a unitary protocol, but there are as many
-req/ack pairs as there are inputs.  The output y
+This operator has a split protocol, but there are as many
+sample-req/sample-ack pairs as there are inputs.  There is a
+single update-req/update-ack pair.  The output y
 is assigned to an input for which a request has been made.
-\item The {\em concatenate} operator has two inputs and a single
-output.  The output bit sequence is a conctatenation of the input
-bit sequences.
-\begin{verbatim}
-&& [cname] (a b) (c)
-\end{verbatim}
-This operator also has a split protocol.
 \item The {\em slice} operator has three inputs, the first
 of which is a wire, and the next two must be constants.
 It has a single output:
@@ -429,6 +452,8 @@ $call [call_id] $module foo (in1 in2 .. inN) (out1 out2 .. outM)
 The number of input and output arguments must match those
 on module foo.
 \end{itemize}
+
+{\bf Note: All operators can be guarded!}
 
 \section{Control-data links} 
 
