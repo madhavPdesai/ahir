@@ -72,7 +72,7 @@ AaExpression::~AaExpression() {};
 
 void AaExpression::Check_Volatile_Inconsistency(AaStatement* stmt)
 {
-	if(stmt->Get_Is_Volatile() && !this->Is_Trivial())
+	if((stmt != NULL) && stmt->Get_Is_Volatile() && !this->Is_Trivial())
 	{
 		AaRoot::Error("Expression "  + this->To_String() 
 				+ " is not trivial but statement is marked as volatile", stmt);

@@ -1935,10 +1935,11 @@ void AaCallStatement::Replace_Input_Argument(AaExpression* old_arg, AaSimpleObje
 			this->_source_objects.erase(arg->Get_Object());
 
 			_input_args[i] = new_arg;
-			new_arg->Set_Associated_Statement(this);
 			new_arg->Add_Target_Reference(this);
 			this->Add_Source_Reference(new_arg);
 			new_arg->Map_Source_References(this->_source_objects);
+
+			new_arg->Set_Associated_Statement(this);
 			break;
 		}
 	}

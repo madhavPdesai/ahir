@@ -389,7 +389,7 @@ class AaExpression: public AaRoot
 		Update_Reenable_Points_And_Producer_Delay_Status(set<string>& en_points, map<string,bool>& en_bypass_flags, 
 													set<AaRoot*>& visited_elements);
 
-	void Check_Volatile_Inconsistency(AaStatement* stmt);
+	virtual void Check_Volatile_Inconsistency(AaStatement* stmt);
 };
 
 
