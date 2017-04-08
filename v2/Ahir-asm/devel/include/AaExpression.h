@@ -396,7 +396,7 @@ class AaExpression: public AaRoot
 	virtual void Write_Forward_Dependency_From_Roots(string dependent_transition, 
 								set<AaRoot*>& visited_elements,
 									ostream& ofile);
-
+	virtual void Check_Volatile_Inconsistency(AaStatement* stmt);
 };
 
 
@@ -481,6 +481,7 @@ class AaObjectReference: public AaExpression
 		virtual void Set_Associated_Statement(AaStatement* stmt)
 		{
 			_associated_statement = stmt;
+			this->Check_Volatile_Inconsistency(stmt);
 		}
 
 
@@ -761,6 +762,7 @@ class AaConstantLiteralReference: public AaObjectReference
 	virtual void Set_Associated_Statement(AaStatement* stmt)
 	{
 		_associated_statement = stmt;
+		this->Check_Volatile_Inconsistency(stmt);
 	}
 	virtual void Collect_Root_Sources(set<AaRoot*>& root_set) {};
 	virtual string Get_VC_Name() {return("konst_" + Int64ToStr(this->Get_Index()));}
@@ -867,6 +869,7 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual void Set_Associated_Statement(AaStatement* stmt)
 	{
 		_associated_statement = stmt;
+		this->Check_Volatile_Inconsistency(stmt);
 	}
 
 	virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
@@ -977,6 +980,7 @@ class AaArrayObjectReference: public AaObjectReference
 	virtual void Set_Associated_Statement(AaStatement* stmt)
 	{
 		_associated_statement = stmt;
+		this->Check_Volatile_Inconsistency(stmt);
 		for(int idx = 0; idx < _indices.size(); idx++)
 			_indices[idx]->Set_Associated_Statement(stmt);
 
@@ -1072,6 +1076,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
 	{
 		_associated_statement = stmt;
 		_reference_to_object->Set_Associated_Statement(stmt);
+		this->Check_Volatile_Inconsistency(stmt);
 	}
 	virtual void Map_Source_References_As_Target(set<AaRoot*>& source_objects)
 	{
@@ -1170,6 +1175,7 @@ class AaAddressOfExpression: public AaObjectReference
 	{
 		_associated_statement = stmt;
 		_reference_to_object->Set_Associated_Statement(stmt);
+		this->Check_Volatile_Inconsistency(stmt);
 	}
 	virtual void Set_Pipeline_Parent(AaStatement* dws)
 	{
@@ -1271,6 +1277,7 @@ class AaTypeCastExpression: public AaExpression
 	{
 		_associated_statement = stmt;
 		_rest->Set_Associated_Statement(stmt);
+		this->Check_Volatile_Inconsistency(stmt);
 	}
 
 	virtual void Set_Pipeline_Parent(AaStatement* dws)
@@ -1382,11 +1389,7 @@ class AaUnaryExpression: public AaExpression
 	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC(ofstream& ofile);
 
-	virtual void Set_Associated_Statement(AaStatement* stmt)
-	{
-		_associated_statement = stmt;
-		_rest->Set_Associated_Statement(stmt);
-	}
+	virtual void Set_Associated_Statement(AaStatement* stmt);
 	virtual void Set_Pipeline_Parent(AaStatement* dws)
 	{
 		_pipeline_parent = dws;

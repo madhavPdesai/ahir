@@ -75,6 +75,15 @@ bool AaExpression::Is_Flow_Through()
 	return(this->Is_Trivial() && this->Get_Is_Intermediate());
 }
 
+void AaExpression::Check_Volatile_Inconsistency(AaStatement* stmt)
+{
+	if((stmt != NULL) && stmt->Get_Is_Volatile() && !this->Is_Trivial())
+	{
+		AaRoot::Error("Expression "  + this->To_String() 
+				+ " is not trivial but statement is marked as volatile", stmt);
+	}
+}
+
 void AaExpression::Write_VC_Output_Buffering(string dpe_name, string tgt_name, ostream& ofile)
 {
 	int this_buffering = this->Get_Buffering();
@@ -4473,6 +4482,12 @@ AaUnaryExpression::AaUnaryExpression(AaScope* parent_tpr,AaOperation op, AaExpre
 }
 
 AaUnaryExpression::~AaUnaryExpression() {};
+void AaUnaryExpression::Set_Associated_Statement(AaStatement* stmt)
+{
+	_associated_statement = stmt;
+	_rest->Set_Associated_Statement(stmt);
+	this->Check_Volatile_Inconsistency(stmt);
+}
 void AaUnaryExpression::Print(ostream& ofile)
 {
 	ofile << "( ";
