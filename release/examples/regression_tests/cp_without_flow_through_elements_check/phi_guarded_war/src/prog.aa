@@ -1,0 +1,25 @@
+$pipe in_data  : $uint<8> $depth 2
+$pipe out_data : $uint<8> $depth 2
+
+$volatile $module [add_v] $in (A: $uint<8>) $out (B: $uint<8>) $is {
+	B := (A+1)
+}
+
+$module [add_nv] $in (A: $uint<8>) $out (B: $uint<8>) $is {
+	B := (A+1)
+}
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback 
+			$phi X := _b0 $on $entry $guard (get_data) in_data $on $loopback
+			$phi init_flag := ($bitcast ($uint<1>) 1) $on $entry 0 $on $loopback
+		$endmerge
+		$volatile get_data := (init_flag | (~init_flag)) // always 1.
+		$guard (~init_flag) out_data := X
+		$while 1
+	}
+}

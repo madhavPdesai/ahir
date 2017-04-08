@@ -797,27 +797,38 @@ void AaExpression::Get_Non_Trivial_Source_References(set<AaRoot*>& root_set)
 	// if this is a target... then keep going forward from those who
 	// use this as a source...
 	{
+		assert(stmt != NULL);
+
 		if(this->Is_Implicit_Variable_Reference())
 		{
-			for(set<AaRoot*>::iterator iter = this->_source_references.begin(),
-				fiter = this->_source_references.end(); iter != fiter; iter++)
+			if(!stmt->Get_Is_Volatile())
 			{
-				AaRoot* r = *iter;
-				r->Get_Non_Trivial_Source_References(root_set);
+				root_set.insert(stmt);
+			}
+			else
+			// keep hunting.
+			{
+				for(set<AaRoot*>::iterator iter = this->_source_references.begin(),
+						fiter = this->_source_references.end(); iter != fiter; iter++)
+				{
+					AaRoot* r = *iter;
+					r->Get_Non_Trivial_Source_References(root_set);
+				}
 			}
 		}
 		else
 			root_set.insert(this);
 	}
 	else if((stmt != NULL) && stmt->Get_Is_Volatile())
-	// this has a volatile call statement..
+		// this has a volatile call statement..
 	{
 		stmt->Get_Non_Trivial_Source_References(root_set);
 	}
-	else if(this->Is_Flow_Through())
-	//
-	// this is flow-through.... go to its targets...
-	//
+	else if(this->Is_Flow_Through() || this->Is_Implicit_Variable_Reference() ||
+			this->Is_Signal_Read())
+		//
+		// this is flow-through.... go to its targets...
+		//
 	{
 		for(set<AaExpression*>::iterator iter = _targets.begin(), fiter = _targets.end(); iter != fiter; iter++)
 		{
@@ -893,7 +904,7 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 	}
 	else
 	{
-		
+
 		this->Set_Delay(MEMORY_ACCESS_DELAY);
 	}
 

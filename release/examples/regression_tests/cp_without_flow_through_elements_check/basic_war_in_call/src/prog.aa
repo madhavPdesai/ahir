@@ -3,8 +3,9 @@ $pipe out_data : $uint<32> $depth 2
 
 $pipeline $depth 3 $fullrate $module [accumulate] $in (first_time: $uint<1> a: $uint<32>) $out (b: $uint<32>) $is
 {
-	u := ($mux first_time 0 b)
-	b := (u + a)
+	$volatile u := ($mux first_time 0 b)
+	$volatile tmp := (u + a)
+	b := tmp
 }
 
 $module [volatile_check_daemon] $in() $out () $is

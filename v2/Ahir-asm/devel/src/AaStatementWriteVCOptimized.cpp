@@ -240,8 +240,6 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		}
 
 
-		// WAR dependencies
-		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 
 		if(!this->Get_Is_Volatile() && !target_is_implicit && !this->_source->Is_Constant())
 		{
@@ -271,6 +269,8 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			this->Write_VC_Synch_Dependency(visited_elements, pipeline_flag, ofile);
 
 		visited_elements.insert(this);
+		// WAR dependencies
+		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 	}
 }  
 
@@ -453,7 +453,6 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			}
 		}
 
-		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 
 		if(!this->Get_Is_Volatile())
 			this->Write_VC_Synch_Dependency(visited_elements, pipeline_flag, ofile);
@@ -466,6 +465,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		}
 
 		visited_elements.insert(this);
+		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 	}
 }
 
@@ -1584,7 +1584,9 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		if(!source_expr->Is_Constant())
 		{
 			AaExpression* sge = source_expr->Get_Guard_Expression();
-			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr))
+			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
+				!sge->Is_Implicit_Variable_Reference() && 
+				!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 			{
 				sge->Write_VC_Control_Path_Optimized(pipeline_flag,
 						visited_elements,
@@ -1631,8 +1633,9 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			}
 
 
-			//if(sge != NULL)
-			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr))
+			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
+				!sge->Is_Implicit_Variable_Reference() && 
+				!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 			{
 				ofile << "// Guard dependency in PHI alternative.." << endl;
 				__J(__SST(source_expr), __UCT(sge));
@@ -1640,7 +1643,9 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 			if(pipeline_flag)
 			{
-				if(sge != NULL)
+				if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
+						!sge->Is_Implicit_Variable_Reference() && 
+						!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 				{
 					sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
 				}
@@ -1719,7 +1724,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		AaRoot::Error("Guards for PHI statements are not permitted.", this);
 	}
 
-	this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements, ofile);
+	//this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements, ofile);
 	visited_elements.insert(this);
 }
 

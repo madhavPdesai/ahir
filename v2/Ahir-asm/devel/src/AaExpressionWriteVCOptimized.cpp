@@ -88,9 +88,17 @@ void AaExpression::Write_VC_Update_Reenables(AaRoot* reenabling_agent,
 	for(set<AaRoot*>::iterator iter = root_set.begin(), fiter = root_set.end(); iter != fiter; iter++)
 	{
 		AaRoot* producer = *iter;
+		bool producer_is_dependent_on_phi =
+				producer->Is_Phi_Statement() ||
+					(producer->Is_Expression() && 
+						(((AaExpression*)producer)->Get_Associated_Phi_Statement() != NULL));
 		if(visited_elements.find(producer) != visited_elements.end())
 		{
-			if(!(this_depends_on_phi && producer->Is_Phi_Statement()))
+
+			if(!(this_depends_on_phi && producer_is_dependent_on_phi))
+			//
+			// No Phi->Phi dependencies.
+			//
 			{
 				__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, true);
 			}
@@ -227,54 +235,56 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						((r_root->Is_Expression() ?
 					 			((AaExpression*)r_root)->Get_Associated_Phi_Statement() : NULL)));
 
-			// The target "b = (d+e)" cannot be updated until 
-			// the statement a := (b+c) has sampled b..  
-			// This is conservative
-			if(!(read_is_dependent_on_phi && write_stmt_is_dependent_on_phi))
-				//
-				// Note: phi-phi WAR dependencies are taken care of through
-				//         aggregated-phi symbols.  See 
-				// void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
-				//
+			if(visited_elements.find(r_root) != visited_elements.end())
 			{
+				// The target "b = (d+e)" cannot be updated until 
+				// the statement a := (b+c) has sampled b..  
+				// This is conservative
+				if(!(read_is_dependent_on_phi && write_stmt_is_dependent_on_phi))
+					//
+					// Note: phi-phi WAR dependencies are taken care of through
+					//         aggregated-phi symbols.  See 
+					// void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
+					//
+				{
 
-				if(r_phi == NULL)
-				{
-					__J(__UST(w_root), __SCT(r_root));
-				}
-				else
-				{
-					__J(__UST(w_root), __SCT(r_phi));
-				}
-
-				// The completion of "b = (d+e)" reenables the
-				// evaluation of "a = (b+c)"
-				if(pipeline_flag)
-				{
-					ofile << "// WAR dependency: release  Read: " 
-						<< this->To_String() 
-						<< " with Write: " << w_root->To_String() << endl;
 					if(r_phi == NULL)
 					{
-						__MJ(__SST(r_root), __UCT(w_root), true);
+						__J(__UST(w_root), __SCT(r_root));
 					}
 					else
 					{
-						__MJ(__SST(r_phi), __UCT(w_root), true);
+						__J(__UST(w_root), __SCT(r_phi));
 					}
 
-					int rb = w_root->Get_Buffering();
-					if(full_rate && (rb < 2))
+					// The completion of "b = (d+e)" reenables the
+					// evaluation of "a = (b+c)"
+					if(pipeline_flag)
 					{
-						w_root->Set_Buffering(2);
+						ofile << "// WAR dependency: release  Read: " 
+							<< this->To_String() 
+							<< " with Write: " << w_root->To_String() << endl;
+						if(r_phi == NULL)
+						{
+							__MJ(__SST(r_root), __UCT(w_root), true);
+						}
+						else
+						{
+							__MJ(__SST(r_phi), __UCT(w_root), true);
+						}
+
+						int rb = w_root->Get_Buffering();
+						if(full_rate && (rb < 2))
+						{
+							w_root->Set_Buffering(2);
+						}
 					}
 				}
+				else
+				{
+					ofile << "// self dependency in WAR or PHI-PHI dependency in WAR ignored." << endl;
+				}
 			}
-			else
-			{
-				ofile << "// self dependency in WAR or PHI-PHI dependency in WAR ignored." << endl;
-			}
-
 		}
 	}
 }
