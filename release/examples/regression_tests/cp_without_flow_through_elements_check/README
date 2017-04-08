@@ -1,0 +1,48 @@
+Test cases for checking that dependency analysis is correctly handled.
+	basic_raw
+		basic Read-After-Write
+		(checked)
+
+	basic_raw_call
+		basic Read-After-Write through call
+		(checked)
+
+	basic_raw_call_operator
+		basic Read-After-Write through operator call
+		(checked)
+
+	basic_raw_storage
+		basic Read-After-Write through storage
+		(checked)
+
+	basic_raw_storage_pointer
+		basic Read-After-Write through storage pointer
+		(checked)
+
+	basic_raw_while_cond
+		basic Read-After-Write with non-trivial while condition.
+		(checked)
+
+	basic_war
+		basic Write-after-read
+		(checked)
+
+	basic_war_call
+		basic Write-after-read via call.
+		(checked)
+
+	basic_war_call_volatile
+		basic Write-after-read via volatile call.
+		(checked)
+
+	basic_war_in_call
+		basic Write-after-read inside pipelined module.
+		(checked)
+
+	basic_war_volatile
+		basic Write-after-read via volatile
+
+	phi_war
+		Write-after-read involving phi
+		(checked)
+

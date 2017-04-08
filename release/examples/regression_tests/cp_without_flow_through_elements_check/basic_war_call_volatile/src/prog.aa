@@ -1,0 +1,31 @@
+$pipe out_data : $uint<32> $depth 2
+
+$volatile $module [incr] $in (a: $uint<32>) $out (b: $uint<32>) $is
+{
+	b := (a + 1)
+}
+$volatile $module [or0] $in (a: $uint<32>) $out (b: $uint<32>) $is
+{
+	b := a
+}
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback 
+			$phi first_time := ($bitcast ($uint<1>) 1) $on $entry 0 $on $loopback
+		$endmerge
+
+		// we create a WAR dependency in the mux!
+		//   in a round-about way.
+		//    tnCount (R) -> nCount (W) -> mux (R) -> Count (W) -> tnCount(W)
+		// 
+		$volatile $call or0 (tnCount) (nCount)
+		Count := ($mux first_time ($bitcast ($uint<32>) 0) (1 + (nCount - 1)))
+		$volatile $call incr (Count) (tnCount)
+
+		out_data := Count
+		$while 1
+	}
+}

@@ -1228,7 +1228,9 @@ void AaAssignmentStatement::Set_Is_Volatile(bool v)
 	}
 	_is_volatile = v;
 	if(this->_source)
+	{
 		this->_source->Set_Is_Intermediate(v);
+	}
 }
 
 void AaAssignmentStatement::Set_Pipeline_Parent(AaStatement* dws)
@@ -1417,6 +1419,9 @@ void AaAssignmentStatement::Map_Source_References()
 
 void AaAssignmentStatement::Collect_Root_Sources(set<AaRoot*>& root_sources)
 {
+	if(this->Get_Is_On_Collect_Root_Sources_Stack())
+		AaRoot::Error("Cycle in collect-root-sources", this);
+	this->Set_Is_On_Collect_Root_Sources_Stack(true);
 	if(this->Get_Is_Volatile())
 	{
 		if(this->_source != NULL)
@@ -1426,8 +1431,28 @@ void AaAssignmentStatement::Collect_Root_Sources(set<AaRoot*>& root_sources)
 	{
 		root_sources.insert(this);
 	}
+	this->Set_Is_On_Collect_Root_Sources_Stack(false);
 }
 
+
+void AaAssignmentStatement::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_sources)
+{
+	if(this->Get_Is_On_Search_For_Non_Trivial_Refs_Stack())
+	{
+		AaRoot::Error("Cycle in searching for non-trivial source refs ", this);
+		return;
+	}
+   	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
+	if(this->Get_Is_Volatile())
+	{
+		this->_target->Get_Non_Trivial_Source_References(tgt_sources);
+	}
+	else
+	{
+		tgt_sources.insert(this);
+	}
+   	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
+}
 
 AaSimpleObjectReference* AaAssignmentStatement::Get_Implicit_Target(string tgt_name)
 {
@@ -4022,7 +4047,7 @@ void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
 	}
 
 	expr->Set_Associated_Statement(this);
-	expr->Set_Is_Intermediate(true);
+	expr->Set_Is_Intermediate(false);
 
 	if(this->_target)
 	{
@@ -4355,11 +4380,10 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 		AaExpression* src_expr = _source_pairs[i].second;
 		bool src_is_constant = src_expr->Is_Constant();
 		bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
-		bool src_has_trivial_dpe = (!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
 
 		string src_driver_name = src_expr->Get_VC_Driver_Name();
 
-		if(!src_is_constant && (src_has_no_dpe || src_has_trivial_dpe))
+		if(!src_is_constant && src_has_no_dpe)
 		{
 			src_driver_name = src_expr->Get_VC_Driver_Name() +  "_"  + 
 				Int64ToStr(src_expr->Get_Index()) + "_buffered";
@@ -5592,7 +5616,7 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 	}
 	else
 	{
-		__F(__UCT(condition_expr), "condition_evaluated");
+		condition_expr->Write_Forward_Dependency_From_Roots("condition_evaluated", visited_elements, ofile);
 	}
 
 	__F("condition_evaluated", "$null");
@@ -5905,6 +5929,10 @@ void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, in
 
 void AaCallStatement::Collect_Root_Sources(set<AaRoot*>& root_sources)
 {
+	if(this->Get_Is_On_Collect_Root_Sources_Stack())
+		AaRoot::Error("Cycle in collect-root-sources", this);
+	this->Set_Is_On_Collect_Root_Sources_Stack(true);
+
 	if(this->Get_Is_Volatile())
 	{
 		for(int idx = 0, fidx = _input_args.size(); idx < fidx; idx++)
@@ -5916,7 +5944,30 @@ void AaCallStatement::Collect_Root_Sources(set<AaRoot*>& root_sources)
 	{
 		root_sources.insert(this);
 	}
+	this->Set_Is_On_Collect_Root_Sources_Stack(false);
 
+}
+
+void AaCallStatement::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_sources)
+{
+	if(this->Get_Is_On_Search_For_Non_Trivial_Refs_Stack())
+	{
+		AaRoot::Error("Cycle in searching for non-trivial source refs ", this);
+		return;
+	}
+   	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
+	if(this->Get_Is_Volatile())
+	{
+		for(int idx = 0, fidx = _output_args.size(); idx < fidx; idx++)
+		{
+			_output_args[idx]->Get_Non_Trivial_Source_References(tgt_sources);
+		}
+	}
+	else
+	{
+		tgt_sources.insert(this);
+	}
+   	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
 }
 
 

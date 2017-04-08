@@ -1,0 +1,35 @@
+$storage A: $array[4] $of $uint<8>
+
+$pipe in_data : $uint<8> $depth 2
+$pipe out_data : $uint<8> $depth 2
+
+$module [run_daemon] $in () $out () $is
+{
+	$branchblock[Main] {
+		$dopipeline $depth 3 $buffering 2 $fullrate
+		$merge $entry $loopback
+			$phi I := ($bitcast ($uint<2>) 0) $on $entry NI $on $loopback
+		$endmerge
+		$volatile NI := (I+1)
+		
+		X := in_data
+
+		wptr := @(A[I])
+		->(wptr) := X
+
+		$while (I < 3)
+
+		$dopipeline $depth 3 $buffering 2 $fullrate
+		$merge $entry $loopback
+			$phi J := ($bitcast ($uint<2>) 0) $on $entry NJ $on $loopback
+		$endmerge
+		$volatile NJ := (J+1)
+		
+		rptr := @(A[J])
+		out_data := ->(rptr)
+
+		$while (J < 3)
+	}
+}
+
+

@@ -1,0 +1,25 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback $endmerge
+
+		X := in_data
+
+		
+	        $volatile 
+			X_H := ($slice X 31 16)
+		$volatile 
+			X_L := ($slice X 15 0)
+
+		$volatile Y := ($concat X_L X_H)
+		$volatile Z := (~(~Y))
+
+		out_data := Z
+		$while 1
+	}
+}

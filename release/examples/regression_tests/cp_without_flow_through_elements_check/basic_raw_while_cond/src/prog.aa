@@ -1,0 +1,19 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback 
+			$phi I := ($bitcast ($uint<8>) 0) $on $entry nI $on $loopback
+		$endmerge
+		$volatile nI := (I+1)
+
+		X := in_data
+		out_data := X
+
+		$while (I < 32)
+	}
+}

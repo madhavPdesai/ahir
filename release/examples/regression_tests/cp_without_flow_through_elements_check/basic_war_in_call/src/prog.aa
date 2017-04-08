@@ -1,0 +1,27 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$pipeline $depth 3 $fullrate $module [accumulate] $in (first_time: $uint<1> a: $uint<32>) $out (b: $uint<32>) $is
+{
+	u := ($mux first_time 0 b)
+	b := (u + a)
+}
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback 
+			$phi first_time := ($bitcast ($uint<1>) 1) $on $entry 0 $on $loopback
+		$endmerge
+
+		X := in_data
+
+		$call accumulate (first_time X) (Y)
+
+		out_data := Y
+		
+		$while 1
+	}
+}

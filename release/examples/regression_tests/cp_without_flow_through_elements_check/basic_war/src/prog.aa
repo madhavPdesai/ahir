@@ -1,0 +1,21 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback 
+			$phi first_time := ($bitcast ($uint<1>) 1) $on $entry 0 $on $loopback
+		$endmerge
+
+		X := in_data
+
+		Count := ($mux first_time ($bitcast ($uint<32>) 0) (1 + (nCount - 1)))
+		nCount := (Count + 1)
+
+		out_data := (X  + (Count  & (~Count)))
+		$while 1
+	}
+}

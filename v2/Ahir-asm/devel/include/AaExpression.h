@@ -114,8 +114,8 @@ class AaExpression: public AaRoot
 
 	AaValue* _expression_value;
 
-	void Set_Buffering(int d) {_buffering = d;}
-	int Get_Buffering() {return(_buffering);}
+	virtual void Set_Buffering(int d) {_buffering = d;}
+	virtual int Get_Buffering() {return(_buffering);}
  	virtual void Print_Buffering(ostream& ofile);
 	virtual void Write_VC_Output_Buffering(string dpe_name, string tgt_name, ostream& ofile);
 	virtual void Write_VC_Input_Buffering(string dpe_name, string src_name, ostream& ofile)
@@ -148,6 +148,8 @@ class AaExpression: public AaRoot
 	}
 
 	virtual bool Is_Trivial() {return(false);}
+	virtual bool Is_Flow_Through();
+
 
 	virtual bool Is_Signal_Read() {return(false);}
 
@@ -327,7 +329,7 @@ class AaExpression: public AaRoot
 	virtual bool Get_Guard_Complement();
 
 	virtual void Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& visited_elements, ostream& ofile);
-	virtual void Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
+	virtual void Write_VC_Guard_Forward_Dependency(AaRoot* guard_expr_root, set<AaRoot*>& visited_elements, ostream& ofile);
 	virtual void Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile);
 
 	virtual bool  Is_NOP() {return(false);}
@@ -336,6 +338,7 @@ class AaExpression: public AaRoot
 	{
 		assert(0);
 	}
+	virtual void Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_set);
 
 	virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements) {
 
@@ -388,6 +391,11 @@ class AaExpression: public AaRoot
 	virtual void
 		Update_Reenable_Points_And_Producer_Delay_Status(set<string>& en_points, map<string,bool>& en_bypass_flags, 
 													set<AaRoot*>& visited_elements);
+
+
+	virtual void Write_Forward_Dependency_From_Roots(string dependent_transition, 
+								set<AaRoot*>& visited_elements,
+									ostream& ofile);
 
 };
 
@@ -718,10 +726,6 @@ class AaObjectReference: public AaExpression
 			assert(0);
 		}
 
-	virtual bool Base_Address_Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements)
-	{
-		assert(0);
-	}
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -804,7 +808,7 @@ class AaSimpleObjectReference: public AaObjectReference
 		leaf_expression_set.insert(this);
 	}
 
-	virtual void Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
+	virtual void Write_VC_Guard_Forward_Dependency(AaRoot* guard_expr_root, set<AaRoot*>& visited_elements, ostream& ofile);
 	virtual void Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile);
 
 	virtual void Write_VC_Output_Buffering(string dpe_name, string tgt_name, ostream& ofile);
@@ -1033,7 +1037,6 @@ class AaArrayObjectReference: public AaObjectReference
 
 	virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements);
 	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
-	virtual bool Base_Address_Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements);
 };
 
 
@@ -1142,7 +1145,6 @@ class AaPointerDereferenceExpression: public AaObjectReference
 	virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
 	virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements);
-	virtual bool Base_Address_Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements);
 };
 
 
@@ -1561,7 +1563,7 @@ class AaBinaryExpression: public AaExpression
 		return(this->Get_VC_Sample_Start_Transition_Name());
 	} 
 
-	virtual void Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
+	virtual void Write_VC_Guard_Forward_Dependency(AaRoot* guard_expr_root, set<AaRoot*>& visited_elements, ostream& ofile);
 	virtual void Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile);
 
 

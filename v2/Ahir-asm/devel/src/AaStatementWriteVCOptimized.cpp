@@ -34,9 +34,9 @@
 // for the pipelined case.
 void AaStatement::Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaRoot*>& visited_elements)
 {
-  set<AaRoot*> non_triv_preds;
-  expr->Identify_Non_Trivial_Predecessors(non_triv_preds, visited_elements);
-  Write_VC_RAW_Release_Deps(((AaRoot*)this),non_triv_preds);
+	set<AaRoot*> non_triv_preds;
+	expr->Identify_Non_Trivial_Predecessors(non_triv_preds, visited_elements);
+	Write_VC_RAW_Release_Deps(((AaRoot*)this),non_triv_preds);
 }
 
 void AaStatement::Write_VC_Synch_Dependency(set<AaRoot*>& visited_elements, bool pipeline_flag, ostream& ofile)
@@ -50,12 +50,12 @@ void AaStatement::Write_VC_Synch_Dependency(set<AaRoot*>& visited_elements, bool
 			if(visited_elements.find(stmt) != visited_elements.end())
 			{
 				ofile << "// forced synch: synched statement will start after marked statement" 
-						<< endl;
+					<< endl;
 				string synch_transition_name = 
 					string ("synch_") + __SST(this) + "_" + __SCT(stmt);
 				ofile << "$T [" << synch_transition_name <<"] $delay" << endl;
 				__J(synch_transition_name, __SCT(stmt))
-				__J(__SST(this), synch_transition_name);
+					__J(__SST(this), synch_transition_name);
 				if(pipeline_flag)
 				{
 					__MJ(__SST(stmt), __SCT(this), true); // bypass
@@ -143,63 +143,26 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		AaRoot* barrier,
 		ostream& ofile)
 {
-	if(this->Is_Constant())
+	ofile << "// " << this->To_String() << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->Is_Constant()) 
 	{
-		return;
+		ofile << "// constant! " << endl;
 	}
-	else  if(this->Get_Is_Volatile())
+	else  
 	{
-		ofile << "// " << this->To_String() << endl;
-		ofile << "// " << this->Get_Source_Info() << endl;
-		ofile << "// volatile.. " << endl;
-		if(this->_guard_expression)
-		{
-			AaRoot::Error("Volatile statement cannot have guard expression.", this);
-		}
 
-		this->_source->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements, ls_map,
-									pipe_map, barrier, ofile);
+		if(this->Get_Is_Volatile())
+			ofile << "// volatile! " << endl;
 
-		if(!this->_target->Is_Implicit_Variable_Reference())
-		{
-			AaRoot::Error("Target of volatile statement must be an implicit variable reference..", this);
-		}
-		else
-		{
-			AaRoot* robj = this->_target->Get_Root_Object();
-			if(robj->Is_Interface_Object())
-			{
-				if((this->Get_Root_Scope() == NULL) || 
-						!this->Get_Root_Scope()->Get_Is_Volatile())
-					AaRoot::Error("Target of volatile statement cannot be an interface object..", this);
-			}
-		}
-
-		
 		bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
+		bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
 
-		// target has to be implicit..  but if source is also
-		// implicit, we will declare the transitions for
-		// this statement.
-		if(source_is_implicit)
+		if(!this->Get_Is_Volatile() && source_is_implicit && target_is_implicit)
+			// both are implicit.. introduce an interlock.
 		{
 			__DeclTransSplitProtocolPattern;
-			__J(__SST(this), __UCT(this->_source));
-			__FlowThroughConnectSplitProtocolPattern;
 		}
-
-		//
-		// WAR dependencies
-		// If a WAR dependency exists, this will flag an error..
-		//
-		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
-
-		visited_elements.insert(this);
-	}
-	else
-	{
-		ofile << "// " << this->To_String() << endl;
-		ofile << "// " << this->Get_Source_Info() << endl;
 
 		// take care of the guard
 		if(this->_guard_expression)
@@ -229,17 +192,6 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		}
 
 
-		// if both are implicit, then declare an interlock.
-		bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
-		bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
-
-		// declare explicitly if target and source are both implicit.
-		// else one of the two will define the transitions for this
-		// statement.
-		if(target_is_implicit && source_is_implicit)
-		{
-			__DeclTransSplitProtocolPattern;
-		}
 
 		ofile << "// Target expression" << endl;
 		this->_target->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
@@ -247,57 +199,38 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				ls_map,pipe_map,barrier,
 				ofile);
 
-		// four cases.
-		if(source_is_implicit && target_is_implicit)
+		if(!this->Get_Is_Volatile() && source_is_implicit && target_is_implicit)
 			// both are implicit.. introduce an interlock.
 		{
-			if(source_is_implicit)
+			ofile << "// both source and target are implicit: use interlock " << endl;
+			ofile << "// Interlock " << endl;
+
+			ofile <<  ";;[" << this->Get_VC_Name() << "_Sample] { " << endl;
+			ofile << "$T [req] $T [ack] // interlock-sample." << endl;
+			ofile << "}" << endl;
+
+			ofile <<  ";;[" << this->Get_VC_Name() << "_Update] { " << endl;
+			ofile << "$T [req] $T [ack] // interlock-update." << endl;
+			ofile << "}" << endl;
+
+			__ConnectSplitProtocolPattern;
+
+			if(this->_guard_expression && !this->_guard_expression->Is_Constant())
 			{
-				ofile << "// both source and target are implicit: use interlock " << endl;
-				ofile << "// Interlock " << endl;
-
-				ofile <<  ";;[" << this->Get_VC_Name() << "_Sample] { " << endl;
-				ofile << "$T [req] $T [ack] // interlock-sample." << endl;
-				ofile << "}" << endl;
-
-				ofile <<  ";;[" << this->Get_VC_Name() << "_Update] { " << endl;
-				ofile << "$T [req] $T [ack] // interlock-update." << endl;
-				ofile << "}" << endl;
-
-				__ConnectSplitProtocolPattern;
-			}
-			else
-			{
-				__J(__SST(this), __UCT(this->_source));
-				__FlowThroughConnectSplitProtocolPattern;
-			}
-
-
-			if(this->_guard_expression)
-			{
-				if(!this->_guard_expression->Is_Constant())
+				ofile << "// Guard dependency" << endl;
+				this->_guard_expression->Write_Forward_Dependency_From_Roots(__SST(this),
+						visited_elements,
+						ofile);
+				if(pipeline_flag)
 				{
-					if(source_is_implicit)
-					{
-						ofile << "// Guard dependency" << endl;
-						__J(__SST(this), __UCT(this->_guard_expression));
-						if(pipeline_flag)
-						{
-							this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), false,
-								visited_elements, ofile);
-						}
-					}
-					else
-					// is signal-read.
-					{
-						ofile << "// Guard dependency" << endl;
-						__J(__SST(_source), __UCT(this->_guard_expression));
-					}
+					this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), false,
+							visited_elements, ofile);
 				}
-
 			}
 
-			__J(__SST(this), __UCT(this->_source));
+			this->_source->Write_Forward_Dependency_From_Roots(__SST(this),
+					visited_elements,
+					ofile);
 			if(pipeline_flag)
 			{
 				this->_source->Write_VC_Update_Reenables(this, __SCT(this), false,
@@ -306,12 +239,15 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			}
 		}
 
+
 		// WAR dependencies
 		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 
-		if(!target_is_implicit && !this->_source->Is_Constant())
+		if(!this->Get_Is_Volatile() && !target_is_implicit && !this->_source->Is_Constant())
 		{
-			__J(__SST(this->_target), __UCT(this->_source));
+			this->_source->Write_Forward_Dependency_From_Roots(__SST(this->_target),
+					visited_elements,
+					ofile);
 			if(pipeline_flag)
 			{
 				this->_source->Write_VC_Update_Reenables(this, __SCT(this->_target), false,
@@ -319,7 +255,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			}
 		}
 
-		if(target_is_implicit)
+		if(target_is_implicit && !this->Get_Is_Volatile())
 		{
 			AaRoot* root_obj = _target->Get_Root_Object();
 			if(root_obj == ((AaRoot*) this))
@@ -331,7 +267,9 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			}
 		}
 
-		this->Write_VC_Synch_Dependency(visited_elements, pipeline_flag, ofile);
+		if(!this->Get_Is_Volatile())
+			this->Write_VC_Synch_Dependency(visited_elements, pipeline_flag, ofile);
+
 		visited_elements.insert(this);
 	}
 }  
@@ -400,61 +338,20 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		AaRoot* barrier,
 		ostream& ofile)
 {
-
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
-	bool volatile_flag = false;
-	if(this->Get_Is_Volatile())
+	if(this->Is_Constant())
 	{
-		ofile << "// volatile.. " << endl;
-		if(this->_guard_expression)
-			AaRoot::Error("Volatile statement cannot have  a guard." , this);
-
-		__DeclTransSplitProtocolPattern;
-		__FlowThroughConnectSplitProtocolPattern;
-		for(int idx = 0; idx < _input_args.size(); idx++)
-		{
-			ofile << "// Call input argument " << idx << endl;
-			AaExpression* expr = _input_args[idx];
-			if(!expr->Is_Constant())
-			{
-				expr->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
-				__J(__SST(this), __UCT(expr));
-			}
-		}
-		for(int idx = 0; idx < _output_args.size(); idx++)
-		{
-			AaExpression* expr = _output_args[idx];
-
-
-			if(!expr->Is_Implicit_Variable_Reference())
-			{
-				AaRoot::Error("Volatile call statement must have implicit output args." , this);
-			}
-			else
-			{
-				AaRoot* robj = expr->Get_Root_Object();
-				if(robj->Is_Interface_Object())
-				{
-					if((this->Get_Root_Scope() == NULL) || 
-						!this->Get_Root_Scope()->Get_Is_Volatile())
-						AaRoot::Error("Target of volatile statement cannot be an interface object..", this);
-				}
-			}
-
-			ofile << "// Call output argument " << idx << endl;
-			expr->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
-					visited_elements,ls_map,pipe_map,barrier,ofile);
-
-			if(!expr->Is_Constant() && !expr->Is_Implicit_Variable_Reference())
-				__J(__SST(expr), __UCT(this));
-		}
-		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
-		visited_elements.insert(this);
-	} 
-	else
+		ofile << "// constant! " << endl;
+	}
+	else 
 	{
-		__DeclTransSplitProtocolPattern;
+		if(this->Get_Is_Volatile())
+			ofile << "// volatile! " << endl;
+		if(!this->Get_Is_Volatile())
+		{
+			__DeclTransSplitProtocolPattern;
+		}
 
 		// take care of the guard
 		if(this->_guard_expression)
@@ -465,12 +362,14 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				ofile << "// Guard expression" << endl;
 				this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
 
-				__J(__SST(this),__UCT(this->_guard_expression));
-
-				if(pipeline_flag)
+				if(!this->Get_Is_Volatile())
 				{
-					this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), false,
-							visited_elements, ofile);
+					this->_guard_expression->Write_Forward_Dependency_From_Roots(__SST(this), visited_elements, ofile);
+					if(pipeline_flag)
+					{
+						this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), false,
+								visited_elements, ofile);
+					}
 				}
 			}
 		}
@@ -487,10 +386,9 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		{
 
 			AaExpression* expr = _input_args[idx];
-			if(!expr->Is_Constant())
+			if(!expr->Is_Constant() && !this->Get_Is_Volatile())
 			{
-				__J(__SST(this), __UCT(expr));
-
+				expr->Write_Forward_Dependency_From_Roots(__SST(this), visited_elements, ofile);
 				if(pipeline_flag)
 				{
 					// expression evaluation will be reenabled by activation of the
@@ -501,15 +399,19 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			}
 		}
 
-		// the call-trigger will start the call..
-		ofile << ";;[" << this->Get_VC_Name() << "_Sample] { " 
-			<< "$T [crr] $T [cra] "
-			<< "} " << endl;
-		// the call will eventually complete.
-		ofile << ";;[" << this->Get_VC_Name() << "_Update] { " 
-			<< "$T [ccr] $T [cca] "
-			<< "} " << endl;
-		__ConnectSplitProtocolPattern;
+
+		if(!this->Get_Is_Volatile())
+		{
+			// the call-trigger will start the call..
+			ofile << ";;[" << this->Get_VC_Name() << "_Sample] { " 
+				<< "$T [crr] $T [cra] "
+				<< "} " << endl;
+			// the call will eventually complete.
+			ofile << ";;[" << this->Get_VC_Name() << "_Update] { " 
+				<< "$T [ccr] $T [cca] "
+				<< "} " << endl;
+			__ConnectSplitProtocolPattern;
+		}
 
 
 		// the output arguments.
@@ -521,7 +423,9 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			ofile << "// Call output argument " << idx << endl;
 			expr->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
 					visited_elements,ls_map,pipe_map,barrier,ofile);
-			if(!expr->Is_Implicit_Variable_Reference())
+
+
+			if(!this->Get_Is_Volatile() && !expr->Is_Implicit_Variable_Reference())
 			{
 
 				__J(__SST(expr),__UCT(this));
@@ -536,28 +440,32 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				non_triv_flag = true;
 			}
 
-
-			AaRoot* root_obj = expr->Get_Root_Object();
-			if(root_obj == ((AaRoot*) this))
-				visited_elements.insert(this);
-			else if ((root_obj != NULL) && (root_obj->Is("AaInterfaceObject")))
+			if(!this->Get_Is_Volatile())
 			{
-				visited_elements.insert(this);
-				visited_elements.insert(root_obj);
+				AaRoot* root_obj = expr->Get_Root_Object();
+				if(root_obj == ((AaRoot*) this))
+					visited_elements.insert(this);
+				else if ((root_obj != NULL) && (root_obj->Is("AaInterfaceObject")))
+				{
+					visited_elements.insert(this);
+					visited_elements.insert(root_obj);
+				}
 			}
 		}
 
 		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
-		this->Write_VC_Synch_Dependency(visited_elements, pipeline_flag, ofile);
-		visited_elements.insert(this);
+
+		if(!this->Get_Is_Volatile())
+			this->Write_VC_Synch_Dependency(visited_elements, pipeline_flag, ofile);
 
 
 		// if pipeline-flag, then re-enable..
-		if(pipeline_flag)
+		if(!this->Get_Is_Volatile() && pipeline_flag)
 		{
 			__SelfReleaseSplitProtocolPattern
 		}
 
+		visited_elements.insert(this);
 	}
 }
 
@@ -625,7 +533,7 @@ void AaBlockStatement::Identify_Maximal_Sequences( AaStatementSequence* sseq,
 				continue;
 			}
 
-					
+
 			// barrier_due_to_side_effects.
 			bool barrier_due_to_side_effects = false;
 			if(stmt->Is("AaCallStatement"))
@@ -635,7 +543,7 @@ void AaBlockStatement::Identify_Maximal_Sequences( AaStatementSequence* sseq,
 					barrier_due_to_side_effects = true;
 			}
 			if( stmt->Is_Block_Statement()  || 
-				stmt->Is_Control_Flow_Statement() || 
+					stmt->Is_Control_Flow_Statement() || 
 					barrier_due_to_side_effects || stmt->Can_Block(false))
 			{
 				if(linear_segment.size() == 0)
@@ -925,7 +833,7 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> 
 		AaRoot* obj = fe->Get_Object();
 		assert((obj != NULL) && (obj->Is_Pipe_Object()));
 		bool is_signal = obj->Is_Signal();
-	
+
 		AaExpression* first_expr = (*iter).second[0];
 		vector<AaExpression*> write_expr_vector;
 		vector<AaExpression*> read_expr_vector;
@@ -1532,36 +1440,36 @@ void AaJoinForkStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofil
 		{
 			AaStatement* stmt = this->_statement_sequence->Get_Statement(idx);
 			if(stmt->Is_Block_Statement())
-	    stmt->Write_VC_Links_Optimized(hier_id,ofile);
-	  else
-	    {
-	      this->AaBlockStatement::Write_VC_Links_Optimized(hier_id, stmt, ofile);
-	    }
+				stmt->Write_VC_Links_Optimized(hier_id,ofile);
+			else
+			{
+				this->AaBlockStatement::Write_VC_Links_Optimized(hier_id, stmt, ofile);
+			}
+		}
 	}
-    }
 }
 
 
 // AaMergeStatement
 void AaMergeStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
-  this->Write_VC_Control_Path(ofile);
+	this->Write_VC_Control_Path(ofile);
 }
 void AaMergeStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
-  this->Write_VC_Links(hier_id,ofile);
+	this->Write_VC_Links(hier_id,ofile);
 }
 
 // AaPhiStatement
 void AaPhiStatement::Write_VC_WAR_Dependencies(bool pipeline_flag, set<AaRoot*>& visited_elements,
-				 ostream& ofile)
+		ostream& ofile)
 {
 	this->_target->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements, ofile);
 }
 
 void AaPhiStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
-  this->Write_VC_Control_Path(ofile);
+	this->Write_VC_Control_Path(ofile);
 }
 
 
@@ -1572,248 +1480,247 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 // the place transitions associated with the loop block body
 // in which the statement occurs.
 void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
-						     set<AaRoot*>& visited_elements,
-						     map<string, vector<AaExpression*> >& ls_map,
-						     map<string,vector<AaExpression*> >& pipe_map,
-						     AaRoot* barrier,
-						     ostream& ofile)
+		set<AaRoot*>& visited_elements,
+		map<string, vector<AaExpression*> >& ls_map,
+		map<string,vector<AaExpression*> >& pipe_map,
+		AaRoot* barrier,
+		ostream& ofile)
 {
-  bool ok_flag = this->Get_In_Do_While();
-  if(!ok_flag)
-    assert(0);
+	bool ok_flag = this->Get_In_Do_While();
+	if(!ok_flag)
+		assert(0);
 
-  assert(pipeline_flag);
+	assert(pipeline_flag);
 
-  ofile << "// (pipelined) PHI statement " << this->Get_VC_Name() << endl;
-  ofile << "// " << this->To_String() << endl;
-  __DeclTransSplitProtocolPattern;
+	ofile << "// (pipelined) PHI statement " << this->Get_VC_Name() << endl;
+	ofile << "// " << this->To_String() << endl;
+	__DeclTransSplitProtocolPattern;
 
-   //
-   // PHI synchronization.
-   //
-  __T(__SST(this) + "_ps");
-  __J("aggregated_phi_sample_req", __SST(this));
-  __J((__SST(this) + "_ps"), "aggregated_phi_sample_req");
+	//
+	// PHI synchronization.
+	//
+	__T(__SST(this) + "_ps");
+	__J("aggregated_phi_sample_req", __SST(this));
+	__J((__SST(this) + "_ps"), "aggregated_phi_sample_req");
 
-  __T(__SCT(this) + "_ps");
-  __F((__SCT(this) + "_ps"),"aggregated_phi_sample_ack");
-  __F("aggregated_phi_sample_ack", __SCT(this));
+	__T(__SCT(this) + "_ps");
+	__F((__SCT(this) + "_ps"),"aggregated_phi_sample_ack");
+	__F("aggregated_phi_sample_ack", __SCT(this));
 
-  __T(__UST(this) + "_ps");
-  __J("aggregated_phi_update_req", __UST(this));
-  __J((__UST(this) + "_ps"), "aggregated_phi_update_req");
+	__T(__UST(this) + "_ps");
+	__J("aggregated_phi_update_req", __UST(this));
+	__J((__UST(this) + "_ps"), "aggregated_phi_update_req");
 
-  __T(__UCT(this) + "_ps");
-  __F((__UCT(this) + "_ps"), "aggregated_phi_update_ack");
-  __F("aggregated_phi_update_ack", __UCT(this));
+	__T(__UCT(this) + "_ps");
+	__F((__UCT(this) + "_ps"), "aggregated_phi_update_ack");
+	__F("aggregated_phi_update_ack", __UCT(this));
 
-  // the active, completed and the active transitions
-  string trigger_from_loop_back = this->Get_VC_Name() + "_loopback_trigger";
-  string sample_from_loop_back = this->Get_VC_Name() + "_loopback_sample_req";
-  __T(trigger_from_loop_back);
-  __J(trigger_from_loop_back,"back_edge_to_loop_body");
-  __T(sample_from_loop_back);
+	// the active, completed and the active transitions
+	string trigger_from_loop_back = this->Get_VC_Name() + "_loopback_trigger";
+	string sample_from_loop_back = this->Get_VC_Name() + "_loopback_sample_req";
+	__T(trigger_from_loop_back);
+	__J(trigger_from_loop_back,"back_edge_to_loop_body");
+	__T(sample_from_loop_back);
 
-  string trigger_from_entry = this->Get_VC_Name() + "_entry_trigger";
-  string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
-  __T(trigger_from_entry);
-  __J(trigger_from_entry, "first_time_through_loop_body");
-  __T(sample_from_entry);
-
-
-
-  if(pipeline_flag)
-  {
-	__MJ(__UST(this), __UCT(this), true); // bypass.
-	__MJ(__SST(this), __SCT(this), false); // no bypass.
-  }
-
-  string msample_req = this->Get_VC_Name() + "_merged_reqs";
-  string req_merge_name = this->Get_VC_Name() + "_req_merge";
-  __T(msample_req);
-
-  string merge_from_entry = sample_from_entry +  "__merge_in";
-  __T(merge_from_entry);
-  __J(merge_from_entry, sample_from_entry);
-  string merge_from_loop_back = sample_from_loop_back +  "__merge_in";
-  __T(merge_from_loop_back);
-  __J(merge_from_loop_back, sample_from_loop_back);
- 
-  ofile << "$transitionmerge [" << req_merge_name << "] (" 
-	<< merge_from_entry << " " << merge_from_loop_back << ") (" << msample_req << ")" << endl;
-  __F(msample_req, "$null"); // merged the two and tied the merge as open.
-
-  vector<string> triggers;
-  vector<string> src_sample_reqs;
-  vector<string> src_sample_acks;
-  vector<string> src_update_reqs;
-  vector<string> src_update_acks;
-  vector<string> phi_mux_reqs;
-
-  string phi_mux_ack = this->Get_VC_Name() + "_phi_mux_ack";
-  __T(phi_mux_ack);
-  string phi_mux_ack_ps = this->Get_VC_Name() + "_phi_mux_ack_ps";
-  __T(phi_mux_ack_ps);
-  __J(phi_mux_ack_ps, phi_mux_ack);
-
-  // the source control paths.
-  for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
-    {
-      AaExpression* source_expr = _source_pairs[idx].second;
-      string trig_place = _source_pairs[idx].first;
+	string trigger_from_entry = this->Get_VC_Name() + "_entry_trigger";
+	string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
+	__T(trigger_from_entry);
+	__J(trigger_from_entry, "first_time_through_loop_body");
+	__T(sample_from_entry);
 
 
-	__T(__SST(source_expr) + "_ps");
-	__T(__SCT(source_expr) + "_ps");
-	__T(__UST(source_expr) + "_ps");
-	__T(__UCT(source_expr) + "_ps");
 
-      src_sample_reqs.push_back(__SST(source_expr) + "_ps");
-      src_sample_acks.push_back(__SCT(source_expr) + "_ps");
-      src_update_reqs.push_back(__UST(source_expr) + "_ps");
-      src_update_acks.push_back(__UCT(source_expr) + "_ps");
+	if(pipeline_flag)
+	{
+		__MJ(__UST(this), __UCT(this), true); // bypass.
+		__MJ(__SST(this), __SCT(this), false); // no bypass.
+	}
 
-      if(!source_expr->Is_Constant())
-      {
-	      AaExpression* sge = source_expr->Get_Guard_Expression();
-	      if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr))
-	      {
-		      sge->Write_VC_Control_Path_Optimized(pipeline_flag,
-				      visited_elements,
-				      ls_map,pipe_map,barrier,
-				      ofile);
+	string msample_req = this->Get_VC_Name() + "_merged_reqs";
+	string req_merge_name = this->Get_VC_Name() + "_req_merge";
+	__T(msample_req);
 
-			__J(__SST(sge), (__SST(source_expr) + "_ps"));
-      			//__J((__SCT(source_expr) + "_ps"), __SCT(sge));
-			
-	      }
+	string merge_from_entry = sample_from_entry +  "__merge_in";
+	__T(merge_from_entry);
+	__J(merge_from_entry, sample_from_entry);
+	string merge_from_loop_back = sample_from_loop_back +  "__merge_in";
+	__T(merge_from_loop_back);
+	__J(merge_from_loop_back, sample_from_loop_back);
 
-	      bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
-	      bool src_has_trivial_dpe = (!src_has_no_dpe && (source_expr->Is_Trivial() && source_expr->Get_Is_Intermediate()));
-	      if(src_has_no_dpe || src_has_trivial_dpe)
+	ofile << "$transitionmerge [" << req_merge_name << "] (" 
+		<< merge_from_entry << " " << merge_from_loop_back << ") (" << msample_req << ")" << endl;
+	__F(msample_req, "$null"); // merged the two and tied the merge as open.
+
+	vector<string> triggers;
+	vector<string> src_sample_reqs;
+	vector<string> src_sample_acks;
+	vector<string> src_update_reqs;
+	vector<string> src_update_acks;
+	vector<string> phi_mux_reqs;
+
+	string phi_mux_ack = this->Get_VC_Name() + "_phi_mux_ack";
+	__T(phi_mux_ack);
+	string phi_mux_ack_ps = this->Get_VC_Name() + "_phi_mux_ack_ps";
+	__T(phi_mux_ack_ps);
+	__J(phi_mux_ack_ps, phi_mux_ack);
+
+	// the source control paths.
+	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
+	{
+		AaExpression* source_expr = _source_pairs[idx].second;
+		string trig_place = _source_pairs[idx].first;
+
+
+		__T(__SST(source_expr) + "_ps");
+		__T(__SCT(source_expr) + "_ps");
+		__T(__UST(source_expr) + "_ps");
+		__T(__UCT(source_expr) + "_ps");
+
+		src_sample_reqs.push_back(__SST(source_expr) + "_ps");
+		src_sample_acks.push_back(__SCT(source_expr) + "_ps");
+		src_update_reqs.push_back(__UST(source_expr) + "_ps");
+		src_update_acks.push_back(__UCT(source_expr) + "_ps");
+
+		if(!source_expr->Is_Constant())
 		{
+			AaExpression* sge = source_expr->Get_Guard_Expression();
+			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr))
+			{
+				sge->Write_VC_Control_Path_Optimized(pipeline_flag,
+						visited_elements,
+						ls_map,pipe_map,barrier,
+						ofile);
+
+				__J(__SST(sge), (__SST(source_expr) + "_ps"));
+				//__J((__SCT(source_expr) + "_ps"), __SCT(sge));
+
+			}
+
+			bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
+			if(src_has_no_dpe)
+			{
+				__T(__SST(source_expr));
+				__T(__SCT(source_expr));
+				__T(__UST(source_expr));
+				__T(__UCT(source_expr));
+
+				string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
+				ofile <<  ";;[" << sample_region_name << "] { " << endl;
+				ofile << "$T [req] $T [ack] // interlock-sample." << endl;
+				ofile << "}" << endl;
+				__F(__SST(source_expr), sample_region_name);
+				__J(__SCT(source_expr), sample_region_name);
+
+				string update_region_name = source_expr->Get_VC_Name() + "_Update";
+				ofile <<  ";;[" << update_region_name << "] { " << endl;
+				ofile << "$T [req] $T [ack] // interlock-update." << endl;
+				ofile << "}" << endl;
+				__F(__UST(source_expr), update_region_name);
+				__J(__UCT(source_expr), update_region_name);
+
+
+				// dont forget!
+				source_expr->Mark_As_Visited(visited_elements);
+			}
+			else
+			{
+				source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
+						visited_elements,
+						ls_map,pipe_map,barrier,
+						ofile);
+			}
+
+
+			//if(sge != NULL)
+			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr))
+			{
+				ofile << "// Guard dependency in PHI alternative.." << endl;
+				__J(__SST(source_expr), __UCT(sge));
+			}
+
+			if(pipeline_flag)
+			{
+				if(sge != NULL)
+				{
+					sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+				}
+
+				source_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+			}
+		}
+		else
+		{
+			// source is constant... but phi-sequencer needs dummies.
+			ofile << "// dummies for constant expression source for phi" << endl;
 			__T(__SST(source_expr));
 			__T(__SCT(source_expr));
+			__J(__SCT(source_expr), __SST(source_expr));
+
 			__T(__UST(source_expr));
-			__T(__UCT(source_expr));
-
-			string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
-			ofile <<  ";;[" << sample_region_name << "] { " << endl;
-			ofile << "$T [req] $T [ack] // interlock-sample." << endl;
-			ofile << "}" << endl;
-			__F(__SST(source_expr), sample_region_name);
-			__J(__SCT(source_expr), sample_region_name);
-
-			string update_region_name = source_expr->Get_VC_Name() + "_Update";
-			ofile <<  ";;[" << update_region_name << "] { " << endl;
-			ofile << "$T [req] $T [ack] // interlock-update." << endl;
-			ofile << "}" << endl;
-			__F(__UST(source_expr), update_region_name);
-			__J(__UCT(source_expr), update_region_name);
-			
-
-			// dont forget!
-			source_expr->Mark_As_Visited(visited_elements);
+			// delay needed from UST -> UCT.
+			ofile << "$T [" << __UCT(source_expr) << "] $delay " << endl;
+			__J(__UCT(source_expr), __UST(source_expr));
 		}
-	      else
+
+		// relayed to i/o of phi-sequencer.
+		__J(__SST(source_expr), (__SST(source_expr) + "_ps"));
+		__J((__SCT(source_expr) + "_ps"), __SCT(source_expr));
+		__J(__UST(source_expr), (__UST(source_expr) + "_ps"));
+		__J((__UCT(source_expr) + "_ps"), __UCT(source_expr));
+
+		if(trig_place == "$loopback")
 		{
-	      		source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
-			      visited_elements,
-			      ls_map,pipe_map,barrier,
-			      ofile);
+			triggers.push_back(trigger_from_loop_back);
+			phi_mux_reqs.push_back(sample_from_loop_back);
 		}
-	
-
-	      //if(sge != NULL)
-	      if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr))
+		else
 		{
-		      ofile << "// Guard dependency in PHI alternative.." << endl;
-		      __J(__SST(source_expr), __UCT(sge));
+			triggers.push_back(trigger_from_entry);
+			phi_mux_reqs.push_back(sample_from_entry);
 		}
+	}
 
-	      if(pipeline_flag)
-	      {
-		      if(sge != NULL)
-		      {
-			      sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
-		      }
-
-		      source_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
-	      }
-      }
-      else
-      {
-	// source is constant... but phi-sequencer needs dummies.
-	ofile << "// dummies for constant expression source for phi" << endl;
-	__T(__SST(source_expr));
-	__T(__SCT(source_expr));
-	__J(__SCT(source_expr), __SST(source_expr));
-
-	__T(__UST(source_expr));
-	// delay needed from UST -> UCT.
-	ofile << "$T [" << __UCT(source_expr) << "] $delay " << endl;
-	__J(__UCT(source_expr), __UST(source_expr));
-      }
-
-	// relayed to i/o of phi-sequencer.
-      __J(__SST(source_expr), (__SST(source_expr) + "_ps"));
-      __J((__SCT(source_expr) + "_ps"), __SCT(source_expr));
-      __J(__UST(source_expr), (__UST(source_expr) + "_ps"));
-      __J((__UCT(source_expr) + "_ps"), __UCT(source_expr));
-
-      if(trig_place == "$loopback")
-      {
-	      triggers.push_back(trigger_from_loop_back);
-	      phi_mux_reqs.push_back(sample_from_loop_back);
-      }
-      else
-      {
-	      triggers.push_back(trigger_from_entry);
-	      phi_mux_reqs.push_back(sample_from_entry);
-      }
-    }
-
-  // the control-sequencing for the PHI is too complicated to
-  // model in a normal-fork block. The dirty stuff is hidden
-  // in the phi_sequencer.
-  ofile << "$phisequencer [ " << this->Get_VC_Name() << "_phi_seq] : " << endl;
-ofile << "     ";
-  for(int idx = 0, fidx = triggers.size(); idx < fidx; idx++)
-  {
-	ofile << triggers[idx] <<  " " << src_sample_reqs[idx] << " "
+	// the control-sequencing for the PHI is too complicated to
+	// model in a normal-fork block. The dirty stuff is hidden
+	// in the phi_sequencer.
+	ofile << "$phisequencer [ " << this->Get_VC_Name() << "_phi_seq] : " << endl;
+	ofile << "     ";
+	for(int idx = 0, fidx = triggers.size(); idx < fidx; idx++)
+	{
+		ofile << triggers[idx] <<  " " << src_sample_reqs[idx] << " "
 			<< src_sample_acks[idx] << " " 
 			<< src_update_reqs[idx] << " "
 			<< src_update_acks[idx] << " ";
-  }
-  ofile << ":" << endl;
-  ofile << "     ";
-  ofile << __SST(this)+"_ps" << " " << __SCT(this)+"_ps" << " " << __UST(this)+"_ps" << " " << __UCT(this)+"_ps" << " ";
-  ofile << ":" << endl;
-  ofile << "     ";
-  for(int idx = 0, fidx = phi_mux_reqs.size(); idx < fidx; idx++)
-  {
-	ofile <<  phi_mux_reqs[idx] << " ";
-  }
-  ofile << ": " << endl;
-  ofile << "     ";
-  ofile << phi_mux_ack << endl;
+	}
+	ofile << ":" << endl;
+	ofile << "     ";
+	ofile << __SST(this)+"_ps" << " " << __SCT(this)+"_ps" << " " << __UST(this)+"_ps" << " " << __UCT(this)+"_ps" << " ";
+	ofile << ":" << endl;
+	ofile << "     ";
+	for(int idx = 0, fidx = phi_mux_reqs.size(); idx < fidx; idx++)
+	{
+		ofile <<  phi_mux_reqs[idx] << " ";
+	}
+	ofile << ": " << endl;
+	ofile << "     ";
+	ofile << phi_mux_ack << endl;
 
-  // sample-ack from phi must join with condition-evaluated so that
-  // loop-back is delayed until the present PHI has sampled.
-  // 
-  // Note: this is handled at the do-while level using the
-  //    aggregated phi-sample-ack.
-  //__J("condition_evaluated", __SCT(this));
+	// sample-ack from phi must join with condition-evaluated so that
+	// loop-back is delayed until the present PHI has sampled.
+	// 
+	// Note: this is handled at the do-while level using the
+	//    aggregated phi-sample-ack.
+	//__J("condition_evaluated", __SCT(this));
 
-  // take care of the guard
-  if(this->_guard_expression)
-  {
-	  // For the moment, PHI statements cannot have guards.
-	  AaRoot::Error("Guards for PHI statements are not permitted.", this);
-  }
+	// take care of the guard
+	if(this->_guard_expression)
+	{
+		// For the moment, PHI statements cannot have guards.
+		AaRoot::Error("Guards for PHI statements are not permitted.", this);
+	}
 
-  this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements, ofile);
-  visited_elements.insert(this);
+	this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements, ofile);
+	visited_elements.insert(this);
 }
 
 // called only if it appears in a do-while loop.
@@ -1843,15 +1750,15 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
 	{
 		AaExpression* source_expr = _source_pairs[idx].second;
-	        bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
-	        bool src_has_trivial_dpe = (!src_has_no_dpe && (source_expr->Is_Trivial() && source_expr->Get_Is_Intermediate()));
+		bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
+		bool src_has_trivial_dpe = (!src_has_no_dpe && (source_expr->Is_Trivial() && source_expr->Get_Is_Intermediate()));
 		if(!source_expr->Is_Constant() && (src_has_no_dpe || src_has_trivial_dpe))
 		{
 			// interlock.
 			vector<string> reqs;
 			vector<string> acks;
 			string dpe_name = source_expr->Get_VC_Driver_Name() + "_" +
-						Int64ToStr(source_expr->Get_Index()) +  "_buf";
+				Int64ToStr(source_expr->Get_Index()) +  "_buf";
 			string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
 			string update_region_name = source_expr->Get_VC_Name() + "_Update";
 			reqs.push_back(hier_id + "/" + sample_region_name + "/req");
@@ -1880,10 +1787,10 @@ void AaSwitchStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 // AaIfStatement
 void AaIfStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
-  this->Write_VC_Control_Path(true, ofile);  
+	this->Write_VC_Control_Path(true, ofile);  
 }
 
 void AaIfStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
-  this->Write_VC_Links(true, hier_id,ofile);
+	this->Write_VC_Links(true, hier_id,ofile);
 }

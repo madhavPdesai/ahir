@@ -70,6 +70,11 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
 
 AaExpression::~AaExpression() {};
 
+bool AaExpression::Is_Flow_Through()
+{
+	return(this->Is_Trivial() && this->Get_Is_Intermediate());
+}
+
 void AaExpression::Write_VC_Output_Buffering(string dpe_name, string tgt_name, ostream& ofile)
 {
 	int this_buffering = this->Get_Buffering();
@@ -769,6 +774,56 @@ void AaExpression::Update_Guard_Adjacency(map<AaRoot*, vector< pair<AaRoot*, int
 	}
 }
 
+void AaExpression::Get_Non_Trivial_Source_References(set<AaRoot*>& root_set)
+{
+	if(this->Get_Is_On_Search_For_Non_Trivial_Refs_Stack())
+	{
+		AaRoot::Error("Cycle in searching for non-trivial source refs ", this);
+		return;
+	}
+	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
+
+	AaStatement* stmt = this->Get_Associated_Statement();
+	if(this->Get_Is_Target())
+	// if this is a target... then keep going forward from those who
+	// use this as a source...
+	{
+		if(this->Is_Implicit_Variable_Reference())
+		{
+			for(set<AaRoot*>::iterator iter = this->_source_references.begin(),
+				fiter = this->_source_references.end(); iter != fiter; iter++)
+			{
+				AaRoot* r = *iter;
+				r->Get_Non_Trivial_Source_References(root_set);
+			}
+		}
+		else
+			root_set.insert(this);
+	}
+	else if((stmt != NULL) && stmt->Get_Is_Volatile())
+	// this has a volatile call statement..
+	{
+		stmt->Get_Non_Trivial_Source_References(root_set);
+	}
+	else if(this->Is_Flow_Through())
+	//
+	// this is flow-through.... go to its targets...
+	//
+	{
+		for(set<AaExpression*>::iterator iter = _targets.begin(), fiter = _targets.end(); iter != fiter; iter++)
+		{
+			AaExpression* expr = *iter;
+			expr->Get_Non_Trivial_Source_References(root_set);
+		}
+	}
+	else
+	{
+		root_set.insert(this);
+	}
+
+	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
+}
+
 //---------------------------------------------------------------------
 //AaSimpleObjectReference
 //---------------------------------------------------------------------
@@ -841,7 +896,6 @@ bool AaSimpleObjectReference::Is_Trivial()
 			&& (this->Is_Implicit_Variable_Reference()));
 }
 
-
 AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, AaAssignmentStatement* root_obj):AaObjectReference(parent_tpr, root_obj) 
 {
 	this->Set_Object(root_obj);
@@ -895,7 +949,7 @@ bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObjec
 
 void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
-	if(this->_in_collect_roots_stack)
+	if(this->Get_Is_On_Collect_Root_Sources_Stack())
 	{
 		AaRoot::Error("Cycle in collect-root-sources", this);
 		return;
@@ -904,7 +958,7 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 	if(this->Is_Constant())
 		return;
 
-	this->_in_collect_roots_stack = true;
+	this->Set_Is_On_Collect_Root_Sources_Stack(true);
 	// if it is an implicit reference
 	if(this->Get_Is_Target())
 	{
@@ -920,11 +974,11 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 				}
 				else
 				{
-					root_set.insert(this);
 					root_set.insert(r);
 				}
 			}	
-			else  // what could this be?
+			else    // what could this be?  
+				// It could be an interface object or a signal read.
 				root_set.insert(this);
 		}
 		else
@@ -942,7 +996,6 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 			}
 			else
 			{
-				root_set.insert(this);
 				root_set.insert(r);
 			}
 		}	
@@ -956,7 +1009,7 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 	}
 
 
-	this->_in_collect_roots_stack = false;
+	this->Set_Is_On_Collect_Root_Sources_Stack(false);
 }
 
 void AaSimpleObjectReference::Set_Type(AaType* t)
@@ -1512,6 +1565,8 @@ string AaSimpleObjectReference::Get_VC_Update_Completed_Transition_Name()
 			&&  (this->Is_Implicit_Variable_Reference() || 
 				this->_object->Is_Interface_Object()))
 		return(__UCT(this->Get_Associated_Statement()));
+	else if(this->_object->Is_Interface_Object())
+		return ("$entry");
 	else
 		return(this->AaRoot::Get_VC_Update_Completed_Transition_Name());
 }
@@ -2832,8 +2887,13 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances_As_Target(ostream& ofil
 
 void AaArrayObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
+	
 	if(this->Is_Constant())
 		return;
+	
+	if(this->Get_Is_On_Collect_Root_Sources_Stack())
+		AaRoot::Error("Cycle in collect-root-sources", this);
+	this->Set_Is_On_Collect_Root_Sources_Stack(true);
 
 	if(this->Get_Object_Type()->Is_Pointer_Type())
 		root_set.insert(this);
@@ -2854,6 +2914,7 @@ void AaArrayObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 			root_set.insert(this);
 		}
 	}
+	this->Set_Is_On_Collect_Root_Sources_Stack(false);
 }
 
 void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
@@ -4174,15 +4235,20 @@ bool AaTypeCastExpression::Is_Trivial()
 }
 
 
+
 void AaTypeCastExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
+		if(this->Get_Is_On_Collect_Root_Sources_Stack())
+			AaRoot::Error("Cycle in collect-root-sources", this);
+		this->Set_Is_On_Collect_Root_Sources_Stack(true);
 		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 		if(flow_through)
 			_rest->Collect_Root_Sources(root_set);
 		else
 			root_set.insert(this);
+		this->Set_Is_On_Collect_Root_Sources_Stack(false);
 	}
 }
 
@@ -4449,12 +4515,16 @@ void AaUnaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
+		if(this->Get_Is_On_Collect_Root_Sources_Stack())
+			AaRoot::Error("Cycle in collect-root-sources", this);
+		this->Set_Is_On_Collect_Root_Sources_Stack(true);
 		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 		if(flow_through)
 			_rest->Collect_Root_Sources(root_set);
 		else
 			root_set.insert(this);
 
+		this->Set_Is_On_Collect_Root_Sources_Stack(false);
 	}
 }
 
@@ -5003,6 +5073,9 @@ void AaBinaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
+		if(this->Get_Is_On_Collect_Root_Sources_Stack())
+			AaRoot::Error("Cycle in collect-root-sources", this);
+		this->Set_Is_On_Collect_Root_Sources_Stack(true);
 		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 		if(flow_through)
 		{
@@ -5012,6 +5085,7 @@ void AaBinaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 		else
 			root_set.insert(this);
 
+		this->Set_Is_On_Collect_Root_Sources_Stack(false);
 	}
 }
 
@@ -5498,6 +5572,9 @@ void AaTernaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
+	if(this->Get_Is_On_Collect_Root_Sources_Stack())
+		AaRoot::Error("Cycle in collect-root-sources", this);
+	this->Set_Is_On_Collect_Root_Sources_Stack(true);
 		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 		if(flow_through)
 		{
@@ -5508,6 +5585,7 @@ void AaTernaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 		else
 			root_set.insert(this);
 
+	this->Set_Is_On_Collect_Root_Sources_Stack(false);
 	}
 }
 

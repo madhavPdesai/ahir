@@ -57,6 +57,8 @@ AaRoot::AaRoot()
   this->_file_name = AaProgram::_current_file_name;
   this->_delay = 0;
   this->_c_declaration_printed = false;
+  this->_is_on_collect_root_sources_stack = false;
+  this->_is_on_search_for_non_trivial_refs_stack = false;
 }
 AaRoot::~AaRoot() {};
 string AaRoot::Kind()
@@ -138,44 +140,78 @@ void AaRoot::Remove_Source_Reference(AaRoot* referrer)
 {
 	this->_source_references.erase(referrer);
 }
+  
+void AaRoot::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_set)
+{
+	if(this->Get_Is_On_Search_For_Non_Trivial_Refs_Stack())
+	{
+		AaRoot::Error("Cycle in searching for non-trivial source refs ", this);
+		return;
+	}
+	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
+	if(this->Is_Expression() &&  
+			!((AaExpression*)this)->Get_Is_Target() && 
+			!((AaExpression*)this)->Is_Implicit_Variable_Reference())
+	{
+		tgt_set.insert(this);
+		this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
+		return;
+	} 
+	else if(this->Is_Statement() && !((AaStatement*)this)->Get_Is_Volatile())
+	{
+		tgt_set.insert(this);
+		this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
+		return;
+	}
+
+	for(set<AaRoot*>::iterator iter = this->_source_references.begin(),
+			fiter = this->_source_references.end(); iter != fiter; iter++)
+	{
+		AaRoot* x = *iter;
+		x->Get_Non_Trivial_Source_References(tgt_set);
+	}
+	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
+}
+
+
 string Make_VC_Legal(string x)
 {
-  string ret_string;
+	string ret_string;
 
-  for(int idx = 0; idx < x.size(); idx++)
-    {
-      if(isalnum(x[idx]) || (x[idx] == '_'))
-	ret_string += x[idx];
-      else
-	ret_string += "xx";
-    }
+	for(int idx = 0; idx < x.size(); idx++)
+	{
+		if(isalnum(x[idx]) || (x[idx] == '_'))
+			ret_string += x[idx];
+		else
+			ret_string += "xx";
+	}
 
-  return(ret_string);
+	return(ret_string);
 }
 
 
 bool AaRootCompare::operator() (AaRoot* s1, AaRoot* s2) const
 {
-  if(s1->Get_Index() < s2->Get_Index())
-    return(true);
-  else
-    return(false);
+	if(s1->Get_Index() < s2->Get_Index())
+		return(true);
+	else
+		return(false);
 }
 
 bool AaRootPairCompare::operator() (AaRootPair* s1, AaRootPair* s2) const
 {
-  if(s1->_distance_from_root > s2->_distance_from_root)
-    return(true);
-  else if((s1->_element != NULL) && (s2->_element == NULL))
-    return(true); 
-  else if((s2->_element == NULL) && (s2->_element != NULL))
-    return(false);
-  else if((s1->_element == NULL) && (s2->_element == NULL))
-    return(false);
-  else if(s1->_element->Get_Root_Counter() < s2->_element->Get_Root_Counter())
-    return(true);
-  else
-    return(false);
+	if(s1->_distance_from_root > s2->_distance_from_root)
+		return(true);
+	else if((s1->_element != NULL) && (s2->_element == NULL))
+		return(true); 
+	else if((s2->_element == NULL) && (s2->_element != NULL))
+		return(false);
+	else if((s1->_element == NULL) && (s2->_element == NULL))
+		return(false);
+	else if(s1->_element->Get_Root_Counter() < s2->_element->Get_Root_Counter())
+		return(true);
+	else
+		return(false);
 }
 
 void __InsMap(map<AaRoot*,vector< pair<AaRoot*, int> > >& amap, AaRoot* src, AaRoot* dest, int Dist)

@@ -634,6 +634,7 @@ class AaAssignmentStatement: public AaStatement
   virtual string Get_VC_Update_Completed_Transition_Name();
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
+   virtual void Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_set);
 };
 
 
@@ -660,6 +661,7 @@ class AaCallStatement: public AaStatement
   virtual void Set_Is_Volatile(bool v);
   virtual bool Get_Is_Volatile(); //       { return(_is_volatile); }
   virtual void Collect_Root_Sources(set<AaRoot*>& root_src_exprs);
+  virtual void Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_set);
 
   void Replace_Input_Argument(AaExpression* old_arg, AaSimpleObjectReference* new_arg);
 

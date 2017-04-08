@@ -61,6 +61,8 @@ class AaRoot
   int _delay; // delay through expression/statement/module etc..
 
   bool _c_declaration_printed;
+  bool _is_on_collect_root_sources_stack; 
+  bool _is_on_search_for_non_trivial_refs_stack; 
  protected:
 
   // vector of references to this object from "anywhere"
@@ -69,6 +71,12 @@ class AaRoot
 
  public:
 
+   void Set_Is_On_Collect_Root_Sources_Stack(bool v) { _is_on_collect_root_sources_stack = v;}
+   bool Get_Is_On_Collect_Root_Sources_Stack() {return (_is_on_collect_root_sources_stack);}
+
+   void Set_Is_On_Search_For_Non_Trivial_Refs_Stack(bool v) { _is_on_search_for_non_trivial_refs_stack = v;}
+   bool Get_Is_On_Search_For_Non_Trivial_Refs_Stack() {return (_is_on_search_for_non_trivial_refs_stack);}
+
   void Set_C_Declaration_Printed(bool v) { _c_declaration_printed = v;}
   bool Get_C_Declaration_Printed() {return (_c_declaration_printed);}
   void Set_Delay(int d) {_delay = d;}
@@ -76,6 +84,13 @@ class AaRoot
 
   set<AaRoot*>& Get_Target_References() {return(_target_references);}
   set<AaRoot*>& Get_Source_References() {return(_source_references);}
+
+  //
+  // search forward until you find non-trivial 
+  // expressions or statements which use this 
+  // as a source.
+  //
+  virtual void Get_Non_Trivial_Source_References(set<AaRoot*>&);
 
   static void Increment_Root_Counter();// { _root_counter += 1; }
   static int64_t Get_Root_Counter(); // { return _root_counter; }
@@ -158,6 +173,7 @@ class AaRoot
 
   virtual bool Is_Expression() {return(false); }
   virtual bool Is_Statement() {return(false); }
+  virtual bool Is_Phi_Statement() {return(false); }
   virtual bool Is_Null_Like_Statement() {return(false); }
   virtual bool Is_Assignment_Statement() {return(false); }
   virtual bool Is_Call_Statement() {return(false); }
@@ -165,6 +181,10 @@ class AaRoot
   // do we really need this? keep it for now
   virtual bool Is(string class_name);
   virtual string Kind();
+
+
+  virtual int Get_Buffering () {assert(0);}
+  virtual void Set_Buffering (int u) {assert(0);}
 
   virtual void Add_Target_Reference(AaRoot* referrer);
   virtual void Add_Source_Reference(AaRoot* referrer);
