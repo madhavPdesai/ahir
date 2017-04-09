@@ -285,7 +285,6 @@ aA_Out_Args[AaModule* parent]
 aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist] 
 {
     AaStatement* stmt;
-    bool guard_flag = false; 
     bool not_flag   = false;
     bool mark_flag  = false;	
     string ms;
@@ -299,11 +298,17 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
     bool volatile_flag = false;
     int delay_val;
     int lno;
+    AaSimpleObjectReference* guard_expr = NULL;
 }
     :  
       ( 
 	(
-	(GUARD LPAREN (NOT {not_flag = true;})? gid:SIMPLE_IDENTIFIER RPAREN {guard_flag = true; gs = gid->getText();} ) ? 
+	(GUARD LPAREN (NOT {not_flag = true;})? gid:SIMPLE_IDENTIFIER RPAREN 
+			{
+				gs = gid->getText();
+				guard_expr = new AaSimpleObjectReference(scope,gs);
+				guard_expr->Set_Object_Root_Name(gs);
+			} ) ? 
 	(VOLATILE {volatile_flag = true;})?
 		// NOTE: the split statement can create a group of statements..
 		//       Thus, we put the created statement(s) in a list.
@@ -332,11 +337,9 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 			stmt = llist[I];
 			if(volatile_flag)
 				stmt->Set_Is_Volatile(true);
-			if(guard_flag)
+			if(guard_expr != NULL)
 			{
-				AaSimpleObjectReference* oref = new AaSimpleObjectReference(scope,gs);
-				oref->Set_Object_Root_Name(gs);
-				stmt->Set_Guard_Expression(oref);
+				stmt->Set_Guard_Expression(guard_expr);
 				stmt->Set_Guard_Complement(not_flag);
 
 			}

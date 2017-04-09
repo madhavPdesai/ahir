@@ -60,7 +60,8 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 		AaRoot* pred = *iter;
 		if(visited_elements.find(pred) != visited_elements.end())
 		{
-			if((to_index > 0) && (pred->Get_Index() >= to_index))
+			
+			if((to_index > 0) && (pred->Get_Index() > to_index))
 			{
 				AaRoot::Error("incorrect ordering of forward dependency for " + this->To_String() + 
 							" (from " + pred->To_String() + ")", this);
@@ -262,7 +263,32 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 					if(r_phi == NULL)
 					{
-						if(r_root->Get_Index() <= w_root->Get_Index())
+						int r_index;
+						if(r_root->Is_Expression())
+						{
+							AaStatement* rs = ((AaExpression*)r_root)->Get_Associated_Statement();
+							if(rs != NULL)
+								r_index = rs->Get_Index();
+							else
+								r_index = r_root->Get_Index();
+						}
+						else
+							r_index = r_root->Get_Index();
+
+						int w_index;
+						if(w_root->Is_Expression())
+						{
+							AaStatement* ws = ((AaExpression*)w_root)->Get_Associated_Statement();
+							if(ws != NULL)
+								w_index = ws->Get_Index();
+							else
+								w_index = w_root->Get_Index();
+						}
+						else
+							w_index = w_root->Get_Index();
+
+
+						if(r_index <= w_index)
 						{
 							__J(__UST(w_root), __SCT(r_root));
 						}
