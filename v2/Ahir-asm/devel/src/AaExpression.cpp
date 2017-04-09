@@ -812,7 +812,16 @@ void AaExpression::Get_Non_Trivial_Source_References(set<AaRoot*>& root_set)
 						fiter = this->_source_references.end(); iter != fiter; iter++)
 				{
 					AaRoot* r = *iter;
-					r->Get_Non_Trivial_Source_References(root_set);
+					if(r->Get_Index() > this->Get_Index())
+					{
+						r->Get_Non_Trivial_Source_References(root_set);
+					}
+					else
+					{
+						AaRoot::Warning("in Get_Non_Trivial_Source_References for "
+							+ this->To_String() + ", will not go backward through "
+							+ r->To_String(), this);
+					}
 				}
 			}
 		}
@@ -1009,14 +1018,22 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 		AaRoot* root_obj = this->Get_Root_Object();
 		if(root_obj->Is_Statement())
 		{
-			AaStatement* r = (AaStatement*) root_obj;
-			if(r->Get_Is_Volatile())
+	 		if (root_obj->Get_Index() < this->Get_Index())	
+			// go backwards only!!
 			{
-				r->Collect_Root_Sources(root_set);
+				AaStatement* r = (AaStatement*) root_obj;
+				if(r->Get_Is_Volatile())
+				{
+					r->Collect_Root_Sources(root_set);
+				}
+				else
+				{
+					root_set.insert(r);
+				}
 			}
 			else
 			{
-				root_set.insert(r);
+				AaRoot::Warning("in Collect_Root_Sources for " + this->To_String() + " will not go in forward direction", this);
 			}
 		}	
 		else

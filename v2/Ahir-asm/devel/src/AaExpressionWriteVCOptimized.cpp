@@ -47,7 +47,9 @@ using namespace std;
 // From this expression, write forward dependencies to dependent_transition.
 // Look for root expressions of this and add UCT->dependent_transition links.
 // 
-void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transition, set<AaRoot*>& visited_elements, ostream& ofile)
+void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transition, 
+							   int64_t to_index, 
+								set<AaRoot*>& visited_elements, ostream& ofile)
 {
 	
 	set<AaRoot*> root_sources;
@@ -57,7 +59,17 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 	{
 		AaRoot* pred = *iter;
 		if(visited_elements.find(pred) != visited_elements.end())
-			__J(dependent_transition,__UCT(pred));
+		{
+			if((to_index > 0) && (pred->Get_Index() >= to_index))
+			{
+				AaRoot::Error("incorrect ordering of forward dependency for " + this->To_String() + 
+							" (from " + pred->To_String() + ")", this);
+			}
+			else
+			{
+				__J(dependent_transition,__UCT(pred));
+			}
+		}
 	}
 }
 
@@ -250,7 +262,14 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 					if(r_phi == NULL)
 					{
-						__J(__UST(w_root), __SCT(r_root));
+						if(r_root->Get_Index() <= w_root->Get_Index())
+						{
+							__J(__UST(w_root), __SCT(r_root));
+						}
+						else
+						{
+							AaRoot::Error("ordering error in WAR for " + this->To_String() + " writer:" + w_root->To_String() + " reader:" + r_root->To_String(), this);
+						}
 					}
 					else
 					{
@@ -922,14 +941,15 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				this->_pointer_ref->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
 				if(!this->_pointer_ref->Is_Constant())
 				{
-					this->_pointer_ref->Write_Forward_Dependency_From_Roots(base_addr_calc, visited_elements, ofile);
+					this->_pointer_ref->Write_Forward_Dependency_From_Roots(base_addr_calc, -1, 
+												visited_elements, ofile);
 				}
 
 			}
 			else if(this->_object->Is_Expression())
 			{
 				AaExpression* expr = ((AaExpression*)this->_object);
-				expr->Write_Forward_Dependency_From_Roots(base_addr_calc, visited_elements, ofile);
+				expr->Write_Forward_Dependency_From_Roots(base_addr_calc,-1, visited_elements, ofile);
 			}
 			else if(this->_object->Is_Interface_Object())
 			{
@@ -1043,7 +1063,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						ofile);
 
 				// expression has been evaluated.. go to active
-				expr->Write_Forward_Dependency_From_Roots(__SST(this), visited_elements, ofile);
+				expr->Write_Forward_Dependency_From_Roots(__SST(this), this->Get_Index(),
+											 visited_elements, ofile);
 
 				// TODO: use split protocol to implement Slice.
 				//       (note that Slice doubles as a register..)
@@ -1245,6 +1266,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
 	if(!this->_reference_to_object->Is_Constant())
 	{
 		this->_reference_to_object->Write_Forward_Dependency_From_Roots(base_addr_calc, 
+											-1,
 											visited_elements,
 											ofile);
 
@@ -1307,6 +1329,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(b
 	if(!this->_reference_to_object->Is_Constant())
 	{
 		this->_reference_to_object->Write_Forward_Dependency_From_Roots(base_addr_calc, 
+											-1,
 											visited_elements,
 											ofile);
 		__J(__SST(this),base_addr_calc);
@@ -1537,7 +1560,8 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 
 		if(!this->Is_Flow_Through())
 		{
-			this->_rest->Write_Forward_Dependency_From_Roots(__SST(this), visited_elements, ofile);
+			this->_rest->Write_Forward_Dependency_From_Roots(__SST(this), this->Get_Index(),
+										 visited_elements, ofile);
 
 			// either it will be a register or a split conversion
 			// operator..
@@ -1644,7 +1668,8 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 
 		if(!this->Is_Flow_Through())
 		{
-			this->_rest->Write_Forward_Dependency_From_Roots(__SST(this), visited_elements, ofile);
+			this->_rest->Write_Forward_Dependency_From_Roots(__SST(this), this->Get_Index(),
+											visited_elements, ofile);
 
 			string sample_regn = this->Get_VC_Name() + "_Sample";
 			string update_regn = this->Get_VC_Name() + "_Update";
@@ -1820,11 +1845,13 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 			string sst = __SST(this);
 			if(!this->_first->Is_Constant())
 			{
-				this->_first->Write_Forward_Dependency_From_Roots(sst, visited_elements, ofile);
+				this->_first->Write_Forward_Dependency_From_Roots(sst, this->Get_Index(),
+											visited_elements, ofile);
 			}
 			if(!this->_second->Is_Constant())
 			{
-				this->_second->Write_Forward_Dependency_From_Roots(sst, visited_elements, ofile);
+				this->_second->Write_Forward_Dependency_From_Roots(sst,this->Get_Index(),
+											 visited_elements, ofile);
 			}
 
 
@@ -1945,15 +1972,18 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 			string sst = __SST(this);
 			if(!this->_test->Is_Constant())
 			{
-				this->_test->Write_Forward_Dependency_From_Roots(sst, visited_elements, ofile);
+				this->_test->Write_Forward_Dependency_From_Roots(sst,this->Get_Index(),
+											 visited_elements, ofile);
 			}
 			if(!this->_if_true->Is_Constant())
 			{
-				this->_if_true->Write_Forward_Dependency_From_Roots(sst, visited_elements, ofile);
+				this->_if_true->Write_Forward_Dependency_From_Roots(sst, this->Get_Index(),
+											visited_elements, ofile);
 			}
 			if(!this->_if_false->Is_Constant())
 			{
-				this->_if_false->Write_Forward_Dependency_From_Roots(sst, visited_elements, ofile);
+				this->_if_false->Write_Forward_Dependency_From_Roots(sst,this->Get_Index(),
+											 visited_elements, ofile);
 			}
 
 			ofile << ";;[" << this->Get_VC_Start_Region_Name() << "] { // ternary expression: " << endl;
@@ -2552,7 +2582,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 													active_reenable_bypass_flags,
 															visited_elements);
 				}
-				index_expr->Write_Forward_Dependency_From_Roots(index_computed, visited_elements, ofile);
+				index_expr->Write_Forward_Dependency_From_Roots(index_computed, -1, visited_elements, ofile);
 				index_chain_complete_map[idx] = index_computed;
 
 

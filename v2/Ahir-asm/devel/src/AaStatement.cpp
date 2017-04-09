@@ -5617,7 +5617,7 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 	}
 	else
 	{
-		condition_expr->Write_Forward_Dependency_From_Roots("condition_evaluated", visited_elements, ofile);
+		condition_expr->Write_Forward_Dependency_From_Roots("condition_evaluated",-1,visited_elements, ofile);
 	}
 
 	__F("condition_evaluated", "$null");

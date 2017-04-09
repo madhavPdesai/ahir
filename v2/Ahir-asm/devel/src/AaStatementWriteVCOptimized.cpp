@@ -219,6 +219,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			{
 				ofile << "// Guard dependency" << endl;
 				this->_guard_expression->Write_Forward_Dependency_From_Roots(__SST(this),
+						this->Get_Index(),
 						visited_elements,
 						ofile);
 				if(pipeline_flag)
@@ -229,6 +230,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			}
 
 			this->_source->Write_Forward_Dependency_From_Roots(__SST(this),
+						this->Get_Index(),
 					visited_elements,
 					ofile);
 			if(pipeline_flag)
@@ -244,6 +246,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		if(!this->Get_Is_Volatile() && !target_is_implicit && !this->_source->Is_Constant())
 		{
 			this->_source->Write_Forward_Dependency_From_Roots(__SST(this->_target),
+					this->Get_Index(),
 					visited_elements,
 					ofile);
 			if(pipeline_flag)
@@ -364,7 +367,8 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 				if(!this->Get_Is_Volatile())
 				{
-					this->_guard_expression->Write_Forward_Dependency_From_Roots(__SST(this), visited_elements, ofile);
+					this->_guard_expression->Write_Forward_Dependency_From_Roots(__SST(this), 
+										this->Get_Index(), visited_elements, ofile);
 					if(pipeline_flag)
 					{
 						this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), false,
@@ -388,7 +392,8 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			AaExpression* expr = _input_args[idx];
 			if(!expr->Is_Constant() && !this->Get_Is_Volatile())
 			{
-				expr->Write_Forward_Dependency_From_Roots(__SST(this), visited_elements, ofile);
+				expr->Write_Forward_Dependency_From_Roots(__SST(this),
+										this->Get_Index(),  visited_elements, ofile);
 				if(pipeline_flag)
 				{
 					// expression evaluation will be reenabled by activation of the

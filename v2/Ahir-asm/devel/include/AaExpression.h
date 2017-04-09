@@ -394,8 +394,9 @@ class AaExpression: public AaRoot
 
 
 	virtual void Write_Forward_Dependency_From_Roots(string dependent_transition, 
-								set<AaRoot*>& visited_elements,
-									ostream& ofile);
+								int64_t to_index, // to prevent cycles!
+									set<AaRoot*>& visited_elements,
+										ostream& ofile);
 	virtual void Check_Volatile_Inconsistency(AaStatement* stmt);
 };
 
