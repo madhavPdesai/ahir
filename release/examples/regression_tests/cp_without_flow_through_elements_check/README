@@ -72,13 +72,17 @@ Test cases for checking that dependency analysis is correctly handled.
 			$volatile u := f(b)
 			$volatile tmp := g(u)
 			b := tmp
-				WAR, but optimized away?
+				WAR in last statement.
 
 	basic_war_volatile
 		basic Write-after-read via volatile
-
+			a :=  f(b)
+			$volatile b := ....
+				WAR in first statement.
 
 	phi_war
 		Write-after-read involving phi
 		(checked)
+			WAR's via PHI's.
+				(all get optimized away!)
 
