@@ -222,7 +222,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				// statement a := (b+c) has used the value of b.
 				//
 				ofile << "// WAR dependency: Read: " << read_expr->To_String() << " before Write: " << write_stmt->To_String() << endl;
-				read_expr->Get_Non_Trivial_Source_References(read_root_set);
+				read_expr->Get_Non_Trivial_Source_References(read_root_set, visited_elements);
 			 }
 		}
 	}

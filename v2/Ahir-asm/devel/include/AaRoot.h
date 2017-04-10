@@ -90,7 +90,7 @@ class AaRoot
   // expressions or statements which use this 
   // as a source.
   //
-  virtual void Get_Non_Trivial_Source_References(set<AaRoot*>&);
+  virtual void Get_Non_Trivial_Source_References(set<AaRoot*>&, set<AaRoot*>& visited_elements);
 
   static void Increment_Root_Counter();// { _root_counter += 1; }
   static int64_t Get_Root_Counter(); // { return _root_counter; }

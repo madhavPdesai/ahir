@@ -1,46 +1,82 @@
 Test cases for checking that dependency analysis is correctly handled.
+
+
 	basic_raw
 		basic Read-After-Write
 		(checked)
+        	
+		a := f(b,c)
+        	d := g(a)  
 
 	basic_raw_call
 		basic Read-After-Write through call
 		(checked)
+	
+		a := f(b,c)
+    		$volatile $call foo (a) (aa)
+                d := g(aa) 
 
 	basic_raw_call_operator
 		basic Read-After-Write through operator call
 		(checked)
 
+		$call foo (a) (b) (operator)
+                e := b
+
 	basic_raw_storage
 		basic Read-After-Write through storage
 		(checked)
+
+		store X
+                read-back
 
 	basic_raw_storage_pointer
 		basic Read-After-Write through storage pointer
 		(checked)
 
+		store X through pointer
+		read-back through pointer
+
 	basic_raw_while_cond
 		basic Read-After-Write with non-trivial while condition.
 		(checked)
+
+		with non-trivial while condition.
 
 	basic_war
 		basic Write-after-read
 		(checked)
 
+		p := f(q,r)
+                q := h(a,b)
+
 	basic_war_call
 		basic Write-after-read via call.
 		(checked)
+
+		p : f(q,r)
+		$call (a b) (q)
 
 	basic_war_call_volatile
 		basic Write-after-read via volatile call.
 		(checked)
 
+		A: $volatile $call (tC) (nC)
+                B: C := f(nC)
+		C: $volatile $call (C) (tC)
+  			C -> A (-> B) WAR
+
 	basic_war_in_call
 		basic Write-after-read inside pipelined module.
 		(checked)
+			$volatile u := f(b)
+			$volatile tmp := g(u)
+			b := tmp
+				WAR, but optimized away?
 
 	basic_war_volatile
 		basic Write-after-read via volatile
+
 
 	phi_war
 		Write-after-read involving phi

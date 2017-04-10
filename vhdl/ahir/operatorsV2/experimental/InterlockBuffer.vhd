@@ -95,25 +95,7 @@ begin  -- default_arch
   NoFlowThrough: if (not flow_through) generate
 
 
-    synchBuf: if (buffer_size = 1) generate
-	sbuf: PipelineSynchBuffer
-		generic map (name => name & " synch-buffer ",
-				in_data_width => in_data_width,
-				out_data_width => out_data_width,
-				full_rate => full_rate)
-		port map(
-				write_req => write_req,
-				write_ack => write_ack,
-				write_data => write_data,
-				read_req => read_req,
-				read_ack => read_ack,
-				read_data => read_data,
-				clk => clk, reset => reset
-			);
-
-    end generate synchBuf;
-
-    interlockBuf: if (buffer_size > 1) generate
+    interlockBuf: if (buffer_size > 0) generate
       inSmaller: if in_data_width <= out_data_width generate
         buf_write_data <= write_data;
   

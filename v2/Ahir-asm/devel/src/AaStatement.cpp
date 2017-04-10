@@ -1435,7 +1435,7 @@ void AaAssignmentStatement::Collect_Root_Sources(set<AaRoot*>& root_sources)
 }
 
 
-void AaAssignmentStatement::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_sources)
+void AaAssignmentStatement::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_sources, set<AaRoot*>& visited_elements)
 {
 	if(this->Get_Is_On_Search_For_Non_Trivial_Refs_Stack())
 	{
@@ -1443,15 +1443,18 @@ void AaAssignmentStatement::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_
 		return;
 	}
    	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
-	if(this->Get_Is_Volatile())
+	if(visited_elements.find(this) != visited_elements.end())
 	{
-		this->_target->Get_Non_Trivial_Source_References(tgt_sources);
+		if(this->Get_Is_Volatile())
+		{
+			this->_target->Get_Non_Trivial_Source_References(tgt_sources, visited_elements);
+		}
+		else
+		{
+			tgt_sources.insert(this);
+		}
 	}
-	else
-	{
-		tgt_sources.insert(this);
-	}
-   	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
+	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
 }
 
 AaSimpleObjectReference* AaAssignmentStatement::Get_Implicit_Target(string tgt_name)
@@ -5949,7 +5952,7 @@ void AaCallStatement::Collect_Root_Sources(set<AaRoot*>& root_sources)
 
 }
 
-void AaCallStatement::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_sources)
+void AaCallStatement::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_sources, set<AaRoot*>& visited_elements)
 {
 	if(this->Get_Is_On_Search_For_Non_Trivial_Refs_Stack())
 	{
@@ -5957,18 +5960,21 @@ void AaCallStatement::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_source
 		return;
 	}
    	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
-	if(this->Get_Is_Volatile())
+	if(visited_elements.find(this) != visited_elements.end())
 	{
-		for(int idx = 0, fidx = _output_args.size(); idx < fidx; idx++)
+		if(this->Get_Is_Volatile())
 		{
-			_output_args[idx]->Get_Non_Trivial_Source_References(tgt_sources);
+			for(int idx = 0, fidx = _output_args.size(); idx < fidx; idx++)
+			{
+				_output_args[idx]->Get_Non_Trivial_Source_References(tgt_sources, visited_elements);
+			}
+		}
+		else
+		{
+			tgt_sources.insert(this);
 		}
 	}
-	else
-	{
-		tgt_sources.insert(this);
-	}
-   	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
+	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
 }
 
 

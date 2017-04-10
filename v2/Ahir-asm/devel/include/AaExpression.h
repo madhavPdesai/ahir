@@ -338,7 +338,7 @@ class AaExpression: public AaRoot
 	{
 		assert(0);
 	}
-	virtual void Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_set);
+	virtual void Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_set, set<AaRoot*>& visited_elements);
 
 	virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements) {
 

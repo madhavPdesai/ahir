@@ -141,7 +141,7 @@ void AaRoot::Remove_Source_Reference(AaRoot* referrer)
 	this->_source_references.erase(referrer);
 }
   
-void AaRoot::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_set)
+void AaRoot::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_set, set<AaRoot*>& visited_elements)
 {
 	if(this->Get_Is_On_Search_For_Non_Trivial_Refs_Stack())
 	{
@@ -149,26 +149,29 @@ void AaRoot::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_set)
 		return;
 	}
 	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
-	if(this->Is_Expression() &&  
-			!((AaExpression*)this)->Get_Is_Target() && 
-			!((AaExpression*)this)->Is_Implicit_Variable_Reference())
+	if(visited_elements.find(this) != visited_elements.end())
 	{
-		tgt_set.insert(this);
-		this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
-		return;
-	} 
-	else if(this->Is_Statement() && !((AaStatement*)this)->Get_Is_Volatile())
-	{
-		tgt_set.insert(this);
-		this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
-		return;
-	}
+		if(this->Is_Expression() &&  
+				!((AaExpression*)this)->Get_Is_Target() && 
+				!((AaExpression*)this)->Is_Implicit_Variable_Reference())
+		{
+			tgt_set.insert(this);
+			this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
+			return;
+		} 
+		else if(this->Is_Statement() && !((AaStatement*)this)->Get_Is_Volatile())
+		{
+			tgt_set.insert(this);
+			this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
+			return;
+		}
 
-	for(set<AaRoot*>::iterator iter = this->_source_references.begin(),
-			fiter = this->_source_references.end(); iter != fiter; iter++)
-	{
-		AaRoot* x = *iter;
-		x->Get_Non_Trivial_Source_References(tgt_set);
+		for(set<AaRoot*>::iterator iter = this->_source_references.begin(),
+				fiter = this->_source_references.end(); iter != fiter; iter++)
+		{
+			AaRoot* x = *iter;
+			x->Get_Non_Trivial_Source_References(tgt_set, visited_elements);
+		}
 	}
 	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
 }

@@ -18,7 +18,11 @@ $module [volatile_check_daemon] $in() $out () $is
 			$phi X := _b0 $on $entry $guard (get_data) in_data $on $loopback
 			$phi init_flag := ($bitcast ($uint<1>) 1) $on $entry 0 $on $loopback
 		$endmerge
+
+		// WAR dependency from this to PHI... gets optimized away
+		// since PHI already includes update <-> sample ring.
 		$volatile get_data := (init_flag | (~init_flag)) // always 1.
+
 		$guard (~init_flag) out_data := X
 		$while 1
 	}

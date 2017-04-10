@@ -2270,22 +2270,6 @@ package BaseComponents is
         reset: in std_logic);
   end component InterlockBuffer;
 
-  component PipelineSynchBuffer is
-    generic (name : string; 
-		in_data_width: integer; 
-		out_data_width: integer; 
-		full_rate: boolean := false);
-  port (
-    read_req       : in  boolean;
-    read_ack       : out boolean;
-    read_data      : out std_logic_vector(out_data_width-1 downto 0);
-    write_req       : in  boolean;
-    write_ack       : out boolean;
-    write_data      : in std_logic_vector((in_data_width-1) downto 0);
-    clk, reset : in  std_logic);
-  
-  end component PipelineSynchBuffer;
-
   component ReceiveBuffer  is
     generic (name: string; buffer_size: integer ; data_width : integer ;
 	   		full_rate : boolean );

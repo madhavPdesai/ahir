@@ -783,7 +783,7 @@ void AaExpression::Update_Guard_Adjacency(map<AaRoot*, vector< pair<AaRoot*, int
 	}
 }
 
-void AaExpression::Get_Non_Trivial_Source_References(set<AaRoot*>& root_set)
+void AaExpression::Get_Non_Trivial_Source_References(set<AaRoot*>& root_set, set<AaRoot*>& visited_elements)
 {
 	if(this->Get_Is_On_Search_For_Non_Trivial_Refs_Stack())
 	{
@@ -792,64 +792,62 @@ void AaExpression::Get_Non_Trivial_Source_References(set<AaRoot*>& root_set)
 	}
 	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
 
-	AaStatement* stmt = this->Get_Associated_Statement();
-	if(this->Get_Is_Target())
-	// if this is a target... then keep going forward from those who
-	// use this as a source...
+	
+	if(visited_elements.find(this) != visited_elements.end())
 	{
-		assert(stmt != NULL);
-
-		if(this->Is_Implicit_Variable_Reference())
+		AaStatement* stmt = this->Get_Associated_Statement();
+		if(this->Get_Is_Target())
+			// if this is a target... then keep going forward from those who
+			// use this as a source...
 		{
-			if(!stmt->Get_Is_Volatile())
+			assert(stmt != NULL);
+
+			if(this->Is_Implicit_Variable_Reference())
 			{
-				root_set.insert(stmt);
-			}
-			else
-			// keep hunting.
-			{
-				for(set<AaRoot*>::iterator iter = this->_source_references.begin(),
-						fiter = this->_source_references.end(); iter != fiter; iter++)
+				if(!stmt->Get_Is_Volatile() && (visited_elements.find(stmt) != visited_elements.end()))
 				{
-					AaRoot* r = *iter;
-					if(r->Get_Index() > this->Get_Index())
+					root_set.insert(stmt);
+				}
+				else
+					// keep hunting.
+				{
+					for(set<AaRoot*>::iterator iter = this->_source_references.begin(),
+							fiter = this->_source_references.end(); iter != fiter; iter++)
 					{
-						r->Get_Non_Trivial_Source_References(root_set);
-					}
-					else
-					{
-						AaRoot::Warning("in Get_Non_Trivial_Source_References for "
-							+ this->To_String() + ", will not go backward through "
-							+ r->To_String(), this);
+						AaRoot* r = *iter;
+						r->Get_Non_Trivial_Source_References(root_set, visited_elements);
 					}
 				}
 			}
+			else
+			{
+				root_set.insert(this);
+			}
+		}
+		else if((stmt != NULL) && stmt->Get_Is_Volatile())
+			// this has a volatile call statement..
+		{
+			stmt->Get_Non_Trivial_Source_References(root_set, visited_elements);
+		}
+		else if(this->Is_Flow_Through() || this->Is_Implicit_Variable_Reference() ||
+				this->Is_Signal_Read())
+			//
+			// this is flow-through.... go to its targets...
+			//
+		{
+			for(set<AaExpression*>::iterator iter = _targets.begin(), fiter = _targets.end(); iter != fiter; iter++)
+			{
+				AaExpression* expr = *iter;
+				expr->Get_Non_Trivial_Source_References(root_set, visited_elements);
+			}
 		}
 		else
-			root_set.insert(this);
-	}
-	else if((stmt != NULL) && stmt->Get_Is_Volatile())
-		// this has a volatile call statement..
-	{
-		stmt->Get_Non_Trivial_Source_References(root_set);
-	}
-	else if(this->Is_Flow_Through() || this->Is_Implicit_Variable_Reference() ||
-			this->Is_Signal_Read())
-		//
-		// this is flow-through.... go to its targets...
-		//
-	{
-		for(set<AaExpression*>::iterator iter = _targets.begin(), fiter = _targets.end(); iter != fiter; iter++)
 		{
-			AaExpression* expr = *iter;
-			expr->Get_Non_Trivial_Source_References(root_set);
+			if(visited_elements.find(this) != visited_elements.end())
+				root_set.insert(this);
 		}
-	}
-	else
-	{
-		root_set.insert(this);
-	}
 
+	}
 	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(false);
 }
 
@@ -1018,22 +1016,14 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 		AaRoot* root_obj = this->Get_Root_Object();
 		if(root_obj->Is_Statement())
 		{
-	 		if (root_obj->Get_Index() < this->Get_Index())	
-			// go backwards only!!
+			AaStatement* r = (AaStatement*) root_obj;
+			if(r->Get_Is_Volatile())
 			{
-				AaStatement* r = (AaStatement*) root_obj;
-				if(r->Get_Is_Volatile())
-				{
-					r->Collect_Root_Sources(root_set);
-				}
-				else
-				{
-					root_set.insert(r);
-				}
+				r->Collect_Root_Sources(root_set);
 			}
 			else
 			{
-				AaRoot::Warning("in Collect_Root_Sources for " + this->To_String() + " will not go in forward direction", this);
+				root_set.insert(r);
 			}
 		}	
 		else

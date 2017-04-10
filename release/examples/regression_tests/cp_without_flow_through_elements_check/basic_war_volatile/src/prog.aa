@@ -12,8 +12,14 @@ $module [volatile_check_daemon] $in() $out () $is
 
 		X := in_data
 
+		// There is a WAR dependency here from the 
+		// second to the first.  This translates
+		// to a self dependency between update 
+		// and sample on the mux operator.
 		Count := ($mux first_time ($bitcast ($uint<32>) 0) (0 + (nCount + 1)))
 		$volatile nCount := (Count + 1)
+
+
 		$volatile tC := Count
 		$volatile tX := X
 
