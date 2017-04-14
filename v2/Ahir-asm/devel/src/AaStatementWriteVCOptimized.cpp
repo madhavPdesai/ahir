@@ -679,10 +679,14 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					AaStatement* prev_stmt = sseq->Get_Statement(K);
 
 					// if prev_stmt is a constant or can be ignored, then skip it.
-					if(prev_stmt->Is_Constant() || prev_stmt->Is_Null_Like_Statement())
+					if(prev_stmt->Is_Constant() || 
+						prev_stmt->Get_Is_Volatile() ||
+							prev_stmt->Is_Null_Like_Statement())
 						continue;
 
+					// barrier!
 					__J(__SST(stmt), __UCT(prev_stmt));
+
 					if(prev_stmt->Is_Block_Statement() || (prev_stmt->Is("AaCallStatement") && 
 								!((AaModule*)(((AaCallStatement*)prev_stmt)->Get_Called_Module()))->Has_No_Side_Effects())
 							|| prev_stmt->Can_Block(pipeline_flag))
