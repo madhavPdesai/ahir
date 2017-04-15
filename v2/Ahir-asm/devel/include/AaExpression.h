@@ -1453,6 +1453,7 @@ class AaBitmapExpression: public AaUnaryExpression
 
 	virtual string Kind() {return("AaBitmapExpression");}
 	virtual void Evaluate();
+	void Check_If_Well_Formed();
 	AaBitmapExpression(AaScope* scope, map<int,int>& bitmap, AaExpression *rest);
 	virtual bool Is_Trivial() {return(true);}
 	void Print(ostream& ofile);

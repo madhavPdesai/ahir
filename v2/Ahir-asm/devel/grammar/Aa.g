@@ -1386,6 +1386,7 @@ aA_Bitmap_Expression[AaScope* scope] returns [AaExpression* expr]
         	{
 	    		expr = new AaBitmapExpression(scope, destination_map, rest);
             		if(expr) expr->Set_Line_Number(lpid->getLine());
+			((AaBitmapExpression*) expr)->Check_If_Well_Formed();
         	}
 	        (aA_Expression_Buffering_Spec[expr])?
 	RPAREN

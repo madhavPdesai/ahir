@@ -1667,7 +1667,7 @@ void vcPermutation::Print_VHDL(ostream& ofile)
 		<< ", in_data_width => " << this->Get_Din()->Get_Size() 
 		<< ", out_data_width => " << this->Get_Dout()->Get_Size() 
 		<< ", buffer_size => " << buf_size 
-		<< ", flow_through => " << (flow_through ? "true" : "false")  << ", " 
+		<< ", flow_through => " << (flow_through ? "true" : "false") 
 		<< ", full_rate => " << (full_rate ? "true" : "false") 
 		<< ") -- {" << endl;
 	ofile << " port map( write_data => permuted_sig" 

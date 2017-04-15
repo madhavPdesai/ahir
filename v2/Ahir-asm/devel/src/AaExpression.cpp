@@ -4481,8 +4481,9 @@ AaUnaryExpression::AaUnaryExpression(AaScope* parent_tpr,AaOperation op, AaExpre
 	// operation.
 	//
 	// added: Priority encode also!
+	// added: Bitmap also!
 	//
-	if((op == __NOT) || (op == __PRIORITYENCODE))
+	if((op == __NOT) || (op == __PRIORITYENCODE) || (op == __BITMAP))
 		AaProgram::Add_Type_Dependency(this,rest);
 
 	if(rest)
@@ -4740,6 +4741,33 @@ AaBitmapExpression::AaBitmapExpression(AaScope* scope, map<int,int>& bitmap, AaE
 		_bitmap_vector.push_back(pair<int,int>((*iter).second, (*iter).first));	
 	}	
 }
+
+void AaBitmapExpression::Check_If_Well_Formed()
+{
+	// need to check if the bitmap is well-formed!
+	set<int> mapped_dests;
+	set<int> mapped_srcs;
+	for(int I = 0, fI  = _bitmap_vector.size(); I < fI; I++)
+	{
+		int s = _bitmap_vector[I].first;
+		mapped_srcs.insert(s);
+
+		int d  = _bitmap_vector[I].second;
+		mapped_dests.insert(d);
+	}
+
+	// if I is a dest, it must also be a source!
+	for(set<int>::iterator iter = mapped_dests.begin(), fiter = mapped_dests.end(); 
+			iter != fiter; iter++)
+	{
+		int d = *iter;
+		if(mapped_srcs.find(d) == mapped_srcs.end())
+		{
+			AaRoot::Error("inconsistent bit-map specification ", this);
+		}
+	}
+}
+
 
 void AaBitmapExpression::Evaluate()
 {
