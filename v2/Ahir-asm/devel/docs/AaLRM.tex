@@ -1186,13 +1186,28 @@ LPAREN $bitmap <expression> ( <from-index> <to-index> )+ RPAREN
 The flattened bit-vector value of expression is permuted according
 to the information provided by the $(from,to)$ pairs (result(to) = source(from)).
 
-For example
+For example, 
 \begin{verbatim}
-( $bitmap ($bitcast ($uint<4>) _h3) 0 3 1 2 2 1 3 0 ) = _he
+// X has type $uint<4>
+( $bitmap ($bitcast X) 0 3 1 2 2 1 3 0 ) = rX
+\end{verbatim}
+implements
+\begin{verbatim}
+rX[3] <- X[0], rX[1] <- X[2], 
+   rX[2] <- X[1], rX[0] <- X[3]
+\end{verbatim}
+and
+\begin{verbatim}
+// X has type $uint<4>
+( $bitmap ($bitcast X) 0 3 3 0) = rX
+\end{verbatim}
+implements (not that unmapped indices
+are left undisturbed)
+\begin{verbatim}
+rX[3] <- X[0], rX[1] <- X[1], 
+   rX[2] <- X[2], rX[3] <- X[0]
 \end{verbatim}
 
-Note: this expression is not currently supported in hardware,
-but will eventually be, maybe.
 
 
 \subsection{Binary expressions}
