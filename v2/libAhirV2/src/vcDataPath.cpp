@@ -199,18 +199,7 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 				is_no_block = false;
 			}
 
-			if(is_no_block && !p2p_flag)
-			{
-				//
-				// if non-blocking and if it is a p2p, then the nonblocking
-				// behaviour is handled by the input port.
-				//
-				ofile << pipe_id << "_Pipe: NonBlockingReadPipeBase -- {" << endl;
-			}
-			else
-			{
-				ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
-			}
+			ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
 			ofile << "generic map( -- { " << endl;
 			ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
 			ofile << "num_reads => " << num_reads << "," << endl;
@@ -2651,6 +2640,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 			ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
 				<< "  num_reqs => " << num_reqs << ","
 				<< "  output_buffering => outBUFs, "
+				<< "  nonblocking_read_flag => " << (noblock_flag ? "true" : "False") << "," 
 				<< "  no_arbitration => " << no_arb_string << ")" << endl;
 			ofile << "port map (-- {\n sample_req => reqL " << ", " <<  endl
 				<< "    sample_ack => ackL" << ", " <<  endl

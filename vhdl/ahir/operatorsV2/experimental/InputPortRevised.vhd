@@ -52,6 +52,7 @@ entity InputPortRevised is
 	   num_reqs: integer;
 	   data_width: integer;
 	   output_buffering: IntegerArray;
+	   nonblocking_read_flag: boolean := false;
 	   no_arbitration: boolean := false);
   port (
     -- pulse interface with the data-path
@@ -103,22 +104,30 @@ begin
 	signal fsm_state: FsmState;
 	signal data_reg : std_logic_vector(data_width-1 downto 0);
     begin
-	process(clk, reset, fsm_state, update_req(I),  write_enable(I))
+	process(clk, reset, fsm_state, update_req(I),  write_enable(I), write_data(I))
 		variable next_fsm_state: FsmState;
 		variable has_room_v : std_logic;
 		variable latch_v : boolean;
+		variable next_data_reg_var : std_logic_vector(data_width-1 downto 0);
 	begin
 		next_fsm_state := fsm_state;
 		has_room_v     := '0';
 		latch_v        := false;
+		next_data_reg_var := (others => '0');
 		case fsm_state is
 			when Idle  =>
 				if(update_req(I)) then
 					has_room_v := '1';
 					if(write_enable(I) = '1') then
 						latch_v := true;
+						next_data_reg_var := write_data(I);
 					else
-						next_fsm_state := Waiting;
+						if(nonblocking_read_flag) then
+							latch_v := true;
+							-- write 0.
+						else
+							next_fsm_state := Waiting;
+						end if;
 					end if;
 				end if;
 			when Waiting =>
@@ -126,6 +135,7 @@ begin
 				if(write_enable(I) = '1') then
 					latch_v := true;
 					next_fsm_state := Idle;
+					next_data_reg_var := write_data(I);
 				end if;
 		end case;
 
@@ -141,7 +151,7 @@ begin
 				fsm_state <= next_fsm_state;
 				update_ack(I) <= latch_v;
 				if(latch_v) then
-					data_reg <= write_data(I);
+					data_reg <= next_data_reg_var;
 				end if;
 			end if;
 

@@ -113,20 +113,14 @@ void hierPipe::Print_Vhdl_Instance(hierSystem* sys, ostream& ofile)
 		ofile << "-- pipe " << pipe_name << " depth set to 0 since it is a P2P pipe." << endl;
 	}
 
+	if(this->Get_Is_Noblock())
+	{
+		ofile << " -- this is marked as a non-blocking pipe... InputPorts should take care of it! " << endl;
+	}
+
 	string inst_name = pipe_name + "_inst";
 	ofile << inst_name << ": ";
-	if(this->Get_Is_Noblock() && !this->Get_Is_P2P())
-	{
-		//
-		// if noblock and p2p, then nonblocking behaviour is
-		// built into an input-port. 
-		//
-		ofile << " NonblockingReadPipeBase -- { " << endl;
-	}
-	else
-	{
-		ofile << " PipeBase -- { " << endl;
-	}
+	ofile << " PipeBase -- { " << endl;
 	ofile << "generic map( -- { " << endl;
 	ofile << "name => " << '"' << "pipe " << pipe_name << '"' << "," << endl;
 	ofile << "num_reads => 1," << endl;

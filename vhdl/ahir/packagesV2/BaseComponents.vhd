@@ -2173,6 +2173,7 @@ package BaseComponents is
 	   num_reqs: integer;
 	   data_width: integer;
            output_buffering: IntegerArray;
+	   nonblocking_read_flag: boolean := false;
 	   no_arbitration: boolean := false);
     port (
     -- pulse interface with the data-path
