@@ -199,6 +199,12 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 				is_no_block = false;
 			}
 
+			if(this->Get_No_Block_Mode())
+			{
+				ofile << "-- non-blocking pipe... Input-ports must have non-blocking-flag => true"
+						<< endl;
+			}
+
 			ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
 			ofile << "generic map( -- { " << endl;
 			ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
