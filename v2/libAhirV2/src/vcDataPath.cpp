@@ -191,6 +191,14 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 			num_reads = MAX(num_reads,1);
 			num_writes = MAX(num_writes,1);
 
+			int actual_pipe_depth = pipe_depth;
+			if(this->Get_P2P() ||
+				((is_input_pipe || is_output_pipe) && vcSystem::_suppress_io_pipes))
+			{
+				actual_pipe_depth = 0; // P2P pipe storage absorbed into INPORTs.
+				is_no_block = false;
+			}
+
 			if(is_no_block && !p2p_flag)
 			{
 				//
@@ -202,12 +210,6 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 			else
 			{
 				ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
-			}
-			int actual_pipe_depth = pipe_depth;
-			if(this->Get_P2P() ||
-				((is_input_pipe || is_output_pipe) && vcSystem::_suppress_io_pipes))
-			{
-				actual_pipe_depth = 0; // P2P pipe storage absorbed into INPORTs.
 			}
 			ofile << "generic map( -- { " << endl;
 			ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
