@@ -39,4 +39,10 @@ package GlobalConstants is
     --
     constant max_single_bit_queue_depth_per_stage : integer := 512;  -- this is huge.. make it smaller for effect (carefully)
 
+    -- threshold for deciding if a pipe is deep or shallow
+    -- pipes shallower than this are implemented using FF's
+    -- deeper pipes with DPRAM.  Note: this is a hack!
+    constant global_pipe_shallowness_threshold : integer := 8;  
+
+
 end package GlobalConstants;
