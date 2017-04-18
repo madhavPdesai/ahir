@@ -1,48 +1,26 @@
 0README
-	this file
-combinational_merge.vhd
-	sub-design-unit 
-comb_merge
-	sub-design-unit 
-demerge_tree.vhd
-	sub-design-unit 
-mem_component_pack.vhd
-	component declaration package
-mem_demux.vhd
-	sub-design-unit 
-mem_function_pack.vhd
-	function package
-memory_bank.vhd
-	sub-design-unit 
-memory_bank_base.vhd
-	sub-design-unit 
-base_bank.vhd
-	sub-design-unit
-		(this is the basic memory bank)
-memory_subsystem_tb.vhd
-	test-bench (top-level)
-memory_subsystem.vhd
-	TOP-level
-mem_repeater.vhd
-	sub-design-unit 
-mem_shift_repeater.vhd
-	sub-design-unit 
-mem_test_block.vhd
-	test-bench component
-merge_box_with_repeater.vhd
-	sub-design-unit 
-merge_functions.vhd
-	function package
-merge_tree.vhd
-	sub-design-unit 
-memory_subsystem_package.vhd
-	component declaration of top-level memory-subsystem
+	this file.
 
--- new additions.
-dummy_read_only_memory_subsystem.vhd
-	dummy ROM, always returns 0.
-dummy_write_only_memory_subsystem.vhd
-	dummy WOM, write ignored, but acked.
-register_bank.vhd
-	register bank to model "small memories".
-	number of ports = number of registers
+base_bank
+	base single and dual port memories
+	for FPGA impl.
+
+base_bank_asic
+	base single and dual port memories
+	for ASIC impl.
+
+base_bank_image
+	base single and dual port memories
+	for IMAGE impl.
+
+common
+	common design units for ordered/unordered
+	memory subsytems.
+
+strictly_ordered
+	design units for strictly ordered memory
+        subsystems.
+
+unordered
+	design units for un-ordered memory
+        subsystems.

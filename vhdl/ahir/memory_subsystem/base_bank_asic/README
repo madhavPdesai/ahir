@@ -1,0 +1,46 @@
+base_bank_dual_port.vhd
+	dual port implementation in terms of
+	SCL dpramcuts.
+
+base_bank.vhd
+	single port implementation in terms of
+	SCL spramcuts.
+
+dpmem_column.vhd
+	column partitioner for dpram cuts.
+
+dpmem_selector.vhd
+	selector of memory cuts for dpram.
+
+
+README
+	this file
+
+spmem_column.vhd
+	column partitioner for spram cuts.
+
+spmem_selector.vhd
+	selector of memory cuts for spram.
+
+
+for_fpga_impl_of_asic_rtl/
+
+	FPGA implementation of ASIC RTL needs
+	generic memories corresponding to memory
+	cuts.  Files in this folder should be
+	included in the ahir library during FPGA
+	synthesis of ASIC rtl.
+
+	dpram_generic.vhd
+		generic dpram implementation for
+		use in VHDL simulation/FPGA implementation
+		of base-bank implementations.
+
+	MemGenerics.vhd
+		Generic memory cuts entity/arch defs.
+		(for use only with FPGA sim)
+	spram_generic.vhd
+		generic spram implementation for
+		use in VHDL simulation/FPGA implementation
+		of base-bank implementations.
+	

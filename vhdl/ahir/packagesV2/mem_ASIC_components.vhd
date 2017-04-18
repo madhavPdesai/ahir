@@ -66,7 +66,7 @@ component SPRAM_32_16
 	O  : out std_logic_vector(15 downto 0));
 end component;
 
-component obc11_256x81
+component obc11_256x8
 	port(A : in std_logic_vector(7 downto 0 );
 	CEB : in std_logic;
 	WEB: in std_logic;
