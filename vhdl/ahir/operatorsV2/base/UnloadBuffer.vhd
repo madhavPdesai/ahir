@@ -182,14 +182,15 @@ begin  -- default_arch
 			if(reset = '1') then
 				fsm_state <= idle;
 				unload_ack <= false;
+           			read_data <= (others => '0');
 			else
 				fsm_state <= nstate;
 				unload_ack <= loadv;
+				if(loadv) then
+           				read_data <= datav;
+        			end if;
 			end if;
 		
-			if(loadv) then
-           			read_data <= datav;
-        		end if;
      		end if;
   	end process;
 
@@ -244,14 +245,14 @@ begin  -- default_arch
 			if(reset = '1') then
 				fsm_state <= idle;
 				unload_ack <= false;
+           			read_data <= (others => '0');
 			else
 				fsm_state <= nstate;
 				unload_ack <= loadv;
+				if(loadv) then
+           				read_data <= datav;
+        			end if;
 			end if;
-		
-			if(loadv) then
-           			read_data <= datav;
-        		end if;
      		end if;
   	end process;
   end generate bufEq0;

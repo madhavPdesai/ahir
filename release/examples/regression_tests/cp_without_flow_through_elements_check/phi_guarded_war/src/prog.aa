@@ -1,14 +1,6 @@
 $pipe in_data  : $uint<8> $depth 2
 $pipe out_data : $uint<8> $depth 2
 
-$volatile $module [add_v] $in (A: $uint<8>) $out (B: $uint<8>) $is {
-	B := (A+1)
-}
-
-$module [add_nv] $in (A: $uint<8>) $out (B: $uint<8>) $is {
-	B := (A+1)
-}
-
 $module [volatile_check_daemon] $in() $out () $is
 {
 	$branchblock[lOoP] {
@@ -16,14 +8,14 @@ $module [volatile_check_daemon] $in() $out () $is
 		$fullrate
 		$merge $entry $loopback 
 			$phi X := _b0 $on $entry $guard (get_data) in_data $on $loopback
-			$phi init_flag := ($bitcast ($uint<1>) 1) $on $entry 0 $on $loopback
+			$phi get_data_d := ($bitcast ($uint<1>) _b0) $on $entry get_data $on $loopback
 		$endmerge
 
 		// WAR dependency from this to PHI... gets optimized away
 		// since PHI already includes update <-> sample ring.
-		$volatile get_data := (init_flag | (~init_flag)) // always 1.
+		$volatile get_data := (~ get_data_d)
 
-		$guard (~init_flag) out_data := X
+		$guard (get_data_d) out_data := X
 		$while 1
 	}
 }
