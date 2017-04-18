@@ -1,9 +1,17 @@
 $pipe in_data  : $uint<32> $depth 2
 $pipe out_data : $uint<32> $depth 2
 
-$volatile $module [replicate] $in (a: $uint<32>) $out (b: $uint<32>) $is
+$volatile $module [replicate_v] $in (a: $uint<32>) $out (b: $uint<32>) $is
 {
 	b := a
+}
+
+$module [replicate] $in (a: $uint<32>) $out (b c: $uint<32>) $is
+{
+	b := a
+	x := (b == 1)
+	c := ($mux x b a)
+
 }
 
 $module [volatile_check_daemon] $in() $out () $is
@@ -17,15 +25,16 @@ $module [volatile_check_daemon] $in() $out () $is
 
 		U := X
 		
-		$volatile $call replicate (U) (UU)
+		$volatile $call replicate_v (U) (UU)
+		$call replicate (UU) (UUU UUUIGNORE)
 
 	        $volatile 
-			X_H := ($slice UU 31 16)
+			X_H := ($slice UUU 31 16)
 		$volatile 
-			X_L := ($slice UU 15 0)
+			X_L := ($slice UUU 15 0)
 
 		$volatile Y := ($concat X_L X_H)
-		$volatile Z := (X | (Y & (~Y)))
+		$volatile Z := (Y | (X & (~X)))
 
 		out_data := Z
 		$while 1

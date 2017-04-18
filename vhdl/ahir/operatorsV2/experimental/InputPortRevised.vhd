@@ -82,7 +82,31 @@ architecture Base of InputPortRevised is
   signal ack_raw: BooleanArray(num_reqs-1 downto 0);
   
   type FsmState is (Idle, Waiting);
+   
+  signal oreq_qualified       : std_logic;
+  signal oack_qualified       : std_logic;
+  signal odata_qualified      : std_logic_vector(data_width-1 downto 0);
+
+  constant c_d_0      : std_logic_vector(data_width-1 downto 0) := (others => '0');
+
 begin
+
+  -----------------------------------------------------------------------------
+  -- non-block/block qualification
+  -----------------------------------------------------------------------------
+  noBlk: if (nonblocking_read_flag) generate
+	oreq <= oreq_qualified;
+	oack_qualified <= '1';
+	odata_qualified <= odata when (oack = '1') else c_d_0;
+  end generate noBlk;
+
+  yesBlk: if (not nonblocking_read_flag) generate
+	oreq <= oreq_qualified;
+	oack_qualified <= oack;
+	odata_qualified <= odata;
+  end generate yesBlk;
+
+
 
   -----------------------------------------------------------------------------
   -- data register for every requester.
@@ -113,7 +137,7 @@ begin
 		next_fsm_state := fsm_state;
 		has_room_v     := '0';
 		latch_v        := false;
-		next_data_reg_var := (others => '0');
+		next_data_reg_var := data_reg;
 		case fsm_state is
 			when Idle  =>
 				if(update_req(I)) then
@@ -122,12 +146,7 @@ begin
 						latch_v := true;
 						next_data_reg_var := write_data(I);
 					else
-						if(nonblocking_read_flag) then
-							latch_v := true;
-							-- write 0.
-						else
-							next_fsm_state := Waiting;
-						end if;
+						next_fsm_state := Waiting;
 					end if;
 				end if;
 			when Waiting =>
@@ -173,9 +192,9 @@ begin
       req => has_room,
       ack => write_enable,
       data => demux_data,
-      oreq => oreq,
-      odata => odata,
-      oack => oack,
+      oreq => oreq_qualified,
+      odata => odata_qualified,
+      oack => oack_qualified,
       clk => clk,
       reset => reset);
 

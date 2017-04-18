@@ -1026,6 +1026,17 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 				root_set.insert(r);
 			}
 		}	
+		else if(root_obj->Is_Interface_Object())
+		{
+			// an output interface object may be written by
+			// a statement. Add this statement to the roots.
+			AaInterfaceObject* io = ((AaInterfaceObject*) root_obj);
+			AaStatement* sio = io->Get_Unique_Driver_Statement();
+			if(sio != NULL)
+				sio->Collect_Root_Sources(root_set);
+			else
+				root_set.insert(this);
+		}
 		else
 			root_set.insert(this);
 	}
