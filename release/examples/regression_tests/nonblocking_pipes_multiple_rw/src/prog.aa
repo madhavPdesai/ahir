@@ -1,0 +1,41 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+$noblock $pipe mid_pipe: $uint<33> $depth 2
+
+$constant ONE_1: $uint<1> := 1
+
+$module [rx_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback $endmerge
+
+		X := in_data
+		mid_pipe := ($concat ONE_1 X)
+
+		X1 := in_data
+		mid_pipe := ($concat ONE_1 X1)
+
+		$while 1
+	}
+}
+
+$module [tx_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback $endmerge
+
+		X := mid_pipe
+		$split (X 1 32) (vX XX)
+		$guard (vX) out_data := XX
+
+		X1 := mid_pipe
+		$split (X1 1 32) (vX1 X1X)
+		$guard (vX1) out_data := X1X
+
+		$while 1
+	}
+}

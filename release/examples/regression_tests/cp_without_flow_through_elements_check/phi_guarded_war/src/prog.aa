@@ -8,12 +8,15 @@ $module [volatile_check_daemon] $in() $out () $is
 		$fullrate
 		$merge $entry $loopback 
 			$phi X := _b0 $on $entry $guard (get_data) in_data $on $loopback
+			$phi idx := ($bitcast ($uint<8>) _b0) $on $entry nidx $on $loopback
 			$phi get_data_d := ($bitcast ($uint<1>) _b0) $on $entry get_data $on $loopback
 		$endmerge
 
+		$volatile nidx := (idx + 1)
+		$volatile get_data := (($slice idx 2 0) == 7)
+
 		// WAR dependency from this to PHI... gets optimized away
 		// since PHI already includes update <-> sample ring.
-		$volatile get_data := (~ get_data_d)
 
 		$guard (get_data_d) out_data := X
 		$while 1
