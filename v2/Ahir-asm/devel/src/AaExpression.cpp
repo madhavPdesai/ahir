@@ -66,6 +66,7 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_buffering = 1;
   this->_guard_expression = NULL;
   this->_guard_complement = false;
+  this->_phi_source_index = -1;
 }
 
 AaExpression::~AaExpression() {};
@@ -1035,7 +1036,13 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 			if(sio != NULL)
 				sio->Collect_Root_Sources(root_set);
 			else
+			{	
+				//
+				// interface object can link to 
+				// update enables in operators.
+				//
 				root_set.insert(this);
+			}
 		}
 		else
 			root_set.insert(this);
@@ -1603,7 +1610,8 @@ string AaSimpleObjectReference::Get_VC_Update_Completed_Transition_Name()
 			&&  (this->Is_Implicit_Variable_Reference() || 
 				this->_object->Is_Interface_Object()))
 		return(__UCT(this->Get_Associated_Statement()));
-	else if(this->_object->Is_Interface_Object())
+	else if(this->_object->Is_Interface_Object() && 
+			(this->Get_Associated_Phi_Statement() == NULL))
 		return ("$entry");
 	else
 		return(this->AaRoot::Get_VC_Update_Completed_Transition_Name());

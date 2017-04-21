@@ -4024,6 +4024,10 @@ void AaPhiStatement::Set_Target(AaObjectReference* tgt)
 	{
 		AaRoot::Error("target of a PHI statement must be an implicit (SSA) variable.", this);
 	}
+	else if(tgt->Is_Interface_Object_Reference())
+	{
+		AaRoot::Error("target of a PHI statement cannot be an interface object!", this);
+	}
 
 	if(this->_source_pairs.size() > 0)
 	{
@@ -4040,6 +4044,7 @@ void AaPhiStatement::Set_Target(AaObjectReference* tgt)
 void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
 {
 	_merged_labels.insert(label);
+	int curr_index = this->_source_pairs.size();
 
 
 	AaExpression* ge = expr->Get_Guard_Expression();
@@ -4048,10 +4053,12 @@ void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
 		// phi statements do not have guards, only their
 		// sources can have guards.
 		ge->Set_Associated_Statement(this);
+		ge->Set_Phi_Source_Index(curr_index);
 	}
 
 	expr->Set_Associated_Statement(this);
 	expr->Set_Is_Intermediate(false);
+	expr->Set_Phi_Source_Index(curr_index);
 
 	if(this->_target)
 	{

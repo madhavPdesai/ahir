@@ -78,6 +78,7 @@ class AaExpression: public AaRoot
 	bool Get_Coalesce_Flag() {return(_coalesce_flag);}
 
 
+	int _phi_source_index;
 
 
 	// expression is handled in a different
@@ -121,6 +122,11 @@ class AaExpression: public AaRoot
 	virtual void Write_VC_Input_Buffering(string dpe_name, string src_name, ostream& ofile)
  	{
 	}
+
+	virtual void Set_Phi_Source_Index(int v) {_phi_source_index = v;}
+	int Get_Phi_Source_Index() {return(_phi_source_index);}
+
+	virtual void Write_VC_Phi_Start_Dependency(ostream& ofile);
 
 	virtual void Set_Guarded_Expression(AaExpression* expr) {assert(0);}
 	virtual AaExpression* Get_Guarded_Expression() {return(NULL);}
@@ -398,6 +404,8 @@ class AaExpression: public AaRoot
 									set<AaRoot*>& visited_elements,
 										ostream& ofile);
 	virtual void Check_Volatile_Inconsistency(AaStatement* stmt);
+
+
 };
 
 
@@ -988,6 +996,14 @@ class AaArrayObjectReference: public AaObjectReference
 		if(_pointer_ref != NULL)
 			_pointer_ref->Set_Associated_Statement(stmt);
 	}
+	virtual void Set_Phi_Source_Index(int v) {
+		_phi_source_index = v;
+		for(int idx = 0; idx < _indices.size(); idx++)
+			_indices[idx]->Set_Phi_Source_Index(v);
+
+		if(_pointer_ref != NULL)
+			_pointer_ref->Set_Phi_Source_Index(v);
+	}
 
 	virtual void Write_VC_Control_Path_As_Target( ostream& ofile);
 	virtual void Evaluate();
@@ -1078,6 +1094,11 @@ class AaPointerDereferenceExpression: public AaObjectReference
 		_associated_statement = stmt;
 		_reference_to_object->Set_Associated_Statement(stmt);
 		this->Check_Volatile_Inconsistency(stmt);
+	}
+	virtual void Set_Phi_Source_Index(int v)
+	{
+		_phi_source_index = v;
+		_reference_to_object->Set_Phi_Source_Index(v);
 	}
 	virtual void Map_Source_References_As_Target(set<AaRoot*>& source_objects)
 	{
@@ -1177,6 +1198,11 @@ class AaAddressOfExpression: public AaObjectReference
 		_associated_statement = stmt;
 		_reference_to_object->Set_Associated_Statement(stmt);
 		this->Check_Volatile_Inconsistency(stmt);
+	}
+	virtual void Set_Phi_Source_Index(int v)
+	{
+		_phi_source_index = v;
+		_reference_to_object->Set_Phi_Source_Index(v);
 	}
 	virtual void Set_Pipeline_Parent(AaStatement* dws)
 	{
@@ -1279,6 +1305,11 @@ class AaTypeCastExpression: public AaExpression
 		_associated_statement = stmt;
 		_rest->Set_Associated_Statement(stmt);
 		this->Check_Volatile_Inconsistency(stmt);
+	}
+	virtual void Set_Phi_Source_Index(int v)
+	{
+		_phi_source_index = v;
+		_rest->Set_Phi_Source_Index(v);
 	}
 
 	virtual void Set_Pipeline_Parent(AaStatement* dws)
@@ -1391,6 +1422,11 @@ class AaUnaryExpression: public AaExpression
 	virtual void PrintC(ofstream& ofile);
 
 	virtual void Set_Associated_Statement(AaStatement* stmt);
+	virtual void Set_Phi_Source_Index(int v)
+	{
+		_phi_source_index = v;
+		_rest->Set_Phi_Source_Index(v);
+	}
 	virtual void Set_Pipeline_Parent(AaStatement* dws)
 	{
 		_pipeline_parent = dws;
@@ -1509,6 +1545,13 @@ class AaBinaryExpression: public AaExpression
 		_associated_statement = stmt;
 		_first->Set_Associated_Statement(stmt);
 		_second->Set_Associated_Statement(stmt);
+		this->Check_Volatile_Inconsistency(stmt);
+	}
+	virtual void Set_Phi_Source_Index(int v)
+	{
+		_phi_source_index = v;
+		_first->Set_Phi_Source_Index(v);
+		_second->Set_Phi_Source_Index(v);
 	}
 	virtual void Set_Pipeline_Parent(AaStatement* dws)
 	{
@@ -1618,6 +1661,13 @@ class AaTernaryExpression: public AaExpression
 		_test->Set_Associated_Statement(stmt);
 		_if_true->Set_Associated_Statement(stmt);
 		_if_false->Set_Associated_Statement(stmt);
+	}
+	virtual void Set_Phi_Source_Index(int v)
+	{
+		_phi_source_index = v;
+		_test->Set_Phi_Source_Index(v);
+		_if_true->Set_Phi_Source_Index(v);
+		_if_false->Set_Phi_Source_Index(v);
 	}
 	virtual void Set_Pipeline_Parent(AaStatement* dws)
 	{

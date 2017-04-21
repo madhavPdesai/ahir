@@ -1215,6 +1215,17 @@ class AaPhiStatement: public AaStatement
   virtual bool Is_Phi_Statement() {return(true);}
   void Add_Source_Pair(string label, AaExpression* expr);
 
+  AaExpression* Get_Source_Expression(int index)
+  {
+	if((index >=0) && (index < _source_pairs.size()))
+	{
+		return(_source_pairs[index].second);
+	}
+	else
+	{
+		return(NULL);
+	}
+  }
   virtual void Set_Pipeline_Parent(AaStatement* dws);
   bool Is_Merged(string label)
   {

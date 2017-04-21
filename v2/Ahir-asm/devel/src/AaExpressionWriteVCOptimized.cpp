@@ -43,6 +43,25 @@ using namespace std;
 #include <AaProgram.h>
 #include <Aa2VC.h>
 
+
+// Write dependency from phi-sequencer to start this expression's evaluation.
+void AaExpression::Write_VC_Phi_Start_Dependency(ostream& ofile)
+{
+	if(!this->Is_Flow_Through() && !this->Get_Is_Target())
+	{
+		AaPhiStatement* phi = this->Get_Associated_Phi_Statement();
+		if(phi != NULL)
+		{
+			ofile << "// Phi start dependency" << endl;
+			int src_index = this->Get_Phi_Source_Index();
+			assert(src_index >= 0);
+			AaExpression* source_expr = phi->Get_Source_Expression(src_index);
+			string trig_name = __SST(source_expr) + "_ps";
+			__J(__SST(this), trig_name);
+		}
+	}
+}
+
 //
 // From this expression, write forward dependencies to dependent_transition.
 // Look for root expressions of this and add UCT->dependent_transition links.
@@ -589,6 +608,8 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 
 		// at the end!
 		visited_elements.insert(this);
+	
+		this->Write_VC_Phi_Start_Dependency(ofile);
 	}
 }
 
@@ -1147,6 +1168,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		}
 
 		visited_elements.insert(this);
+		this->Write_VC_Phi_Start_Dependency(ofile);
 	}
 }
 
@@ -1312,7 +1334,9 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
 		__SelfReleaseSplitProtocolPattern
 	}
 
+
 	visited_elements.insert(this);
+	this->Write_VC_Phi_Start_Dependency(ofile);
 }
 
 void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -1501,6 +1525,7 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 		ofile << "// constant address-of expression" << endl;
 	}
 	visited_elements.insert(this);
+	this->Write_VC_Phi_Start_Dependency(ofile);
 }
 
 void AaAddressOfExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -1612,6 +1637,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 				__SelfReleaseSplitProtocolPattern
 			}
 		}
+		this->Write_VC_Phi_Start_Dependency(ofile);
 	}
 	visited_elements.insert(this);
 
@@ -1716,6 +1742,7 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 				__SelfReleaseSplitProtocolPattern
 			}
 		}
+		this->Write_VC_Phi_Start_Dependency(ofile);
 	}
 	visited_elements.insert(this);
 }
@@ -1911,6 +1938,7 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 				__SelfReleaseSplitProtocolPattern
 			}
 		}
+		this->Write_VC_Phi_Start_Dependency(ofile);
 	}
 	visited_elements.insert(this);
 }
@@ -2047,6 +2075,7 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 
 			}
 		}
+		this->Write_VC_Phi_Start_Dependency(ofile);
 	}
 	visited_elements.insert(this);
 }
@@ -3233,13 +3262,6 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 		acks.clear();
 	}
 }
-
-
-
-
-
-
-
 
 
 

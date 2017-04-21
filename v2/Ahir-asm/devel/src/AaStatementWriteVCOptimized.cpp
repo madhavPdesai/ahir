@@ -1597,13 +1597,16 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				!sge->Is_Implicit_Variable_Reference() && 
 				!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 			{
+				ofile << "// guard in Phi alternative" << endl;
 				sge->Write_VC_Control_Path_Optimized(pipeline_flag,
 						visited_elements,
 						ls_map,pipe_map,barrier,
 						ofile);
-
-				__J(__SST(sge), (__SST(source_expr) + "_ps"));
-				//__J((__SCT(source_expr) + "_ps"), __SCT(sge));
+				
+				//
+				// This will be taken care of in a unified way.
+				//
+				//__J(__SST(sge), (__SST(source_expr) + "_ps"));
 
 			}
 
@@ -1677,7 +1680,11 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		}
 
 		// relayed to i/o of phi-sequencer.
-		__J(__SST(source_expr), (__SST(source_expr) + "_ps"));
+		//  This will be taken care of in a unified way.
+		if(source_expr->Is_Implicit_Variable_Reference() || source_expr->Is_Constant())
+		{
+			 __J(__SST(source_expr), (__SST(source_expr) + "_ps"));
+		}
 		__J((__SCT(source_expr) + "_ps"), __SCT(source_expr));
 		__J(__UST(source_expr), (__UST(source_expr) + "_ps"));
 		__J((__UCT(source_expr) + "_ps"), __UCT(source_expr));
