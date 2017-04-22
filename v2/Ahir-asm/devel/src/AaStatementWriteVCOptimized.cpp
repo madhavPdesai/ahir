@@ -143,7 +143,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		AaRoot* barrier,
 		ostream& ofile)
 {
-	ofile << "// " << this->To_String() << endl;
+	ofile << "// start:  " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
 	if(this->Is_Constant()) 
 	{
@@ -275,6 +275,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		// WAR dependencies
 		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 	}
+	ofile << "// end:  " << this->To_String() << endl;
 }  
 
 
@@ -341,7 +342,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		AaRoot* barrier,
 		ostream& ofile)
 {
-	ofile << "// " << this->To_String() << endl;
+	ofile << "// start: " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
 	if(this->Is_Constant())
 	{
@@ -472,6 +473,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		visited_elements.insert(this);
 		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 	}
+	ofile << "// end: " << this->To_String() << endl;
 }
 
 
@@ -1501,7 +1503,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 	assert(pipeline_flag);
 
-	ofile << "// (pipelined) PHI statement " << this->Get_VC_Name() << endl;
+	ofile << "// start:  PHI statement " << this->Get_VC_Name() << endl;
 	ofile << "// " << this->To_String() << endl;
 	__DeclTransSplitProtocolPattern;
 
@@ -1613,6 +1615,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
 			if(src_has_no_dpe)
 			{
+				ofile << "// interlock for implicit-variable-ref/signal-read in Phi alternative " 
+					<<  idx <<  endl;
 				__T(__SST(source_expr));
 				__T(__SCT(source_expr));
 				__T(__UST(source_expr));
@@ -1638,6 +1642,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			}
 			else
 			{
+				ofile << "// source expression in Phi alternative " 
+					<<  idx <<  endl;
 				source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
 						visited_elements,
 						ls_map,pipe_map,barrier,
@@ -1742,6 +1748,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 	//this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements, ofile);
 	visited_elements.insert(this);
+	ofile << "// done: PHI Statement " << this->Get_VC_Name() << endl;
 }
 
 // called only if it appears in a do-while loop.

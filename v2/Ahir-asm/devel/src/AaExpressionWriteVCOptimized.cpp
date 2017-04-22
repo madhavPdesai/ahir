@@ -71,6 +71,8 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 								set<AaRoot*>& visited_elements, ostream& ofile)
 {
 	
+	ofile << "// start: Forward dependencies from " << this->To_String() 
+		<< " to transition " << dependent_transition << endl;
 	set<AaRoot*> root_sources;
 	this->Collect_Root_Sources(root_sources);
 	for(set<AaRoot*>::iterator iter = root_sources.begin(), fiter = root_sources.end();
@@ -85,12 +87,35 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 				AaRoot::Error("incorrect ordering of forward dependency for " + this->To_String() + 
 							" (from " + pred->To_String() + ")", this);
 			}
-			else
+			else 
 			{
-				__J(dependent_transition,__UCT(pred));
+				if(pred->Is_Expression())
+				{
+					AaExpression* expr = ((AaExpression*) pred);
+					if(!expr->Is_Interface_Object_Reference())
+					//
+					// interface object references may be
+					// included in the root object set.
+					// But these do not have any control transitions.
+					//
+					{
+						__J(dependent_transition,__UCT(pred));
+					}
+					else
+					{
+						ofile << "// Forward dependency from interface-object-ref omitted ("
+							<< expr->To_String() << ")" << endl;
+					}
+				}
+				else
+				{
+					__J(dependent_transition,__UCT(pred));
+				}
 			}
 		}
 	}
+	ofile << "// done: Forward dependencies from " << this->To_String() 
+		<< " to transition " << dependent_transition << endl;
 }
 
 //
@@ -184,6 +209,8 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 		set<AaRoot*>& visited_elements,
 		ostream& ofile)
 {
+
+	ofile << "// start: WAR dependencies for " << this->To_String() << endl;
 	if(!this->Is_Implicit_Variable_Reference())
 		return;
 
@@ -351,6 +378,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 			}
 		}
 	}
+	ofile << "// done: WAR dependencies for " << this->To_String() << endl;
 }
 
 //
