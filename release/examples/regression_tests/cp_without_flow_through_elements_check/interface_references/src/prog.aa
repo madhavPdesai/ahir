@@ -1,0 +1,38 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$module [replicate] $in (a: $uint<32>) $out (b: $uint<32>) $is
+{
+
+	$branchblock[loop] {
+		$dopipeline $depth 3 $buffering 2 $fullrate
+
+		$merge $entry $loopback
+			$phi I := ($bitcast ($uint<8>) 0) $on $entry NI $on $loopback
+	
+			// RAW dependency on interface object via a
+			// WAR dependency on interface object via b.
+			$phi R := ($bitcast ($uint<32>) ((($bitcast ($uint<64>) a) << 8) >> 8))
+						$on $entry b $on $loopback
+		$endmerge
+
+		NI := (I + 1)
+		b  := (R + 1)
+
+		$while (I < 1)
+	}
+}
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback $endmerge
+
+		X := in_data
+		$call replicate (X) (XX)
+		out_data := XX
+		$while 1
+	}
+}

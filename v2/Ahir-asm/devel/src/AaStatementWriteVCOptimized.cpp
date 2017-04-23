@@ -1689,10 +1689,12 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		//  This will be taken care of in a unified way.
 		if(source_expr->Is_Implicit_Variable_Reference() || source_expr->Is_Constant())
 		{
-			 __J(__SST(source_expr), (__SST(source_expr) + "_ps"));
+			ofile << "// Phi start dependency for implicit/constant alternative." << endl;
+			__J(__SST(source_expr), (__SST(source_expr) + "_ps"));
+			__J(__UST(source_expr), (__UST(source_expr) + "_ps"));
 		}
+		ofile << "// Phi complete dependency." << endl;
 		__J((__SCT(source_expr) + "_ps"), __SCT(source_expr));
-		__J(__UST(source_expr), (__UST(source_expr) + "_ps"));
 		__J((__UCT(source_expr) + "_ps"), __UCT(source_expr));
 
 		if(trig_place == "$loopback")

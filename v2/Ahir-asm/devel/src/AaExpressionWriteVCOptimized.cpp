@@ -56,8 +56,12 @@ void AaExpression::Write_VC_Phi_Start_Dependency(ostream& ofile)
 			int src_index = this->Get_Phi_Source_Index();
 			assert(src_index >= 0);
 			AaExpression* source_expr = phi->Get_Source_Expression(src_index);
-			string trig_name = __SST(source_expr) + "_ps";
-			__J(__SST(this), trig_name);
+
+			string strig_name = __SST(source_expr) + "_ps";
+			__J(__SST(this), strig_name);
+
+			string utrig_name = __UST(source_expr) + "_ps";
+			__J(__UST(this), utrig_name);
 		}
 	}
 }
