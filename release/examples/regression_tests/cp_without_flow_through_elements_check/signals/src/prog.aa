@@ -1,0 +1,19 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe TMP: $uint<32> $signal
+$pipe out_data : $uint<32> $depth 2
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback $endmerge
+
+		X := in_data
+
+		TMP := X
+		
+		out_data := TMP
+		$while 1
+	}
+}

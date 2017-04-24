@@ -19,7 +19,7 @@ $module [volatile_check_daemon] $in() $out () $is
 			$phi C := ($bitcast ($uint<8>) 0) $on $entry nC $on $loopback
 			$phi CC := ($bitcast ($uint<8>) 0) $on $entry nCC $on $loopback
 			$phi CCC := ($bitcast ($uint<8>) 0) $on $entry nCCC $on $loopback
-			$phi CCCC := ($bitcast ($uint<8>) 0) $on $entry nCCCC $on $loopback
+			$phi CCCC := ($bitcast ($uint<8>) 0) $on $entry nnnCCCC $on $loopback
 		$endmerge
 
 		$volatile nC := (C+1) // Self-referential WAR dependency
@@ -29,7 +29,12 @@ $module [volatile_check_daemon] $in() $out () $is
 
 
 		$volatile $call add_v (CCC) (nCCC)  // self-referential..
-		$call add_nv (CCCC) (nCCCC) // true WAR!
+
+		$call add_nv (CCCC) (tCCCC) // true WAR!
+		ttCCCC := tCCCC
+		$volatile nCCCC  := ttCCCC
+		nnCCCC := nCCCC
+		$volatile nnnCCCC  := nnCCCC
 
 		$volatile Y := ($reduce + X C CC CCC CCCC)
 		out_data := Y   // RAW dependency.

@@ -791,6 +791,10 @@ void AaExpression::Get_Non_Trivial_Source_References(set<AaRoot*>& root_set, set
 		AaRoot::Error("Cycle in searching for non-trivial source refs ", this);
 		return;
 	}
+
+	if(visited_elements.find(this) == visited_elements.end())
+		return;
+
 	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
 
 	
@@ -809,32 +813,51 @@ void AaExpression::Get_Non_Trivial_Source_References(set<AaRoot*>& root_set, set
 				{
 					root_set.insert(stmt);
 				}
-				else
+				else 
 					// keep hunting.
 				{
 					for(set<AaRoot*>::iterator iter = this->_source_references.begin(),
 							fiter = this->_source_references.end(); iter != fiter; iter++)
 					{
 						AaRoot* r = *iter;
-						r->Get_Non_Trivial_Source_References(root_set, visited_elements);
+						if(visited_elements.find(r) != visited_elements.end())
+						{
+							r->Get_Non_Trivial_Source_References(root_set, visited_elements);
+						}
 					}
 				}
 			}
-			else
+			else 
 			{
 				root_set.insert(this);
 			}
 		}
-		else if((stmt != NULL) && stmt->Get_Is_Volatile())
-			// this has a volatile call statement..
+		//
+		//  Possible predicates
+		//       a. this is in a phi
+		//       b. this is an implicit variable reference
+		//       c. this is intermediate
+		//       d. this is trivial
+		//       e. the statement corresponding to this is volatile
+		//       f. there is no statement corresponding to this.
+		//  Not a target.
+		//  1. If stmt is a phi-statement insert the phi and be done with it.
+		//
+		else if((stmt != NULL) && stmt->Is_Phi_Statement())
 		{
-			stmt->Get_Non_Trivial_Source_References(root_set, visited_elements);
+			root_set.insert(stmt);
 		}
-		else if(this->Is_Flow_Through() || this->Is_Implicit_Variable_Reference() ||
-				this->Is_Signal_Read())
-			//
-			// this is flow-through.... go to its targets...
-			//
+		else if(!this->Is_Flow_Through() && !this->Is_Implicit_Variable_Reference())
+		//  2. if this is not flow-through, no issues.
+		//       insert this if it is serious.
+		{
+			root_set.insert(this);
+		}
+		//
+		//  3. if it is intermediate.. hunt its targets down
+		//       it is a flow-through intermediate.
+		//      
+		else if(this->Get_Is_Intermediate())
 		{
 			for(set<AaExpression*>::iterator iter = _targets.begin(), fiter = _targets.end(); iter != fiter; iter++)
 			{
@@ -842,10 +865,25 @@ void AaExpression::Get_Non_Trivial_Source_References(set<AaRoot*>& root_set, set
 				expr->Get_Non_Trivial_Source_References(root_set, visited_elements);
 			}
 		}
-		else
+		//
+		//  4.  Not intermediate...  See what its stmt does.
+		else if(stmt != NULL)
 		{
-			if(visited_elements.find(this) != visited_elements.end())
-				root_set.insert(this);
+			if(visited_elements.find(stmt) != visited_elements.end())
+			{
+				if(!stmt->Get_Is_Volatile())
+					root_set.insert(stmt);
+				else
+					stmt->Get_Non_Trivial_Source_References(root_set, visited_elements);
+			}
+		}
+		//
+		//   5. stmt is null..  not possible to get here.
+		//
+		else 
+		{
+			AaRoot::Error("expression has no associated statement", this);
+			root_set.insert(this);
 		}
 
 	}
