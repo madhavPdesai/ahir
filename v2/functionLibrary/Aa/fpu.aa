@@ -230,26 +230,29 @@ $module [fpsqrt64_inner] $in ( a : $float<11,52>)  $out ( sqrt_a: $float<11,52>)
 	ua_val := ($slice ua 62 0)
 
 	
-	step0 := (x != fp_d_ZERO)
-	$guard (step0) $call fpdiv64_inner (a x) (q0)
-	$guard (step0) $call fpadd64_inner (x q0) (r0)
-	$guard (step0) $call fpmul64_inner (C3 r0) (x1)
+	$branchblock [loop] {
 
-	step1 := (x1 != fp_d_ZERO)
-	$guard (step1) $call fpdiv64_inner (a x1) (q1)
-	$guard (step1) $call fpadd64_inner (x1 q1) (r1)
-	$guard (step1) $call fpmul64_inner (C3 r1) (x2)
+		$merge $entry loopback
+			$phi curr_X := x $on $entry next_X $on loopback
+			$phi STEP   := ($bitcast ($uint<4>) 0)  $on $entry next_STEP $on loopback
+		$endmerge
 
-	step2 := (x2 != fp_d_ZERO)
-	$guard (step2) $call fpdiv64_inner (a x2) (q2)
-	$guard (step2) $call fpadd64_inner (x2 q2) (r2)
-	$guard (step2) $call fpmul64_inner (C3 r2) (x3)
+		ret_X := curr_X
 
-	xf := ($prioritymux step2 x3
-				step1 x2
-				  step0 x1
-					$default x)
-	
+		not_zero := (curr_X != fp_d_ZERO)
+		next_STEP := (STEP + 1)
+
+		break_from_loop := ((STEP == 3) | (~not_zero))
+
+		$guard (~break_from_loop) $call fpdiv64_inner (a curr_X) (Q)
+		$guard (~break_from_loop) $call fpadd64_inner (curr_X Q) (R)
+		$guard (~break_from_loop) $call fpmul64_inner (C3 R) (next_X)
+
+		$if (~break_from_loop) $then
+			$place [loopback]
+		$endif
+
+	} (ret_X => xf)
 
 	sqrt_a := ($mux ((ua_val != 0) & (~s)) xf fp_d_ZERO)
 }

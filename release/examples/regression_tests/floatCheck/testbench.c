@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <math.h>
 
 #ifdef SW
 #include <Pipes.h>
@@ -319,6 +320,27 @@ int main(int argc, char* argv[])
 					*((uint32_t*) &Y),
 					*((uint32_t*) &hZ));
 		}
+
+#endif
+
+#ifdef SQRT
+		hZ = fpsqrt32(X);
+		sZ = pow (X, 0.5);
+
+		if(hZ != sZ)
+		{
+			fprintf(stdout," sqrt(%f) = %f, expected %f.\n", X,hZ,sZ);
+			fprintf(stdout," sqrt(%x) = %x, expected %x.\n", *((uint32_t*) &X),
+					*((uint32_t*) &hZ),
+					*((uint32_t*) &sZ));
+			err_flag = 1;
+		}
+		else
+		{
+			fprintf(stdout," sqrt(%f) = %f\n", X,hZ);
+			fprintf(stdout," sqrt(%x) = %x\n", *((uint32_t*) &X), *((uint32_t*) &hZ));
+		}
+
 
 #endif
 

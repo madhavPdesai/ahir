@@ -15,3 +15,4 @@ int32_t fpd2int(double x);
 uint32_t fpd2uint(double x);
 float int2float(int32_t x);
 double int2double(int32_t x);
+float fpsqrt32(float x);

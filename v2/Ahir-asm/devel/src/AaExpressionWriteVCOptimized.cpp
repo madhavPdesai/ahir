@@ -77,6 +77,14 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 	
 	ofile << "// start: Forward dependencies from " << this->To_String() 
 		<< " to transition " << dependent_transition << endl;
+
+	// special case.. signal read
+	if(this->Is_Signal_Read())
+	{
+		__J(dependent_transition, __UCT(this));
+		return;
+	}
+
 	set<AaRoot*> root_sources;
 	this->Collect_Root_Sources(root_sources);
 	for(set<AaRoot*>::iterator iter = root_sources.begin(), fiter = root_sources.end();

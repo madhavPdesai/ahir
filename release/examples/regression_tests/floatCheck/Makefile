@@ -6,8 +6,11 @@ PIPEHANDLER_LIB=$(AHIR_RELEASE)/lib
 VHDL_LIB=$(AHIR_RELEASE)/vhdl/
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary
 
-DEFS= -DADD -DMUL -DSUB -DFLOATRESIZE -DTOINT
-TOPMODULES= -t fpadd -t fpaddd  -t fpsub -t fpincr -t fpmul -t fpmuld -t double_to_float -t float_to_double -t fp2int -t fpd2int  -t fp2uint -t fpd2uint -t int2float -t int2double 
+#DEFS= -DADD -DMUL -DSUB -DFLOATRESIZE -DTOINT -DSQRT
+#TOPMODULES= -t fpadd -t fpaddd  -t fpsub -t fpincr -t fpmul -t fpmuld -t double_to_float -t float_to_double -t fp2int -t fpd2int  -t fp2uint -t fpd2uint -t int2float -t int2double  -t fpsqrt32
+
+DEFS=  -DSQRT
+TOPMODULES= -t fpsqrt32
 
 #DEFS= -DADD -DMUL -DDOT -DCMP
 #TOPMODULES=-t fpmul -t fpmuld  -t fpadd -t fpaddd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
@@ -31,7 +34,7 @@ SW: prog.c prog.h testbench.c
 	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include $(DEFS) prog.c
 	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include  $(DEFS)  testbench.c
 	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include  $(DEFS)  $(FUNCTIONLIB)/src/fpu.c
-	gcc -o testbench_sw prog.o fpu.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
+	gcc -o testbench_sw prog.o fpu.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread -lm
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
@@ -63,7 +66,7 @@ vc2vhdl: prog.vc
 vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h vhdlCStubs.c
 	gcc -c vhdlCStubs.c -I./ -I$(SOCKETLIB_INCLUDE)
 	gcc -c $(DEFS) testbench.c -I./ -I$(SOCKETLIB_INCLUDE)
-	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLibPipeHandler -lpthread
+	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLibPipeHandler -lpthread -lm
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl
@@ -86,7 +89,7 @@ postsynthvhdlsim: ahir_system_synth.vhdl ahir_system_test_bench.vhdl
 	ghdl -i --work=work --ieee=synopsys -fexplicit -P$(UNISIM) ahir_system_global_package.vhdl
 	ghdl -i --work=work --ieee=synopsys -fexplicit -P$(UNISIM) ahir_system_synth.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl
-	ghdl -m --work=work --ieee=synopsys -fexplicit -P$(UNISIM) -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
+	ghdl -m --work=work --ieee=synopsys -fexplicit -P$(UNISIM) -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lm -Wl,-lVhpi ahir_system_test_bench 
 
 clean:
 	rm -rf *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_data* testbench_sw testbench_hw ahir_system_test_bench vhpi.log *.aa *.vc *.lso xst

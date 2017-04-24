@@ -1,8 +1,12 @@
 #include <stdlib.h>
 #include <stdint.h>
-#include <Pipes.h>
 #include <stdio.h>
+
+#ifdef SW
+#include <math.h>
+#include <Pipes.h>
 #include <fpu.h>
+#endif
 
 
 int32_t fp2int(float x)
@@ -34,6 +38,14 @@ float fpsub(float x, float y)
 {
 	return(x-y);
 }
+
+
+#ifdef SW
+float fpsqrt(float x)
+{
+	return(pow(x,0.5));
+}
+#endif
 
 float dotProduct(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3)
 {
