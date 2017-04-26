@@ -1,0 +1,37 @@
+$noblock $pipe noblock_env_to_ajit_debug_command : $uint<32>
+$constant ONE_1  : $uint<1> := 1
+$constant ZERO_1 : $uint<1> := 0
+
+
+$module [check_valid_gdb_msg] 
+	$in(blocking: $uint<1>)
+	$out(gdb_message: $uint<32> gdb_message_valid: $uint<1>) $is
+{
+	// Wait for a valid message from the ccu daemon.
+	$branchblock [gdb_msg_recv_loop] {
+
+		$merge $entry gdb_msg_recv_loop $endmerge
+
+		gdb_full_msg := noblock_env_to_ajit_debug_command
+					
+		$split (gdb_full_msg 32 1 ) (gdb_message gdb_msg_valid)
+
+		// check for a valid connect request
+		gdb_msg_recv_success := (gdb_msg_valid == ONE_1)
+
+		// Send back only a valid value
+		send_valid_only := (blocking == ONE_1)
+		
+		// Decide whether to read again from the pipe
+		read_next := (send_valid_only & (~gdb_msg_recv_success))
+		
+		// Report if the output has a valid value or not
+		gdb_message_valid := ($mux gdb_msg_recv_success ONE_1 ZERO_1)
+		
+		$if read_next $then				
+			$place [gdb_msg_recv_loop]
+		$endif
+	}
+
+}
+

@@ -1,0 +1,44 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$merge $entry loopback  $endmerge
+
+
+		X := in_data
+
+		$if (X [] 0) $then
+		    YP := (X + 1)
+		    $if (X [] 1) $then
+		       YPQ := (YP + 1)
+		       $place [PQ]
+		    $else
+		       YPNQ := (YP + 1)
+		       $place [PNQ]
+		    $endif
+		$else
+		    YNP := (X + 1)
+		    $if (X [] 1) $then
+		       YNPQ := (YNP + 1)
+		       $place [NPQ]
+		    $else
+		       YNPNQ := (YNP + 1)
+		       $place [NPNQ]
+		    $endif
+		$endif
+
+		$merge PQ PNQ NPQ NPNQ 
+			$phi rYPQ := YPQ $on PQ 0 $on PNQ 0 $on NPQ 0 $on NPNQ
+			$phi rYPNQ := YPNQ $on PNQ 0 $on PQ 0 $on NPNQ 0 $on NPQ
+			$phi rYNPNQ := YNPNQ $on NPNQ 0 $on PQ 0 $on NPQ 0 $on PNQ
+			$phi rYNPQ := YNPQ $on NPQ 0 $on PQ 0 $on PNQ 0 $on NPNQ
+		$endmerge 
+
+		out_data := ($reduce + rYPQ rYPNQ rYNPQ rYNPNQ)
+
+		$place [loopback]
+	}
+}

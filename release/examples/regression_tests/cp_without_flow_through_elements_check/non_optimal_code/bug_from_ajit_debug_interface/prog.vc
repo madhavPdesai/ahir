@@ -1,0 +1,491 @@
+// Virtual circuit produced from Aa description by Aa2VC 
+// $noblock $pipe  noblock_env_to_ajit_debug_command : $uint<32>  $depth 1 
+// can point into 
+// in scope  top-level
+$noblock $pipe [noblock_env_to_ajit_debug_command] 32 $depth 1 
+$constant $W[ONE_1] : $int<1> := _b1// 1
+$constant $W[ZERO_1] : $int<1> := _b0// 0
+$module [check_valid_gdb_msg] 
+{
+  $in blocking:$int<1>
+  // can point into  foreign( $void )
+  $out gdb_message:$int<32>
+  // can point into  foreign( $void )
+  gdb_message_valid:$int<1>
+  // can point into  foreign( $void )
+  // pipe-declarations for block %check_valid_gdb_msg
+  //  file src/prog.aa, line 6
+  // pipe-declarations for block %check_valid_gdb_msg%gdb_msg_recv_loop
+  //  file src/prog.aa, line 11
+  // pipe-declarations for block %check_valid_gdb_msg%gdb_msg_recv_loop%
+  //  file src/prog.aa, line 13
+  $CP 
+  {
+    // begin control-path 
+    <>[branch_block_stmt_13] // Branch Block  file src/prog.aa, line 11
+    {
+      $P [branch_block_stmt_13__entry__]
+      branch_block_stmt_13__entry__ <-| ($entry)
+      $P [branch_block_stmt_13__exit__]
+      branch_block_stmt_13__exit__ |-> ($exit)
+      $P [merge_stmt_14__entry__] 
+      $P [merge_stmt_14__exit__] 
+      $P [assign_stmt_17__entry__] 
+      $P [assign_stmt_17__exit__] 
+      $P [assign_stmt_22_to_assign_stmt_47__entry__] 
+      $P [assign_stmt_22_to_assign_stmt_47__exit__] 
+      $P [if_stmt_48__entry__] 
+      $P [if_stmt_48__exit__] 
+      ::[assign_stmt_17] 
+      {
+        // start:  		gdb_full_msg := noblock_env_to_ajit_debug_command
+        //  file src/prog.aa, line 15
+        // Source expression
+        // noblock_env_to_ajit_debug_command
+        $T[RPIPE_noblock_env_to_ajit_debug_command_16_sample_start_] 
+        $T[RPIPE_noblock_env_to_ajit_debug_command_16_sample_completed_] 
+        $T[RPIPE_noblock_env_to_ajit_debug_command_16_update_start_] 
+        $T[RPIPE_noblock_env_to_ajit_debug_command_16_update_completed_] 
+        ;;[RPIPE_noblock_env_to_ajit_debug_command_16_Sample] 
+        {
+          // pipe read sample
+          $T [rr] $T [ra] 
+        }
+        ;;[RPIPE_noblock_env_to_ajit_debug_command_16_Update] 
+        {
+          // pipe read update
+          $T [cr] $T [ca] 
+        }
+        RPIPE_noblock_env_to_ajit_debug_command_16_sample_start_ &-> (RPIPE_noblock_env_to_ajit_debug_command_16_Sample)
+        RPIPE_noblock_env_to_ajit_debug_command_16_sample_completed_ <-& (RPIPE_noblock_env_to_ajit_debug_command_16_Sample)
+        RPIPE_noblock_env_to_ajit_debug_command_16_update_start_ <-& (RPIPE_noblock_env_to_ajit_debug_command_16_sample_completed_)
+        RPIPE_noblock_env_to_ajit_debug_command_16_update_start_ &-> (RPIPE_noblock_env_to_ajit_debug_command_16_Update)
+        RPIPE_noblock_env_to_ajit_debug_command_16_update_completed_ <-& (RPIPE_noblock_env_to_ajit_debug_command_16_Update)
+        // Target expression
+        // (as target) gdb_full_msg
+        // start: WAR dependencies for gdb_full_msg
+        // done: WAR dependencies for gdb_full_msg
+        // end:  		gdb_full_msg := noblock_env_to_ajit_debug_command
+        // barrier: 		gdb_full_msg := noblock_env_to_ajit_debug_command
+        // load-store dependencies..
+        // pipe read/write dependencies for pipe noblock_env_to_ajit_debug_command
+        // read-dependencies for pipe noblock_env_to_ajit_debug_command
+        // write-dependencies for pipe noblock_env_to_ajit_debug_command
+        // signal dependencies for noblock_env_to_ajit_debug_command
+      }
+      assign_stmt_17__entry__ |-> (assign_stmt_17)
+      assign_stmt_17__exit__ <-| (assign_stmt_17)
+      ::[assign_stmt_22_to_assign_stmt_47] 
+      {
+        // start:  		gdb_message := ( $slice gdb_full_msg 32 1 ) 
+        //  file src/prog.aa, line 17
+        // Source expression
+        // ( $slice gdb_full_msg 32 1 ) 
+        $T[slice_21_sample_start_] 
+        $T[slice_21_sample_completed_] 
+        $T[slice_21_update_start_] 
+        $T[slice_21_update_completed_] 
+        // gdb_full_msg
+        // start: Forward dependencies from gdb_full_msg to transition slice_21_sample_start_
+        // done: Forward dependencies from gdb_full_msg to transition slice_21_sample_start_
+        ;;[slice_21_Sample] 
+        {
+          // unary expression 
+          $T [rr] $T [ra] // (split) unary operation
+        }
+        ;;[slice_21_Update] 
+        {
+          // unary expression 
+          $T [cr] $T [ca] //(split) unary operation
+        }
+        slice_21_sample_start_ &-> (slice_21_Sample)
+        slice_21_sample_completed_ <-& (slice_21_Sample)
+        slice_21_sample_completed_ &-> ($null)
+        slice_21_update_start_ &-> (slice_21_Update)
+        slice_21_update_completed_ <-& (slice_21_Update)
+        // Target expression
+        // (as target) gdb_message
+        // gdb_message
+        // write to interface object
+        // start: WAR dependencies for gdb_message
+        // done: WAR dependencies for gdb_message
+        // end:  		gdb_message := ( $slice gdb_full_msg 32 1 ) 
+        // start:  		gdb_msg_valid := ( $slice gdb_full_msg 0 0 ) 
+        //  file src/prog.aa, line 17
+        // Source expression
+        // ( $slice gdb_full_msg 0 0 ) 
+        $T[slice_24_sample_start_] 
+        $T[slice_24_sample_completed_] 
+        $T[slice_24_update_start_] 
+        $T[slice_24_update_completed_] 
+        // gdb_full_msg
+        // start: Forward dependencies from gdb_full_msg to transition slice_24_sample_start_
+        // done: Forward dependencies from gdb_full_msg to transition slice_24_sample_start_
+        ;;[slice_24_Sample] 
+        {
+          // unary expression 
+          $T [rr] $T [ra] // (split) unary operation
+        }
+        ;;[slice_24_Update] 
+        {
+          // unary expression 
+          $T [cr] $T [ca] //(split) unary operation
+        }
+        slice_24_sample_start_ &-> (slice_24_Sample)
+        slice_24_sample_completed_ <-& (slice_24_Sample)
+        slice_24_sample_completed_ &-> ($null)
+        slice_24_update_start_ &-> (slice_24_Update)
+        slice_24_update_completed_ <-& (slice_24_Update)
+        // Target expression
+        // (as target) gdb_msg_valid
+        // start: WAR dependencies for gdb_msg_valid
+        // done: WAR dependencies for gdb_msg_valid
+        // end:  		gdb_msg_valid := ( $slice gdb_full_msg 0 0 ) 
+        // start:  		gdb_msg_recv_success := (gdb_msg_valid == ONE_1)
+        //  file src/prog.aa, line 20
+        // Source expression
+        // (gdb_msg_valid == ONE_1)
+        $T[EQ_u1_u1_29_sample_start_] 
+        $T[EQ_u1_u1_29_sample_completed_] 
+        $T[EQ_u1_u1_29_update_start_] 
+        $T[EQ_u1_u1_29_update_completed_] 
+        // gdb_msg_valid
+        // start: Forward dependencies from gdb_msg_valid to transition EQ_u1_u1_29_sample_start_
+        EQ_u1_u1_29_sample_start_ <-& (slice_24_update_completed_)
+        // done: Forward dependencies from gdb_msg_valid to transition EQ_u1_u1_29_sample_start_
+        ;;[EQ_u1_u1_29_Sample] 
+        {
+          // binary expression 
+          $T [rr] $T [ra]  // (split) binary operation 
+        }
+        ;;[EQ_u1_u1_29_Update] 
+        {
+          // binary expression 
+          $T [cr] $T [ca] // (split) binary operation 
+        }
+        EQ_u1_u1_29_sample_start_ &-> (EQ_u1_u1_29_Sample)
+        EQ_u1_u1_29_sample_completed_ <-& (EQ_u1_u1_29_Sample)
+        EQ_u1_u1_29_sample_completed_ &-> ($null)
+        EQ_u1_u1_29_update_start_ &-> (EQ_u1_u1_29_Update)
+        EQ_u1_u1_29_update_completed_ <-& (EQ_u1_u1_29_Update)
+        // Target expression
+        // (as target) gdb_msg_recv_success
+        // start: WAR dependencies for gdb_msg_recv_success
+        // done: WAR dependencies for gdb_msg_recv_success
+        // end:  		gdb_msg_recv_success := (gdb_msg_valid == ONE_1)
+        // start:  		send_valid_only := (blocking == ONE_1)
+        //  file src/prog.aa, line 23
+        // Source expression
+        // (blocking == ONE_1)
+        $T[EQ_u1_u1_34_sample_start_] 
+        $T[EQ_u1_u1_34_sample_completed_] 
+        $T[EQ_u1_u1_34_update_start_] 
+        $T[EQ_u1_u1_34_update_completed_] 
+        // blocking
+        // start: Forward dependencies from blocking to transition EQ_u1_u1_34_sample_start_
+        // Forward dependency from interface-object-ref omitted (blocking)
+        // done: Forward dependencies from blocking to transition EQ_u1_u1_34_sample_start_
+        ;;[EQ_u1_u1_34_Sample] 
+        {
+          // binary expression 
+          $T [rr] $T [ra]  // (split) binary operation 
+        }
+        ;;[EQ_u1_u1_34_Update] 
+        {
+          // binary expression 
+          $T [cr] $T [ca] // (split) binary operation 
+        }
+        EQ_u1_u1_34_sample_start_ &-> (EQ_u1_u1_34_Sample)
+        EQ_u1_u1_34_sample_completed_ <-& (EQ_u1_u1_34_Sample)
+        EQ_u1_u1_34_sample_completed_ &-> ($null)
+        EQ_u1_u1_34_update_start_ &-> (EQ_u1_u1_34_Update)
+        EQ_u1_u1_34_update_completed_ <-& (EQ_u1_u1_34_Update)
+        // Target expression
+        // (as target) send_valid_only
+        // start: WAR dependencies for send_valid_only
+        // done: WAR dependencies for send_valid_only
+        // end:  		send_valid_only := (blocking == ONE_1)
+        // start:  		read_next := (send_valid_only & ( ~ gdb_msg_recv_success ))
+        //  file src/prog.aa, line 26
+        // Source expression
+        // (send_valid_only & ( ~ gdb_msg_recv_success ))
+        $T[AND_u1_u1_40_sample_start_] 
+        $T[AND_u1_u1_40_sample_completed_] 
+        $T[AND_u1_u1_40_update_start_] 
+        $T[AND_u1_u1_40_update_completed_] 
+        // send_valid_only
+        // ( ~ gdb_msg_recv_success )
+        // gdb_msg_recv_success
+        // start: Forward dependencies from send_valid_only to transition AND_u1_u1_40_sample_start_
+        AND_u1_u1_40_sample_start_ <-& (EQ_u1_u1_34_update_completed_)
+        // done: Forward dependencies from send_valid_only to transition AND_u1_u1_40_sample_start_
+        // start: Forward dependencies from ( ~ gdb_msg_recv_success ) to transition AND_u1_u1_40_sample_start_
+        AND_u1_u1_40_sample_start_ <-& (EQ_u1_u1_29_update_completed_)
+        // done: Forward dependencies from ( ~ gdb_msg_recv_success ) to transition AND_u1_u1_40_sample_start_
+        ;;[AND_u1_u1_40_Sample] 
+        {
+          // binary expression 
+          $T [rr] $T [ra]  // (split) binary operation 
+        }
+        ;;[AND_u1_u1_40_Update] 
+        {
+          // binary expression 
+          $T [cr] $T [ca] // (split) binary operation 
+        }
+        AND_u1_u1_40_sample_start_ &-> (AND_u1_u1_40_Sample)
+        AND_u1_u1_40_sample_completed_ <-& (AND_u1_u1_40_Sample)
+        AND_u1_u1_40_sample_completed_ &-> ($null)
+        AND_u1_u1_40_update_start_ &-> (AND_u1_u1_40_Update)
+        AND_u1_u1_40_update_completed_ <-& (AND_u1_u1_40_Update)
+        // Target expression
+        // (as target) read_next
+        // start: WAR dependencies for read_next
+        // done: WAR dependencies for read_next
+        // end:  		read_next := (send_valid_only & ( ~ gdb_msg_recv_success ))
+        // start:  		gdb_message_valid := ( $mux gdb_msg_recv_success ONE_1  ZERO_1 ) 
+        //  file src/prog.aa, line 29
+        // Source expression
+        // ( $mux gdb_msg_recv_success ONE_1  ZERO_1 ) 
+        $T[MUX_46_sample_start_] 
+        $T[MUX_46_sample_completed_] 
+        $T[MUX_46_update_start_] 
+        $T[MUX_46_update_completed_] 
+        // gdb_msg_recv_success
+        // start: Forward dependencies from gdb_msg_recv_success to transition MUX_46_sample_start_
+        MUX_46_sample_start_ <-& (EQ_u1_u1_29_update_completed_)
+        // done: Forward dependencies from gdb_msg_recv_success to transition MUX_46_sample_start_
+        ;;[MUX_46_start] 
+        {
+          // ternary expression: 
+          $T [req] $T [ack] // sample req/ack
+        }
+        ;;[MUX_46_complete] 
+        {
+          // ternary expression: 
+          $T [req] $T [ack] // update req/ack
+        }
+        MUX_46_sample_start_ &-> (MUX_46_start)
+        MUX_46_sample_completed_ <-& (MUX_46_start)
+        MUX_46_update_start_ &-> (MUX_46_complete)
+        MUX_46_update_completed_ <-& (MUX_46_complete)
+        // Target expression
+        // (as target) gdb_message_valid
+        // gdb_message_valid
+        // write to interface object
+        // start: WAR dependencies for gdb_message_valid
+        // done: WAR dependencies for gdb_message_valid
+        // end:  		gdb_message_valid := ( $mux gdb_msg_recv_success ONE_1  ZERO_1 ) 
+        // load-store dependencies..
+      }
+      assign_stmt_22_to_assign_stmt_47__entry__ |-> (assign_stmt_22_to_assign_stmt_47)
+      assign_stmt_22_to_assign_stmt_47__exit__ <-| (assign_stmt_22_to_assign_stmt_47)
+      // if-statement  
+      //  file src/prog.aa, line 0
+      ;;[if_stmt_48_dead_link] 
+      {
+        $T [dead_transition] $dead 
+      }
+      if_stmt_48__entry__ |-> (if_stmt_48_dead_link)
+      if_stmt_48__exit__ <-| (if_stmt_48_dead_link)
+      ;;[if_stmt_48_eval_test] 
+      {
+        // test expression evaluate and trigger branch 
+        $T [branch_req] 
+      }
+      if_stmt_48__entry__ |-> (if_stmt_48_eval_test)
+      $P [R_read_next_49_place]
+      R_read_next_49_place <-| (if_stmt_48_eval_test)
+      ;;[if_stmt_48_if_link] 
+      {
+        $T [if_choice_transition] 
+      }
+      ;;[if_stmt_48_else_link] 
+      {
+        $T [else_choice_transition] 
+      }
+      R_read_next_49_place |-> (if_stmt_48_if_link if_stmt_48_else_link)
+      $P [gdb_msg_recv_loop]
+      gdb_msg_recv_loop <-| (if_stmt_48_if_link)
+      if_stmt_48__exit__ <-| (if_stmt_48_else_link)
+      // control-path for merge  
+      //  file src/prog.aa, line 13
+      ;;[merge_stmt_14_dead_link] 
+      {
+        $T [dead_transition] $dead 
+      }
+      merge_stmt_14__entry__ |-> (merge_stmt_14_dead_link)
+      merge_stmt_14__exit__ <-| (merge_stmt_14_dead_link)
+      //---------------------   merge statement  file src/prog.aa, line 13  --------------------------
+      ||[merge_stmt_14__entry___PhiReq] 
+      {
+        // no phi statements in merge..
+      }
+      merge_stmt_14__entry__ |-> (merge_stmt_14__entry___PhiReq)
+      ||[gdb_msg_recv_loop_PhiReq] 
+      {
+        // no phi statements in merge..
+      }
+      gdb_msg_recv_loop |-> (gdb_msg_recv_loop_PhiReq)
+      $P [merge_stmt_14_PhiReqMerge] 
+      merge_stmt_14_PhiReqMerge <-| ( merge_stmt_14__entry___PhiReq  gdb_msg_recv_loop_PhiReq )
+      ||[merge_stmt_14_PhiAck] 
+      {
+        $T [dummy] 
+      }
+      merge_stmt_14_PhiReqMerge |-> (merge_stmt_14_PhiAck)
+      merge_stmt_14__exit__  <-| (merge_stmt_14_PhiAck)
+      //---------------------  end of merge statement  file src/prog.aa, line 13  --------------------------
+      merge_stmt_14__entry__ <-| (branch_block_stmt_13__entry__)
+      assign_stmt_17__entry__ <-| (merge_stmt_14__exit__)
+      assign_stmt_22_to_assign_stmt_47__entry__ <-| (assign_stmt_17__exit__)
+      if_stmt_48__entry__ <-| (assign_stmt_22_to_assign_stmt_47__exit__)
+      if_stmt_48__exit__ |-> (branch_block_stmt_13__exit__)
+    }
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %check_valid_gdb_msg%gdb_msg_recv_loop%
+    //  file src/prog.aa, line 13
+    // constant-object-declarations for block %check_valid_gdb_msg%gdb_msg_recv_loop
+    //  file src/prog.aa, line 11
+    // constant-object-declarations for block %check_valid_gdb_msg
+    //  file src/prog.aa, line 6
+    // constant-declarations for block %check_valid_gdb_msg%gdb_msg_recv_loop
+    //  file src/prog.aa, line 11
+    // constant-declarations for block %check_valid_gdb_msg%gdb_msg_recv_loop%
+    //  file src/prog.aa, line 13
+    // ONE_1
+    $constant $W[R_ONE_1_28_wire_constant] : $int<1> := _b1// 1
+    // ONE_1
+    $constant $W[R_ONE_1_33_wire_constant] : $int<1> := _b1// 1
+    // ( $mux gdb_msg_recv_success ONE_1  ZERO_1 ) 
+    // ONE_1
+    $constant $W[R_ONE_1_44_wire_constant] : $int<1> := _b1// 1
+    // ZERO_1
+    $constant $W[R_ZERO_1_45_wire_constant] : $int<1> := _b0// 0
+    // if-statement  
+    //  file src/prog.aa, line 0
+    // block %check_valid_gdb_msg%gdb_msg_recv_loop
+    //  file src/prog.aa, line 11
+    // 		gdb_full_msg := noblock_env_to_ajit_debug_command
+    //  file src/prog.aa, line 15
+    // gdb_full_msg
+    $W[gdb_full_msg_17] : $int<32>
+    // 		gdb_message := ( $slice gdb_full_msg 32 1 ) 
+    //  file src/prog.aa, line 17
+    // gdb_message
+    // 		gdb_msg_valid := ( $slice gdb_full_msg 0 0 ) 
+    //  file src/prog.aa, line 17
+    // gdb_msg_valid
+    $W[gdb_msg_valid_25] : $int<1>
+    // 		gdb_msg_recv_success := (gdb_msg_valid == ONE_1)
+    //  file src/prog.aa, line 20
+    // gdb_msg_recv_success
+    $W[gdb_msg_recv_success_30] : $int<1>
+    // 		send_valid_only := (blocking == ONE_1)
+    //  file src/prog.aa, line 23
+    // send_valid_only
+    $W[send_valid_only_35] : $int<1>
+    // 		read_next := (send_valid_only & ( ~ gdb_msg_recv_success ))
+    //  file src/prog.aa, line 26
+    // ( ~ gdb_msg_recv_success )
+    $intermediate $W[NOT_u1_u1_39_wire] : $int<1>
+    // read_next
+    $W[read_next_41] : $int<1>
+    // 		gdb_message_valid := ( $mux gdb_msg_recv_success ONE_1  ZERO_1 ) 
+    //  file src/prog.aa, line 29
+    // gdb_message_valid
+    // if statement  
+    //  file src/prog.aa, line 0
+    // datapath-instances for block %check_valid_gdb_msg%gdb_msg_recv_loop
+    //  file src/prog.aa, line 11
+    // 		gdb_full_msg := noblock_env_to_ajit_debug_command
+    //  file src/prog.aa, line 15
+    // noblock_env_to_ajit_debug_command
+    $ioport $in [RPIPE_noblock_env_to_ajit_debug_command_16_inst] (noblock_env_to_ajit_debug_command) (gdb_full_msg_17) 
+    // 		gdb_message := ( $slice gdb_full_msg 32 1 ) 
+    //  file src/prog.aa, line 17
+    // ( $slice gdb_full_msg 32 1 ) 
+    [:] [slice_21_inst] (gdb_full_msg_17 32 1) (gdb_message) 
+    $buffering  $out slice_21_inst gdb_message 1
+    $delay slice_21_inst 1
+    // 		gdb_msg_valid := ( $slice gdb_full_msg 0 0 ) 
+    //  file src/prog.aa, line 17
+    // ( $slice gdb_full_msg 0 0 ) 
+    [:] [slice_24_inst] (gdb_full_msg_17 0 0) (gdb_msg_valid_25) 
+    $buffering  $out slice_24_inst gdb_msg_valid_25 1
+    $delay slice_24_inst 1
+    // 		gdb_msg_recv_success := (gdb_msg_valid == ONE_1)
+    //  file src/prog.aa, line 20
+    // (gdb_msg_valid == ONE_1)
+    ==[EQ_u1_u1_29_inst] (gdb_msg_valid_25 R_ONE_1_28_wire_constant) (gdb_msg_recv_success_30)   
+    $buffering  $out EQ_u1_u1_29_inst gdb_msg_recv_success_30 1
+    $delay EQ_u1_u1_29_inst 1
+    // 		send_valid_only := (blocking == ONE_1)
+    //  file src/prog.aa, line 23
+    // (blocking == ONE_1)
+    ==[EQ_u1_u1_34_inst] (blocking R_ONE_1_33_wire_constant) (send_valid_only_35)   
+    $buffering  $out EQ_u1_u1_34_inst send_valid_only_35 1
+    $delay EQ_u1_u1_34_inst 1
+    // 		read_next := (send_valid_only & ( ~ gdb_msg_recv_success ))
+    //  file src/prog.aa, line 26
+    // ( ~ gdb_msg_recv_success )
+    ~ [NOT_u1_u1_39_inst] (gdb_msg_recv_success_30) (NOT_u1_u1_39_wire)   $flowthrough
+    $delay NOT_u1_u1_39_inst 0
+    // (send_valid_only & ( ~ gdb_msg_recv_success ))
+    &[AND_u1_u1_40_inst] (send_valid_only_35 NOT_u1_u1_39_wire) (read_next_41)   
+    $buffering  $out AND_u1_u1_40_inst read_next_41 1
+    $delay AND_u1_u1_40_inst 1
+    // 		gdb_message_valid := ( $mux gdb_msg_recv_success ONE_1  ZERO_1 ) 
+    //  file src/prog.aa, line 29
+    // ( $mux gdb_msg_recv_success ONE_1  ZERO_1 ) 
+    ? [MUX_46_inst] (gdb_msg_recv_success_30 R_ONE_1_44_wire_constant R_ZERO_1_45_wire_constant) (gdb_message_valid) 
+    $buffering  $out MUX_46_inst gdb_message_valid 1
+    // datapath-instances for if  
+    //  file src/prog.aa, line 0
+    ==0? [if_stmt_48_branch] (read_next_41)
+  }
+  // end data-path
+  // CP-DP links for merge  
+  //  file src/prog.aa, line 13
+  // 		gdb_full_msg := noblock_env_to_ajit_debug_command
+  //  file src/prog.aa, line 15
+  // noblock_env_to_ajit_debug_command
+  RPIPE_noblock_env_to_ajit_debug_command_16_inst <=> (branch_block_stmt_13/assign_stmt_17/RPIPE_noblock_env_to_ajit_debug_command_16_Sample/rr branch_block_stmt_13/assign_stmt_17/RPIPE_noblock_env_to_ajit_debug_command_16_Update/cr) (branch_block_stmt_13/assign_stmt_17/RPIPE_noblock_env_to_ajit_debug_command_16_Sample/ra branch_block_stmt_13/assign_stmt_17/RPIPE_noblock_env_to_ajit_debug_command_16_Update/ca)
+  // 		gdb_message := ( $slice gdb_full_msg 32 1 ) 
+  //  file src/prog.aa, line 17
+  // gdb_full_msg
+  // ( $slice gdb_full_msg 32 1 ) 
+  slice_21_inst <=> (branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/slice_21_Sample/rr branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/slice_21_Update/cr) (branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/slice_21_Sample/ra branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/slice_21_Update/ca)
+  // 		gdb_msg_valid := ( $slice gdb_full_msg 0 0 ) 
+  //  file src/prog.aa, line 17
+  // gdb_full_msg
+  // ( $slice gdb_full_msg 0 0 ) 
+  slice_24_inst <=> (branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/slice_24_Sample/rr branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/slice_24_Update/cr) (branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/slice_24_Sample/ra branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/slice_24_Update/ca)
+  // 		gdb_msg_recv_success := (gdb_msg_valid == ONE_1)
+  //  file src/prog.aa, line 20
+  // (gdb_msg_valid == ONE_1)
+  // gdb_msg_valid
+  EQ_u1_u1_29_inst <=> (branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/EQ_u1_u1_29_Sample/rr branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/EQ_u1_u1_29_Update/cr) (branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/EQ_u1_u1_29_Sample/ra branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/EQ_u1_u1_29_Update/ca)
+  // 		send_valid_only := (blocking == ONE_1)
+  //  file src/prog.aa, line 23
+  // (blocking == ONE_1)
+  // blocking
+  EQ_u1_u1_34_inst <=> (branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/EQ_u1_u1_34_Sample/rr branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/EQ_u1_u1_34_Update/cr) (branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/EQ_u1_u1_34_Sample/ra branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/EQ_u1_u1_34_Update/ca)
+  // 		read_next := (send_valid_only & ( ~ gdb_msg_recv_success ))
+  //  file src/prog.aa, line 26
+  // (send_valid_only & ( ~ gdb_msg_recv_success ))
+  // send_valid_only
+  // gdb_msg_recv_success
+  AND_u1_u1_40_inst <=> (branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/AND_u1_u1_40_Sample/rr branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/AND_u1_u1_40_Update/cr) (branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/AND_u1_u1_40_Sample/ra branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/AND_u1_u1_40_Update/ca)
+  // 		gdb_message_valid := ( $mux gdb_msg_recv_success ONE_1  ZERO_1 ) 
+  //  file src/prog.aa, line 29
+  // gdb_msg_recv_success
+  // ( $mux gdb_msg_recv_success ONE_1  ZERO_1 ) 
+  MUX_46_inst <=> (branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/MUX_46_start/req branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/MUX_46_complete/req) (branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/MUX_46_start/ack branch_block_stmt_13/assign_stmt_22_to_assign_stmt_47/MUX_46_complete/ack)
+  // CP-DP links for if  
+  //  file src/prog.aa, line 0
+  if_stmt_48_branch <=> (branch_block_stmt_13/if_stmt_48_eval_test/branch_req) (branch_block_stmt_13/if_stmt_48_else_link/else_choice_transition branch_block_stmt_13/if_stmt_48_if_link/if_choice_transition)
+}

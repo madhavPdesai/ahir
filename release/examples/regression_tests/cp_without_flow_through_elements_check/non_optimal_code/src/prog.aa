@@ -1,0 +1,38 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$module [CCT] $in (L H: $uint<16>) $out (LH: $uint<32>) $is
+{
+	LH := (L && H)
+}
+
+$module [volatile_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$merge $entry loopback $endmerge
+
+		X := in_data
+
+	        $volatile 
+			X_H := ($slice X 31 16)
+		$volatile 
+			X_L := ($slice X 15 0)
+
+		X0 := (X [] 0)
+
+		$volatile Y := ($concat X_L X_H)
+		$volatile Z := (~(~Y))
+
+		$if (X0 | (~X0)) $then
+			$call CCT (X_L X_H) (Y1)
+		$else 
+			Y2 := X
+		$endif
+
+		$volatile oZ := ($mux (X0 | (~X0)) Y1 Y2)
+
+		out_data := Z
+
+		$place [loopback]
+	}
+}
