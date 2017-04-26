@@ -4309,9 +4309,12 @@ void AaPhiStatement::Write_VC_Source_Control_Paths(string& mplace, ostream& ofil
 		if(src_expr->Is_Constant())
 		{
 			// constant source. nothing is necessary..
+			ofile << "// constant source .... delay transition " << endl;
+			ofile << "$T [" << src_expr->Get_VC_Name() << "_konst_delay_trans] $delay" << endl;
 		}
 		else
 		{
+			ofile << "// trivial non-constant source .... interlock-buffer introduced " << endl;
 			if(src_expr->Get_Guard_Expression())
 				src_expr->Get_Guard_Expression()->Write_VC_Control_Path(ofile);
 			if(src_has_no_dpe || src_has_trivial_dpe)

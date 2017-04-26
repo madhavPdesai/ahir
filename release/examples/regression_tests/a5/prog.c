@@ -41,7 +41,7 @@
 #define R3OUT	0x400000	/* bit 22 (the high bit) */
 
 #include <stdint.h>
-#include <iolib.h>
+#include <Pipes.h>
 
 #ifdef RUN
 #include <stdio.h>
