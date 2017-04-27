@@ -1351,11 +1351,12 @@ uint8_t isNormalFp32(float a)
 {
 	float tA = a;
 	uint32_t ua = 	 *((uint32_t*) &tA);
+	uint8_t is_zero = (ua == 0);
 	uint32_t sign_ua = (ua & (1 << 31));
 	// get rid of sign bit and extract the exponent.
 	uint8_t exp_ua  = ((ua << 1) >> 24);
 
-	uint8_t is_normal = ((exp_ua != 0xff) && (exp_ua != 0));
+	uint8_t is_normal = ((exp_ua != 0xff) && (exp_ua != 0)) || is_zero;
 	return(is_normal);	
 }
 
@@ -1366,12 +1367,13 @@ uint8_t isNormalFp64(double a)
 	uint64_t u64_0x7ff = 0x7ff;
 
 	uint64_t ua = 	 *((uint64_t*) &tA);
+	uint8_t is_zero = (ua == 0);
 	uint64_t sign_ua = (ua & (u64_1 << 63));
 
 	// get rid of sign bit and extract the exponent.
 	uint16_t exp_ua  = ((ua << 1) >> 53);
 
-	uint8_t is_normal = ((exp_ua != 0x7ff) && (exp_ua != 0));
+	uint8_t is_normal = ((exp_ua != 0x7ff) && (exp_ua != 0)) || is_zero;
 	return(is_normal);	
 }
 uint8_t fp32_unordered(float a, float b)
