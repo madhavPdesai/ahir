@@ -65,6 +65,24 @@ void AaStatement::Write_VC_Synch_Dependency(set<AaRoot*>& visited_elements, bool
 	}
 }
 
+   
+void AaStatement::Check_Volatility_Ordering_Condition()
+{
+	set<AaRoot*> root_sources;
+	this->Collect_Root_Sources(root_sources);
+
+	for(set<AaRoot*>::iterator iter = root_sources.begin(), fiter = root_sources.end();
+		iter != fiter; iter++)
+	{
+		AaRoot* r =*iter;
+		if(r->Get_Index() > this->Get_Index())
+		{
+			AaRoot::Error("volatile statement uses downstream statement " + r->To_String(), this);
+		}
+	}
+}
+
+
 // a lot of code repetition, but can it be avoided?
 
 void AaStatementSequence::Write_VC_Control_Path_Optimized(ostream& ofile)
@@ -143,6 +161,15 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		AaRoot* barrier,
 		ostream& ofile)
 {
+	if(this->Get_Is_Volatile())
+	{
+		//
+		// volatile statements should not depend 
+		// on anything which is indexed higher than
+		// the statement.
+		//
+		this->Check_Volatility_Ordering_Condition();
+	}
 	ofile << "// start:  " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
 	if(this->Is_Constant()) 
@@ -342,6 +369,15 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		AaRoot* barrier,
 		ostream& ofile)
 {
+	if(this->Get_Is_Volatile())
+	{
+		//
+		// volatile statements should not depend 
+		// on anything which is indexed higher than
+		// the statement.
+		//
+		this->Check_Volatility_Ordering_Condition();
+	}
 	ofile << "// start: " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
 	if(this->Is_Constant())

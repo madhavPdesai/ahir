@@ -313,6 +313,14 @@ class AaStatement: public AaScope
    // which the outputs of this statement depend.
    //
    virtual void Collect_Root_Sources(set<AaRoot*>& root_sources) {};
+
+
+   //
+   // volatile statements should not depend 
+   // on anything which is indexed higher than
+   // the statement.
+   //
+   virtual void Check_Volatility_Ordering_Condition();
 };
 
 // statement sequence (is used in block statements which lead to programs)

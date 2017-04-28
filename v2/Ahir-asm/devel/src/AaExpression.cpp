@@ -5690,9 +5690,9 @@ void AaTernaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
-	if(this->Get_Is_On_Collect_Root_Sources_Stack())
-		AaRoot::Error("Cycle in collect-root-sources", this);
-	this->Set_Is_On_Collect_Root_Sources_Stack(true);
+		if(this->Get_Is_On_Collect_Root_Sources_Stack())
+			AaRoot::Error("Cycle in collect-root-sources", this);
+		this->Set_Is_On_Collect_Root_Sources_Stack(true);
 		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 		if(flow_through)
 		{
@@ -5703,7 +5703,7 @@ void AaTernaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 		else
 			root_set.insert(this);
 
-	this->Set_Is_On_Collect_Root_Sources_Stack(false);
+		this->Set_Is_On_Collect_Root_Sources_Stack(false);
 	}
 }
 

@@ -1478,6 +1478,16 @@ void AaAssignmentStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	headerfile << "\n#define " << this->Get_C_Macro_Name() << " ";
 	srcfile << this->Get_C_Macro_Name() << "; " << endl;
 
+	if(this->Get_Is_Volatile())
+	{
+		//
+		// volatile statements should not depend 
+		// on anything which is indexed higher than
+		// the statement.
+		//
+		this->Check_Volatility_Ordering_Condition();
+	}
+
 	if(this->Get_Guard_Expression())
 	{
 		this->Get_Guard_Expression()->PrintC_Declaration(headerfile);
@@ -1558,6 +1568,16 @@ void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
 
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+
+	if(this->Get_Is_Volatile())
+	{
+		//
+		// volatile statements should not depend 
+		// on anything which is indexed higher than
+		// the statement.
+		//
+		this->Check_Volatility_Ordering_Condition();
+	}
 
 
 	ofile << ";;[" << this->Get_VC_Name() << "] // " << this->Get_Source_Info() << endl << " {" << endl;
@@ -2354,6 +2374,16 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 {
 	assert(this->Get_Called_Module() && this->Get_Called_Module()->Is("AaModule"));
 
+	if(this->Get_Is_Volatile())
+	{
+		//
+		// volatile statements should not depend 
+		// on anything which is indexed higher than
+		// the statement.
+		//
+		this->Check_Volatility_Ordering_Condition();
+	}
+
 	AaModule* m = (AaModule*) this->Get_Called_Module();
 	if(!m->Can_Have_Native_C_Interface())
 	{
@@ -2518,6 +2548,15 @@ void AaCallStatement::PrintC_Implicit_Declarations(ofstream& ofile)
 
 void AaCallStatement::Write_VC_Control_Path(ostream& ofile)
 {
+	if(this->Get_Is_Volatile())
+	{
+		//
+		// volatile statements should not depend 
+		// on anything which is indexed higher than
+		// the statement.
+		//
+		this->Check_Volatility_Ordering_Condition();
+	}
 
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
