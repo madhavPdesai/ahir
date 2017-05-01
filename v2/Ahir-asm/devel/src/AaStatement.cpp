@@ -3639,8 +3639,11 @@ bool AaMergeStatement::Can_Block(bool pipeline_flag)
 			return(true);
 	}
 
-	if(this->_statement_sequence->Can_Block(pipeline_flag))
-		return(true);
+	if(this->_statement_sequence != NULL)
+	{
+		if(this->_statement_sequence->Can_Block(pipeline_flag))
+			return(true);
+	}
 
 	return(false);
 }
@@ -5433,10 +5436,13 @@ AaDoWhileStatement::~AaDoWhileStatement() {}
 
 bool AaDoWhileStatement::Can_Block(bool pipeline_flag)
 {
+
+	assert(this->_merge_statement != NULL);
+
 	if(this->_merge_statement->Can_Block(pipeline_flag))
 		return(true);
 
-	if(this->_loop_body_sequence->Can_Block(pipeline_flag))
+	if((this->_loop_body_sequence != NULL) && this->_loop_body_sequence->Can_Block(pipeline_flag))
 		return(true);
 
 	return(false);
