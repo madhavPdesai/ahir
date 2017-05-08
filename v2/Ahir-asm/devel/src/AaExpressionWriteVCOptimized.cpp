@@ -232,13 +232,8 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 	AaStatement* write_stmt = this->Get_Associated_Statement();
 	assert(write_stmt != NULL); // this is always a target..  so statement completion should retrigger read.
 
-	bool write_stmt_is_dependent_on_phi = write_stmt->Is_Dependent_On_Phi();
-	bool this_is_volatile = write_stmt->Get_Is_Volatile();
 	bool full_rate = write_stmt->Is_Part_Of_Fullrate_Pipeline();
 	bool err_flag = false;
-
-	// the transition that triggers the write.
-	string write_trigger_transition_name =  __UST(write_stmt);;
 
 	// root will be the statement b = (d+e) (or possibly a $call foo () (b))
 	AaRoot* root = this->Get_Root_Object();
@@ -311,7 +306,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				// The target "b = (d+e)" cannot be updated until 
 				// the statement a := (b+c) has sampled b..  
 				// This is conservative
-				if(!(read_is_dependent_on_phi && write_stmt_is_dependent_on_phi))
+				if(!(read_is_dependent_on_phi && write_is_dependent_on_phi))
 					//
 					// Note: phi-phi WAR dependencies are taken care of through
 					//         aggregated-phi symbols.  See 

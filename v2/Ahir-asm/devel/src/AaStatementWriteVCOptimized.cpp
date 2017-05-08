@@ -169,6 +169,9 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		// the statement.
 		//
 		this->Check_Volatility_Ordering_Condition();
+
+		// WAR dependencies.. need to be chased down even if it is volatile.
+		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 	}
 	ofile << "// start:  " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
@@ -377,6 +380,9 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		// the statement.
 		//
 		this->Check_Volatility_Ordering_Condition();
+
+		// WAR dependencies.. need to be chased down even if it is volatile.
+		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 	}
 	ofile << "// start: " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
