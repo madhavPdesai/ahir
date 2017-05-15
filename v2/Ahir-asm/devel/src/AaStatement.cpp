@@ -239,7 +239,6 @@ bool AaStatement::Is_Dependent_On_Phi()
 // return true if one of the sources or targets is a pipe.
 bool AaStatement::Can_Block(bool pipeline_flag)
 {
- 
 	for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
 			siter != this->_target_objects.end();
 			siter++)
@@ -2359,6 +2358,7 @@ void AaCallStatement::Map_Source_References()
 // return true if one of the sources or targets is a pipe.
 bool AaCallStatement::Can_Block(bool pipeline_flag)
 {
+
 	if(this->AaStatement::Can_Block(pipeline_flag))
 		return(true);
 
@@ -3638,13 +3638,6 @@ bool AaMergeStatement::Can_Block(bool pipeline_flag)
 		if(_wait_on_statements[I]->Can_Block(pipeline_flag))
 			return(true);
 	}
-
-	if(this->_statement_sequence != NULL)
-	{
-		if(this->_statement_sequence->Can_Block(pipeline_flag))
-			return(true);
-	}
-
 	return(false);
 }
 
@@ -5436,16 +5429,7 @@ AaDoWhileStatement::~AaDoWhileStatement() {}
 
 bool AaDoWhileStatement::Can_Block(bool pipeline_flag)
 {
-
-	assert(this->_merge_statement != NULL);
-
-	if(this->_merge_statement->Can_Block(pipeline_flag))
-		return(true);
-
-	if((this->_loop_body_sequence != NULL) && this->_loop_body_sequence->Can_Block(pipeline_flag))
-		return(true);
-
-	return(false);
+	return(true);
 }
 
 void AaDoWhileStatement::Set_Test_Expression(AaExpression* te) 
