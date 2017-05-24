@@ -1,0 +1,32 @@
+$pipe control_pipe  : $uint<8> $depth 2
+$pipe in_data       : $uint<32> $depth 2
+$pipe out_data      : $uint<32> $depth 2
+
+$module [worker_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi init_flag := ($bitcast ($uint<1>) 1)  $on $entry 0 $on $loopback
+		$endmerge
+
+		//
+		// Stage 1: read control-pipe
+		// Remember to delay init_flag!
+		init_flag_d := init_flag $buffering 2
+		ctrl := control_pipe
+		$volatile rd_data := (ctrl [] 0)
+
+		//
+		// Stage 2: depending on control-pipe, read in-data
+		//
+		$guard (rd_data) read_data := in_data
+		count := ($mux init_flag_d ($bitcast ($uint<8>) 0) next_count)
+		$volatile next_count := ($slice read_data 7 0)
+
+		// Stage 2 action: write out rd_data.
+		$volatile write_data := ($mux rd_data read_data 0)
+		out_data := write_data
+		$while 1
+	}
+}

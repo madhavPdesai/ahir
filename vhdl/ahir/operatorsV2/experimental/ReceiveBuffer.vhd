@@ -93,7 +93,7 @@ begin  -- default_arch
 
 
   -- FSM
-  process(clk,reset, write_req, push_ack)
+  process(clk,reset, fsm_state, write_req, push_ack)
 	variable nstate : RxBufFsmState;
 	variable pushreqv: std_logic;
 	variable decr: boolean;
