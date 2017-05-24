@@ -609,7 +609,7 @@ void vcCall::Print_Flow_Through_VHDL(ostream& ofile)
 {
 	assert(this->_called_module->Get_Volatile_Flag());
 
-	ofile << "call_inst_" << this->Get_Root_Index() << ": ";
+	ofile << "volatile_operator_" << this->_called_module->Get_VHDL_Id() << "_" <<  this->Get_Root_Index() << ": ";
 	ofile << this->_called_module->Get_VHDL_Entity_Name() << " port map(";
 	bool first_one = true;
 	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Input_Arguments(); idx < fidx; idx++)
@@ -699,7 +699,8 @@ void vcSplitOperator::Print_VHDL_Instantiation_Preamble(bool flow_through_flag, 
 
 void vcCall::Print_Operator_VHDL(ostream& ofile)
 {
-	string inst_name = this->Get_VHDL_Id();
+	string inst_name = "operator_" + this->_called_module->Get_VHDL_Id() + "_" + 
+					Int64ToStr(this->Get_Root_Index());
 	string block_name = inst_name + "_block"; 
 	string name = '"' + inst_name + '"';
 
