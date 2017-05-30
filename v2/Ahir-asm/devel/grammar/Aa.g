@@ -314,7 +314,8 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 		//       Thus, we put the created statement(s) in a list.
 	   (aA_Assignment_Statement[scope,llist] |  aA_Call_Statement[scope,llist] | aA_Split_Statement[scope,llist]
 			| aA_Report_Statement[scope,llist] | aA_Trace_Statement[scope,llist] |
-					aA_Lock_Statement[scope,llist] | aA_Unlock_Statement[scope,llist]) 
+					aA_Lock_Statement[scope,llist] | aA_Unlock_Statement[scope,llist] |
+						aA_Sleep_Statement[scope,llist] ) 
 	   (MARK mid: SIMPLE_IDENTIFIER 
 		{
 			mark_flag = true;
@@ -408,6 +409,7 @@ aA_Lock_Statement[AaScope* scope, vector<AaStatement*>& slist]
 		}
 ;
 
+
 //-----------------------------------------------------------------------------------------------
 // aA_Unlock_Statement : $lock simple-identifier
 //-----------------------------------------------------------------------------------------------
@@ -421,6 +423,26 @@ aA_Unlock_Statement[AaScope* scope, vector<AaStatement*>& slist]
 		sid: SIMPLE_IDENTIFIER
 		{
 			ls = new AaUnlockStatement(scope, sid->getText());
+			ls->Set_Line_Number(line_number);
+			slist.push_back(ls);
+		}
+;
+
+//-----------------------------------------------------------------------------------------------
+// aA_Sleep_Statement : $sleep <integer>
+//-----------------------------------------------------------------------------------------------
+aA_Sleep_Statement[AaScope* scope, vector<AaStatement*>& slist] 
+{
+	int line_number=0;
+	int sleep_count = 1;
+	AaSleepStatement* ls = NULL;
+	int lno = 0;
+}
+:
+    lid: SLEEP {line_number = lid->getLine();}
+		sleep_count = aA_Integer_Parameter_Expression [lno]
+		{
+			ls = new AaSleepStatement(scope, sleep_count);
 			ls->Set_Line_Number(line_number);
 			slist.push_back(ls);
 		}
@@ -2421,6 +2443,7 @@ MUTEX         : "$mutex";
 LOCK          : "$lock";
 UNLOCK        : "$unlock";
 PARAMETER     : "$parameter";
+SLEEP	      : "$sleep";
 
 
 // Special symbols

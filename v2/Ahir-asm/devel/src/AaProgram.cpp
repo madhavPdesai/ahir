@@ -89,6 +89,7 @@ bool AaProgram::_optimize_flag = false;
 bool AaProgram::_unordered_memory_flag = false;
 bool AaProgram::_balance_loop_pipeline_bodies = false;
 
+
 AaGraphBase AaProgram::_call_graph;
 AaUGraphBase AaProgram::_type_dependency_graph;
 AaUGraphBase AaProgram::_storage_dependency_graph;
@@ -1139,6 +1140,7 @@ void AaProgram::Write_C_Model()
   source_file << "#include <" << header << ">" << endl;
 
   source_file << "FILE* " << AaProgram::Report_Log_File_Name() << " = NULL;" << endl;
+  source_file << "int " << AaProgram::Trace_On_Flag_Name() << " = 0;" << endl;
   header_file << "void " << AaProgram::_c_vhdl_module_prefix << "_set_trace_file(FILE* fp);" << endl;
   source_file << "void " << AaProgram::_c_vhdl_module_prefix << "_set_trace_file(FILE* fp) {" << endl;
   source_file << AaProgram::Report_Log_File_Name() << " = fp;" << endl;
@@ -1216,9 +1218,10 @@ void AaProgram::Write_C_Model()
 	source_file << "PTHREAD_DECL(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
     }
 
-    header_file << "void " << AaProgram::_c_vhdl_module_prefix << "start_daemons(FILE* fp);" << endl;
-    source_file << "void " << AaProgram::_c_vhdl_module_prefix << "start_daemons(FILE* fp) {" << endl;
+    header_file << "void " << AaProgram::_c_vhdl_module_prefix << "start_daemons(FILE* fp, int trace_on);" << endl;
+    source_file << "void " << AaProgram::_c_vhdl_module_prefix << "start_daemons(FILE* fp, int trace_on) {" << endl;
     source_file << AaProgram::Report_Log_File_Name() << " = fp;" << endl;
+    source_file << AaProgram::Trace_On_Flag_Name() << " = trace_on;" << endl;
     source_file << AaProgram::_c_vhdl_module_prefix << "__init_aa_globals__(); " << endl;
     for(int I = 0, fI = top_daemons.size(); I < fI; I++)
     {

@@ -549,6 +549,16 @@ class AaUnlockStatement: public AaNullStatement
         virtual string Kind() {return("AaUnlockStatement");}
 };
 
+class AaSleepStatement: public AaNullStatement
+{
+	public:
+        int _sleep_count;
+	AaSleepStatement(AaScope* prnt, int sleep_count):AaNullStatement(prnt) {_sleep_count = sleep_count;}
+        virtual void Print(ostream& ofile);
+  	virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
+        virtual string Kind() {return("AaSleepStatement");}
+};
+
 // assignment statement
 class AaAssignmentStatement: public AaStatement
 {

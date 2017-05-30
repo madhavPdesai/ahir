@@ -172,6 +172,8 @@ class AaProgram
   static bool _optimize_flag;
   static bool _unordered_memory_flag;
 
+  static bool _trace_on;
+
   //// Aa2C related stuff.
   // top-level threads (daemons)
   // used by Aa2C to generate thread creation code.
@@ -192,6 +194,10 @@ class AaProgram
   static string Report_Log_File_Name()
   {
 	return(AaProgram::_c_vhdl_module_prefix + "__report_log_file__");
+  }
+  static string Trace_On_Flag_Name()
+  {
+	return(AaProgram::_c_vhdl_module_prefix + "__trace_on__");
   }
   static void Add_Mutex(string m)
   {

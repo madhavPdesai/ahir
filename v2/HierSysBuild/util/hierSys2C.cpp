@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
   	header_file.open(header_file_name.c_str());
 
 	header_file << "#include <stdio.h>"  << endl;
-	header_file << "void " << c_prefix << "_start_daemons(FILE* fp);" << endl;
+	header_file << "void " << c_prefix << "_start_daemons(FILE* fp, int trace_on);" << endl;
 	header_file << "void " << c_prefix << "_stop_daemons();" << endl;
 
 	source_file << "#include <string.h>"  << endl;
@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
 		match_daemon_map[sys] = match_daemons;
 	}
 
-	source_file << "void " << c_prefix << "_start_daemons(FILE* fp) {" << endl;
+	source_file << "void " << c_prefix << "_start_daemons(FILE* fp, int trace_on) {" << endl;
 	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
 	{
 
@@ -316,8 +316,8 @@ int main(int argc, char* argv[])
 			string id  = sys->Get_Id();
 
 			string init_fn_name = lib + "_start_daemons";
-			header_file << "void " << init_fn_name << "(FILE* fp );" << endl;
-			source_file << init_fn_name << "(fp);" << endl;
+			header_file << "void " << init_fn_name << "(FILE* fp, int trace_on);" << endl;
+			source_file << init_fn_name << "(fp, trace_on);" << endl;
 		}	
 
 

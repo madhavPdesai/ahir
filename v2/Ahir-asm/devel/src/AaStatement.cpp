@@ -1038,7 +1038,51 @@ void AaTraceStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), headerfile);
 		headerfile << ") {\\" << endl;
 	}
+	headerfile << "if (" << AaProgram::Trace_On_Flag_Name() << ") {\\" << endl;
 	headerfile << "__trace(\"" << this->_trace_identifier << "\");\\" <<  endl;
+	headerfile << "}\\" << endl;
+	if(this->Get_Guard_Expression())
+		headerfile << "}\\" << endl;
+}
+
+//---------------------------------------------------------------------
+// AaSleepStatement: public AaNullStatement
+//---------------------------------------------------------------------
+void AaSleepStatement::Print(ostream& ofile)
+{
+	if(this->Get_Guard_Expression())
+	{
+		ofile << "$guard (";
+		if(this->Get_Guard_Complement())
+		{
+			ofile << "~";
+		}
+		this->Get_Guard_Expression()->Print(ofile);
+		ofile << ") ";
+	}
+	ofile << "$sleep " << this->_sleep_count <<  endl;
+}
+
+
+void AaSleepStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
+{
+	srcfile << "// " << this->To_String();
+	headerfile << "\n#define " << this->Get_C_Macro_Name() << " " ;
+	srcfile << this->Get_C_Macro_Name() << "; " << endl ;
+	if(this->Get_Guard_Expression())
+	{
+		this->Get_Guard_Expression()->PrintC_Declaration(headerfile);
+		this->Get_Guard_Expression()->PrintC(headerfile);
+	}
+	if(this->Get_Guard_Expression())
+	{
+		headerfile << "if (" ;
+		if(this->Get_Guard_Complement())
+			headerfile << "!";
+		Print_C_Value_Expression(this->Get_Guard_Expression()->C_Reference_String(), this->Get_Guard_Expression()->Get_Type(), headerfile);
+		headerfile << ") {\\" << endl;
+	}
+	headerfile << "usleep (" << this->_sleep_count << ");\\" <<  endl;
 	if(this->Get_Guard_Expression())
 		headerfile << "}\\" << endl;
 }
