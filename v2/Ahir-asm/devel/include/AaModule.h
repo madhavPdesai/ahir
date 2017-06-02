@@ -312,6 +312,7 @@ class AaModule: public AaSeriesBlockStatement
    string Get_C_Inner_Output_Args_Prepare_Macro() ;
 
    void Check_Statements();
+   void Check_That_All_Out_Args_Are_Driven();
 };
 
 #endif

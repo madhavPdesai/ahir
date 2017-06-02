@@ -122,6 +122,8 @@ AaExpression* AaModule::Lookup_Print_Remap(AaInterfaceObject* obj)
 
 void AaModule::Print(ostream& ofile)
 {
+  this->Check_That_All_Out_Args_Are_Driven();
+
   if(this->Get_Inline_Flag())
     ofile << "$inline ";
   if(this->Get_Macro_Flag())
@@ -683,6 +685,7 @@ void AaModule::Write_VC_Model_Optimized(ostream& ofile)
 
 void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
 {
+  this->Check_That_All_Out_Args_Are_Driven();
 
   //  this->Propagate_Constants();
   if(this->_foreign_flag)
@@ -1062,10 +1065,23 @@ void AaModule::Check_Statements()
 	}
 }
 
+void AaModule::Check_That_All_Out_Args_Are_Driven()
+{
+	for(int I = 0, fI = this->Get_Number_Of_Output_Arguments(); I < fI; I++)
+	{
+		AaInterfaceObject* oobj = this->Get_Output_Argument(I);
+		if(oobj->Get_Unique_Driver_Statement() == NULL)
+		{
+			AaRoot::Error("output interface " + oobj->Get_Name() + " of module " + this->Get_Label()
+						+ " not driven.", NULL);
+		}
+	}
+}
 
 void AaModule::Write_VC_Control_Path_Optimized_Base(ostream& ofile)
 {
   this->Check_Statements(); // check for errors.
+
   if(!this->Is_Pipelined())
     {
       this->AaSeriesBlockStatement::Write_VC_Control_Path_Optimized_Base(ofile);
