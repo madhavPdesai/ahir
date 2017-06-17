@@ -12,6 +12,7 @@ $out (ret_val_x_x : $float<8,23>)
 $is 
 {
     ret_val_x_x := (L * R)
+    $attribute delay 12
 }
 
 $pipeline $depth 15 $buffering 2 $fullrate $module [fpadd32] 
@@ -20,6 +21,7 @@ $out (ret_val_x_x : $float<8,23>)
 $is 
 {
     ret_val_x_x := (L + R)
+    $attribute delay 14
 }
 
 $pipeline $depth 15 $buffering 2  $fullrate $module [fpsub32] 
@@ -28,6 +30,7 @@ $out (ret_val_x_x : $float<8,23>)
 $is 
 {
     ret_val_x_x := (L - R)
+    $attribute delay 14
 }
 
 $pipeline  $depth 15 $buffering 2 $fullrate $module [fpu32] 
@@ -42,6 +45,7 @@ $is
     	$guard (is_sub) osub := (L - R)
         $guard (is_mul) omul := (L * R)
 	ret_val_x_x := ($mux is_add oadd ($mux is_sub osub ($mux is_mul omul 0)))
+    	$attribute delay 24
 }
 
 // double precision..
@@ -52,6 +56,7 @@ $out (ret_val_x_x : $float<11,52>)
 $is 
 {
 	$call fpmul64_inner (L R) (ret_val_x_x)
+    	$attribute delay 14
 }
 
 $pipeline  $depth 31 $buffering 2 $fullrate $module [fpmul64_inner] 
@@ -60,7 +65,7 @@ $out (ret_val_x_x : $float<11,52>)
 $is 
 {
     ret_val_x_x := (L * R)
-    $attribute delay 24
+    $attribute delay 14
 }
 
 $pipeline  $depth 31 $buffering 2 $fullrate $module [fpadd64] 
@@ -69,6 +74,7 @@ $out (ret_val_x_x : $float<11,52>)
 $is 
 {
 	$call fpadd64_inner (L R) (ret_val_x_x)
+    	$attribute delay 16
 }
 
 $pipeline  $depth 31 $buffering 2 $fullrate $module [fpadd64_inner] 
@@ -77,7 +83,7 @@ $out (ret_val_x_x : $float<11,52>)
 $is 
 {
     ret_val_x_x := (L + R)
-    $attribute delay 24
+    $attribute delay 16
 }
 
 $pipeline  $depth 31 $buffering 2 $fullrate $module [fpsub64] 
@@ -86,6 +92,7 @@ $out (ret_val_x_x : $float<11,52>)
 $is 
 {
     $call fpsub64_inner (L R) (ret_val_x_x)
+    $attribute delay 16
 }
 
 $pipeline  $depth 31 $buffering 2 $fullrate $module [fpsub64_inner] 
@@ -94,7 +101,7 @@ $out (ret_val_x_x : $float<11,52>)
 $is 
 {
     ret_val_x_x := (L - R)
-    $attribute delay 24
+    $attribute delay 16
 }
 
 $pipeline  $depth 31 $buffering 2 $fullrate $module [fpu64] 
