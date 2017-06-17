@@ -2550,21 +2550,14 @@ void AaExpression:: Update_Reenable_Points_And_Producer_Delay_Status(set<string>
 	for(set<AaRoot*>::iterator iter = root_expr_set.begin();
 			iter != root_expr_set.end(); iter++)
 	{
-		if((*iter)->Is_Expression())
+		AaRoot* root = (*iter);
+		if((root != NULL) && (visited_elements.find(root) != visited_elements.end()))
 		{
-			AaExpression* root_expr = (AaExpression*) *iter;
-			if(visited_elements.find(root_expr) != visited_elements.end())
+			if(this->Get_Associated_Phi_Statement() == NULL)
 			{
-				if((this->Get_Associated_Phi_Statement() == NULL) || 
-						(root_expr->Get_Associated_Phi_Statement() != 
-						 this->Get_Associated_Phi_Statement()))
-				{
-					string en_trans_name = root_expr->Get_VC_Reenable_Update_Transition_Name(visited_elements);	
-					en_points.insert(en_trans_name);
-
-					bool en_bypass = root_expr->Update_Protocol_Has_Delay(visited_elements);
-					en_bypass_flags[en_trans_name] =  en_bypass;
-				}
+				string en_trans_name = root->Get_VC_Reenable_Update_Transition_Name(visited_elements);	
+				en_points.insert(en_trans_name);
+				en_bypass_flags[en_trans_name] =  true;
 			}
 		}
 	}	

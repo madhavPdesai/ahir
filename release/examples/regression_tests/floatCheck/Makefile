@@ -6,11 +6,11 @@ PIPEHANDLER_LIB=$(AHIR_RELEASE)/lib
 VHDL_LIB=$(AHIR_RELEASE)/vhdl/
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary
 
-#DEFS= -DADD -DMUL -DSUB -DFLOATRESIZE -DTOINT -DSQRT
-#TOPMODULES= -t fpadd -t fpaddd  -t fpsub -t fpincr -t fpmul -t fpmuld -t double_to_float -t float_to_double -t fp2int -t fpd2int  -t fp2uint -t fpd2uint -t int2float -t int2double  -t fpsqrt32
+DEFS= -DADD -DMUL -DSUB -DFLOATRESIZE -DTOINT -DSQRT -DINTTOFLOAT
+TOPMODULES= -t fpadd -t fpaddd  -t fpsub -t fpincr -t fpmul -t fpmuld -t double_to_float -t float_to_double -t fp2int -t fpd2int  -t fp2uint -t fpd2uint -t int2float -t int2double  -t fpsqrt32
 
-DEFS=  -DSQRT
-TOPMODULES= -t fpsqrt32
+#DEFS=  -DSQRT
+#TOPMODULES= -t fpsqrt32
 
 #DEFS= -DADD -DMUL -DDOT -DCMP
 #TOPMODULES=-t fpmul -t fpmuld  -t fpadd -t fpaddd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub

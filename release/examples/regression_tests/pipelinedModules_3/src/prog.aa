@@ -10,6 +10,8 @@ $module [exec_op] $in (X: $float <8,23>) $out (Z: $float <8,23>) $is
 	mid_data := X 
 	Z := end_data
 	$attribute delay 31
+	$attribute input_buffering 0
+	//$attribute output_buffering 0
 }
 
 $module [operator_daemon] $in () $out () $is
