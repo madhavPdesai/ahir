@@ -1,13 +1,4 @@
 #vhdl-lib:mod-name:mod-delay
-<<<<<<< HEAD
-ahir:fpu32:20
-ahir:fpadd32:14
-ahir:fpsub32:14
-ahir:fpmul32:12
-ahir:fpu64:28
-ahir:fpadd64:16
-ahir:fpsub64:16
-=======
 ahir:fpu32:18
 ahir:fpadd32:14
 ahir:fpsub32:14
@@ -15,5 +6,4 @@ ahir:fpmul32:12
 ahir:fpu64:20
 ahir:fpadd64:16
 ahir:fpsub64:14
->>>>>>> 9364ad7cca33b7a66d777c50566a6f6bfbb97023
 ahir:fpmul64:14
