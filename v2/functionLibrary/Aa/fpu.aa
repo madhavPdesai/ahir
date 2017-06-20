@@ -21,7 +21,6 @@ $out (ret_val_x_x : $float<8,23>)
 $is 
 {
     ret_val_x_x := (L + R)
-
     $attribute delay 14
 }
 
@@ -56,10 +55,8 @@ $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
 {
-	$call fpmul64_inner (L R) (ret_val_x_x)
+    $call fpmul64_inner (L R) (ret_val_x_x)
     $attribute delay 14
-    $attribute input_buffering 0
-    $attribute output_buffering 0
 }
 
 $pipeline  $depth 31 $buffering 2 $fullrate $module [fpmul64_inner] 
@@ -78,9 +75,6 @@ $is
 {
     $call fpadd64_inner (L R) (ret_val_x_x)
     $attribute delay 16
-    $attribute input_buffering 0
-    $attribute output_buffering 0
-	
 }
 
 $pipeline  $depth 31 $buffering 2 $fullrate $module [fpadd64_inner] 
@@ -99,8 +93,6 @@ $is
 {
     $call fpsub64_inner (L R) (ret_val_x_x)
     $attribute delay 16
-    $attribute input_buffering 0
-    $attribute output_buffering 0
 }
 
 $pipeline  $depth 31 $buffering 2 $fullrate $module [fpsub64_inner] 

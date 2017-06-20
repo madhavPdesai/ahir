@@ -6,6 +6,8 @@ $pipeline $depth 28 $buffering 2 $fullrate
 $module [fp_add] $in (X Y: $float <8,23>) $out (Z: $float <8,23>) $is
 {
 	Z := (X + Y) $buffering 2
+	$attribute input_buffering 0
+	$attribute output_buffering 0
 }
 
 $pipeline $depth 28 $buffering 2 $fullrate $operator

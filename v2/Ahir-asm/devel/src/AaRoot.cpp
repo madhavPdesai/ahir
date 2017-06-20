@@ -219,11 +219,37 @@ bool AaRootPairCompare::operator() (AaRootPair* s1, AaRootPair* s2) const
 
 void __InsMap(map<AaRoot*,vector< pair<AaRoot*, int> > >& amap, AaRoot* src, AaRoot* dest, int Dist)
 {
-	amap[src].push_back(pair<AaRoot*,int>(dest,Dist));
-	if(AaProgram::_verbose_flag)
+	assert(dest != NULL);
+
+	//
+	// generally forward arc heads have higher indices than tails, except
+	// for assignment statements to their targets..
+	//
+	AaStatement* src_stmt = NULL;
+	if((src != NULL) && src->Is_Statement())
+		src_stmt = (AaStatement*) src;
+	
+	AaExpression* dest_expr = NULL;
+	if((dest != NULL) && dest->Is_Expression())
+		dest_expr = (AaExpression*) dest;
+
+	bool is_stmt_to_target_adjacency =
+		(dest_expr != NULL) && dest_expr->Get_Is_Target() && 
+				(dest_expr->Get_Associated_Statement() == src_stmt);
+	
+	
+	if(is_stmt_to_target_adjacency || (src == NULL) || (src->Get_Index() < dest->Get_Index()))
 	{
-		cerr << "Info:aa: added adjacency " << ((src != NULL) ? src->Get_Name() : "NULL") << " -> " << dest->Get_Name() << "(" << Dist << ")" << endl;
-		cerr << "Info:aa:vc: added adjacency " << ((src != NULL) ? src->Get_VC_Name() : "NULL") << " -> " << dest->Get_VC_Name() << "(" << Dist << ")" << endl;
+		amap[src].push_back(pair<AaRoot*,int>(dest,Dist));
+		if(AaProgram::_verbose_flag)
+		{
+			cerr << "Info:aa: added adjacency " << ((src != NULL) ? src->Get_Name() : "NULL") << " -> " << dest->Get_Name() << "(" << Dist << ")" << endl;
+			cerr << "Info:aa:vc: added adjacency " << ((src != NULL) ? src->Get_VC_Name() : "NULL") << " -> " << dest->Get_VC_Name() << "(" << Dist << ")" << endl;
+		}
+	}
+	else
+	{
+		AaRoot::Warning("ignored backward edge in building adjacency map", dest);
 	}
 
 }
