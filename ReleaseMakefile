@@ -85,6 +85,7 @@ Release:
 	# scripts
 	cp -f $(SCRIPTS)/ghdlSanitize.sh $(RELEASE)/bin/
 	cp -f $(SCRIPTS)/formatVhdlFiles.py $(RELEASE)/bin/
+	cp -f $(SCRIPTS)/gdb_commands.txt $(RELEASE)/bin/
 
 Clean:
 	rm -f $(RELEASE)/bin/*
