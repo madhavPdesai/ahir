@@ -148,7 +148,7 @@ process(data_in)
       
     end generate RowGen;
     
-    process(data_out_array,enable_array, write_bar)
+    process(data_out_array,enable_array_reg, write_bar_reg)
     begin
       padded_data_out((COL+1)*g_base_bank_data_width -1 downto (COL*g_base_bank_data_width)) <= (others => '0');
       for ROW in 0 to bank_array_height-1 loop

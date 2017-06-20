@@ -1,0 +1,15 @@
+define view
+     p to_string(&($arg0))
+end
+define view_hex
+     p to_hex_string(&($arg0))
+end
+define me 
+     info macro $arg0
+end
+define u64
+     p bit_vector_to_uint64(0,&($arg0))
+end
+define u64x
+     p/x bit_vector_to_uint64(0,&($arg0))
+end
