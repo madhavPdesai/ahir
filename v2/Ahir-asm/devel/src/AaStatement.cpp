@@ -4116,7 +4116,9 @@ void AaPhiStatement::Set_Target(AaObjectReference* tgt)
 	}
 	else if(tgt->Is_Interface_Object_Reference())
 	{
-		AaRoot::Error("target of a PHI statement cannot be an interface object!", this);
+		// This warning should be an error if the module is
+		// a pipelined one.
+		AaRoot::Warning("target of a PHI statement is an interface object!", this);
 	}
 
 	if(this->_source_pairs.size() > 0)

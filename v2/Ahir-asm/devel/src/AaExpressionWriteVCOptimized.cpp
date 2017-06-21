@@ -288,99 +288,121 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				(w_root->Is_Phi_Statement() || (w_root->Is_Expression() && 
 				   (((AaExpression*)w_root)->Get_Associated_Statement() != NULL) &&
 					((AaExpression*)w_root)->Get_Associated_Statement()->Is_Phi_Statement()));
-		for(set<AaRoot*>::iterator r_iter = read_root_set.begin(),
-				fr_iter = read_root_set.end(); r_iter != fr_iter; r_iter++)
+		bool w_root_is_input_interface = false;
+		if(w_root && w_root->Is_Expression())
+			w_root_is_input_interface = ((AaExpression*)w_root)->Is_Interface_Object_Reference() && 
+										!(((AaExpression*)w_root)->Get_Is_Target());
+		else if(w_root && w_root->Is_Interface_Object())
+			w_root_is_input_interface = ((AaInterfaceObject*)w_root)->Get_Is_Input();
+			
+
+		AaScope* w_root_scope = 
+			((w_root && w_root->Is_Expression()) ? ((AaExpression*) w_root)->Get_Scope()
+				: ((w_root && w_root->Is_Statement()) ? ((AaStatement*) w_root)->Get_Scope() : NULL));
+		bool w_root_is_out_of_scope = (w_root != NULL) || (w_root_scope != this->Get_Scope());
+
+		bool ignore_w_root = (w_root_is_input_interface || w_root_is_out_of_scope);
+
+		if(ignore_w_root)
 		{
-			AaRoot* r_root = *r_iter;
-			bool read_is_dependent_on_phi = 
-				(r_root->Is_Phi_Statement() || (r_root->Is_Expression() && 
-								(((AaExpression*)r_root)->Get_Associated_Statement() != NULL) &&
-								((AaExpression*)r_root)->Get_Associated_Statement()->Is_Phi_Statement()));
-			AaPhiStatement* r_phi =
-				(r_root->Is_Phi_Statement()  ? ((AaPhiStatement*) r_root) : 
-						((r_root->Is_Expression() ?
-					 			((AaExpression*)r_root)->Get_Associated_Phi_Statement() : NULL)));
-
-			if(visited_elements.find(r_root) != visited_elements.end())
+			ofile << "// ignored out-of-scope/interface w_root " << w_root->To_String() << endl;
+		}
+		else
+		{
+			for(set<AaRoot*>::iterator r_iter = read_root_set.begin(),
+					fr_iter = read_root_set.end(); r_iter != fr_iter; r_iter++)
 			{
-				// The target "b = (d+e)" cannot be updated until 
-				// the statement a := (b+c) has sampled b..  
-				// This is conservative
-				if(!(read_is_dependent_on_phi && write_is_dependent_on_phi))
-					//
-					// Note: phi-phi WAR dependencies are taken care of through
-					//         aggregated-phi symbols.  See 
-					// void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
-					//
-				{
+				AaRoot* r_root = *r_iter;
+				bool read_is_dependent_on_phi = 
+					(r_root->Is_Phi_Statement() || (r_root->Is_Expression() && 
+									(((AaExpression*)r_root)->Get_Associated_Statement() != NULL) &&
+									((AaExpression*)r_root)->Get_Associated_Statement()->Is_Phi_Statement()));
+				AaPhiStatement* r_phi =
+					(r_root->Is_Phi_Statement()  ? ((AaPhiStatement*) r_root) : 
+					 ((r_root->Is_Expression() ?
+					   ((AaExpression*)r_root)->Get_Associated_Phi_Statement() : NULL)));
 
-					if(r_phi == NULL)
+				if(visited_elements.find(r_root) != visited_elements.end())
+				{
+					// The target "b = (d+e)" cannot be updated until 
+					// the statement a := (b+c) has sampled b..  
+					// This is conservative
+					if(!(read_is_dependent_on_phi && write_is_dependent_on_phi))
+						//
+						// Note: phi-phi WAR dependencies are taken care of through
+						//         aggregated-phi symbols.  See 
+						// void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
+						//
 					{
-						int r_index;
-						if(r_root->Is_Expression())
+
+						if(r_phi == NULL)
 						{
-							AaStatement* rs = ((AaExpression*)r_root)->Get_Associated_Statement();
-							if(rs != NULL)
-								r_index = rs->Get_Index();
+							int r_index;
+							if(r_root->Is_Expression())
+							{
+								AaStatement* rs = ((AaExpression*)r_root)->Get_Associated_Statement();
+								if(rs != NULL)
+									r_index = rs->Get_Index();
+								else
+									r_index = r_root->Get_Index();
+							}
 							else
 								r_index = r_root->Get_Index();
-						}
-						else
-							r_index = r_root->Get_Index();
 
-						int w_index;
-						if(w_root->Is_Expression())
-						{
-							AaStatement* ws = ((AaExpression*)w_root)->Get_Associated_Statement();
-							if(ws != NULL)
-								w_index = ws->Get_Index();
+							int w_index;
+							if(w_root->Is_Expression())
+							{
+								AaStatement* ws = ((AaExpression*)w_root)->Get_Associated_Statement();
+								if(ws != NULL)
+									w_index = ws->Get_Index();
+								else
+									w_index = w_root->Get_Index();
+							}
 							else
 								w_index = w_root->Get_Index();
-						}
-						else
-							w_index = w_root->Get_Index();
 
 
-						if(r_index <= w_index)
-						{
-							__J(__UST(w_root), __SCT(r_root));
+							if(r_index <= w_index)
+							{
+								__J(__UST(w_root), __SCT(r_root));
+							}
+							else
+							{
+								AaRoot::Error("ordering error in WAR for " + this->To_String() + " writer:" + w_root->To_String() + " reader:" + r_root->To_String(), this);
+							}
 						}
 						else
 						{
-							AaRoot::Error("ordering error in WAR for " + this->To_String() + " writer:" + w_root->To_String() + " reader:" + r_root->To_String(), this);
+							__J(__UST(w_root), __SCT(r_phi));
+						}
+
+						// The completion of "b = (d+e)" reenables the
+						// evaluation of "a = (b+c)"
+						if(pipeline_flag)
+						{
+							ofile << "// WAR dependency: release  Read: " 
+								<< this->To_String() 
+								<< " with Write: " << w_root->To_String() << endl;
+							if(r_phi == NULL)
+							{
+								__MJ(__SST(r_root), __UCT(w_root), true);
+							}
+							else
+							{
+								__MJ(__SST(r_phi), __UCT(w_root), true);
+							}
+
+							int rb = w_root->Get_Buffering();
+							if(full_rate && (rb < 2))
+							{
+								w_root->Set_Buffering(2);
+							}
 						}
 					}
 					else
 					{
-						__J(__UST(w_root), __SCT(r_phi));
+						ofile << "// self dependency in WAR or PHI-PHI dependency in WAR ignored." << endl;
 					}
-
-					// The completion of "b = (d+e)" reenables the
-					// evaluation of "a = (b+c)"
-					if(pipeline_flag)
-					{
-						ofile << "// WAR dependency: release  Read: " 
-							<< this->To_String() 
-							<< " with Write: " << w_root->To_String() << endl;
-						if(r_phi == NULL)
-						{
-							__MJ(__SST(r_root), __UCT(w_root), true);
-						}
-						else
-						{
-							__MJ(__SST(r_phi), __UCT(w_root), true);
-						}
-
-						int rb = w_root->Get_Buffering();
-						if(full_rate && (rb < 2))
-						{
-							w_root->Set_Buffering(2);
-						}
-					}
-				}
-				else
-				{
-					ofile << "// self dependency in WAR or PHI-PHI dependency in WAR ignored." << endl;
 				}
 			}
 		}
@@ -643,7 +665,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 
 		// at the end!
 		visited_elements.insert(this);
-	
+
 		this->Write_VC_Phi_Start_Dependency(ofile);
 	}
 }
@@ -1024,7 +1046,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				if(!this->_pointer_ref->Is_Constant())
 				{
 					this->_pointer_ref->Write_Forward_Dependency_From_Roots(base_addr_calc, -1, 
-												visited_elements, ofile);
+							visited_elements, ofile);
 				}
 
 			}
@@ -1146,7 +1168,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 				// expression has been evaluated.. go to active
 				expr->Write_Forward_Dependency_From_Roots(__SST(this), this->Get_Index(),
-											 visited_elements, ofile);
+						visited_elements, ofile);
 
 				// TODO: use split protocol to implement Slice.
 				//       (note that Slice doubles as a register..)
@@ -1349,9 +1371,9 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
 	if(!this->_reference_to_object->Is_Constant())
 	{
 		this->_reference_to_object->Write_Forward_Dependency_From_Roots(base_addr_calc, 
-											-1,
-											visited_elements,
-											ofile);
+				-1,
+				visited_elements,
+				ofile);
 
 		__J(__SST(this),base_addr_calc);
 		if(pipeline_flag)
@@ -1414,9 +1436,9 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(b
 	if(!this->_reference_to_object->Is_Constant())
 	{
 		this->_reference_to_object->Write_Forward_Dependency_From_Roots(base_addr_calc, 
-											-1,
-											visited_elements,
-											ofile);
+				-1,
+				visited_elements,
+				ofile);
 		__J(__SST(this),base_addr_calc);
 		if(pipeline_flag)
 		{
@@ -1582,7 +1604,7 @@ void AaTypeCastExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofi
 	{
 		this->_rest->Write_VC_Links_Optimized(hier_id, ofile);
 
-	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 		if(flow_through)
 			return;
 
@@ -1647,7 +1669,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 		if(!this->Is_Flow_Through())
 		{
 			this->_rest->Write_Forward_Dependency_From_Roots(__SST(this), this->Get_Index(),
-										 visited_elements, ofile);
+					visited_elements, ofile);
 
 			// either it will be a register or a split conversion
 			// operator..
@@ -1756,7 +1778,7 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 		if(!this->Is_Flow_Through())
 		{
 			this->_rest->Write_Forward_Dependency_From_Roots(__SST(this), this->Get_Index(),
-											visited_elements, ofile);
+					visited_elements, ofile);
 
 			string sample_regn = this->Get_VC_Name() + "_Sample";
 			string update_regn = this->Get_VC_Name() + "_Update";
@@ -1934,12 +1956,12 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 			if(!this->_first->Is_Constant())
 			{
 				this->_first->Write_Forward_Dependency_From_Roots(sst, this->Get_Index(),
-											visited_elements, ofile);
+						visited_elements, ofile);
 			}
 			if(!this->_second->Is_Constant())
 			{
 				this->_second->Write_Forward_Dependency_From_Roots(sst,this->Get_Index(),
-											 visited_elements, ofile);
+						visited_elements, ofile);
 			}
 
 
@@ -2062,17 +2084,17 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 			if(!this->_test->Is_Constant())
 			{
 				this->_test->Write_Forward_Dependency_From_Roots(sst,this->Get_Index(),
-											 visited_elements, ofile);
+						visited_elements, ofile);
 			}
 			if(!this->_if_true->Is_Constant())
 			{
 				this->_if_true->Write_Forward_Dependency_From_Roots(sst, this->Get_Index(),
-											visited_elements, ofile);
+						visited_elements, ofile);
 			}
 			if(!this->_if_false->Is_Constant())
 			{
 				this->_if_false->Write_Forward_Dependency_From_Roots(sst,this->Get_Index(),
-											 visited_elements, ofile);
+						visited_elements, ofile);
 			}
 
 			ofile << ";;[" << this->Get_VC_Start_Region_Name() << "] { // ternary expression: " << endl;
@@ -2642,7 +2664,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			{
 				non_constant_indices.push_back(idx);
 
-			        string idx_active_reenable;
+				string idx_active_reenable;
 				string idx_active_complete;
 
 				string index_resized = this->Get_VC_Name() + "_index_resized_" + IntToStr(idx);
@@ -2662,16 +2684,16 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 				if(pipeline_flag)
 				{
 					index_expr->Update_Reenable_Points_And_Producer_Delay_Status(index_chain_reenable_map[idx], 
-													active_reenable_bypass_flags,
-															visited_elements);
+							active_reenable_bypass_flags,
+							visited_elements);
 				}
 				index_expr->Write_Forward_Dependency_From_Roots(index_computed, -1, visited_elements, ofile);
 				index_chain_complete_map[idx] = index_computed;
 
 
-				
+
 				string idx_resize_regn_name = this->Get_VC_Name() + "_index_resize_" + 
-								IntToStr(idx);
+					IntToStr(idx);
 
 				if(index_expr->Get_Type()->Is_Uinteger_Type())
 				{
@@ -2685,14 +2707,14 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 				}
 				else
 				{
-			
+
 					// type conversion to uinteger.
 					// the sample and update regions
 					// are separated to create
 					// separate sample and update
 					// reenable points.
 					string idx_resize_sample_start = 
-							idx_resize_regn_name + "_sample_start";
+						idx_resize_regn_name + "_sample_start";
 					string idx_resize_sample_complete = idx_resize_regn_name + "_sample_complete";
 
 					string idx_resize_update_start = idx_resize_regn_name + "_update_start";
@@ -2724,8 +2746,8 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 					if(pipeline_flag)
 					{
 						for(set<string>::iterator iiter = index_chain_reenable_map[idx].begin(), 
-							fiiter = index_chain_reenable_map[idx].end();
-							iiter != fiiter; iiter++)
+								fiiter = index_chain_reenable_map[idx].end();
+								iiter != fiiter; iiter++)
 						{
 							// reenable index expression update when
 							// sample-completed.
@@ -2748,7 +2770,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 				if((*scale_factors)[idx] > 1)
 				{
 					string idx_scale_sample_start = 
-							idx_scale_regn_name + "_sample_start";
+						idx_scale_regn_name + "_sample_start";
 					string idx_scale_sample_complete = idx_scale_regn_name + "_sample_complete";
 
 					string idx_scale_update_start = idx_scale_regn_name + "_update_start";
@@ -2760,9 +2782,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 					__T(idx_scale_update_complete);
 
 					string idx_scale_sample_regn = 
-							idx_scale_regn_name + "_Sample";
+						idx_scale_regn_name + "_Sample";
 					string idx_scale_update_regn = 
-							idx_scale_regn_name + "_Update";
+						idx_scale_regn_name + "_Update";
 
 					ofile << ";;[" << idx_scale_sample_regn << "] { " << endl;
 					ofile << "$T [rr] $T [ra] " << endl;
@@ -2785,8 +2807,8 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 						// successor complete: indices_scaled
 						// predecessor sample: index_resized.
 						for(set<string>::iterator iiter = index_chain_reenable_map[idx].begin(), 
-							fiiter = index_chain_reenable_map[idx].end();
-							iiter != fiiter; iiter++)
+								fiiter = index_chain_reenable_map[idx].end();
+								iiter != fiiter; iiter++)
 						{
 							string jj = *iiter;
 							// reenable index expression update when
@@ -2821,7 +2843,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		//       each addition is written as a split pair
 		//       of sample and update.  The updates trigger
 		//       the next sample (forming a chain).
-		
+
 		// then add them up.. Note that if there is one non-constant
 		// and at least one constant, then an adder will still be needed.
 		int num_index_adds = (num_non_constant  - 1);
@@ -2879,7 +2901,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 					__J(sample_start, index_chain_complete_map[I0]);
 					__J(sample_start, index_chain_complete_map[I1]);
-				
+
 
 					if(pipeline_flag)
 					{
@@ -2921,14 +2943,14 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 		// active reenables from index-chains.
 		for(int IIDX = 0, FIIDX = index_vector->size(); IIDX < FIIDX; IIDX++)
-                {
+		{
 			for(set<string>::iterator iiter = index_chain_reenable_map[IIDX].begin(),
-				fiiter = index_chain_reenable_map[IIDX].end(); iiter != fiiter; iiter++)
+					fiiter = index_chain_reenable_map[IIDX].end(); iiter != fiiter; iiter++)
 			{
 				active_reenable_points.insert(*iiter);
 				active_reenable_bypass_flags[*iiter] =true;
 			}
-                }
+		}
 
 		// index addition..
 		if(const_index_flag)
@@ -2936,15 +2958,15 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			// add the constant index sum to the non-constant
 			// index sum.
 			string prefix = this->Get_VC_Name() + "_final_index_sum_regn";
- 			string sample_complete = prefix + "_sample_complete";
- 			string update_start = prefix + "_update_start";
+			string sample_complete = prefix + "_sample_complete";
+			string update_start = prefix + "_update_start";
 
 			__T(sample_complete);
 			__T(update_start);
-			
 
- 			string sample_regn = prefix + "_Sample";
- 			string update_regn = prefix + "_Update";
+
+			string sample_regn = prefix + "_Sample";
+			string update_regn = prefix + "_Update";
 			ofile << ";;[" <<  sample_regn << "] { " << endl;
 			ofile << " $T [req] $T [ack] " << endl;
 			ofile << "}" << endl;
@@ -2963,7 +2985,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 				Write_VC_Marked_Joins(active_reenable_points, sample_complete, false, ofile);
 				__MJ(update_start, offset_calculated, true); // bypass.
 			}
-		
+
 			active_reenable_points.clear();
 			active_reenable_points.insert(update_start);
 			active_reenable_bypass_flags[update_start] = true;
@@ -3021,27 +3043,27 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		string bpo_update_start = this->Get_VC_Name() + "_base_plus_offset_update_start";
 		string bpo_update_complete = this->Get_VC_Name() + "_base_plus_offset_update_complete";
 		__T(bpo_sample_start)
-		__T(bpo_sample_complete)
-		__T(bpo_update_start)
-		__T(bpo_update_complete)
+			__T(bpo_sample_complete)
+			__T(bpo_update_start)
+			__T(bpo_update_complete)
 
-		ofile << ";;[" << bpo_sample_regn << "] { " << endl;
+			ofile << ";;[" << bpo_sample_regn << "] { " << endl;
 		ofile << "$T [rr] $T [ra]" << endl;
 		ofile << "}" << endl;
 		ofile << ";;[" << bpo_update_regn << "] { " << endl;
 		ofile << "$T [cr] $T [ca]" << endl;
 		ofile << "}" << endl;
-	
+
 		__F(bpo_sample_start, bpo_sample_regn)
-		__F(bpo_update_start, bpo_update_regn)
-		__J(bpo_sample_complete, bpo_sample_regn)
-		__J(bpo_update_complete, bpo_update_regn)
+			__F(bpo_update_start, bpo_update_regn)
+			__J(bpo_sample_complete, bpo_sample_regn)
+			__J(bpo_update_complete, bpo_update_regn)
 
 
-		if(base_addr < 0)
-		{
-			__F(base_address_resized,bpo_sample_start);
-		}
+			if(base_addr < 0)
+			{
+				__F(base_address_resized,bpo_sample_start);
+			}
 		if(offset_val < 0)
 		{
 			__F(offset_calculated,bpo_sample_start);
@@ -3052,18 +3074,18 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			}
 		}
 		__J(root_address_calculated,bpo_update_complete);
-	
+
 		if(pipeline_flag)
 		{
 			// self-release
-		  __MJ(bpo_sample_start, bpo_sample_complete, false); // no bypass
-		  __MJ(bpo_update_start, bpo_update_complete, true); // bypass
+			__MJ(bpo_sample_start, bpo_sample_complete, false); // no bypass
+			__MJ(bpo_update_start, bpo_update_complete, true); // bypass
 
-		  Write_VC_Reenable_Joins(active_reenable_points, active_reenable_bypass_flags, bpo_sample_complete,false,  ofile); // do not force bypass, decide based on active bypass flags..
-		  
-		  active_reenable_points.clear();
-		  active_reenable_points.insert(bpo_update_start);
-		  active_reenable_bypass_flags[bpo_update_start] = true;
+			Write_VC_Reenable_Joins(active_reenable_points, active_reenable_bypass_flags, bpo_sample_complete,false,  ofile); // do not force bypass, decide based on active bypass flags..
+
+			active_reenable_points.clear();
+			active_reenable_points.insert(bpo_update_start);
+			active_reenable_bypass_flags[bpo_update_start] = true;
 		}
 	}
 	else 
@@ -3126,12 +3148,12 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 			if(!(*indices)[idx]->Is_Constant())
 			{
 				string idx_resize_regn_name = this->Get_VC_Name() + "_index_resize_" + 
-								IntToStr(idx);
+					IntToStr(idx);
 
 				num_non_constant++;
 				(*indices)[idx]->Write_VC_Links_Optimized(hier_id,ofile);
 
-								IntToStr(idx);
+				IntToStr(idx);
 
 				if((*indices)[idx]->Get_Type()->Is_Uinteger_Type())	      
 				{
@@ -3157,9 +3179,9 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 				if((*scale_factors)[idx] > 1)
 				{
 					string idx_scale_sample_regn = 
-							idx_scale_regn_name + "_Sample";
+						idx_scale_regn_name + "_Sample";
 					string idx_scale_update_regn = 
-							idx_scale_regn_name + "_Update";
+						idx_scale_regn_name + "_Update";
 					reqs.push_back(hier_id + "/" + idx_scale_sample_regn + "/rr");
 					reqs.push_back(hier_id + "/" + idx_scale_update_regn + "/cr");
 					acks.push_back(hier_id + "/" + idx_scale_sample_regn + "/ra");
@@ -3208,8 +3230,8 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 		if(const_index_flag)
 		{
 			string prefix = this->Get_VC_Name() + "_final_index_sum_regn";
- 			string sample_regn = prefix + "_Sample";
- 			string update_regn = prefix + "_Update";
+			string sample_regn = prefix + "_Sample";
+			string update_regn = prefix + "_Update";
 
 			inst_name = this->Get_VC_Name() + "_index_offset";
 
