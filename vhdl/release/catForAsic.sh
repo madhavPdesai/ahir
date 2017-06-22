@@ -23,7 +23,7 @@ cat ../ahir/control-path/*.vhdl >> ahirForAsic.vhdl
 cat ../ahir/operatorsV2/base/*.vhd >> ahirForAsic.vhdl
 cat ../ahir/operatorsV2/ieee754/*.vhd >> ahirForAsic.vhdl
 cat ../ahir/operatorsV2/experimental/*.vhd >> ahirForAsic.vhdl
-cat ../ahir/operatorsV2/glue/*.vhd >> ahirForAsic.vhdl
+cat ../ahir/operatorsV2/glue/*.vhd* >> ahirForAsic.vhdl
 cat ../ahir/operatorsV2/functionLibrary/*.vhd >> ahirForAsic.vhdl
 cat ../ahir/operatorsV2/ap_int/*.vhd >> ahirForAsic.vhdl
 cat ../aHiR_ieee_proposed/trimmed/math_utility_pkg.vhd >> aHiR_ieee_proposed.vhdl

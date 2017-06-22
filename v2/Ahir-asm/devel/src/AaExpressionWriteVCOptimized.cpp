@@ -301,7 +301,8 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				: ((w_root && w_root->Is_Statement()) ? ((AaStatement*) w_root)->Get_Scope() : NULL));
 		bool w_root_is_out_of_scope = (w_root != NULL) || (w_root_scope != this->Get_Scope());
 
-		bool ignore_w_root = (w_root_is_input_interface || w_root_is_out_of_scope);
+		// ignore out of scope dependencies.
+		bool ignore_w_root = w_root_is_out_of_scope;
 
 		if(ignore_w_root)
 		{
@@ -324,6 +325,30 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 				if(visited_elements.find(r_root) != visited_elements.end())
 				{
+					int r_index;
+					if(r_root->Is_Expression())
+					{
+						AaStatement* rs = ((AaExpression*)r_root)->Get_Associated_Statement();
+						if(rs != NULL)
+							r_index = rs->Get_Index();
+						else
+							r_index = r_root->Get_Index();
+					}
+					else
+						r_index = r_root->Get_Index();
+
+					int w_index;
+					if(w_root->Is_Expression())
+					{
+						AaStatement* ws = ((AaExpression*)w_root)->Get_Associated_Statement();
+						if(ws != NULL)
+							w_index = ws->Get_Index();
+						else
+							w_index = w_root->Get_Index();
+					}
+					else
+						w_index = w_root->Get_Index();
+
 					// The target "b = (d+e)" cannot be updated until 
 					// the statement a := (b+c) has sampled b..  
 					// This is conservative
@@ -337,30 +362,6 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 						if(r_phi == NULL)
 						{
-							int r_index;
-							if(r_root->Is_Expression())
-							{
-								AaStatement* rs = ((AaExpression*)r_root)->Get_Associated_Statement();
-								if(rs != NULL)
-									r_index = rs->Get_Index();
-								else
-									r_index = r_root->Get_Index();
-							}
-							else
-								r_index = r_root->Get_Index();
-
-							int w_index;
-							if(w_root->Is_Expression())
-							{
-								AaStatement* ws = ((AaExpression*)w_root)->Get_Associated_Statement();
-								if(ws != NULL)
-									w_index = ws->Get_Index();
-								else
-									w_index = w_root->Get_Index();
-							}
-							else
-								w_index = w_root->Get_Index();
-
 
 							if(r_index <= w_index)
 							{
@@ -385,7 +386,10 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 								<< " with Write: " << w_root->To_String() << endl;
 							if(r_phi == NULL)
 							{
-								__MJ(__SST(r_root), __UCT(w_root), true);
+								if(r_index <= w_index)
+								{
+									__MJ(__SST(r_root), __UCT(w_root), true);
+								}
 							}
 							else
 							{
