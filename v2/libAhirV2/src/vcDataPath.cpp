@@ -173,9 +173,11 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 		}
 		else if(this->Get_Signal())
 		{ 
+			string volatile_string = ((pipe_depth == 0) ? "true" : "false");
 			ofile << pipe_id << "_Signal: SignalBase -- {" << endl;
 			ofile << "generic map( -- { " << endl;
 			ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
+			ofile << "volatile_flag => " << volatile_string << "," << endl;
 			ofile << "num_writes => " << num_writes << "," << endl;
 			ofile << "data_width => " << pipe_width << " --} ) \n" << endl;
 			ofile << "port map( -- { " << endl;

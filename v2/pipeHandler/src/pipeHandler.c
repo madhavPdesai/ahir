@@ -252,43 +252,56 @@ uint32_t register_signal(char* id, int pipe_width)
 {
   PipeRec* p;
   p = find_pipe(id); // this also uses the lock.
+
+  // if pipe width is not a standard c-width, then the pipe
+  // is organized as an array of bytes.
+  int corrected_pipe_width, corrected_pipe_depth;
+  if((pipe_width == 8) || (pipe_width == 16) || (pipe_width == 32) || (pipe_width == 64))
+	  corrected_pipe_width = pipe_width;
+  else
+	  corrected_pipe_width = 8;
+
+  int nwords = (pipe_width/corrected_pipe_width);
+  nwords = ((pipe_width % corrected_pipe_width) ? nwords + 1 : nwords);
+  int nbytes = ((corrected_pipe_width == 8) ? nwords : (pipe_width/8));
+
   if(p != NULL)
   {
-	if(p->pipe_width != pipe_width)
-        {
-	      fprintf(stderr,"\nError: pipeHandler: redefinition of pipe %s with conflicting widths (%d or %d?)\n", id, p->pipe_width, pipe_width);
-		return(1);
-        }
-	if(!p->is_signal)
-	{
-	      fprintf(stderr,"\nError: pipeHandler: redefinition of pipe %s with conflicting Port-status )\n", id);
-		return(1);
-	}
-	return(0);
+	  if(p->pipe_width != corrected_pipe_width)
+	  {
+		  fprintf(stderr,"\nError: pipeHandler: redefinition of pipe %s with conflicting widths (%d or %d?)\n", id, p->pipe_width, corrected_pipe_width);
+		  return(1);
+	  }
+	  if(!p->is_signal)
+	  {
+		  fprintf(stderr,"\nError: pipeHandler: redefinition of pipe %s with conflicting Port-status )\n", id);
+		  return(1);
+	  }
+	  return(0);
   }
 
   PipeRec* new_p = (PipeRec*) calloc(1,sizeof(PipeRec));
   new_p->pipe_name = strdup(id);
-  new_p->pipe_width = pipe_width;
-  new_p->pipe_depth = 1;
+  new_p->pipe_width = corrected_pipe_width;
+  new_p->pipe_depth = nwords;
   new_p->number_of_entries = 0;
   new_p->write_pointer = 0;
   new_p->read_pointer = 0;
-  new_p->buffer.ptr8 = (uint8_t*) calloc(1, ((pipe_width)/8)*sizeof(uint8_t));
+  new_p->buffer.ptr8 = (uint8_t*) calloc(1, nbytes*sizeof(uint8_t));
   new_p->is_signal = 1;
 
   ___LOCK___
-  new_p->next = pipes;
+	  new_p->next = pipes;
   pipes = new_p;
   ___UNLOCK___
 
-  if(log_file != NULL)
-  {
-    __LOCKLOG__
-    fprintf(log_file,"\nAdded: %s width %d (port).", id, pipe_width);
-    fflush(log_file);
-    __UNLOCKLOG__
-  }
+	  if(log_file != NULL)
+	  {
+		  __LOCKLOG__
+			  fprintf(log_file,"\nAdded: %s width %d (port).", id, pipe_width);
+		  fflush(log_file);
+		  __UNLOCKLOG__
+	  }
   return(0);
 }
 
@@ -298,61 +311,61 @@ uint32_t register_signal(char* id, int pipe_width)
 //
 uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requested, void* burst_payload)
 {
-  if(log_file != NULL)
-  {
-    __LOCKLOG__
-   fprintf(log_file,"\nInfo: read-request %d word(s) of width %d from pipe %s.\n", number_of_words_requested,width, pipe_name);
-    __UNLOCKLOG__
-  }
+	if(log_file != NULL)
+	{
+		__LOCKLOG__
+			fprintf(log_file,"\nInfo: read-request %d word(s) of width %d from pipe %s.\n", number_of_words_requested,width, pipe_name);
+		__UNLOCKLOG__
+	}
 
 
-  uint32_t ret_val = 0;
-  PipeRec* p = find_pipe(pipe_name);
-  if(p == NULL)
-  {
-	fprintf(stderr,"\nWarning: pipeHandler:read_from_pipe: job used unregistered pipe %s, will register it as a FIFO with depth 1.\n", pipe_name);
-	register_pipe(pipe_name,1,width,0);
-	p = find_pipe(pipe_name);
-  }
-  
-  if(p->pipe_width != width)
-  {
-	fprintf(stderr,"\nError: pipeHandler:read_from_pipe: width mismatch in pipe %s (declared %d, requested %d)\n", 
-					pipe_name, p->pipe_width, width);
-	return 0;
-  }
+	uint32_t ret_val = 0;
+	PipeRec* p = find_pipe(pipe_name);
+	if(p == NULL)
+	{
+		fprintf(stderr,"\nWarning: pipeHandler:read_from_pipe: job used unregistered pipe %s, will register it as a FIFO with depth 1.\n", pipe_name);
+		register_pipe(pipe_name,1,width,0);
+		p = find_pipe(pipe_name);
+	}
 
-  MUTEX_LOCK(p->pm);
-  if(p->is_signal)
-	ret_val = 1;
-  else
-  {
-	  if(p->number_of_entries >= number_of_words_requested)
-	  {
-		  ret_val = number_of_words_requested;
-	  }
-	  else if(p->number_of_entries > 0)
-	  {
-		  ret_val = p->number_of_entries;
-	  }
-  }
+	if(p->pipe_width != width)
+	{
+		fprintf(stderr,"\nError: pipeHandler:read_from_pipe: width mismatch in pipe %s (declared %d, requested %d)\n", 
+				pipe_name, p->pipe_width, width);
+		return 0;
+	}
 
-  if((p->pipe_mode == PIPE_FIFO_NON_BLOCK_READ) && (ret_val < number_of_words_requested))
-  {
-	ret_val = number_of_words_requested;
-	bzero(burst_payload, number_of_words_requested*width/8);
-  }
-  else if(ret_val > 0)
-  {
-	  uint32_t idx;
-	  uint8_t* ptr = (uint8_t*) burst_payload;
-	  for (idx = 0; idx < ret_val; idx++)
-	  {
-		  ___POP(p,ptr,width);	
-		  ptr = ptr + (width/8);
-	  }
-  }
-  MUTEX_UNLOCK(p->pm);
+	MUTEX_LOCK(p->pm);
+	if(p->is_signal)
+		ret_val = 1;
+	else
+	{
+		if(p->number_of_entries >= number_of_words_requested)
+		{
+			ret_val = number_of_words_requested;
+		}
+		else if(p->number_of_entries > 0)
+		{
+			ret_val = p->number_of_entries;
+		}
+	}
+
+	if((p->pipe_mode == PIPE_FIFO_NON_BLOCK_READ) && (ret_val < number_of_words_requested))
+	{
+		ret_val = number_of_words_requested;
+		bzero(burst_payload, number_of_words_requested*width/8);
+	}
+	else if(ret_val > 0)
+	{
+		uint32_t idx;
+		uint8_t* ptr = (uint8_t*) burst_payload;
+		for (idx = 0; idx < ret_val; idx++)
+		{
+			___POP(p,ptr,width);	
+			ptr = ptr + (width/8);
+		}
+	}
+	MUTEX_UNLOCK(p->pm);
 
   if(ret_val > 0)
   {

@@ -34,9 +34,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 library ahir;
-use ahir.Types.all;
-use ahir.Subprograms.all;
-use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 --
@@ -47,6 +44,7 @@ use ahir.BaseComponents.all;
 
 entity SignalBase is
   generic (name : string;
+	   volatile_flag: boolean := false;
            num_writes: integer;
            data_width: integer);
   port (
@@ -60,7 +58,7 @@ end SignalBase;
 
 architecture default_arch of SignalBase is
 
-  signal pipe_data: std_logic_vector(data_width-1 downto 0);
+  signal pipe_data, read_data_reg: std_logic_vector(data_width-1 downto 0);
   signal pipe_req, pipe_ack: std_logic;
   
 begin  -- default_arch
@@ -96,13 +94,21 @@ begin  -- default_arch
   begin
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
-			read_data <= (others => '0');	
+			read_data_reg <= (others => '0');	
 		else
 			if(pipe_req = '1') then
-				read_data <= pipe_data;
+				read_data_reg <= pipe_data;
 			end if;
 		end if;
 	end if;
   end process;
+
+  VolatileGen: if volatile_flag generate
+	read_data <= pipe_data when pipe_req = '1' else read_data_reg;
+  end generate VolatileGen;
+  nonVolatileGen: if not volatile_flag generate
+	read_data <= read_data_reg;
+  end generate nonVolatileGen;
+
 
 end default_arch;

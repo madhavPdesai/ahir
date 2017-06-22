@@ -66,7 +66,7 @@ void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, 
 
 	if(signal_mode)
 	{
-		ofile << "register_signal(\"" << pipe_name << "\", " <<  wsize  << ");" << __endl__;
+		ofile << "register_signal(\"" << pipe_name << "\", " <<  tsize  << ");" << __endl__;
 	}
 	else
 	{

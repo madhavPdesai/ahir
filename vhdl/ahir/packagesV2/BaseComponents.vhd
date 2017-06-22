@@ -316,16 +316,6 @@ package BaseComponents is
          ack_in: in std_logic);
   end component RigidRepeater;
   
-  component BypassRegister 
-  generic(name: string;
-	   data_width: integer; enable_bypass: boolean); 
-  port (
-    clk, reset : in  std_logic;
-    enable     : in  std_logic;
-    data_in     : in  std_logic_vector(data_width-1 downto 0);
-    data_out    : out std_logic_vector(data_width-1 downto 0));
-  end component BypassRegister;
-
 
   -----------------------------------------------------------------------------
   -- operator base components
@@ -2387,6 +2377,7 @@ package BaseComponents is
  
   component SignalBase is
    generic (name : string;
+	    volatile_flag: boolean := false;
 	    num_writes: integer;
             data_width : integer); 
    port (
@@ -2446,5 +2437,12 @@ package BaseComponents is
     clk, reset : in  std_logic);
   end component;
 
+  component BypassRegister is
+	generic (data_width: integer; bypass: boolean);
+	port (clk: in std_logic; 
+		enable: in boolean; 
+		din: in std_logic_vector(data_width-1 downto 0);
+		q: out std_logic_vector(data_width-1 downto 0));
+  end component;
 
 end BaseComponents;
