@@ -101,7 +101,7 @@ begin  -- SimModel
     pop_ack  <= '1' when (queue_size > 0) else '0';
 
     -- bottom pointer gives the data in FIFO mode..
-    data_out <= queue_array(read_pointer) when (queue_size > 0) else (others => '0');
+    data_out <= queue_array(read_pointer);
   
     -- single process
     process(clk, reset, read_pointer, write_pointer, incr_read_pointer, incr_write_pointer, queue_size, push_req, pop_req)

@@ -71,6 +71,7 @@ architecture struct of dpmem_column is
 
   --finding the number of row-replications in the column being build
   constant n_rows: integer := 2**(Maximum(0, g_addr_width - g_base_bank_addr_width));
+  type WordArray is array  ( natural range <> ) of std_logic_vector (g_base_bank_addr_width-1 downto 0);
 
   --fixing the size of address to maximum of addr_width, cut_width
   constant resized_addr_width: integer := Maximum (g_addr_width, g_base_bank_addr_width);
@@ -129,9 +130,11 @@ begin
   --if more than one cuts are required to satisfy the address width
   n_rows_gt_1: if (n_rows > 1) generate
 	row_gt_1_blk: block
-	  signal decoded_CS_0, decoded_CS_0_d: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
-	  signal decoded_CS_1, decoded_CS_1_d: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
+	  signal decoded_CS_0, decoded_CS_0_d: std_logic_vector(n_rows-1 downto 0):= (others=>'1');
+	  signal decoded_CS_1, decoded_CS_1_d: std_logic_vector(n_rows-1 downto 0):= (others=>'1');
 	  
+  	   signal dataout_array_0 : WordArray(n_rows-1 downto 0);
+  	   signal dataout_array_1 : WordArray(n_rows-1 downto 0);
 	  --chipselect is made low only when enable is high and reset is low.
 	  --memory will not be read or written when enable is low.
 	begin
@@ -176,15 +179,39 @@ begin
 			CE2 => clk,
 			WEB1 => writebar_0,
 			WEB2 => writebar_1,
-			OEB1 => decoded_CS_0_d(j),
-			OEB2 => decoded_CS_1_d(j),
+			OEB1 => ZZZ_1,
+			OEB2 => ZZZ_1,
 			CSB1 => decoded_CS_0(j),
 			CSB2 => decoded_CS_1(j),
 			I1 => datain_0,
 			I2 => datain_1,
-			O1 => dataout_0,
-			O2 => dataout_1 );
+			O1 => dataout_array_0(j),
+			O2 => dataout_array_1(j) );
 	  end generate row_gen;
+
+	-- muxes.
+          process(data_out_array_0, decoded_CS_0_d)
+		variable sel_data_var: std_logic_vector(g_base_bank_data_width-1 downto 0);
+	  begin
+		sel_data_var := (others => '0');
+		for I in 0 to n_rows-1 loop
+			if(decoded_CS_0_d(I) = '1') then
+				sel_data_var := dataout_array_0(I);
+			end if;
+		end loop;
+		dataout_0 <= sel_data_var;
+	  end process;
+          process(data_out_array_1, decoded_CS_1_d)
+		variable sel_data_var: std_logic_vector(g_base_bank_data_width-1 downto 0);
+	  begin
+		sel_data_var := (others => '0');
+		for I in 0 to n_rows-1 loop
+			if(decoded_CS_1_d(I) = '1') then
+				sel_data_var := dataout_array_1(I);
+			end if;
+		end loop;
+		dataout_1 <= sel_data_var;
+	  end process;
 	end block;
   end generate n_rows_gt_1;
 end struct;
