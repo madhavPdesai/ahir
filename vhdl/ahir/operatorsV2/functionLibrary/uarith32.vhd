@@ -96,7 +96,7 @@ begin
 				in_rdy => start_req, out_rdy => fin_ack);
    rrr: BypassRegister 
 		generic map (data_width => 32, bypass => true)
-		port map (clk => clk, enable => update_ack_sig, din => addsub_out, q => ret_val_x_x);
+		port map (clk => clk, reset => reset, enable => update_ack_sig, din => addsub_out, q => ret_val_x_x);
 end Struct;
 
 library ieee;
@@ -215,7 +215,7 @@ begin
 			
    rrr: BypassRegister 
 		generic map (data_width => 64, bypass => true)
-		port map (clk => clk, enable => update_ack_sig, din => mul_out, q => ret_val_x_x);
+		port map (clk => clk, reset =>reset, enable => update_ack_sig, din => mul_out, q => ret_val_x_x);
 end Struct;
 
 library ieee;
@@ -333,7 +333,7 @@ begin
 
    rrr: BypassRegister 
 		generic map (data_width => 32, bypass => true)
-		port map (clk => clk, enable => update_ack_sig, din => shift_out, q => ret_val_x_x);
+		port map (clk => clk, reset =>reset, enable => update_ack_sig, din => shift_out, q => ret_val_x_x);
 
 end Struct;
 

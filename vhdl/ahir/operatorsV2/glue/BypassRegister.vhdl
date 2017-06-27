@@ -39,7 +39,7 @@ use ahir.Subprograms.all;
 
 entity BypassRegister  is
 	generic (data_width: integer; bypass: boolean);
-	port (clk: in std_logic; enable: in boolean; 
+	port (clk, reset: in std_logic; enable: in boolean; 
 			din: in std_logic_vector(data_width-1 downto 0);
 			q: out std_logic_vector(data_width-1 downto 0));
 end entity;
@@ -47,10 +47,12 @@ end entity;
 architecture Behaveee of  BypassRegister is
    signal din_reg: std_logic_vector(data_width-1 downto 0);
 begin
-	process(clk, enable)
+	process(clk,reset, enable)
 	begin
 		if(clk'event and clk = '1') then
-			if enable then
+			if reset = '1' then
+				din_reg <= (others => '0');
+			elsif enable then
 				din_reg <= din;
 			end if;
 		end if;

@@ -39,6 +39,21 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
+--
+-- The unload buffer is used all over the place.  We will use
+-- three forms
+--     depth <= 1
+--         fast cut through with buffering provided by a single register
+--     depth = 2
+--         1 + 1 split with bypass in the first part.
+--     depth > 2
+--         (n-1) + 1 split with no bypass provided in the
+--         second part.
+--
+--  Using shallow buffers (<=2) will result in fast in->out 
+--  performance but combinational through paths.  Using deeper
+--  buffers will result in at least one unit of delay from in->out
+--
 entity UnloadBuffer is
   generic (name: string; buffer_size: integer ; data_width : integer ; 
 			bypass_flag : boolean := false; 
@@ -57,27 +72,26 @@ end UnloadBuffer;
 architecture default_arch of UnloadBuffer is
 
   signal pop_req, pop_ack, push_req, push_ack: std_logic_vector(0 downto 0);
-  signal pipe_data_out:  std_logic_vector(data_width-1 downto 0);
-
-  -- for waveforms..
-  signal output_register_prereg: std_logic_vector(data_width-1 downto 0);
-  signal load_reg: boolean;
-
-  type UnloadFsmState is (idle, waiting);
-  signal fsm_state : UnloadFsmState;
-
+  signal pipe_data_out, data_to_unload_register:  std_logic_vector(data_width-1 downto 0);
 
   signal number_of_elements_in_pipe: integer range 0 to buffer_size+1;
   signal pipe_has_data: boolean;
 
+  signal unload_register_ready: boolean;
+
+  signal pop_req_from_unload_register : std_logic;
+  signal pop_ack_to_unload_register   : std_logic;
+
+  signal write_to_pipe: boolean;
+  signal unload_from_pipe : boolean;
+
 begin  -- default_arch
 
-  -- assert (buffer_size > 0) report "Unload buffer size must be > 0" & ": buffer = " & name  severity error;
 
-  bufGt0: if buffer_size > 0 generate
-  
-	-- count number of elements in pipe.
-  	process(clk, reset)
+  bufGt1: if buffer_size > 1 generate
+
+		-- count number of elements in pipe.
+	process(clk, reset)
   	begin
 		if(clk'event and clk = '1') then
 			if(reset = '1') then
@@ -95,7 +109,20 @@ begin  -- default_arch
   	end process;
 	
   	pipe_has_data <= (number_of_elements_in_pipe > 0);
-  	
+	write_to_pipe <= (pipe_has_data or (not unload_register_ready));
+	unload_from_pipe <= pipe_has_data;
+
+	unload_register_ready <= (pop_req_from_unload_register = '1');
+ 
+	-- if pipe does not have data, then we will be bypassing write-data straight
+	-- to the unload-register, if it is ready to accept stuff.
+	push_req(0) <= write_req when write_to_pipe else '0';
+	write_ack   <= push_ack(0);
+
+	pop_ack_to_unload_register <= pop_ack(0) when unload_from_pipe else write_req;
+	pop_req(0)  <= pop_req_from_unload_register;
+	data_to_unload_register <= pipe_data_out when unload_from_pipe else write_data;
+
   	-- the input pipe.
   	bufPipe : PipeBase generic map (
         	name =>  name & "-blocking_read-bufPipe",
@@ -104,7 +131,7 @@ begin  -- default_arch
         	data_width => data_width,
         	lifo_mode  => false,
 		shift_register_mode => false,
-        	depth      => buffer_size,
+        	depth      => buffer_size - 1,
 		full_rate  => full_rate)
       	port map (
         	read_req   => pop_req,
@@ -115,168 +142,29 @@ begin  -- default_arch
         	write_data => write_data,
         	clk        => clk,
         	reset      => reset);
+
+   end generate bufGt1;
 	
-		write_ack <= push_ack(0);
-  	
-	-- FSM
-  	--   Two states: Idle, Waiting
-  	process(clk,fsm_state, unload_req, pipe_has_data, push_ack, pop_ack, write_req, write_data, pipe_data_out)
-     		variable nstate: UnloadFsmState;
-     		variable loadv : boolean;
-     		variable pop_reqv, push_reqv: std_logic;
-     		variable datav: std_logic_vector(data_width-1 downto 0);
-        begin
-     		nstate :=  fsm_state;
 
-     		pop_reqv   := '0';
-     		push_reqv  := write_req;
+   bufLte1: if (buffer_size <= 1) generate
+	data_to_unload_register <= write_data;
+	pop_ack_to_unload_register <= write_req;
+	write_ack  <= pop_req_from_unload_register;
+   end generate bufLte1;
 
-     		loadv := false;
-     		datav := (others => '0');
-  		
-     		case fsm_state is
-         		when idle => 
-               			if(unload_req) then
-               	 			pop_reqv := '1';   
-                 			if (pop_ack(0) = '1') then
-		    			-- load output register.
-		    				loadv := true;
-		    				datav := pipe_data_out;
-		 			elsif ((not pipe_has_data) and (write_req = '1')) then
-						loadv := true;
-						datav := write_data;
-						-- write-data forwarded to output, don't push into queue.
-						push_reqv := '0';
-					elsif (nonblocking_read_flag) then
-						loadv := true; -- load zero into output register.
-		 			else 
-		        			-- desire to unload, but nothing present.
-						nstate := waiting;
-		 			end if;
-               			end if;
-	 		when waiting =>
-				pop_reqv := '1';
-	        		if(pop_ack(0) = '1') then
-		    			-- ack the unload-req.
-		    			loadv := true;
-		    			datav := pipe_data_out;
-		    			nstate := idle;
-				elsif ((not pipe_has_data) and (write_req = '1')) then
-		    			-- lets not add an in->out combinational
-		    			-- path which can really bite us later.
-
-		    			loadv := true;
-		    			datav := write_data;
-		    			push_reqv := '0';
-		    			nstate := idle;
-				end if;
-     		end case;
- 
-     		pop_req(0) <= pop_reqv;
-     		push_req(0) <= push_reqv;
-		
-     		load_reg <= loadv;
-     		output_register_prereg <= datav;
-		
-     		if(clk'event and clk = '1') then
-			if(reset = '1') then
-				fsm_state <= idle;
-				unload_ack <= false;
-           			read_data <= (others => '0');
-			else
-				fsm_state <= nstate;
-				unload_ack <= loadv;
-				if(loadv) then
-           				read_data <= datav;
-        			end if;
-			end if;
-		
-     		end if;
-  	end process;
-
-  end generate bufGt0;
-
-  --
-  -- buffer_size = 0 means we want a fast write_data->read_data path
-  -- with the UnloadBuffer just doing protocol conversion.
-  --
-  bufEq0: if buffer_size = 0 generate
-     bypassBlock: block
-        signal bypass_flag: Boolean;
-	signal write_data_reg: std_logic_vector(data_width-1 downto 0);
-        -- delayed and immediate versions of unload-ack
-	-- corresponding to the two possible unload scenarios.
-	signal unload_ack_d, unload_ack_c: Boolean;
-     begin
-    
-	-- FSM
-  	--   Two states: Idle, Waiting
-  	process(clk,fsm_state, unload_req, pipe_has_data, push_ack, pop_ack, write_req, write_data, pipe_data_out)
-     		variable nstate: UnloadFsmState;
-     		variable loadv, bypassv : boolean;
-     		variable write_ackv: std_logic;
-     		variable datav: std_logic_vector(data_width-1 downto 0);
-        begin
-     		nstate :=  fsm_state;
-     		write_ackv := '0';
-
-     		loadv := false;
-	 	bypassv := false;
-     		datav := (others => '0');
-  		
-     		case fsm_state is
-         		when idle => 
-               			if(unload_req) then
-					write_ackv := '1';
-		 			if (write_req = '1') then
-						loadv := true;
-						datav := write_data;
-					elsif (nonblocking_read_flag) then
-						loadv := true; -- load zero into output register.
-		 			else 
-		        			-- desire to unload, but nothing present.
-						nstate := waiting;
-		 			end if;
-               			end if;
-	 		when waiting =>
-		    		write_ackv := '1';
-				if (write_req = '1') then
-		    			loadv := true;
-					bypassv := true;
-		    			datav := write_data;
-		    			nstate := idle;
-				end if;
-				-- if unload-req is true, stay here.
-				-- serve the unload in the next cycle.
-				if(unload_req) then
-					nstate := waiting;
-				end if;
-     		end case;
- 
-     		write_ack <= write_ackv;
-     		load_reg <= loadv;
-                unload_ack_c <= (loadv and bypassv); -- bypass? then unload_ack immediately.
-		bypass_flag <= bypassv;
-     		output_register_prereg <= datav;
-		
-     		if(clk'event and clk = '1') then
-			if(reset = '1') then
-				fsm_state <= idle;
-				unload_ack_d <= false;
-           			write_data_reg <= (others => '0');
-			else
-				fsm_state <= nstate;
-				-- not bypass? delay unload_ack.
-				unload_ack_d <= (loadv and (not bypassv));
-				if(loadv) then
-           				write_data_reg <= datav;
-        			end if;
-			end if;
-     		end if;
-  	end process;
-        read_data <= write_data when bypass_flag else write_data_reg;
-	unload_ack <= unload_ack_c or unload_ack_d;
-    end block;
-  end generate bufEq0;
+   ulReg: UnloadRegister 
+			generic map (name => name & "-unload-register",
+					data_width => data_width,
+						nonblocking_read_flag => nonblocking_read_flag)
+			port map (
+					write_data => data_to_unload_register,
+					write_req => pop_ack_to_unload_register,
+					write_ack => pop_req_from_unload_register,
+					unload_req => unload_req,
+					unload_ack => unload_ack,
+					read_data => read_data,
+					clk => clk,  reset => reset
+				);
+							
 
 end default_arch;

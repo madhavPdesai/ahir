@@ -1,8 +1,10 @@
 $pipe out_data : $uint<32> $depth 2
 $pipe in_data : $uint<32> $depth 2
 $pipe mid_pipe_0 : $uint<32> $depth 0 $p2p 
-$pipe mid_pipe_1 : $uint<32> $depth 16 $p2p 
-$pipe mid_pipe_2 : $uint<32> $depth 0 $p2p
+$pipe mid_pipe_1 : $uint<32> $depth 1 $p2p 
+$pipe mid_pipe_2 : $uint<32> $depth 2 $p2p
+$pipe mid_pipe_3 : $uint<32> $depth 8 $p2p
+$pipe mid_pipe_4 : $uint<32> $depth 16 $p2p
 
 $module [p2p_check_daemon] $in() $out () $is
 {
@@ -20,7 +22,13 @@ $module [p2p_check_daemon] $in() $out () $is
 		mid_pipe_2 := CMD_1
 		CMD_2 := mid_pipe_2
 
-		out_data :=  CMD_2
+		mid_pipe_3 := CMD_2
+		CMD_3 := mid_pipe_3
+
+		mid_pipe_4 := CMD_3
+		CMD_4 := mid_pipe_4
+
+		out_data :=  CMD_4
 		$while 1
 	}
 }

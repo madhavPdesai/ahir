@@ -288,25 +288,14 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				(w_root->Is_Phi_Statement() || (w_root->Is_Expression() && 
 				   (((AaExpression*)w_root)->Get_Associated_Statement() != NULL) &&
 					((AaExpression*)w_root)->Get_Associated_Statement()->Is_Phi_Statement()));
-		bool w_root_is_input_interface = false;
-		if(w_root && w_root->Is_Expression())
-			w_root_is_input_interface = ((AaExpression*)w_root)->Is_Interface_Object_Reference() && 
-										!(((AaExpression*)w_root)->Get_Is_Target());
-		else if(w_root && w_root->Is_Interface_Object())
-			w_root_is_input_interface = ((AaInterfaceObject*)w_root)->Get_Is_Input();
-			
-
-		AaScope* w_root_scope = 
-			((w_root && w_root->Is_Expression()) ? ((AaExpression*) w_root)->Get_Scope()
-				: ((w_root && w_root->Is_Statement()) ? ((AaStatement*) w_root)->Get_Scope() : NULL));
-		bool w_root_is_out_of_scope = (w_root != NULL) || (w_root_scope != this->Get_Scope());
 
 		// ignore out of scope dependencies.
-		bool ignore_w_root = w_root_is_out_of_scope;
+		bool ignore_w_root = (w_root == NULL) || (visited_elements.find(w_root) == visited_elements.end());
 
 		if(ignore_w_root)
 		{
-			ofile << "// ignored out-of-scope/interface w_root " << w_root->To_String() << endl;
+			if(w_root != NULL)
+				ofile << "// ignored out-of-scope w_root " << w_root->To_String() << endl;
 		}
 		else
 		{
@@ -360,12 +349,22 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						//
 					{
 
+
 						if(r_phi == NULL)
 						{
 
 							if(r_index <= w_index)
 							{
-								__J(__UST(w_root), __SCT(r_root));
+
+								// Aggressive timing and use of registers implies that
+								// this dependency must be delayed in order to prevent
+								// combinational cycles.	
+								string delay_trans_name = 
+									__SCT(r_root) + "_delay_to_" + __UST(w_root) + "_for_" + 
+											this->Get_VC_Name();
+								ofile << "$T [" << delay_trans_name << "] $delay" << endl;
+								__J(delay_trans_name, __SCT(r_root));
+								__J(__UST(w_root), delay_trans_name);
 							}
 							else
 							{
@@ -374,7 +373,15 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						}
 						else
 						{
-							__J(__UST(w_root), __SCT(r_phi));
+							// Aggressive timing and use of registers implies that
+							// this dependency must be delayed in order to prevent
+							// combinational cycles.	
+							string delay_trans_name = 
+								__SCT(r_phi) + "_delay_to_" + __UST(w_root) + "_for_" + 
+								this->Get_VC_Name();
+							ofile << "$T [" << delay_trans_name << "] $delay" << endl;
+							__J(delay_trans_name, __SCT(r_phi));
+							__J(__UST(w_root), delay_trans_name);
 						}
 
 						// The completion of "b = (d+e)" reenables the

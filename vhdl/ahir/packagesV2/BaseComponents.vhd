@@ -2344,6 +2344,19 @@ package BaseComponents is
           reset: in std_logic);
   end component UnloadBuffer;
 
+  component UnloadRegister is
+    generic (name: string; 
+		data_width : integer ; 
+		nonblocking_read_flag : boolean := false);
+    port ( write_req: in std_logic;
+           write_ack: out std_logic;
+           write_data: in std_logic_vector(data_width-1 downto 0);
+           unload_req: in boolean;
+           unload_ack: out boolean;
+           read_data: out std_logic_vector(data_width-1 downto 0);
+           clk : in std_logic;
+           reset: in std_logic);
+  end component UnloadRegister;
   -----------------------------------------------------------------------------------------
   --  System Ports
   -----------------------------------------------------------------------------------------
@@ -2439,7 +2452,7 @@ package BaseComponents is
 
   component BypassRegister is
 	generic (data_width: integer; bypass: boolean);
-	port (clk: in std_logic; 
+	port (clk, reset: in std_logic; 
 		enable: in boolean; 
 		din: in std_logic_vector(data_width-1 downto 0);
 		q: out std_logic_vector(data_width-1 downto 0));

@@ -7,7 +7,7 @@ $pipeline $depth 8 $fullrate $operator $module
 	$out (dout: $uint<32>) $is
 {
 	a := (din + 1)  // din +  1
-	b := (din + a)  // 2din + 1
+	b := (din + a) $buffering 2  // 2din + 1
 	c := (din + b)  // 3din + 1
 	e := (b + c)	// 5din + 2
 	f := (din + e)  // 6din + 2

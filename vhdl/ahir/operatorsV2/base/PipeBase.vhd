@@ -172,23 +172,6 @@ begin  -- default_arch
 
   Shallow: if (not signal_mode) and shallow_flag and (not lifo_mode) generate
 
-    singleBufferedFullRateCase: if((depth = 1) and full_rate) generate
-       preg: PipelineRegister
-		generic map (name => name & "-preg", 
-				data_width => data_width)
-		port map(
-        		write_req   => pipe_req,
-        		write_ack => pipe_ack,
-        		write_data  => pipe_data,
-        		read_req  => pipe_req_repeated,
-        		read_ack  => pipe_ack_repeated,
-        		read_data => pipe_data_repeated,
-        		clk      => clk,
-        		reset    => reset
-			);
-    end generate singleBufferedFullRateCase;
-
-    notSingleBufferedOrFullRateCase: if ((not full_rate) or (depth /= 1)) generate
       queue : QueueBase generic map (	
         name => name & "-queue",	
         queue_depth => depth,
@@ -202,7 +185,7 @@ begin  -- default_arch
           data_out => pipe_data_repeated,
           clk      => clk,
           reset    => reset);
-    end generate notSingleBufferedOrFullRateCase; 
+
   end generate Shallow;
 
   DeepFifo: if (not signal_mode) and (not shallow_flag) and (not lifo_mode) generate
