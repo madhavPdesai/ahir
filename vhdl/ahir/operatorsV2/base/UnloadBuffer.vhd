@@ -85,10 +85,18 @@ architecture default_arch of UnloadBuffer is
   signal write_to_pipe: boolean;
   signal unload_from_pipe : boolean;
 
+  --
+  -- try to save a slot if buffer size is 1... this
+  -- tries to prevent a 100% wastage of resources
+  -- and allows us to use 2-depth buffers to cut long
+  -- combinational paths.
+  --
+  constant save_slot_flag : boolean := (buffer_size = 1);
+
 begin  -- default_arch
 
 
-  bufGt1: if buffer_size > 1 generate
+  bufGt1: if buffer_size > 0 generate
 
 		-- count number of elements in pipe.
 	process(clk, reset)
@@ -131,7 +139,8 @@ begin  -- default_arch
         	data_width => data_width,
         	lifo_mode  => false,
 		shift_register_mode => false,
-        	depth      => buffer_size - 1,
+        	depth      => buffer_size,
+		save_slot  => save_slot_flag,
 		full_rate  => full_rate)
       	port map (
         	read_req   => pop_req,
@@ -146,7 +155,7 @@ begin  -- default_arch
    end generate bufGt1;
 	
 
-   bufLte1: if (buffer_size <= 1) generate
+   bufLte1: if (buffer_size = 0) generate
 	data_to_unload_register <= write_data;
 	pop_ack_to_unload_register <= write_req;
 	write_ack  <= pop_req_from_unload_register;

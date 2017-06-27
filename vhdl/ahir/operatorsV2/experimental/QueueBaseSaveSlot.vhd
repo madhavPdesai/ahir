@@ -36,8 +36,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 
-entity QueueBase is
-  generic(name : string; queue_depth: integer := 1; data_width: integer := 32;
+-- Save a slot, introduce a pop_req -> push_ack path.
+entity QueueBaseSaveSlot is
+  generic(name : string; queue_depth: integer := 2; data_width: integer := 32;
 		save_one_slot: boolean := false);
   port(clk: in std_logic;
        reset: in std_logic;
@@ -47,10 +48,13 @@ entity QueueBase is
        data_out: out std_logic_vector(data_width-1 downto 0);
        pop_ack : out std_logic;
        pop_req: in std_logic);
-end entity QueueBase;
+end entity QueueBaseSaveSlot;
 
-architecture behave of QueueBase is
+architecture behave of QueueBaseSaveSlot is
 
+
+
+  constant physical_queue_depth: integer := queue_depth-1;
   type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
   function Incr(x: integer; M: integer) return integer is
   begin
@@ -64,10 +68,13 @@ architecture behave of QueueBase is
 
 begin  -- SimModel
 
+  assert (queue_depth > 0) report "QueueBaseSaveSlot " & name & " must have at least one slot"
+			severity error;
+
  --
  -- 0-depth queue is just a set of wires.
  --
- triv: if queue_depth = 0 generate
+ triv: if physical_queue_depth = 0 generate
 	push_ack <= pop_req;
 	pop_ack  <= push_req;
 	data_out <= data_in;
@@ -75,30 +82,30 @@ begin  -- SimModel
 
 
 
- qDGt0: if queue_depth > 0 generate 
+ qDGt0: if physical_queue_depth > 0 generate 
   NTB: block 
-  	signal queue_array : QueueArray(queue_depth-1 downto 0);
-  	signal read_pointer, write_pointer : integer range 0 to queue_depth-1;
-  	signal incr_write_pointer, incr_read_pointer : integer range 0 to queue_depth-1;
-  	signal queue_size : integer range 0 to queue_depth;
+  	signal queue_array : QueueArray(physical_queue_depth-1 downto 0);
+  	signal read_pointer, write_pointer : integer range 0 to physical_queue_depth-1;
+  	signal incr_write_pointer, incr_read_pointer : integer range 0 to physical_queue_depth-1;
+  	signal queue_size : integer range 0 to physical_queue_depth;
   begin
  
-    assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
-    assert (queue_size < (3*queue_depth/4)) report "Queue " & name & " is three-quarters-full." severity note;
-    assert (queue_size < (queue_depth/2)) report "Queue " & name & " is half-full." severity note;
-    assert (queue_size < (queue_depth/4)) report "Queue " & name & " is quarter-full." severity note;
+    assert (queue_size < physical_queue_depth) report "Queue " & name & " is full." severity note;
+    assert (queue_size < (3*physical_queue_depth/4)) report "Queue " & name & " is three-quarters-full." severity note;
+    assert (queue_size < (physical_queue_depth/2)) report "Queue " & name & " is half-full." severity note;
+    assert (queue_size < (physical_queue_depth/4)) report "Queue " & name & " is quarter-full." severity note;
 
-    qD1: if (queue_depth = 1) generate
+    qD1: if (physical_queue_depth = 1) generate
      incr_read_pointer <= read_pointer;
      incr_write_pointer <= write_pointer;
     end generate qD1;
 
-    qDG1: if (queue_depth > 1) generate
-     incr_read_pointer <= Incr(read_pointer, queue_depth-1);
-     incr_write_pointer <= Incr(write_pointer, queue_depth-1);
+    qDG1: if (physical_queue_depth > 1) generate
+     incr_read_pointer <= Incr(read_pointer, physical_queue_depth-1);
+     incr_write_pointer <= Incr(write_pointer, physical_queue_depth-1);
     end generate qDG1;
 
-    push_ack <= '1' when (queue_size < queue_depth) else '0';
+    push_ack <= '1' when (queue_size < physical_queue_depth) or (pop_req = '1') else '0';
     pop_ack  <= '1' when (queue_size > 0) else '0';
 
     -- bottom pointer gives the data in FIFO mode..
@@ -106,9 +113,9 @@ begin  -- SimModel
   
     -- single process
     process(clk, reset, read_pointer, write_pointer, incr_read_pointer, incr_write_pointer, queue_size, push_req, pop_req)
-      variable qsize : integer range 0 to queue_depth;
+      variable qsize : integer range 0 to physical_queue_depth;
       variable push,pop : boolean;
-      variable next_read_ptr,next_write_ptr : integer range 0 to queue_depth-1;
+      variable next_read_ptr,next_write_ptr : integer range 0 to physical_queue_depth-1;
     begin
 
       qsize := queue_size;
@@ -117,7 +124,7 @@ begin  -- SimModel
       next_read_ptr := read_pointer;
       next_write_ptr := write_pointer;
       
-      if((qsize < queue_depth) and push_req = '1') then
+      if (((pop_req = '1') or (qsize < physical_queue_depth)) and push_req = '1') then
           push := true;
       end if;
   

@@ -55,6 +55,7 @@ entity PipeBase is
            depth: integer := 1;
 	   signal_mode: boolean := false;
            shift_register_mode: boolean := false;
+	   save_slot: boolean := false;
 	   full_rate: boolean);
   port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
@@ -172,6 +173,24 @@ begin  -- default_arch
 
   Shallow: if (not signal_mode) and shallow_flag and (not lifo_mode) generate
 
+     saveSlot: if save_slot and (depth > 0) generate
+      queue : QueueBaseSaveSlot generic map (	
+        name => name & "-queue",	
+        queue_depth => depth,
+        data_width       => data_width)
+        port map (
+          push_req   => pipe_req,
+          push_ack => pipe_ack,
+          data_in  => pipe_data,
+          pop_req  => pipe_req_repeated,
+          pop_ack  => pipe_ack_repeated,
+          data_out => pipe_data_repeated,
+          clk      => clk,
+          reset    => reset);
+     end generate saveSlot;
+
+     notSaveSlot: if (not save_slot) or (depth = 0) generate
+
       queue : QueueBase generic map (	
         name => name & "-queue",	
         queue_depth => depth,
@@ -185,6 +204,7 @@ begin  -- default_arch
           data_out => pipe_data_repeated,
           clk      => clk,
           reset    => reset);
+     end generate notSaveSlot;
 
   end generate Shallow;
 
