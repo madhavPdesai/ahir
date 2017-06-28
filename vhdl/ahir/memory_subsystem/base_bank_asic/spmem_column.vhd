@@ -105,7 +105,7 @@ begin
   n_rows_gt_1: if (n_rows > 1) generate
 	row_gt_1_blk: block
 	  
-  	   signal decoded_CS, decoded_CS_d: std_logic_vector(nrows-1 downto 0):= (others=>'1');
+  	   signal decoded_CS, decoded_CS_d: std_logic_vector(n_rows-1 downto 0):= (others=>'1');
   	   signal dataout_array : WordArray(n_rows-1 downto 0);
 
 	  --chipselect is made low only when enable is high and reset is low.
@@ -139,7 +139,7 @@ begin
 	  end generate row_gen;
 
   	  -- mux.
-          process(data_out_array, decoded_CS_d)
+          process(dataout_array, decoded_CS_d)
 		variable sel_data_var: std_logic_vector(g_base_bank_data_width-1 downto 0);
 	  begin
 		sel_data_var := (others => '0');

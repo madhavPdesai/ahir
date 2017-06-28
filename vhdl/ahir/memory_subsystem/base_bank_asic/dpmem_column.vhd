@@ -190,7 +190,7 @@ begin
 	  end generate row_gen;
 
 	-- muxes.
-          process(data_out_array_0, decoded_CS_0_d)
+          process(dataout_array_0, decoded_CS_0_d)
 		variable sel_data_var: std_logic_vector(g_base_bank_data_width-1 downto 0);
 	  begin
 		sel_data_var := (others => '0');
@@ -201,7 +201,7 @@ begin
 		end loop;
 		dataout_0 <= sel_data_var;
 	  end process;
-          process(data_out_array_1, decoded_CS_1_d)
+          process(dataout_array_1, decoded_CS_1_d)
 		variable sel_data_var: std_logic_vector(g_base_bank_data_width-1 downto 0);
 	  begin
 		sel_data_var := (others => '0');
