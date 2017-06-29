@@ -1,5 +1,7 @@
-$pipe in_data  : $uint<32> $signal
-$pipe out_data : $uint<32> $signal
+$pipe in_data  : $uint<32>  
+$pipe out_data : $uint<32> 
+$pipe TMP : $uint<32> $depth 1 $signal // non-volatile signal.
+$pipe VTMP : $uint<32> $depth 0 $signal // volatile signal.
 
 
 $module [signal_io_daemon] $in() $out () $is
@@ -11,7 +13,9 @@ $module [signal_io_daemon] $in() $out () $is
 		$merge $entry $loopback $endmerge
 
 		A := in_data
-		out_data := A
+		$volatile VTMP := A
+		TMP := A
+		out_data := (TMP | VTMP)
 
 		$while 1
 	}

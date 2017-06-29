@@ -90,8 +90,19 @@ begin  -- default_arch
   -- in signal mode, the pipe is just a flag
   -- write always succeeds.
   pipe_ack <= '1';
-  process(clk,reset) 
-  begin
+
+  -- in volatile-mode, the signal follws the input
+  -- as long as the request is maintained else
+  -- it shows a blank (0)
+  VolatileGen: if volatile_flag generate
+	read_data <= pipe_data when pipe_req = '1' else (others => '0');
+  end generate VolatileGen;
+
+  -- in non-volatile mode, the signal is a flag, 
+  -- set by pipe-reg.
+  nonVolatileGen: if not volatile_flag generate
+     process(clk,reset) 
+     begin
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			read_data_reg <= (others => '0');	
@@ -101,13 +112,9 @@ begin  -- default_arch
 			end if;
 		end if;
 	end if;
-  end process;
+     end process;
 
-  VolatileGen: if volatile_flag generate
-	read_data <= pipe_data when pipe_req = '1' else read_data_reg;
-  end generate VolatileGen;
-  nonVolatileGen: if not volatile_flag generate
-	read_data <= read_data_reg;
+     read_data <= read_data_reg;
   end generate nonVolatileGen;
 
 
