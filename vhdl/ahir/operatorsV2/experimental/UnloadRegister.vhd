@@ -75,15 +75,17 @@ begin  -- default_arch
   		
      		case fsm_state is
          		when Idle => 
-               			if(unload_req and (nonblocking_read_flag or (write_req = '1'))) then
+               			if(unload_req) then
 					write_ack_v := '1';
-					load_v := true;
-					if(write_req = '0') then
+					if (write_req = '1') then
+						load_v := true;
+					elsif nonblocking_read_flag then
+						load_v := true;
 						data_v := (others => '0'); -- non-blocking!
+					else
+						nstate := Waiting;
 					end if;
-				elsif unload_req then
-					nstate := Waiting;
-               			end if;
+				end if;
 	 		when Waiting =>
 				write_ack_v := '1';
 				if(write_req = '1') then
