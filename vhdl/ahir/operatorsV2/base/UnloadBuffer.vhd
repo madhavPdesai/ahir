@@ -92,6 +92,7 @@ architecture default_arch of UnloadBuffer is
   -- combinational paths.
   --
   constant save_slot_flag : boolean := (buffer_size = 1);
+  constant bypass_flag_to_ureg : boolean := (buffer_size = 0);
 
 begin  -- default_arch
 
@@ -164,7 +165,8 @@ begin  -- default_arch
    ulReg: UnloadRegister 
 			generic map (name => name & "-unload-register",
 					data_width => data_width,
-						nonblocking_read_flag => nonblocking_read_flag)
+						bypass_flag => bypass_flag_to_ureg,
+						   nonblocking_read_flag => nonblocking_read_flag)
 			port map (
 					write_data => data_to_unload_register,
 					write_req => pop_ack_to_unload_register,

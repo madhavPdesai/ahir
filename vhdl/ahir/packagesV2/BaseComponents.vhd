@@ -2360,6 +2360,7 @@ package BaseComponents is
   component UnloadRegister is
     generic (name: string; 
 		data_width : integer ; 
+		bypass_flag: boolean := false;
 		nonblocking_read_flag : boolean := false);
     port ( write_req: in std_logic;
            write_ack: out std_logic;

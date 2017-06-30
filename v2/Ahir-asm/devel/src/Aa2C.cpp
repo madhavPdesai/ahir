@@ -57,6 +57,15 @@ void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, 
 {
 	int wsize;
 	int tsize = pipe_type->Size();
+
+	// pipes will have a minimum depth of 1.
+	if(depth <= 0)
+	{
+		cerr << "Warning: pipe " + pipe_name + " depth is specified to be 0, taken as 1." << endl;
+	}
+	int corrected_depth = (depth <= 0) ? 1 : depth;
+
+
 	if((tsize == 8) || (tsize == 16) || (tsize == 32) || (tsize == 64))
 		wsize = tsize;
 	else
@@ -70,7 +79,7 @@ void Print_C_Pipe_Registration(string pipe_name, AaType* pipe_type, int  depth, 
 	}
 	else
 	{
-		ofile << "register_pipe(\"" << pipe_name << "\", " <<  (nwords*depth)
+		ofile << "register_pipe(\"" << pipe_name << "\", " <<  (nwords*corrected_depth)
 			<< ", " << wsize << ", " <<   (lifo_mode ? 1 : (noblock_mode ? 2 : 0)) << ");" << __endl__;
 
 	}

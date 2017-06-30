@@ -230,6 +230,7 @@ int main(int argc, char* argv[])
 			string q_pname = "\"" + pname + "\"";
 			int W = sys->Get_Input_Pipe_Width(pname);
 			int D = sys->Get_Input_Pipe_Depth(pname);
+			if (D <= 0) D = 1;
 			int eW = (((W == 8) || (W == 16) || (W == 32) || (W ==64)) ? W : 8);
 			int eD = D*((((W/eW)*eW) == W) ? W/eW  : (W/eW)+1);
 			if(sys->Is_Signal(pname))
@@ -249,6 +250,7 @@ int main(int argc, char* argv[])
 			string q_pname = "\"" + pname + "\"";
 			int W = sys->Get_Output_Pipe_Width(pname);
 			int D = sys->Get_Output_Pipe_Depth(pname);
+			if (D <= 0) D = 1;
 			int eW = (((W == 8) || (W == 16) || (W == 32) || (W ==64)) ? W : 8);
 			int eD = D*((((W/eW)*eW) == W) ? W/eW  : (W/eW)+1);
 			if(sys->Is_Signal(pname))
@@ -267,6 +269,7 @@ int main(int argc, char* argv[])
 			string q_pname = "\"" + pname + "\"";
 			int W = sys->Get_Internal_Pipe_Width(pname);
 			int D = sys->Get_Internal_Pipe_Depth(pname);
+			if (D <= 0) D = 1;
 			int eW = (((W == 8) || (W == 16) || (W == 32) || (W ==64)) ? W : 8);
 			int eD = D*((((W/eW)*eW) == W) ? W/eW  : (W/eW)+1);
 			if(sys->Is_Signal(pname))
