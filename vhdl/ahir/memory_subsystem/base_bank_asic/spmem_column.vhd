@@ -70,7 +70,7 @@ architecture struct of spmem_column is
 --fixing the size of address to maximum of addr_width, cut_width
   constant resized_addr_width: integer := Maximum(g_addr_width, g_base_bank_addr_width);
   signal resized_addrin: std_logic_vector(resized_addr_width-1 downto 0);  
-  type WordArray is array  ( natural range <> ) of std_logic_vector (g_base_bank_addr_width-1 downto 0);
+  type WordArray is array  ( natural range <> ) of std_logic_vector (g_base_bank_data_width-1 downto 0);
   signal ZZZ_1 : std_logic := '0';
 
 begin
@@ -105,25 +105,25 @@ begin
   n_rows_gt_1: if (n_rows > 1) generate
 	row_gt_1_blk: block
 	  
-  	   signal decoded_CS, decoded_CS_d: std_logic_vector(n_rows-1 downto 0):= (others=>'1');
+  	   signal decoded_CSB, decoded_CSB_d: std_logic_vector(n_rows-1 downto 0):= (others=>'1');
   	   signal dataout_array : WordArray(n_rows-1 downto 0);
 
 	  --chipselect is made low only when enable is high and reset is low.
 	  --memory will not be read or written when enable is low.
 	begin
 	  process(addrin, enable, clk, reset)
-	     variable decoded_CS_var: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
+	     variable decoded_CSB_var: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
 	    begin
 		if (enable = '1' and reset = '0') then
-		  decoded_CS_var := MemDecoder(resized_addrin(resized_addr_width-1
+		  decoded_CSB_var := MemDecoder(resized_addrin(resized_addr_width-1
 		  downto resized_addr_width-Ceil_log2(n_rows)));
 		else 
-		  decoded_CS_var :=(others=>'1');
+		  decoded_CSB_var :=(others=>'1');
 		end if;
 
-		decoded_CS <= decoded_CS_var;
+		decoded_CSB <= decoded_CSB_var;
 		if(clk'event and clk = '1') then
-			decoded_CS_d <= decoded_CS_var;
+			decoded_CSB_d <= decoded_CSB_var;
 		end if;
 	  end process;
 	  row_gen: for j in 0 to n_rows-1 generate
@@ -133,18 +133,18 @@ begin
 				CE => clk,
 				WEB => writebar,
 				OEB => ZZZ_1,
-				CSB => decoded_CS(j),
+				CSB => decoded_CSB(j),
 				I => datain,
 				O => dataout_array(j));
 	  end generate row_gen;
 
   	  -- mux.
-          process(dataout_array, decoded_CS_d)
+          process(dataout_array, decoded_CSB_d)
 		variable sel_data_var: std_logic_vector(g_base_bank_data_width-1 downto 0);
 	  begin
 		sel_data_var := (others => '0');
 		for I in 0 to n_rows-1 loop
-			if(decoded_CS_d(I) = '1') then
+			if(decoded_CSB_d(I) = '0') then
 				sel_data_var := dataout_array(I);
 			end if;
 		end loop;
