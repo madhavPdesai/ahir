@@ -124,10 +124,11 @@ begin  -- default_arch
   yesBypass: if bypass_flag generate
      bypassBlock: block
         signal bypass_reg_flag: Boolean;
-	signal write_data_reg: std_logic_vector(data_width-1 downto 0);
+	signal write_data_reg, write_data_prereg: std_logic_vector(data_width-1 downto 0);
+
         -- delayed and immediate versions of unload-ack
 	-- corresponding to the two possible unload scenarios.
-	signal unload_ack_d, unload_ack_c: Boolean;
+	signal unload_ack_sig: boolean;
      begin
     
 	-- FSM
@@ -148,53 +149,48 @@ begin  -- default_arch
      		case fsm_state is
          		when idle => 
                			if(unload_req) then
-					write_ackv := '1';
-		 			if (write_req = '1') then
-						loadv := true;
-						datav := write_data;
-					elsif (nonblocking_read_flag) then
-						loadv := true; -- load zero into output register.
-		 			else 
-		        			-- desire to unload, but nothing present.
-						nstate := waiting;
-		 			end if;
+					nstate := waiting;
                			end if;
 	 		when waiting =>
 		    		write_ackv := '1';
-				if (write_req = '1') then
-		    			loadv := true;
-					bypassv := true;
+
+				if(write_req = '1') then
 		    			datav := write_data;
-		    			nstate := idle;
 				end if;
+
+				if nonblocking_read_flag then
+					bypassv := true;
+					loadv   := true;
+				elsif (write_req = '1') then
+					bypassv := true;
+					loadv   := true;
+				end if;
+
 				-- if unload-req is true, stay here.
 				-- serve the unload in the next cycle.
-				if(unload_req) then
-					nstate := waiting;
+				if(not unload_req) then
+					nstate := idle;
 				end if;
      		end case;
  
      		write_ack <= write_ackv;
-                unload_ack_c <= (loadv and bypassv); -- bypass? then unload_ack immediately.
-		bypass_reg_flag <= bypassv;
+                unload_ack_sig <= bypassv;
+		write_data_prereg <= datav;
 		
      		if(clk'event and clk = '1') then
 			if(reset = '1') then
 				fsm_state <= idle;
-				unload_ack_d <= false;
            			write_data_reg <= (others => '0');
 			else
 				fsm_state <= nstate;
-				-- not bypass? delay unload_ack.
-				unload_ack_d <= (loadv and (not bypassv));
 				if(loadv) then
            				write_data_reg <= datav;
         			end if;
 			end if;
      		end if;
   	end process;
-        read_data <= write_data when bypass_reg_flag else write_data_reg;
-	unload_ack <= unload_ack_c or unload_ack_d;
+        read_data <= write_data_prereg when unload_ack_sig else write_data_reg;
+	unload_ack <= unload_ack_sig;
     end block;
   end generate yesBypass;
 end default_arch;
