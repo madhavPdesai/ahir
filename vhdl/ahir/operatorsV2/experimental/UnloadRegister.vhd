@@ -121,7 +121,7 @@ begin  -- default_arch
   -- buffer_size = 0 means we want a fast write_data->read_data path
   -- with the UnloadBuffer just doing protocol conversion.
   --
-  yesBypass: if bypass_flag generate
+  yesBypassNonBlocking: if bypass_flag and nonblocking_read_flag generate
      bypassBlock: block
         signal bypass_reg_flag: Boolean;
 	signal write_data_reg, write_data_prereg: std_logic_vector(data_width-1 downto 0);
@@ -135,7 +135,7 @@ begin  -- default_arch
   	--   Two states: Idle, Waiting
   	process(clk,fsm_state, unload_req, write_req, write_data)
      		variable nstate: FsmState;
-     		variable loadv, bypassv : boolean;
+     		variable loadv : boolean;
      		variable write_ackv: std_logic;
      		variable datav: std_logic_vector(data_width-1 downto 0);
         begin
@@ -143,38 +143,30 @@ begin  -- default_arch
      		write_ackv := '0';
 
      		loadv := false;
-	 	bypassv := false;
      		datav := (others => '0');
   		
      		case fsm_state is
          		when idle => 
                			if(unload_req) then
-					nstate := waiting;
+					nstate := Waiting;
                			end if;
-	 		when waiting =>
+	 		when Waiting =>
 		    		write_ackv := '1';
+				loadv   := true;
 
+				-- write-data is 0 unless write-reg='1'.
 				if(write_req = '1') then
 		    			datav := write_data;
 				end if;
 
-				if nonblocking_read_flag then
-					bypassv := true;
-					loadv   := true;
-				elsif (write_req = '1') then
-					bypassv := true;
-					loadv   := true;
-				end if;
 
-				-- if unload-req is true, stay here.
-				-- serve the unload in the next cycle.
 				if(not unload_req) then
-					nstate := idle;
+					nstate := Idle;
 				end if;
      		end case;
  
      		write_ack <= write_ackv;
-                unload_ack_sig <= bypassv;
+                unload_ack_sig <= loadv;
 		write_data_prereg <= datav;
 		
      		if(clk'event and clk = '1') then
@@ -192,5 +184,80 @@ begin  -- default_arch
         read_data <= write_data_prereg when unload_ack_sig else write_data_reg;
 	unload_ack <= unload_ack_sig;
     end block;
-  end generate yesBypass;
+  end generate yesBypassNonBlocking;
+
+  yesBypassBlocking: if bypass_flag and (not nonblocking_read_flag) generate
+     bypassBlock: block
+	type FsmStateBypass is (Idle, Waiting_1, Waiting_2);
+        signal bypass_reg_flag: Boolean;
+	signal write_data_reg, write_data_prereg: std_logic_vector(data_width-1 downto 0);
+
+        -- delayed and immediate versions of unload-ack
+	-- corresponding to the two possible unload scenarios.
+	signal unload_ack_sig: boolean;
+	signal fsm_state_bypass : FsmStateBypass;
+     begin
+    
+	-- FSM
+  	--   Two states: Idle, Waiting
+  	process(clk,fsm_state_bypass, unload_req, write_req, write_data)
+     		variable nstate: FsmStateBypass;
+     		variable loadv : boolean;
+     		variable write_ackv: std_logic;
+     		variable datav: std_logic_vector(data_width-1 downto 0);
+        begin
+     		nstate :=  fsm_state_bypass;
+     		write_ackv := '0';
+
+     		loadv := false;
+		datav := write_data;
+  		
+     		case fsm_state_bypass is
+         		when idle => 
+               			if(unload_req) then
+					nstate := Waiting_1;
+               			end if;
+	 		when Waiting_1 =>
+		    		write_ackv := '1';
+
+				if (write_req = '1') then
+					loadv   := true;
+					if(not unload_req) then
+						nstate := Idle;
+					end if;
+				else
+					nstate := Waiting_2;
+				end if;
+			when Waiting_2 =>
+		    		write_ackv := '1';
+				if(write_req = '1') then
+					loadv := true;
+					if(unload_req) then
+						nstate := Waiting_1;
+					else
+						nstate := Idle;
+					end if;
+				end if;
+     		end case;
+ 
+     		write_ack <= write_ackv;
+                unload_ack_sig <= loadv;
+		write_data_prereg <= datav;
+		
+     		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				fsm_state_bypass <= Idle;
+           			write_data_reg <= (others => '0');
+			else
+				fsm_state_bypass <= nstate;
+				if(loadv) then
+           				write_data_reg <= datav;
+        			end if;
+			end if;
+     		end if;
+  	end process;
+        read_data <= write_data_prereg when unload_ack_sig else write_data_reg;
+	unload_ack <= unload_ack_sig;
+    end block;
+  end generate yesBypassBlocking;
 end default_arch;
