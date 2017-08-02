@@ -1120,6 +1120,7 @@ void AaProgram::Write_C_Model()
 
 
   header_file << "#include <stdlib.h>" << endl;
+  header_file << "#include <unistd.h>" << endl; // for usleep.
   header_file << "#include <assert.h>" << endl;
   header_file << "#include <stdio.h>" << endl;
   header_file << "#include <BitVectors.h>" << endl;

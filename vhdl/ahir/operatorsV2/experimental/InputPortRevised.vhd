@@ -127,6 +127,7 @@ begin
     fsm: block
 	signal fsm_state: FsmState;
 	signal data_reg : std_logic_vector(data_width-1 downto 0);
+	signal latch_sig: boolean;
     begin
 	process(clk, reset, fsm_state, update_req(I),  write_enable(I), write_data(I))
 		variable next_fsm_state: FsmState;
@@ -141,34 +142,32 @@ begin
 		case fsm_state is
 			when Idle  =>
 				if(update_req(I)) then
-					has_room_v := '1';
-					if(write_enable(I) = '1') then
-						latch_v := true;
-						next_data_reg_var := write_data(I);
-					else
-						next_fsm_state := Waiting;
-					end if;
+					next_fsm_state := Waiting;
 				end if;
 			when Waiting =>
+				-- no immediate dependency from update-req to write-ack.
 				has_room_v := '1';
 				if(write_enable(I) = '1') then
 					latch_v := true;
-					next_fsm_state := Idle;
 					next_data_reg_var := write_data(I);
+					if(update_req(I)) then
+						next_fsm_state := Waiting;
+					else
+						next_fsm_state := Idle;
+					end if;
 				end if;
 		end case;
 
-
 		has_room(I) <= has_room_v;
+		latch_sig <= latch_v;
+		update_ack(I) <= latch_v;
 		
 		if(clk'event and clk = '1') then
 			if(reset = '1') then
-				update_ack(I) <= false;
 				fsm_state <= Idle;
 				data_reg <= (others => '0');
 			else
 				fsm_state <= next_fsm_state;
-				update_ack(I) <= latch_v;
 				if(latch_v) then
 					data_reg <= next_data_reg_var;
 				end if;
@@ -178,7 +177,7 @@ begin
 	end process;
 
 	-- read-data I
-	read_data(I) <= data_reg;
+	read_data(I) <= write_data(I) when latch_sig else data_reg;
     end block;
 
   end generate ProTx;
