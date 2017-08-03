@@ -83,28 +83,25 @@ architecture Base of InputPortRevised is
   
   type FsmState is (Idle, Waiting);
    
+  -- to deal with nonblocking case..
   signal oreq_qualified       : std_logic;
   signal oack_qualified       : std_logic;
   signal odata_qualified      : std_logic_vector(data_width-1 downto 0);
 
   constant c_d_0      : std_logic_vector(data_width-1 downto 0) := (others => '0');
 
+  -- bypass if there is only one requester.
+  constant bypass_flag : boolean := (num_reqs = 1);
+
 begin
 
   -----------------------------------------------------------------------------
-  -- non-block/block qualification
+  -- non-block/block qualification.. no need to do it here since nonblock
+  -- functionality is present in UnloadRegister.
   -----------------------------------------------------------------------------
-  noBlk: if (nonblocking_read_flag) generate
-	oreq <= oreq_qualified;
-	oack_qualified <= '1';
-	odata_qualified <= odata when (oack = '1') else c_d_0;
-  end generate noBlk;
-
-  yesBlk: if (not nonblocking_read_flag) generate
-	oreq <= oreq_qualified;
-	oack_qualified <= oack;
-	odata_qualified <= odata;
-  end generate yesBlk;
+  oreq <= oreq_qualified;
+  oack_qualified <= oack;
+  odata_qualified <= odata;
 
 
 
@@ -112,7 +109,6 @@ begin
   -- data register for every requester.
   -----------------------------------------------------------------------------
   ProTx : for I in 0 to num_reqs-1 generate
-
 
     --
     -- Note: for correct functioning of this input port
@@ -123,63 +119,19 @@ begin
     --
     sample_ack(I) <= sample_req(I); -- to maintain illusion of split protocol.
 
-    -- FSM.
-    fsm: block
-	signal fsm_state: FsmState;
-	signal data_reg : std_logic_vector(data_width-1 downto 0);
-	signal latch_sig: boolean;
-    begin
-	process(clk, reset, fsm_state, update_req(I),  write_enable(I), write_data(I))
-		variable next_fsm_state: FsmState;
-		variable has_room_v : std_logic;
-		variable latch_v : boolean;
-		variable next_data_reg_var : std_logic_vector(data_width-1 downto 0);
-	begin
-		next_fsm_state := fsm_state;
-		has_room_v     := '0';
-		latch_v        := false;
-		next_data_reg_var := data_reg;
-		case fsm_state is
-			when Idle  =>
-				if(update_req(I)) then
-					next_fsm_state := Waiting;
-				end if;
-			when Waiting =>
-				-- no immediate dependency from update-req to write-ack.
-				has_room_v := '1';
-				if(write_enable(I) = '1') then
-					latch_v := true;
-					next_data_reg_var := write_data(I);
-					if(update_req(I)) then
-						next_fsm_state := Waiting;
-					else
-						next_fsm_state := Idle;
-					end if;
-				end if;
-		end case;
-
-		has_room(I) <= has_room_v;
-		latch_sig <= latch_v;
-		update_ack(I) <= latch_v;
-		
-		if(clk'event and clk = '1') then
-			if(reset = '1') then
-				fsm_state <= Idle;
-				data_reg <= (others => '0');
-			else
-				fsm_state <= next_fsm_state;
-				if(latch_v) then
-					data_reg <= next_data_reg_var;
-				end if;
-			end if;
-
-		end if;
-	end process;
-
-	-- read-data I
-	read_data(I) <= write_data(I) when latch_sig else data_reg;
-    end block;
-
+    -- the unload-register..
+    ulreg: UnloadRegister
+		generic map (name => name & "-unload-reg",
+				data_width => data_width,
+				bypass_flag => bypass_flag,
+				nonblocking_read_flag => nonblocking_read_flag)	
+		port map (write_req => write_enable(I),
+				write_ack => has_room(I),
+				  write_data => write_data(I),
+				unload_req => update_req(I),
+				  unload_ack => update_ack(I),
+				   read_data => read_data(I),
+				     clk => clk, reset => reset);
   end generate ProTx;
 
   demux : InputPortLevel generic map (

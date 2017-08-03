@@ -200,8 +200,10 @@ begin  -- default_arch
     
 	-- FSM
   	--   Three states: Idle, Waiting_1, Waiting_2.. Not clear
-	--     why do we need Waiting_1 and Waiting_2? OK. Waiting_1
-	--     means that we saw unload-req in the previous cycle!
+	--     why we need Waiting_1 and Waiting_2?  I thought I
+	--     had a reason for this.. Let the synthesis tool 
+	--     optimize this one.
+	--
   	process(clk,fsm_state_bypass, unload_req, write_req, write_data)
      		variable nstate: FsmStateBypass;
      		variable loadv : boolean;
@@ -235,9 +237,9 @@ begin  -- default_arch
 				end if;
 			when Waiting_2 =>
 				-- unload req observed.. but not immediately
-				-- previous cycle.  Idle and Waiting_2 play
-				-- similar roles in the sense that both 
-				-- check if unload-req is true.
+				-- previous cycle.  Idle and Waiting_2 are 
+				-- distinguished by the fact that when we
+				-- are in Waiting_2, we have a pending unload.
 		    		write_ackv := '1';
 				if(write_req = '1') then
 					loadv := true;
