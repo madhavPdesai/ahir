@@ -61,6 +61,9 @@ architecture behave of QueueWithBypass is
 	signal bypass_active : Boolean;
 begin  -- SimModel
 
+  assert (queue_depth > 0) report "QueueWithBypass "  &  name  & " must have depth > 0 "
+				severity failure;
+
   -- count number of elements in queue.
   process(clk, reset)
   begin
@@ -80,6 +83,11 @@ begin  -- SimModel
   end process;
 
   qhas_data <= (number_of_elements_in_queue > 0);
+
+  -- queue will always accept if there is room.
+  -- but it is possible that the accepted data goes 
+  -- straight to the output.
+  push_ack <= '1' when (number_of_elements_in_queue < queue_depth) else '0';
  
   qinst: QueueBase 
 		generic map (name => name & "-qbase", queue_depth => queue_depth, data_width => data_width)
@@ -92,12 +100,13 @@ begin  -- SimModel
 
   -- push into the queue when queue-has-data = '1' or when the world does not care
   qpush_req <= push_req  when (not bypass_active) else  '0';
-  push_ack  <= qpush_ack when (not bypass_active) else pop_req;
   qdata_in  <= data_in;
 
   -- pop from queue when queue-has-data = '1'.
-  data_out <= qdata_out when (not bypass_active) else data_in;
-  qpop_req <= pop_req   when (not bypass_active) else '0';
-  pop_ack  <= qpop_ack  when (not bypass_active) else push_req;
+  data_out <= qdata_out when qhas_data else data_in;
+  qpop_req <= pop_req   when qhas_data else '0';
+  
+  -- Note: the forward path from push_req to pop_ack!
+  pop_ack  <= qpop_ack  when qhas_data else push_req;
 
 end behave;
