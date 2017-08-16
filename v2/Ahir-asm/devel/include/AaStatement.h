@@ -277,6 +277,7 @@ class AaStatement: public AaScope
 
   void Add_Delayed_Versions(AaRoot* curr, 
 		  map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+		  set<AaRoot*>& visited_elements, 
 		  map<AaRoot*, int>& longest_paths_from_root_map,
 		  AaStatementSequence* stmt_sequence);
   virtual void Add_Delayed_Versions( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 

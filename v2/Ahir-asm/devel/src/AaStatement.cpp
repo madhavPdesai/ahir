@@ -514,6 +514,7 @@ int AaStatement::Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >&
 // Add delayed versions of curr (if curr is an implicit object reference or an intermediate expression)
 void AaStatement::Add_Delayed_Versions(AaRoot* curr, 
 		map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+		set<AaRoot*>& visited_elements,
 		map<AaRoot*, int>& longest_paths_from_root_map,
 		AaStatementSequence* stmt_sequence)
 {
@@ -537,6 +538,11 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 		return;
 
 	AaRoot* curr_expr_root =  curr_expr->Get_Root_Object();
+	// curr-expr-root not in visited elements...  leave it
+	if((curr_expr_root != NULL) && (visited_elements.find(curr_expr_root) == visited_elements.end()))
+	{
+		return;
+	}
 
 	//
 	// Is curr-expression acting as a guard to some statement?
@@ -3213,7 +3219,8 @@ void AaSeriesBlockStatement::Add_Delayed_Versions( map<AaRoot*, vector< pair<AaR
 		AaRoot* curr = *iter;
 
 		// add delayed versions of curr if required..
-		this->AaStatement::Add_Delayed_Versions(curr, adjacency_map, longest_paths_from_root_map, this->_statement_sequence);
+		this->AaStatement::Add_Delayed_Versions(curr, adjacency_map, visited_elements,
+							longest_paths_from_root_map, this->_statement_sequence);
 	}
 }
 
@@ -5932,7 +5939,8 @@ void AaDoWhileStatement::Add_Delayed_Versions( map<AaRoot*, vector< pair<AaRoot*
 			iter != fiter; iter++)
 	{
 		AaRoot* curr = *iter;
-		this->AaStatement::Add_Delayed_Versions(curr, adjacency_map, longest_paths_from_root_map, this->_loop_body_sequence);
+		this->AaStatement::Add_Delayed_Versions(curr, adjacency_map, visited_elements,
+							longest_paths_from_root_map, this->_loop_body_sequence);
 	}
 }
 
