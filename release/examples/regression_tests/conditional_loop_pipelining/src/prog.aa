@@ -1,0 +1,23 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+
+$module [timer_daemon] $in() $out () $is
+{
+
+
+	X := in_data
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 
+		$fullrate
+		$merge $entry $loopback 
+			$phi N := X $on $entry NN $on $loopback
+			$phi do_not_break := 1 $on $entry continue_flag $on $loopback
+		$endmerge
+		$volatile NN := (N-1)
+		$volatile continue_flag := (N > 1)
+
+		$while continue_flag
+	}
+	out_data := X
+}
