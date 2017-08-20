@@ -1389,6 +1389,7 @@ void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 			iter++)
 	{
 		vcBranch* s = (*iter).second;
+		string bypass_val = (s->Get_Bypass_Flag() ? "true" : "false");
 		if(vcSystem::_enable_logging)
 			s->vcDatapathElement::Print_VHDL_Logger(this->Get_Parent(), ofile);
 
@@ -1405,7 +1406,7 @@ void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 		}
 		ofile << ";" << endl;
 		ofile << "branch_instance: BranchBase -- {" << endl;
-		ofile << " generic map( name => \"" << s->Get_VHDL_Id() << "\", condition_width => " << in_width << ")" << endl;
+		ofile << " generic map( name => \"" << s->Get_VHDL_Id() << "\", condition_width => " << in_width << ",  bypass_flag => " << bypass_val << ")" << endl;
 		ofile << " port map( -- { " << endl << " condition => condition_sig";
 		ofile << "," << endl;
 		ofile << "req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() << "," <<  endl

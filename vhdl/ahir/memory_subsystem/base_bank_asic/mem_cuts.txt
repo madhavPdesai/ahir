@@ -1,0 +1,10 @@
+Single-ported SRAM (nwords x word-size)
+	16x4 
+	32x16
+	256x8
+	512x24
+
+Dual-ported SRAM (nwords x word-size)
+	16x4
+	16x8
+	32x8

@@ -722,7 +722,8 @@ package BaseComponents is
   component BranchBase
     generic (
       name: string;
-      condition_width : integer);
+      condition_width : integer;
+      bypass_flag: boolean := false);
     port (condition: in std_logic_vector(condition_width-1 downto 0);
           clk,reset: in std_logic;
           req: in Boolean;

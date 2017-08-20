@@ -76,6 +76,11 @@ bool AaExpression::Is_Flow_Through()
 	return(this->Is_Trivial() && this->Get_Is_Intermediate());
 }
 
+void AaExpression::Check_Volatile_Inconsistency()
+{
+	this->Check_Volatile_Inconsistency(this->Get_Associated_Statement());
+}
+
 void AaExpression::Check_Volatile_Inconsistency(AaStatement* stmt)
 {
 	if((stmt != NULL) && stmt->Get_Is_Volatile() && !this->Is_Trivial())
@@ -336,16 +341,20 @@ void AaExpression::Set_Type(AaType* t)
 
 bool AaExpression::Is_Part_Of_Pipelined_Module()
 {
+	bool ret_val = false;
 	AaScope* s = NULL;
 	AaStatement* stmt = this->Get_Associated_Statement();
-	if(stmt != NULL)
-		s = stmt->Get_Scope();
-	else 
-		s = this->Get_Scope();
-	if(s && s->Is("AaModule") && ((AaModule*) s)->Is_Pipelined())
-		return(true);
 
-	return(false);
+	if(stmt != NULL)
+		ret_val = stmt->Is_Part_Of_Pipelined_Module();
+	else 
+	{
+		s = this->Get_Scope();
+		if(s && s->Is("AaModule") && ((AaModule*) s)->Is_Pipelined())
+			ret_val = true;
+	}
+
+	return(ret_val);
 }
 
 bool AaExpression::Is_Part_Of_Operator_Module()
@@ -1043,9 +1052,25 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 					root_set.insert(r);
 				}
 			}	
-			else    // what could this be?  
+			else   if(root_obj->Is_Interface_Object())
+			{
+				AaStatement* stmt = 
+					((AaInterfaceObject*) root_obj)->Get_Unique_Driver_Statement();
+				if(stmt->Get_Is_Volatile())
+				{
+					stmt->Collect_Root_Sources(root_set);
+				}
+				else 
+				{
+					root_set.insert(this);
+				}
+			}
+			else 
+			{
+				// what could this be?  
 				// It could be an interface object or a signal read.
 				root_set.insert(this);
+			}
 		}
 		else
 			root_set.insert(this);
@@ -1322,6 +1347,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
 	if(!this->Is_Constant())
 	{
 
+		this->Check_Volatile_Inconsistency();
 		if(this->Is_Implicit_Variable_Reference())
 		{
 			// do nothing..
@@ -2633,6 +2659,7 @@ void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 	if(!this->Is_Constant())
 	{
 
+		this->Check_Volatile_Inconsistency();
 		ofile << "// " << this->To_String() << endl;
 
 
@@ -3625,6 +3652,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path( ostream& ofile)
 { 
 	ofile << "// " << this->To_String() << endl;
 
+	this->Check_Volatile_Inconsistency();
 	if((this->Get_Addressed_Object_Representative() == NULL)
 			|| this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
 	{
@@ -3955,6 +3983,7 @@ void AaAddressOfExpression::Write_VC_Control_Path( ostream& ofile)
 	if(!this->Is_Constant())
 	{
 
+		this->Check_Volatile_Inconsistency();
 		ofile << "// " << this->To_String() << endl;
 
 		assert(this->_reference_to_object->Is("AaArrayObjectReference"));
@@ -4226,6 +4255,7 @@ void AaTypeCastExpression::Write_VC_Control_Path(ostream& ofile)
 	if(!this->Is_Constant())
 	{
 
+		this->Check_Volatile_Inconsistency();
 		ofile << "// " << this->To_String() << endl;
 
 		ofile << ";;[" << this->Get_VC_Name() << "] { // type-cast expression" << endl;
@@ -4562,7 +4592,6 @@ void AaUnaryExpression::Set_Associated_Statement(AaStatement* stmt)
 {
 	_associated_statement = stmt;
 	_rest->Set_Associated_Statement(stmt);
-	this->Check_Volatile_Inconsistency(stmt);
 }
 void AaUnaryExpression::Print(ostream& ofile)
 {
@@ -4633,6 +4662,7 @@ void AaUnaryExpression::Write_VC_Control_Path(ostream& ofile)
 
 	if(!this->Is_Constant())
 	{
+		this->Check_Volatile_Inconsistency();
 		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 		ofile << ";;[" << this->Get_VC_Name() << "] { // unary expression " << endl;
 		this->_rest->Write_VC_Control_Path(ofile);
@@ -5226,6 +5256,7 @@ void AaBinaryExpression::Write_VC_Control_Path(ostream& ofile)
 	if(!this->Is_Constant())
 	{
 
+		this->Check_Volatile_Inconsistency();
 		ofile << "// " << this->To_String() << endl;
 
 		ofile << ";;[" << this->Get_VC_Name() << "] { // binary expression " << endl;
@@ -5497,6 +5528,7 @@ void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)
 
 	ofile << "// " << this->To_String() << endl;
 
+	this->Check_Volatile_Inconsistency();
 
 	// if _test is constant, print dummy.
 	if(!this->Is_Constant())

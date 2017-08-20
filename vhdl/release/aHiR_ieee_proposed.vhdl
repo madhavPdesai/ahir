@@ -1403,7 +1403,7 @@ package body float_pkg is
       remainder  := frac_shift (2 downto 0);
       -- round (round_zero will bypass this and truncate)
       case round_style is
-        when round_nearest =>
+        when round_nearest => -- looks like round-to-nearest-even.
           round := remainder(2) and
                    (fract (0) or (or_reduce (remainder (1 downto 0))));
         when round_inf =>
@@ -5957,7 +5957,7 @@ package body float_pkg is
       remainder  := frac_shift (2 downto 0);
       -- round (round_zero will bypass this and truncate)
       case round_style is
-        when round_nearest =>
+        when round_nearest => -- looks like round-to-nearest-even.
           round := remainder(2) and
                    (fract (0) or (or_reduce (remainder (1 downto 0))));
         when round_inf =>

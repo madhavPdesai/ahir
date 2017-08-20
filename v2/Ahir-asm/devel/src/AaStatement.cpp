@@ -58,6 +58,15 @@ AaModule* AaStatement::Get_Module()
 		return(NULL);
 }
 
+bool AaStatement::Is_Part_Of_Pipelined_Module()
+{
+	AaScope* s = (this->Is_Module() ? this : this->Get_Scope());
+	if(s && s->Is("AaModule") && ((AaModule*) s)->Is_Pipelined())
+		return(true);
+	else
+		return(false);
+}
+
 bool AaStatement::Is_Part_Of_Fullrate_Pipeline()
 {
 	AaStatement* dws = this->Get_Pipeline_Parent();
@@ -539,9 +548,15 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 
 	AaRoot* curr_expr_root =  curr_expr->Get_Root_Object();
 	// curr-expr-root not in visited elements...  leave it
-	if((curr_expr_root != NULL) && (visited_elements.find(curr_expr_root) == visited_elements.end()))
+	// since it is out of scope...
+	if((curr_expr_root != NULL) && 
+		(visited_elements.find(curr_expr_root) == visited_elements.end()))
 	{
-		return;
+		// ... except if it is an interface object in a pipelined module.
+		//  Y%%&^ special cases.
+		//
+		if(!(this->Is_Part_Of_Pipelined_Module()&& curr_expr_root->Is_Interface_Object()))
+		 	return;
 	}
 
 	//
@@ -5730,11 +5745,13 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 			trailing_barrier,
 			ofile);
 
-	if(condition_expr->Is_Constant())
-	{
-		__F("loop_body_start", "condition_evaluated");
-	}
-	else
+	
+	// this delay prevents a loop in the whole shebang.. we will
+	// be making branch-base have the option of bypass.
+	ofile << "$T [loop_body_delay_to_condition_start] $delay" << endl;
+	__F("loop_body_start", "loop_body_delay_to_condition_start");
+	__F("loop_body_delay_to_condition_start", "condition_evaluated");
+	if(!condition_expr->Is_Constant())
 	{
 		condition_expr->Write_Forward_Dependency_From_Roots("condition_evaluated",-1,visited_elements, ofile);
 	}
@@ -5832,7 +5849,7 @@ void AaDoWhileStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	branch_inputs.push_back(pair<string,AaType*>(this->_test_expression->Get_VC_Driver_Name(),
 				this->_test_expression->Get_Type()));
 
-	Write_VC_Branch_Instance(this->Get_VC_Name()+"_branch",
+	Write_VC_Branch_With_Bypass_Instance(this->Get_VC_Name()+"_branch",
 			branch_inputs,
 			ofile);
 

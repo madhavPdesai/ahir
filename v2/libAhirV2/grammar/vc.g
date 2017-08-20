@@ -900,14 +900,15 @@ vc_Branch_Instantiation[vcDataPath* dp]
   string wid;
   vector<vcWire*> wires;
   vcWire* x;
+  bool bypass_flag = false;
 }
 :
  br_id: BRANCH_OP id = vc_Label
  LPAREN 
     (wid = vc_Identifier {x = dp->Find_Wire(wid); NOT_FOUND__("wire",x,wid,br_id)
                           wires.push_back(x);})+
- RPAREN
- { new_op = new vcBranch(id,wires); dp->Add_Branch(new_op);}
+ RPAREN (FLOWTHROUGH {bypass_flag = true;})?
+ { new_op = new vcBranch(id,wires,bypass_flag); dp->Add_Branch(new_op);}
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------

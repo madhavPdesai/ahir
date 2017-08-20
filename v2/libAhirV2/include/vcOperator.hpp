@@ -439,11 +439,14 @@ public:
 // single req, two acks.
 class vcBranch: public vcDatapathElement
 {
+  bool _bypass_flag;
 public:
   vcBranch(string id, vector<vcWire*>& wires);
+  vcBranch(string id, vector<vcWire*>& wires, bool bypass_flag);
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcBranch");}
+  bool Get_Bypass_Flag() {return(_bypass_flag);}
 
   friend class vcDataPath;
 };

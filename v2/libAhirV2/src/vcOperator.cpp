@@ -1757,6 +1757,12 @@ void vcRegister::Print_VHDL(ostream& ofile)
 vcBranch::vcBranch(string id, vector<vcWire*>& wires): vcDatapathElement(id) 
 {
 	this->Set_Input_Wires(wires);
+	_bypass_flag = false;
+}
+vcBranch::vcBranch(string id, vector<vcWire*>& wires, bool bypass_flag): vcDatapathElement(id) 
+{
+	this->Set_Input_Wires(wires);
+	_bypass_flag = bypass_flag;
 }
 
 void vcBranch::Print(ostream& ofile)

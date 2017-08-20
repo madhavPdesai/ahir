@@ -180,10 +180,14 @@ int main(int argc, char* argv[])
     }
 
   
+  int ret_val = 0;
   AaProgram::Elaborate();
 
   if(AaRoot::Get_Error_Flag())
+  {
     cerr << "Error: there were errors during elaboration, check the log" << endl;
+    ret_val = 1;
+  }
   else
     {
       cout << "// Virtual circuit produced from Aa description by Aa2VC " << endl;
@@ -196,6 +200,11 @@ int main(int argc, char* argv[])
 	AaProgram::Write_VHDL_C_Stubs();
     }
 
+  if(AaRoot::Get_Error_Flag())
+  {
+    cerr << "Error: there were errors during elaboration, check the log" << endl;
+    ret_val = 1;
+  }
 
-  return(0);
+  return(ret_val);
 }

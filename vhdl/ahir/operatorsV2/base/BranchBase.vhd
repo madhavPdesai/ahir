@@ -37,7 +37,7 @@ use ahir.Utilities.all;
 use ahir.SubPrograms.all;
 
 entity BranchBase is
-  generic (name: string; condition_width: integer := 1);
+  generic (name: string; condition_width: integer := 1; bypass_flag: boolean := false);
   port (condition: in std_logic_vector(condition_width-1 downto 0);
         clk,reset: in std_logic;
         req: in Boolean;
@@ -49,6 +49,7 @@ end entity;
 architecture Behave of BranchBase is
 begin
 
+ noBypass: if not bypass_flag generate
   process(clk)
     variable c_reduce : std_logic;
   begin
@@ -76,5 +77,23 @@ begin
       end if;
     end if;
   end process;
+ end generate noBypass;
+
+ yesBypass: if bypass_flag generate
+
+    process(condition, req)
+	variable c_reduce: std_logic;
+    begin
+        c_reduce := OrReduce(condition);
+	if(req) then
+		ack0 <= (c_reduce = '0');
+		ack1 <= (c_reduce = '1');
+	else
+		ack0 <= false;
+		ack1 <= false;
+	end if;
+    end process;
+ end generate yesBypass;
+
 end Behave;
 

@@ -403,8 +403,14 @@ class AaExpression: public AaRoot
 								int64_t to_index, // to prevent cycles!
 									set<AaRoot*>& visited_elements,
 										ostream& ofile);
+	
+	virtual void Check_Volatile_Inconsistency();
 	virtual void Check_Volatile_Inconsistency(AaStatement* stmt);
 
+	virtual void Write_VC_Pipelined_Module_Enable_Joins(set<AaRoot*>& visited_elements, ostream& ofile)
+	{
+		// default.. do nothing.
+	}
 
 };
 
@@ -903,6 +909,9 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
 
 	virtual bool Is_Trivial();
+	virtual void Write_VC_Pipelined_Module_Enable_Joins(set<AaRoot*>& visited_elements, ostream& ofile);
+	void Write_VC_Joins_To_Root_Source_Updates(string trig_trans, 
+							set<AaRoot*>& visited_elements, ostream& ofile);
 };
 
 

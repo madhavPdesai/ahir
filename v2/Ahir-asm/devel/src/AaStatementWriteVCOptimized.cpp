@@ -305,6 +305,12 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		// WAR dependencies
 		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 	}
+
+	// if target is interface object in a pipelined module then this
+	// join kicks in!
+	if(this->_target)
+		this->_target->Write_VC_Pipelined_Module_Enable_Joins(visited_elements,ofile);
+
 	ofile << "// end:  " << this->To_String() << endl;
 }  
 
@@ -499,6 +505,12 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					visited_elements.insert(root_obj);
 				}
 			}
+
+			//
+			// if expr is a interface-object in pipelined module, this kicks in
+			// to play.
+			//
+			expr->Write_VC_Pipelined_Module_Enable_Joins(visited_elements,ofile);
 		}
 
 

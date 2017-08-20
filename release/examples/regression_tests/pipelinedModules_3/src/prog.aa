@@ -4,11 +4,16 @@ $pipe out_data   : $float<8,23> $depth 2
 $pipe mid_data    : $float<8,23> $depth 2
 $pipe end_data   : $float<8,23> $depth 2
 
+
 $pipeline $depth 31 $buffering 2 $fullrate 
-$module [exec_op] $in (X: $float <8,23>) $out (Z: $float <8,23>) $is
+$module [exec_op] $in (X: $float <8,23>) $out (Z: $float <8,23> Zv: $float<8,23>) $is
 {
 	mid_data := X 
-	Z := end_data
+	Z0 := end_data
+
+	$volatile Z := Z0
+
+	Zv := X
 	$attribute delay 31
 	$attribute input_buffering 0
 	//$attribute output_buffering 0
@@ -41,7 +46,7 @@ $module [fp_check_daemon] $in() $out () $is
 
 		X := in_data
 
-		$call exec_op (X) (Y)
+		$call exec_op (X) (Y Yign)
 
 		out_data := Y
 

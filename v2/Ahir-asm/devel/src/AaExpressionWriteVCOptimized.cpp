@@ -627,6 +627,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 {
 	if(!this->Is_Constant())
 	{
+		this->Check_Volatile_Inconsistency();
 		ofile << "// " << this->To_String() << endl;
 		if(this->_object->Is("AaStorageObject"))
 			// complete region name is in Write_VC_Load_Control...
@@ -711,6 +712,61 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 	}
 }
 
+void AaSimpleObjectReference::Write_VC_Pipelined_Module_Enable_Joins(set<AaRoot*>& visited_elements, ostream& ofile)
+{
+	if(this->_object->Is_Interface_Object())
+	{
+		ofile << "// " << this->To_String() << endl << "// write to interface object" << endl;
+		bool pm = this->Is_Part_Of_Pipelined_Module();
+		if(pm)
+		{
+			string update_enable = this->_object->Get_VC_Name() + "_update_enable";
+			this->Write_VC_Joins_To_Root_Source_Updates(update_enable, visited_elements, ofile);
+		}
+	}
+}
+
+
+void AaSimpleObjectReference::Write_VC_Joins_To_Root_Source_Updates(string trig_trans, 
+							set<AaRoot*>& visited_elements, ostream& ofile)
+{
+	
+	set<AaRoot*> root_set;
+	this->Collect_Root_Sources(root_set);
+	for(set<AaRoot*>::iterator iter = root_set.begin(), fiter = root_set.end();
+			iter != fiter; iter++)
+	{
+		AaRoot* r = *iter;
+		if((r != NULL) && (visited_elements.find(r) != visited_elements.end()))
+		{
+			bool err;
+			err = false;
+			//
+			// If r is an input interface object, then we are in trouble.
+			//
+			if(r->Is("AaSimpleObjectReference"))
+			{
+				AaSimpleObjectReference* sor = (AaSimpleObjectReference*) r;
+				AaRoot* sor_root = sor->Get_Root_Object();
+				if((sor_root != NULL) && sor_root->Is_Interface_Object() &&
+							((AaInterfaceObject*)sor_root)->Get_Is_Input())
+				{
+					AaRoot::Error("zero-delay path from input-interface-object-ref " 
+							+ r->Get_VC_Name() + " to output-interface-object-ref "
+								+ this->Get_VC_Name(), this);
+					err = true;
+				}
+			}
+			if(!err)
+			{
+				// ... note: unmarked, since 
+				// transitions to update_enable will be marked.
+				__J(__UST(r), trig_trans);
+			}
+		}
+	}
+}
+
 void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, 
 		set<AaRoot*>& visited_elements,
 		map<string,vector<AaExpression*> >& ls_map,
@@ -723,17 +779,6 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 	if(this->_object->Is_Interface_Object())
 	{
 		ofile << "// " << this->To_String() << endl << "// write to interface object" << endl;
-		bool pm = this->Is_Part_Of_Pipelined_Module();
-		if(pm)
-		{
-			AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
-			string update_enable = this->_object->Get_VC_Name() + "_update_enable";
-
-			// ... note: unmarked, since 
-			// transitions to update_enable will be marked.
-			if(root != NULL)
-				__J(__UST(root), update_enable);
-		}
 	}
 	else if(this->_object->Is("AaStorageObject"))
 	{
@@ -1062,6 +1107,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 {
 	if(!this->Is_Constant())
 	{
+		this->Check_Volatile_Inconsistency();
 		ofile << "// " << this->To_String() << endl;
 
 		string base_addr_calc = (this->Get_VC_Name() + "_base_address_calculated");
@@ -1280,6 +1326,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pipe
 		ostream& ofile)
 {
 
+	this->Check_Volatile_Inconsistency();
 	if(this->_object->Is("AaStorageObject"))
 	{
 		ofile << "// " << this->To_String() << endl;
@@ -1377,6 +1424,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
 		AaRoot* barrier,
 		ostream& ofile)
 {
+		this->Check_Volatile_Inconsistency();
 	ofile << "// " << this->To_String() << endl;
 	if((this->Get_Addressed_Object_Representative() == NULL)
 			|| this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
@@ -1445,6 +1493,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(b
 		AaRoot* barrier,
 		ostream& ofile)
 {
+		this->Check_Volatile_Inconsistency();
 	ofile << "// " << this->To_String() << endl;
 	if((this->Get_Addressed_Object_Representative() == NULL)
 			|| this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
@@ -1550,6 +1599,7 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 		AaRoot* barrier,
 		ostream& ofile)
 {
+		this->Check_Volatile_Inconsistency();
 	ofile << "// " << this->To_String() << endl;
 
 	if(!this->Is_Constant())
@@ -1691,6 +1741,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 {
 	if(!this->Is_Constant())
 	{
+		this->Check_Volatile_Inconsistency();
 
 		ofile << "// " << this->To_String() << endl;
 		if(!this->Is_Flow_Through())
@@ -1799,6 +1850,7 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 {
 	if(!this->Is_Constant())
 	{
+		this->Check_Volatile_Inconsistency();
 		ofile << "// " << this->To_String() << endl;
 		if(!this->Is_Flow_Through())
 		{
@@ -1975,6 +2027,7 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 	if(!this->Is_Constant())
 	{
 
+		this->Check_Volatile_Inconsistency();
 		ofile << "// " << this->To_String() << endl;
 
 		if(!this->Is_Flow_Through())
@@ -2098,6 +2151,7 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 {
 	if(!this->Is_Constant())
 	{
+		this->Check_Volatile_Inconsistency();
 
 		ofile << "// " << this->To_String() << endl;
 

@@ -420,6 +420,13 @@ void Write_VC_Branch_Instance(string inst_name, vector<pair<string,AaType*> >& b
     }
   ofile << ")" << endl;
 }
+
+void Write_VC_Branch_With_Bypass_Instance(string inst_name, vector<pair<string,AaType*> >& br_inputs, ostream& ofile)
+{
+  Write_VC_Branch_Instance(inst_name, br_inputs,ofile);
+  ofile << " $flowthrough" << endl;
+}
+
 void Write_VC_Pointer_Declaration(string name, string wire_name, AaType* type,ostream& ofile)
 {
   string type_name = "$pointer<" + name + ">";

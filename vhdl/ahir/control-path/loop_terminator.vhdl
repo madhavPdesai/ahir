@@ -173,8 +173,13 @@ begin  -- Behave
       clear_lc_place <= true;
     end if;
 
-    -- loop-terminate? check if count = M, and emit loop_exit, reset counter.
-    if(lt_place_token and (available_iterations = max_iterations_in_flight)) then
+    -- loop-terminate? check if count will reach M, and emit loop_exit, reset counter.
+    if(lt_place_token and 
+		((available_iterations = max_iterations_in_flight) or 
+			-- dont waste a cycle... loop-body-exit should be applied
+			-- right away
+			(incr and (not decr) and 
+				(available_iterations = (max_iterations_in_flight-1))))) then
       rst := true;
       loop_exit <= true;
       clear_lt_place <= true;          

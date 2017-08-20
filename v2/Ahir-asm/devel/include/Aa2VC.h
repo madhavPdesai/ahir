@@ -178,6 +178,8 @@ void Write_VC_Link(string inst_name, vector<string>& reqs, vector<string>& acks,
 		   ostream& ofile);
 void Write_VC_Branch_Instance(string inst_name, vector<pair<string,AaType*> >& br_inputs,
 			      ostream& ofile);
+void Write_VC_Branch_With_Bypass_Instance(string inst_name, vector<pair<string,AaType*> >& br_inputs,
+			      ostream& ofile);
 void Write_VC_Constant_Declaration(string name, AaType* type, AaValue* value,
 				   ostream& ofile);
 

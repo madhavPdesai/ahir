@@ -322,6 +322,7 @@ class AaStatement: public AaScope
    // the statement.
    //
    virtual void Check_Volatility_Ordering_Condition();
+   virtual bool Is_Part_Of_Pipelined_Module();
 };
 
 // statement sequence (is used in block statements which lead to programs)
