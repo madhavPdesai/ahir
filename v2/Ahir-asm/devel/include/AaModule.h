@@ -313,6 +313,8 @@ class AaModule: public AaSeriesBlockStatement
 
    void Check_Statements();
    void Check_That_All_Out_Args_Are_Driven();
+  
+   virtual void Initialize_Visited_Elements(set<AaRoot*>& visited_elements);
 };
 
 #endif

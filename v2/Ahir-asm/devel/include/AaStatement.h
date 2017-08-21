@@ -267,6 +267,10 @@ class AaStatement: public AaScope
   virtual bool Get_Pipeline_Full_Rate_Flag() {assert(0);}
 
   void Print_Adjacency_Map( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map);
+  virtual void Initialize_Visited_Elements(set<AaRoot*>& visited_elements)
+  {
+	// do nothing.	
+  }
   virtual void Equalize_Paths_For_Pipelining();
   virtual void Calculate_And_Update_Longest_Path();
   virtual int Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 

@@ -292,6 +292,49 @@ void AaInterfaceObject::Write_VC_Model(ostream& ofile)
 	ofile << endl;
 }
 
+  
+// interface objects can be root sources.  In this case we
+// need to specify their sample/update transitions.  This
+// was being done in a round-about way..
+string AaInterfaceObject::Get_VC_Sample_Start_Transition_Name()
+{
+	return("$null");
+}
+string AaInterfaceObject::Get_VC_Sample_Completed_Transition_Name()
+{
+	return("$entry");
+}
+string AaInterfaceObject::Get_VC_Update_Start_Transition_Name()
+{
+	if(this->Get_Scope()->Is_Module() && 
+		((AaModule*)this->Get_Scope())->Is_Pipelined())
+	{
+		return(this->Get_VC_Name() + "_update_enable");
+	}
+	else
+	{
+		return("$null");
+	}
+}
+
+string AaInterfaceObject::Get_VC_Update_Completed_Transition_Name()
+{
+	return("$entry");
+}
+
+string AaInterfaceObject::Get_VC_Unmarked_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
+{
+	string ret_val = "$null";
+	if(this->Get_Scope()->Is_Module() && 
+			((AaModule*)this->Get_Scope())->Is_Pipelined() &&
+			((AaModule*)this->Get_Scope())->Get_Operator_Flag())
+	{
+		if(this->Get_Mode() == "in")
+			ret_val = this->Get_VC_Name() + "_update_enable_unmarked";
+	}
+	return(ret_val);
+}
+
 //---------------------------------------------------------------------
 // AaStorageObject
 //---------------------------------------------------------------------

@@ -320,6 +320,7 @@ void AaStatement::Print_Adjacency_Map( map<AaRoot*, vector< pair<AaRoot*, int> >
 	}
 }
 
+
 // Build a weighted statement precedence graph as follows:
 //   1.  A vertex for each expression/statement.
 //   2.  If result of u is used in v  then introduce an edge u -> v.  
@@ -336,14 +337,27 @@ void AaStatement::Print_Adjacency_Map( map<AaRoot*, vector< pair<AaRoot*, int> >
 //
 void AaStatement::Equalize_Paths_For_Pipelining()
 {
+	set<AaRoot*> visited_elements;
+
+	// initialization.. for pipelined modules, the 
+	// seeds are set from the input arguments.
+	this->Initialize_Visited_Elements(visited_elements);
+
 	// implicit variable references.. which are targets
 	// of statements and the expression that depend on them,
 	// with the estimated delay from the point of generation
 	// to the point of use.
 	map<AaRoot*, vector< pair<AaRoot*, int> > > adjacency_map;
 
-	// set of statements already visited.
-	set<AaRoot*> visited_elements;
+	//
+	// NULL source to initial visited elements (input args of pipelined modules)
+	//
+	for(set<AaRoot*>::iterator iter = visited_elements.begin(), fiter = visited_elements.end();	
+		iter != fiter; iter++)
+	{
+		AaRoot* r = *iter;
+		__InsMap(adjacency_map,NULL,r,0);
+	}
 
 	// steps 1,2.
 	//
@@ -530,11 +544,13 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 
 	int new_stmt_counter = 0;
 	AaExpression* curr_expr = NULL;
+
+	// only expressions from here on.
 	if(curr->Is_Expression())
 	{
 		curr_expr = (AaExpression*) curr;
 	}
-	else if(curr->Is_Statement())
+	else 
 	{
 		return;
 	}
@@ -549,13 +565,9 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 	AaRoot* curr_expr_root =  curr_expr->Get_Root_Object();
 	// curr-expr-root not in visited elements...  leave it
 	// since it is out of scope...
-	if((curr_expr_root != NULL) && 
+	if((curr_expr_root != NULL) &&
 		(visited_elements.find(curr_expr_root) == visited_elements.end()))
 	{
-		// ... except if it is an interface object in a pipelined module.
-		//  Y%%&^ special cases.
-		//
-		if(!(this->Is_Part_Of_Pipelined_Module()&& curr_expr_root->Is_Interface_Object()))
 		 	return;
 	}
 

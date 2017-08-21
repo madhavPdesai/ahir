@@ -1097,13 +1097,22 @@ void AaModule::Write_VC_Control_Path_Optimized_Base(ostream& ofile)
       string place_decls;
       string binding_string;
 
-	// TODO: collect group of inputs and outputs that are actually used
-	// 	 those that are unused will not need really need input buffers! 
+      set<AaRoot*> visited_elements;
+
+      // TODO: collect group of inputs and outputs that are actually used
+      // 	 those that are unused will not need really need input buffers! 
       for(int idx = 0,  fidx = this->Get_Number_Of_Input_Arguments(); 
 	  idx < fidx;
 	  idx++)
 	{
 	  AaInterfaceObject* inobj = this->Get_Input_Argument(idx);
+
+	  //
+	  // add inobj to visited elements.
+	  // (only for pipelined modules)
+	 //
+	  visited_elements.insert(inobj);
+
 	  string tname = inobj->Get_VC_Name() + "_update_enable";
 	  exported_outputs += " " + tname + "_out";
 	  place_decls += "$P [" + tname + "] \n";
@@ -1150,7 +1159,6 @@ void AaModule::Write_VC_Control_Path_Optimized_Base(ostream& ofile)
 	}
 
       ofile << ":|:[" << region_name << "] {" << endl;
-      set<AaRoot*> visited_elements;
       map<string, vector<AaExpression*> > load_store_ordering_map;
       map<string, vector<AaExpression*> >  pipe_map;
       AaRoot* tb = NULL;
@@ -1207,5 +1215,25 @@ string AaModule::Get_C_Inner_Output_Args_Prepare_Macro()
 {
 	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Label() + 
 			"_inner_outarg_prep_macro__");
+}
+
+   
+void AaModule::Initialize_Visited_Elements(set<AaRoot*>& visited_elements)
+{
+	if(this->Is_Pipelined())
+	{
+		for(int idx = 0,  fidx = this->Get_Number_Of_Input_Arguments(); 
+				idx < fidx;
+				idx++)
+		{
+			AaInterfaceObject* inobj = this->Get_Input_Argument(idx);
+
+			//
+			// add inobj to visited elements.
+			// (only for pipelined modules)
+			//
+			visited_elements.insert(inobj);
+		}
+	}
 }
 

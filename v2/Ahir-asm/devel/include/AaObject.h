@@ -159,6 +159,13 @@ class AaInterfaceObject: public AaObject
   {
 	// will be declared explicitly..
   }
+  
+  virtual string Get_VC_Sample_Start_Transition_Name();
+  virtual string Get_VC_Sample_Completed_Transition_Name();
+  virtual string Get_VC_Update_Start_Transition_Name();
+  virtual string Get_VC_Update_Completed_Transition_Name();
+  virtual string Get_VC_Unmarked_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
+
 };
 
 class AaConstantObject: public AaObject

@@ -766,7 +766,7 @@ void AaExpression::Update_Guard_Adjacency(map<AaRoot*, vector< pair<AaRoot*, int
 		AaRoot* root = sexpr->Get_Root_Object();
 		if(visited_elements.find(root) != visited_elements.end())
 		{
-			AaExpression* root_target = NULL;
+			AaRoot* root_target = NULL;
 			if(root->Is("AaAssignmentStatement"))
 			{
 				root_target = ((AaAssignmentStatement*)root)->Get_Target();		
@@ -780,9 +780,7 @@ void AaExpression::Update_Guard_Adjacency(map<AaRoot*, vector< pair<AaRoot*, int
 				root_target = ((AaCallStatement*)root)->Get_Implicit_Target(sexpr->Get_Object_Root_Name());
 			}
 			else
-				assert(0);
-
-			assert(root_target != NULL);
+				root_target = root;
 
 			__InsMap(adjacency_map,root_target,this,ge->Get_Delay());
 		}
@@ -1056,19 +1054,18 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 			{
 				AaStatement* stmt = 
 					((AaInterfaceObject*) root_obj)->Get_Unique_Driver_Statement();
-				if(stmt->Get_Is_Volatile())
+				if(stmt != NULL) 
 				{
-					stmt->Collect_Root_Sources(root_set);
-				}
-				else 
-				{
-					root_set.insert(this);
+					if (stmt->Get_Is_Volatile())
+						stmt->Collect_Root_Sources(root_set);
+					else
+						root_set.insert(this);
 				}
 			}
 			else 
 			{
 				// what could this be?  
-				// It could be an interface object or a signal read.
+				// It could be a signal read.
 				root_set.insert(this);
 			}
 		}
@@ -1098,13 +1095,17 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 			AaStatement* sio = io->Get_Unique_Driver_Statement();
 			if(sio != NULL)
 				sio->Collect_Root_Sources(root_set);
-			else
+			else 
+			//
+			// this must be an input interface object..
+			// put it into the root-set!
+			//
 			{	
 				//
 				// interface object can link to 
 				// update enables in operators.
 				//
-				root_set.insert(this);
+				root_set.insert(io);
 			}
 		}
 		else
@@ -2126,7 +2127,7 @@ void AaSimpleObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaR
 			if(visited_elements.find(root) != visited_elements.end())
 			{
 
-				AaExpression* root_target = NULL;
+				AaRoot* root_target = NULL;
 				if(root->Is("AaAssignmentStatement"))
 				{
 					root_target = ((AaAssignmentStatement*)root)->Get_Target();		
@@ -2140,9 +2141,8 @@ void AaSimpleObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaR
 					root_target = ((AaCallStatement*)root)->Get_Implicit_Target(this->Get_Object_Root_Name());
 				}
 				else
-					assert(0);
+					root_target = root;
 
-				assert(root_target != NULL);
 				__InsMap(adjacency_map,root_target,this,0);
 				visited_elements.insert(this);
 			}		

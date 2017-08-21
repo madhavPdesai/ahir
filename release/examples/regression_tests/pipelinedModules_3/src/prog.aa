@@ -8,8 +8,8 @@ $pipe end_data   : $float<8,23> $depth 2
 $pipeline $depth 31 $buffering 2 $fullrate 
 $module [exec_op] $in (X: $float <8,23>) $out (Z: $float <8,23> Zv: $float<8,23>) $is
 {
-	mid_data := X 
-	Z0 := end_data
+	mid_data := X  $mark SMID
+	Z0 := end_data $delay (SMID 24)
 
 	$volatile Z := Z0
 

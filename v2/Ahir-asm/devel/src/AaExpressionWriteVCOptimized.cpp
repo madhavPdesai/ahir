@@ -181,16 +181,15 @@ void AaExpression::Write_VC_Update_Reenables(AaRoot* reenabling_agent,
 			// a simple-object-reference to an input interface object, then 
 			// we create an unmarked link to an update-enable.
 			// 
-			if(this->Is_Part_Of_Operator_Module() && producer->Is("AaSimpleObjectReference"))
+			if(producer->Is_Interface_Object())
 			{
-				AaSimpleObjectReference* sor = (AaSimpleObjectReference*) producer;
-				if(sor->Get_Object() && sor->Get_Object()->Is_Interface_Object())
+				AaInterfaceObject* iobj = (AaInterfaceObject*) producer;
+				if(iobj->Get_Mode() == "in")
 				{
-					AaInterfaceObject* iobj = (AaInterfaceObject*) (sor->Get_Object());
-					if(iobj->Get_Mode() == "in")
-					{
-						__J(sor->Get_VC_Unmarked_Reenable_Update_Transition_Name(visited_elements), ctrans);
-					}
+					string utrans = 
+						iobj->Get_VC_Unmarked_Reenable_Update_Transition_Name(visited_elements);
+					if(utrans != "$null")
+						__J(utrans, ctrans);
 				}
 			}
 		}
@@ -744,18 +743,12 @@ void AaSimpleObjectReference::Write_VC_Joins_To_Root_Source_Updates(string trig_
 			//
 			// If r is an input interface object, then we are in trouble.
 			//
-			if(r->Is("AaSimpleObjectReference"))
+			if(r->Is_Interface_Object() && ((AaInterfaceObject*)r)->Get_Is_Input())
 			{
-				AaSimpleObjectReference* sor = (AaSimpleObjectReference*) r;
-				AaRoot* sor_root = sor->Get_Root_Object();
-				if((sor_root != NULL) && sor_root->Is_Interface_Object() &&
-							((AaInterfaceObject*)sor_root)->Get_Is_Input())
-				{
-					AaRoot::Error("zero-delay path from input-interface-object-ref " 
-							+ r->Get_VC_Name() + " to output-interface-object-ref "
-								+ this->Get_VC_Name(), this);
-					err = true;
-				}
+				AaRoot::Error("zero-delay path from input-interface-object-ref " 
+						+ r->Get_VC_Name() + " to output-interface-object-ref "
+						+ this->Get_VC_Name(), this);
+				err = true;
 			}
 			if(!err)
 			{
