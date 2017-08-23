@@ -1,0 +1,45 @@
+$pipe in_data    : $uint<8> $depth 2
+$pipe out_data   : $uint<8> $depth 2
+
+
+$pipeline $depth 3 $fullrate $operator $module [operator_0] $in (a: $uint<8>) $out (b: $uint<8>) $is
+{
+	a1 := a
+	a2 := a1
+	b  := a2 
+	$attribute delay 3
+}
+
+$pipeline $depth 3 $fullrate $operator $module [operator_1] $in (a: $uint<8>) $out (b: $uint<8>) $is
+{
+	a1 := a
+	a2 := a1
+	b  := a2 
+	$attribute delay 3
+}
+
+
+$module [check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 7 $buffering 2 
+		$fullrate
+		$merge $entry $loopback 
+			$phi SEL := ($bitcast ($uint<1>) 0) $on $entry nSEL $on $loopback
+			$phi X  := 0 $on $entry in_data $on $loopback
+		$endmerge
+
+		$volatile nSEL := (~SEL)
+
+		$guard (SEL)  $call operator_1 (X) (X_1)
+		$guard (~SEL) $call operator_0 (X) (X_0)
+
+		$volatile Y := ($mux SEL X_1 X_0)
+		$volatile send_flag := (X > 0)
+		
+		$guard (send_flag) 
+			out_data := Y
+
+		$while 1
+	}
+}
