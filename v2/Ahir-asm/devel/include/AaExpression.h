@@ -158,6 +158,7 @@ class AaExpression: public AaRoot
 
 
 	virtual bool Is_Signal_Read() {return(false);}
+	virtual bool Is_Indirect_Signal_Read() {return(false);}
 
 	virtual int Get_Delay();
 
@@ -817,6 +818,7 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual bool Has_No_Registered_Update();
 	virtual void Assign_Expression_Value(AaValue* expr_value);
 	virtual bool Is_Signal_Read();
+	virtual bool Is_Indirect_Signal_Read();
 
 	virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
 

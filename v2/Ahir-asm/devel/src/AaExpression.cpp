@@ -83,10 +83,17 @@ void AaExpression::Check_Volatile_Inconsistency()
 
 void AaExpression::Check_Volatile_Inconsistency(AaStatement* stmt)
 {
-	if((stmt != NULL) && stmt->Get_Is_Volatile() && !this->Is_Trivial())
-	{
-		AaRoot::Error("Expression "  + this->To_String() 
-				+ " is not trivial but statement is marked as volatile", stmt);
+	if((stmt != NULL) && stmt->Get_Is_Volatile())
+	{ 
+		if(this->Get_Is_Target() && !this->Is_Implicit_Variable_Reference())
+		{
+			AaRoot::Error("Targets of volatile statements must be implicit variable refs: "  + this->To_String(), stmt);
+		}
+		if (!stmt->Is_Call_Statement() && !this->Is_Trivial())
+		{
+			AaRoot::Error("Expression "  + this->To_String() 
+				+ " is not trivial but appears in an assignment statement.", stmt);
+		}
 	}
 }
 
@@ -966,7 +973,7 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 bool AaSimpleObjectReference::Is_Trivial()
 {
 	return(!this->Get_Is_Target() 
-			&& (this->Is_Implicit_Variable_Reference()));
+			&& (this->Is_Implicit_Variable_Reference() || this->Is_Signal_Read()));
 }
 
 AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, AaAssignmentStatement* root_obj):AaObjectReference(parent_tpr, root_obj) 
@@ -1001,6 +1008,26 @@ bool AaSimpleObjectReference::Is_Signal_Read()
 	return(false);
 }
 
+//
+// if driven by a signal through a chain of volatiles,
+// the root sources set will be empty.
+//
+bool AaSimpleObjectReference::Is_Indirect_Signal_Read()
+{
+	bool ret_val = this->Is_Signal_Read();
+	if(!ret_val)
+	{
+		set<AaRoot*> root_sources;
+		this->Collect_Root_Sources(root_sources);
+
+		if(root_sources.size() == 0)
+		{
+			ret_val = true;	
+		}
+	}
+	return(ret_val);
+}
+
 bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObject* obj)
 {
 	this->_addressed_objects.insert(obj);
@@ -1027,7 +1054,7 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 		AaRoot::Error("Cycle in collect-root-sources", this);
 		return;
 	}
-	
+
 	if(this->Is_Constant())
 		return;
 
@@ -5181,40 +5208,27 @@ void AaBinaryExpression::Update_Type()
 
 bool AaBinaryExpression::Is_Trivial()
 {
-	if((this->_operation == __MUL) || Is_Shift_Operation(this->_operation))
+	// not-trivial
+	// 	floating point ops
+	//      muls and shifts > 64 bits
+	bool ret_val = true;	
+
+	bool second_is_constant = (this->_second != NULL) && this->_second->Is_Constant();
+	// 64-bit mul/shifts are trivial (ha ha)
+	if((this->_operation == __MUL) || 
+		(Is_Shift_Operation(this->_operation) && !second_is_constant))
 	{
-		// lets say we can do up to 16-bit mul/shift operations in one cycle.
+		// lets say we can do up to 64-bit mul/shift operations in one cycle.
 		// even though they have quadratic complexity.
-		return (this->_first->Get_Type()->Size() <= 16);
+		ret_val =  (this->_first->Get_Type()->Size() <= 64);
 	}
-	else if((this->_first->Get_Type()->Size() <= 32) && (!this->Get_Type()->Is_Float_Type()))
+	else if(this->Get_Type()->Is_Float_Type())
 	{
-		// others with less than 32 bits are "trivial"..
-		// because they have linear complexity.
-		// (except for floats!)
-		return (true);
+		// floats are never trivial.
+		ret_val = false;
 	}
 
-	if(this->_operation == __OR || this->_operation == __AND ||
-			this->_operation == __NOR || this->_operation == __NAND ||
-			this->_operation == __XOR || this->_operation == __XNOR || 
-			this->_operation == __CONCAT || this->_operation == __BITSEL ||
-			this->_operation == __EQUAL || this->_operation == __NOTEQUAL )
-	{
-		// some operations are obviously trivial.
-		// we can keep adding to this list based on certain rules..
-		return(true);
-	}
-
-	// shifts with constant-shift-amount are trivial.
-	if(((this->_operation == __SHL) || (this->_operation == __SHR)) && 
-			((this->_second != NULL) && this->_second->Is_Constant()))
-		return(true);
-	else if(((this->_operation == __ROL) || (this->_operation == __ROR)) && 
-			((this->_second != NULL) && this->_second->Is_Constant()))
-		return(true);
-	else
-		return(false);
+	return(ret_val);
 }
 
 void AaBinaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)

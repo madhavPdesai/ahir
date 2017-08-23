@@ -571,6 +571,13 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 		 	return;
 	}
 
+	// signals are asynchronous.. no point in delaying them.
+	if(curr_expr->Is_Indirect_Signal_Read())
+	{
+		return;
+	}
+
+
 	//
 	// Is curr-expression acting as a guard to some statement?
 	// In this case, only the guarded statement is affected.
