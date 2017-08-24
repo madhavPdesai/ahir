@@ -13,10 +13,10 @@ env.Append(CPPPATH = './src/:./include:../BGLWrap/include:/usr/local/include/:' 
 
 VariantDir('obj','src',duplicate=0)
 
-env.Library('lib/libVC', Glob('obj/*.cpp'), CCFLAGS='-g ')
+env.Library('lib/libVC', Glob('obj/*.cpp'), CCFLAGS=' -g ')
 env.Program('bin/vcParse', 'util/vcParseMain.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ' + ANTLR_LIB_PATH))
 env.Program('bin/vcAnalyze', 'util/vcAnalyze.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ' + ANTLR_LIB_PATH ))
 env.Program('bin/vcFormat', 'util/vcFormat.cpp',CCFLAGS='-g ', LINKFLAGS='-g ')
 env.Program('bin/vhdlFormat', 'util/vhdlFormat.cpp',CCFLAGS='-g ', LINKFLAGS='-g ')
-env.Program('bin/vc2vhdl', 'util/vc2vhdl.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr' ], LIBPATH=Split('./lib/ ' + ANTLR_LIB_PATH))
+env.Program('bin/vc2vhdl', 'util/vc2vhdl.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ' + ANTLR_LIB_PATH))
 
