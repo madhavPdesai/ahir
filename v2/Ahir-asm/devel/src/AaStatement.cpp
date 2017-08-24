@@ -5719,8 +5719,12 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 		__T("aggregated_phi_update_ack");
 
 		// do not loop-back unless all phi's have used
-		// up their triggering tokens.
-		__F("aggregated_phi_update_req", "condition_evaluated");
+		// up their triggering tokens.  Delay introduced
+		ofile << "// do not loop-back unless all phi's have used up their triggering tokens." << endl;
+		ofile << "// add delay to avoid 0-delay cycle through bypassed branch block" << endl;
+		ofile << "$T [all_phis_have_used_triggering_tokens] $delay" << endl;
+		__F("aggregated_phi_update_req", "all_phis_have_used_triggering_tokens");
+		__F("all_phis_have_used_triggering_tokens", "condition_evaluated");
 
 		//
 		// do not re-sample unless the result of the previous
