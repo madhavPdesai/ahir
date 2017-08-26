@@ -1259,14 +1259,6 @@ uint8_t bit_vector_compare(uint8_t signed_flag, bit_vector* r, bit_vector* s)
 		}
 	}
 
-
-	if(sr && ss)
-	{ // both negative.. swap rl, rg.
-		uint8_t tmp = rg;
-		rg = rl;
-		rl = rg;
-	}
-
 	if(re)
 		return(IS_EQUAL);
 	else if(rg) 
