@@ -94,6 +94,7 @@ AaGraphBase AaProgram::_call_graph;
 AaUGraphBase AaProgram::_type_dependency_graph;
 AaUGraphBase AaProgram::_storage_dependency_graph;
 
+int AaProgram::_buffering_bits_added_during_path_balancing = 0;
 
 void AaMemorySpace::Write_VC_Model(bool opt_flag, ostream& ofile)
 {

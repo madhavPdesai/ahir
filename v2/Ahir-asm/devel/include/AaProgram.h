@@ -187,6 +187,9 @@ class AaProgram
 
   // directory in which aa2c products will be created..
   static string _aa2c_output_directory;
+ 
+  // number of buffering bits added during path balancing.
+  static int _buffering_bits_added_during_path_balancing;
 
   AaProgram();
   ~AaProgram();

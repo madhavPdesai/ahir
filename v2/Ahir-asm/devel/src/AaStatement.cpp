@@ -617,6 +617,8 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 			int buf_val = curr_slack;
 			//if(this->Is_Part_Of_Fullrate_Pipeline()) buf_val = ((buf_val < 2) ? 2 : buf_val);
 			new_stmt->Set_Buffering(buf_val);
+			AaProgram::_buffering_bits_added_during_path_balancing +=
+						buf_val * new_target->Get_Type()->Size();
 
 			new_stmt->Map_Source_References();
 
@@ -740,6 +742,9 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 			int buf_val = curr_slack;
 			//if(this->Is_Part_Of_Fullrate_Pipeline()) buf_val = ((buf_val < 2) ? 2 : buf_val);
 			new_stmt->Set_Buffering(buf_val);
+
+			AaProgram::_buffering_bits_added_during_path_balancing +=
+						buf_val * new_target->Get_Type()->Size();
 
 			if(linked_to_stmt)
 			{
