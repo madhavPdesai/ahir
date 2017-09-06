@@ -3,7 +3,7 @@ $pipe in_data : $uint<32> $depth 2
 $pipe mid_pipe_0 : $uint<32> $depth 0 $p2p 
 $pipe mid_pipe_1 : $uint<32> $depth 1 $p2p 
 $pipe mid_pipe_2 : $uint<32> $depth 2 $p2p
-$pipe mid_pipe_3 : $uint<32> $depth 8 $p2p
+$pipe mid_pipe_3 : $uint<32> $depth 8 
 $pipe mid_pipe_4 : $uint<32> $depth 16 $p2p
 
 $module [p2p_check_daemon] $in() $out () $is
