@@ -211,6 +211,13 @@ class AaProgram
 	return(AaProgram::_mutex_set.find(m) != AaProgram::_mutex_set.end());
   }
 
+  static void Increment_Buffering_Bit_Count(int n)
+  {
+      cerr << "Info: added " << n << " buffering bits during path balancing" << endl;
+      AaProgram::_buffering_bits_added_during_path_balancing += n;
+  }
+
+
   static void Make_Extmem_Object();
   static AaStorageObject* Get_Extmem_Object()
     {

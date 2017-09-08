@@ -1094,8 +1094,9 @@ void AaProgram::Equalize_Paths_Of_Pipelined_Modules()
 	  AaModule* m = ((AaModule*)(AaProgram::_ordered_module_vector[idx]));
 	  if(m->Is_Pipelined())
 	  {
-		if(!m->Get_Has_Been_Equalized())
+		if(!m->Get_Has_Been_Equalized() && !m->Get_Noopt_Flag())
 		{
+		        AaRoot::Info (" started path balancing for module " + m->Get_Label());
 			m->Equalize_Paths_For_Pipelining();
 			m->Set_Has_Been_Equalized(true);
 		}

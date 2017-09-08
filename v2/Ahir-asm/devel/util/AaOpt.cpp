@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
   AaProgram::_print_inlined_functions_in_caller = true;
 
   AaProgram::_tool_name = "AaOpt";
-
+  AaProgram::_buffering_bits_added_during_path_balancing = 0;
 
   while ((opt = 
 	  getopt_long(argc, 
@@ -150,8 +150,6 @@ int main(int argc, char* argv[])
   if(!AaRoot::Get_Error_Flag() && AaProgram::_balance_loop_pipeline_bodies)
   {
 	AaProgram::Equalize_Paths_Of_Pipelined_Modules();
-	cerr << "Info: added " << AaProgram::_buffering_bits_added_during_path_balancing
-			<< " bits of buffering during path balancing." << endl;
    }
 
   if(AaRoot::Get_Error_Flag())
@@ -159,6 +157,8 @@ int main(int argc, char* argv[])
   else
     AaProgram::Print(cout);
 
+   cerr << "Info: added " << AaProgram::_buffering_bits_added_during_path_balancing
+			<< " bits of buffering during path balancing." << endl;
   if(AaRoot::Get_Error_Flag())
     {
       cerr << "Error: there were errors during elaboration, check the log" << endl;

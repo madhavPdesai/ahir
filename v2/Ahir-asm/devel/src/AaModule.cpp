@@ -172,7 +172,10 @@ void AaModule::Print_Body(ostream& ofile)
 	if(this->_pipeline_flag && AaProgram::_balance_loop_pipeline_bodies && !this->Get_Has_Been_Equalized())
 	{
 		if(!this->Get_Noopt_Flag())
+		{
+			AaRoot::Info(" started path balancing for module " + this->Get_Label());
 			this->Equalize_Paths_For_Pipelining();
+		}
 		this->Set_Has_Been_Equalized(true);
 	}
 	
