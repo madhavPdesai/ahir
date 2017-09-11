@@ -1,0 +1,28 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2
+
+$noopt $module [phi_check_daemon] $in() $out () $is
+{
+
+	$branchblock[lOoP] {
+		$dopipeline $depth 16 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi CMD := ($bitcast ($uint<32>) 0) $on $entry 
+					$guard (read_in) in_data $on $loopback
+			$phi CMD_D := 0 $on $entry NCMD_D $on $loopback
+			$phi first_time := ($bitcast ($uint<1>) 1) $on $entry 0 $on $loopback
+		$endmerge
+		
+		read_in := (first_time | (~first_time))
+
+		NCMD := CMD
+		NCMD_D := NCMD
+		
+		NZ := (CMD_D != 0)
+
+		$guard (~first_time)
+			out_data := CMD_D
+
+		$while 1
+	}
+}

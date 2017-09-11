@@ -5724,6 +5724,18 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 		__T("aggregated_phi_update_req");
 		__T("aggregated_phi_update_ack");
 
+		// 
+		//  joins of all src-update-enables from
+		//  phi-sequencer.
+		//
+		__T("aggregated_phi_entry_target_update");
+		__T("aggregated_phi_loopback_target_update");
+
+
+		ofile << "$transitionmerge [aggregated_phi_req_merge] "
+			<< " (aggregated_phi_entry_target_update aggregated_phi_loopback_target_update) "
+			<< " (aggregated_phi_update_ack)" << endl;
+
 		// do not loop-back unless all phi's have used
 		// up their triggering tokens.  Delay introduced
 		ofile << "// do not loop-back unless all phi's have used up their triggering tokens." << endl;

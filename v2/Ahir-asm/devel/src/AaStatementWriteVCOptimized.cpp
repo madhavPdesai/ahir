@@ -1577,21 +1577,28 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	__J((__UST(this) + "_ps"), "aggregated_phi_update_req");
 
 	__T(__UCT(this) + "_ps");
-	__F((__UCT(this) + "_ps"), "aggregated_phi_update_ack");
-	__F("aggregated_phi_update_ack", __UCT(this));
+	__J(__UCT(this), __UCT(this) + "_ps");
+
+
 
 	// the active, completed and the active transitions
 	string trigger_from_loop_back = this->Get_VC_Name() + "_loopback_trigger";
 	string sample_from_loop_back = this->Get_VC_Name() + "_loopback_sample_req";
+	string sample_from_loop_back_ps = this->Get_VC_Name() + "_loopback_sample_req_ps";
 	__T(trigger_from_loop_back);
 	__J(trigger_from_loop_back,"back_edge_to_loop_body");
 	__T(sample_from_loop_back);
+	__T(sample_from_loop_back_ps);
+	__J(sample_from_loop_back, sample_from_loop_back_ps)
 
 	string trigger_from_entry = this->Get_VC_Name() + "_entry_trigger";
 	string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
+	string sample_from_entry_ps = this->Get_VC_Name() + "_entry_sample_req_ps";
 	__T(trigger_from_entry);
 	__J(trigger_from_entry, "first_time_through_loop_body");
 	__T(sample_from_entry);
+	__T(sample_from_entry_ps);
+	__J(sample_from_entry, sample_from_entry_ps);
 
 
 
@@ -1605,16 +1612,19 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	string req_merge_name = this->Get_VC_Name() + "_req_merge";
 	__T(msample_req);
 
-	string merge_from_entry = sample_from_entry +  "__merge_in";
-	__T(merge_from_entry);
-	__J(merge_from_entry, sample_from_entry);
-	string merge_from_loop_back = sample_from_loop_back +  "__merge_in";
-	__T(merge_from_loop_back);
-	__J(merge_from_loop_back, sample_from_loop_back);
+	/*
+	   No longer required... aggregated_phi_req_merge does the job.
+	   string merge_from_entry = sample_from_entry +  "__merge_in";
+	   __T(merge_from_entry);
+	   __J(merge_from_entry, sample_from_entry);
+	   string merge_from_loop_back = sample_from_loop_back +  "__merge_in";
+	   __T(merge_from_loop_back);
+	   __J(merge_from_loop_back, sample_from_loop_back);
 
-	ofile << "$transitionmerge [" << req_merge_name << "] (" 
-		<< merge_from_entry << " " << merge_from_loop_back << ") (" << msample_req << ")" << endl;
-	__F(msample_req, "$null"); // merged the two and tied the merge as open.
+	   ofile << "$transitionmerge [" << req_merge_name << "] (" 
+	   << merge_from_entry << " " << merge_from_loop_back << ") (" << msample_req << ")" << endl;
+	   __F(msample_req, "$null"); // merged the two and tied the merge as open.
+	 */
 
 	vector<string> triggers;
 	vector<string> src_sample_reqs;
@@ -1623,6 +1633,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	vector<string> src_update_acks;
 	vector<string> phi_mux_reqs;
 
+	// mux-ack from phi-base going back into 
+	// phi-sequencer.
 	string phi_mux_ack = this->Get_VC_Name() + "_phi_mux_ack";
 	__T(phi_mux_ack);
 	string phi_mux_ack_ps = this->Get_VC_Name() + "_phi_mux_ack_ps";
@@ -1650,21 +1662,24 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		{
 			AaExpression* sge = source_expr->Get_Guard_Expression();
 			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
-				!sge->Is_Implicit_Variable_Reference() && 
-				!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
+					!sge->Is_Implicit_Variable_Reference() && 
+					!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 			{
 				ofile << "// guard in Phi alternative" << endl;
 				sge->Write_VC_Control_Path_Optimized(pipeline_flag,
 						visited_elements,
 						ls_map,pipe_map,barrier,
 						ofile);
-				
+
 				//
 				// This will be taken care of in a unified way.
 				//
 				//__J(__SST(sge), (__SST(source_expr) + "_ps"));
 
 			}
+
+			if((sge != NULL) && (sge != source_expr))
+				sge->Mark_As_Visited(visited_elements);
 
 			bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
 			if(src_has_no_dpe)
@@ -1754,12 +1769,14 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		if(trig_place == "$loopback")
 		{
 			triggers.push_back(trigger_from_loop_back);
-			phi_mux_reqs.push_back(sample_from_loop_back);
+			phi_mux_reqs.push_back(sample_from_loop_back_ps);
+			__J("aggregated_phi_loopback_target_update", sample_from_loop_back);
 		}
 		else
 		{
 			triggers.push_back(trigger_from_entry);
-			phi_mux_reqs.push_back(sample_from_entry);
+			phi_mux_reqs.push_back(sample_from_entry_ps);
+			__J("aggregated_phi_entry_target_update", sample_from_entry);
 		}
 	}
 
@@ -1780,13 +1797,15 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	ofile << __SST(this)+"_ps" << " " << __SCT(this)+"_ps" << " " << __UST(this)+"_ps" << " " << __UCT(this)+"_ps" << " ";
 	ofile << ":" << endl;
 	ofile << "     ";
+
+	// sample from entry, sample from loopback.
 	for(int idx = 0, fidx = phi_mux_reqs.size(); idx < fidx; idx++)
 	{
 		ofile <<  phi_mux_reqs[idx] << " ";
 	}
 	ofile << ": " << endl;
 	ofile << "     ";
-	ofile << phi_mux_ack << endl;
+	ofile << phi_mux_ack_ps << endl;
 
 	// sample-ack from phi must join with condition-evaluated so that
 	// loop-back is delayed until the present PHI has sampled.
@@ -1824,9 +1843,9 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 	{
 		string trig_place = _source_pairs[idx].first;
 		if(trig_place == "$loopback")
-			reqs.push_back(hier_id + "/" + sample_from_loop_back);
+			reqs.push_back(hier_id + "/aggregated_phi_loopback_target_update");
 		else
-			reqs.push_back(hier_id + "/" + sample_from_entry);
+			reqs.push_back(hier_id + "/aggregated_phi_entry_target_update");
 	}
 	acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_phi_mux_ack");
 	Write_VC_Link(this->Get_VC_Name(),reqs,acks,ofile);
