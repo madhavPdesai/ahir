@@ -48,9 +48,16 @@ end auto_run;
 
 architecture default_arch of auto_run is
 
+    signal start_req_sig, fin_req_sig: std_logic;
+    attribute keep : string;
+    attribute keep of start_req_sig : signal is "true";
+    attribute keep of fin_req_sig : signal is "true";
 begin  
 
-  start_req <= '1';
-  fin_req <= '1';
+  start_req_sig <= '1';
+  fin_req_sig <= '1';
+
+  start_req <= start_req_sig;
+  fin_req <= fin_req_sig;
 
 end default_arch;
