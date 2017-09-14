@@ -60,9 +60,6 @@ architecture behave of SynchFifoWithDPRAM is
   signal read_pointer, write_pointer : unsigned(addr_width_of_dpram-1 downto 0);
   signal queue_size : integer range 0 to queue_depth;
 
-  signal pop_ack_int, pop_req_int: std_logic;
-  signal data_out_int : std_logic_vector(data_width-1 downto 0);
-
   function Incr(x: unsigned; M: integer) return unsigned is
      variable ret_var: unsigned(1 to x'length);
   begin
@@ -76,10 +73,15 @@ architecture behave of SynchFifoWithDPRAM is
 
   signal incr_read_pointer, incr_write_pointer : unsigned(addr_width_of_dpram-1 downto 0);
 
-  signal write_to_dpram, read_from_dpram: std_logic;
+  signal write_to_dpram, read_from_dpram, latch_read_data: std_logic;
   signal tied_to_low, tied_to_high : std_logic;
   signal data_out_0_unused, data_tied_to_low: std_logic_vector(data_width-1 downto 0);
   
+  type ReadFsmState is (Idle, Valid, WaitPop);
+  signal read_state: ReadFsmState;
+  signal read_data : std_logic_vector(data_width-1 downto 0);
+  signal read_data_reg: std_logic_vector(data_width-1 downto 0);
+
 begin  -- SimModel
 
   tied_to_low <= '0';
@@ -89,99 +91,95 @@ begin  -- SimModel
   assert(queue_depth > 1) report "Synch FIFO depth must be greater than 1" severity failure;
   assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
 
-  qD1: if (queue_depth = 1) generate
-     incr_read_pointer <= read_pointer;
-     incr_write_pointer <= write_pointer;
-  end generate qD1;
+  incr_read_pointer <= Incr(read_pointer, queue_depth-1);
+  incr_write_pointer <= Incr(write_pointer, queue_depth-1);
 
-  qDG1: if (queue_depth > 1) generate
-     incr_read_pointer <= Incr(read_pointer, queue_depth-1);
-     incr_write_pointer <= Incr(write_pointer, queue_depth-1);
-  end generate qDG1;
-  
-  -- single process
-  process(clk,reset,queue_size,push_req,pop_req_int,read_pointer, write_pointer, incr_read_pointer, incr_write_pointer)
-    variable qsize : integer range 0 to queue_depth;
-    variable push_ack_v, pop_ack_v, nearly_full_v: std_logic;
-    variable push,pop : boolean;
-    variable next_read_ptr,next_write_ptr : unsigned(addr_width_of_dpram-1 downto 0);
-
+  -- pointer management process.
+  process(clk, reset)
   begin
+     if(clk'event and (clk = '1') ) then
+	if(reset ='1') then
+		read_pointer <= (others => '0');
+		write_pointer <= (others => '0');
+                queue_size <= 0;
+	else
+             if(write_to_dpram = '1') then
+		write_pointer <= incr_write_pointer;
+	     end if;
+	     if (read_from_dpram = '1') then
+		read_pointer <= incr_read_pointer;
+	     end if;
 
-    
-    qsize := queue_size;
-    push  := false;
-    pop   := false;
-    next_read_ptr := read_pointer;
-    next_write_ptr := write_pointer;
-    
-    if(queue_size < queue_depth) then
-      push_ack_v := '1';
-    else
-      push_ack_v := '0';
-    end if;
+	     if ((write_to_dpram = '1') and (read_from_dpram = '0')) then
+		queue_size <= queue_size + 1;
+	     elsif ((read_from_dpram = '1') and (write_to_dpram = '0')) then
+		queue_size <= queue_size - 1;
+	     end if;
+	end if;
+     end if;
+  end process;
 
-    if(queue_size < queue_depth-1) then
-      nearly_full_v := '0';
-    else
-      nearly_full_v := '1';
-    end if;
-
-    if(queue_size > 0) then
-      pop_ack_v := '1';
-    else
-      pop_ack_v := '0';
-    end if;
-
-
-    
-    if(push_ack_v = '1' and push_req = '1') then
-      push := true;
-    end if;
-
-    if(pop_ack_v = '1' and pop_req_int = '1') then
-      pop := true;
-    end if;
-
-    if(push) then
-      next_write_ptr := incr_write_pointer;
-      write_to_dpram <= '1';
-    else
-      write_to_dpram <= '0';
-    end if;
-
-    if(pop) then
-      next_read_ptr := incr_read_pointer;
-      read_from_dpram <= '1';
-    else
-      read_from_dpram <= '0';
-    end if;
+  -- write is easy.
+  write_to_dpram <= '1' when ((push_req = '1') and (queue_size < queue_depth)) else '0';
+  push_ack <= '1' when (queue_size < queue_depth) else '0';
+  nearly_full <= '1' when (queue_size = (queue_depth-1)) else '0';
 
 
-    if(pop and (not push)) then
-      qsize := qsize - 1;
-    elsif(push and (not pop)) then
-      qsize := qsize + 1;
-    end if;
-    
+  
+  -- read process.
+  process(clk,reset,read_state, pop_req, queue_size) 
+	variable next_read_state:  ReadFsmState;
+	variable read_from_dpram_var: std_logic;
+	variable latch_read_data_var: std_logic;
+	variable pop_ack_var : std_logic;
+  begin
+	next_read_state := read_state;
+	read_from_dpram_var := '0';
+	latch_read_data_var := '0';
+	pop_ack_var := '0';
+	
+	
+	case read_state is 
+		when Idle =>
+			if (queue_size > 0) then
+				read_from_dpram_var := '1';
+				next_read_state := Valid;	
+			end if;
+		when Valid =>
+			pop_ack_var := '1';
+			if (pop_req = '1') then
+				if(queue_size > 0) then 
+					read_from_dpram_var := '1';
+				else
+					next_read_state := Idle;
+				end if;
+			else
+				next_read_state := WaitPop;
+				latch_read_data_var := '1';
+			end if;
+		when WaitPop =>
+			pop_ack_var := '1';
+			if(pop_req = '1') then
+				if(queue_size > 0) then
+					read_from_dpram_var := '1';
+					next_read_state := Valid;
+				else
+					next_read_state := Idle;
+				end if;
+			end if;
+	end case;
 
-    push_ack <= push_ack_v;
-    pop_ack_int  <=  pop_ack_v;
+	read_from_dpram <= read_from_dpram_var;
+	latch_read_data <= latch_read_data_var;
+	pop_ack <= pop_ack_var;
 
-    nearly_full <= nearly_full_v;
-    
-    if(clk'event and clk = '1') then
-      if(reset = '1') then
-	queue_size <= 0;
-        read_pointer <= (others => '0');
-        write_pointer <= (others => '0');
-      else
-        queue_size <= qsize;
-        read_pointer <= next_read_ptr;
-        write_pointer <= next_write_ptr;
-      end if;
-    end if;
-    
+	if(clk'event and (clk = '1')) then
+		if(reset = '1') then
+			read_state <= Idle;
+		else
+			read_state <= next_read_state;
+		end if;
+	end if;
   end process;
 
   dpramInst: base_bank_dual_port
@@ -195,24 +193,28 @@ begin  -- SimModel
 				enable_0 => write_to_dpram,
 				writebar_0  => tied_to_low,
 				datain_1 => data_tied_to_low,
-				dataout_1 => data_out_int,
+				dataout_1 => read_data,
 				addrin_1 =>  std_logic_vector(read_pointer),
 				enable_1 => read_from_dpram,
 				writebar_1  => tied_to_high,
 				clk => clk, 
 				reset => reset
 			 );
+   -- registering
+   process(clk, reset)
+   begin
+       if(clk'event and (clk = '1')) then
+		if(reset = '1') then
+			read_data_reg <= (others => '0');
+		elsif (latch_read_data = '1') then
+			read_data_reg <= read_data;
+		end if;
+       end if;
+   end process;
 
-  opReg: SynchToAsynchReadInterface 
-		generic map(name => name & "-opReg", 
-			data_width => data_width)
-		port map(clk => clk, reset => reset,
-			 synch_req => pop_ack_int,
-			 synch_ack => pop_req_int,
-			 asynch_req => pop_ack,
-			 asynch_ack => pop_req,
-			 synch_data => data_out_int,
-			 asynch_data => data_out);
+   -- output mux
+   data_out <= read_data when (read_state = Valid) else read_data_reg;
+
 end behave;
 
 
