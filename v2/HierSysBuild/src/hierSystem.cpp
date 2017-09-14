@@ -216,7 +216,8 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
 		bool is_sig;
 		bool is_nb;
 		bool is_p2p;
-		bool err = getPipeInfoFromGlobals(actual, global_pipe_map, w, d, is_sig, is_nb, is_p2p);	
+		bool is_shiftreg;
+		bool err = getPipeInfoFromGlobals(actual, global_pipe_map, w, d, is_sig, is_nb, is_p2p, is_shiftreg);	
 		if(err)
 		{
 			this->Report_Error("Instance " + this->Get_Id() + " in " + parent->Get_Id() + 
@@ -227,7 +228,7 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
 		{
 			this->Report_Warning(string("Added internal ") + 
 					(is_sig ? "signal " : "pipe " )  + actual + " to " + parent->Get_Id());
-			parent->Add_Internal_Pipe(actual, w, d, is_nb, is_p2p);
+			parent->Add_Internal_Pipe(actual, w, d, is_nb, is_p2p, is_shiftreg);
 			if(is_sig)
 				parent->Add_Signal(actual);
 		}
@@ -1184,7 +1185,7 @@ void listPipeMap(map<string, hierPipe*>& pmap, vector<string>& pvec)
 }
 
 bool getPipeInfoFromGlobals(string pname, map<string, hierPipe*>& pmap, 
-		int& width, int& depth, bool& is_signal, bool& is_noblock, bool& is_p2p)
+		int& width, int& depth, bool& is_signal, bool& is_noblock, bool& is_p2p, bool& is_shiftreg)
 {
 	if(pmap.find(pname) == pmap.end())
 		return(true);
@@ -1196,6 +1197,7 @@ bool getPipeInfoFromGlobals(string pname, map<string, hierPipe*>& pmap,
 	is_signal = p->Get_Is_Signal();
 	is_noblock = p->Get_Is_Noblock();
 	is_p2p = p->Get_Is_P2P();
+	is_shiftreg = p->Get_Is_Shiftreg();
 	
 	return(false);
 }

@@ -447,7 +447,7 @@ public:
 
 
 			
-	void Add_In_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag)
+	void Add_In_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag, bool shiftreg_mode)
 	{
 		hierPipe* p = this->Add_Pipe(pid, pipe_width, depth, "in-pipe");
 		_in_pipes[pid] = p;
@@ -457,6 +457,8 @@ public:
 			p->Set_Is_Noblock(true);
 		if(p2p_flag)
 			p->Set_Is_P2P(true);
+		if(shiftreg_mode)
+			p->Set_Is_Shiftreg(true);
 
 		if(this->Get_Output_Pipe_Width(pid) > 0)
 		{
@@ -468,7 +470,7 @@ public:
 		}
 
 	}
-	void Add_Out_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag)
+	void Add_Out_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag, bool shiftreg_mode)
 	{
 		hierPipe* p = this->Add_Pipe(pid, pipe_width, depth, "out-pipe");
 		_out_pipes[pid] = p;
@@ -477,6 +479,8 @@ public:
 			p->Set_Is_Noblock(true);
 		if(p2p_flag)
 			p->Set_Is_P2P(true);
+		if(shiftreg_mode)
+			p->Set_Is_Shiftreg(true);
 
 		if(this->Get_Input_Pipe_Width( pid) > 0)
 		{
@@ -487,7 +491,7 @@ public:
 			this->Report_Error("pipe " + pid + " in system " + this->_id + " is both internal and output pipe.");
 		}
 	}
-	void Add_Internal_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag)
+	void Add_Internal_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag, bool shiftreg_mode)
 	{
 		hierPipe* p = this->Add_Pipe(pid, pipe_width, depth, "internal-pipe");
 		_internal_pipes[pid] = p;
@@ -496,6 +500,8 @@ public:
 			p->Set_Is_Noblock(true);
 		if(p2p_flag)
 			p->Set_Is_P2P(true);
+		if(shiftreg_mode)
+			p->Set_Is_Shiftreg(true);
 
 		if(this->Get_Input_Pipe_Width(pid) > 0)
 		{
@@ -820,7 +826,7 @@ void listPipeMap(map<string, hierPipe* >& pmap, vector<hierPipe*>& pvec);
 bool getPipeInfoFromGlobals(string pname, 
 				map<string, hierPipe*>& pmap,
 					int& width, int& depth, bool& is_signal, bool& noblock_flag,
-						bool& p2p_flag);
+						bool& p2p_flag, bool& shiftreg_flag);
 
 void addPipeToGlobalMaps(string oname, 
 				map<string, hierPipe*>& pipe_map, 

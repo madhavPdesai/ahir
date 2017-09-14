@@ -163,9 +163,10 @@ hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map,
 	string pipe_name;
 	int depth = 1;
 	int pipe_width = 0;
+	bool shiftreg_flag = false;
 }:
 		(NOBLOCK {noblock_flag = true;})? 
-		(P2P {p2p_flag = true;})?
+		((P2P {p2p_flag = true;})| (SHIFTREG {shiftreg_flag = true;})) ?
 		(PIPE | (SIGNAL {signal_flag = true;}))
 		sidi: SIMPLE_IDENTIFIER  (uidi: UINTEGER {pipe_width = atoi(uidi->getText().c_str());})?
 				(DEPTH didi: UINTEGER {depth = atoi(didi->getText().c_str());})?
@@ -175,7 +176,7 @@ hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map,
 				{
 					bool err = getPipeInfoFromGlobals(pipe_name, global_pipe_map,
 											 pipe_width, depth, signal_flag,
-												noblock_flag, p2p_flag);
+												noblock_flag, p2p_flag, shiftreg_flag);
 					if(err)
 					{
 						sys->Report_Error("underspecified pipe " + pipe_name + " not found in globals.");		
@@ -184,11 +185,11 @@ hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map,
 				}
 
 				if(in_flag)
-					sys->Add_In_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag);
+					sys->Add_In_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag,shiftreg_flag);
 				else if(out_flag)
-					sys->Add_Out_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag);
+					sys->Add_Out_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag,shiftreg_flag);
 				else
-					sys->Add_Internal_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag);
+					sys->Add_Internal_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag,shiftreg_flag);
 
 				if(signal_flag)
 					sys->Add_Signal(sidi->getText());
