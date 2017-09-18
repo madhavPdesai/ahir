@@ -280,6 +280,14 @@ etc.   Expressions can be {\em unary},
 described in detail in Section \ref{sec:Expressions}.
 Details of the syntax are provided in 
 Section \ref{sec:Syntax}.
+
+An assignment statement can be marked as a volatile
+\begin{verbatim}
+$volatile a := (b+c)
+\end{verbatim}
+which means that $a$ will be generated from $b,c$, but
+the logic which updates $a$ can be combinational.
+
 \item A {\bf call} statement is of the form
 \begin{verbatim}
 call-spec module-name input-arguments output-arguments
@@ -299,6 +307,21 @@ Here is an example of a call statement
 $call foo (p q)  (r s t)
 \end{verbatim}
 Here $p,q,r,s,t$ can be expressions.
+
+A call statement must be marked as a volatile
+if the corresponding called module is volatile
+\begin{verbatim}
+$volatile $call foo (b c) (a)
+\end{verbatim}
+which means that $a$ will be generated from $b,c$, but
+the logic which updates $a$ can be combinational.
+
+\item The {\bf null} statement does nothing, and just passes the
+token onwards.  This is how it looks like
+\begin{verbatim}
+$null
+\end{verbatim}
+\end{itemize}
 
 Complete atomic statements can have a guard predicate
 specified, so that they are executed only if the guard
@@ -351,12 +374,6 @@ balance pipelines.
 More details of the syntax are provided in 
 Section \ref{sec:Syntax}.
 
-\item The {\bf null} statement does nothing, and just passes the
-token onwards.  This is how it looks like
-\begin{verbatim}
-$null
-\end{verbatim}
-\end{itemize}
 
 \subsection{Complete Block Statements}
 
