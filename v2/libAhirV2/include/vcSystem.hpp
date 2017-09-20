@@ -94,6 +94,9 @@ class vcSystem: public vcRoot
 
   static int _register_bank_threshold;
 
+  static int _fifo_register_count;
+  static void Increment_Fifo_Register_Count(int S);
+
   void Register_Pipe_Read(string pipe_id, vcModule* m, int idx);
   int Get_Num_Pipe_Reads(string pipe_id);
   void Register_Pipe_Write(string pipe_id, vcModule* m, int idx);

@@ -405,6 +405,7 @@ int main(int argc, char* argv[])
 	  sys_file << "-- VHDL produced by vc2vhdl from virtual circuit (vc) description " << endl;
 	  test_system.Print_VHDL(sys_file);
 	  sys_file.close();
+	  cerr << "Info: number of register bits used in FIFO's = " << vcSystem::_fifo_register_count << endl;
 
 	  ofstream sys_tb_file;
 	  string tb_file_name = sys_name + "_test_bench.unformatted_vhdl";

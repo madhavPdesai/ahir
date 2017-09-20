@@ -48,6 +48,14 @@ bool vcSystem::_min_clock_period_flag = false;
 bool vcSystem::_enable_logging = false;
 bool vcSystem::_generate_hsys_file = false;
 
+int vcSystem::_fifo_register_count = 0;
+void vcSystem::Increment_Fifo_Register_Count (int S)
+{
+	vcSystem::_fifo_register_count += S;
+}
+
+
+
 // bypass stride.
 // the maximum chain of joins with bypass
 // (to control the clock-period).

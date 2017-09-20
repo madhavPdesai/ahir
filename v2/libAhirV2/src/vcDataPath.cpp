@@ -207,6 +207,8 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 						<< endl;
 			}
 
+			int fifo_register_bits = pipe_width * actual_pipe_depth;
+			vcSystem::Increment_Fifo_Register_Count (fifo_register_bits);
 			ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
 			ofile << "generic map( -- { " << endl;
 			ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
@@ -2623,6 +2625,9 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 				vcSystem::Error("P2P pipe " + p->Get_VHDL_Id() + " cannot have multiple readers. ");
 				assert(0);
 			}
+
+			int fifo_register_bits = data_width * p->Get_Depth();
+			vcSystem::Increment_Fifo_Register_Count (fifo_register_bits);
 
 			ofile << group_name << ": InputPort_P2P -- { " << endl;
 			ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
