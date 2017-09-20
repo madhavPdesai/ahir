@@ -162,10 +162,8 @@ begin  -- default_arch
 	end if;
      end process;
 
-	-- read always succeeds, provided that it has been written
-	-- into at least once.
      ReaderGen: for R in 0 to num_reads-1 generate
-	read_ack_sig(R) <= written_at_least_once;
+	read_ack_sig(R) <= '1'; -- read-ack always succeeds..
 	read_data_sig(((R+1)*data_width)-1 downto (R*data_width)) <= signal_data;
      end generate ReaderGen;
 
