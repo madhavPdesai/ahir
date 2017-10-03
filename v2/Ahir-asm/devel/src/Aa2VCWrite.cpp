@@ -120,7 +120,7 @@ bool Is_Trivial_VC_Type_Conversion(AaType* src_type, AaType* target_type)
 {
   bool ret_val;
   if((target_type == src_type) || 
-     (target_type->Is_Uinteger_Type() && src_type->Is_Uinteger_Type()))
+     (target_type->Is_Integer_Type() && src_type->Is_Integer_Type()))
     ret_val = true;
   else
     ret_val = false;

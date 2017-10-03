@@ -204,6 +204,8 @@ begin  -- default_arch
 	--     had a reason for this.. Let the synthesis tool 
 	--     optimize this one.
 	--
+	-- creates a forward path from write_req to unload_ack..
+	-- 
   	process(clk,fsm_state_bypass, unload_req, write_req, write_data)
      		variable nstate: FsmStateBypass;
      		variable loadv : boolean;
