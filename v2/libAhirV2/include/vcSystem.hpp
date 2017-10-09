@@ -116,7 +116,7 @@ class vcSystem: public vcRoot
       return NULL;
   }
   void Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bool noblock_mode, bool in_flag, bool out_flag, bool signal_flag, 
-		bool p2p_flag, bool shiftreg_flag, bool full_rate);
+		bool p2p_flag, bool shiftreg_flag, bool full_rate, bool bypass);
   int Get_Pipe_Width(string pipe_id);
   int Get_Pipe_Depth(string pipe_id);
   void Print_Pipes(ostream& ofile);

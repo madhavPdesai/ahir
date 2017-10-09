@@ -658,6 +658,7 @@ package BaseComponents is
 	     signal_mode: boolean := false;
  	     shift_register_mode: boolean := false;
 	     save_slot: boolean := false;
+	     bypass: boolean := false;
 	     full_rate : boolean := false);
     port (
       read_req       : in  std_logic_vector(num_reads-1 downto 0);
@@ -2216,6 +2217,7 @@ package BaseComponents is
     generic (name : string;
 	   data_width: integer;
 	   queue_depth: integer;
+	   bypass_flag: boolean := false;
 	   nonblocking_read_flag: boolean := false);
     port (
     -- pulse interface with the data-path

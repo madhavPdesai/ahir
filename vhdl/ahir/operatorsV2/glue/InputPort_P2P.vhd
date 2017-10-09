@@ -45,6 +45,7 @@ entity InputPort_P2P is
   generic (name : string;
 	   data_width: integer;
 	   queue_depth: integer;
+	   bypass_flag: boolean := false;
 	   nonblocking_read_flag: boolean);
   port (
     -- pulse interface with the data-path
@@ -71,7 +72,7 @@ begin
 	generic map (name => name & "-ub", 
 				data_width => data_width,
 				   buffer_size => queue_depth, 
-					bypass_flag => true,  -- no longer relevant..
+					bypass_flag => bypass_flag,  
 						nonblocking_read_flag => nonblocking_read_flag,
 							full_rate => false -- no longer relevant..
 					)

@@ -1802,6 +1802,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 	    bool noblock_flag = false;
 	    bool is_shift_reg = false;
 	    bool full_rate = false;
+	    bool bypass_flag = false;
 		int lno;
         }
         : ((LIFO { lifo_flag = true; }) | (NOBLOCK {noblock_flag = true;}))? 
@@ -1813,6 +1814,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 		(SYNCH {is_synch = true;})?
 		(P2P {is_p2p = true;})?
 		(FULLRATE {full_rate = true;})?
+		(BYPASS {bypass_flag = true;})?
         {
 	    for(int I = 0, fI = oname_list.size(); I < fI; I++)
 	    {
@@ -1832,6 +1834,7 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 	    	((AaPipeObject*)obj)->Set_P2P(is_p2p);
 	    	((AaPipeObject*)obj)->Set_Full_Rate(full_rate);
 	    	((AaPipeObject*)obj)->Set_Shift_Reg(is_shift_reg);
+	    	((AaPipeObject*)obj)->Set_Bypass(bypass_flag);
 
 		if(scope == NULL)
 			AaProgram::Add_Object(obj);
@@ -2433,6 +2436,7 @@ PHI           : "$phi";
 DEPTH         : "$depth";
 BUFFERING     : "$buffering";
 FULLRATE      : "$fullrate";
+BYPASS        : "$bypass";
 ATTRIBUTE     : "$attribute";
 GUARD         : "$guard";
 DO            : "$dopipeline";

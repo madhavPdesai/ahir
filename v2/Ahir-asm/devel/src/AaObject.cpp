@@ -455,6 +455,8 @@ AaPipeObject::AaPipeObject(AaScope* parent_tpr, string oname, AaType* otype):AaO
 	_signal = false;
 	_synch  = false;
 	_p2p  = false;
+	_full_rate = false;
+	_bypass = false;
 };
 
 void AaPipeObject::Set_Depth(int d)
@@ -507,6 +509,9 @@ void AaPipeObject::Print(ostream& ofile)
 
 	if(_full_rate)
 		ofile << " $fullrate ";
+
+	if(_bypass)
+		ofile << " $bypass ";
 
 
 	ofile << endl << "// can point into ";
@@ -570,6 +575,7 @@ void AaPipeObject::Write_VC_Model(ostream& ofile)
 			this->Get_P2P(),
 			this->Get_Shift_Reg(),
 			this->Get_Full_Rate(),
+			this->Get_Bypass(),
 			ofile);
 }
 

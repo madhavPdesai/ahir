@@ -94,6 +94,7 @@ hierPipe::hierPipe(string pname, int w, int d):hierRoot(pname)
 	_is_input = false;
 	_is_output = false;
 	_is_internal = false;
+	_bypass = false;
 }
 
 
@@ -129,6 +130,7 @@ void hierPipe::Print_Vhdl_Instance(hierSystem* sys, ostream& ofile)
 	ofile << "lifo_mode => false," << endl;
 	ofile << "signal_mode => false," << endl;
 	ofile << "shift_register_mode => " << (this->Get_Is_Shiftreg() ? "true," : "false,") << endl;
+	ofile << "bypass => " << (this->Get_Bypass() ? "true," : "false,") << endl;
 	ofile << "depth => " << pipe_depth << " --}\n)" << endl;
 	ofile << "port map( -- { " << endl;
 	ofile << "read_req => " << sys->Get_Pipe_Vhdl_Read_Req_Name(pipe_name) << "," << endl 
@@ -217,7 +219,9 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
 		bool is_nb;
 		bool is_p2p;
 		bool is_shiftreg;
-		bool err = getPipeInfoFromGlobals(actual, global_pipe_map, w, d, is_sig, is_nb, is_p2p, is_shiftreg);	
+		bool bypass_flag;
+		bool err = getPipeInfoFromGlobals(actual, global_pipe_map, w, d, is_sig, is_nb, is_p2p, is_shiftreg,
+							bypass_flag);	
 		if(err)
 		{
 			this->Report_Error("Instance " + this->Get_Id() + " in " + parent->Get_Id() + 
@@ -228,7 +232,7 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
 		{
 			this->Report_Warning(string("Added internal ") + 
 					(is_sig ? "signal " : "pipe " )  + actual + " to " + parent->Get_Id());
-			parent->Add_Internal_Pipe(actual, w, d, is_nb, is_p2p, is_shiftreg);
+			parent->Add_Internal_Pipe(actual, w, d, is_nb, is_p2p, is_shiftreg, bypass_flag);
 			if(is_sig)
 				parent->Add_Signal(actual);
 		}
@@ -1185,7 +1189,8 @@ void listPipeMap(map<string, hierPipe*>& pmap, vector<string>& pvec)
 }
 
 bool getPipeInfoFromGlobals(string pname, map<string, hierPipe*>& pmap, 
-		int& width, int& depth, bool& is_signal, bool& is_noblock, bool& is_p2p, bool& is_shiftreg)
+		int& width, int& depth, bool& is_signal, bool& is_noblock, bool& is_p2p, bool& is_shiftreg,
+			bool& bypass_flag)
 {
 	if(pmap.find(pname) == pmap.end())
 		return(true);
@@ -1198,6 +1203,7 @@ bool getPipeInfoFromGlobals(string pname, map<string, hierPipe*>& pmap,
 	is_noblock = p->Get_Is_Noblock();
 	is_p2p = p->Get_Is_P2P();
 	is_shiftreg = p->Get_Is_Shiftreg();
+	bypass_flag =p->Get_Bypass();
 	
 	return(false);
 }
@@ -1206,7 +1212,7 @@ bool getPipeInfoFromGlobals(string pname, map<string, hierPipe*>& pmap,
 void addPipeToGlobalMaps(string oname, map<string, hierPipe*>& pipe_map, 
 					int pipe_width, int pipe_depth, bool is_signal, bool noblock_mode,
 						bool shiftreg_mode,
-						bool p2p_mode)
+						bool p2p_mode, bool bypass_flag)
 {
 		std::cerr << "Info: adding pipe " << oname << " width = " << pipe_width << ", depth = " 
 			<< pipe_depth << " to global map " << endl;
@@ -1243,8 +1249,13 @@ void addPipeToGlobalMaps(string oname, map<string, hierPipe*>& pipe_map,
 		}
 		if(p2p_mode)
 		{
-			std::cerr << "Info: marking pipe " << oname << " as a noblock-pipe in global set." << endl;
+			std::cerr << "Info: marking pipe " << oname << " as a p2p-pipe in global set." << endl;
 			p->Set_Is_P2P(true);
+		}
+		if(bypass_flag)
+		{
+			std::cerr << "Info: marking pipe " << oname << " as a bypass-pipe in global set." << endl;
+			p->Set_Bypass(true);
 		}
 }
 

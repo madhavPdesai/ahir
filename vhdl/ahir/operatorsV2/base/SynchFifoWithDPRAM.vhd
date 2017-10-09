@@ -82,6 +82,8 @@ architecture behave of SynchFifoWithDPRAM is
   signal read_data : std_logic_vector(data_width-1 downto 0);
   signal read_data_reg: std_logic_vector(data_width-1 downto 0);
 
+  signal ready_for_bypass: std_logic;
+
 begin  -- SimModel
 
   tied_to_low <= '0';
@@ -120,22 +122,26 @@ begin  -- SimModel
   end process;
 
   -- write is easy.
-  write_to_dpram <= '1' when ((push_req = '1') and (queue_size < queue_depth)) else '0';
+  write_to_dpram <= '1' when ((push_req = '1') and (queue_size < queue_depth) and (ready_for_bypass = '0')) 
+						else '0';
   push_ack <= '1' when (queue_size < queue_depth) else '0';
   nearly_full <= '1' when (queue_size = (queue_depth-1)) else '0';
 
 
   
   -- read process.
-  process(clk,reset,read_state, pop_req, queue_size) 
+  process(clk,reset,read_state, pop_req, queue_size, push_req) 
 	variable next_read_state:  ReadFsmState;
 	variable read_from_dpram_var: std_logic;
 	variable latch_read_data_var: std_logic;
+	variable ready_for_bypass_var: std_logic;
 	variable pop_ack_var : std_logic;
   begin
 	next_read_state := read_state;
 	read_from_dpram_var := '0';
 	latch_read_data_var := '0';
+	ready_for_bypass_var := '0';
+
 	pop_ack_var := '0';
 	
 	
@@ -144,12 +150,20 @@ begin  -- SimModel
 			if (queue_size > 0) then
 				read_from_dpram_var := '1';
 				next_read_state := Valid;	
+			elsif (push_req = '1') then
+				ready_for_bypass_var := '1';
+				latch_read_data_var := '1';
+				next_read_state := WaitPop;
 			end if;
 		when Valid =>
 			pop_ack_var := '1';
 			if (pop_req = '1') then
 				if(queue_size > 0) then 
 					read_from_dpram_var := '1';
+				elsif (push_req = '1') then
+					ready_for_bypass_var := '1';
+					latch_read_data_var := '1';
+					next_read_state := WaitPop;
 				else
 					next_read_state := Idle;
 				end if;
@@ -163,6 +177,10 @@ begin  -- SimModel
 				if(queue_size > 0) then
 					read_from_dpram_var := '1';
 					next_read_state := Valid;
+				elsif (push_req = '1') then
+					ready_for_bypass_var := '1';
+					latch_read_data_var := '1';
+					next_read_state := WaitPop;
 				else
 					next_read_state := Idle;
 				end if;
@@ -171,6 +189,8 @@ begin  -- SimModel
 
 	read_from_dpram <= read_from_dpram_var;
 	latch_read_data <= latch_read_data_var;
+	ready_for_bypass <= ready_for_bypass_var;
+
 	pop_ack <= pop_ack_var;
 
 	if(clk'event and (clk = '1')) then
@@ -207,7 +227,11 @@ begin  -- SimModel
 		if(reset = '1') then
 			read_data_reg <= (others => '0');
 		elsif (latch_read_data = '1') then
-			read_data_reg <= read_data;
+			if(ready_for_bypass = '1') then
+				read_data_reg <= data_in;
+			else
+				read_data_reg <= read_data;
+			end if;
 		end if;
        end if;
    end process;

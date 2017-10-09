@@ -79,6 +79,7 @@ vc_Pipe[vcSystem* sys, vcModule* m]
   bool p2p_flag = false;
   bool full_rate = false;
   bool shiftreg_flag = false;
+  bool bypass_flag = false;
 }:  ((LIFO {lifo_mode = true;}) | (NOBLOCK {noblock_mode = true;}))? 
 	(SHIFTREG {shiftreg_flag = true;})?
 	PIPE lbl = vc_Label  wid:UINTEGER  (DEPTH did:UINTEGER {depth = atoi(did->getText().c_str()); })?
@@ -86,11 +87,12 @@ vc_Pipe[vcSystem* sys, vcModule* m]
 	(SIGNAL {signal_flag = true;})?
 	(P2P {p2p_flag = true;})?
 	(FULLRATE {full_rate = true;})?
+	(BYPASS {bypass_flag = true;})?
         {
             if (sys) 
-                sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode, noblock_mode, in_flag, out_flag, signal_flag, p2p_flag, shiftreg_flag, full_rate);
+                sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode, noblock_mode, in_flag, out_flag, signal_flag, p2p_flag, shiftreg_flag, full_rate, bypass_flag);
             else if(m)
-                m->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode, noblock_mode,  in_flag, out_flag, signal_flag, p2p_flag, shiftreg_flag,full_rate);
+                m->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode, noblock_mode,  in_flag, out_flag, signal_flag, p2p_flag, shiftreg_flag,full_rate, bypass_flag);
         } 
 ;
 
@@ -1884,6 +1886,7 @@ HASH: "#";
 FLOWTHROUGH : "$flowthrough";
 // full-rate indicator.
 FULLRATE      : "$fullrate";
+BYPASS	      : "$bypass";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

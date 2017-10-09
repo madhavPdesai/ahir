@@ -322,6 +322,7 @@ class AaPipeObject: public AaObject
   bool _synch;
   bool _p2p;
   bool _shift_reg;
+  bool _bypass;
  public:
 
   
@@ -336,6 +337,9 @@ class AaPipeObject: public AaObject
 
   void Set_Full_Rate(bool v) { _full_rate = v; }
   bool Get_Full_Rate() {return(_full_rate);}
+
+  void Set_Bypass(bool v) { _bypass = v; }
+  bool Get_Bypass() {return(_bypass);}
 
   void Set_No_Block_Mode(bool v) { _no_block_mode = v; }
   bool Get_No_Block_Mode() {return(_no_block_mode);}

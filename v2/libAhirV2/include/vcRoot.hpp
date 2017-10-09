@@ -181,8 +181,9 @@ enum vcLexerKeytags
     __TIED_HIGH,
     __LEFT_OPEN,
     __HASH,
+    __FLOWTHROUGH,
     __FULLRATE,
-    __FLOWTHROUGH
+    __BYPASS
   };
 
 static string vcLexerKeywords[] = 
@@ -336,7 +337,8 @@ static string vcLexerKeywords[] =
       "$left_open",
       "#",
       "$flowthrough",
-      "$fullrate"
+      "$fullrate",
+      "$bypass"
   };
 
 string To_VHDL(string x);

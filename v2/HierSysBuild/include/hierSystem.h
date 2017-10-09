@@ -132,6 +132,7 @@ class hierPipe: public hierRoot
 	bool   _is_input;
 	bool   _is_output;
 	bool   _is_internal;
+        bool   _bypass;
 
 	hierPipe(string name, int width, int depth);
 	void Set_Is_Signal(bool v) {_is_signal = v;}
@@ -141,6 +142,7 @@ class hierPipe: public hierRoot
 	void Set_Is_Input(bool v) {_is_input = v;}
 	void Set_Is_Output(bool v) {_is_output = v;}
 	void Set_Is_Internal(bool v) {_is_internal = v;}
+	void Set_Bypass(bool v) {_bypass = v;}
 
 	bool Get_Is_Signal() {return(_is_signal);}
 	bool Get_Is_Noblock() {return(_is_noblock);}
@@ -149,6 +151,7 @@ class hierPipe: public hierRoot
 	bool Get_Is_Input() {return(_is_input);}
 	bool Get_Is_Output() {return(_is_output);}
 	bool Get_Is_Internal() {return(_is_internal);}
+	bool Get_Bypass() {return(_bypass);}
 
 	string Get_Name() {return(_name);}
 	int    Get_Depth() {return(_depth);}
@@ -161,12 +164,15 @@ class hierPipe: public hierRoot
 			ofile  << "$noblock ";
 		if(_is_p2p)
 			ofile  << "$p2p ";
+		if(_bypass)
+			ofile << "$bypass ";
 		if(_is_signal)
 			ofile << "$signal ";
 		else
 			ofile << "$pipe ";
 
 		ofile << _name << " " << _width << " $depth " << _depth << " " << endl;
+
 	}
 
 	void Print_Vhdl_Instance(hierSystem* sys, ostream& ofile);
@@ -447,7 +453,8 @@ public:
 
 
 			
-	void Add_In_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag, bool shiftreg_mode)
+	void Add_In_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag, 
+						bool shiftreg_mode, bool bypass_flag)
 	{
 		hierPipe* p = this->Add_Pipe(pid, pipe_width, depth, "in-pipe");
 		_in_pipes[pid] = p;
@@ -459,6 +466,8 @@ public:
 			p->Set_Is_P2P(true);
 		if(shiftreg_mode)
 			p->Set_Is_Shiftreg(true);
+		if(bypass_flag)
+			p->Set_Bypass(true);
 
 		if(this->Get_Output_Pipe_Width(pid) > 0)
 		{
@@ -470,7 +479,8 @@ public:
 		}
 
 	}
-	void Add_Out_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag, bool shiftreg_mode)
+	void Add_Out_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag, 
+						bool shiftreg_mode, bool bypass_flag)
 	{
 		hierPipe* p = this->Add_Pipe(pid, pipe_width, depth, "out-pipe");
 		_out_pipes[pid] = p;
@@ -481,6 +491,8 @@ public:
 			p->Set_Is_P2P(true);
 		if(shiftreg_mode)
 			p->Set_Is_Shiftreg(true);
+		if(bypass_flag)
+			p->Set_Bypass(true);
 
 		if(this->Get_Input_Pipe_Width( pid) > 0)
 		{
@@ -491,7 +503,8 @@ public:
 			this->Report_Error("pipe " + pid + " in system " + this->_id + " is both internal and output pipe.");
 		}
 	}
-	void Add_Internal_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag, bool shiftreg_mode)
+	void Add_Internal_Pipe(string pid, int pipe_width, int depth, bool noblock_flag, bool p2p_flag, 
+					bool shiftreg_mode, bool bypass_flag)
 	{
 		hierPipe* p = this->Add_Pipe(pid, pipe_width, depth, "internal-pipe");
 		_internal_pipes[pid] = p;
@@ -502,6 +515,8 @@ public:
 			p->Set_Is_P2P(true);
 		if(shiftreg_mode)
 			p->Set_Is_Shiftreg(true);
+		if(bypass_flag)
+			p->Set_Bypass(true);
 
 		if(this->Get_Input_Pipe_Width(pid) > 0)
 		{
@@ -826,13 +841,13 @@ void listPipeMap(map<string, hierPipe* >& pmap, vector<hierPipe*>& pvec);
 bool getPipeInfoFromGlobals(string pname, 
 				map<string, hierPipe*>& pmap,
 					int& width, int& depth, bool& is_signal, bool& noblock_flag,
-						bool& p2p_flag, bool& shiftreg_flag);
+						bool& p2p_flag, bool& shiftreg_flag, bool& bypass_flag);
 
 void addPipeToGlobalMaps(string oname, 
 				map<string, hierPipe*>& pipe_map, 
 					int pipe_width, int pipe_depth, bool is_signal, bool noblock_mode, 
 						bool shiftreg_mode,
-						bool p2p_mode);
+						bool p2p_mode, bool bypass_flag);
 
 
 string IntToStr(int u);

@@ -164,9 +164,12 @@ hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map,
 	int depth = 1;
 	int pipe_width = 0;
 	bool shiftreg_flag = false;
+	bool bypass_flag = false;
 }:
 		(NOBLOCK {noblock_flag = true;})? 
 		((P2P {p2p_flag = true;})| (SHIFTREG {shiftreg_flag = true;})) ?
+		(BYPASS {bypass_flag = true;})?
+
 		(PIPE | (SIGNAL {signal_flag = true;}))
 		sidi: SIMPLE_IDENTIFIER  (uidi: UINTEGER {pipe_width = atoi(uidi->getText().c_str());})?
 				(DEPTH didi: UINTEGER {depth = atoi(didi->getText().c_str());})?
@@ -175,8 +178,10 @@ hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map,
 				if((pipe_width == 0) || (depth == 0))
 				{
 					bool err = getPipeInfoFromGlobals(pipe_name, global_pipe_map,
-											 pipe_width, depth, signal_flag,
-												noblock_flag, p2p_flag, shiftreg_flag);
+										pipe_width, 
+										depth, signal_flag,
+										noblock_flag, p2p_flag, 
+										shiftreg_flag, bypass_flag);
 					if(err)
 					{
 						sys->Report_Error("underspecified pipe " + pipe_name + " not found in globals.");		
@@ -185,11 +190,14 @@ hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map,
 				}
 
 				if(in_flag)
-					sys->Add_In_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag,shiftreg_flag);
+					sys->Add_In_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag,
+								shiftreg_flag, bypass_flag);
 				else if(out_flag)
-					sys->Add_Out_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag,shiftreg_flag);
+					sys->Add_Out_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag,
+								shiftreg_flag, bypass_flag);
 				else
-					sys->Add_Internal_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag,shiftreg_flag);
+					sys->Add_Internal_Pipe(pipe_name, pipe_width, depth, noblock_flag, p2p_flag,
+								shiftreg_flag, bypass_flag);
 
 				if(signal_flag)
 					sys->Add_Signal(sidi->getText());
@@ -266,6 +274,7 @@ hier_system_Pipe_Declaration[map<string, hierPipe* >& pipe_map, map<string, int>
     bool is_synch  = false;
     bool is_p2p   = false;
     bool shiftreg_mode = false;
+    bool bypass_flag = false;
    
 }
     :       ((lid:LIFO { std::cerr << "Warning: lifo flag ignored.. line number " << lid->getLine() << endl; }) |
@@ -279,13 +288,14 @@ hier_system_Pipe_Declaration[map<string, hierPipe* >& pipe_map, map<string, int>
         (DEPTH pipe_depth = aA_Integer_Parameter_Expression[global_parameter_map])?
 		(SIGNAL {is_signal = true;})?
 		(P2P    {is_p2p = true;})?
+		(BYPASS {bypass_flag = true;})?
         {
             for(int I = 0, fI = oname_list.size(); I < fI; I++)
                 {
                     string oname = oname_list[I];
                     
                     addPipeToGlobalMaps(oname, pipe_map, pipe_width, pipe_depth, is_signal, noblock_mode, 
-						shiftreg_mode, is_p2p);
+						shiftreg_mode, is_p2p, bypass_flag);
 
                 }
 
@@ -1053,6 +1063,7 @@ LIFO: "$lifo";
 NOBLOCK: "$noblock";
 SHIFTREG: "$shiftreg";
 P2P: "$p2p";
+BYPASS:"$bypass";
 SIGNAL: "$signal";
 INSTANCE: "$instance";
 LIBRARY: "$library";

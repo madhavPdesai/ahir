@@ -218,6 +218,7 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 			ofile << "lifo_mode => " << (this->Get_Lifo_Mode() ? "true" : "false") << "," << endl;
 			ofile << "full_rate => " << (this->Get_Full_Rate() ? "true" : "false") << "," << endl;
 			ofile << "shift_register_mode => " << (this->Get_Shift_Reg() ? "true" : "false") << "," << endl;
+			ofile << "bypass => " << (this->Get_Bypass() ? "true" : "false") << "," << endl;
 			ofile << "depth => " << actual_pipe_depth << " --}\n)" << endl;
 			ofile << "port map( -- { " << endl;
 			ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
@@ -2618,6 +2619,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 
 		bool p2p_flag = p->Get_P2P();
 		bool noblock_flag = p->Get_No_Block_Mode();
+		bool bypass = p->Get_Bypass();
 		if(p2p_flag)
 		{
 			if(num_reqs > 1)
@@ -2631,7 +2633,8 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 
 			ofile << group_name << ": InputPort_P2P -- { " << endl;
 			ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
-				<< "   	nonblocking_read_flag => " << (noblock_flag ? "true" : "False") << "," 
+				<< "    bypass_flag => " << (bypass ? "true" : "false") << ","
+				<< "   	nonblocking_read_flag => " << (noblock_flag ? "true" : "false") << "," 
 				<< "  queue_depth =>  " << p->Get_Depth() << ")" << endl;
 			ofile << "port map (-- {\n sample_req => reqL(0) " << ", " <<  endl
 				<< "    sample_ack => ackL(0)" << ", " <<  endl

@@ -1586,7 +1586,8 @@ vcPipe* vcModule::Find_Pipe(string pipe_id)
 }
 
 void vcModule::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bool noblock_mode,
-					 bool in_flag, bool out_flag, bool signal_flag, bool p2p_flag, bool shiftreg_flag, bool full_rate) 
+					 bool in_flag, bool out_flag, bool signal_flag, 
+					bool p2p_flag, bool shiftreg_flag, bool full_rate, bool bypass) 
 {
 	assert(_pipe_map.find(pipe_id) == _pipe_map.end());
 	assert(width > 0);
@@ -1601,6 +1602,7 @@ void vcModule::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bo
 	np->Set_P2P(p2p_flag);
 	np->Set_Shift_Reg(shiftreg_flag);
 	np->Set_Full_Rate(full_rate);
+	np->Set_Bypass(bypass);
 }
 
 void vcModule::Print_VHDL_Pipe_Signals(ostream& ofile)

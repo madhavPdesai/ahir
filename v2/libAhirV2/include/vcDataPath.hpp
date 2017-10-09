@@ -75,6 +75,7 @@ class vcPipe: public vcRoot
   bool _p2p;
   bool _shift_reg;
   bool _full_rate;
+  bool _bypass;
 public:
 
   
@@ -104,6 +105,10 @@ public:
 
   void Set_Full_Rate(bool v) { _full_rate = v; }
   bool Get_Full_Rate() {return(_full_rate);}
+
+  void Set_Bypass(bool v) { _bypass = v; }
+  bool Get_Bypass() {return(_bypass);}
+
 
   void Set_Shift_Reg(bool v) { _shift_reg = v; }
   bool Get_Shift_Reg() {return(_shift_reg);}
@@ -168,6 +173,9 @@ public:
 	    ofile << vcLexerKeywords[__P2P]  << " ";
     if(_full_rate)
 	    ofile << vcLexerKeywords[__FULLRATE]  << " ";
+
+    if(_bypass)
+	    ofile << vcLexerKeywords[__BYPASS]  << " ";
 
     ofile << endl;
   }

@@ -196,7 +196,7 @@ void Write_VC_Intermediate_Wire_Declaration(string wire_name,
 
 void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode,  bool noblock_flag, 
 			bool in_flag, bool out_flag, bool signal_flag, 
-			 bool p2p_flag, bool shiftreg_flag, bool full_rate, ostream& ofile);
+			 bool p2p_flag, bool shiftreg_flag, bool full_rate, bool bypass, ostream& ofile);
 void Write_VC_Memory_Space_Declaration(string space_name, string obj_name, AaType* type,ostream& ofile);
 void Write_VC_Load_Operator(string ms_name, string inst_name, string data_name, string addr_name,
 			     string guard_string,
