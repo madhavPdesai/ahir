@@ -92,8 +92,8 @@ architecture default_arch of UnloadBuffer is
   -- and allows us to use 2-depth buffers to cut long
   -- combinational paths.
   --
-  constant save_slot_flag : boolean := (buffer_size = 1);
-  constant bypass_flag_to_ureg : boolean := (buffer_size = 0);
+  constant save_slot_flag : boolean := ((not bypass_flag) and (buffer_size = 1));
+  constant bypass_flag_to_ureg : boolean := (bypass_flag or (buffer_size = 0));
 
   constant shallow_flag : boolean :=    (buffer_size < global_pipe_shallowness_threshold);
 
