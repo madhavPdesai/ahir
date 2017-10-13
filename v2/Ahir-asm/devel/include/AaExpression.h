@@ -413,6 +413,8 @@ class AaExpression: public AaRoot
 		// default.. do nothing.
 	}
 
+	virtual int Get_Existing_Buffering() {return(0);}
+
 };
 
 
@@ -914,6 +916,8 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual void Write_VC_Pipelined_Module_Enable_Joins(set<AaRoot*>& visited_elements, ostream& ofile);
 	void Write_VC_Joins_To_Root_Source_Updates(string trig_trans, 
 							set<AaRoot*>& visited_elements, ostream& ofile);
+
+	virtual int Get_Existing_Buffering();
 };
 
 

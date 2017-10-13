@@ -5,6 +5,7 @@ echo "Making vhdl release."
 cd vhdl/release
 . cat.sh
 . catForAsic.sh
+. catForAsicFpga.sh
 cd -
 echo "Running scons to build tools."
 cd v2

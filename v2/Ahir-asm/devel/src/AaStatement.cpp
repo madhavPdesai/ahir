@@ -589,6 +589,7 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 
 		AaStatement* gstmt = curr_expr->Get_Guarded_Statement();
 		int curr_slack = longest_paths_from_root_map[gstmt] - longest_paths_from_root_map[curr];
+		
 		if (curr_slack > 0)
 		{
 			AaScope* prnt_scope = this->Get_Scope();
@@ -705,6 +706,7 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 		// if expression is target, then introduce delayed 
 		// statements after the stmt in which it occurs.
 		string root_name = curr_expr->Get_Name();
+
 		string delayed_name;
 		for(set<int>::iterator siiter = slack_set.begin(), sfiter = slack_set.end();
 				siiter != sfiter; siiter++)
@@ -714,43 +716,46 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 				prnt_scope = this; 
 
 			int curr_slack = *siiter;
-			delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + IntToStr(curr_slack) + "_" + IntToStr(new_stmt_counter);
-			new_stmt_counter++;
-
-			AaSimpleObjectReference* new_target = new AaSimpleObjectReference(prnt_scope, delayed_name);
-			new_target->Set_Type(curr_expr->Get_Type());
-
-			AaExpression* new_src    = NULL;
-
-			bool linked_to_stmt = curr_expr->Is_Implicit_Variable_Reference() && !curr_expr->Get_Is_Intermediate();
-			if(linked_to_stmt)
+			if(curr_slack > 0)
 			{
-				new_src =  new AaSimpleObjectReference(prnt_scope, root_name);
-				new_src->Set_Type(curr_expr->Get_Type());
+				delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + IntToStr(curr_slack) + "_" + IntToStr(new_stmt_counter);
+				new_stmt_counter++;
+
+				AaSimpleObjectReference* new_target = new AaSimpleObjectReference(prnt_scope, delayed_name);
+				new_target->Set_Type(curr_expr->Get_Type());
+
+				AaExpression* new_src    = NULL;
+
+				bool linked_to_stmt = curr_expr->Is_Implicit_Variable_Reference() && !curr_expr->Get_Is_Intermediate();
+				if(linked_to_stmt)
+				{
+					new_src =  new AaSimpleObjectReference(prnt_scope, root_name);
+					new_src->Set_Type(curr_expr->Get_Type());
+				}
+				else
+				{
+					new_src = curr_expr;
+				}
+
+				AaAssignmentStatement* new_stmt = new AaAssignmentStatement(prnt_scope,
+						new_target,
+						new_src,
+						0);
+
+				int buf_val = curr_slack;
+				//if(this->Is_Part_Of_Fullrate_Pipeline()) buf_val = ((buf_val < 2) ? 2 : buf_val);
+				new_stmt->Set_Buffering(buf_val);
+
+				AaProgram::Increment_Buffering_Bit_Count(buf_val * new_target->Get_Type()->Size());
+
+				if(linked_to_stmt)
+				{
+					new_stmt->Map_Source_References();
+				}
+
+				delayed_versions.push_back(new_stmt);
+				slack_to_stmt_map[curr_slack] = new_stmt;
 			}
-			else
-			{
-				new_src = curr_expr;
-			}
-
-			AaAssignmentStatement* new_stmt = new AaAssignmentStatement(prnt_scope,
-					new_target,
-					new_src,
-					0);
-
-			int buf_val = curr_slack;
-			//if(this->Is_Part_Of_Fullrate_Pipeline()) buf_val = ((buf_val < 2) ? 2 : buf_val);
-			new_stmt->Set_Buffering(buf_val);
-
-			AaProgram::Increment_Buffering_Bit_Count(buf_val * new_target->Get_Type()->Size());
-
-			if(linked_to_stmt)
-			{
-				new_stmt->Map_Source_References();
-			}
-
-			delayed_versions.push_back(new_stmt);
-			slack_to_stmt_map[curr_slack] = new_stmt;
 		}
 
 		if(curr_expr->Get_Is_Target())
@@ -773,7 +778,7 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 			// a simple object reference to the appropriately
 			// delayed version.
 			//
-			if(slack > 0)
+			if((slack > 0) & (slack_to_stmt_map.find(slack) != slack_to_stmt_map.end()))
 			{
 				AaAssignmentStatement* rs = (AaAssignmentStatement*) slack_to_stmt_map[slack];
 				if(nbr->Is_Expression())
@@ -1466,6 +1471,14 @@ void AaAssignmentStatement::Print(ostream& ofile)
 				ofile << " ";
 			}
 			ofile << ")  ";
+		}
+
+		AaModule* m = this->Get_Module();
+		if(!this->Get_Is_Volatile() && (m != NULL) && !m->Get_Is_Volatile() &&
+					(this->_target != NULL))
+		{
+			int bits_of_buffering = bufval * this->_target->Get_Type()->Size();
+			ofile << "// bits of buffering = " << bits_of_buffering << " ";
 		}
 	}
 

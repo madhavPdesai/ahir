@@ -48,6 +48,7 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 use aHiR_ieee_proposed.float_pkg.all;
 
 library ahir;
+use ahir.Types.all;
 use ahir.MemCutsPackage.all;
 use ahir.mem_ASIC_components.all;
 

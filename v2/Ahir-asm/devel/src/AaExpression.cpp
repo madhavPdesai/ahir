@@ -969,6 +969,31 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 	}
 
 }
+	
+int AaSimpleObjectReference::Get_Existing_Buffering()
+{
+	int ret_val = 0;
+	AaRoot* root  = this->Get_Root_Object();
+	if(root != NULL)
+	{
+		AaStatement* stmt = NULL;
+
+		if(root->Is_Statement())
+		{
+			stmt = (AaStatement*) root;
+		}
+		else if (root->Is_Expression())
+		{
+			stmt = ((AaExpression*)root)->Get_Associated_Statement();
+		}
+
+		if((stmt != NULL) && !stmt->Get_Is_Volatile())
+		{
+			ret_val = stmt->Get_Buffering();
+		}
+	}
+	return(ret_val);
+}
 
 bool AaSimpleObjectReference::Is_Trivial()
 {
