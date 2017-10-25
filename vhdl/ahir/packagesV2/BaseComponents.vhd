@@ -2486,4 +2486,42 @@ package BaseComponents is
 		q: out std_logic_vector(data_width-1 downto 0));
   end component;
 
+  component SingleCycleStartFinFsm is
+	port (clk, reset, start_req, fin_req : in std_logic;
+		enable, start_ack, fin_ack: out std_logic) ;
+  end component SingleCycleStartFinFsm;
+
+  component ram_1024x32_Operator is -- 
+  port ( -- 
+    sample_req: in boolean;
+    sample_ack: out boolean;
+    update_req: in boolean;
+    update_ack: out boolean;
+    enable : in  std_logic_vector(0 downto 0);
+    read_write_bar : in  std_logic_vector(0 downto 0);
+    addr : in  std_logic_vector(9 downto 0);
+    din : in  std_logic_vector(31 downto 0);
+    dout : out  std_logic_vector(31 downto 0);
+    clk, reset: in std_logic
+    -- 
+  );
+  -- 
+  end component ram_1024x32_Operator;
+  component dpram_1w_1r_1024x32_Operator is -- 
+  port ( -- 
+    sample_req: in boolean;
+    sample_ack: out boolean;
+    update_req: in boolean;
+    update_ack: out boolean;
+    read_enable : in  std_logic_vector(0 downto 0);
+    write_enable : in  std_logic_vector(0 downto 0);
+    read_addr : in  std_logic_vector(9 downto 0);
+    write_addr : in  std_logic_vector(9 downto 0);
+    write_data : in  std_logic_vector(31 downto 0);
+    read_data : out  std_logic_vector(31 downto 0);
+    clk, reset: in std_logic
+    -- 
+  );
+  -- 
+  end component dpram_1w_1r_1024x32_Operator;
 end BaseComponents;

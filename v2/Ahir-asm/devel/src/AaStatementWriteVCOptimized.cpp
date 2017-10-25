@@ -1843,9 +1843,9 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 	{
 		string trig_place = _source_pairs[idx].first;
 		if(trig_place == "$loopback")
-			reqs.push_back(hier_id + "/aggregated_phi_loopback_target_update");
+			reqs.push_back(hier_id + "/" + sample_from_loop_back);
 		else
-			reqs.push_back(hier_id + "/aggregated_phi_entry_target_update");
+			reqs.push_back(hier_id + "/" + sample_from_entry);
 	}
 	acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_phi_mux_ack");
 	Write_VC_Link(this->Get_VC_Name(),reqs,acks,ofile);
