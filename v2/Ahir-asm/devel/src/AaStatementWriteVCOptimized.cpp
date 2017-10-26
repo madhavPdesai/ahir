@@ -1591,15 +1591,21 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	__T(sample_from_loop_back_ps);
 	__J(sample_from_loop_back, sample_from_loop_back_ps)
 
+	// loop body exit not determined by this guy.
+	__F(sample_from_loop_back, "$null");
+
 	string trigger_from_entry = this->Get_VC_Name() + "_entry_trigger";
 	string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
 	string sample_from_entry_ps = this->Get_VC_Name() + "_entry_sample_req_ps";
 	__T(trigger_from_entry);
 	__J(trigger_from_entry, "first_time_through_loop_body");
 	__T(sample_from_entry);
+
 	__T(sample_from_entry_ps);
 	__J(sample_from_entry, sample_from_entry_ps);
 
+	// loop body exit not determined by this guy.
+	__F(sample_from_entry, "$null");
 
 
 	if(pipeline_flag)
@@ -1770,13 +1776,11 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		{
 			triggers.push_back(trigger_from_loop_back);
 			phi_mux_reqs.push_back(sample_from_loop_back_ps);
-			__J("aggregated_phi_loopback_target_update", sample_from_loop_back);
 		}
 		else
 		{
 			triggers.push_back(trigger_from_entry);
 			phi_mux_reqs.push_back(sample_from_entry_ps);
-			__J("aggregated_phi_entry_target_update", sample_from_entry);
 		}
 	}
 
@@ -1806,6 +1810,9 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	ofile << ": " << endl;
 	ofile << "     ";
 	ofile << phi_mux_ack_ps << endl;
+
+	// join update-ack to aggregated phi update ack
+	__J("aggregated_phi_update_ack", __UCT(this));
 
 	// sample-ack from phi must join with condition-evaluated so that
 	// loop-back is delayed until the present PHI has sampled.
