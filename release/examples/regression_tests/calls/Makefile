@@ -15,7 +15,7 @@ TOVHDL:TOVC vc2vhdl
 LLVM2AAOPTS=-extract_do_while=true 
 
 
-TOPMODULES=-T main_daemon  
+TOPMODULES=-T main_daemon_1 -T main_daemon_2
 
 
 

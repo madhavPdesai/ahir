@@ -1,5 +1,8 @@
-$pipe out_data : $uint<32> $depth 2
-$pipe in_data : $uint<32> $depth 2
+$pipe out_data_1 : $uint<32> $depth 2
+$pipe out_data_2 : $uint<32> $depth 16
+
+$pipe in_data_1 : $uint<32> $depth 2
+$pipe in_data_2 : $uint<32> $depth 2
 
 $pipeline $depth 15 $buffering 2 $fullrate 
 	$module [subroutine] $in (X: $uint<32>) $out (Y: $uint<32>) $is
@@ -7,16 +10,16 @@ $pipeline $depth 15 $buffering 2 $fullrate
 	Y := X
 }
 
-$module [main_daemon] $in() $out () $is
+$module [main_daemon_1] $in() $out () $is
 {
 	$branchblock[lOoP] {
 		$dopipeline $depth 15 $buffering 2 $fullrate
 		$merge $entry $loopback $endmerge
 		
-			X0 := in_data
-			X1 := in_data
-			X2 := in_data
-			X3 := in_data
+			X0 := in_data_1
+			X1 := in_data_1
+			X2 := in_data_1
+			X3 := in_data_1
 
 
 			$call subroutine (X0) (Y0)
@@ -25,10 +28,37 @@ $module [main_daemon] $in() $out () $is
 			$call subroutine (X3) (Y3)
 
 
-			out_data := Y0
-			out_data := Y1
-			out_data := Y2
-			out_data := Y3
+			out_data_1 := Y0
+			out_data_1 := Y1
+			out_data_1 := Y2
+			out_data_1 := Y3
+
+		$while 1
+	}
+}
+
+$module [main_daemon_2] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 15 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+		
+			X0 := in_data_2
+			X1 := in_data_2
+			X2 := in_data_2
+			X3 := in_data_2
+
+
+			$call subroutine (X0) (Y0)
+			$call subroutine (X1) (Y1)
+			$call subroutine (X2) (Y2)
+			$call subroutine (X3) (Y3)
+
+
+			out_data_2 := Y0
+			out_data_2 := Y1
+			out_data_2 := Y2
+			out_data_2 := Y3
 
 		$while 1
 	}
