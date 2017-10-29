@@ -208,16 +208,21 @@ begin
 
    -- on a successful call, register the tag from the caller
    -- side..
-   process(clk)
+   process(clk, pe_call_reqs, call_tag, latch_call_data)
 	variable tvar : std_logic_vector(caller_tag_length-1 downto 0);
    begin
-       if(clk'event and clk = '1') then
+	tvar := (others => '0');
+
 	for T in 0 to num_reqs-1 loop
-         if(pe_call_reqs(T) = '1' and latch_call_data = '1') then
+         if(pe_call_reqs(T) = '1') then
            tvar := call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
          end if;
         end loop;
-	caller_mtag_reg <= tvar;
+
+       if(clk'event and clk = '1') then
+	if(latch_call_data = '1') then
+		caller_mtag_reg <= tvar;
+	end if;
        end if;
    end process;     
 
