@@ -1845,6 +1845,15 @@ package BaseComponents is
 	      reset: in std_logic);
   end component;
 
+  component SgiSampleFsm is
+	generic (name: string);
+	port (sr_in: in Boolean;
+		sr_in_q: out Boolean;
+		push_req: out std_logic;
+		push_ack: in std_logic;
+		clk, reset: in std_logic);
+  end component;
+
   component SplitGuardInterface is
 	generic (name: string;
 	     		nreqs: integer; buffering: IntegerArray; use_guards: BooleanArray;

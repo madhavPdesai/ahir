@@ -76,9 +76,6 @@ architecture Behave of SplitGuardInterfaceBase is
   signal push, push_ack, pop, pop_ack: std_logic;
   signal qdata_in, qdata : std_logic_vector(0 downto 0);
 
-  type LhsState is (l_Idle, l_Wait_On_Ack_In, l_Wait_On_Queue);
-  signal lhs_state : LhsState;
-
   type RhsState is (r_Idle, r_Wait_On_Ack_In, r_Wait_On_Queue);
   signal rhs_state: RhsState;
 
@@ -94,7 +91,8 @@ architecture Behave of SplitGuardInterfaceBase is
   constant g_queue_number_of_stages : integer := Ceil(buffering, max_single_bit_queue_depth_per_stage);
 
   -- constant g_queue_number_of_stages : integer := 1;
-
+ 
+  signal sr_in_q : Boolean;
 begin
 	ca_out <= ca_out_d or ca_out_u;
 
@@ -110,97 +108,20 @@ begin
 				pop_req => pop,
 				pop_ack => pop_ack);
 
-	-- LHS state machine.
-        -- 
-	------------------------------------------------------------------------------------------
-        --   Present-state  sr_in  push_ack guard_interface sa_in    Nstate  sr_out  sa_out  push
-	------------------------------------------------------------------------------------------
-        --     l_Idle        0        _          _            _      l_Idle
- 	--     l_Idle        1        1          0            _      l_Idle            1      1
-	--     l_Idle        1        1          1            0      W-ack-in  1              1
-	--     l_Idle        1        1          1            1      l_Idle    1       1      1
-	--     l_Idle        1        0          _            _      W-Queue   
-	------------------------------------------------------------------------------------------
-        --   Present-state  sr_in  push_ack guard_interface sa_in    Nstate  sr_out  sa_out  push
-	------------------------------------------------------------------------------------------
-	--     W-Queue       _        0          _            _      W-Queue
-	--     W-Queue       _        1          1            1      l_Idle    1       1      1
-	--     W-Queue       _        1          1            0      W-ack-in  1              1
-	--     W-Queue       _        1          0            _      l_Idle            1      1
-	------------------------------------------------------------------------------------------
-        --   Present-state  sr_in  push_ack guard_interface sa_in    Nstate  sr_out  sa_out  push
-	------------------------------------------------------------------------------------------
-	--     W-Ack-In      _        _          _            0      W-ack-in
-	--     W-Ack-In      _        _          _            1      l_Idle            1
-	------------------------------------------------------------------------------------------
-	process(clk, sr_in, push_ack, guard_interface, sa_in, lhs_state, reset)
-		variable nstate : LhsState;
-		variable next_s_counter: integer;
-	begin
-		nstate 	:= lhs_state;
-		sr_out 	<= false;
-		sa_out 	<= false;
-		push	<= '0';
- 		next_s_counter := s_counter;
+	-----------------------------------------------------------------------------------------------
+	-- sample side logic.
+	-----------------------------------------------------------------------------------------------
+	sampleFsm: SgiSampleFsm
+			generic map (name => name & "-sample-fsm")
+			port map (clk => clk, reset => reset,
+					sr_in => sr_in, sr_in_q => sr_in_q,
+					push_req => push, push_ack => push_ack);
 
-		case lhs_state is
-			when l_Idle => 
-				if sr_in then
-					if((push_ack = '1') and (guard_interface = '0')) then
-						sa_out <= true;
-						push   <= '1';
-					elsif ((push_ack = '1') and (guard_interface = '1')) then
-						if sa_in then
-							sa_out 	<= true;
-							sr_out 	<= true;
-							next_s_counter := (next_s_counter + 1);
-							push 	<= '1';
-						else	
-							nstate 	:= l_Wait_On_Ack_In;
-							sr_out 	<= true;
-							next_s_counter := (next_s_counter + 1);
-							push 	<= '1';
-						end if;
-					elsif (push_ack = '0') then
-						nstate := l_Wait_On_Queue;
-					end if;
-				end if;
-			when l_Wait_On_Queue => 
-				if(push_ack  = '1') then
-					if((guard_interface = '1') and sa_in) then
-						nstate := l_Idle;
-						sa_out <= true;
-						sr_out <= true;
-						next_s_counter := (next_s_counter + 1);
-						push <= '1';
-					elsif ((guard_interface = '1') and (not sa_in)) then
-						nstate := l_Wait_On_Ack_In;
-						sr_out <= true;
-						next_s_counter := (next_s_counter + 1);
-						push   <= '1';
-					elsif (guard_interface = '0') then
-						nstate := l_Idle;
-						sa_out <= true;
-						push <= '1';
-					end if;
-				end if;
-			when l_Wait_On_Ack_In => 
-				if sa_in then
-					nstate := l_Idle;
-					sa_out <= true;
-				end if;
-		end case;
-
-		if(clk'event and clk = '1') then
-			if(reset = '1') then
-				lhs_state <= l_Idle;
-				s_counter <= 0;
-			else
-				lhs_state <= nstate;
-				s_counter <= next_s_counter;
-			end if;
-		end if;
-	end process;
+	-- sr_out
+	sr_out <= sr_in_q when (guard_interface = '1') else false;
+	
+	-- sa_out
+	sa_out <= sr_in_q when (guard_interface = '0') else sa_in;
 
 
 	-- RHS State machine.

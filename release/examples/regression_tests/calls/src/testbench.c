@@ -62,19 +62,28 @@ int main(int argc, char* argv[])
 	PTHREAD_CREATE(Sender_2);
 
 	uint8_t idx;
+	int err = 0;
 	
 	read_uint32_n("out_data_1",result,ORDER);
 	for(idx = 0; idx < ORDER; idx++)
 	{
+		err = err || (result[idx] != expected_result_1[idx]);
 		fprintf(stdout,"Result = %x, expected = %x.\n", result[idx],expected_result_1[idx]);
 	}
 	read_uint32_n("out_data_2",result,ORDER);
 	for(idx = 0; idx < ORDER; idx++)
 	{
+		err = err || (result[idx] != expected_result_2[idx]);
 		fprintf(stdout,"Result = %x, expected = %x.\n", result[idx],expected_result_2[idx]);
 	}
 
 	PTHREAD_CANCEL(Sender_1);
 	PTHREAD_CANCEL(Sender_2);
+
+	if(err)
+		fprintf(stdout,"FAILURE... there were errors\n");
+	else
+		fprintf(stdout,"SUCCESS!\n");
+
 	return(0);
 }

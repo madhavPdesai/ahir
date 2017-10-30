@@ -4,22 +4,36 @@ $pipe out_data_2 : $uint<32> $depth 16
 $pipe in_data_1 : $uint<32> $depth 2
 $pipe in_data_2 : $uint<32> $depth 2
 
-$pipeline $depth 15 $buffering 2 $fullrate 
-	$module [subroutine] $in (X: $uint<32>) $out (Y: $uint<32>) $is
+$module [subroutine] $in (X: $uint<32>) $out (Y: $uint<32>) $is
 {
 	Y := X
+}
+
+$module [get_data_in_1] $in () $out (X: $uint<32>) $is
+{
+	X := in_data_1
+}
+
+$module [get_data_in_2] $in () $out (X: $uint<32>) $is
+{
+	X := in_data_2
+}
+
+$module [send_data_out] $in (S: $uint<1> X: $uint<32>) $out () $is
+{
+	$guard (~S) out_data_1  := X
+	$guard (S)  out_data_2  := X
 }
 
 $module [main_daemon_1] $in() $out () $is
 {
 	$branchblock[lOoP] {
-		$dopipeline $depth 15 $buffering 2 $fullrate
-		$merge $entry $loopback $endmerge
+		$merge $entry loopback $endmerge
 		
-			X0 := in_data_1
-			X1 := in_data_1
-			X2 := in_data_1
-			X3 := in_data_1
+			$call get_data_in_1 () (X0) 
+			$call get_data_in_1 () (X1) 
+			$call get_data_in_1 () (X2) 
+			$call get_data_in_1 () (X3) 
 
 
 			$call subroutine (X0) (Y0)
@@ -28,39 +42,36 @@ $module [main_daemon_1] $in() $out () $is
 			$call subroutine (X3) (Y3)
 
 
-			out_data_1 := Y0
-			out_data_1 := Y1
-			out_data_1 := Y2
-			out_data_1 := Y3
+			$call send_data_out (0 Y0) () 
+			$call send_data_out (0 Y1) () 
+			$call send_data_out (0 Y2) () 
+			$call send_data_out (0 Y3) () 
 
-		$while 1
+		$place [loopback]
 	}
 }
 
 $module [main_daemon_2] $in() $out () $is
 {
 	$branchblock[lOoP] {
-		$dopipeline $depth 15 $buffering 2 $fullrate
-		$merge $entry $loopback $endmerge
+		$merge $entry loopback $endmerge
 		
-			X0 := in_data_2
-			X1 := in_data_2
-			X2 := in_data_2
-			X3 := in_data_2
-
+			$call get_data_in_2 () (X0) 
+			$call get_data_in_2 () (X1)
+			$call get_data_in_2 () (X2) 
+			$call get_data_in_2 () (X3) 
 
 			$call subroutine (X0) (Y0)
 			$call subroutine (X1) (Y1)
 			$call subroutine (X2) (Y2)
 			$call subroutine (X3) (Y3)
 
+			$call send_data_out (1 Y0) () 
+			$call send_data_out (1 Y1) () 
+			$call send_data_out (1 Y2) () 
+			$call send_data_out (1 Y3) () 
 
-			out_data_2 := Y0
-			out_data_2 := Y1
-			out_data_2 := Y2
-			out_data_2 := Y3
-
-		$while 1
+		$place [loopback]
 	}
 }
 
