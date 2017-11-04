@@ -55,7 +55,7 @@ begin
 
 	sr_in_q <= sr_in_q_sig;
 
-	process(sr_in_state, sr_in, push_ack)
+	process(sr_in_state, sr_in, push_ack, clk, reset)
 		variable next_sr_in_state: SrInState;
 		variable sr_in_q_var: Boolean;
 		variable push_req_var: std_logic;
