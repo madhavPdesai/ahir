@@ -836,10 +836,8 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 			vcSystem::Info("input buffering set to " + IntToStr(input_buffering) + " in module " + this->Get_VHDL_Id());
 		}
 
-		//
-		// bypass only if you don't create a zero delay update-req/ack path.
-		//
-		bool bypass_flag = (input_buffering > 0);
+		// bypass if input buffering is 0.
+		bool bypass_flag = (input_buffering == 0);
 
 		ofile << "in_buffer: UnloadBuffer -- { " << endl;
 		ofile << " generic map(name => \"" << this->Get_VHDL_Id() << "_input_buffer\", -- {" << endl
@@ -1135,7 +1133,9 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 void vcModule::Print_VHDL_Tag_Logic(ostream& ofile)
 {
 	int ilock_depth = (this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1);
-	bool bypass_flag = this->_pipeline_flag; // cut a clock cycle.
+
+	// has no effect.. 
+	bool bypass_flag = false;
 
 	ofile << "-- interlock buffer for TAG.. to provide required buffering." << endl;
 	ofile << "tagIlock: InterlockBuffer -- { " << endl
