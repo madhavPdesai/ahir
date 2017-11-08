@@ -1513,6 +1513,30 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 	}
 }
 
+// return the name of the transition which triggers the update of
+// this expression's value.
+string AaSimpleObjectReference::Get_VC_Unmarked_Reenable_Update_Transition_Name_Generic(set<AaRoot*>& visited_elements)
+{
+	string ret_val = "$null";
+	if(!this->Is_Constant() && !this->Is_Signal_Read() && (this->_object != NULL))
+	{
+		if(this->_object->Is_Interface_Object())
+		{
+			AaInterfaceObject* obj = ((AaInterfaceObject*)(this->_object));
+		
+			if(obj->Get_Mode() == "in")
+			{
+				bool pm = this->Is_Part_Of_Pipelined_Module();
+				if(pm)
+				{
+					ret_val = this->Get_VC_Unmarked_Reenable_Update_Transition_Name(visited_elements);
+				}
+			}
+		}
+	}
+	return(ret_val);
+}
+
 //
 //  Very specific function to be called only
 //  when parent module is pipelined and an operator,

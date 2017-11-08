@@ -715,6 +715,16 @@ void Write_VC_Marked_Joins(set<string> join_trans_set, string trig_trans, bool b
 	}
 }
 
+void Write_VC_Unmarked_Joins(set<string> join_trans_set, string trig_trans, ostream& ofile)
+{
+	for(set<string>::iterator iter = join_trans_set.begin(), fiter = join_trans_set.end(); iter != fiter; iter++)
+	{
+		string jname = *iter;
+		__J(jname, trig_trans);
+	}
+}
+
+
 string Get_Op_Ascii_Name(AaOperation op, AaType* src_type, AaType* dest_type)
 {
 	string ret_val;

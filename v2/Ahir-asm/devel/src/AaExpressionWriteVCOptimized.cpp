@@ -961,6 +961,31 @@ string AaArrayObjectReference::Get_VC_Base_Address_Update_Reenable_Transition(se
 	return(base_addr_calc_reenable);
 }
 
+string AaArrayObjectReference::Get_VC_Base_Address_Update_Unmarked_Reenable_Transition(set<AaRoot*>& visited_elements)
+{
+
+	string base_addr_calc_reenable =  "$null";
+	if(!this->Is_Constant())
+	{
+		if(this->Get_Object_Type()->Is_Pointer_Type())
+			// array expression is a pointer-evaluation expression.
+		{
+			if(this->_object->Is_Interface_Object())
+			{
+				AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
+				bool pm = this->Is_Part_Of_Pipelined_Module();
+				if(pm)
+				{
+					base_addr_calc_reenable =
+						 (this->_object->Get_VC_Name() + "_update_enable_unmarked");
+				}
+			}
+		}
+
+	}
+	return(base_addr_calc_reenable);
+}
+
 
 void AaArrayObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
@@ -1151,6 +1176,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 			// this will link to complete region.
 			set<string> active_reenable_points;
+			set<string> active_unmarked_reenable_points;
 			map<string,bool> active_reenable_bypass_flags;
 			this->Write_VC_Root_Address_Calculation_Control_Path_Optimized(pipeline_flag, visited_elements,
 					ls_map,
@@ -1158,6 +1184,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					&_indices,
 					&scale_factors, &shift_factors,
 					active_reenable_points,
+					active_unmarked_reenable_points,
 					active_reenable_bypass_flags,
 					barrier,
 					ofile);
@@ -1196,6 +1223,10 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 				active_reenable_points.clear();
 				active_reenable_points.insert(__UST(this));
+
+				// unmarked joins (for use in pipelined operator modules).
+				Write_VC_Unmarked_Joins (active_unmarked_reenable_points, ctrans,ofile);
+				active_unmarked_reenable_points.clear();
 
 				// SelfRelease
 				ofile << "// self-release " << endl;
@@ -1410,6 +1441,13 @@ string AaPointerDereferenceExpression::Get_VC_Base_Address_Update_Reenable_Trans
 	return(ret_string);
 }
 
+string AaPointerDereferenceExpression::Get_VC_Base_Address_Update_Unmarked_Reenable_Transition(set<AaRoot*>& visited_elements)
+{
+	string ret_val = "$null";
+	assert(this->_reference_to_object != NULL);
+	string ret_string = this->_reference_to_object->Get_VC_Unmarked_Reenable_Update_Transition_Name_Generic(visited_elements);
+	return(ret_string);
+}
 
 void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 		map<string,vector<AaExpression*> >& ls_map,
@@ -1622,12 +1660,14 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 		// root address calculation will include all dependencies with 
 		// this etc..
 		set<string> active_reenable_points;
+		set<string> active_unmarked_reenable_points;
 		map<string,bool> active_reenable_bypass_flags;
 		obj_ref->Write_VC_Root_Address_Calculation_Control_Path_Optimized(pipeline_flag, visited_elements,
 				ls_map,pipe_map,
 				obj_ref->Get_Index_Vector(),
 				&scale_factors, &shift_factors,
 				active_reenable_points,
+				active_unmarked_reenable_points,
 				active_reenable_bypass_flags,
 				barrier,
 				ofile);
@@ -1657,6 +1697,9 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 					active_reenable_bypass_flags, 
 					ctrans,false, ofile); // do not force bypass, decide based on active bypass flags
 			active_reenable_points.clear();
+
+			Write_VC_Unmarked_Joins(active_unmarked_reenable_points, ctrans,ofile);
+			active_unmarked_reenable_points.clear();
 
 			// SelfRelease
 			ofile << "// self-release " << endl;
@@ -2256,6 +2299,7 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 		ostream& ofile)
 {
 	set<string> active_reenables;
+	set<string> active_unmarked_reenables;
 	map<string,bool> active_reenable_bypass_flags;
 	// address calculation
 	// 1. compute agross = base + (offset*scale-factor)
@@ -2270,6 +2314,7 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 			shift_factors, 
 			barrier,
 			active_reenables,
+			active_unmarked_reenables,
 			active_reenable_bypass_flags,
 			ofile);
 
@@ -2292,7 +2337,12 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 		string at = __SCT(this);
 		ofile << "// reenable-joins" << endl;
 		Write_VC_Reenable_Joins(active_reenables, active_reenable_bypass_flags, at,false, ofile); // do not force bypass, decide based on active bypass flags
+		Write_VC_Unmarked_Joins(active_unmarked_reenables, at, ofile); 
+		
 	}
+		
+	active_reenables.clear();
+	active_unmarked_reenables.clear();
 }
 
 void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -2305,6 +2355,7 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 		ostream& ofile)
 {
 	set<string> active_reenables;
+	set<string> active_unmarked_reenables;
 	map<string,bool> active_reenable_bypass_flags;
 
 	// address calculation
@@ -2318,6 +2369,7 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 			shift_factors, 
 			barrier,
 			active_reenables,
+			active_unmarked_reenables,
 			active_reenable_bypass_flags,
 			ofile);
 
@@ -2338,7 +2390,12 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 
 		ofile << "// reenable-joins" << endl;
 		Write_VC_Reenable_Joins(active_reenables, active_reenable_bypass_flags,  at,false, ofile); // do not force bypass, decide based on active bypass flags..
+		Write_VC_Unmarked_Joins(active_unmarked_reenables,  at, ofile); // do not force bypass, decide based on active bypass flags..
+
 	}
+
+	active_reenables.clear();
+	active_unmarked_reenables.clear();
 }
 
 void AaObjectReference::Write_VC_Load_Store_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -2499,6 +2556,7 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 		vector<int>* shift_factors,
 		AaRoot* barrier,
 		set<string>& active_reenable_points,
+		set<string>& active_unmarked_reenable_points,
 		map<string, bool>& active_reenable_bypass_flags,
 		ostream& ofile)
 {
@@ -2524,6 +2582,7 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 				scale_factors,
 				shift_factors,
 				active_reenable_points,
+				active_unmarked_reenable_points,
 				active_reenable_bypass_flags,
 				barrier,
 				ofile);
@@ -2568,13 +2627,17 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 			if(pipeline_flag)
 			{
 				// self-release..
-				__MJ(sample_start, sample_complete, false) // no bypass
-					__MJ(update_start, update_complete, true)  // bypass
+				__MJ(sample_start, sample_complete, false); // no bypass
+				__MJ(update_start, update_complete, true);  // bypass
 
-					Write_VC_Reenable_Joins(active_reenable_points, active_reenable_bypass_flags,  word_addr_calculated, false,  ofile); // do not force bypass, decide based on active bypass flags.
+				Write_VC_Reenable_Joins(active_reenable_points, active_reenable_bypass_flags,  word_addr_calculated, false,  ofile); // do not force bypass, decide based on active bypass flags.
 				active_reenable_points.clear();
 				active_reenable_points.insert(update_start);
 				active_reenable_bypass_flags[update_start] =  true;
+
+				Write_VC_Unmarked_Joins(active_unmarked_reenable_points, 
+									word_addr_calculated, ofile);
+				active_unmarked_reenable_points.clear();
 			}
 		}
 		else
@@ -2659,7 +2722,9 @@ void AaObjectReference::Write_VC_Address_Calculation_Links_Optimized(string hier
 
 // when this expression is trivial, reenables to it have to be
 // targeted to the root sources.
-void AaExpression:: Update_Reenable_Points_And_Producer_Delay_Status(set<string>& en_points, 
+void AaExpression:: Update_Reenable_Points_And_Producer_Delay_Status(
+		set<string>& en_points, 
+		set<string>& en_unmarked_points, 
 		map<string,bool>& en_bypass_flags,
 		set<AaRoot*>& visited_elements)
 {
@@ -2675,7 +2740,12 @@ void AaExpression:: Update_Reenable_Points_And_Producer_Delay_Status(set<string>
 			if(this->Get_Associated_Phi_Statement() == NULL)
 			{
 				string en_trans_name = root->Get_VC_Reenable_Update_Transition_Name(visited_elements);	
+				string en_unmarked_trans_name = 
+					root->Get_VC_Unmarked_Reenable_Update_Transition_Name_Generic(visited_elements);	
 				en_points.insert(en_trans_name);
+				if(en_unmarked_trans_name != "$null")
+					en_unmarked_points.insert(en_unmarked_trans_name);
+					
 				en_bypass_flags[en_trans_name] =  true;
 			}
 		}
@@ -2696,6 +2766,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		vector<int>* scale_factors,
 		vector<int>* shift_factors,
 		set<string>& active_reenable_points,
+		set<string>& active_unmarked_reenable_points,
 		map<string,bool>& active_reenable_bypass_flags,
 		AaRoot* barrier,
 		ostream& ofile)
@@ -2717,6 +2788,8 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 	string base_addr_update_reenable = 
 		this->Get_VC_Base_Address_Update_Reenable_Transition(visited_elements);
+	string base_addr_unmarked_update_reenable = 
+		this->Get_VC_Base_Address_Update_Unmarked_Reenable_Transition(visited_elements);
 	//bool base_addr_update_reenable_bypass = this->Base_Address_Update_Protocol_Has_Delay(visited_elements);
 	bool base_addr_update_reenable_bypass = true; // in the new rationalized scheme, this is always true.
 	if(pipeline_flag)
@@ -2725,6 +2798,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		{
 			active_reenable_points.insert(base_addr_update_reenable);
 			active_reenable_bypass_flags[base_addr_update_reenable] =  base_addr_update_reenable_bypass;
+
+			if(base_addr_unmarked_update_reenable != "$null")
+				active_unmarked_reenable_points.insert(base_addr_unmarked_update_reenable);
 		}
 	}
 
@@ -2743,6 +2819,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	string base_address_calculated = this->Get_VC_Name() + "_base_address_calculated";
 
 	map<int,set<string> > index_chain_reenable_map;
+	map<int,set<string> > index_chain_unmarked_reenable_map;
 	map<int,string> index_chain_complete_map;
 
 	// if offset value is < 0, then it is not known at compile time.
@@ -2761,9 +2838,6 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			{
 				non_constant_indices.push_back(idx);
 
-				string idx_active_reenable;
-				string idx_active_complete;
-
 				string index_resized = this->Get_VC_Name() + "_index_resized_" + IntToStr(idx);
 				string index_scaled = this->Get_VC_Name() + "_index_scaled_" + IntToStr(idx);
 				string index_computed = this->Get_VC_Name() + "_index_computed_" + IntToStr(idx);
@@ -2780,9 +2854,11 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 				if(pipeline_flag)
 				{
-					index_expr->Update_Reenable_Points_And_Producer_Delay_Status(index_chain_reenable_map[idx], 
-							active_reenable_bypass_flags,
-							visited_elements);
+					index_expr->Update_Reenable_Points_And_Producer_Delay_Status
+							(index_chain_reenable_map[idx], 
+								index_chain_unmarked_reenable_map[idx], 
+								active_reenable_bypass_flags,
+								visited_elements);
 				}
 				index_expr->Write_Forward_Dependency_From_Roots(index_computed, -1, visited_elements, ofile);
 				index_chain_complete_map[idx] = index_computed;
@@ -2854,6 +2930,17 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 						index_chain_reenable_map[idx].clear();
 						index_chain_reenable_map[idx].insert(idx_resize_update_start);
 
+						for(set<string>::iterator iiuter = index_chain_unmarked_reenable_map[idx].begin(), 
+								fiuiter = index_chain_unmarked_reenable_map[idx].end();
+								iiuter != fiuiter; iiuter++)
+						{
+							// reenable index expression update when
+							// sample-completed.
+							string jj = *iiuter;
+							__J(jj, idx_resize_sample_complete);
+						}
+						index_chain_unmarked_reenable_map[idx].clear();
+
 						// self-release. 
 						__MJ(idx_resize_sample_start, idx_resize_sample_complete, false); // no bypass
 						__MJ(idx_resize_update_start, idx_resize_update_complete, true); // bypass
@@ -2914,6 +3001,17 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 						}
 						index_chain_reenable_map[idx].clear();
 						index_chain_reenable_map[idx].insert(index_scaled);
+
+						for(set<string>::iterator iiuter = index_chain_unmarked_reenable_map[idx].begin(), 
+								fiuiter = index_chain_unmarked_reenable_map[idx].end();
+								iiuter != fiuiter; iiuter++)
+						{
+							// reenable index expression update when
+							// sample-completed.
+							string jj = *iiuter;
+							__J(jj, index_scaled);
+						}
+						index_chain_unmarked_reenable_map[idx].clear();
 
 						// self-release.. 
 						__MJ(idx_scale_sample_start, idx_scale_sample_complete, false); // bypass
@@ -3003,9 +3101,14 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 					if(pipeline_flag)
 					{
 						Write_VC_Marked_Joins(index_chain_reenable_map[I0], sample_complete, false, ofile);
+						Write_VC_Unmarked_Joins(index_chain_unmarked_reenable_map[I0], sample_complete,ofile);
 						Write_VC_Marked_Joins(index_chain_reenable_map[I1], sample_complete, false, ofile);
+						Write_VC_Unmarked_Joins(index_chain_unmarked_reenable_map[I1], sample_complete,  ofile);
 						index_chain_reenable_map[I0].clear();
 						index_chain_reenable_map[I1].clear();
+
+						index_chain_unmarked_reenable_map[I0].clear();
+						index_chain_unmarked_reenable_map[I1].clear();
 					}
 				}
 				else
@@ -3016,7 +3119,10 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 					if(pipeline_flag)
 					{	
 						Write_VC_Marked_Joins(index_chain_reenable_map[I1], sample_complete, true, ofile);
+						Write_VC_Unmarked_Joins(index_chain_unmarked_reenable_map[I1], sample_complete,  ofile);
 						index_chain_reenable_map[I1].clear();
+						index_chain_unmarked_reenable_map[I1].clear();
+					
 						if(last_sum_reenable != "")
 							__MJ(last_sum_reenable, update_complete, false);
 					}
@@ -3032,6 +3138,8 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 				last_sum_reenable =  update_start;
 
 				active_reenable_points.clear();
+				active_unmarked_reenable_points.clear();
+
 				active_reenable_points.insert(last_sum_reenable);
 				active_reenable_bypass_flags[last_sum_reenable] = true;
 			}
@@ -3046,6 +3154,12 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			{
 				active_reenable_points.insert(*iiter);
 				active_reenable_bypass_flags[*iiter] =true;
+			}
+			for(set<string>::iterator iiuter = index_chain_unmarked_reenable_map[IIDX].begin(),
+					fiiuter = index_chain_unmarked_reenable_map[IIDX].end(); 
+					iiuter != fiiuter; iiuter++)
+			{
+				active_unmarked_reenable_points.insert(*iiuter);
 			}
 		}
 
@@ -3080,10 +3194,13 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			if(pipeline_flag)
 			{
 				Write_VC_Marked_Joins(active_reenable_points, sample_complete, false, ofile);
+				Write_VC_Unmarked_Joins(active_unmarked_reenable_points, sample_complete, ofile);
 				__MJ(update_start, offset_calculated, true); // bypass.
 			}
 
 			active_reenable_points.clear();
+			active_unmarked_reenable_points.clear();
+
 			active_reenable_points.insert(update_start);
 			active_reenable_bypass_flags[update_start] = true;
 		}
@@ -3139,28 +3256,28 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		string bpo_sample_complete = this->Get_VC_Name() + "_base_plus_offset_sample_complete";
 		string bpo_update_start = this->Get_VC_Name() + "_base_plus_offset_update_start";
 		string bpo_update_complete = this->Get_VC_Name() + "_base_plus_offset_update_complete";
-		__T(bpo_sample_start)
-			__T(bpo_sample_complete)
-			__T(bpo_update_start)
-			__T(bpo_update_complete)
+		__T(bpo_sample_start);
+		__T(bpo_sample_complete);
+		__T(bpo_update_start);
+		__T(bpo_update_complete);
 
-			ofile << ";;[" << bpo_sample_regn << "] { " << endl;
+		ofile << ";;[" << bpo_sample_regn << "] { " << endl;
 		ofile << "$T [rr] $T [ra]" << endl;
 		ofile << "}" << endl;
 		ofile << ";;[" << bpo_update_regn << "] { " << endl;
 		ofile << "$T [cr] $T [ca]" << endl;
 		ofile << "}" << endl;
 
-		__F(bpo_sample_start, bpo_sample_regn)
-			__F(bpo_update_start, bpo_update_regn)
-			__J(bpo_sample_complete, bpo_sample_regn)
-			__J(bpo_update_complete, bpo_update_regn)
+		__F(bpo_sample_start, bpo_sample_regn);
+		__F(bpo_update_start, bpo_update_regn);
+		__J(bpo_sample_complete, bpo_sample_regn);
+		__J(bpo_update_complete, bpo_update_regn);
 
 
-			if(base_addr < 0)
-			{
-				__F(base_address_resized,bpo_sample_start);
-			}
+		if(base_addr < 0)
+		{
+			__F(base_address_resized,bpo_sample_start);
+		}
 		if(offset_val < 0)
 		{
 			__F(offset_calculated,bpo_sample_start);
@@ -3179,8 +3296,10 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			__MJ(bpo_update_start, bpo_update_complete, true); // bypass
 
 			Write_VC_Reenable_Joins(active_reenable_points, active_reenable_bypass_flags, bpo_sample_complete,false,  ofile); // do not force bypass, decide based on active bypass flags..
+			Write_VC_Unmarked_Joins(active_unmarked_reenable_points, bpo_sample_complete, ofile); 
 
 			active_reenable_points.clear();
+			active_unmarked_reenable_points.clear();
 			active_reenable_points.insert(bpo_update_start);
 			active_reenable_bypass_flags[bpo_update_start] = true;
 		}

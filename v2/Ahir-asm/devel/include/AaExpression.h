@@ -396,7 +396,8 @@ class AaExpression: public AaRoot
 	// used in root address calculation.
 	// 
 	virtual void
-		Update_Reenable_Points_And_Producer_Delay_Status(set<string>& en_points, map<string,bool>& en_bypass_flags, 
+		Update_Reenable_Points_And_Producer_Delay_Status(set<string>& en_points, 
+					set<string>& en_unmarked_points, map<string,bool>& en_bypass_flags, 
 													set<AaRoot*>& visited_elements);
 
 
@@ -710,6 +711,7 @@ class AaObjectReference: public AaExpression
 				vector<int>* shift_factors,
 				AaRoot* barrier,
 				set<string>& active_reenable_points,
+				set<string>& active_unmarked_reenable_points,
 				map<string,bool>& active_reenable_bypass_flags,
 				ostream& ofile);
 
@@ -727,6 +729,7 @@ class AaObjectReference: public AaExpression
 				vector<int>* scale_factors,
 				vector<int>* shift_factors,
 				set<string>& active_reenable_points,
+				set<string>& active_unmarked_reenable_points,
 				map<string,bool>& active_reenable_bypass_flags,
 				AaRoot* barrier,
 				ostream& ofile);
@@ -741,6 +744,10 @@ class AaObjectReference: public AaExpression
 		void Set_Is_Dereferenced(bool v);
 
 		virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements)
+		{
+			assert(0);
+		}
+		virtual string Get_VC_Base_Address_Update_Unmarked_Reenable_Transition(set<AaRoot*>& visited_elements)
 		{
 			assert(0);
 		}
@@ -892,6 +899,7 @@ class AaSimpleObjectReference: public AaObjectReference
 	}
 
 	virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
+	virtual string Get_VC_Unmarked_Reenable_Update_Transition_Name_Generic(set<AaRoot*>& visited_elements);
 	virtual string Get_VC_Unmarked_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
 	virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements);
 
@@ -1072,6 +1080,7 @@ class AaArrayObjectReference: public AaObjectReference
 	virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
 	virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements);
+	virtual string Get_VC_Base_Address_Update_Unmarked_Reenable_Transition(set<AaRoot*>& visited_elements);
 	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
 };
 
@@ -1187,6 +1196,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
 	virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
 	virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements);
+	virtual string Get_VC_Base_Address_Update_Unmarked_Reenable_Transition(set<AaRoot*>& visited_elements);
 };
 
 

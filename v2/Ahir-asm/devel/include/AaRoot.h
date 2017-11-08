@@ -145,6 +145,12 @@ class AaRoot
   virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements) {
     return(this->Get_VC_Update_Start_Transition_Name());    
   }
+  virtual string Get_VC_Unmarked_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements) {
+    return("$null");
+  }
+  virtual string Get_VC_Unmarked_Reenable_Update_Transition_Name_Generic(set<AaRoot*>& visited_elements) {
+    return("$null");
+  }
   virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements) {
     return(this->Get_VC_Sample_Start_Transition_Name());    
   }

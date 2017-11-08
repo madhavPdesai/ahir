@@ -340,11 +340,6 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 					else
 						ninputs++;
 
-					preds.push_back(w->Get_VHDL_Id() + "_update_enable");
-					pred_capacities.push_back(this->Get_Pipeline_Depth());
-					pred_markings.push_back(0);
-					pred_delays.push_back(1); // revisit later..
-
 					ipreds.push_back(w->Get_VHDL_Id() + "_update_enable_unmarked");
 					ipred_capacities.push_back(this->Get_Pipeline_Depth());
 					ipred_markings.push_back(0);
@@ -357,7 +352,7 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 				}
 
 				string joined_symbol = cp_entry_symbol;
-				ofile << "-- join of all unload_ack_symbols.. used to trigger CP." << endl;
+				ofile << "-- join of sample-req and update-ack-symbol.. used to trigger CP." << endl;
 				Print_VHDL_Join(joined_symbol + "_join", 
 						preds,
 						pred_markings,
