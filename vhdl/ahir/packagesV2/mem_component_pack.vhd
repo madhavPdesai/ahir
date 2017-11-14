@@ -156,6 +156,35 @@ component base_bank_dual_port is
          reset : in std_logic);
 end component base_bank_dual_port;
 
+component base_bank_with_registers
+   generic ( name: string;
+	g_addr_width: natural; g_data_width : natural);
+   port (datain : in std_logic_vector(g_data_width-1 downto 0);
+         dataout: out std_logic_vector(g_data_width-1 downto 0);
+         addrin: in std_logic_vector(g_addr_width-1 downto 0);
+         enable: in std_logic;
+         writebar : in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+end component base_bank_with_registers;
+
+component base_bank_dual_port_with_registers is
+   generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
+   port (
+	 datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         dataout_0: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         writebar_0 : in std_logic;
+	 datain_1 : in std_logic_vector(g_data_width-1 downto 0);
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+         writebar_1 : in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+end component base_bank_dual_port_with_registers;
+
 
 component merge_box_with_repeater 
   generic (name: string;
