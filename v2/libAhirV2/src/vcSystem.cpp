@@ -507,8 +507,12 @@ void vcSystem::Print_VHDL_Test_Bench(ostream& ofile)
 
   ofile << "-- clock/reset generation " << endl;
   ofile << "clk <= not clk after 5 ns;" << endl;
+  ofile << "-- assert reset for four clocks" << endl;
   ofile << "process" << endl;
   ofile << "begin --{" << endl;
+  ofile << "wait until clk = '1';" << endl;
+  ofile << "wait until clk = '1';" << endl;
+  ofile << "wait until clk = '1';" << endl;
   ofile << "wait until clk = '1';" << endl;
   ofile << "reset <= '0';" << endl;
   ofile << "wait;" << endl;
@@ -577,9 +581,13 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 
   ofile << "-- clock/reset generation " << endl;
   ofile << "clk <= not clk after 5 ns;" << endl;
+  ofile << "-- assert reset for four clocks." << endl;
   ofile << "process" << endl;
   ofile << "begin --{" << endl;
   ofile << vcSystem::_simulator_link_prefix << "Initialize;" << endl;
+  ofile << "wait until clk = '1';" << endl;
+  ofile << "wait until clk = '1';" << endl;
+  ofile << "wait until clk = '1';" << endl;
   ofile << "wait until clk = '1';" << endl;
   ofile << "reset <= '0';" << endl;
   ofile << "while true loop --{" << endl;
