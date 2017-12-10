@@ -138,7 +138,7 @@ begin
 	  --chipselect is made low only when enable is high and reset is low.
 	  --memory will not be read or written when enable is low.
 	begin
-	  process(addrin_0, enable_0, clk, reset)
+	  process(enable_0, resized_addrin_0, clk, reset)
 	  	variable decoded_CSB_0_var: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
 	    begin
 		if (enable_0 = '1' and reset = '0') then
@@ -155,7 +155,7 @@ begin
 
 	  end process;
 	  
-	  process(addrin_1, enable_1, clk, reset)
+	  process(enable_1, resized_addrin_1,  clk, reset)
 	  	variable decoded_CSB_1_var: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
 	    begin
 		if (enable_1 = '1' and reset = '0') then

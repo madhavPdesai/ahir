@@ -1007,9 +1007,9 @@ void AaProgram::Coalesce_Storage()
 	{
 	  AaRoot::Warning("memory space " + new_ms->Get_VC_Identifier() + " is not accessed ", NULL);
 	  
-	  new_ms->_total_size = (total_size);
+	  new_ms->_total_size = total_size;
 	  new_ms->_word_size = 1;
-	  new_ms->_address_width = CeilLog2(total_size); // address all-one will not be used..
+	  new_ms->_address_width = nAddressBits(total_size); 
 	  new_ms->_max_access_width = 1;
 	}	    
       else
@@ -1017,7 +1017,7 @@ void AaProgram::Coalesce_Storage()
 	  // find the gcd
 	  int word_size = GCD(lau_set);
 	  int max_access_width = *(lau_set.rbegin());
-	  int addr_width = CeilLog2(total_size/word_size); // address all-one will not be used..
+	  int addr_width = nAddressBits(total_size/word_size); // address all-one will not be used..
 	  
 	  new_ms->_total_size = (total_size/word_size);
 	  new_ms->_word_size = word_size;

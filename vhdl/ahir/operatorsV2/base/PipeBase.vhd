@@ -226,7 +226,6 @@ begin  -- default_arch
   DeepFifo: if (not signal_mode) and (not shallow_flag) and (not lifo_mode) generate
     
    notShiftReg: if (not shift_register_mode) generate
-    --queue : CompositeFifo generic map (
     queue : SynchFifoWithDPRAM generic map (
       name => name & "-queue", 
       queue_depth => depth,

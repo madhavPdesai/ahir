@@ -83,6 +83,28 @@ int CeilLog2(int n)
   return(ret_val);
 }
 
+int nAddressBits(int n)
+{
+  int ret_val = 0;
+  if (n > 0)
+  {
+  	int T = 1;
+  	while(T < n)
+    	{
+		T = 2*T;
+		ret_val++;
+    	}
+  }
+
+  //
+  // at least 1 bit...
+  //
+  if(ret_val == 0)
+	ret_val = 1;
+
+  return(ret_val);
+}
+
 uint32_t uLog2(uint32_t n)
 {
   uint32_t ret_val = 0;

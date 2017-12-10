@@ -50,6 +50,7 @@ struct StringCompare:public binary_function
 };
 
 int CeilLog2(int n);
+int nAddressBits(int n);
 
 uint32_t uLog2(uint32_t n);
 
