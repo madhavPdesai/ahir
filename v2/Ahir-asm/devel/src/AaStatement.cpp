@@ -2766,31 +2766,26 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 	ofile << "$delay " << dpe_name <<  " " << delay << endl;
 
-	// extreme pipelining.
-	AaStatement* dws = this->Get_Pipeline_Parent();
-	if((dws != NULL)  && (dws->Get_Pipeline_Full_Rate_Flag()))
+	//
+	// input buffering is used to decouple the
+	// two sides.
+	//
+	for(int i = 0; i < inargs.size(); i++)
 	{
-		//
-		// input buffering is used to decouple the
-		// two sides.
-		//
-		for(int i = 0; i < inargs.size(); i++)
-		{
-			string src_name = inargs[i].first;
-			ofile << "$buffering  $in " << dpe_name << " "
-				<< src_name << " 2" << endl;
-		}
+		string src_name = inargs[i].first;
+		ofile << "$buffering  $in " << dpe_name << " "
+			<< src_name << " " << this->Get_Buffering() << endl;
+	}
 
-		//
-		// output buffering is used to decouple the
-		// two sides.
-		//
-		for(int i = 0; i < outargs.size(); i++)
-		{
-			string tgt_name = outargs[i].first;
-			ofile << "$buffering  $out " << dpe_name << " "
-				<< tgt_name << " 2" << endl;
-		}
+	//
+	// output buffering is used to decouple the
+	// two sides.
+	//
+	for(int i = 0; i < outargs.size(); i++)
+	{
+		string tgt_name = outargs[i].first;
+		ofile << "$buffering  $out " << dpe_name << " "
+			<< tgt_name << " " << this->Get_Buffering()  << endl;
 	}
 }
 
