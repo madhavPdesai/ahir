@@ -2037,7 +2037,7 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 		int lineno): AaStatement(parent_tpr)
 {
 	_is_volatile = false;
-	_buffering = 0;
+	_buffering = 1;
 
 	this->_function_name = func_name;
 	this->Set_Line_Number(lineno);
@@ -2109,7 +2109,19 @@ void AaCallStatement::Set_Pipeline_Parent(AaStatement* dws)
 	if((dws != NULL) && (this->_called_module != NULL) && this->_called_module->Get_Pipeline_Flag() && 
 			(this->_called_module->Get_Pipeline_Full_Rate_Flag() != dws->Get_Pipeline_Full_Rate_Flag()))
 	{
-		AaRoot::Error("called module and containing scope of call statement have incompatible fullrate flags.", this);
+		AaRoot::Warning("called module and containing scope of call statement have incompatible fullrate flags.. buffering set to 1.", this);
+
+		//
+		// keep buffering at 1 since buffering of 2 is not really needed.
+		//
+		this->_buffering = 1;
+	}
+	else if((this->_called_module != NULL) && 
+			this->_called_module->Get_Pipeline_Flag() && 
+			this->_called_module->Get_Pipeline_Full_Rate_Flag())
+	{
+		if(this->_buffering < 2) 
+			this->_buffering = 2;
 	}
 
 	for(unsigned int i = 0; i < _input_args.size(); i++)
@@ -2377,7 +2389,18 @@ void AaCallStatement::Set_Called_Module(AaModule* m)
 	if((dws != NULL) && (this->_called_module != NULL) && this->_called_module->Get_Pipeline_Flag() && 
 			(this->_called_module->Get_Pipeline_Full_Rate_Flag() != dws->Get_Pipeline_Full_Rate_Flag()))
 	{
-		AaRoot::Error("called module and containing scope of call statement have incompatible fullrate flags.", this);
+		AaRoot::Warning("called module and containing scope of call statement have incompatible fullrate flags.", this);
+
+		// fullrate specified but both caller and called are not marked as such.
+		this->_buffering = 1;
+	}
+	else if((this->_called_module != NULL) && 
+			this->_called_module->Get_Pipeline_Flag() && 
+			this->_called_module->Get_Pipeline_Full_Rate_Flag())
+	{
+		// need at least a buffering of 2 to achieve fullrate as specified.
+		if(this->_buffering < 2) 
+			this->_buffering = 2;
 	}
 }
 
@@ -2766,6 +2789,18 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 	ofile << "$delay " << dpe_name <<  " " << delay << endl;
 
+	// extreme pipelining.
+	AaStatement* dws = this->Get_Pipeline_Parent();
+	int buffering = this->Get_Buffering();
+
+	//
+	// Rationalized earlier...
+	//if((dws != NULL)  && (dws->Get_Pipeline_Full_Rate_Flag()))
+	//{
+		//if(buffering < 2) 
+			//buffering = 2;
+	//}
+
 	//
 	// input buffering is used to decouple the
 	// two sides.
@@ -2774,7 +2809,7 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	{
 		string src_name = inargs[i].first;
 		ofile << "$buffering  $in " << dpe_name << " "
-			<< src_name << " " << this->Get_Buffering() << endl;
+			<< src_name << " " << buffering << endl;
 	}
 
 	//
@@ -2785,7 +2820,7 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	{
 		string tgt_name = outargs[i].first;
 		ofile << "$buffering  $out " << dpe_name << " "
-			<< tgt_name << " " << this->Get_Buffering()  << endl;
+			<< tgt_name << " " << buffering << endl;
 	}
 }
 
