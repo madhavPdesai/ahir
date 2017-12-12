@@ -4,7 +4,7 @@ $pipe out_data_2 : $uint<32> $depth 16
 $pipe in_data_1 : $uint<32> $depth 2
 $pipe in_data_2 : $uint<32> $depth 2
 
-$module [subroutine] $in (X: $uint<32>) $out (Y: $uint<32>) $is
+$pipeline $depth 3 $buffering 2 $fullrate $module [subroutine] $in (X: $uint<32>) $out (Y: $uint<32>) $is
 {
 	Y := X
 }

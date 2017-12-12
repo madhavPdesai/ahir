@@ -2104,24 +2104,13 @@ void AaCallStatement::Set_Is_Volatile(bool v)
 void AaCallStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
 	_pipeline_parent = dws;
-
-	// full rate flags of called module and dws must match.
+	
+	//
+	// set buffering to 2 if dws and called-module are both full-rate.
 	if((dws != NULL) && (this->_called_module != NULL) && this->_called_module->Get_Pipeline_Flag() && 
-			(this->_called_module->Get_Pipeline_Full_Rate_Flag() != dws->Get_Pipeline_Full_Rate_Flag()))
+			this->_called_module->Get_Pipeline_Full_Rate_Flag() && dws->Get_Pipeline_Full_Rate_Flag())
 	{
-		AaRoot::Warning("called module and containing scope of call statement have incompatible fullrate flags.. buffering set to 1.", this);
-
-		//
-		// keep buffering at 1 since buffering of 2 is not really needed.
-		//
-		this->_buffering = 1;
-	}
-	else if((this->_called_module != NULL) && 
-			this->_called_module->Get_Pipeline_Flag() && 
-			this->_called_module->Get_Pipeline_Full_Rate_Flag())
-	{
-		if(this->_buffering < 2) 
-			this->_buffering = 2;
+		this->_buffering = 2;
 	}
 
 	for(unsigned int i = 0; i < _input_args.size(); i++)
@@ -2387,21 +2376,11 @@ void AaCallStatement::Set_Called_Module(AaModule* m)
 	}
 
 	AaStatement* dws = this->Get_Pipeline_Parent();
-	if((dws != NULL) && (this->_called_module != NULL) && this->_called_module->Get_Pipeline_Flag() && 
-			(this->_called_module->Get_Pipeline_Full_Rate_Flag() != dws->Get_Pipeline_Full_Rate_Flag()))
-	{
-		AaRoot::Warning("called module and containing scope of call statement have incompatible fullrate flags.", this);
 
-		// fullrate specified but both caller and called are not marked as such.
-		this->_buffering = 1;
-	}
-	else if((this->_called_module != NULL) && 
-			this->_called_module->Get_Pipeline_Flag() && 
-			this->_called_module->Get_Pipeline_Full_Rate_Flag())
+	if((dws != NULL) && (this->_called_module != NULL) && this->_called_module->Get_Pipeline_Flag() && 
+			this->_called_module->Get_Pipeline_Full_Rate_Flag() && dws->Get_Pipeline_Full_Rate_Flag())
 	{
-		// need at least a buffering of 2 to achieve fullrate as specified.
-		if(this->_buffering < 2) 
-			this->_buffering = 2;
+		this->_buffering = 2;
 	}
 }
 
