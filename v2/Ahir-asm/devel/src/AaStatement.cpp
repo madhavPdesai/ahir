@@ -2356,6 +2356,10 @@ void AaCallStatement::Print(ostream& ofile)
 	}
 	ofile << ") ";
 
+	int buf_val = this->Get_Buffering();
+	if(buf_val > 1)
+		ofile << " $buffering " << buf_val;
+
 	if(this->_mark != "")
 		ofile << " $mark " << _mark << " ";
 
@@ -2370,9 +2374,6 @@ void AaCallStatement::Print(ostream& ofile)
 		}
 		ofile << ")  ";
 	}
-	int buf_val = this->Get_Buffering();
-	if(buf_val > 1)
-		ofile << " $buffering " << buf_val;
 
 	ofile << endl;
 }
