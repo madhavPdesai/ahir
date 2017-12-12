@@ -1977,12 +1977,13 @@ void AaSimpleObjectReference::Write_VC_Output_Buffering(string dpe_name, string 
 {
 	if(this->_object->Is_Pipe_Object() && !this->Get_Is_Target())
 	{
-		if(this->Get_Pipeline_Parent() != NULL)
+		int buffering = this->Get_Buffering();
+		if(buffering > 0)
 		{
 			ofile << " $buffering $out " 
 				<< this->Get_VC_Datapath_Instance_Name() << " "
 				<< tgt_name
-				<< " 2"  << endl;
+				<< " " << buffering  << endl;
 		}
 	}
 	else

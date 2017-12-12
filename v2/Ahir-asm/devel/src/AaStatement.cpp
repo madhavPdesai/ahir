@@ -4304,14 +4304,6 @@ void AaPhiStatement::Set_Pipeline_Parent(AaStatement* dws)
 	for(int idx = 0; idx < this->_source_pairs.size(); idx++)
 	{
 		this->_source_pairs[idx].second->Set_Pipeline_Parent(dws);
-
-		//
-		// buffering set to 2 in pipelined case.... this is not really required.
-		//   revisit this...
-		/*
-		if(dws != NULL) 
-			this->_source_pairs[idx].second->Set_Buffering(2);
-		*/
 	}
 }
 
