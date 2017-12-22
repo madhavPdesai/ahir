@@ -504,8 +504,10 @@ class AaNullStatement: public AaStatement
 class AaTraceStatement: public AaNullStatement
 {
 	string _trace_identifier;
+	int _trace_index;
 	public:
-	AaTraceStatement(AaScope* prnt, string tid):AaNullStatement(prnt) {_trace_identifier = tid;}
+	AaTraceStatement(AaScope* prnt, string tid):AaNullStatement(prnt) {_trace_identifier = tid; _trace_index = 0;}
+	AaTraceStatement(AaScope* prnt, string tid, int tindex):AaNullStatement(prnt) {_trace_identifier = tid; _trace_index = tindex;}
         virtual void Print(ostream& ofile);
   	virtual void Map_Source_References();
 

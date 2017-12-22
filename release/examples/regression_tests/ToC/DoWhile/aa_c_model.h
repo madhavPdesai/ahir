@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <unistd.h>
 #include <assert.h>
 #include <stdio.h>
 #include <BitVectors.h>
@@ -62,14 +63,20 @@ write_bit_vector_to_pipe("out_data",&(MUL_u32_u32_35));\
 }
 ;
 
-#define _Daemon_assign_stmt_41_c_macro_ __declare_static_bit_vector(konst_39,8);\
-bit_vector_clear(&konst_39);\
-konst_39.val.byte_array[0] = 1;\
-__declare_static_bit_vector(ADD_u8_u8_40,8);\
-bit_vector_clear(&konst_39);\
-konst_39.val.byte_array[0] = 1;\
-bit_vector_plus( &(I), &(konst_39), &(ADD_u8_u8_40));\
-bit_vector_cast_to_bit_vector(0, &(NI), &(ADD_u8_u8_40));\
+#define _Daemon_stmt_38_c_macro_ if (bit_vector_to_uint64(0, &gflag)) {\
+if (__trace_on__) {\
+__trace("TTTT",1);\
+}\
+}\
+
+#define _Daemon_assign_stmt_43_c_macro_ __declare_static_bit_vector(konst_41,8);\
+bit_vector_clear(&konst_41);\
+konst_41.val.byte_array[0] = 1;\
+__declare_static_bit_vector(ADD_u8_u8_42,8);\
+bit_vector_clear(&konst_41);\
+konst_41.val.byte_array[0] = 1;\
+bit_vector_plus( &(I), &(konst_41), &(ADD_u8_u8_42));\
+bit_vector_cast_to_bit_vector(0, &(NI), &(ADD_u8_u8_42));\
 ;
 ;
 

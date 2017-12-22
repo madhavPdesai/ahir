@@ -454,14 +454,17 @@ aA_Sleep_Statement[AaScope* scope, vector<AaStatement*>& slist]
 aA_Trace_Statement[AaScope* scope, vector<AaStatement*>& slist]
 {
 	string t_string = "";
+	int tindex = 0;
+	int lno;
 }
 :
-	TRACE sid: SIMPLE_IDENTIFIER 
+	TRACE sid: SIMPLE_IDENTIFIER (LPAREN tindex = aA_Integer_Parameter_Expression[lno] RPAREN)?
 	     {
 		t_string = sid->getText(); 
-		AaTraceStatement* tstmt = new AaTraceStatement(scope, t_string);
+		AaTraceStatement* tstmt = new AaTraceStatement(scope, t_string, tindex);
 		slist.push_back(tstmt);
 	     }
+
 ;
 
 

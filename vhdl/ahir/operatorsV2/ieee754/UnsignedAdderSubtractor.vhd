@@ -130,6 +130,8 @@ architecture Pipelined of UnsignedAdderSubtractor is
 			addsubcell_A, addsubcell_B, final_sums: CWord(0 to num_chunks-1);
   signal addsubcell_BP, addsubcell_BG : std_logic_vector(0 to num_chunks-1);
   signal addsubcell_Cin: std_logic_vector(0 to num_chunks);
+  constant zero_Cin: std_logic_vector(0 to num_chunks) := (others => '0');
+
 
   signal block_carries: std_logic_vector(0 to num_chunks);
   signal subtract_op_1, subtract_op_2: std_logic;
@@ -147,7 +149,15 @@ architecture Pipelined of UnsignedAdderSubtractor is
 begin  -- Pipelined
 
   -- note: if subtract_op = '1', then complement R (see below) and add 1.
-  addsubcell_Cin <= (0 => '1', others => '0') when subtract_op = '1' else (others => '0');
+  process(subtract_op)
+     variable TMP: std_logic_vector(0 to num_chunks);
+  begin
+     TMP := (others =>  '0');
+     if (subtract_op = '1') then
+       TMP(0) := '1';
+     end if;
+     addsubcell_Cin <= TMP;
+  end process;
 
   stage_active(0) <= in_rdy;
   out_rdy <= stage_active(pipe_depth);

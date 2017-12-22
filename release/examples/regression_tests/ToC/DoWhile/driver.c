@@ -47,9 +47,12 @@ void Exit(int sig)
 	
 DEFINE_THREAD(Daemon)
 
+extern int __trace_on__;
 int main(int argc, char* argv[])
 {
 	uint32_t idx;
+
+	__trace_on__ = 1;
 
 	signal(SIGINT,  Exit);
   	signal(SIGTERM, Exit);

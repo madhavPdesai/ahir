@@ -44,10 +44,10 @@ _Daemon_ ()
   {
     {
 // do-while:   file DoWhile.aa, line 9
-      __declare_static_bit_vector (konst_44, 8);
-      bit_vector_clear (&konst_44);
-      konst_44.val.byte_array[0] = 4;
-      __declare_static_bit_vector (ULT_u8_u1_45, 1);
+      __declare_static_bit_vector (konst_46, 8);
+      bit_vector_clear (&konst_46);
+      konst_46.val.byte_array[0] = 4;
+      __declare_static_bit_vector (ULT_u8_u1_47, 1);
       uint8_t do_while_entry_flag;
       do_while_entry_flag = 1;
       uint8_t do_while_loopback_flag;
@@ -59,28 +59,30 @@ _Daemon_ ()
 //                      $phi I :=                         ($bitcast ($uint<8>) 0  ) $on $entry                    NI $on $loopback // type of target is $uint<8>
 	  _Daemon_phi_stmt_9_c_macro_;
 	  _Daemon_merge_stmt_8_c_postamble_macro_;
-//                      T[I][I] := in_data
+//                      T[I][I] := in_data// bits of buffering = 32 
 	  _Daemon_assign_stmt_20_c_macro_;
-//                      gflag := (I >= 0 )
+//                      gflag := (I >= 0 )// bits of buffering = 1 
 	  _Daemon_assign_stmt_26_c_macro_;
-//                      $guard (gflag) out_data := (T[I][I] * T[I][I])
+//                      $guard (gflag) out_data := (T[I][I] * T[I][I])// bits of buffering = 32 
 	  _Daemon_assign_stmt_36_c_macro_;
-//                      NI := (I + 1 )
-	  _Daemon_assign_stmt_41_c_macro_;
+// $guard (gflag) $trace TTTT (1)
+	  _Daemon_stmt_38_c_macro_;
+//                      NI := (I + 1 )// bits of buffering = 8 
+	  _Daemon_assign_stmt_43_c_macro_;
 	  do_while_entry_flag = 0;
 	  do_while_loopback_flag = 1;
-	  bit_vector_clear (&konst_44);
-	  konst_44.val.byte_array[0] = 4;
-	  bit_vector_less (0, &(NI), &(konst_44), &(ULT_u8_u1_45));
-	  if (has_undefined_bit (&ULT_u8_u1_45))
+	  bit_vector_clear (&konst_46);
+	  konst_46.val.byte_array[0] = 4;
+	  bit_vector_less (0, &(NI), &(konst_46), &(ULT_u8_u1_47));
+	  if (has_undefined_bit (&ULT_u8_u1_47))
 	    {
 	      fprintf (stderr,
-		       "Error: variable ULT_u8_u1_45 has undefined value (%s) at test point.\n",
-		       to_string (&ULT_u8_u1_45));
+		       "Error: variable ULT_u8_u1_47 has undefined value (%s) at test point.\n",
+		       to_string (&ULT_u8_u1_47));
 	      assert (0);
 	    }
 
-	  if (!bit_vector_to_uint64 (0, &ULT_u8_u1_45))
+	  if (!bit_vector_to_uint64 (0, &ULT_u8_u1_47))
 	    break;
 	}
     }

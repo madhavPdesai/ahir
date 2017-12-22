@@ -1049,7 +1049,7 @@ void AaTraceStatement::Print(ostream& ofile)
 		this->Get_Guard_Expression()->Print(ofile);
 		ofile << ") ";
 	}
-	ofile << "$trace " << this->_trace_identifier <<  endl;
+	ofile << "$trace " << this->_trace_identifier <<  " (" << this->_trace_index << ")" <<  endl;
 }
 
 
@@ -1085,7 +1085,7 @@ void AaTraceStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 		headerfile << ") {\\" << endl;
 	}
 	headerfile << "if (" << AaProgram::Trace_On_Flag_Name() << ") {\\" << endl;
-	headerfile << "__trace(\"" << this->_trace_identifier << "\");\\" <<  endl;
+	headerfile << "__trace(\"" << this->_trace_identifier << "\"," << this->_trace_index << ");\\" <<  endl;
 	headerfile << "}\\" << endl;
 	if(this->Get_Guard_Expression())
 		headerfile << "}\\" << endl;

@@ -98,9 +98,14 @@ begin
 	begin
 
 		if(clk'event and clk = '1') then
+                        y := (others => '0');
 			if(stall = '0') then
 				x := "00" & SU;
-				y := (1 => SR(1), 0 => SR(0), others => '0');
+
+				-- y := (1 => SR(1), 0 => SR(0), others => '0');
+                                y(1) := SR(1);
+                                y(0) := SR(0);
+
 				z := "00" & SDiagIn;
 		
 				if(not (ignore_diag  or ignore_right)) then
