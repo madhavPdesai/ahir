@@ -1,12 +1,11 @@
 # build software version of testbench (to check the "desired behaviour")
-AHIR_RELEASE=/home/madhav/ahirgit/ahir/release/
-SOCKETLIB_INCLUDE=$(AHIR_RELEASE)/CtestBench/include
-SOCKETLIB_LIB=$(AHIR_RELEASE)/CtestBench/lib
-PIPEHANDLER_INCLUDE=$(AHIR_RELEASE)/pipeHandler/include
-PIPEHANDLER_LIB=$(AHIR_RELEASE)/pipeHandler/lib
-PTHREADUTILS_INCLUDE=$(AHIR_RELEASE)/pthreadUtils/include
+SOCKETLIB_INCLUDE=$(AHIR_RELEASE)/include
+SOCKETLIB_LIB=$(AHIR_RELEASE)/lib
+PIPEHANDLER_INCLUDE=$(AHIR_RELEASE)/include
+PIPEHANDLER_LIB=$(AHIR_RELEASE)/lib
+PTHREADUTILS_INCLUDE=$(AHIR_RELEASE)/include
 VHDL_LIB=$(AHIR_RELEASE)/vhdl
-VHDL_VHPI_LIB=$(AHIR_RELEASE)/CtestBench/vhdl
+VHDL_VHPI_LIB=$(AHIR_RELEASE)/vhdl
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 SRC=./src
 all: HW 
@@ -42,7 +41,7 @@ vc2vhdl: prog.vc
 vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl $(SRC)/testbench.c vhdlCStubs.h vhdlCStubs.c
 	gcc -c vhdlCStubs.c  -I$(SRC) -I./ -I$(SOCKETLIB_INCLUDE)
 	gcc -c $(SRC)/testbench.c -I$(PTHREADUTILS_INCLUDE) -I$(SRC) -I./ -I$(SOCKETLIB_INCLUDE)
-	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
+	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLibPipeHandler -lpthread
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl
