@@ -1,0 +1,5 @@
+$module  [maxOfTwo] $in (a b: $uint<32>) 
+   $out (c : $uint<32>) $is
+{
+	c := ($mux (a > b) a b)
+}

@@ -14,7 +14,7 @@ TOVHDL:TOVC vc2vhdl
 LLVM2AAOPTS=
 
 # the top-level module.
-TOPMODULES=-T firDaemon 
+TOPMODULES=-T pfirf 
 
 
 # compile with SW defined.

@@ -1,0 +1,37 @@
+A simple example describing an FIR filter. If the current
+input is x(k), the output is
+y(k) = 0.8*x(k) + 0.15*x(k-1) + 0.05*x(k-2)
+
+Before running the example, go to the ahir release
+area and set up the environment.
+
+cd <ahir-release-directory>
+source ahir_bashrc
+
+Now come back to this directory and type
+
+make SW
+
+This will produce an executable called testbench_sw.
+If you run it
+
+./testbench_sw
+
+It will expect you to type x values (in float format).
+
+e.g.
+
+1.0 0.8 0.9 0.7 0.0
+
+For each input value that is read, it outputs the corresponding
+filter output.
+
+As soon as a 0.0 is read, the program terminates..
+
+If the program works correctly, type
+
+make HW
+
+This generates two executables, testbench_hw and ahir_system_test_bench
+You will need to run these in two separate shells, and observe that 
+the testbench_hw behaves exactly like testbench_sw, but a lot slower!

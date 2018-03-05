@@ -1,7 +1,8 @@
 \documentclass{beamer}
-\usepackage{epsfig}
+\usepackage{graphics}
 \title{An introduction to the AHIR-v2 tool-set}
-\author{Madhav P. Desai}
+\author{Madhav P. Desai\\ Department of Electrical Engg.\\ IIT Bombay, Mumbai India}
+\date{March 8, 2018}
 \begin{document}
 \maketitle
 
@@ -12,13 +13,38 @@
 \begin{itemize}
 \item Aid in the design and implementation of complex systems (in hardware).
 \item Describe the algorithm (behaviour) of the system using high-level
-languages (currently C), and migrate the algorithm to a hardware
+languages, and migrate the algorithm to a hardware
 implementation.
+\begin{itemize}
+\item C.
+\item Aa.
+\end{itemize}
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{Plan}
+\begin{itemize}
+\item Introduction: going from C to VHDL and simulating the VHDL.
+\begin{itemize}
+\item Exercise: go through a couple of examples.
+\end{itemize}
+\item Understand the hardware target model used by the AHIR-V2 tools.
+\begin{itemize}
+\item Exercise: re-visit the examples to take a closer look.
+\end{itemize}
+\item Optimizations.
+\item Loop-pipelining.
+\item {\bf Aa} language.
+\item Design problem.
+\begin{itemize}
+\item Design a programmable FIR filter.
+\end{itemize}
 \end{itemize}
 }
 
 
 \frame[containsverbatim]{\frametitle{For example}
+
 Design a circuit that takes two inputs, computes the maximum of
 the two and returns the maximum.
 \begin{verbatim}
@@ -53,13 +79,21 @@ Go to ex1/ and check it out.
 
 }
 
+\frame[containsverbatim]{\frametitle{AHIR flow}
+\begin{figure}
+  \centering
+  \includegraphics[width=10cm]{figs/AhirFlow.pdf}
+  \caption{AHIR flow}
+\end{figure}
+}
+
 
 \frame[containsverbatim]{\frametitle{Conversion to hardware}
 
 The AHIR-v2 flow translates the code to hardware in four steps:
 \begin{enumerate}
 \item The source C code is compiled using the open-source compiler
-{\bf clang} (we version 2.8), which produces byte-code in {\bf llvm}
+{\bf clang} (we use version 2.8), which produces byte-code in {\bf llvm}
 format.
 \item We take the {\bf llvm} bytecode and translate it to our internal
 representation called {\bf Aa}.  This is done by a utility called {\bf llvm2aa}.
@@ -80,6 +114,14 @@ Go back to ex1/ and check it out.
 
 }
 
+\frame[containsverbatim]{\frametitle{VHDL Structure}
+\begin{figure}
+  \centering
+  \includegraphics[width=10cm]{ex1/figs/VhdlStructure.eps}
+  \caption{VHDL structure of generated example}
+\end{figure}
+}
+
 
 \frame[containsverbatim]{\frametitle{Validating the VHDL}
 
@@ -95,19 +137,25 @@ generated VHDL.  The two processes communicate through sockets.
 
 
 \frame[containsverbatim]{\frametitle{Lets take a look}
-Go back to examples/ex1 and check it out.
+Go back to ex1/ and check it out.
 }
 
 \frame[containsverbatim]{\frametitle{Lets make it a  little more interesting}
 \begin{verbatim}
-void maxDaemon()
+float x_vals[2];
+void firDaemon()
 {
+  x_vals[0] = 0.0; x_vals[1] = 0.0;
+  uint8_t head_pointer = 0;
+  // fir loop.
   while(1)
   {
-       uint32_t a = read_uint32("in_data");
-       uint32_t b = read_uint32("in_data");
-       c = ((a > b) ? a : b);
-       write_uint32("out_data", c);
+    float x = read_float32("in_data");
+    float y = 0.8*x + (0.15*x_vals[head_pointer]) + 
+                (0.05*x_vals[(head_pointer+1)&0x1]);
+    write_float32("out_data",y);
+    head_pointer = (head_pointer + 1)&0x1;
+    x_vals[head_pointer] = x;
   }
 }
 \end{verbatim}
@@ -117,15 +165,13 @@ void maxDaemon()
 \begin{verbatim}
 int main(int argc, char* argv[])
 {
-  uint32_t a, b, c;
   while(1)
   {
-     scanf("%d", &a);
-     scanf("%d", &b);
-     write_uint32("in_data", a);
-     write_uint32("in_data", b);
-     c = read_uint32("out_data");
-     printf(stdout,"Result = %d.\n", c);
+    float a;
+    scanf("%f", &a);
+    write_float32("in_data",a);
+    float c = read_float32("out_data");
+    fprintf(stdout,"Result = %f.\n", c);
   }
   return(0);
 }
@@ -139,18 +185,24 @@ Go to ex2/.
 }
 
 
-
-\frame[containsverbatim]{\frametitle{Installing AHIR-v2}
-
+\frame[containsverbatim]{\frametitle{Download and Install}
 \begin{itemize}
-\item You will need to install llvm-2.8, clang-2.8, the BOOST graph library.
-\item You can download the source code from gitHub.
-\item Go to the v2/ folder in the git repository.  You will need to
-source ``build\_bashrc'', and then type ``scons'' to build the executables.
-You can then make a release by going back to the root of the git repository
-and then typing ``make -f ReleaseMakeFile''.  This populates the Release
-directory with binaries, examples etc. which should be enough to get you
-going.
+\item Clone git repository
+\begin{verbatim}
+git clone https://github.com/madhavPdesai/ahir.git .
+\end{verbatim}
+\item Install llvm-2.8, clang-2.8 from www.llvm.org (from source, builds on ubuntu 12, centos 6.5, may need  to do minor edits in includes in ubuntu 14).
+\item Install boost development packages.
+\item Install antlr-2.7.7 (from source, builds on ubuntu 12, centos 6.5, some includes need to be added in ubuntu 14).
+\item Install java run-time (openjdk).
+\item Install ghdl (or modelsim).
+\item Go to release directory. 
+\begin{verbatim}
+source ahir_bashrc
+mkdir bin
+./build.sh
+\end{verbatim}
+\item Should work..
 \end{itemize}
 }
 

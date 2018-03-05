@@ -8,20 +8,16 @@
 #include <pipeHandler.h>
 #ifndef SW
 #include "vhdlCStubs.h"
+#else
+#include "aa_c_model.h"
 #endif
 
-void firDaemon();
-
-#ifdef SW
-DEFINE_THREAD(firDaemon)
-#endif
 
 int main(int argc, char* argv[])
 {
 #ifdef SW
-	init_pipe_handler_with_log("pipelog.txt");
-	PTHREAD_DECL(firDaemon);   // declare the Daemon thread.
-	PTHREAD_CREATE(firDaemon); // start the Daemon..
+	init_pipe_handler();
+	start_daemons(NULL,0);
 #endif
 	while(1)
 	{

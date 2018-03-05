@@ -2,6 +2,7 @@
 \usepackage{epsfig}
 \title{An introduction to the {\bf Aa} language}
 \author{Madhav P. Desai}
+\date{March 8, 2018}
 \begin{document}
 \maketitle
 
@@ -100,14 +101,47 @@ $constant C: $float<8,23> := _f2.3465e+0
 \begin{verbatim}
 $pipe A: $uint<32> $depth 4
 $lifo $pipe B: $uint<8> $depth 8
+$noblock $pipe C: $uint<39> $depth 2
 \end{verbatim}
-\item Implicit Variables:  these are defined by
+\item Implicit objects:  these are defined by
 statements:
 \begin{verbatim}
 a := (A + B)
 \end{verbatim}
 They are also called {\em static-single-assignment}
 or SSA variables.
+\item Interface objects:  Inputs and outputs of modules are
+treated like SSA variables.  Inputs cannot be written into.
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Storage Objects}
+\begin{itemize}
+\item  Will be implemented in memory spaces.
+\item  Access to a storage object takes 3+ cycles.
+\item  Should use sparingly.
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Pipe Objects}
+\begin{itemize}
+\item Blocking in nature:  provide synchronization mechanism.
+\item FIFO or LIFO data transfer within and across modules.
+\item Non-blocking pipes: return a 0 if read is attempted on an empty pipe.
+\end{itemize}
+}
+\frame[containsverbatim]{\frametitle{{\bf Aa} SSA Objects}
+\begin{itemize}
+\item Implemented as registers.
+\item Fast access (immediate read, single cycle write).
+\item Should use as often as possible.
+\item Note that the type of these objects is inferred from the
+context in which they appear.
+\begin{verbatim}
+a := (A + B)
+\end{verbatim}
+$A$ and $B$ must have the same type, and the type of $a$ is
+inferred to be the type of $A$.
 \end{itemize}
 }
 
@@ -253,6 +287,41 @@ Control-flow:  sequential, but control flow is altered by
 merge, place, if and switch statements.
 }
 
+\frame[containsverbatim]{\frametitle{{\bf Aa} Phi Statements}
+\begin{itemize}
+\item Can appear only in branch blocks, and within merge statements.
+\item Indicate the action to be taken depending on how control got
+to this statement.
+\item  Example:
+\begin{verbatim}
+       $phi I := ($bitcast($uint<32>) 0) $on $entry
+                    NI $on loopback
+\end{verbatim}
+
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Do-Pipeline-While Statements}
+These are not atomic, and can occur only inside a branch-block.
+\begin{verbatim}
+$dopipeline $depth 7 $buffering 1 $fullrate
+   $merge $entry $loopback
+        $phi I := ($bitcast ($uint<32>) 0) 
+                      $on $entry
+                   NI $on $loopback
+   $endmerge
+   a[I] := (b[I] + c[I])
+   NI   := (I+1)
+$while (I < 16)
+\end{verbatim}
+Control-flow:  sequential, controlled by the condition check.  The
+places \$entry and \$loopback are implicitly defined.  When control
+enters the do-while, the token gets placed in \$entry and when
+control loops-back from the condition check, the token gets placed
+in \$loopback.  The compiler will pipeline the loop by keeping
+\$depth iterations alive.
+}
+
 \frame[containsverbatim]{\frametitle{{\bf Aa} Fork Block Statements}
 \begin{verbatim}
 $forkblock [FB] {
@@ -272,28 +341,37 @@ will trigger new statements etc.  Token exits block when all statements
 finish.
 }
 
-\frame[containsverbatim]{\frametitle{{\bf Aa} Do-While Statements}
-These are not atomic, and can occur only inside a branch-block.
+
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Volatile Statements}
+\begin{itemize}
+\item If you do not want to use a register:
 \begin{verbatim}
-$do
-   $merge $entry $loopback
-        $phi I := ($bitcast ($uint<32>) 0) 
-                      $on $entry
-                   NI $on $loopback
-   $endmerge
-   a[I] := (b[I] + c[I])
-   NI   := (I+1)
-$while (I < 16)
+$volatile p := (q + r)
 \end{verbatim}
-Control-flow:  sequential, controlled by the condition check.  The
-places \$entry and \$loopback are implicitly defined.  When control
-enters the do-while, the token gets placed in \$entry and when
-control loops-back from the condition check, the token gets placed
-in \$loopback.
+\item $p$ will not necessarily be implemented as a register.   You
+can only assume that $p$ is equivalent to $(q  +  r)$.
+\item Useful in describing combinational logic.
+\end{itemize}
 }
 
+\frame[containsverbatim]{\frametitle{{\bf Aa} Summary}
 
-\frame[containsverbatim]{\frametitle{Getting to hardware starting from an {\bf Aa} Program}
+\begin{itemize}
+\item An {\bf Aa} program consists of a collection of module
+descriptions and object declarations.
+\item Each module is a sequence of statements.
+\item Statements can be simple or block-structured.
+\item Specific blocks allow branching, while others describe
+parallelism.
+\item Objects in an {\bf Aa} program can be FIFOs (pipes), storage
+or implicitly inferred.
+\item Almost everything you can express in C can be expressed, but
+we are closer to hardware.
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{Look at the FIR again}
 }
 
 

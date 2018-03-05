@@ -14,33 +14,24 @@ TOVHDL:TOVC vc2vhdl
 LLVM2AAOPTS=
 
 # the top-level module.
-TOPMODULES=-T firDaemon 
+TOPMODULES=-t maxOfTwo 
 
+AA2C: $(SRC)/prog.aa
+	Aa2C $(SRC)/prog.aa
 
-# compile with SW defined.
-SW: $(SRC)/prog.c $(SRC)/testbench.c 
-	gcc -g -c -DSW -I$(SRC) -I$(AHIR_INCLUDE) $(SRC)/prog.c
-	gcc -g -c -DSW -I$(SRC) -I$(AHIR_INCLUDE) $(SRC)/testbench.c
-	gcc -g -o testbench_sw prog.o testbench.o -L$(AHIR_LIB) -lPipeHandler -lpthread
+SW: aa_c_model.c $(SRC)/testbench.c 
+	gcc -g -c -DSW -I./ -I$(AHIR_INCLUDE) aa_c_model.c
+	gcc -g -c -DSW -I./ -I$(SRC) -I$(AHIR_INCLUDE) $(SRC)/testbench.c
+	gcc -g -o testbench_sw aa_c_model.o testbench.o -lBitVectors -lSocketLibPipeHandler -L $(AHIR_LIB)
 
-# five steps from C to vhdl simulator.
-HW: c2llvmbc llvmbc2aa  aa2vc  vc2vhdl  vhdlsim
+# three steps from Aa to vhdl simulator.
+HW: aa2vc  vc2vhdl  vhdlsim
 
 AA2VHDL: aa2vc vc2vhdl vhdlsim
 
-# C to llvm byte-code.. use clang.
-c2llvmbc: $(SRC)/prog.c 
-	clang -O3 -std=gnu89 -I$(AHIR_INCLUDE) -I$(FUNCTIONLIB)/include -emit-llvm -c $(SRC)/prog.c
-	opt --indvars --loopsimplify prog.o -o prog.opt.o
-	llvm-dis prog.opt.o
-
-# llvm byte-code to Aa..
-llvmbc2aa:  prog.opt.o 
-	llvm2aa  prog.opt.o | vcFormat >  prog.aa
-
 # Aa to vC
-aa2vc: prog.aa
-	Aa2VC -O -C prog.aa | vcFormat > prog.vc
+aa2vc: $(SRC)/prog.aa
+	Aa2VC -O -C $(SRC)/prog.aa | vcFormat > prog.vc
 
 # vC to VHDL
 vc2vhdl: prog.vc
@@ -66,6 +57,6 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl $(SRC)/testbench.c vhdlCSt
 	ghdl -m --work=work -Wl,-L$(AHIR_LIB) -Wl,-lVhpi ahir_system_test_bench 
 
 clean:
-	rm -rf *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_data* testbench_sw testbench_hw ahir_system_test_bench vhpi.log *.aa *.vc *.lso xst *.ngc *_xmsgs *.xrpt pipeHandler.log *.srp *.ghw *.dot
+	rm -rf *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_data* testbench_sw testbench_hw ahir_system_test_bench vhpi.log *.aa *.vc *.lso xst *.ngc *_xmsgs *.xrpt pipeHandler.log *.srp *.ghw *.dot aa_c_model.*
 
 PHONY: all clean	

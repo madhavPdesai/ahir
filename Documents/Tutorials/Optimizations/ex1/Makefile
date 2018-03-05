@@ -16,24 +16,20 @@ AA2VHDLSIM: aa2vc  vc2vhdl  vhdlsim
 TOVHDL:TOVC vc2vhdl
 
 # llvm2aa opts: pipelined case, extract-do-while.
-#LLVM2AAOPTS=--storageinit=true
-LLVM2AAOPTS=-extract_do_while=true --storageinit=true -pipedepths=pipedepths.txt
+LLVM2AAOPTS=
 
 #program defs: no unrolling
-#PROGDEFS=-DPIPELINE 
-#PROGDEFS=-DPIPELINE -DALT
-#PROGDEFS=-DUNROLL
+PROGDEFS=
 
 TOPMODULES=-T vectorSum 
 
 
 # compile with SW defined.
-# note the use of IOLIB in building the testbench.
-SW: $(SRC)/prog.c $(SRC)/prog.h $(SRC)/testbench.c 
-	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include -I$(SRC) $(SRC)/prog.c
+SW: $(SRC)/prog0.c $(SRC)/prog1.c $(SRC)/prog.h $(SRC)/testbench.c 
+	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include -I$(SRC) $(SRC)/prog0.c
+	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include -I$(SRC) $(SRC)/prog1.c
 	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(PTHREADUTILS_INCLUDE) -I$(SRC) $(SRC)/testbench.c
-	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include  $(DEFS)  $(FUNCTIONLIB)/src/fpu.c
-	gcc -g -o testbench_sw prog.o fpu.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
+	gcc -g -o testbench_sw prog0.o prog1.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
@@ -41,18 +37,22 @@ HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
 AA2VHDL: aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
-c2llvmbc: $(SRC)/prog.c $(SRC)/prog.h
-	clang -O3 -std=gnu89 $(PROGDEFS)  -I$(SOCKETLIB_INCLUDE) -I$(FUNCTIONLIB)/include -emit-llvm -c $(SRC)/prog.c
-	opt --indvars --loopsimplify prog.o -o prog.opt.o
-	llvm-dis prog.opt.o
+c2llvmbc: $(SRC)/prog0.c $(SRC)/prog1.c $(SRC)/prog.h
+	clang -O3 -std=gnu89 $(PROGDEFS)  -I$(SOCKETLIB_INCLUDE) -I$(FUNCTIONLIB)/include -emit-llvm -c $(SRC)/prog0.c
+	opt --indvars --loopsimplify prog0.o -o prog0.opt.o
+	llvm-dis prog0.opt.o
+	clang -O3 -std=gnu89 $(PROGDEFS)  -I$(SOCKETLIB_INCLUDE) -I$(FUNCTIONLIB)/include -emit-llvm -c $(SRC)/prog1.c
+	opt --indvars --loopsimplify prog1.o -o prog1.opt.o
+	llvm-dis prog1.opt.o
 
 # llvm byte-code to Aa..
-llvmbc2aa:  prog.opt.o 
-	llvm2aa $(LLVM2AAOPTS)  prog.opt.o | vcFormat >  prog.aa
+llvmbc2aa:  prog0.opt.o  prog1.opt.o
+	llvm2aa $(LLVM2AAOPTS)  prog0.opt.o | vcFormat >  prog0.aa
+	llvm2aa $(LLVM2AAOPTS)  prog1.opt.o | vcFormat >  prog1.aa
 
 # Aa to vC
-aalink: prog.aa 
-	AaLinkExtMem prog.aa $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.linked.aa
+aalink: prog0.aa  prog1.aa
+	AaLinkExtMem -I 1 -E mempool prog0.aa prog1.aa | vcFormat > prog.linked.aa
 	AaOpt -B prog.linked.aa | vcFormat > prog.linked.opt.aa
 
 aa2vc: prog.linked.opt.aa
@@ -82,6 +82,6 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl $(SRC)/testbench.c vhdlCSt
 	ghdl -m --work=work -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
 
 clean:
-	rm -rf *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_data* testbench_sw testbench_hw ahir_system_test_bench vhpi.log *.aa *.vc *.lso xst *.ngc *_xmsgs *.xrpt pipeHandler.log *.srp *.ghw
+	rm -rf *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_data* testbench_sw testbench_hw ahir_system_test_bench vhpi.log *.aa *.vc *.lso xst *.ngc *_xmsgs *.xrpt pipeHandler.log *.srp *.ghw *.dot
 
 PHONY: all clean	

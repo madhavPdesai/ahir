@@ -1,0 +1,115 @@
+\documentclass{beamer}
+\usepackage{graphics}
+\title{Optimizations carried out by the AHIR tool chain}
+\author{Madhav P. Desai\\Department of Electrical Engineering\\ IIT Bombay, Mumbai India}
+\date{March 8, 2018}
+\begin{document}
+\maketitle
+
+
+\frame[containsverbatim]{\frametitle{Optimizations}
+\begin{itemize}
+\item Dependency analysis.
+\begin{itemize}
+\item Reduce latency through a group of statements.
+\end{itemize}
+\item Loop pipelining.
+\begin{itemize}
+\item Increase throughput of a loop.
+\end{itemize}
+\item Operator sharing.
+\begin{itemize}
+\item Reduce cost of hardware.
+\end{itemize}
+\item Identification of disjoint memory spaces.
+\begin{itemize}
+\item Increase memory bandwidth.
+\end{itemize}
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{Dependency analysis}
+\begin{verbatim}
+   a := (b + c)
+   d := (b + c)
+   e := (a + d)
+\end{verbatim}
+The first two statements can be executed concurrently, but the third depends
+on the first two (RAW dependency).  Other dependencies that are analyzed and
+enforced are WAR and WAW.  For pipe accesses, RAR dependencies are also imposed.
+}
+
+\frame[containsverbatim]{\frametitle{Loop pipelining}
+A loop may be implemented as a pipeline in hardware.  We will discuss this
+separately.
+}
+
+\frame[containsverbatim]{\frametitle{Operator sharing}
+
+\begin{verbatim}
+   a := (b + c)
+   d := (b + c)
+   e := (a + d)
+\end{verbatim}
+If $+$ can be replicated, we observe that only two copies of $+$ are required
+to implement the three additions.
+
+}
+
+\frame[containsverbatim]{\frametitle{Storage Variables and Memory Spaces}
+\begin{itemize}
+\item Storage variables are grouped into memory spaces.
+\item Each memory space is implemented in hardware by a memory sub-system. 
+\item Memory spaces are identified by doing a static aliasing analysis.
+\end{itemize}
+}
+
+
+\frame[containsverbatim]{\frametitle{Aliasing analysis}
+\begin{verbatim}
+int A, B, C, D; // storage objects.
+int foo()
+{
+   int ret_val = 0;
+   int* p1 = &A;
+   ret_val += *p1;
+   int *p2 = &B;
+   ret_val += *p2;
+   int *p3 = &C;
+   ret_val += *p3;
+   p3 = &D;
+   ret_val += *p3;
+   return(ret_val);
+}
+\end{verbatim}
+}
+
+
+\frame[containsverbatim]{\frametitle{Groupings}
+
+\begin{itemize}
+\item The memory spaces are $\{A\}$, $\{ B\}$, $\{ C, D \}$.
+\item $C$ and $D$ are grouped together because pointer $p3$ can
+point to either $C$ or $D$.
+\end{itemize}
+
+}
+
+\frame[containsverbatim]{\frametitle{Note: Orphan references}
+
+An orphan reference is pointer which points to an unknown storage object.
+In such cases, the orphan pointer is directed to a default storage object
+(sort of like /dev/null).
+
+\begin{verbatim}
+AaLinkExtMem -I 1 -E mempool prog1.aa prog2.aa 
+       | vcFormat > linked.aa
+Aa2VC -E mempool  linked.aa ....
+\end{verbatim}
+
+All orphan pointers in linked.aa now point to mempool which is a dummy storage object whose
+size is $1$ byte.  This mempool should never actually be accessed...
+
+}
+
+\end{document}

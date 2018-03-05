@@ -1,0 +1,93 @@
+$parameter  ORDER          8
+
+
+$pipe in_data  : $float<8,23>
+$pipe out_data : $float<8,23>
+
+$constant OMASK: $uint<8> := {ORDER - 1}
+
+//
+// reads x(k) from input..
+// Computes y(k) = 0.8*x(k) + 0.15*x(k-1) + 0.05*x(k-2)
+// sends y(k) to output.
+
+$module  [pfirf] $in () $out () $is
+{
+  $storage taps:  $array[ORDER] $of $float<8,23>
+  $storage xvals: $array[ORDER] $of $float<8,23>
+
+  $branchblock [loop] {
+	// get the taps in.
+	$merge $entry tap_loopback
+		$phi U := ($bitcast ($uint<8>) 0) $on $entry NU $on tap_loopback
+	$endmerge
+		taps [U] := in_data
+		xvals [U] := _f0.0e+0
+		NU := (U+1)
+	$if (U < OMASK) $then $place [tap_loopback] $endif
+
+	$rreport (pfirf FIR_TAPS_READ)
+	
+	// FIR outer loop
+	$merge $entry fir_outer_loopback
+		$phi HEAD := ($bitcast ($uint<8>) {ORDER - 1}) $on $entry nHEAD $on fir_outer_loopback
+	$endmerge 
+	nHEAD := ((HEAD - 1) & OMASK)
+	xvals[HEAD] := in_data
+
+	//
+	// FIR inner loop: unrolled 4 times and pipelined.  This gives a speedup of 1.5X
+	// over the vanilla C code.
+	//
+	$dopipeline $depth 31 $buffering 2 $fullrate 
+	$merge $entry $loopback 
+		$phi I := ($bitcast ($uint<8>) 0) $on $entry nI $on $loopback
+		$phi S0    := ($bitcast ($float<8,23>) 0) $on $entry next_S0 $on $loopback
+		$phi S1    := ($bitcast ($float<8,23>) 0) $on $entry next_S1 $on $loopback
+		$phi S2    := ($bitcast ($float<8,23>) 0) $on $entry next_S2 $on $loopback
+		$phi S3    := ($bitcast ($float<8,23>) 0) $on $entry next_S3 $on $loopback
+	$endmerge 
+		nI := (I + 4)
+
+		continue_flag := (nI < ORDER)
+
+		$volatile t0 := ((OMASK - I) & OMASK)
+		tap0:= taps[t0]
+
+		$volatile t1 := ((t0 - 1)  & OMASK)
+		tap1:= taps[t1]
+
+		$volatile t2 := ((t1 - 1)  & OMASK)
+		tap2:= taps[t2]
+
+		$volatile t3 := ((t2 - 1)  & OMASK)
+		tap3:= taps[t3]
+
+		$volatile i0 := ((I + HEAD)  & OMASK)
+		xval0 := xvals[i0]
+
+		$volatile i1 := ((i0 + 1)  & OMASK)
+		xval1 := xvals[i1]
+
+		$volatile i2 := ((i1 + 1)  & OMASK)
+		xval2 := xvals[i2]
+
+		$volatile i3 := ((i2 + 1)  & OMASK)
+		xval3 := xvals[i3]
+		
+		next_S0 := (S0 + (tap0*xval0))
+		next_S1 := (S1 + (tap1*xval1))
+		next_S2 := (S2 + (tap2*xval2))
+		next_S3 := (S3 + (tap3*xval3))
+
+		$guard (~continue_flag)
+			out_data := ((next_S0 + next_S1)  + (next_S2 + next_S3))
+
+	$while continue_flag
+	
+
+
+	// fir outer loop.
+	$place [fir_outer_loopback]	
+  }
+}

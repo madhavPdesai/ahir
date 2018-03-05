@@ -1,0 +1,108 @@
+\documentclass{beamer}
+\usepackage{graphics}
+\title{An Exercise}
+\author{Madhav P. Desai\\ Department of Electrical Engg.\\ IIT Bombay, Mumbai India}
+\date{March 8, 2018}
+\begin{document}
+\maketitle
+
+
+
+\frame[containsverbatim]{\frametitle{Specification}
+
+\begin{itemize}
+\item Design an 8-tap programmable FIR filter (PFIRF).
+\item The PFIRF has a single 32-bit FIFO input and a single
+32-bit FIFO output.
+\item After reset, the PFIRF first reads the 8 tap values from the FIFO input,
+and on subsequent inputs, starts functioning like an FIR.
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{Possible solution}
+\begin{verbatim}
+void pfirf ()
+{
+    int i;
+    float taps[8];
+    float xvals[8];
+    for (i = 0; i < 8; i++)
+    {
+       taps[i] = read_float32("in_data");
+       xvals [i] = 0;
+    }
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{Possible solution: continued}
+\begin{verbatim}
+    int HEAD = 7;
+    while (1) // outer loop.
+    {
+      // read input sample x and store it.
+      float x = read_float32("in_data");
+      xvals [HEAD] =  x;  
+      // calculate the FIR output
+      float output_val = 0.0;
+      // inner loop..
+      for (i = 0; i < 8; i++)
+        output_val += xvals [(i + HEAD) & 0x7]*taps[7 -i]; 
+      // Send FIR output on pipe out_data.
+      write_float32 ("out_data", output_val);
+      // Adjust head of circular queue.
+      HEAD = (HEAD - 1) & 0x7;
+    }
+}
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{Try to write a test-bench}
+\begin{itemize}
+\item Testbench should first send in the taps.
+\item Then it should send in the filter inputs and
+read out the filter outputs.
+\item Try to do this in a burst so that you can check filter 
+throughput.
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{Makefile}
+See the model in vanillaC/
+}
+
+\frame[containsverbatim]{\frametitle{Can we do better?}
+\begin{itemize}
+\item Can you optimize the performance?  
+\begin{itemize}
+\item Use loop pipelining.
+\item Use loop unrolling.
+\end{itemize}
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{How about writing the PFIRF in {\bf Aa}}
+\begin{itemize}
+\item Almost exactly like C, but use a branch block and do-while.
+\item Inner loop is unrolled 4-times and pipelined.
+\item 1.5X better performance with marginally more hardware.
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{Makefile for Aa}
+
+See the model in optAa/.   We will convert the Aa to C to 
+verify the functionality before going to hardware.
+
+}
+
+\frame[containsverbatim]{\frametitle{Other interesting problems}
+\begin{itemize}
+\item Sorter:  read N integers, sort them and output the sorted list.
+\item Correlator: Given an input sequence and a reference sequence, find
+the amount by which the input sequence needs to be rotated to maximize
+its correlation with the reference sequence. 
+\item Etc..
+\end{itemize}
+}
+
+\end{document}

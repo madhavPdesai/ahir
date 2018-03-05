@@ -17,28 +17,13 @@ void Exit(int sig)
 	exit(0);
 }
 
-	
-float expected_result[ORDER];
-void Sender()
-{
-	int idx;
-	float val[ORDER];
-	for(idx = 0; idx < ORDER; idx++)
-	{
-		val[idx] = drand48();
-		expected_result[idx] = (val[idx])*(val[idx] + 1.0);
-	}
-	write_float32_n("a_pipe",val,ORDER);
-}
-
 #ifdef SW
 DEFINE_THREAD(vectorSum)
 #endif
-DEFINE_THREAD(Sender)
-
 int main(int argc, char* argv[])
 {
-	float result[ORDER];
+	float result;
+	float expected_result[ORDER];
 	signal(SIGINT,  Exit);
   	signal(SIGTERM, Exit);
 
@@ -47,21 +32,24 @@ int main(int argc, char* argv[])
 	PTHREAD_DECL(vectorSum);
 	PTHREAD_CREATE(vectorSum);
 #endif
-	PTHREAD_DECL(Sender);
-	PTHREAD_CREATE(Sender);
 
 	uint8_t idx;
-	
-	read_float32_n("result_pipe",result,ORDER);
+	for(idx = 0; idx < ORDER; idx++)
+	{
+		float val = drand48();
+		expected_result[idx] = 2.0*val;
+		write_float32("in_data_pipe",val);
+	}
+
 
 	for(idx = 0; idx < ORDER; idx++)
 	{
-		fprintf(stdout,"Result = %f, expected = %f.\n", result[idx],expected_result[idx]);
+		result = read_float32("out_data_pipe");
+		fprintf(stdout,"Result = %f, expected = %f.\n", result,expected_result[idx]);
 	}
-	PTHREAD_CANCEL(Sender);
 #ifdef SW
 	close_pipe_handler();
 	PTHREAD_CANCEL(vectorSum);
-#endif
 	return(0);
+#endif
 }

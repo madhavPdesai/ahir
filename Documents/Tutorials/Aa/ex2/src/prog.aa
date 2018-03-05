@@ -1,0 +1,28 @@
+$pipe in_data  : $float<8,23>
+$pipe out_data : $float<8,23>
+
+//
+// reads x(k) from input..
+// Computes y(k) = 0.8*x(k) + 0.15*x(k-1) + 0.05*x(k-2)
+// sends y(k) to output.
+
+$module  [firDaemon] $in () $out () $is
+{
+  $branchblock [loop] {
+	$dopipeline $depth 31 $buffering 2 $fullrate 
+
+	$merge $entry $loopback 
+		$phi last_x := ($bitcast ($float<8,23>) _b0) $on $entry next_last_x $on $loopback	
+		$phi last_last_x := ($bitcast ($float<8,23>) _b0) $on $entry next_last_last_x 
+										$on $loopback	
+	$endmerge 
+	
+	x := in_data
+	y := (((_f8.0e-1 * x) + (_f1.5e-1 * last_x)) + (_f5.0e-2 * last_last_x))
+	next_last_x := x
+	next_last_last_x := last_x
+
+	out_data := y
+	$while 1
+  }
+}

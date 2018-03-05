@@ -1,0 +1,17 @@
+fig2mpdf BaseCP.fig
+fig2mpdf BranchCP.fig
+fig2mpdf BranchOperator.fig
+fig2mpdf CallReturn.fig
+fig2mpdf DataPath.fig
+fig2mpdf ExamplePetriNets.fig
+fig2mpdf ForkCP.fig
+fig2mpdf GenericOperator.fig
+fig2mpdf IOPorts.fig
+fig2mpdf Join.fig
+fig2mpdf LoadStore.fig
+fig2mpdf MemorySubsystem.fig
+fig2mpdf Operator.fig
+fig2mpdf ParallelCP.fig
+fig2mpdf Pipe.fig
+fig2mpdf SeriesCP.fig
+fig2mpdf TopLevel.fig
