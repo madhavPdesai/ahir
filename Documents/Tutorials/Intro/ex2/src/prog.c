@@ -7,6 +7,11 @@
 // sends y(k) to output.
 //
 float x_vals[2];
+
+//
+// This is a daemon, which will be marked as a top-level
+// always-running module.  It cannot have inputs/outputs.
+//
 void firDaemon()
 {
 

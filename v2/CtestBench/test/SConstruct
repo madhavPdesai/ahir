@@ -2,6 +2,6 @@ import os
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
 env.Append(CPPPATH = './:../include')
 env.Program('Server', 'testVhpiServer.c', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Vhpi' ], LIBPATH=Split('../lib'))
-env.Program('Client', ['testVhpiClient.c','vhdlCStubs.c'], CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['pthread','SocketLib'], LIBPATH=Split('../lib'))
+env.Program('Client', ['testVhpiClient.c','vhdlCStubs.c'], CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['pthread','SocketLibPipeHandler'], LIBPATH=Split('../lib'))
 
 

@@ -1,23 +1,25 @@
-# build software version of testbench (to check the "desired behaviour")
+# locations
 AHIR_INCLUDE=$(AHIR_RELEASE)/include
 AHIR_LIB=$(AHIR_RELEASE)/lib
 VHDL_LIB=$(AHIR_RELEASE)/vhdl
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 SRC=./src
+
+# rules.
 all: SW HW 
-TOAA:c2llvmbc llvmbc2aa  aalink
-TOVC:c2llvmbc llvmbc2aa  aalink aa2vc 
+TOAA:c2llvmbc llvmbc2aa  
+TOVC:c2llvmbc llvmbc2aa  aa2vc 
 VC2VHDL: vc2vhdl  vhdlsim
 AA2VHDLSIM: aa2vc  vc2vhdl  vhdlsim
 TOVHDL:TOVC vc2vhdl
 
-LLVM2AAOPTS=
-
-# the top-level module.
+# the top-level module... in this case it is
+# the module maxOfTwo.
 TOPMODULES=-t maxOfTwo 
 
 
-# compile with SW defined.
+# compile with SW defined to produce testbench_sw which can
+# be used to verify prog.c
 SW: $(SRC)/prog.c $(SRC)/testbench.c 
 	gcc -g -c -DSW -I$(SRC) $(SRC)/prog.c
 	gcc -g -c -DSW -I$(SRC) $(SRC)/testbench.c
@@ -50,7 +52,6 @@ vc2vhdl: prog.vc
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 
 # build testbench and ghdl executable
-# note the use of SOCKETLIB in building the testbench.
 vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl $(SRC)/testbench.c vhdlCStubs.h vhdlCStubs.c
 	gcc -c vhdlCStubs.c  -I$(SRC) -I./ -I$(AHIR_INCLUDE)
 	gcc -c $(SRC)/testbench.c -I$(AHIR_INCLUDE) -I$(SRC) -I./ 

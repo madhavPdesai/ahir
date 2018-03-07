@@ -8,6 +8,7 @@
 
 \documentclass[12pt]{article}
 \usepackage{epsfig}
+\usepackage{graphics}
 
 \title{AhirV2: from algorithms to hardware \\ An overview }
 \author{Madhav Desai \\ Department of Electrical Engineering \\ Indian Institute of Technology \\
@@ -32,8 +33,8 @@ The flow of transformations is illustrated in Figure \ref{fig:AhirFlow}.
 \begin{centering}
 \centerline{\psfig{figure=AHIRv2Flow.eps,width=3.0in,height=3.0in}}
 \caption{AhirV2 flow}
- \label{fig:AhirFlow}
 \end{centering}
+ \label{fig:AhirFlow}
 \end{figure}
 
 \begin{itemize}
@@ -272,7 +273,7 @@ This produces a VHDL implementation of the system with
 is produced is too voluminous to reproduce here, but
 the top-level system entity is
 \begin{verbatim}
-entity test_system is  -- system
+entity ahir_system is  -- system
   port (--
     add_a : in  std_logic_vector(31 downto 0);
     add_b : in  std_logic_vector(31 downto 0);
@@ -430,7 +431,7 @@ The resulting AHIR system in system.vhdl implements the pipeline
 (the block diagram of the system is shown in Figure \ref{fig:FooBarPipeline})
 with the following interface:
 \begin{verbatim}
-entity test_system is  -- system 
+entity ahir_system is  -- system 
   port (-- 
     clk : in std_logic;
     reset : in std_logic;
@@ -561,7 +562,7 @@ vc2vhdl -O -t foo -t extmem_store_32 -t extmem_load_32\
 If you look at the generated top-level VHDL entity, its ports
 will be
 \begin{verbatim}
-entity test_system is  -- system
+entity ahir_system is  -- system
   port (--
     clk : in std_logic;
     reset : in std_logic;
@@ -650,7 +651,7 @@ variable is named mempool, and it is an array of 1024 {\bf bytes}.
 The generated top-level VHDL entity has the following
 ports:
 \begin{verbatim}
-entity test_system is  -- system
+entity ahir_system is  -- system
   port (--
     foo_b : in  std_logic_vector(31 downto 0);
     foo_ret_val_x_x : out  std_logic_vector(31 downto 0);
@@ -769,7 +770,10 @@ declared as an error!
 
 If the programs being linked contain memory initialization
 routines, the linker generates a global storage initialization
-function which is named {\bf global\_storage\_initializer\_}.
+function which is named 
+\begin{verbatim}
+global_storage_initializer
+\end{verbatim}
 This global initializer calls all the memory initializers in
 the programs being linked.
 
@@ -891,7 +895,7 @@ the user can trade-off clock cycles versus clock period.
 The lowest clock period will be obtained for -S 1.   
 \item {\bf -e top-entity-name} : The generated top-level VHDL entity
 corresponding to the AHIR system is named top-entity-name.  The default
-is test\_system.
+is ahir\_system.
 \item {-L function-library} : AhirV2 provides some built in operator
 functions which can be called from your code.  These are organized
 as function libraries and this option specifies a function library

@@ -185,7 +185,7 @@ Obviously, we would prefer to use the same test-bench
 to verify that the VHDL system generated from ``prog.c'' 
 functions correctly.  
 The difference is that instead of using the pipeHandler,
-the test-bench now uses methods in SocketLib.  Further, the
+the test-bench now uses methods in SocketLibPipeHandler.  Further, the
 VHDL is executed in a VHDL simulator; the simulator communicates
 with the testbench using sockets.
 The {\em ifdef's} in the test-bench and the system program
@@ -199,13 +199,10 @@ to VHDL.  The same testbench can be used to test the VHDL
 also.
 \begin{verbatim}
 # build software version of testbench (to check the "desired behaviour")
-SOCKETLIB_INCLUDE=$(AHIR_RELEASE)/CtestBench/include
-SOCKETLIB_LIB=$(AHIR_RELEASE)/CtestBench/lib
-PIPEHANDLER_INCLUDE=$(AHIR_RELEASE)/pipeHandler/include
-PIPEHANDLER_LIB=$(AHIR_RELEASE)/pipeHandler/lib
-PTHREADUTILS_INCLUDE=$(AHIR_RELEASE)/pthreadUtils/include
+AHIR_INCLUDE=$(AHIR_RELEASE)/include
+AHIR_LIB=$(AHIR_RELEASE)/lib
 VHDL_LIB=$(AHIR_RELEASE)/vhdl
-VHDL_VHPI_LIB=$(AHIR_RELEASE)/CtestBench/vhdl
+VHDL_VHPI_LIB=$(AHIR_RELEASE)/vhdl
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 SRC=./src
 all: SW HW 
@@ -231,12 +228,12 @@ TOPMODULES=-T accumulate -t get_sum -t global_storage_initializer_
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.
 SW: $(SRC)/prog.c $(SRC)/prog.h $(SRC)/testbench.c 
-	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE)\
+	gcc -g -c -DSW $(PROGDEFS) -I$(AHIR_INCLUDE)\
               -I$(FUNCTIONLIB)/include -I$(SRC) $(SRC)/prog.c
-	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE)\
-              -I$(PTHREADUTILS_INCLUDE) -I$(SRC) $(SRC)/testbench.c
+	gcc -g -c -DSW $(PROGDEFS) -I$(AHIR_INCLUDE)\
+               -I$(SRC) $(SRC)/testbench.c
 	gcc -g -o testbench_sw prog.o testbench.o\
-              -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
+              -L$(AHIR_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
@@ -245,7 +242,7 @@ AA2VHDL: aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: $(SRC)/prog.c $(SRC)/prog.h
-	clang -O3 -std=gnu89 $(PROGDEFS)  -I$(SOCKETLIB_INCLUDE)\
+	clang -O3 -std=gnu89 $(PROGDEFS)  -I$(AHIR_INCLUDE)\
               -I$(FUNCTIONLIB)/include -emit-llvm -c $(SRC)/prog.c
 	opt --indvars --loopsimplify prog.o -o prog.opt.o
 	llvm-dis prog.opt.o
@@ -279,12 +276,12 @@ vhdlsim: vhdlTb ghdlModel
 
 vhdlTb: $(SRC)/testbench.c vhdlCStubs.h vhdlCStubs.c
 	gcc -c vhdlCStubs.c  -I$(SRC)\
-                -I./ -I$(SOCKETLIB_INCLUDE)
+                -I./ -I$(AHIR_INCLUDE)
 	gcc -c $(SRC)/testbench.c\
-                -I$(PTHREADUTILS_INCLUDE) -I$(SRC)\
-                -I./ -I$(SOCKETLIB_INCLUDE)
+                -I$(AHIR_INCLUDE) -I$(SRC)\
+                -I./ 
 	gcc -o testbench_hw testbench.o vhdlCStubs.o\
-                -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
+                -L$(AHIR_LIB) -lSocketLibPipeHandler -lpthread
 
 ghdlModel: ahir_system.vhdl ahir_system_test_bench.vhdl ahir_system_global_package.vhdl
 	ghdl --clean
@@ -296,7 +293,7 @@ ghdlModel: ahir_system.vhdl ahir_system_test_bench.vhdl ahir_system_global_packa
 	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl
-	ghdl -m --work=work -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
+	ghdl -m --work=work -Wl,-L$(AHIR_LIB) -Wl,-lVhpi ahir_system_test_bench 
 
 PHONY: all clean	
 \end{verbatim}

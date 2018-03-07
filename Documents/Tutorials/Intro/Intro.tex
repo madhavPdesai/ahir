@@ -73,12 +73,6 @@ int main(int argc, char* argv[])
 \end{verbatim}
 }
 
-\frame[containsverbatim]{\frametitle{We compile and run it}
-
-Go to ex1/ and check it out.
-
-}
-
 \frame[containsverbatim]{\frametitle{AHIR flow}
 \begin{figure}
   \centering
@@ -86,6 +80,21 @@ Go to ex1/ and check it out.
   \caption{AHIR flow}
 \end{figure}
 }
+
+\frame[containsverbatim]{\frametitle{We compile and run it}
+
+Go to ex1/ and check it out.
+\begin{itemize}
+\item In the Makefile, we define rules to produce a ``software'' executable (testbench\_sw)
+and two ``hardware'' executables, testbench\_hw  and ahir\_system\_test\_bench.
+\item You can execute testbench\_sw to verify that your C code is OK.
+\item You can concurrently execute testbench\_hw and ahir\_system\_test\_bench to
+verify that the the VHDL is OK.
+\item Note: the same testbench.c file is used to verify both the software and hardware.
+\end{itemize}
+
+}
+
 
 
 \frame[containsverbatim]{\frametitle{Conversion to hardware}
@@ -192,7 +201,7 @@ Go to ex2/.
 git clone https://github.com/madhavPdesai/ahir.git .
 \end{verbatim}
 \item Install llvm-2.8, clang-2.8 from www.llvm.org (from source, builds on ubuntu 12, centos 6.5, may need  to do minor edits in includes in ubuntu 14).
-\item Install boost development packages.
+\item Install boost development packages, GNU pth, pdflatex (packages exist for ubuntu/centos).
 \item Install antlr-2.7.7 (from source, builds on ubuntu 12, centos 6.5, some includes need to be added in ubuntu 14).
 \item Install java run-time (openjdk).
 \item Install ghdl (or modelsim).

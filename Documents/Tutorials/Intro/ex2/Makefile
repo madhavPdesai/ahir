@@ -13,7 +13,8 @@ TOVHDL:TOVC vc2vhdl
 
 LLVM2AAOPTS=
 
-# the top-level module.
+# the top-level module..in this case it is an ``always-running''
+# module.   Such modules cannot have inputs/outputs.
 TOPMODULES=-T firDaemon 
 
 
