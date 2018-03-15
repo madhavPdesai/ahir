@@ -1,0 +1,58 @@
+$storage A: $array[4] $of $uint<8>
+$storage B: $array[4][4] $of $uint<8>
+$storage C: $array[4][4][4] $of $uint<8>
+$storage D: $array[4][4][4][4] $of $uint<8>
+
+$pipe in_data : $uint<8> $depth 2
+$pipe out_data : $uint<8> $depth 2
+
+$module [store_abc] $in (aptr: $pointer<$uint<8> > X: $uint<8> I: $uint<2>) $out () $is
+{
+	->(aptr) := X           //  A[I] := X
+	B[I][I] := X
+	C[I][0][I] := X
+}
+
+$module [fetch_bc] $in (I: $uint<2>) $out (b c: $uint<8>) $is
+{
+	b := B[I][I]
+	ptr := @(C[I][0][I])
+	$call fetch_c (ptr) (c)
+
+}
+
+$module [fetch_c] $in (ptr: $pointer< $uint<8> >) $out (c: $uint<8>) $is
+{
+	c := ->(ptr)
+}
+
+
+$module [fetch_d] $in (I: $uint<2>) $out (d: $uint<8>) $is
+{
+	d := D[I][I][I][1]
+}
+
+$module [run_daemon] $in () $out () $is
+{
+	$branchblock[Main] {
+		$dopipeline $depth 3 $buffering 2 $fullrate
+		$merge $entry $loopback
+			$phi I := ($bitcast ($uint<2>) 0) $on $entry NI $on $loopback
+		$endmerge
+		$volatile NI := (I+1)
+		
+		X := in_data
+		aptr := @(A[I])
+		$call store_abc (aptr X I) ()
+
+		$call fetch_bc (I) (b c) 
+		D[I][I][I][1] := ((A[I] + b) + c)
+
+		$call fetch_d (I) (d)
+		out_data := d
+
+		$while (I < 3)
+	}
+}
+
+

@@ -1,0 +1,7 @@
+digraph control_path {
+  e_0: entry_node : n ;
+  e_1 [shape = triangle];
+  e_2: exit_node : s ;
+  e_0 -> e_1;
+  e_0 -> e_2;
+}
