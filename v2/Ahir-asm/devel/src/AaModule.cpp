@@ -816,8 +816,29 @@ void AaModule::Write_VC_Data_Path(ostream& ofile)
 
 void AaModule::Write_VC_Memory_Spaces(bool opt_flag, ostream& ofile)
 {
-	for(int idx = 0; idx < _memory_spaces.size(); idx++)
-		_memory_spaces[idx]->Write_VC_Model(opt_flag, ofile);
+	for(set<AaMemorySpace*>::iterator witer = _memory_spaces_written_into.begin(),
+				fwiter = _memory_spaces_written_into.end();  witer != fwiter; witer++)
+	{
+		ofile << "// memory-space " << (*witer)->_mem_space_index << " is written into." << endl;
+	}
+
+	for(set<AaMemorySpace*>::iterator riter = _memory_spaces_read_from.begin(),
+				friter = _memory_spaces_read_from.end();  riter != friter; riter++)
+	{
+		ofile << "// memory-space " << (*riter)->_mem_space_index << " is read from." << endl;
+	}
+
+	if(_memory_spaces.size() > 0)
+	{
+		ofile << "// memory spaces local to this module." << endl;
+
+		for(int idx = 0; idx < _memory_spaces.size(); idx++)
+        	{
+			_memory_spaces[idx]->Write_VC_Model(opt_flag, ofile);
+		}
+	}
+	else
+		ofile << "// there are no memory spaces local to this module." << endl;
 }
 
 
@@ -1162,8 +1183,8 @@ void AaModule::Write_VC_Control_Path_Optimized_Base(ostream& ofile)
 	}
 
       ofile << ":|:[" << region_name << "] {" << endl;
-      map<string, vector<AaExpression*> > load_store_ordering_map;
-      map<string, vector<AaExpression*> >  pipe_map;
+      map<AaMemorySpace*, vector<AaRoot*> > load_store_ordering_map;
+      map<AaPipeObject*, vector<AaRoot*> >  pipe_map;
       AaRoot* tb = NULL;
 
       // declare the linking (export) transitions.
@@ -1240,3 +1261,129 @@ void AaModule::Initialize_Visited_Elements(set<AaRoot*>& visited_elements)
 	}
 }
 
+bool AaModule::Writes_To_Memory_Space(AaMemorySpace* ms)
+{
+	bool ret_val = false;
+	if(_memory_spaces_written_into.find(ms) != _memory_spaces_written_into.end())
+		ret_val = true;
+	else
+		// called modules may write memory space...
+	{
+		for(set<AaModule*>::iterator iter = _called_modules.begin(), 
+				fiter = _called_modules.end(); iter != fiter; iter++)
+		{
+			if((*iter)->Writes_To_Memory_Space(ms))
+			{
+				ret_val = true;
+			}
+			if(ret_val)
+				break;
+		}
+	}
+	return(ret_val);
+}
+
+bool AaModule::Reads_From_Memory_Space(AaMemorySpace* ms)
+{
+	bool ret_val = false;
+	if(_memory_spaces_read_from.find(ms) != _memory_spaces_read_from.end())
+		ret_val = true;
+	else
+		// called modules may read from memory space...
+	{
+		for(set<AaModule*>::iterator iter = _called_modules.begin(), 
+				fiter = _called_modules.end(); iter != fiter; iter++)
+		{
+			if((*iter)->Reads_From_Memory_Space(ms))
+			{
+				ret_val = true;
+			}
+			if(ret_val)
+				break;
+		}
+	}
+	return(ret_val);
+}
+bool AaModule::Reads_From_Pipe(AaPipeObject* obj)
+{
+	bool ret_val = (_read_pipes.find(obj) != _read_pipes.end());
+	if(!ret_val)
+	{
+		for(set<AaModule*>::iterator iter = this->_called_modules.begin(),
+				fiter = this->_called_modules.end(); iter != fiter; iter++)
+		{
+			AaModule* cm = *iter;
+			if((cm != this) && cm->Reads_From_Pipe(obj))
+			{
+				ret_val = true;
+			}
+			if(ret_val)
+				break;
+		}
+	}
+	return(ret_val);
+}
+bool AaModule::Writes_To_Pipe(AaPipeObject* obj)
+{
+	bool ret_val = (_write_pipes.find(obj) != _write_pipes.end());
+	if(!ret_val)
+	{
+		for(set<AaModule*>::iterator iter = this->_called_modules.begin(),
+				fiter = this->_called_modules.end(); iter != fiter; iter++)
+		{
+			AaModule* cm = *iter;
+			if((cm != this) && cm->Writes_To_Pipe(obj))
+			{
+				ret_val = true;
+			}
+			if(ret_val)
+				break;
+		}
+	}
+	return(ret_val);
+}
+void AaModule::Get_Accessed_Pipes(set<AaPipeObject*>& p_set)
+{
+	for(set<AaPipeObject*>::iterator iter = _write_pipes.begin(),
+			fiter = _write_pipes.end(); iter != fiter; iter++)
+	{
+		p_set.insert(*iter);
+	}
+	for(set<AaPipeObject*>::iterator riter = _read_pipes.begin(),
+			rfiter = _read_pipes.end(); riter != rfiter; riter++)
+	{
+		p_set.insert(*riter);
+	}
+
+	//
+	// called modules may access pipes as well!
+	//
+	for(set<AaModule*>::iterator titer = _called_modules.begin(),
+			tfiter = _called_modules.end(); titer != tfiter; titer++)
+	{
+		AaModule* cm = *titer;
+		if(cm != this)
+			cm->Get_Accessed_Pipes(p_set);
+	}
+}
+
+void AaModule::Get_Accessed_Memory_Spaces(set<AaMemorySpace*>& ms_set)
+{
+	for(set<AaMemorySpace*>::iterator iter = _memory_spaces_written_into.begin(),
+			fiter = _memory_spaces_written_into.end(); iter != fiter; iter++)
+	{
+		ms_set.insert(*iter);
+	}
+	for(set<AaMemorySpace*>::iterator riter = _memory_spaces_read_from.begin(),
+			rfiter = _memory_spaces_read_from.end(); riter != rfiter; riter++)
+	{
+		ms_set.insert(*riter);
+	}
+	for(set<AaModule*>::iterator titer = _called_modules.begin(),
+			tfiter = _called_modules.end(); titer != tfiter; titer++)
+	{
+		AaModule* cm = *titer;
+		if(cm != this)
+			cm->Get_Accessed_Memory_Spaces(ms_set);
+	}
+}

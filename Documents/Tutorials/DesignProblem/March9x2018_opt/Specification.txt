@@ -1,0 +1,71 @@
+Specification:
+
+	The system accepts 16 numbers and returns them
+        in sorted ascending order.
+
+	Each number is 8-bits wide.
+
+
+	The numbers are read from an input FIFO called
+	"in_data"
+
+	The numbers are written to an output FIFO called
+	"out_data"
+
+
+Algorithm?
+
+
+	The system reads the 16 numbers, sorts them in ascending
+	order using the bubble sort algorithm, and writes back
+	the sorted numbers to the output.
+
+
+Pseudo-code?
+
+	uint8_t  numbers[16];  // storage = 16 numbers.
+	
+void sort_daemon()
+{
+	while (1)
+	{
+		// read the numbers
+		for(i=0; i < 16; i++)
+			numbers[i] = read_uint8("in_data");
+
+		// now sort in place.
+		uint8_t sort_ret_val = bubble_sort ();
+
+	
+		// write out the numbers.
+		for (i=0; i < 16; i++)
+			write_uint8 ("out_data", numbers[i]);
+	}
+}
+
+
+	// function bubble_sort in ascending order.
+	uint8_t bubble_sort ()
+	{
+		int i,j;
+		while (1)
+		{
+			uint8_t swap = 0;
+			for (i = 0; i < 15; i++)
+			{
+				uint8_t X = numbers[i];
+				uint8_t Y = numbers[i+1];
+
+				if (X > Y)
+				{
+					numbers[i+1] = X;
+					numbers[i]   = Y;
+					swap = 1;
+				}
+			}
+
+			if(swap == 0)
+				break;
+		}
+		return(1);
+	}

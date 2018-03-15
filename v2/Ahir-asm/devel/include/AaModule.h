@@ -65,6 +65,12 @@ class AaModule: public AaSeriesBlockStatement
   set<AaPipeObject*> _read_pipes;
   set<AaMemorySpace*> _shared_memory_spaces;
 
+  // Add some information to allow finer side-effect
+  // estimation.
+  set<AaMemorySpace*> _memory_spaces_written_into;
+  set<AaMemorySpace*> _memory_spaces_read_from;
+
+
   int _number_of_times_called;
 
   map<string,string> _attribute_map;
@@ -84,6 +90,9 @@ class AaModule: public AaSeriesBlockStatement
   // by the existing _shared_memory_spaces code.
   set<AaStorageObject*> _global_objects_that_are_read;
   set<AaStorageObject*> _global_objects_that_are_written;
+
+  set<AaStorageObject*> _objects_that_are_read;
+  set<AaStorageObject*> _objects_that_are_written;
 
   bool _foreign_flag;
   bool _inline_flag;
@@ -134,6 +143,12 @@ class AaModule: public AaSeriesBlockStatement
 
   void Add_Written_Global_Object(AaStorageObject* sobj) {_global_objects_that_are_written.insert(sobj);}
   void Add_Read_Global_Object(AaStorageObject* sobj) {_global_objects_that_are_read.insert(sobj);}
+
+  void Add_Written_Object(AaStorageObject* sobj) {_objects_that_are_written.insert(sobj);}
+  void Add_Read_Object(AaStorageObject* sobj) {_objects_that_are_read.insert(sobj);}
+
+  void Add_Written_Memory_Space(AaMemorySpace* sobj) {_memory_spaces_written_into.insert(sobj);}
+  void Add_Read_Memory_Space(AaMemorySpace* sobj) {_memory_spaces_read_from.insert(sobj);}
 
   void Set_Print_Prefix(string str) { _print_prefix = str;}
   string Get_Print_Prefix() {return(_print_prefix);}
@@ -279,6 +294,8 @@ class AaModule: public AaSeriesBlockStatement
     _shared_memory_spaces.insert(ms);
   }
 
+  void Get_Accessed_Memory_Spaces(set<AaMemorySpace*>& m_set);
+
   void Add_Write_Pipe(AaPipeObject* obj)
   {
     if((obj->Get_Scope() == NULL) || 
@@ -288,6 +305,7 @@ class AaModule: public AaSeriesBlockStatement
       }
     _write_pipes.insert(obj);
   }
+  bool Writes_To_Pipe(AaPipeObject* obj);
 
   void Add_Read_Pipe(AaPipeObject* obj)
   {
@@ -298,6 +316,16 @@ class AaModule: public AaSeriesBlockStatement
       }
     _read_pipes.insert(obj);
   }
+  bool Reads_From_Pipe(AaPipeObject* obj);
+  void Get_Accessed_Pipes(set<AaPipeObject*>& p_set);
+
+  // during the execution of this module, can it
+  // write to the specified memory space.
+  virtual bool Writes_To_Memory_Space(AaMemorySpace* ms);
+
+  // during the execution of this module, can it
+  // write to the specified memory space.
+  virtual bool Reads_From_Memory_Space(AaMemorySpace* ms);
 
   void Write_VHDL_C_Stub_Prefix(ostream& ofile);
   void Write_VHDL_C_Stub_Header(ostream& ofile);

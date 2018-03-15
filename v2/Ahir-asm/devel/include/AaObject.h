@@ -211,6 +211,9 @@ class AaStorageObject: public AaObject
 
   set<int> _access_widths;
 
+  set<AaModule*> _writer_modules;
+  set<AaModule*> _reader_modules;
+
   bool _is_written_into;
   bool _is_read_from;
   bool _register_flag;
@@ -237,9 +240,29 @@ class AaStorageObject: public AaObject
 
   virtual void Set_Is_Written_Into(bool v) { _is_written_into = v; }
   virtual bool Get_Is_Written_Into() { return(_is_written_into); }
+  void Add_Writer_Module(AaModule* m) { _writer_modules.insert(m); }
+  bool Is_Writer_Module(AaModule* m) {return(_writer_modules.find(m) != _writer_modules.end());}
+  void Get_Writer_Modules (vector<AaModule*>& m_vec)
+  {
+	for (set<AaModule*>::iterator iter = _writer_modules.begin(), fiter = _writer_modules.end();
+			iter != fiter; iter++)
+	{
+		m_vec.push_back(*iter);
+	}
+  }
+  void Get_Reader_Modules (vector<AaModule*>& m_vec)
+  {
+	for (set<AaModule*>::iterator iter = _reader_modules.begin(), fiter = _reader_modules.end();
+			iter != fiter; iter++)
+	{
+		m_vec.push_back(*iter);
+	}
+  }
 
   virtual void Set_Is_Read_From(bool v) { _is_read_from = v; }
   virtual bool Get_Is_Read_From() { return(_is_read_from); }
+  void Add_Reader_Module(AaModule* m) { _reader_modules.insert(m); }
+  bool Is_Reader_Module(AaModule* m) {return(_reader_modules.find(m) != _reader_modules.end());}
 
   virtual bool Is_Storage_Object() {return(true);}
 

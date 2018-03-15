@@ -25,7 +25,7 @@ SW: $(SRC)/prog.c $(SRC)/testbench.c
 	gcc -g -o testbench_sw prog.o testbench.o -L$(AHIR_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
-HW: c2llvmbc llvmbc2aa  aa2vc  vc2vhdl  vhdlsim
+HW: c2llvmbc llvmbc2aa  aa2vc  vc2vhdl  
 
 AA2VHDL: aa2vc vc2vhdl vhdlsim
 

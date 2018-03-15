@@ -96,6 +96,12 @@ AaUGraphBase AaProgram::_storage_dependency_graph;
 
 int AaProgram::_buffering_bits_added_during_path_balancing = 0;
 
+string AaMemorySpace::Get_VC_Name()
+{
+	string ret_string = "memory_space_" + IntToStr(this->_mem_space_index);
+	return(ret_string);
+}
+
 void AaMemorySpace::Write_VC_Model(bool opt_flag, ostream& ofile)
 {
   if(this->_is_written_into || this->_is_read_from)
@@ -912,6 +918,21 @@ void AaProgram::Coalesce_Storage()
 			  }
 
 			  ((AaStorageObject*)u)->Set_Mem_Space_Index(idx);
+			
+			  vector<AaModule*> wmodules;
+			  ((AaStorageObject*)u)->Get_Writer_Modules(wmodules);
+			  for (int I = 0, fI = wmodules.size(); I < fI; I++)
+			  {
+				wmodules[I]->Add_Written_Memory_Space(new_ms);
+			  }
+
+			  vector<AaModule*> rmodules;
+			  ((AaStorageObject*)u)->Get_Reader_Modules(rmodules);
+			  for (int I = 0, fI = rmodules.size(); I < fI; I++)
+			  {
+				rmodules[I]->Add_Read_Memory_Space(new_ms);
+			  }
+
 			  for(set<int>::iterator witer = ((AaStorageObject*)u)->Get_Access_Widths().begin(),
 					  fwiter = ((AaStorageObject*)u)->Get_Access_Widths().end();
 					  witer != fwiter;
@@ -925,559 +946,565 @@ void AaProgram::Coalesce_Storage()
 
 			  total_size += ((AaStorageObject*)u)->Get_Type()->Size();
 
-	      AaScope* p_scope = ((AaStorageObject*)u)->Get_Scope();
-	      if(p_scope != NULL)
-		{
-		  AaScope* root_p_scope = p_scope->Get_Root_Scope();
+			  AaScope* p_scope = ((AaStorageObject*)u)->Get_Scope();
+			  if(p_scope != NULL)
+			  {
+				  AaScope* root_p_scope = p_scope->Get_Root_Scope();
 
-		  assert(root_p_scope->Is("AaModule"));
-		  new_ms->_modules.insert((AaModule*)root_p_scope);
+				  assert(root_p_scope->Is("AaModule"));
+				  new_ms->_modules.insert((AaModule*)root_p_scope);
 
-		  AaProgram::_storage_index_module_coverage_map[idx].insert((AaModule*) root_p_scope);
+				  AaProgram::_storage_index_module_coverage_map[idx].insert((AaModule*) root_p_scope);
 
-		}
-	      else
-		new_ms->Set_Is_Global(true);
+			  }
+			  else
+				  new_ms->Set_Is_Global(true);
 
-	    }
-	  else if(u->Is("AaPointerDereferenceExpression"))
-	    {
+		  }
+		  else if(u->Is("AaPointerDereferenceExpression"))
+		  {
 
 
-	      AaPointerDereferenceExpression* pu = ((AaPointerDereferenceExpression*)u);
+			  AaPointerDereferenceExpression* pu = ((AaPointerDereferenceExpression*)u);
 
-	      if(pu->Get_Is_Target())
-		new_ms->_is_written_into = true;
-	      else
-		new_ms->_is_read_from = true;
+			  if(pu->Get_Is_Target())
+				  new_ms->_is_written_into = true;
+			  else
+				  new_ms->_is_read_from = true;
 
-	      AaType* ptype = pu->Get_Reference_To_Object()->Get_Type();
-	      assert(ptype != NULL && ptype->Is_Pointer_Type());
+			  AaType* ptype = pu->Get_Reference_To_Object()->Get_Type();
+			  assert(ptype != NULL && ptype->Is_Pointer_Type());
 
-	      int acc_width = ((AaPointerType*)ptype)->Get_Ref_Type()->Size();
-	      lau_set.insert(acc_width);
+			  int acc_width = ((AaPointerType*)ptype)->Get_Ref_Type()->Size();
+			  lau_set.insert(acc_width);
 
-	      if(pu->Get_Addressed_Object_Representative() == NULL)
-		{
-		  if(!AaProgram::_keep_extmem_inside)
-		    AaProgram::Add_ExtMem_Access_Width(acc_width);
+			  if(pu->Get_Addressed_Object_Representative() == NULL)
+			  {
+				  if(!AaProgram::_keep_extmem_inside)
+					  AaProgram::Add_ExtMem_Access_Width(acc_width);
+				  else
+				  {
+					  AaRoot::Error("pointer dereference expression is not associated with any memory space",pu);
+					  pu->Set_Is_Malformed(true);
+				  }
+			  }
+
+			  AaScope* p_scope = pu->Get_Scope();
+			  if(p_scope != NULL)
+			  {
+				  AaScope* root_p_scope = p_scope->Get_Root_Scope();
+
+				  assert(root_p_scope->Is("AaModule"));
+				  new_ms->_modules.insert((AaModule*)root_p_scope);
+
+				  if(pu->Get_Is_Target())
+					((AaModule*)root_p_scope)->Add_Written_Memory_Space(new_ms);
+				  else
+					  ((AaModule*)root_p_scope)->Add_Read_Memory_Space(new_ms);
+
+
+				  AaProgram::_storage_index_module_coverage_map[idx].insert((AaModule*) root_p_scope);
+
+			  }
+			  else
+				  new_ms->Set_Is_Global(true);
+
+		  }
+		  else if(u->Is("AaForeignStorageObject"))
+		  {
+			  AaRoot::Warning("foreign storage object ignored in memory space identification",NULL);
+		  }
 		  else
-		    {
-			AaRoot::Error("pointer dereference expression is not associated with any memory space",pu);
-			pu->Set_Is_Malformed(true);
-		    }
-		}
+			  assert(0);
+	  }
 
-	      AaScope* p_scope = pu->Get_Scope();
-	      if(p_scope != NULL)
-		{
-		  AaScope* root_p_scope = p_scope->Get_Root_Scope();
+	  if(!new_ms->_is_written_into)
+	  {
+		  AaRoot::Warning("memory space " + new_ms->Get_VC_Identifier() 
+				  + " is not written into in the program", NULL);
+	  }
+	  if(!new_ms->_is_read_from)
+	  {
+		  AaRoot::Warning("memory space " +
+				  new_ms->Get_VC_Identifier() +
+				  " is not read from in the program", NULL);
+	  }
 
-		  assert(root_p_scope->Is("AaModule"));
-		  new_ms->_modules.insert((AaModule*)root_p_scope);
+	  if(lau_set.size() == 0)
+	  {
+		  AaRoot::Warning("memory space " + new_ms->Get_VC_Identifier() + " is not accessed ", NULL);
 
-		  AaProgram::_storage_index_module_coverage_map[idx].insert((AaModule*) root_p_scope);
-
-		}
-	      else
-		new_ms->Set_Is_Global(true);
-
-	    }
-	  else if(u->Is("AaForeignStorageObject"))
-	    {
-	    	AaRoot::Warning("foreign storage object ignored in memory space identification",NULL);
-	    }
+		  new_ms->_total_size = total_size;
+		  new_ms->_word_size = 1;
+		  new_ms->_address_width = nAddressBits(total_size); 
+		  new_ms->_max_access_width = 1;
+	  }	    
 	  else
-		assert(0);
-	}
+	  {
+		  // find the gcd
+		  int word_size = GCD(lau_set);
+		  int max_access_width = *(lau_set.rbegin());
+		  int addr_width = nAddressBits(total_size/word_size); // address all-one will not be used..
 
-      if(!new_ms->_is_written_into)
-	{
-	  AaRoot::Warning("memory space " + new_ms->Get_VC_Identifier() 
-			  + " is not written into in the program", NULL);
-	}
-      if(!new_ms->_is_read_from)
-	{
-	  AaRoot::Warning("memory space " +
-			  new_ms->Get_VC_Identifier() +
-			  " is not read from in the program", NULL);
-	}
+		  new_ms->_total_size = (total_size/word_size);
+		  new_ms->_word_size = word_size;
+		  new_ms->_address_width = addr_width;
+		  new_ms->_max_access_width = max_access_width;
+	  }
 
-      if(lau_set.size() == 0)
-	{
-	  AaRoot::Warning("memory space " + new_ms->Get_VC_Identifier() + " is not accessed ", NULL);
-	  
-	  new_ms->_total_size = total_size;
-	  new_ms->_word_size = 1;
-	  new_ms->_address_width = nAddressBits(total_size); 
-	  new_ms->_max_access_width = 1;
-	}	    
-      else
-	{
-	  // find the gcd
-	  int word_size = GCD(lau_set);
-	  int max_access_width = *(lau_set.rbegin());
-	  int addr_width = nAddressBits(total_size/word_size); // address all-one will not be used..
-	  
-	  new_ms->_total_size = (total_size/word_size);
-	  new_ms->_word_size = word_size;
-	  new_ms->_address_width = addr_width;
-	  new_ms->_max_access_width = max_access_width;
-	}
-      
-      // assign the base addresses and the word-size to the
-      // objects..
-      int base_address = 0; 
-      for(set<AaStorageObject*,AaRootCompare>::iterator iter = 
-	    new_ms->_objects.begin();
-	  iter !=  new_ms->_objects.end();
-	  iter++)
-	{
-	  AaStorageObject* u = (*iter);
-	  
-	  ((AaStorageObject*)u)->Set_Base_Address(base_address);
-	  ((AaStorageObject*)u)->Set_Word_Size(new_ms->_word_size);
-	  ((AaStorageObject*)u)->Set_Address_Width(new_ms->_address_width);
-	  
-	  base_address += (((AaStorageObject*)u)->Get_Type()->Size())/
-	    new_ms->_word_size;
-	}
-    }
+	  // assign the base addresses and the word-size to the
+	  // objects..
+	  int base_address = 0; 
+	  for(set<AaStorageObject*,AaRootCompare>::iterator iter = 
+			  new_ms->_objects.begin();
+			  iter !=  new_ms->_objects.end();
+			  iter++)
+	  {
+		  AaStorageObject* u = (*iter);
+
+		  ((AaStorageObject*)u)->Set_Base_Address(base_address);
+		  ((AaStorageObject*)u)->Set_Word_Size(new_ms->_word_size);
+		  ((AaStorageObject*)u)->Set_Address_Width(new_ms->_address_width);
+
+		  base_address += (((AaStorageObject*)u)->Get_Type()->Size())/
+			  new_ms->_word_size;
+	  }
+  }
 
   // finally, assign memory-spaces to modules
   // a memory space that is only used within a 
   // module is localized to that module..
   for(map<int,AaMemorySpace*>::iterator miter = AaProgram::_memory_space_map.begin();
-      miter != AaProgram::_memory_space_map.end();
-      miter++)
-    {
-      AaMemorySpace* ms = (*miter).second;
-      if(!ms->Get_Is_Global() && (ms->_modules.size() == 1 ))
-	{
-	  (*(ms->_modules.begin()))->Add_Memory_Space(ms);
-	}
-      else
-	{
-	  for(set<AaModule*>::iterator mmiter = ms->_modules.begin();
-	      mmiter != ms->_modules.end();
-	      mmiter++)
-	    {
-	      (*mmiter)->Add_Shared_Memory_Space(ms);
-	    }
-	}
-    }
+		  miter != AaProgram::_memory_space_map.end();
+		  miter++)
+  {
+	  AaMemorySpace* ms = (*miter).second;
+	  if(!ms->Get_Is_Global() && (ms->_modules.size() == 1 ))
+	  {
+		  (*(ms->_modules.begin()))->Add_Memory_Space(ms);
+	  }
+	  else
+	  {
+		  for(set<AaModule*>::iterator mmiter = ms->_modules.begin();
+				  mmiter != ms->_modules.end();
+				  mmiter++)
+		  {
+			  (*mmiter)->Add_Shared_Memory_Space(ms);
+		  }
+	  }
+  }
 }
 
 
 void AaProgram::Elaborate()
 {
-  AaRoot::Info("elaborating the program .... initializing the call-graph");
-  AaProgram::Init_Call_Graph();
-  AaRoot::Info("mapping object references..");
-  AaProgram::Map_Source_References();
-  AaRoot::Info("checking for cycles in the call-graph ... ");
-  AaProgram::Check_For_Cycles_In_Call_Graph();
-  AaRoot::Info("marking modules reachable from root-modules ... ");
-  AaProgram::Mark_Reachable_Modules(AaProgram::_reachable_modules);
-  AaRoot::Info("propagating types in the program ... ");
-  AaProgram::Propagate_Types();
-  AaRoot::Info("coalescing storage into distinct memory spaces ... ");
-  AaProgram::Coalesce_Storage();
-  AaRoot::Info("propagating constants in the program ... ");
-  AaProgram::Propagate_Constants();
+	AaRoot::Info("elaborating the program .... initializing the call-graph");
+	AaProgram::Init_Call_Graph();
+	AaRoot::Info("mapping object references..");
+	AaProgram::Map_Source_References();
+	AaRoot::Info("checking for cycles in the call-graph ... ");
+	AaProgram::Check_For_Cycles_In_Call_Graph();
+	AaRoot::Info("marking modules reachable from root-modules ... ");
+	AaProgram::Mark_Reachable_Modules(AaProgram::_reachable_modules);
+	AaRoot::Info("propagating types in the program ... ");
+	AaProgram::Propagate_Types();
+	AaRoot::Info("coalescing storage into distinct memory spaces ... ");
+	AaProgram::Coalesce_Storage();
+	AaRoot::Info("propagating constants in the program ... ");
+	AaProgram::Propagate_Constants();
 }
 
 void AaProgram::Equalize_Paths_Of_Pipelined_Modules()
 {
-  for(int idx = 0, fidx = AaProgram::_ordered_module_vector.size(); idx < fidx; idx++)
-  {
-	  AaModule* m = ((AaModule*)(AaProgram::_ordered_module_vector[idx]));
-	  if(m->Is_Pipelined())
-	  {
-		if(!m->Get_Has_Been_Equalized() && !m->Get_Noopt_Flag())
+	for(int idx = 0, fidx = AaProgram::_ordered_module_vector.size(); idx < fidx; idx++)
+	{
+		AaModule* m = ((AaModule*)(AaProgram::_ordered_module_vector[idx]));
+		if(m->Is_Pipelined())
 		{
-		        AaRoot::Info (" started path balancing for module " + m->Get_Label());
-			m->Equalize_Paths_For_Pipelining();
-			m->Set_Has_Been_Equalized(true);
+			if(!m->Get_Has_Been_Equalized() && !m->Get_Noopt_Flag())
+			{
+				AaRoot::Info (" started path balancing for module " + m->Get_Label());
+				m->Equalize_Paths_For_Pipelining();
+				m->Set_Has_Been_Equalized(true);
+			}
 		}
-          }
-	  else  if(m->Get_Operator_Flag())
-	  {
-		m->Calculate_And_Update_Longest_Path();
-          }
-  }
+		else  if(m->Get_Operator_Flag())
+		{
+			m->Calculate_And_Update_Longest_Path();
+		}
+	}
 }
 
 void AaProgram::Write_C_Model()
 {
-  ofstream header_file;
-  string header = AaProgram::_c_vhdl_module_prefix + "aa_c_model.h";
-  string header_file_name = AaProgram::_aa2c_output_directory + "/" + header;
-  header_file.open(header_file_name.c_str());
-  
-  ofstream source_file;
-  string source = AaProgram::_c_vhdl_module_prefix + "aa_c_model.c";
-  string source_file_name = AaProgram::_aa2c_output_directory + "/" + source;
-  source_file.open(source_file_name.c_str());
+	ofstream header_file;
+	string header = AaProgram::_c_vhdl_module_prefix + "aa_c_model.h";
+	string header_file_name = AaProgram::_aa2c_output_directory + "/" + header;
+	header_file.open(header_file_name.c_str());
+
+	ofstream source_file;
+	string source = AaProgram::_c_vhdl_module_prefix + "aa_c_model.c";
+	string source_file_name = AaProgram::_aa2c_output_directory + "/" + source;
+	source_file.open(source_file_name.c_str());
 
 
-  header_file << "#include <stdlib.h>" << endl;
-  header_file << "#include <unistd.h>" << endl; // for usleep.
-  header_file << "#include <assert.h>" << endl;
-  header_file << "#include <stdio.h>" << endl;
-  header_file << "#include <BitVectors.h>" << endl;
-  header_file << "#include <pipeHandler.h>" << endl;
-  // declare all the record types that you have encountered.
+	header_file << "#include <stdlib.h>" << endl;
+	header_file << "#include <unistd.h>" << endl; // for usleep.
+	header_file << "#include <assert.h>" << endl;
+	header_file << "#include <stdio.h>" << endl;
+	header_file << "#include <BitVectors.h>" << endl;
+	header_file << "#include <pipeHandler.h>" << endl;
+	// declare all the record types that you have encountered.
 
-  if(AaProgram::_use_gnu_pth) 
-  {
-	source_file << "#include <pth.h>" << endl;
-	source_file << "#include <GnuPthUtils.h>" << endl;
-  }
-  else
-  {
-  	source_file << "#include <pthread.h>" << endl;
-        source_file << "#include <pthreadUtils.h>" << endl;
-  }
-  source_file << "#include <Pipes.h>" << endl;
-  source_file << "#include <" << header << ">" << endl;
-
-  source_file << "FILE* " << AaProgram::Report_Log_File_Name() << " = NULL;" << endl;
-  source_file << "int " << AaProgram::Trace_On_Flag_Name() << " = 0;" << endl;
-  header_file << "void " << AaProgram::_c_vhdl_module_prefix << "_set_trace_file(FILE* fp);" << endl;
-  source_file << "void " << AaProgram::_c_vhdl_module_prefix << "_set_trace_file(FILE* fp) {" << endl;
-  source_file << AaProgram::Report_Log_File_Name() << " = fp;" << endl;
-  source_file << "}" << endl;
-  
-  // declare mutexes
-  for(std::set<string>::iterator muiter = AaProgram::_mutex_set.begin(), fmuiter = AaProgram::_mutex_set.end();
-					muiter != fmuiter; muiter++)
-  {
-	source_file << "MUTEX_DECL(" << *muiter << ");" << endl;
-  }
-
-  for(std::map<string,AaType*,StringCompare>::iterator miter = AaProgram::_type_map.begin();
-      miter != AaProgram::_type_map.end();
-      miter++)
-    {
-      AaType* t = (*miter).second;
-      if(t->Is("AaRecordType"))
+	if(AaProgram::_use_gnu_pth) 
 	{
-	  ((AaRecordType*)t)->PrintC_Declaration(header_file);
+		source_file << "#include <pth.h>" << endl;
+		source_file << "#include <GnuPthUtils.h>" << endl;
 	}
-    }
-  
-  header_file << "// object initialization " << endl;
-  for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
-      miter != AaProgram::_objects.end();
-      miter++)
-    {
-      //
-      // These are global in the source file.
-      //
-	if(((*miter).second->Is_Storage_Object()) || ((*miter).second->Is_Pipe_Object()) || ((*miter).second->Is_Constant()))
-      		((AaStorageObject*) (*miter).second)->PrintC_Global_Declaration(source_file);
-    }
-   header_file << "void " << AaProgram::_c_vhdl_module_prefix << "__init_aa_globals__(); " << endl;
-   source_file << "void " << AaProgram::_c_vhdl_module_prefix << "__init_aa_globals__() " << endl; 
-   source_file << "{" << endl;
-  for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
-      miter != AaProgram::_objects.end();
-      miter++)
-    {
-      //
-      // These are global in the source file.
-      //
-	if(((*miter).second->Is_Storage_Object()) || ((*miter).second->Is_Pipe_Object()) || ((*miter).second->Is_Constant()))
-      		((AaStorageObject*) (*miter).second)->PrintC_Global_Initialization(source_file);
-    }
-   source_file << "}" << endl;
-	
-
-  // top-level daemons.
-  vector<AaModule*> top_daemons;
-  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
-      miter != AaProgram::_modules.end();
-      miter++)
-    {
-	AaModule* m = (*miter).second;
-	if(!m->Get_Foreign_Flag() && (AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end()))
+	else
 	{
-      		// Each module is printed in two parts:
-      		(*miter).second->Write_C_Header(header_file);
-      		(*miter).second->Write_C_Source(source_file, header_file);
-
-		string mname = m->Get_Label();
-		if(AaProgram::_top_level_daemons.find(mname) != AaProgram::_top_level_daemons.end())
-			top_daemons.push_back(m);
-			
+		source_file << "#include <pthread.h>" << endl;
+		source_file << "#include <pthreadUtils.h>" << endl;
 	}
-    }
+	source_file << "#include <Pipes.h>" << endl;
+	source_file << "#include <" << header << ">" << endl;
 
-    for(int I = 0, fI = top_daemons.size(); I < fI; I++)
-    {
-	AaModule* m = top_daemons[I];
-	source_file << "DEFINE_THREAD(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
-	source_file << "PTHREAD_DECL(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
-    }
+	source_file << "FILE* " << AaProgram::Report_Log_File_Name() << " = NULL;" << endl;
+	source_file << "int " << AaProgram::Trace_On_Flag_Name() << " = 0;" << endl;
+	header_file << "void " << AaProgram::_c_vhdl_module_prefix << "_set_trace_file(FILE* fp);" << endl;
+	source_file << "void " << AaProgram::_c_vhdl_module_prefix << "_set_trace_file(FILE* fp) {" << endl;
+	source_file << AaProgram::Report_Log_File_Name() << " = fp;" << endl;
+	source_file << "}" << endl;
 
-    header_file << "void " << AaProgram::_c_vhdl_module_prefix << "start_daemons(FILE* fp, int trace_on);" << endl;
-    source_file << "void " << AaProgram::_c_vhdl_module_prefix << "start_daemons(FILE* fp, int trace_on) {" << endl;
-    source_file << AaProgram::Report_Log_File_Name() << " = fp;" << endl;
-    source_file << AaProgram::Trace_On_Flag_Name() << " = trace_on;" << endl;
-    source_file << AaProgram::_c_vhdl_module_prefix << "__init_aa_globals__(); " << endl;
-    for(int I = 0, fI = top_daemons.size(); I < fI; I++)
-    {
-	AaModule* m = top_daemons[I];
-	source_file << "PTHREAD_CREATE(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
-    }
-    source_file << "}" << endl;
+	// declare mutexes
+	for(std::set<string>::iterator muiter = AaProgram::_mutex_set.begin(), fmuiter = AaProgram::_mutex_set.end();
+			muiter != fmuiter; muiter++)
+	{
+		source_file << "MUTEX_DECL(" << *muiter << ");" << endl;
+	}
 
-    header_file << "void " << AaProgram::_c_vhdl_module_prefix << "stop_daemons();" << endl;
-    source_file << "void " << AaProgram::_c_vhdl_module_prefix << "stop_daemons() {" << endl;
-    for(int I = 0, fI = top_daemons.size(); I < fI; I++)
-    {
-	AaModule* m = top_daemons[I];
-	source_file << "PTHREAD_CANCEL(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
-    }
+	for(std::map<string,AaType*,StringCompare>::iterator miter = AaProgram::_type_map.begin();
+			miter != AaProgram::_type_map.end();
+			miter++)
+	{
+		AaType* t = (*miter).second;
+		if(t->Is("AaRecordType"))
+		{
+			((AaRecordType*)t)->PrintC_Declaration(header_file);
+		}
+	}
 
-    //for(int I = 0, fI = top_daemons.size(); I < fI; I++)
-    //{
+	header_file << "// object initialization " << endl;
+	for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
+			miter != AaProgram::_objects.end();
+			miter++)
+	{
+		//
+		// These are global in the source file.
+		//
+		if(((*miter).second->Is_Storage_Object()) || ((*miter).second->Is_Pipe_Object()) || ((*miter).second->Is_Constant()))
+			((AaStorageObject*) (*miter).second)->PrintC_Global_Declaration(source_file);
+	}
+	header_file << "void " << AaProgram::_c_vhdl_module_prefix << "__init_aa_globals__(); " << endl;
+	source_file << "void " << AaProgram::_c_vhdl_module_prefix << "__init_aa_globals__() " << endl; 
+	source_file << "{" << endl;
+	for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
+			miter != AaProgram::_objects.end();
+			miter++)
+	{
+		//
+		// These are global in the source file.
+		//
+		if(((*miter).second->Is_Storage_Object()) || ((*miter).second->Is_Pipe_Object()) || ((*miter).second->Is_Constant()))
+			((AaStorageObject*) (*miter).second)->PrintC_Global_Initialization(source_file);
+	}
+	source_file << "}" << endl;
+
+
+	// top-level daemons.
+	vector<AaModule*> top_daemons;
+	for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+			miter != AaProgram::_modules.end();
+			miter++)
+	{
+		AaModule* m = (*miter).second;
+		if(!m->Get_Foreign_Flag() && (AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end()))
+		{
+			// Each module is printed in two parts:
+			(*miter).second->Write_C_Header(header_file);
+			(*miter).second->Write_C_Source(source_file, header_file);
+
+			string mname = m->Get_Label();
+			if(AaProgram::_top_level_daemons.find(mname) != AaProgram::_top_level_daemons.end())
+				top_daemons.push_back(m);
+
+		}
+	}
+
+	for(int I = 0, fI = top_daemons.size(); I < fI; I++)
+	{
+		AaModule* m = top_daemons[I];
+		source_file << "DEFINE_THREAD(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
+		source_file << "PTHREAD_DECL(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
+	}
+
+	header_file << "void " << AaProgram::_c_vhdl_module_prefix << "start_daemons(FILE* fp, int trace_on);" << endl;
+	source_file << "void " << AaProgram::_c_vhdl_module_prefix << "start_daemons(FILE* fp, int trace_on) {" << endl;
+	source_file << AaProgram::Report_Log_File_Name() << " = fp;" << endl;
+	source_file << AaProgram::Trace_On_Flag_Name() << " = trace_on;" << endl;
+	source_file << AaProgram::_c_vhdl_module_prefix << "__init_aa_globals__(); " << endl;
+	for(int I = 0, fI = top_daemons.size(); I < fI; I++)
+	{
+		AaModule* m = top_daemons[I];
+		source_file << "PTHREAD_CREATE(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
+	}
+	source_file << "}" << endl;
+
+	header_file << "void " << AaProgram::_c_vhdl_module_prefix << "stop_daemons();" << endl;
+	source_file << "void " << AaProgram::_c_vhdl_module_prefix << "stop_daemons() {" << endl;
+	for(int I = 0, fI = top_daemons.size(); I < fI; I++)
+	{
+		AaModule* m = top_daemons[I];
+		source_file << "PTHREAD_CANCEL(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
+	}
+
+	//for(int I = 0, fI = top_daemons.size(); I < fI; I++)
+	//{
 	//AaModule* m = top_daemons[I];
 	//header_file << "DECLARE_THREAD(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
-    //}
-    source_file << "}" << endl;
+	//}
+	source_file << "}" << endl;
 
-    source_file.close();
-    header_file.close();
+	source_file.close();
+	header_file.close();
 }
 
 
 void AaProgram::Write_VHDL_C_Stubs()
 {
 
-  ofstream header_file;
-  string header = "vhdlCStubs.h";
-  header_file.open(header.c_str());
-  
-  ofstream source_file;
-  string source = "vhdlCStubs.c";
-  source_file.open(source.c_str());
+	ofstream header_file;
+	string header = "vhdlCStubs.h";
+	header_file.open(header.c_str());
 
-  header_file << "#include <stdlib.h>" << endl
-	      << "#include <stdint.h>" << endl
-	      << "#include <stdio.h>" << endl
-	      << "#include <string.h>" << endl
-	      << "#include <Pipes.h>" << endl
-	      << "#include <SocketLib.h>" << endl;
+	ofstream source_file;
+	string source = "vhdlCStubs.c";
+	source_file.open(source.c_str());
 
-  source_file << "#include <" << header << ">" << endl;
+	header_file << "#include <stdlib.h>" << endl
+		<< "#include <stdint.h>" << endl
+		<< "#include <stdio.h>" << endl
+		<< "#include <string.h>" << endl
+		<< "#include <Pipes.h>" << endl
+		<< "#include <SocketLib.h>" << endl;
 
-  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
-      miter != AaProgram::_modules.end();
-      miter++)
-    {
-	AaModule* m = (*miter).second;
-	if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+	source_file << "#include <" << header << ">" << endl;
+
+	for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+			miter != AaProgram::_modules.end();
+			miter++)
 	{
-      		(*miter).second->Write_VHDL_C_Stub_Header(header_file);
-      		(*miter).second->Write_VHDL_C_Stub_Source(source_file);
+		AaModule* m = (*miter).second;
+		if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+		{
+			(*miter).second->Write_VHDL_C_Stub_Header(header_file);
+			(*miter).second->Write_VHDL_C_Stub_Source(source_file);
+		}
 	}
-    }
 
-  header_file.close();
-  source_file.close();
+	header_file.close();
+	source_file.close();
 }
 
 
 
 void AaProgram::Write_VC_Model(int default_space_pointer_width,
-			       int default_space_word_size,
-			       ostream& ofile)
+		int default_space_word_size,
+		ostream& ofile)
 {
 
-  AaRoot::Info("Writing VC model.. ");
-  AaProgram::Write_VC_Pipe_Declarations(ofile);
-  AaProgram::Write_VC_Constant_Declarations(ofile);
+	AaRoot::Info("Writing VC model.. ");
+	AaProgram::Write_VC_Pipe_Declarations(ofile);
+	AaProgram::Write_VC_Constant_Declarations(ofile);
 
-  AaProgram::Write_VC_Memory_Spaces(ofile);
-  AaProgram::Write_VC_Modules(ofile);
-  AaRoot::Info("Done writing VC model.. ");
+	AaProgram::Write_VC_Memory_Spaces(ofile);
+	AaProgram::Write_VC_Modules(ofile);
+	AaRoot::Info("Done writing VC model.. ");
 }
 
 void AaProgram::Write_VC_Model_Optimized(int default_space_pointer_width,
-					 int default_space_word_size,
-					 ostream& ofile)
+		int default_space_word_size,
+		ostream& ofile)
 {
 
-  AaRoot::Info("Writing optimized VC model.. ");
-  AaProgram::Write_VC_Pipe_Declarations(ofile);
-  AaProgram::Write_VC_Constant_Declarations(ofile);
+	AaRoot::Info("Writing optimized VC model.. ");
+	AaProgram::Write_VC_Pipe_Declarations(ofile);
+	AaProgram::Write_VC_Constant_Declarations(ofile);
 
-  AaProgram::Write_VC_Memory_Spaces_Optimized(ofile);
-  AaProgram::Write_VC_Modules_Optimized(ofile);
-  AaRoot::Info("Done writing optimized VC model.. ");
+	AaProgram::Write_VC_Memory_Spaces_Optimized(ofile);
+	AaProgram::Write_VC_Modules_Optimized(ofile);
+	AaRoot::Info("Done writing optimized VC model.. ");
 }
 
 AaMemorySpace* AaProgram::Get_Memory_Space(int idx)
 {
-  if(AaProgram::_memory_space_map.find(idx) != AaProgram::_memory_space_map.end())
-    return(AaProgram::_memory_space_map[idx]);
-  else
-    return(NULL);
+	if(AaProgram::_memory_space_map.find(idx) != AaProgram::_memory_space_map.end())
+		return(AaProgram::_memory_space_map[idx]);
+	else
+		return(NULL);
 }
 
 void AaProgram::Add_To_Recoalesce_Map(AaObject* obj, AaStorageObject* addr_obj)
 {
-  AaProgram::_recoalesce_map[obj].insert(addr_obj);
+	AaProgram::_recoalesce_map[obj].insert(addr_obj);
 }
 
 void AaProgram::Write_VC_Constant_Declarations(ostream& ofile)
 {
-  for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
-      iter != AaProgram::_objects.end();
-      iter++)
-    {
-      if((*iter).second->Is("AaConstantObject"))
+	for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
+			iter != AaProgram::_objects.end();
+			iter++)
 	{
-	  ((AaConstantObject*)((*iter).second))->Write_VC_Model(ofile);
+		if((*iter).second->Is("AaConstantObject"))
+		{
+			((AaConstantObject*)((*iter).second))->Write_VC_Model(ofile);
+		}
+		else if(((*iter).second)->Is("AaStorageObject"))
+		{
+			((AaStorageObject*)((*iter).second))->Write_VC_Load_Store_Constants(ofile);
+		}
 	}
-      else if(((*iter).second)->Is("AaStorageObject"))
-	{
-	  ((AaStorageObject*)((*iter).second))->Write_VC_Load_Store_Constants(ofile);
-	}
-    }
 }
 
 void AaProgram::Write_VC_Pipe_Declarations(ostream& ofile)
 {
 
-  // Pipes in VC are declared at the system level.
-  //
-  // declare pipes at top-level and recursively
-  // enter all modules/blocks and print pipes declared
-  // in their scope..
-  for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
-      iter != AaProgram::_objects.end();
-      iter++)
-    {
-      if((*iter).second->Is("AaPipeObject"))
+	// Pipes in VC are declared at the system level.
+	//
+	// declare pipes at top-level and recursively
+	// enter all modules/blocks and print pipes declared
+	// in their scope..
+	for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
+			iter != AaProgram::_objects.end();
+			iter++)
 	{
-	  ((AaPipeObject*)((*iter).second))->Write_VC_Model(ofile);
+		if((*iter).second->Is("AaPipeObject"))
+		{
+			((AaPipeObject*)((*iter).second))->Write_VC_Model(ofile);
+		}
 	}
-    }
 }
 
 
 void AaProgram::Write_VC_Memory_Spaces(ostream& ofile)
 {
-  for(map<int,AaMemorySpace*>::iterator iter = AaProgram::_memory_space_map.begin();
-      iter != AaProgram::_memory_space_map.end();
-      iter++)
-    {
+	for(map<int,AaMemorySpace*>::iterator iter = AaProgram::_memory_space_map.begin();
+			iter != AaProgram::_memory_space_map.end();
+			iter++)
+	{
 
-      if((*iter).second->Get_Is_Global() || ((*iter).second->_modules.size() != 1))
-	(*iter).second->Write_VC_Model(ofile);
-    }
+		if((*iter).second->Get_Is_Global() || ((*iter).second->_modules.size() != 1))
+			(*iter).second->Write_VC_Model(ofile);
+	}
 }
 
 void AaProgram::Write_VC_Memory_Spaces_Optimized(ostream& ofile)
 {
-  for(map<int,AaMemorySpace*>::iterator iter = AaProgram::_memory_space_map.begin();
-      iter != AaProgram::_memory_space_map.end();
-      iter++)
-    {
+	for(map<int,AaMemorySpace*>::iterator iter = AaProgram::_memory_space_map.begin();
+			iter != AaProgram::_memory_space_map.end();
+			iter++)
+	{
 
-      if((*iter).second->Get_Is_Global() || ((*iter).second->_modules.size() != 1))
-	(*iter).second->Write_VC_Model_Optimized(ofile);
-    }
+		if((*iter).second->Get_Is_Global() || ((*iter).second->_modules.size() != 1))
+			(*iter).second->Write_VC_Model_Optimized(ofile);
+	}
 }
 
 
 void AaProgram::Write_VC_Modules(ostream& ofile)
 {
-  for(int idx =0; idx < AaProgram::_ordered_module_vector.size(); idx++)
-    {
-	AaModule* m = AaProgram::_ordered_module_vector[idx];
-	if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+	for(int idx =0; idx < AaProgram::_ordered_module_vector.size(); idx++)
 	{
-      		AaProgram::_ordered_module_vector[idx]->Write_VC_Model(ofile);
+		AaModule* m = AaProgram::_ordered_module_vector[idx];
+		if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+		{
+			AaProgram::_ordered_module_vector[idx]->Write_VC_Model(ofile);
+		}
 	}
-    }
 }
 
 
 
 void AaProgram::Write_VC_Modules_Optimized(ostream& ofile)
 {
-  for(int idx =0; idx < AaProgram::_ordered_module_vector.size(); idx++)
-    {
-	AaModule* m = AaProgram::_ordered_module_vector[idx];
-	if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+	for(int idx =0; idx < AaProgram::_ordered_module_vector.size(); idx++)
 	{
-      		AaProgram::_ordered_module_vector[idx]->Write_VC_Model_Optimized(ofile);
+		AaModule* m = AaProgram::_ordered_module_vector[idx];
+		if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+		{
+			AaProgram::_ordered_module_vector[idx]->Write_VC_Model_Optimized(ofile);
+		}
 	}
-    }
 }
 
 
 
 
-  // propagate constant values...
+// propagate constant values...
 void AaProgram::Propagate_Constants()
 {
-  for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
-      iter != AaProgram::_objects.end();
-      iter++)
-    {
-      if((*iter).second->Is("AaConstantObject"))
+	for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
+			iter != AaProgram::_objects.end();
+			iter++)
 	{
-	  ((AaConstantObject*)((*iter).second))->Evaluate();
+		if((*iter).second->Is("AaConstantObject"))
+		{
+			((AaConstantObject*)((*iter).second))->Evaluate();
+		}
 	}
-    }
 
-  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
-      miter != AaProgram::_modules.end();
-      miter++)
-    {
-      AaModule* m = (*miter).second;
-      if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
-      	(*miter).second->Propagate_Constants();
-    }
+	for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+			miter != AaProgram::_modules.end();
+			miter++)
+	{
+		AaModule* m = (*miter).second;
+		if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+			(*miter).second->Propagate_Constants();
+	}
 }
 
 
 void AaProgram::Print_Global_Storage_Initializer(ostream& ofile)
 {
-  vector<AaModule*> init_modules;
+	vector<AaModule*> init_modules;
 
-  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
-      miter != AaProgram::_modules.end();
-      miter++)
-    {
-      AaModule* m = (*miter).second;
-      //if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
-	//{
-      if(m->Has_Attribute("initializer"))
-		init_modules.push_back(m);
-	//}
-    }
-
-  ofile << "$module [global_storage_initializer_] $in () $out () $is {" << endl;
-  if(init_modules.size() > 0)
-    {
-      ofile << "$parallelblock [pb] { " << std::endl;      
-      for(unsigned int idx = 0; idx < init_modules.size(); idx++)
+	for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+			miter != AaProgram::_modules.end();
+			miter++)
 	{
-	  ofile << "$call " << init_modules[idx]->Get_Label() << " () () " << endl;
+		AaModule* m = (*miter).second;
+		//if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+		//{
+		if(m->Has_Attribute("initializer"))
+			init_modules.push_back(m);
+		//}
 	}
-      ofile << "}" << endl;
-    }
-  else
-    {
-      ofile << "$null" << endl;
-    }
-  ofile << "}" << endl;
+
+	ofile << "$module [global_storage_initializer_] $in () $out () $is {" << endl;
+	if(init_modules.size() > 0)
+	{
+		ofile << "$parallelblock [pb] { " << std::endl;      
+		for(unsigned int idx = 0; idx < init_modules.size(); idx++)
+		{
+			ofile << "$call " << init_modules[idx]->Get_Label() << " () () " << endl;
+		}
+		ofile << "}" << endl;
+	}
+	else
+	{
+		ofile << "$null" << endl;
+	}
+	ofile << "}" << endl;
 }
 
 
@@ -1489,16 +1516,16 @@ void AaProgram::Mark_As_Root_Module(string& mod_name)
 
 void AaProgram::Mark_Reachable_Modules(set<AaModule*>& reachable_modules)
 {
-	
-  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
-      miter != AaProgram::_modules.end();
-      miter++)
-   {
-       	if((AaProgram::_root_module_names.size() == 0) ||  (AaProgram::_root_module_names.find((*miter).first) != AaProgram::_root_module_names.end()))
-       	{
-		(*miter).second->Mark_Reachable_Modules(reachable_modules);
+
+	for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+			miter != AaProgram::_modules.end();
+			miter++)
+	{
+		if((AaProgram::_root_module_names.size() == 0) ||  (AaProgram::_root_module_names.find((*miter).first) != AaProgram::_root_module_names.end()))
+		{
+			(*miter).second->Mark_Reachable_Modules(reachable_modules);
+		}
 	}
-   }
 }
 
 

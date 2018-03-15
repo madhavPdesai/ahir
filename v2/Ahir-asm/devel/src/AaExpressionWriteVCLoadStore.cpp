@@ -1735,6 +1735,16 @@ int AaPointerDereferenceExpression::Get_VC_Memory_Space_Index()
 	return(-1);
 }
 
+bool AaPointerDereferenceExpression::Writes_To_Memory_Space(AaMemorySpace* ms)
+{
+	bool ret_val = false;
+
+	AaMemorySpace* oms = AaProgram::Get_Memory_Space(this->Get_VC_Memory_Space_Index());
+	ret_val = ((oms == ms) && this->Get_Is_Target());
+
+	return(ret_val);
+}
+
 int AaPointerDereferenceExpression::Get_Access_Width()
 {
 	assert(0);

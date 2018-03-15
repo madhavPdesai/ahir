@@ -77,11 +77,15 @@ class AaMemorySpace: public AaRoot
   set<AaStorageObject*,AaRootCompare> _objects;
   set<AaModule*> _modules;
 
+  set<AaModule*> _writer_modules;
+  set<AaModule*> _reader_modules;
+
   void Write_VC_Model(ostream& ofile) {this->Write_VC_Model(false,ofile);}
   void Write_VC_Model_Optimized(ostream& ofile) {this->Write_VC_Model(true,ofile);}
 
   void Write_VC_Model(bool opt_flag, ostream& ofile);
 
+  virtual string Get_VC_Name();
 
   string Get_VC_Identifier();
 

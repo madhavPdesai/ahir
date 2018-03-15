@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 uint32_t maxOfTwo(uint32_t, uint32_t);
 
 int main(int argc, char* argv[])

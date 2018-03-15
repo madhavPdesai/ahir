@@ -205,8 +205,8 @@ class AaStatement: public AaScope
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile) {assert(0);}
   virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					       set<AaRoot*>& visited_elements,
-					       map<string,vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
+					       map<AaMemorySpace*,vector<AaRoot*> >& ls_map,
+					       map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
 						AaRoot* barrier,
 					       ostream& ofile) {assert(0);}
   virtual void Write_VC_Control_Path_Optimized(string sink_link, ostream& ofile) { assert(0);}
@@ -634,8 +634,8 @@ class AaAssignmentStatement: public AaStatement
   // this is the big one!
   virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					       set<AaRoot*>& visited_elements,
-					       map<string, vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
+					       map<AaMemorySpace*, vector<AaRoot*> >& ls_map,
+					       map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
 						AaRoot* barrier,
 					       ostream& ofile);
 
@@ -683,6 +683,10 @@ class AaCallStatement: public AaStatement
   virtual void Set_Pipeline_Parent(AaStatement* dws);
 
   virtual bool Is_Call_Statement() {return(true);}
+
+  // return true if module writes to pipe ..
+  virtual bool Is_Write_To_Pipe(AaPipeObject* obj);
+  virtual bool Writes_To_Memory_Space(AaMemorySpace* ms);
 
   virtual void Set_Is_Volatile(bool v);
   virtual bool Get_Is_Volatile(); //       { return(_is_volatile); }
@@ -738,8 +742,8 @@ class AaCallStatement: public AaStatement
   }
   virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					       set<AaRoot*>& visited_elements,
-					       map<string, vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
+					       map<AaMemorySpace*, vector<AaRoot*> >& ls_map,
+					       map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
 					       AaRoot* barrier,
 					       ostream& ofile);
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
@@ -907,8 +911,8 @@ class AaBlockStatement: public AaStatement
   virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 					       AaStatementSequence* sseq,
 					       set<AaRoot*>& visited_elements,
-					       map<string,vector<AaExpression*> >& load_store_dep_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
+					       map<AaMemorySpace*,vector<AaRoot*> >& load_store_dep_map,
+					       map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
 					       AaRoot*& trailing_barrier,
 					       ostream& ofile);
 
@@ -918,10 +922,10 @@ class AaBlockStatement: public AaStatement
 
   
   void Write_VC_Load_Store_Dependencies(bool pipeline_flag, 
-					map<string,vector<AaExpression*> >& load_store_dep_map,
+					map<AaMemorySpace*,vector<AaRoot*> >& load_store_dep_map,
 					ostream& ofile);
   void Write_VC_Pipe_Dependencies(bool pipeline_flag, 
-				  map<string,vector<AaExpression*> >& pipe_map,
+				  map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
 				  ostream& ofile);
 
   virtual void Propagate_Constants();
@@ -1294,8 +1298,8 @@ class AaPhiStatement: public AaStatement
   // this is the big one! added to support loop pipelining.
   virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					       set<AaRoot*>& visited_elements,
-					       map<string, vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
+					       map<AaMemorySpace*, vector<AaRoot*> >& ls_map,
+					       map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
 						AaRoot* barrier,
 					       ostream& ofile);
 

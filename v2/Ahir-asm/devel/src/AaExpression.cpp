@@ -127,6 +127,15 @@ AaModule* AaExpression::Get_Module()
 		return(NULL);
 }
 
+AaMemorySpace* AaExpression::Get_VC_Memory_Space()
+{
+	AaMemorySpace* ms = NULL;
+	int ms_index = this->Get_VC_Memory_Space_Index();
+	if(ms_index >= 0)
+		ms = AaProgram::Get_Memory_Space(ms_index);
+	return(ms);
+}
+
 AaPhiStatement* AaExpression::Get_Associated_Phi_Statement()
 {
 	AaStatement* stmt = this->Get_Associated_Statement();
@@ -606,9 +615,16 @@ void AaObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
 			if(child->Is_Object())
 			{
 				source_objects.insert(child);
+				AaScope* r_scope = this->Get_Scope()->Get_Root_Scope();
+				assert((r_scope != NULL) && r_scope->Is_Module());
 
 				if(child->Is("AaStorageObject"))
+				{
 					((AaStorageObject*)child)->Set_Is_Read_From(true);
+
+					// keep track of which modules wrote to this object.
+					((AaStorageObject*)child)->Add_Reader_Module((AaModule*)r_scope);
+				}
 			}
 		}
 	}
@@ -677,11 +693,29 @@ void AaObjectReference::Update_Globally_Accessed_Objects(AaStorageObject* sobj)
 			// object defined in global scope? record it in pm.
 		{
 			if(this->Get_Is_Target())
+			{
 				pm->Add_Written_Global_Object(sobj);
+				pm->Add_Written_Object(sobj);
+			}
 			else
+			{
 				pm->Add_Read_Global_Object(sobj);
+				pm->Add_Read_Object(sobj);
+			}
 		}
 	}
+}
+
+bool AaObjectReference::Writes_To_Memory_Space(AaMemorySpace* ms)
+{
+	bool ret_val = false;
+	if(this->_object->Is_Storage_Object())
+	{
+		AaStorageObject* sobj = (AaStorageObject*) (this->_object);
+		AaMemorySpace* oms = AaProgram::Get_Memory_Space(sobj->Get_Mem_Space_Index());
+		ret_val = ((oms == ms) && this->Get_Is_Target());
+	}
+	return(ret_val);
 }
 
 
@@ -1000,6 +1034,13 @@ bool AaSimpleObjectReference::Is_Trivial()
 	return(!this->Get_Is_Target() 
 			&& (this->Is_Implicit_Variable_Reference() || this->Is_Signal_Read()));
 }
+
+bool AaSimpleObjectReference::Is_Write_To_Pipe(AaPipeObject* obj)
+{
+	return(this->Get_Is_Target()  &&
+			(this->_object == (AaObject*)obj));
+}
+
 
 AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, AaAssignmentStatement* root_obj):AaObjectReference(parent_tpr, root_obj) 
 {
@@ -3538,11 +3579,20 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 			acc_width = ((AaPointerType*) ptr_type)->Get_Ref_Type()->Size();
 
 			obj->Add_Access_Width(acc_width);
+			AaScope* r_scope = this->Get_Scope()->Get_Root_Scope();
 
 			if(this->Get_Is_Target())
+			{
 				obj->Set_Is_Written_Into(true);
+				if(r_scope->Is_Module())
+					obj->Add_Writer_Module((AaModule*) r_scope);
+			}
 			else
+			{
 				obj->Set_Is_Read_From(true);
+				if(r_scope->Is_Module())
+					obj->Add_Reader_Module((AaModule*) r_scope);
+			}
 
 
 			if(!obj->Is_Foreign_Storage_Object())

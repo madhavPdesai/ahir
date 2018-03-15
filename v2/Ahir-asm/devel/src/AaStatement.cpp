@@ -125,7 +125,7 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
   if(child != NULL && child->Is("AaPipeObject"))
     {
       AaScope* root = this->Get_Root_Scope();
-      assert(root->Is("AaModule"));
+      assert(root->Is_Module());
       ((AaPipeObject*)child)->Add_Writer((AaModule*)root);
       ((AaModule*)root)->Add_Write_Pipe((AaPipeObject*)child);
     }
@@ -206,7 +206,14 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
 
 
       if(child->Is_Storage_Object())
-	((AaStorageObject*)child)->Set_Is_Written_Into(true);
+	{
+		((AaStorageObject*)child)->Set_Is_Written_Into(true);
+		AaScope* r_scope = this->Get_Root_Scope();
+		assert((r_scope != NULL) && r_scope->Is_Module());
+
+		// remember which modules wrote to the child...
+		((AaStorageObject*)child)->Add_Writer_Module((AaModule*)r_scope);
+	}
 
 
       // obj_ref -> child
@@ -5725,8 +5732,8 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 	__J("$entry","loop_body_start");
 
 	set<AaRoot*> visited_elements;
-	map<string, vector<AaExpression*> > load_store_ordering_map;
-	map<string, vector<AaExpression*> >  pipe_map;
+	map<AaMemorySpace*, vector<AaRoot*> > load_store_ordering_map;
+	map<AaPipeObject*, vector<AaRoot*> >  pipe_map;
 
 
 	//
@@ -5768,7 +5775,7 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 
 
 	// write the Loop-body-sequence
-	AaRoot* trailing_barrier;
+	AaRoot* trailing_barrier = NULL;
 	pstmt->Write_VC_Control_Path_Optimized(true, 
 			_loop_body_sequence,
 			visited_elements,
@@ -6172,6 +6179,26 @@ AaSimpleObjectReference* AaCallStatement::Get_Implicit_Target(string tgt_name)
 	return(ret);
 }
 
+bool AaCallStatement::Is_Write_To_Pipe(AaPipeObject* obj)
+{
+	bool ret_val = false;
+	if(this->_called_module)
+	{
+		ret_val = this->_called_module->Writes_To_Pipe(obj);
+	}
+	return(ret_val);
+}
+
+bool AaCallStatement::Writes_To_Memory_Space(AaMemorySpace* ms)
+{
+	bool ret_val = false;
+	if(this->_called_module)
+	{
+		ret_val = this->_called_module->Writes_To_Memory_Space(ms);
+	}
+	return(ret_val);
+}
+
 // return true on error.
 bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector<AaExpression*>& targets, 
 		vector<AaStatement*>& slist, int buffering, int line_number)
@@ -6249,4 +6276,6 @@ string AaStatement::Get_C_Postamble_Macro_Name()
 	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
 			+ this->Get_VC_Name() + "_c_postamble_macro_");
 }
+
+  
 

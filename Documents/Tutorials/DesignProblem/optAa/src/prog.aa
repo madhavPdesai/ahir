@@ -1,9 +1,13 @@
+// order of the filter.
+//  (must be a power of 2)
 $parameter  ORDER          8
 
 
+// in and out pipes.
 $pipe in_data  : $float<8,23>
 $pipe out_data : $float<8,23>
 
+// mask (x % ORDER  = x & OMASK)
 $constant OMASK: $uint<8> := {ORDER - 1}
 
 //
@@ -13,6 +17,7 @@ $constant OMASK: $uint<8> := {ORDER - 1}
 
 $module  [pfirf] $in () $out () $is
 {
+  // storage for taps.
   $storage taps:  $array[ORDER] $of $float<8,23>
   $storage xvals: $array[ORDER] $of $float<8,23>
 
@@ -32,8 +37,12 @@ $module  [pfirf] $in () $out () $is
 	$merge $entry fir_outer_loopback
 		$phi HEAD := ($bitcast ($uint<8>) {ORDER - 1}) $on $entry nHEAD $on fir_outer_loopback
 	$endmerge 
-	nHEAD := ((HEAD - 1) & OMASK)
+
+	// incoming data put at head of circular queue.
 	xvals[HEAD] := in_data
+
+	// next head of circular queue.
+	nHEAD := ((HEAD - 1) & OMASK)
 
 	//
 	// FIR inner loop: unrolled 4 times and pipelined.  This gives a speedup of 1.5X
@@ -83,11 +92,12 @@ $module  [pfirf] $in () $out () $is
 		$guard (~continue_flag)
 			out_data := ((next_S0 + next_S1)  + (next_S2 + next_S3))
 
+	// close FIR inner loop
 	$while continue_flag
 	
 
 
-	// fir outer loop.
+	// close FIR outer loop.
 	$place [fir_outer_loopback]	
   }
 }

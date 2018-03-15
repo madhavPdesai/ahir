@@ -156,8 +156,8 @@ void AaAssignmentStatement::Write_VC_WAR_Dependencies(bool pipeline_flag,
 //            statement-complete -> statement-active (could be redundant).
 void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 		set<AaRoot*>& visited_elements,
-		map<string, vector<AaExpression*> >& ls_map,
-		map<string, vector<AaExpression*> >& pipe_map,
+		map<AaMemorySpace*, vector<AaRoot*> >& ls_map,
+		map<AaPipeObject*, vector<AaRoot*> >& pipe_map,
 		AaRoot* barrier,
 		ostream& ofile)
 {
@@ -373,8 +373,8 @@ void AaCallStatement::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 		set<AaRoot*>& visited_elements,
-		map<string, vector<AaExpression*> >& ls_map,
-		map<string, vector<AaExpression*> >& pipe_map,
+		map<AaMemorySpace*, vector<AaRoot*> >& ls_map,
+		map<AaPipeObject*, vector<AaRoot*> >& pipe_map,
 		AaRoot* barrier,
 		ostream& ofile)
 {
@@ -526,6 +526,25 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 		visited_elements.insert(this);
 		this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
+
+		// Pipe and memory space information into ls and pipe maps.
+		AaModule* cm = this->Get_Called_Module();
+		set<AaPipeObject*>  accessed_pipes;
+		cm->Get_Accessed_Pipes(accessed_pipes);
+		for(set<AaPipeObject*>::iterator iter = accessed_pipes.begin(), 
+			fiter = accessed_pipes.end(); iter != fiter; iter++)
+		{
+			pipe_map[*iter].push_back(this);
+		}
+
+		set<AaMemorySpace*> accessed_memory_spaces;
+		cm->Get_Accessed_Memory_Spaces(accessed_memory_spaces);
+		for(set<AaMemorySpace*>::iterator mter = accessed_memory_spaces.begin(), 
+			fmter = accessed_memory_spaces.end(); mter != fmter; mter++)
+		{
+			ls_map[*mter].push_back(this);
+		}
+
 	}
 	ofile << "// end: " << this->To_String() << endl;
 }
@@ -595,17 +614,7 @@ void AaBlockStatement::Identify_Maximal_Sequences( AaStatementSequence* sseq,
 			}
 
 
-			// barrier_due_to_side_effects.
-			bool barrier_due_to_side_effects = false;
-			if(stmt->Is("AaCallStatement"))
-			{
-				AaModule* cm =  ((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()));
-				if(!cm->Has_No_Side_Effects())
-					barrier_due_to_side_effects = true;
-			}
-			if( stmt->Is_Block_Statement()  || 
-					stmt->Is_Control_Flow_Statement() || 
-					barrier_due_to_side_effects || stmt->Can_Block(false))
+			if( stmt->Is_Block_Statement()  || stmt->Is_Control_Flow_Statement())
 			{
 				if(linear_segment.size() == 0)
 				{
@@ -653,8 +662,8 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(AaStatement* stmt, ostrea
 	AaStatementSequence* ss = new AaStatementSequence(this,tv);
 	string region_name = ss->Get_VC_Name();
 	set<AaRoot*> visited_elements;
-	map<string, vector<AaExpression*> > load_store_ordering_map;
-	map<string, vector<AaExpression*> >  pipe_map;
+	map<AaMemorySpace*, vector<AaRoot*> > load_store_ordering_map;
+	map<AaPipeObject*, vector<AaRoot*> >  pipe_map;
 	AaRoot* tb = NULL;
 	ofile << "::[" << region_name << "] {" << endl;
 
@@ -672,17 +681,17 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(AaStatement* stmt, ostrea
 void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		AaStatementSequence* sseq,
 		set<AaRoot*>& visited_elements,
-		map<string,vector<AaExpression*> >& load_store_ordering_map,
-		map<string,vector<AaExpression*> >& pipe_map,
+		map<AaMemorySpace*,vector<AaRoot*> >& load_store_ordering_map,
+		map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
 		AaRoot*& trailing_barrier,
 		ostream& ofile)
 {
+	trailing_barrier = NULL;
 	if(sseq->Get_Statement_Count() == 1 && sseq->Get_Statement(0)->Is_Block_Statement())
 		sseq->Get_Statement(0)->Write_VC_Control_Path_Optimized(ofile);
 	else
 	{
 		/////////////////////////////////////////////////  CORE FUNCTIONALITY /////////////////////////////////////////////////////
-		trailing_barrier = NULL;
 		for(int idx = 0, fidx = sseq->Get_Statement_Count(); idx < fidx; idx++)
 		{
 			AaStatement* stmt = sseq->Get_Statement(idx);
@@ -708,49 +717,6 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						trailing_barrier,
 						ofile);
 			}
-
-			// barriers:
-			//   to maintain ordering dependencies, we will create a
-			//   barrier if
-			//      stmt is a block statement (it may modify memory/access a pipe)
-			//      stmt is a call which modifies memory or writes to a pipe.
-			// this can be made less restrictive. 
-			bool barrier_due_to_side_effects = false;
-			if(stmt->Is("AaCallStatement"))
-			{
-				AaModule* cm =  ((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()));
-				if(!cm->Has_No_Side_Effects() && !pipeline_flag)
-					barrier_due_to_side_effects = true;
-			}
-
-			if(stmt->Is_Block_Statement() ||  barrier_due_to_side_effects || stmt->Can_Block(pipeline_flag))
-			{
-				trailing_barrier = stmt;
-				ofile << "// barrier: " << stmt->To_String() << endl;
-
-				// put dependencies from all prior statements 
-				// to the barrier
-				for(int K = idx-1; K >= 0; K--)
-				{
-					AaStatement* prev_stmt = sseq->Get_Statement(K);
-
-					// if prev_stmt is a constant or can be ignored, then skip it.
-					if(prev_stmt->Is_Constant() || 
-						prev_stmt->Get_Is_Volatile() ||
-							prev_stmt->Is_Null_Like_Statement())
-						continue;
-
-					// barrier!
-					__J(__SST(stmt), __UCT(prev_stmt));
-
-					if(prev_stmt->Is_Block_Statement() || (prev_stmt->Is("AaCallStatement") && 
-								!((AaModule*)(((AaCallStatement*)prev_stmt)->Get_Called_Module()))->Has_No_Side_Effects())
-							|| prev_stmt->Can_Block(pipeline_flag))
-					{
-						break;
-					}
-				}
-			}
 		}
 	}
 }
@@ -759,14 +725,15 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 // load store dependencies.
 void AaBlockStatement::
-Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> >& load_store_dep_map,
+Write_VC_Load_Store_Dependencies(bool pipeline_flag, 
+		map<AaMemorySpace*,vector<AaRoot*> >& load_store_dep_map,
 		ostream& ofile)
 {
 
 	bool leading_store_found = false;
-	set<AaExpression*> leading_accesses;
+	set<AaRoot*> leading_accesses;
 
-	set<AaExpression*> trailing_accesses;
+	set<AaRoot*> trailing_accesses;
 	ofile << "// load-store dependencies.." << endl;
 	// for each memory space, scan the ordered list of 
 	// load-stores, and add dependencies as follows
@@ -774,20 +741,25 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpress
 	//      and nearest store before and after the load
 	//    - start->start dependencies between adjacent
 	//      stores.
-	for(map<string,vector<AaExpression*> >::iterator iter = load_store_dep_map.begin(), 
+	for(map<AaMemorySpace*,vector<AaRoot*> >::iterator iter = load_store_dep_map.begin(), 
 			fiter  = load_store_dep_map.end();
 			iter != fiter;
 			iter++)
 	{
-		vector<AaExpression*> active_loads;
-		AaExpression* last_store = NULL;
+		vector<AaRoot*> active_loads;
+		AaRoot* last_store = NULL;
 
-		string mem_space_name = (*iter).first;
+		AaMemorySpace* ms = (*iter).first;
+		string mem_space_name = ms->Get_VC_Name();
+		ofile << "// memory-space  " << mem_space_name << endl;
+
 
 		for(int idx = 0, fidx = (*iter).second.size(); idx < fidx; idx++)
 		{
-			AaExpression* expr = (*iter).second[idx];
-
+			AaRoot* expr = (*iter).second[idx];
+			// expr can be call statement.
+			bool is_store = expr->Writes_To_Memory_Space(ms);
+			ofile << "//  " << expr->Get_VC_Name() <<  (is_store ? " store" : " load") << endl;
 
 			if(pipeline_flag)
 			{
@@ -799,7 +771,7 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpress
 				// time create a trailing set of loads (or a singleton
 				// store).  It is possible for the leading and trailing
 				// sets to be the same.
-				if(expr->Is_Store())
+				if(is_store)
 				{
 					if(!leading_store_found)
 					{
@@ -821,17 +793,18 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpress
 				}
 			}
 
-			if(expr->Is_Store())
+			if(is_store)
 			{
-
-
 				if(active_loads.size() > 0)
 				{
 					// dependency between active loads and
 					// expr start.
 					for(int lsi = 0, flsi = active_loads.size(); lsi < flsi; lsi++)
 					{
-						Write_VC_Load_Store_Dependency(pipeline_flag, active_loads[lsi],expr,ofile);
+						Write_VC_Load_Store_Dependency(pipeline_flag, 
+								ms,
+								active_loads[lsi],
+								expr, ofile);
 					}
 
 					// active load dependencies are taken care of
@@ -841,20 +814,28 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpress
 				else
 				{
 					if(last_store != NULL)
-						Write_VC_Load_Store_Dependency(pipeline_flag, last_store,expr,ofile);
+						Write_VC_Load_Store_Dependency(pipeline_flag, 
+									ms,
+									last_store,
+									expr,
+									ofile);
 
 					last_store = expr;
 				}
 			}
-			else if(last_store != NULL && expr->Is_Load())
+			else if(last_store != NULL && !is_store)
 			{
 				// dependency between last store and expr.
-				Write_VC_Load_Store_Dependency(pipeline_flag, last_store,expr,ofile);
+				Write_VC_Load_Store_Dependency(pipeline_flag, 
+								ms,
+								last_store,
+								expr, 
+								ofile);
 
 				// keep track of active loads.
 				active_loads.push_back(expr);
 			}
-			else if(last_store == NULL && expr->Is_Load())
+			else if(last_store == NULL && !is_store)
 			{
 				active_loads.push_back(expr);
 			}
@@ -866,10 +847,10 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpress
 		//       are superfluous!
 		if(pipeline_flag)
 		{
-			Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(mem_space_name,
-					leading_accesses,
-					trailing_accesses,
-					ofile);
+			Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(ms,
+							leading_accesses,
+							trailing_accesses,
+							ofile);
 			leading_store_found = false;
 			leading_accesses.clear();
 			trailing_accesses.clear();
@@ -879,76 +860,76 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpress
 
 // pipe accesses will be strictly in order!
 void AaBlockStatement::
-Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> >& pipe_map,
+Write_VC_Pipe_Dependencies(bool pipeline_flag, map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
 		ostream& ofile)
 {
 
 
-	for(map<string,vector<AaExpression*> >::iterator iter = pipe_map.begin(), 
+	for(map<AaPipeObject*,vector<AaRoot*> >::iterator iter = pipe_map.begin(), 
 			fiter  = pipe_map.end();
 			iter != fiter;
 			iter++)
 	{
 
-		ofile << "// pipe read/write dependencies for pipe " << (*iter).first << endl;
-		AaExpression* last_expr = NULL;
-		string pipe_name = (*iter).first;
-		AaExpression* fe = (*iter).second[0];
+		string pipe_name = (*iter).first->Get_Name();
+		AaPipeObject* obj = (*iter).first;
 
-		AaRoot* obj = fe->Get_Object();
-		assert((obj != NULL) && (obj->Is_Pipe_Object()));
+		ofile << "// pipe read/write dependencies for pipe " << pipe_name << endl;
+
+		AaRoot* last_expr = NULL;
+		AaRoot* fe = (*iter).second[0];
 		bool is_signal = obj->Is_Signal();
 
-		AaExpression* first_expr = (*iter).second[0];
-		vector<AaExpression*> write_expr_vector;
-		vector<AaExpression*> read_expr_vector;
-		vector<AaExpression*> signal_access_vector;
+		AaRoot* first_expr = (*iter).second[0];
+		vector<AaRoot*> write_expr_vector;
+		vector<AaRoot*> read_expr_vector;
+		vector<AaRoot*> signal_access_vector;
 		for(int idx = 0, fidx = (*iter).second.size(); idx < fidx; idx++)
 		{
 
-			AaExpression* expr = (*iter).second[idx];
+			AaRoot* expr = (*iter).second[idx];
 			if(is_signal)
 				signal_access_vector.push_back(expr);
-			else if(expr->Get_Is_Target())
+			else if(expr->Is_Write_To_Pipe(obj))
 				write_expr_vector.push_back(expr);
 			else
 				read_expr_vector.push_back(expr);
 		}
 
-		ofile << "// read-dependencies for pipe " << (*iter).first << endl;
+		ofile << "// read-dependencies for pipe " << pipe_name << endl;
 		if(read_expr_vector.size() > 1)
 		{
-			AaExpression* first_expr = read_expr_vector[0];
+			AaRoot* first_expr = read_expr_vector[0];
 			for(int I = 0, fI = read_expr_vector.size(); I < fI; I++)
 			{
 				if(I == 0) continue;
 
-				AaExpression* first = read_expr_vector[I-1];
-				AaExpression* second = read_expr_vector[I];
+				AaRoot* first = read_expr_vector[I-1];
+				AaRoot* second = read_expr_vector[I];
 				__J(__SST(second), __UCT(first));
 				if(pipeline_flag && (I == (fI-1)))
 				{
-					AaExpression* last = read_expr_vector[I];
+					AaRoot* last = read_expr_vector[I];
 
 					ofile << "// ring dependency in pipeline." << endl;
 					__MJ(__UST(first_expr), __UCT(last),  true); // bypass.
 				}
 			}
 		}
-		ofile << "// write-dependencies for pipe " << (*iter).first << endl;
+		ofile << "// write-dependencies for pipe " << pipe_name << endl;
 		if(write_expr_vector.size() > 1)
 		{
 			for(int I = 0, fI = write_expr_vector.size(); I < fI; I++)
 			{
-				AaExpression* first_expr = write_expr_vector[0];
+				AaRoot* first_expr = write_expr_vector[0];
 				if(I == 0) continue;
 
-				AaExpression* first = write_expr_vector[I-1];
-				AaExpression* second = write_expr_vector[I];
+				AaRoot* first = write_expr_vector[I-1];
+				AaRoot* second = write_expr_vector[I];
 				__J(__SST(second), __UCT(first));
 				if(pipeline_flag && (I == (fI-1)))
 				{
-					AaExpression* last = write_expr_vector[I];
+					AaRoot* last = write_expr_vector[I];
 
 					ofile << "// ring dependency in pipeline." << endl;
 					__MJ(__SST(first_expr), __UCT(last),  true); // bypass.
@@ -960,8 +941,8 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> 
 		if(signal_access_vector.size() > 1)
 		{
 			int SS = signal_access_vector.size();
-			AaExpression* first_expr = signal_access_vector[0];
-			AaExpression* last_expr = signal_access_vector[SS-1];
+			AaRoot* first_expr = signal_access_vector[0];
+			AaRoot* last_expr = signal_access_vector[SS-1];
 
 			for(int I = 1; I < SS; I++)
 			{
@@ -1037,8 +1018,8 @@ void AaSeriesBlockStatement::Write_VC_Control_Path_Optimized_Base(ostream& ofile
 			{
 				// TODO .. rationalize this.
 				set<AaRoot*> visited_elements;
-				map<string, vector<AaExpression*> > load_store_ordering_map;
-				map<string, vector<AaExpression*> >  pipe_map;
+				map<AaMemorySpace*, vector<AaRoot*> > load_store_ordering_map;
+				map<AaPipeObject*, vector<AaRoot*> >  pipe_map;
 				AaRoot* tb = NULL;
 
 				string region_name = curr_seq->Get_VC_Name();
@@ -1297,8 +1278,8 @@ void AaBranchBlockStatement::Write_VC_Control_Path_Optimized(string source_link,
 					else 
 					{
 						set<AaRoot*> visited_elements;
-						map<string, vector<AaExpression*> > load_store_ordering_map;
-						map<string, vector<AaExpression*> >  pipe_map;
+						map<AaMemorySpace*, vector<AaRoot*> > load_store_ordering_map;
+						map<AaPipeObject*, vector<AaRoot*> >  pipe_map;
 						AaRoot* tb = NULL;
 
 						string region_name = sseq->Get_VC_Name();
@@ -1546,8 +1527,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 // in which the statement occurs.
 void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		set<AaRoot*>& visited_elements,
-		map<string, vector<AaExpression*> >& ls_map,
-		map<string,vector<AaExpression*> >& pipe_map,
+		map<AaMemorySpace*, vector<AaRoot*> >& ls_map,
+		map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
 		AaRoot* barrier,
 		ostream& ofile)
 {
@@ -1591,8 +1572,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	__T(sample_from_loop_back_ps);
 	__J(sample_from_loop_back, sample_from_loop_back_ps)
 
-	// loop body exit not determined by this guy.
-	__F(sample_from_loop_back, "$null");
+		// loop body exit not determined by this guy.
+		__F(sample_from_loop_back, "$null");
 
 	string trigger_from_entry = this->Get_VC_Name() + "_entry_trigger";
 	string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
@@ -1727,8 +1708,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 
 			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
-				!sge->Is_Implicit_Variable_Reference() && 
-				!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
+					!sge->Is_Implicit_Variable_Reference() && 
+					!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 			{
 				ofile << "// Guard dependency in PHI alternative.." << endl;
 				__J(__SST(source_expr), __UCT(sge));

@@ -566,11 +566,12 @@ void Write_VC_Slice_Operator(string inst_name,
 
 
 void Write_VC_Load_Store_Dependency(bool pipeline_flag,
-				    AaExpression* src,
-				    AaExpression* tgt,
+				    AaMemorySpace* ms,
+				    AaRoot* src,
+				    AaRoot* tgt,
 				    ostream& ofile)
 {
-  int ms_index = src->Get_VC_Memory_Space_Index();
+  int ms_index = ms->_mem_space_index;
 
   string delay_trans = src->Get_VC_Name() + "_" + tgt->Get_VC_Name() + "_delay";
   ofile << "$T [" << delay_trans << "] $delay" << endl;
@@ -578,16 +579,14 @@ void Write_VC_Load_Store_Dependency(bool pipeline_flag,
 
   if(ms_index >= 0)
   { 
-  	ofile << "// " << src->To_String() << (src->Is_Load() ? "(load)" : "(store)" )
+  	ofile << "// " << src->Get_VC_Name() << (src->Writes_To_Memory_Space(ms) ? "(store)" : "(load)" )
 		<<  " -> " 
-		<< tgt->To_String()  << (tgt->Is_Load() ? "(load)" : "(store)" ) << endl;
-	assert(ms_index == tgt->Get_VC_Memory_Space_Index());
+		<< tgt->Get_VC_Name()  << (tgt->Writes_To_Memory_Space(ms) ? "(store)" : "(load)" ) << endl;
 
-	AaMemorySpace* ms = AaProgram::Get_Memory_Space(ms_index);
-	
-	assert(ms != NULL);
+	if(tgt->Is_Expression())
+		assert(ms_index == ((AaExpression*) tgt)->Get_VC_Memory_Space_Index());
 
-	if(ms->Get_Is_Ordered())
+	if(ms->Get_Is_Ordered() && src->Is_Expression())
 	{
   		ofile << __SST(tgt) << " <-& (" << delay_trans << ")" << endl;
   		ofile << delay_trans << " <-& (" << __SCT(src) << ")" << endl;
@@ -608,15 +607,14 @@ void Write_VC_Load_Store_Dependency(bool pipeline_flag,
    }
 }
 
-void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
-							set<AaExpression*>& leading_accesses,
-							set<AaExpression*>& trailing_accesses,
+void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(AaMemorySpace* ms,
+							set<AaRoot*>& leading_accesses,
+							set<AaRoot*>& trailing_accesses,
 							ostream& ofile)
 {
 
-	int ms_index = -1;
-	AaMemorySpace* ms = NULL;
 
+	string mem_space_name = ms->Get_VC_Name();
 	ofile << "// reenable across ring for memory space " << mem_space_name << endl;
 	
 	if(leading_accesses == trailing_accesses)
@@ -628,24 +626,13 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
 	string reenable_trans = "ring_reenable_" + Make_VC_Legal(mem_space_name);
 	__T(reenable_trans)
 
-	for(set<AaExpression*>::iterator titer = trailing_accesses.begin(),
+	for(set<AaRoot*>::iterator titer = trailing_accesses.begin(),
 		ftiter = trailing_accesses.end();
 		titer != ftiter;
 		titer++)
 	{
-		AaExpression* expr = *titer;
-		int l_ms_index = expr->Get_VC_Memory_Space_Index();
-		if(ms == NULL)
-		{
-			ms_index = l_ms_index;
-			ms = AaProgram::Get_Memory_Space(ms_index);
-		}
-		else
-		{
-			assert(ms_index == l_ms_index);
-		}
-
-		if(ms->Get_Is_Ordered())
+		AaRoot* expr = *titer;
+		if(ms->Get_Is_Ordered() && expr->Is_Expression())
 		{
 			ofile << "// ordered memory-subsystem." << endl;
 			__J(reenable_trans, __SCT(expr))
@@ -655,15 +642,12 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
 			
 	}
 
-	for(set<AaExpression*>::iterator liter = leading_accesses.begin(),
+	for(set<AaRoot*>::iterator liter = leading_accesses.begin(),
 		fliter = leading_accesses.end();
 		liter != fliter;
 		liter++)
 	{
-		AaExpression* expr = *liter;
-		int l_ms_index = expr->Get_VC_Memory_Space_Index();
-		assert(ms_index == l_ms_index);
-
+		AaRoot* expr = *liter;
 		__MJ(__SST(expr), reenable_trans, false) // no bypass
 	}
 }

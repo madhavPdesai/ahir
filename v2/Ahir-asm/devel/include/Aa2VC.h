@@ -238,12 +238,13 @@ void Write_VC_Slice_Operator(string inst_name,
 bool Is_Trivial_VC_Type_Conversion(AaType* from, AaType* to);
 
 void Write_VC_Load_Store_Dependency(bool pipeline_flag,
-				    AaExpression* src,
-				    AaExpression* tgt,
-				    ostream& ofile);
-void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
-							set<AaExpression*>& leading_accesses,
-							set<AaExpression*>& trailing_accesses,
+				      	AaMemorySpace* ms, 
+				    	AaRoot* src, 
+				    	AaRoot* tgt, 
+				    	ostream& ofile);
+void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(AaMemorySpace* ms,
+							set<AaRoot*>& leading_accesses,
+							set<AaRoot*>& trailing_accesses,
 							ostream& ofile);
 
 void Write_VC_Pipe_Dependency(bool pipeline_flag,

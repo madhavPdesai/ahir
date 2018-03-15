@@ -42,6 +42,8 @@
 //
 class AaType;
 class AaValue;
+class AaPipeObject;
+class AaMemorySpace;
 class AaRoot
 {
   // to get unique id's for anon objects
@@ -84,6 +86,11 @@ class AaRoot
 
   set<AaRoot*>& Get_Target_References() {return(_target_references);}
   set<AaRoot*>& Get_Source_References() {return(_source_references);}
+
+  virtual bool Is_Write_To_Pipe(AaPipeObject* obj) {return(false);}
+  virtual bool Writes_To_Memory_Space(AaMemorySpace* ms) {return(false);}
+  virtual AaMemorySpace* Get_VC_Memory_Space() {return (NULL);}
+
 
   //
   // search forward until you find non-trivial 

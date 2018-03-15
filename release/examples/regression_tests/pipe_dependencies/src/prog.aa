@@ -1,10 +1,37 @@
 $pipe in_data  : $uint<32> $depth 2
 $pipe out_data : $uint<32> $depth 2
+$pipe mid_pipe : $uint<32> $depth 2
+
+$module [rpipe] $in () $out (y: $uint<32>) $is
+{
+	y := in_data
+}
+$module [rpipe_1] $in () $out (y: $uint<32>) $is
+{
+	$call rpipe () (y)
+}
+
+$module [wpipe] $in (x: $uint<32>) $out () $is
+{
+	out_data := x
+}
+
+$module [wpipe_1] $in (x: $uint<32>) $out () $is
+{
+	$call wpipe (x) ()
+}
+
+$module [wmpipe] $in (x: $uint<32>) $out () $is
+{
+	mid_pipe := x
+}
+$module [rmpipe] $in () $out (y: $uint<32>) $is
+{
+	y := mid_pipe
+}
 
 $module [dependency_check_daemon] $in() $out () $is
 {
-
-
 	$branchblock[lOoP] {
 		$dopipeline $depth 16 $buffering 2 
 		$fullrate
@@ -12,14 +39,25 @@ $module [dependency_check_daemon] $in() $out () $is
 		$merge $entry $loopback $endmerge
 
 		X0 := in_data
-		X1 := in_data
+		$call rpipe_1 () (X1)
 		X2 := in_data
-		X3 := in_data
+		$call rpipe () (X3)
 
-		out_data := X0
-		out_data := X1
-		out_data := X2
-		out_data := X3
+		$call wmpipe (X0) ()
+		XX0 := mid_pipe
+		out_data := XX0
+
+		mid_pipe := X1
+		$call rmpipe () (XX1)
+		$call wpipe_1 (XX1) ()
+
+		$call wmpipe (X2) ()
+		$call rmpipe () (XX2)
+		out_data := XX2
+
+		mid_pipe := X3
+		XX3 := mid_pipe
+		$call wpipe (XX3) ()
 
 		$while 1
 	}

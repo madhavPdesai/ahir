@@ -47,11 +47,23 @@ int main(int argc, char* argv[])
 	uint8_t idx;
 	
 	read_uint32_n("out_data",result,ORDER);
+	int err = 0;
 
 	for(idx = 0; idx < ORDER; idx++)
 	{
-		fprintf(stdout,"Result = %x, expected = %x.\n", result[idx],expected_result[idx]);
+		if(result[idx] == expected_result[idx])
+			fprintf(stdout,"Result = %x, expected = %x.\n", result[idx],expected_result[idx]);
+		else
+		{
+			err = 1;
+			fprintf(stdout,"Error: Result = %x, expected = %x.\n", result[idx],expected_result[idx]);
+		}
 	}
 	PTHREAD_CANCEL(Sender);
-	return(0);
+
+	if(err)
+		fprintf(stderr,"FAILURE!\n");
+	else
+		fprintf(stderr,"SUCCESS!\n");
+	return(err);
 }
