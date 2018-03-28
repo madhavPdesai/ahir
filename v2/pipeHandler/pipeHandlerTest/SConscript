@@ -2,9 +2,9 @@ import os
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
 env.Append(CPPPATH = './:../include:../../pthreadUtils/include:../../GnuPthUtils/include:')
 env.Program('simpleCheck', 'simple_check.c', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['PipeHandlerDebugPthreads','pthread' ], LIBPATH=Split('../lib'))
-env.Program('simpleCheckPth', 'simple_check_gnu_pth.c', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['PipeHandlerGnuPth','pth' ], LIBPATH=Split('../lib'))
+#env.Program('simpleCheckPth', 'simple_check_gnu_pth.c', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['PipeHandlerGnuPth','pth' ], LIBPATH=Split('../lib'))
 env.Program('secondCheck', 'test_program.c', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['PipeHandler','pthread' ], LIBPATH=Split('../lib'))
 env.Program('performance_test_pthread', 'performance_test_pthread.c', CCFLAGS='-O2 ',LINKFLAGS=' ', LIBS=['PipeHandler','pthread' ], LIBPATH=Split('../lib'))
-env.Program('performance_test_gnu_pth', 'performance_test_gnu_pth.c', CCFLAGS='-O2 ',LINKFLAGS=' ', LIBS=['PipeHandlerGnuPth','pth' ], LIBPATH=Split('../lib'))
+#env.Program('performance_test_gnu_pth', 'performance_test_gnu_pth.c', CCFLAGS='-O2 ',LINKFLAGS=' ', LIBS=['PipeHandlerGnuPth','pth' ], LIBPATH=Split('../lib'))
 
 
