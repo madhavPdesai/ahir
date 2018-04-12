@@ -78,8 +78,6 @@ begin  -- default_arch
   backward_reset <= OrReduce(succs);
 
 
-  non_zero <= (token_latch > 0);
-
   latch_token : process (clk, reset,incoming_token, backward_reset, token_latch, non_zero)
 	variable incr, decr: boolean;
   begin
@@ -92,16 +90,18 @@ begin  -- default_arch
 
       if reset = '1' then            -- synchronous reset (active high)
         token_latch <= marking;
+	non_zero <= (marking > 0);
       elsif decr then
 
         if(debug_flag) then
-        	if((not non_zero) and decr and (not incr)) then
+        	if(token_latch = 0) then
           		assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
         	end if;
            	assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
 		 	severity note;
 	end if;
 
+	non_zero <= not (token_latch = 1);
        	token_latch <= token_latch - 1;
 
       elsif incr then
@@ -116,7 +116,9 @@ begin  -- default_arch
 		  	severity note;
 	end if;
 
+	non_zero <= true;
         token_latch <= token_latch + 1;
+
       end if;
     end if;
   end process latch_token;
