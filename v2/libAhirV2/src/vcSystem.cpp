@@ -533,6 +533,13 @@ void vcSystem::Print_VHDL_Test_Bench(ostream& ofile)
       string fin_req = prefix + "fin_req";
       string fin = prefix + "fin_ack";
 
+      ofile << "wait until reset = '0';" << endl;
+      ofile << "-- let the DUT come out of reset.... give it 4 cycles." << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << "wait until clk = '1';" << endl;
+
 
       ofile << "process" << endl;
       ofile << "begin --{" << endl;
@@ -618,6 +625,11 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
       ofile << "variable val_string, obj_ref: VhpiString;" << endl;
       ofile << "begin --{" << endl;
       ofile << "wait until reset = '0';" << endl;
+      ofile << "-- let the DUT come out of reset.... give it 4 cycles." << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << "wait until clk = '1';" << endl;
       ofile << "while true loop -- {" << endl;
       ofile << "wait until clk = '0';" << endl;
       ofile << "wait for 1 ns;" << endl;
@@ -718,6 +730,11 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
       ofile << "variable port_val_string, req_val_string, ack_val_string,  obj_ref: VhpiString;" << endl;
       ofile << "begin --{" << endl;
       ofile << "wait until reset = '0';" << endl;
+      ofile << "-- let the DUT come out of reset.... give it 4 cycles." << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << "wait until clk = '1';" << endl;
       ofile << "while true loop -- {" << endl;
       ofile << "wait until clk = '0';" << endl;
       ofile << "wait for 1 ns; " << endl;

@@ -859,6 +859,11 @@ void Write_Pipe_Access_Process(bool is_signal,
 	ofile << "variable val_string, obj_ref: VhpiString;" << endl;
 	ofile << "begin --{" << endl;
 	ofile << "wait until reset = '0';" << endl;
+        ofile << "-- let the DUT come out of reset.... give it 4 cycles." << endl;
+	ofile << "wait until clk = '1';" << endl;
+	ofile << "wait until clk = '1';" << endl;
+	ofile << "wait until clk = '1';" << endl;
+	ofile << "wait until clk = '1';" << endl;
 	ofile << "while true loop -- {" << endl;
 	ofile << "wait until clk = '0';" << endl;
 	ofile << "wait for 1 ns; " << endl;
