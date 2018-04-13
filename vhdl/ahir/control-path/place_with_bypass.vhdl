@@ -78,35 +78,47 @@ begin  -- default_arch
   backward_reset <= OrReduce(succs);
 
 
+  non_zero <= (token_latch > 0);
+
   latch_token : process (clk, reset,incoming_token, backward_reset, token_latch, non_zero)
 	variable incr, decr: boolean;
+	variable next_token_latch_var: integer range 0 to capacity;
   begin
 
     incr := incoming_token and (not backward_reset);
     decr := backward_reset and (not incoming_token);
+    next_token_latch_var := token_latch;
+
+    if(incr) then
+	if(token_latch < capacity) then
+            next_token_latch_var := token_latch + 1;
+        end if;
+    elsif (decr) then
+        if(token_latch > 0) then
+             next_token_latch_var := token_latch - 1;
+        end if;
+    end if;
     
 
     if clk'event and clk = '1' then  -- rising clock edge
 
       if reset = '1' then            -- synchronous reset (active high)
         token_latch <= marking;
-	non_zero <= (marking > 0);
-      elsif decr then
+      else
+        token_latch <= next_token_latch_var;
+      end if;
 
-        if(debug_flag) then
-        	if(token_latch = 0) then
+      if(debug_flag and decr) then
+           
+        	if (token_latch = 0) then
           		assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
         	end if;
            	assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
 		 	severity note;
-	end if;
+      end if;
 
-	non_zero <= not (token_latch = 1);
-       	token_latch <= token_latch - 1;
+      if (debug_flag and incr) then
 
-      elsif incr then
-
-	if(debug_flag) then
        		if(token_latch = capacity) then
          		assert false report "in place-with-bypass: " & name & " number of tokens "
 			 	& Convert_To_String(token_latch+1) & " cannot exceed capacity " 
@@ -116,10 +128,6 @@ begin  -- default_arch
 		  	severity note;
 	end if;
 
-	non_zero <= true;
-        token_latch <= token_latch + 1;
-
-      end if;
     end if;
   end process latch_token;
 
