@@ -78,58 +78,117 @@ begin  -- default_arch
   backward_reset <= OrReduce(succs);
 
 
-  non_zero <= (token_latch > 0);
+  CapGtOne: if (capacity > 1) generate
 
-  latch_token : process (clk, reset,incoming_token, backward_reset, token_latch, non_zero)
-	variable incr, decr: boolean;
+    latch_token_cap_gt_one : process (clk, reset,incoming_token, backward_reset, token_latch, non_zero)
+	variable incr, decr          : boolean;
 	variable next_token_latch_var: integer range 0 to capacity;
-  begin
+	variable next_non_zero_var        : boolean; 
+    begin
 
-    incr := incoming_token and (not backward_reset);
-    decr := backward_reset and (not incoming_token);
-    next_token_latch_var := token_latch;
-
-    if(incr) then
-	if(token_latch < capacity) then
-            next_token_latch_var := token_latch + 1;
-        end if;
-    elsif (decr) then
-        if(token_latch > 0) then
-             next_token_latch_var := token_latch - 1;
-        end if;
-    end if;
-    
-
-    if clk'event and clk = '1' then  -- rising clock edge
-
-      if reset = '1' then            -- synchronous reset (active high)
-        token_latch <= marking;
-      else
-        token_latch <= next_token_latch_var;
+      incr := incoming_token and (not backward_reset);
+      decr := backward_reset and (not incoming_token);
+      next_token_latch_var := token_latch;
+      next_non_zero_var := non_zero;
+  
+      if(incr) then
+	  if(token_latch < capacity) then
+              next_token_latch_var := token_latch + 1;
+          end if;
+          next_non_zero_var := true;
+      elsif (decr) then
+          if(token_latch > 0) then
+               next_token_latch_var := token_latch - 1;
+          end if;
+          next_non_zero_var := not (token_latch = 1);
       end if;
+      
+  
+      if clk'event and clk = '1' then  -- rising clock edge
 
-      if(debug_flag and decr) then
-           
-        	if (token_latch = 0) then
-          		assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
-        	end if;
-           	assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
-		 	severity note;
+        if reset = '1' then            -- synchronous reset (active high)
+          token_latch <= marking;
+          non_zero <= (marking > 0);
+        else
+          token_latch <= next_token_latch_var;
+          non_zero    <= next_non_zero_var;
+        end if;
+  
+        if(debug_flag and decr) then
+             
+        	  if (token_latch = 0) then
+          		  assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
+        	  end if;
+           	  assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+		 	  severity note;
+        end if;
+  
+        if (debug_flag and incr) then
+  
+       		  if(token_latch = capacity) then
+         		  assert false report "in place-with-bypass: " & name & " number of tokens "
+			 	  & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
+			 	  & Convert_To_String(capacity) severity error;
+       		  end if;
+           	  assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		  	  severity note;
+	  end if;
+
       end if;
+    end process latch_token_cap_gt_one;
+  end generate CapGtOne;
 
-      if (debug_flag and incr) then
 
-       		if(token_latch = capacity) then
-         		assert false report "in place-with-bypass: " & name & " number of tokens "
-			 	& Convert_To_String(token_latch+1) & " cannot exceed capacity " 
-			 	& Convert_To_String(capacity) severity error;
-       		end if;
-           	assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
-		  	severity note;
-	end if;
+  -- When capacity = 1, we will write this process in a slightly optimized
+  -- manner in order to save a flip-flop.
+  CapEqOne: if (capacity = 1) generate
 
-    end if;
-  end process latch_token;
+    latch_token_cap_eq_one : process (clk, reset,incoming_token, backward_reset, non_zero)
+	variable incr, decr          : boolean;
+	variable next_non_zero_var        : boolean; 
+    begin
+
+      incr := incoming_token and (not backward_reset);
+      decr := backward_reset and (not incoming_token);
+
+      next_non_zero_var := non_zero;
+  
+      if(incr) then
+          next_non_zero_var := true;
+      elsif (decr) then
+          next_non_zero_var := false;
+      end if;
+      
+  
+      if clk'event and clk = '1' then  -- rising clock edge
+
+        if reset = '1' then            -- synchronous reset (active high)
+          non_zero <= (marking > 0);
+        else
+          non_zero    <= next_non_zero_var;
+        end if;
+  
+        if(debug_flag and decr) then
+             
+        	  if (not non_zero) then
+          		  assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
+        	  end if;
+           	  assert false report "in place " & name & ": token count decremented from 1 to 0 " severity note;
+        end if;
+  
+        if (debug_flag and incr) then
+  
+       		  if(non_zero) then
+         		  assert false report "in place-with-bypass: " & name & " number of tokens "
+			 	  & " cannot exceed capacity " 
+			 	  & Convert_To_String(capacity) severity error;
+       		  end if;
+           	  assert false report "in place " & name & " token count incremented from 0 to 1" severity note;
+	  end if;
+
+      end if;
+    end process latch_token_cap_eq_one;
+  end generate CapEqOne;
 
   token <= incoming_token or non_zero;
 
