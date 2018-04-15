@@ -35,6 +35,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library ahir;
+use ahir.Utilities.all;
 
 entity QueueBase is
   generic(name : string; queue_depth: integer := 1; data_width: integer := 32;
@@ -52,15 +54,6 @@ end entity QueueBase;
 architecture behave of QueueBase is
 
   type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
-  function Incr(x: integer; M: integer) return integer is
-  begin
-    if(x < M) then
-      return(x + 1);
-    else
-      return(0);
-    end if;
-  end Incr;
-
 
 begin  -- SimModel
 
@@ -73,14 +66,58 @@ begin  -- SimModel
 	data_out <= data_in;
  end generate triv;
 
+ qD1: if (queue_depth = 1) generate
+   RB: block
+      signal full_flag: boolean;
+      signal data_reg: std_logic_vector(data_width-1 downto 0);
+
+   begin
+
+      push_ack <= '1' when (not full_flag) else '0';
+      pop_ack  <= '1' when full_flag else '0';
+      data_out <= data_reg;
+
+      process(clk, reset, push_req, pop_req, full_flag)
+	variable next_full_flag_var: boolean;
+        variable next_data_reg_var: std_logic_vector(data_width-1 downto 0);
+      begin
+	next_full_flag_var := full_flag;
+        next_data_reg_var := data_reg;
+
+        if (full_flag) then
+           if (pop_req = '1') then
+              next_full_flag_var := false;
+           end if;
+        else 
+           if (push_req = '1') then
+               next_full_flag_var := true;
+               next_data_reg_var :=  data_in;
+	   end if;
+         end if;
+  
+       if (clk'event and clk='1') then
+         if(reset  = '1') then
+            full_flag <= false;
+            data_reg <= (others => '0');
+         else
+             full_flag <= next_full_flag_var;
+	     data_reg  <= next_data_reg_var;
+         end if;
+      end if;
+     end process;
+   end block;
+ end generate qD1;
 
 
- qDGt0: if queue_depth > 0 generate 
+ qDGt1: if queue_depth > 1 generate 
   NTB: block 
   	signal queue_array : QueueArray(queue_depth-1 downto 0);
-  	signal read_pointer, write_pointer : integer range 0 to queue_depth-1;
-  	signal incr_write_pointer, incr_read_pointer : integer range 0 to queue_depth-1;
-  	signal queue_size : integer range 0 to queue_depth;
+  	signal read_pointer, write_pointer, incr_write_pointer, incr_read_pointer : 
+			unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
+
+  	constant URW0: unsigned ((Ceil_Log2(queue_depth))-1 downto 0):= (others => '0');
+
+  	signal queue_size : unsigned ((Ceil_Log2(queue_depth+1))-1 downto 0);
   begin
  
     assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
@@ -88,27 +125,21 @@ begin  -- SimModel
     assert (queue_size < (queue_depth/2)) report "Queue " & name & " is half-full." severity note;
     assert (queue_size < (queue_depth/4)) report "Queue " & name & " is quarter-full." severity note;
 
-    qD1: if (queue_depth = 1) generate
-     incr_read_pointer <= read_pointer;
-     incr_write_pointer <= write_pointer;
-    end generate qD1;
 
-    qDG1: if (queue_depth > 1) generate
-     incr_read_pointer <= Incr(read_pointer, queue_depth-1);
-     incr_write_pointer <= Incr(write_pointer, queue_depth-1);
-    end generate qDG1;
+    incr_read_pointer <= (read_pointer + 1) when (read_pointer < (queue_depth - 1)) else URW0;
+    incr_write_pointer <= (write_pointer + 1) when (write_pointer < (queue_depth-1)) else URW0;
 
     push_ack <= '1' when (queue_size < queue_depth) else '0';
     pop_ack  <= '1' when (queue_size > 0) else '0';
 
     -- bottom pointer gives the data in FIFO mode..
-    data_out <= queue_array(read_pointer);
+    data_out <= queue_array(To_Integer(read_pointer));
   
     -- single process
     process(clk, reset, read_pointer, write_pointer, incr_read_pointer, incr_write_pointer, queue_size, push_req, pop_req)
-      variable qsize : integer range 0 to queue_depth;
+      variable qsize : unsigned (queue_size'high downto queue_size'low);
       variable push,pop : boolean;
-      variable next_read_ptr,next_write_ptr : integer range 0 to queue_depth-1;
+      variable next_read_ptr,next_write_ptr : unsigned (read_pointer'high downto read_pointer'low);
     begin
 
       qsize := queue_size;
@@ -136,22 +167,22 @@ begin  -- SimModel
   
   
       if(pop and (not push)) then
-          qsize := qsize - 1;
+          qsize := (qsize  - 1);
       elsif(push and (not pop)) then
-          qsize := qsize + 1;
+          qsize := (qsize + 1);
       end if;
         
   
       if(clk'event and clk = '1') then
         
 	if(reset = '1') then
-           queue_size <= 0;
-           read_pointer <= 0;
-           write_pointer <= 0;
+           queue_size <= (others => '0');
+           read_pointer <= (others => '0');
+           write_pointer <= (others => '0');
            queue_array(0) <= (others => '0'); -- initially 0.
 	else
            if(push) then
-          	queue_array(write_pointer) <= data_in;
+          	queue_array(To_Integer(write_pointer)) <= data_in;
            end if;
         
            queue_size <= qsize;
@@ -162,8 +193,9 @@ begin  -- SimModel
       end if;
 
     end process;
+
    end block NTB;
-  end generate qDGt0;
+  end generate qDGt1;
   
 
 end behave;

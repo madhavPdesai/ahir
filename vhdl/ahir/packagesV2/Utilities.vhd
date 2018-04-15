@@ -58,6 +58,10 @@ package Utilities is
   function Maximum(x,y: integer)   return integer;
   function Minimum(x,y: integer)   return integer;  
   
+  -- wrap around incr/decr
+  function IncrWrap(x: integer; M: integer) return integer;
+  function DecrWrap(x: integer; M: integer) return integer;
+
   function All_Entries_Same ( x : NaturalArray) return boolean;
   function Is_At_Most_One_Hot(x: BooleanArray) return Boolean;
 
@@ -232,6 +236,7 @@ package body Utilities is
     return(ret_var);
   end Ceil;
 
+  -- dont touch this?
   function Ceil_Log2
     ( constant x : integer)
     return integer is
@@ -290,6 +295,26 @@ package body Utilities is
       end if;
     end function Minimum;
     
+  function IncrWrap(x: integer; M: integer) return integer is
+    variable ret_val: integer;
+  begin
+    ret_val := 0;
+    if(x < M) then
+      ret_val := (x + 1);
+    end if;
+    return ret_val;
+  end IncrWrap;
+
+  function DecrWrap(x: integer; M: integer) return integer is
+	variable ret_val: integer;
+  begin
+    ret_val := M;
+    if(x > 0) then
+      ret_val := (x - 1);
+    end if;
+    return ret_val;
+  end DecrWrap;
+
 
   function All_Entries_Same ( x : NaturalArray) return boolean is
     variable ret_var : boolean;

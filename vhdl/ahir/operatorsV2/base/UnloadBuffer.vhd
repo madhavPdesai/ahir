@@ -115,7 +115,7 @@ begin  -- default_arch
   end generate DeepCase;
 
   ShallowCase: if shallow_flag generate
-    bufGt1: if buffer_size > 0 generate
+    bufGt1: if buffer_size > 1 generate
 
 		-- count number of elements in pipe.
 	process(clk, reset)
@@ -126,10 +126,12 @@ begin  -- default_arch
 			else
 				if((pop_req(0) = '1') and (pop_ack(0) = '1')) then
 					if(not ((push_req(0) = '1') and (push_ack(0) = '1'))) then
-						number_of_elements_in_pipe <= number_of_elements_in_pipe - 1;
+				          number_of_elements_in_pipe <= 
+						DecrWrap(number_of_elements_in_pipe, (buffer_size -1));
 					end if;
 				elsif((push_req(0) = '1') and (push_ack(0) = '1')) then
-					number_of_elements_in_pipe <= number_of_elements_in_pipe + 1;
+					number_of_elements_in_pipe <= 
+						IncrWrap(number_of_elements_in_pipe,(buffer_size-1));
 				end if;
 			end if;
 		end if;
@@ -174,7 +176,7 @@ begin  -- default_arch
    end generate bufGt1;
 	
 
-   bufLte1: if (buffer_size = 0) generate
+   bufLte1: if (buffer_size <= 1) generate
 	data_to_unload_register <= write_data;
 	pop_ack_to_unload_register <= write_req;
 	write_ack  <= pop_req_from_unload_register;

@@ -87,10 +87,12 @@ begin  -- default_arch
 		else
 			if((pop_req(0) = '1') and (pop_ack(0) = '1')) then
 				if(not ((push_req(0) = '1') and (push_ack(0) = '1'))) then
-					number_of_elements_in_pipe <= number_of_elements_in_pipe - 1;
+					number_of_elements_in_pipe <= 
+						DecrWrap(number_of_elements_in_pipe, buffer_size+1);
 				end if;
 			elsif((push_req(0) = '1') and (push_ack(0) = '1')) then
-				number_of_elements_in_pipe <= number_of_elements_in_pipe + 1;
+				number_of_elements_in_pipe <= 
+						IncrWrap(number_of_elements_in_pipe, buffer_size+1);
 			end if;
 		end if;
 	end if;

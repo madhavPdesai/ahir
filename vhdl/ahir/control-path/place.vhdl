@@ -32,6 +32,7 @@
 ------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library ahir;
 use ahir.GlobalConstants.all;
@@ -60,13 +61,14 @@ architecture default_arch of place is
   signal incoming_token : boolean;      -- true if a pred fires
   signal backward_reset : boolean;      -- true if a succ fires
   signal token_sig      : boolean;  -- asynchronously computed value of the token
-  signal token_latch    : integer range 0 to capacity;
+  signal token_latch    : unsigned (Ceil_Log2(capacity+1)-1 downto 0);
   
   constant debug_flag : boolean := global_debug_flag;
 begin  -- default_arch
 
   assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;
   assert marking <= capacity report "in place " & name & ": initial marking must be less than place capacity." severity error;
+
 
   -- At most one of the preds can send a pulse.
   -- We detect it with an OR over all inputs
@@ -77,33 +79,43 @@ begin  -- default_arch
   backward_reset <= OrReduce(succs);
 
   latch_token : process (clk, reset)
-
+    variable next_token_latch_var: unsigned (token_latch'high downto token_latch'low);
   begin
 
+    next_token_latch_var := token_latch;
+    if (backward_reset and (not incoming_token)) then
+	if(token_latch> 0) then
+            next_token_latch_var := (token_latch - 1);
+        end if;
+    elsif (incoming_token and (not backward_reset)) then
+	if(token_latch < capacity) then
+            next_token_latch_var := (token_latch + 1);
+        end if;
+    end if;
+    
     if clk'event and clk = '1' then  -- rising clock edge
       if reset = '1' then            -- synchronous reset (active high)
-        token_latch <= marking;
-      elsif (backward_reset and (not incoming_token)) then
-       if(debug_flag) then
-           assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
-         assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+        token_latch <= To_Unsigned(marking,token_latch'length);
+      else
+        token_latch <= next_token_latch_var;
+  
+        if(debug_flag) then
+           if (backward_reset and (not incoming_token)) then
+              assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
+              assert false report "in place " & name & ": token count decremented from " & Convert_To_String(To_Integer(token_latch)) 
 	severity note;
-       end if;
-        token_latch <= token_latch - 1;
-      elsif (incoming_token and (not backward_reset)) then
-	if(debug_flag) then
-          assert token_latch < capacity report "in place " & name & " number of tokens "
-			 & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
-			 & Convert_To_String(capacity) severity error;
-          assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
-		 severity note;
-	end if;
-        token_latch <= token_latch + 1;
-      end if;
-    end if;
+  	   elsif (incoming_token and (not backward_reset)) then
+          	assert token_latch < capacity report "in place " & name & " number of tokens "
+			 	& Convert_To_String(To_Integer(token_latch)+1) & " cannot exceed capacity " 
+			 	& Convert_To_String(capacity) severity error;
+          	assert false report "in place " & name & " token count incremented from " & Convert_To_String(To_Integer(token_latch))
+		 	severity note;
+       	    end if;
+        end if; -- if debug_flag
+      end if; -- if reset
+    end if; -- if clk'event
   end process latch_token;
 
   token <= true when (token_latch > 0) else false;
-
 
 end default_arch;

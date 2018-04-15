@@ -37,6 +37,7 @@ use ieee.numeric_std.all;
 
 
 library ahir;
+use ahir.Utilities.all;
 use ahir.SubPrograms.all;
 
 --
@@ -84,7 +85,7 @@ begin  -- SimModel
   	signal queue_vector: std_logic_vector(queue_depth-1 downto 0);
   	signal write_pointer, incr_write_pointer: std_logic_vector(queue_depth-1 downto 0);
   	signal read_pointer, incr_read_pointer: std_logic_vector(queue_depth-1 downto 0);
-  	signal queue_size : integer range 0 to queue_depth;
+     	signal queue_size : unsigned ((Ceil_Log2(queue_depth+1))-1 downto 0);
   begin
  
     assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
@@ -110,7 +111,7 @@ begin  -- SimModel
   
     -- single process
     process(clk, reset, read_pointer, write_pointer, incr_read_pointer, incr_write_pointer, queue_size, push_req, pop_req)
-      variable qsize : integer range 0 to queue_depth;
+      variable qsize : unsigned ((Ceil_Log2(queue_depth+1))-1 downto 0);
       variable push,pop : boolean;
       variable next_read_ptr,next_write_ptr : std_logic_vector(queue_depth-1 downto 0);
     begin
@@ -149,7 +150,7 @@ begin  -- SimModel
       if(clk'event and clk = '1') then
         
 	if(reset = '1') then
-           queue_size <= 0;
+           queue_size <= (others => '0');
            read_pointer <= (0 => '1', others => '0');
            write_pointer <= (0 => '1', others => '0');
            queue_vector <= (others => '0'); -- initially 0.

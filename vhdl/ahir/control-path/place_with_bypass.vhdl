@@ -32,6 +32,7 @@
 ------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library ahir;
 use ahir.GlobalConstants.all;
@@ -59,7 +60,9 @@ architecture default_arch of place_with_bypass is
 
   signal incoming_token : boolean;      -- true if a pred fires
   signal backward_reset : boolean;      -- true if a succ fires
-  signal token_latch    : integer range 0 to capacity;
+  signal token_latch    : unsigned (Ceil_Log2(capacity+1)-1 downto 0);
+  constant U0    : unsigned (Ceil_Log2(capacity+1)-1 downto 0) := (others => '0');
+
   signal non_zero       : boolean;
 
   constant debug_flag : boolean := global_debug_flag;
@@ -79,39 +82,30 @@ begin  -- default_arch
 
 
   CapGtOne: if (capacity > 1) generate
+  
+    non_zero <= (token_latch /= U0);
 
     latch_token_cap_gt_one : process (clk, reset,incoming_token, backward_reset, token_latch, non_zero)
 	variable incr, decr          : boolean;
-	variable next_token_latch_var: integer range 0 to capacity;
-	variable next_non_zero_var        : boolean; 
+    	variable next_token_latch_var: unsigned (token_latch'high downto token_latch'low);
     begin
 
       incr := incoming_token and (not backward_reset);
       decr := backward_reset and (not incoming_token);
       next_token_latch_var := token_latch;
-      next_non_zero_var := non_zero;
   
       if(incr) then
-	  if(token_latch < capacity) then
-              next_token_latch_var := token_latch + 1;
-          end if;
-          next_non_zero_var := true;
+          next_token_latch_var := token_latch + 1;
       elsif (decr) then
-          if(token_latch > 0) then
-               next_token_latch_var := token_latch - 1;
-          end if;
-          next_non_zero_var := not (token_latch = 1);
+          next_token_latch_var := token_latch - 1;
       end if;
       
-  
       if clk'event and clk = '1' then  -- rising clock edge
 
         if reset = '1' then            -- synchronous reset (active high)
-          token_latch <= marking;
-          non_zero <= (marking > 0);
+          token_latch <= To_Unsigned(marking, token_latch'length);
         else
           token_latch <= next_token_latch_var;
-          non_zero    <= next_non_zero_var;
         end if;
   
         if(debug_flag and decr) then
@@ -119,7 +113,7 @@ begin  -- default_arch
         	  if (token_latch = 0) then
           		  assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
         	  end if;
-           	  assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+           	  assert false report "in place " & name & ": token count decremented from " & Convert_To_String(to_integer(token_latch))
 		 	  severity note;
         end if;
   
@@ -127,10 +121,10 @@ begin  -- default_arch
   
        		  if(token_latch = capacity) then
          		  assert false report "in place-with-bypass: " & name & " number of tokens "
-			 	  & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
+			 	  & Convert_To_String(to_integer(token_latch)+1) & " cannot exceed capacity " 
 			 	  & Convert_To_String(capacity) severity error;
        		  end if;
-           	  assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+           	  assert false report "in place " & name & " token count incremented from " & Convert_To_String(to_integer(token_latch))
 		  	  severity note;
 	  end if;
 

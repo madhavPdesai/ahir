@@ -34,8 +34,11 @@
 -- written by Madhav P. Desai, December 2012.
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
 library ahir;
 use ahir.Types.all;
+use ahir.utilities.all;
 use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 use ahir.GlobalConstants.all;
@@ -73,7 +76,7 @@ architecture Behave of loop_terminator is
   type FSMState is (idle, pending_continue, pending_exit);
 
   signal fsm_state : FSMState;
-  signal available_iterations : integer range 0 to max_iterations_in_flight;
+  signal available_iterations : unsigned ((Ceil_Log2(max_iterations_in_flight+1) - 1) downto 0);
 
   signal lc_place_preds, lc_place_succs : BooleanArray(0 downto 0);
   signal clear_lc_place, lc_place_token : boolean;
@@ -140,7 +143,8 @@ begin  -- Behave
   --   loop_exit, available_iterations.
   --   
   process(clk, reset,lc_place_token,lt_place_token,lbe_place_token,available_iterations)
-    variable next_available_iterations : integer range 0 to max_iterations_in_flight;
+    variable next_available_iterations : 
+		unsigned(available_iterations'high downto available_iterations'low);
     variable incr,decr,rst : boolean;
   begin
     -- all outputs are deasserted by default.
@@ -185,19 +189,21 @@ begin  -- Behave
       clear_lt_place <= true;          
     end if;
 
+    -- manage count.
+    if(rst) then
+       next_available_iterations := To_Unsigned(max_iterations_in_flight - 1, available_iterations'length);
+    elsif (incr and (not decr)) then
+       next_available_iterations := (available_iterations + 1);
+    elsif (decr and (not incr)) then
+       next_available_iterations := (available_iterations - 1);
+    else
+       next_available_iterations := available_iterations;
+    end if;
 
     if(clk'event and clk = '1') then
-
-      -- manage count.
-      if(rst) then
-        available_iterations <= max_iterations_in_flight - 1;
-      elsif (incr and (not decr)) then
-        available_iterations <= available_iterations + 1;
-      elsif (decr and (not incr)) then
-        available_iterations <= available_iterations - 1;
-      end if;
-      
+	available_iterations <= next_available_iterations;
     end if;
+
   end process;
 
   assert (available_iterations > 0)  report "available_iterations = 0 in " & name  severity note;

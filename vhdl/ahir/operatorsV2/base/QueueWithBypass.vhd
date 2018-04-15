@@ -37,6 +37,7 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.BaseComponents.all;
+use ahir.Utilities.all;
 
 entity QueueWithBypass is
   generic(name : string; queue_depth: integer := 1; data_width: integer := 32);
@@ -73,10 +74,10 @@ begin  -- SimModel
 		else
 			if((qpop_req = '1') and (qpop_ack = '1')) then
 				if(not ((qpush_req = '1') and (qpush_ack = '1'))) then
-					number_of_elements_in_queue <= number_of_elements_in_queue - 1;
+					number_of_elements_in_queue <= DecrWrap(number_of_elements_in_queue, queue_depth+1);
 				end if;
 			elsif((qpush_req = '1') and (qpush_ack = '1')) then
-				number_of_elements_in_queue <= number_of_elements_in_queue + 1;
+				number_of_elements_in_queue <= IncrWrap(number_of_elements_in_queue, queue_depth+1);
 			end if;
 		end if;
 	end if;
