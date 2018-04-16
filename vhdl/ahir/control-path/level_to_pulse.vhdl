@@ -34,6 +34,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
 
 
 -- on reset, trigger an AHIR module, and keep
@@ -55,6 +58,8 @@ architecture default_arch of level_to_pulse is
   type L2PState is (idle,waiting);
   signal l2p_state : L2PState;
   signal pack_sig, preq_sig: boolean;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin
 
   process(clk,reset,lreq, pack_sig, l2p_state)

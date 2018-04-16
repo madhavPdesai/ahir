@@ -40,6 +40,10 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 entity place is
 
   generic (
@@ -64,6 +68,8 @@ architecture default_arch of place is
   signal token_latch    : unsigned (Ceil_Log2(capacity+1)-1 downto 0);
   
   constant debug_flag : boolean := global_debug_flag;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin  -- default_arch
 
   assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;

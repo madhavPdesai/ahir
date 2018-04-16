@@ -33,6 +33,10 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
@@ -48,6 +52,9 @@ end control_delay_element;
 
 architecture default_arch of control_delay_element is
   
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
+
 begin  -- default_arch
 
   ZeroDelay: if (delay_value <= 0) generate

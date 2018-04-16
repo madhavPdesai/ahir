@@ -34,6 +34,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 library ahir;
 use ahir.GlobalConstants.all;
 use ahir.Types.all;
@@ -67,6 +71,9 @@ architecture default_arch of place_with_bypass is
 
   constant debug_flag : boolean := global_debug_flag;
   
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
+
 begin  -- default_arch
 
   assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;

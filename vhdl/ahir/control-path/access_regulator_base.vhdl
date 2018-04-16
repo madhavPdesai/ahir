@@ -43,6 +43,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
@@ -78,6 +82,10 @@ architecture default_arch of access_regulator_base is
    signal regulated_req_token: Boolean; 
   
    signal regulated_req_join: boolean;
+
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
+
 begin  -- default_arch
 
    req_place_preds(0) <= req;

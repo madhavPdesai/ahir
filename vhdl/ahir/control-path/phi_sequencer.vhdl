@@ -40,6 +40,10 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 use ahir.Utilities.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 
 entity phi_sequencer  is
   generic (place_capacity : integer; nreqs : integer; nenables : integer; name : string);
@@ -63,6 +67,8 @@ architecture Behave of phi_sequencer is
   signal enable_token, enable_clear : BooleanArray(0 to nenables-1);
 
   signal enabled, ack_token, ack_clear, req_being_fired: Boolean;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin  -- Behave
 
   -- instantiate unmarked places for the in_places.

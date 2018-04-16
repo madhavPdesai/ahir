@@ -41,6 +41,7 @@ use ahir.Utilities.all;
 use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 
+
 entity access_regulator is
   generic (name: string; num_reqs : integer := 1; num_slots: integer := 1);
   port (
@@ -60,6 +61,8 @@ entity access_regulator is
 end access_regulator;
 
 architecture default_arch of access_regulator is
+
+
 begin  -- default_arch
    gen: for I in 0 to num_reqs-1 generate
 	aR: access_regulator_base generic map(name => name & "(" & Convert_To_String(I) & ")", num_slots => num_slots)

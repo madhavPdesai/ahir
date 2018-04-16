@@ -43,6 +43,9 @@ use ahir.BaseComponents.all;
 use ahir.Utilities.all;
 use ahir.GlobalConstants.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
 
 entity phi_sequencer_v2  is
   generic (place_capacity : integer; 
@@ -75,6 +78,8 @@ architecture Behave of phi_sequencer_v2 is
   signal src_update_start_tokens, src_update_start_clears : BooleanArray(0 to ntriggers-1);
   signal src_update_wait_tokens, src_update_wait_clears : BooleanArray(0 to ntriggers-1);
   signal src_sample_start_sigs : BooleanArray(0 to ntriggers-1);   -- sample starts for sources.
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin  -- Behave
 
   src_sample_starts <= src_sample_start_sigs;
