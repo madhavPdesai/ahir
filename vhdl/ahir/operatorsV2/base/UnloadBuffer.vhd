@@ -32,6 +32,7 @@
 ------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Types.all;
@@ -75,7 +76,7 @@ architecture default_arch of UnloadBuffer is
   signal pop_req, pop_ack, push_req, push_ack: std_logic_vector(0 downto 0);
   signal pipe_data_out, data_to_unload_register:  std_logic_vector(data_width-1 downto 0);
 
-  signal number_of_elements_in_pipe: integer range 0 to buffer_size+1;
+  signal number_of_elements_in_pipe: unsigned ((Ceil_Log2(buffer_size+2))-1 downto 0); 
   signal pipe_has_data: boolean;
 
   signal unload_register_ready: boolean;
@@ -122,16 +123,14 @@ begin  -- default_arch
   	begin
 		if(clk'event and clk = '1') then
 			if(reset = '1') then
-				number_of_elements_in_pipe <= 0;
+				number_of_elements_in_pipe <= (others => '0');
 			else
 				if((pop_req(0) = '1') and (pop_ack(0) = '1')) then
 					if(not ((push_req(0) = '1') and (push_ack(0) = '1'))) then
-				          number_of_elements_in_pipe <= 
-						DecrWrap(number_of_elements_in_pipe, (buffer_size -1));
+				          number_of_elements_in_pipe <= (number_of_elements_in_pipe -1);
 					end if;
 				elsif((push_req(0) = '1') and (push_ack(0) = '1')) then
-					number_of_elements_in_pipe <= 
-						IncrWrap(number_of_elements_in_pipe,(buffer_size-1));
+					number_of_elements_in_pipe <= (number_of_elements_in_pipe + 1);
 				end if;
 			end if;
 		end if;

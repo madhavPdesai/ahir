@@ -103,15 +103,17 @@ package body OperatorPackage is
   -----------------------------------------------------------------------------
   procedure ApBitsel_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is
     variable temp_int: integer;
+    alias ll : std_logic_vector (l'length-1 downto 0) is l; 
   begin
 
-      temp_int := To_Integer(To_Unsigned(Ceil_Log2(l'length)+1,r));
+      temp_int := To_Integer(To_Unsigned(Ceil_Log2(l'length),r));
+      result(result'low) := '0';
 
-      if(temp_int < l'length) then
-         result(result'low) := l(temp_int + l'low);
-      else
-         result(result'low) := '0';
-      end if;
+      for I in ll'low to ll'high loop
+           if (I = temp_int) then
+              result(result'low) := ll (I);
+           end if;
+      end loop;
 
   end procedure;
   -----------------------------------------------------------------------------

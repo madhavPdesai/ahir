@@ -141,7 +141,7 @@ begin  -- Behave
    --         is acked, the correspond reqR_register bit is set to 0.
    --
 
-   process(clk)
+   process(clk, reset, reqR_reg_is_non_zero, reqR, reqR_register, ack_s, reqR_priority_encoded)
 	variable next_reqR_register : std_logic_vector(num_reqs-1 downto 0);
    begin
 	next_reqR_register := reqR_register;

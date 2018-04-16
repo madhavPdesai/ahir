@@ -77,7 +77,7 @@ begin  -- SimModel
       pop_ack  <= '1' when full_flag else '0';
       data_out <= data_reg;
 
-      process(clk, reset, push_req, pop_req, full_flag)
+      process(clk, reset, push_req, pop_req, full_flag, data_in, data_reg)
 	variable next_full_flag_var: boolean;
         variable next_data_reg_var: std_logic_vector(data_width-1 downto 0);
       begin
@@ -133,7 +133,19 @@ begin  -- SimModel
     pop_ack  <= '1' when (queue_size > 0) else '0';
 
     -- bottom pointer gives the data in FIFO mode..
-    data_out <= queue_array(To_Integer(read_pointer));
+    -- write it this way to remove warning due to
+    -- synopsys dc synthesis.
+    process(read_pointer, queue_array) 
+       variable data_out_var: std_logic_vector(data_width-1 downto 0);
+    begin
+       data_out_var := (others => '0');
+       for I in queue_array'low to queue_array'high loop
+         if (I = To_Integer(read_pointer)) then
+       	 	data_out_var := queue_array(I);
+         end if;
+       end loop;
+       data_out <= data_out_var;
+    end process;
   
     -- single process
     process(clk, reset, read_pointer, write_pointer, incr_read_pointer, incr_write_pointer, queue_size, push_req, pop_req)
@@ -182,7 +194,11 @@ begin  -- SimModel
            queue_array(0) <= (others => '0'); -- initially 0.
 	else
            if(push) then
-          	queue_array(To_Integer(write_pointer)) <= data_in;
+		for I in queue_array'low to queue_array'high loop
+                    if(I = To_Integer(write_pointer)) then
+          		queue_array(I) <= data_in;
+		    end if;
+		end loop;
            end if;
         
            queue_size <= qsize;

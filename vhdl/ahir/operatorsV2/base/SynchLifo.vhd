@@ -90,7 +90,7 @@ begin  -- SimModel
           full_sig,
           queue_size,
           push_req,
-          pop_req,
+          pop_req, pop_req_int,
           tos_pointer,
           write_pointer)
     variable qsize : integer range 0 to queue_depth;

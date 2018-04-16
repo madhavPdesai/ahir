@@ -155,7 +155,7 @@ begin
 	--            ca_out-u will be asserted only on ca_in.
 	--            ca-out-d can depend on cr_in.
 	------------------------------------------------------------------------------------------
-	process(clk,cr_in,pop_ack,qdata,ca_in,rhs_state,reset)
+	process(clk,cr_in,pop_ack,qdata,ca_in,rhs_state,reset, c_counter)
 		variable nstate : RhsState;
 		variable ca_out_u_var : Boolean;
 		variable ca_out_d_var : Boolean;

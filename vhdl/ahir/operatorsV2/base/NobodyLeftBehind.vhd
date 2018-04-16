@@ -76,7 +76,7 @@ begin  -- Behave
      reqIn_reg_is_non_zero <= OrReduce(reqIn_register);
      reqOut <= reqIn_register when reqIn_reg_is_non_zero = '1' else reqIn;
      
-     process(clk)
+     process(clk, reset, reqIn_reg_is_non_zero, reqIn_register, reqIn, ackIn)
 	  variable next_reqIn_register : std_logic_vector(num_reqs-1 downto 0);
      begin
 	  next_reqIn_register := reqIn_register;

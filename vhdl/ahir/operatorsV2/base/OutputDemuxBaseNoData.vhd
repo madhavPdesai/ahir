@@ -70,11 +70,12 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   PGen: for I in reqR'range generate
     RegFSM: block
-      subtype int7 is integer range 0 to detailed_buffering_per_output(I);
       signal valid: std_logic;
       signal lhs_clear : std_logic;
       signal rhs_state : std_logic;
-      signal lhs_state : int7;
+
+      signal lhs_state : unsigned ((Ceil_Log2(detailed_buffering_per_output(I)+1))-1 downto 0); 
+
     begin  -- block Reg
       
       ---------------------------------------------------------------------------
@@ -88,13 +89,13 @@ begin  -- Behave
       -- at the receiver end.
       ---------------------------------------------------------------------------
       process(clk,lhs_state, lhs_clear,reset,valid)
-        variable nstate : int7;
+        variable nstate : unsigned ((Ceil_Log2(detailed_buffering_per_output(I)+1))-1 downto 0); 
         variable aL_var : std_logic;
       begin
         nstate := lhs_state;
         aL_var := '0';
         
-        if(lhs_state < int7'high) then
+        if(lhs_state < detailed_buffering_per_output(I)) then
             if(valid = '1') then
               nstate := lhs_state + 1;
               aL_var := '1';
@@ -112,7 +113,7 @@ begin  -- Behave
         
         if(clk'event and clk = '1') then
            if(reset = '1') then
-	      lhs_state <= 0;
+	      lhs_state <= (others => '0');
 	   else
               lhs_state <= nstate;
            end if;        

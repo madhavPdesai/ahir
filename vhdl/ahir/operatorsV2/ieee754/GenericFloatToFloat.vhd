@@ -97,7 +97,7 @@ begin
 	f2fi_rdy <=  not pipeline_stall;
 
 	-- stage 1 upto normalizer..
-	process(clk)
+	process(clk, reset, pipeline_stall, stage_full, fract_in_sig)
     		variable result            : UNRESOLVED_float (out_exponent_width downto -out_fraction_width);
                                         -- result value
     		variable fptype            : valid_fpstate;
@@ -224,7 +224,7 @@ begin
 			normalizer_fract(in_fraction_width downto 0) <= fract_in_sig;
 		end process;
 
-		process(clk)
+		process(clk,reset,  pipeline_stall,  stage_full,  normalizer_fract)
     			variable result    : UNRESOLVED_float (out_exponent_width downto -out_fraction_width);
 		begin
 			result :=
@@ -252,7 +252,7 @@ begin
         end generate f2D;
 
 	D2f: if (out_fraction_width < in_fraction_width) generate
-		process(clk)
+		process(clk, reset, pipeline_stall, fract_in_sig, expon_in_sig, sign_sig)
     			variable result    : UNRESOLVED_float (out_exponent_width downto -out_fraction_width);
 		begin
 			result :=

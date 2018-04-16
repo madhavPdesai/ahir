@@ -232,7 +232,7 @@ begin
   -----------------------------------------------------------------------------
   -- Stage 0: register inputs.
   -----------------------------------------------------------------------------
-  process(clk)
+  process(clk, env_rdy, pipeline_stall, reset)
     variable active_v : std_logic;
   begin
     active_v := env_rdy and not (pipeline_stall or reset);
@@ -255,7 +255,7 @@ begin
   -----------------------------------------------------------------------------
   -- Stage 1: detect NaN, deNorm, align exponents.
   -----------------------------------------------------------------------------
-  process(clk)
+  process(clk, l, r, reset, pipeline_stall, stage_full)
     variable active_v : std_logic;
     variable lfptype, rfptype : valid_fpstate;
     variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
@@ -408,7 +408,8 @@ begin
   -----------------------------------------------------------------------------
   -- Stage 2: detect NaN, deNorm, align exponents.
   -----------------------------------------------------------------------------
-  process(clk)
+  process(clk, reset, pipeline_stall, stage_full, fpresult_1, fractr_1, exceptional_result_1, shift_too_low_1, shift_lt_zero_1, shift_eq_zero_1,
+				shift_too_high_1, shift_gt_zero_1, shiftx_1, exponr_1, exponl_1)
     variable active_v : std_logic;
     variable lfptype, rfptype : valid_fpstate;
     variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
@@ -593,7 +594,7 @@ begin
   -----------------------------------------------------------------------------
   -- Stage 4: prepare date for mantissa adder
   -----------------------------------------------------------------------------
-  process(clk)
+  process(clk, reset, pipeline_stall, stage_full, shifter_out, shifter_tag_out)
     variable active_v : std_logic;
     variable lfptype, rfptype : valid_fpstate;
     variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
@@ -779,7 +780,7 @@ begin
   -----------------------------------------------------------------------------
   -- Stage 7: multiplexor.
   -----------------------------------------------------------------------------
-  process(clk)
+  process(clk, reset, pipeline_stall, stage_full, normalizer_tag_out)
     variable active_v : std_logic;
     variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
     variable fpresult_normalized         : UNRESOLVED_float (exponent_width downto -fraction_width);

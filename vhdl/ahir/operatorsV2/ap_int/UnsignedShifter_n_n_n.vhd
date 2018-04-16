@@ -123,7 +123,7 @@ begin  -- Pipelined
   NonTrivOp: if operand_width > 1 generate
 
         genStages: for STAGE in 1 to pipe_depth generate
-  		process(clk)
+  		process(clk, reset, signed_flag, intermediate_results, intermediate_shift_amount, shift_right_flag)
 			variable shifted_L: std_logic_vector(operand_width-1 downto 0);
 			variable shift_amount: unsigned(num_sig_bits-1 downto 0);
   		begin

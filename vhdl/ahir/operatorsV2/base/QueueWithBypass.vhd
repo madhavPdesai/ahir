@@ -53,7 +53,7 @@ end entity QueueWithBypass;
 
 architecture behave of QueueWithBypass is
 
-	signal number_of_elements_in_queue: integer range 0 to queue_depth + 1;
+	signal number_of_elements_in_queue: unsigned( (Ceil_Log2(queue_depth+2))-1 downto 0); 
 
 	signal qpush_req, qpush_ack, qpop_req, qpop_ack: std_logic;
 	signal qdata_in, qdata_out: std_logic_vector(data_width-1 downto 0);
@@ -70,14 +70,14 @@ begin  -- SimModel
   begin
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
-			number_of_elements_in_queue <= 0;
+			number_of_elements_in_queue <= (others => '0');
 		else
 			if((qpop_req = '1') and (qpop_ack = '1')) then
 				if(not ((qpush_req = '1') and (qpush_ack = '1'))) then
-					number_of_elements_in_queue <= DecrWrap(number_of_elements_in_queue, queue_depth+1);
+					number_of_elements_in_queue <= (number_of_elements_in_queue - 1);
 				end if;
 			elsif((qpush_req = '1') and (qpush_ack = '1')) then
-				number_of_elements_in_queue <= IncrWrap(number_of_elements_in_queue, queue_depth+1);
+				number_of_elements_in_queue <= (number_of_elements_in_queue + 1);
 			end if;
 		end if;
 	end if;

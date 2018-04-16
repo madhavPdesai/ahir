@@ -115,7 +115,7 @@ begin  -- Pipelined
 
 
         genStages: for STAGE in 1 to pipe_depth generate
-  		process(clk)
+  		process(clk, reset, stall, stage_active, intermediate_results, intermediate_shift_amount)
 			variable shifted_L: unsigned(operand_width-1 downto 0);
 			variable shift_amount: unsigned(num_sig_bits-1 downto 0);
   		begin

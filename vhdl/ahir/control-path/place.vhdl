@@ -78,7 +78,7 @@ begin  -- default_arch
   -- We detect it with an OR over all inputs
   backward_reset <= OrReduce(succs);
 
-  latch_token : process (clk, reset)
+  latch_token : process (clk, reset, token_latch, backward_reset, incoming_token)
     variable next_token_latch_var: unsigned (token_latch'high downto token_latch'low);
   begin
 

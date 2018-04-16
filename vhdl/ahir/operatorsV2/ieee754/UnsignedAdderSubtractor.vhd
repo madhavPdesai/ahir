@@ -57,7 +57,7 @@ end entity AddSubCell;
 
 architecture Behave of AddSubCell is
 begin
-	process(clk)
+	process(clk, reset, A, B, stall)
 		variable sumv: unsigned(operand_width-1 downto 0);
 		variable prop, gen: std_logic;
 	begin
@@ -215,7 +215,7 @@ begin  -- Pipelined
 
   -- stage two: calculate the block carries.
   MoreThanOneChunk: if (num_chunks > 1) generate
-     process(clk)	
+     process(clk, reset, stall, stage_active, addsubcell_Cin, addsubcell_BP, addsubcell_BG)	
 	variable cin: std_logic_vector(0 to num_chunks);
      begin
 	cin := addsubcell_Cin;

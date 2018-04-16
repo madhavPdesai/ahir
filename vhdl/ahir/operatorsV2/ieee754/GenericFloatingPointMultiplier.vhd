@@ -135,7 +135,7 @@ begin
   -----------------------------------------------------------------------------
   -- Stage 0: register inputs.
   -----------------------------------------------------------------------------
-  process(clk)
+  process(clk, reset, pipeline_stall, stage_full, env_rdy)
     variable active_v : std_logic;
   begin
     active_v := env_rdy and not (pipeline_stall or reset);
@@ -159,7 +159,7 @@ begin
   -----------------------------------------------------------------------------
   -- Stage 1: detect NaN, deNorm, align exponents.
   -----------------------------------------------------------------------------
-  process(clk)
+  process(clk, reset, pipeline_stall, stage_full, l, r)
     variable active_v : std_logic;
     variable exceptional_result: std_ulogic;
     variable lfptype, rfptype : valid_fpstate;
@@ -295,7 +295,7 @@ begin
   -----------------------------------------------------------------------------
   -- Stage 2: instantiate array multiplier
   -----------------------------------------------------------------------------
-  process(tag1, fpresult_1, rexpon_1, fp_sign_1, exceptional_result_1)
+  process(tag1, fpresult_1, rexpon_1, fp_sign_1, exceptional_result_1, fp_sign_1, exceptional_result_1)
     variable tex : std_logic_vector(tag_width+operand_width+(exponent_width+2)+1 downto 0);
     variable fp_slv : std_logic_vector(operand_width-1 downto 0);
     variable pad_bits : std_logic_vector(1 downto 0);
@@ -384,7 +384,7 @@ begin
   -----------------------------------------------------------------------------
   -- Stage 4: final multiplexor... 
   -----------------------------------------------------------------------------
-  process(clk)
+  process(clk, reset, pipeline_stall, stage_full, normalizer_tag_out, fpresult_3)
     variable active_v : std_logic;
     variable exceptional_result: std_ulogic;
     variable fpresult, fpresult_normalized   : UNRESOLVED_float (exponent_width downto -fraction_width);

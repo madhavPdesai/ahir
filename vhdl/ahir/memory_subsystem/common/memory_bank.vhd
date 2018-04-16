@@ -118,7 +118,7 @@ begin  -- behave
 
   -- FSM
   process(clk, reset, fsm_state, 
-		write_enable, write_addr, write_data, write_result_accept,
+		write_enable, write_addr, write_data, write_result_accept, write_has_priority,
 		read_enable, read_addr, read_result_accept)
 	variable next_state: FsmState;
 	variable we_base, re_base: std_logic;
