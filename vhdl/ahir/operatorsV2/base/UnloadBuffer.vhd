@@ -116,7 +116,7 @@ begin  -- default_arch
   end generate DeepCase;
 
   ShallowCase: if shallow_flag generate
-    bufGt1: if buffer_size > 1 generate
+    bufGt0: if buffer_size > 0 generate
 
 		-- count number of elements in pipe.
 	process(clk, reset)
@@ -172,14 +172,15 @@ begin  -- default_arch
         	clk        => clk,
         	reset      => reset);
 
-   end generate bufGt1;
+   end generate bufGt0;
 	
 
-   bufLte1: if (buffer_size <= 1) generate
+   -- unload-register will provide bypassed buffering.
+   bufEq0: if (buffer_size = 0) generate
 	data_to_unload_register <= write_data;
 	pop_ack_to_unload_register <= write_req;
 	write_ack  <= pop_req_from_unload_register;
-   end generate bufLte1;
+   end generate bufEq0;
 
    ulReg: UnloadRegister 
 			generic map (name => name & "-unload-register",
