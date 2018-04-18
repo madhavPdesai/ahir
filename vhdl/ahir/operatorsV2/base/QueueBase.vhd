@@ -111,13 +111,15 @@ begin  -- SimModel
 
  qDGt1: if queue_depth > 1 generate 
   NTB: block 
-  	signal queue_array : QueueArray(queue_depth-1 downto 0);
-  	signal read_pointer, write_pointer, incr_write_pointer, incr_read_pointer : 
-			unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
+   signal queue_array : QueueArray(queue_depth-1 downto 0);
+   signal read_pointer, write_pointer: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
 
-  	constant URW0: unsigned ((Ceil_Log2(queue_depth))-1 downto 0):= (others => '0');
+  constant URW0: unsigned ((Ceil_Log2(queue_depth))-1 downto 0):= (others => '0');
 
-  	signal queue_size : unsigned ((Ceil_Log2(queue_depth+1))-1 downto 0);
+  signal queue_size : unsigned ((Ceil_Log2(queue_depth+1))-1 downto 0);
+  signal incr_read_pointer, incr_write_pointer: boolean;
+  signal incr_queue_size, decr_queue_size: boolean;
+
   begin
  
     assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
@@ -126,85 +128,74 @@ begin  -- SimModel
     assert (queue_size < (queue_depth/4)) report "Queue " & name & " is quarter-full." severity note;
 
 
-    incr_read_pointer <= (read_pointer + 1) when (read_pointer < (queue_depth - 1)) else URW0;
-    incr_write_pointer <= (write_pointer + 1) when (write_pointer < (queue_depth-1)) else URW0;
+    process(clk, incr_read_pointer, incr_write_pointer, read_pointer, write_pointer, reset,
+			incr_queue_size, decr_queue_size, queue_size)
+    begin
+	if (clk'event and (clk = '1')) then
+		if(reset  = '1') then
+			read_pointer <= (others => '0');
+			write_pointer <= (others => '0');
+			queue_size <= (others => '0');
+		else
+			if(incr_read_pointer) then
+				if(read_pointer = queue_depth-1) then
+					read_pointer <= read_pointer + 1;
+				else
+					read_pointer <= (others => '0');
+				end if;
+			end if;
+
+			if(incr_write_pointer) then
+				if(write_pointer = queue_depth-1) then
+					write_pointer <= write_pointer + 1;
+				else
+					write_pointer <= (others => '0');
+				end if;
+			end if;
+
+			if incr_queue_size then
+           			queue_size <= queue_size + 1;
+			elsif decr_queue_size then
+				queue_size <= queue_size - 1;
+			end if;
+		end if;
+	end if;
+    end process;
 
     push_ack <= '1' when (queue_size < queue_depth) else '0';
     pop_ack  <= '1' when (queue_size > 0) else '0';
 
     -- bottom pointer gives the data in FIFO mode..
-    -- write it this way to remove warning due to
-    -- synopsys dc synthesis.
-    process(read_pointer, queue_array) 
-       variable data_out_var: std_logic_vector(data_width-1 downto 0);
-    begin
-       data_out_var := (others => '0');
-       for I in queue_array'low to queue_array'high loop
-         if (I = To_Integer(read_pointer)) then
-       	 	data_out_var := queue_array(I);
-         end if;
-       end loop;
-       data_out <= data_out_var;
-    end process;
+    data_out <= queue_array(To_Integer(read_pointer));
   
-    -- single process
-    process(clk, reset, read_pointer, write_pointer, incr_read_pointer, incr_write_pointer, queue_size, push_req, pop_req)
-      variable qsize : unsigned (queue_size'high downto queue_size'low);
+    -- single process..  Synopsys mangles the logic... split it into two.
+    process(clk, reset, read_pointer, write_pointer, queue_size, push_req, pop_req)
       variable push,pop : boolean;
-      variable next_read_ptr,next_write_ptr : unsigned (read_pointer'high downto read_pointer'low);
     begin
-
-      qsize := queue_size;
       push  := false;
       pop   := false;
-      next_read_ptr := read_pointer;
-      next_write_ptr := write_pointer;
       
-      if((qsize < queue_depth) and push_req = '1') then
+      if((queue_size < queue_depth) and push_req = '1') then
           push := true;
       end if;
   
-      if((qsize > 0) and pop_req = '1') then
+      if((queue_size > 0) and pop_req = '1') then
           pop := true;
       end if;
   
-  
-      if(push) then
-          next_write_ptr := incr_write_pointer;
-      end if;
-  
-      if(pop) then
-          next_read_ptr := incr_read_pointer;
-      end if;
-  
-  
-      if(pop and (not push)) then
-          qsize := (qsize  - 1);
-      elsif(push and (not pop)) then
-          qsize := (qsize + 1);
-      end if;
-        
+      incr_read_pointer <= pop;
+      incr_write_pointer <= push;
+      incr_queue_size <= push and (not pop);
+      decr_queue_size <= pop and (not push);
   
       if(clk'event and clk = '1') then
         
 	if(reset = '1') then
-           queue_size <= (others => '0');
-           read_pointer <= (others => '0');
-           write_pointer <= (others => '0');
            queue_array(0) <= (others => '0'); -- initially 0.
 	else
            if(push) then
-		for I in queue_array'low to queue_array'high loop
-                    if(I = To_Integer(write_pointer)) then
-          		queue_array(I) <= data_in;
-		    end if;
-		end loop;
-           end if;
-        
-           queue_size <= qsize;
-           read_pointer <= next_read_ptr;
-           write_pointer <= next_write_ptr;
-
+		queue_array(To_Integer(write_pointer)) <= data_in;
+	   end if;
         end if;
       end if;
 
@@ -212,6 +203,5 @@ begin  -- SimModel
 
    end block NTB;
   end generate qDGt1;
-  
 
 end behave;
