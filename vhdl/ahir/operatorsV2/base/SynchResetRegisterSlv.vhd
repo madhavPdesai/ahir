@@ -30,41 +30,30 @@
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 -- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
 ------------------------------------------------------------------------------------------------
-
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
 
-library ahir;
-use ahir.BaseComponents.all;
+-- a simple register
+entity SynchResetRegisterSlv is
+  generic(name: string; data_width: integer);
+  port(din: in std_logic_vector(data_width-1 downto 0);
+       dout: out std_logic_vector(data_width-1 downto 0);
+       clk,reset: in std_logic);
+end SynchResetRegisterSlv;
 
--- effectively a two entry queue.
--- used to break combinational paths
--- at the cost of a single cycle delay from input
--- to output.
-entity mem_repeater is
-    generic(name: string; g_data_width: integer := 32);
-    port(clk: in std_logic;
-       reset: in std_logic;
-       data_in: in std_logic_vector(g_data_width-1 downto 0);
-       req_in: in std_logic;
-       ack_out : out std_logic;
-       data_out: out std_logic_vector(g_data_width-1 downto 0);
-       req_out : out std_logic;
-       ack_in: in std_logic);
-end entity mem_repeater;
 
-architecture behave of mem_repeater is
-begin  -- SimModel
+architecture Simplest of SynchResetRegisterSlv is
+begin
 
-  bqueue: QueueBase
-             generic map (name => name & ":bqueue", queue_depth => 2,  data_width => g_data_width,
-				save_one_slot => false)
-	     port map (clk => clk, reset => reset, 
-       				data_in => data_in,
-       				push_req => req_in,
-       				push_ack => ack_out,
-       				data_out => data_out,
-       				pop_ack => req_out,
-				pop_req => ack_in);
-end behave;
+  process(din,reset,clk)
+    begin
+      if(clk'event and clk = '1') then
+        if(reset = '1') then
+          dout <= (others => '0');
+        else
+          dout <= din;
+ 	end if;
+      end if;
+  end process;
+
+end architecture Simplest;

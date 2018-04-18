@@ -35,6 +35,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 library ahir;
 use ahir.BaseComponents.all;
 use ahir.Utilities.all;
@@ -60,6 +64,10 @@ architecture behave of QueueWithBypass is
 
 	signal qhas_data: Boolean;
 	signal bypass_active : Boolean;
+
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
+
 begin  -- SimModel
 
   assert (queue_depth > 0) report "QueueWithBypass "  &  name  & " must have depth > 0 "

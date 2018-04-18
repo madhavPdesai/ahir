@@ -37,6 +37,11 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
 
 entity QueueBase is
   generic(name : string; queue_depth: integer := 1; data_width: integer := 32;
@@ -54,6 +59,9 @@ end entity QueueBase;
 architecture behave of QueueBase is
 
   type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
+
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 
 begin  -- SimModel
 
@@ -113,12 +121,15 @@ begin  -- SimModel
   NTB: block 
    signal queue_array : QueueArray(queue_depth-1 downto 0);
    signal read_pointer, write_pointer: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
+   signal next_read_pointer, next_write_pointer: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
 
   constant URW0: unsigned ((Ceil_Log2(queue_depth))-1 downto 0):= (others => '0');
 
   signal queue_size : unsigned ((Ceil_Log2(queue_depth+1))-1 downto 0);
   signal incr_read_pointer, incr_write_pointer: boolean;
   signal incr_queue_size, decr_queue_size: boolean;
+
+  signal write_flag : boolean;
 
   begin
  
@@ -128,31 +139,12 @@ begin  -- SimModel
     assert (queue_size < (queue_depth/4)) report "Queue " & name & " is quarter-full." severity note;
 
 
-    process(clk, incr_read_pointer, incr_write_pointer, read_pointer, write_pointer, reset,
-			incr_queue_size, decr_queue_size, queue_size)
+    process(clk, reset, incr_queue_size, decr_queue_size, queue_size)
     begin
 	if (clk'event and (clk = '1')) then
 		if(reset  = '1') then
-			read_pointer <= (others => '0');
-			write_pointer <= (others => '0');
 			queue_size <= (others => '0');
 		else
-			if(incr_read_pointer) then
-				if(read_pointer = queue_depth-1) then
-					read_pointer <= read_pointer + 1;
-				else
-					read_pointer <= (others => '0');
-				end if;
-			end if;
-
-			if(incr_write_pointer) then
-				if(write_pointer = queue_depth-1) then
-					write_pointer <= write_pointer + 1;
-				else
-					write_pointer <= (others => '0');
-				end if;
-			end if;
-
 			if incr_queue_size then
            			queue_size <= queue_size + 1;
 			elsif decr_queue_size then
@@ -165,11 +157,66 @@ begin  -- SimModel
     push_ack <= '1' when (queue_size < queue_depth) else '0';
     pop_ack  <= '1' when (queue_size > 0) else '0';
 
+    -- next read pointer, write pointer.
+    process(incr_read_pointer, read_pointer) 
+    begin
+	if(incr_read_pointer) then
+		if(read_pointer = queue_depth-1) then
+			next_read_pointer <= (others => '0');
+		else
+			next_read_pointer <= read_pointer + 1;
+		end if;
+	else
+		next_read_pointer <= read_pointer;
+	end if;
+    end process;
+    rdpReg: SynchResetRegisterUnsigned generic map (name => name & ":rpreg", data_width => read_pointer'length)
+		port map (clk => clk, reset => reset, din => next_read_pointer, dout => read_pointer);
+
+    process(incr_write_pointer, write_pointer) 
+    begin
+	if(incr_write_pointer) then
+		if(write_pointer = queue_depth-1) then
+			next_write_pointer <= (others => '0');
+		else
+			next_write_pointer <= write_pointer + 1;
+		end if;
+	else
+		next_write_pointer <= write_pointer;
+	end if;
+    end process;
+    wrpReg: SynchResetRegisterUnsigned generic map (name => name & ":wrpreg", data_width => write_pointer'length)
+		port map (clk => clk, reset => reset, din => next_write_pointer, dout => write_pointer);
+
     -- bottom pointer gives the data in FIFO mode..
-    data_out <= queue_array(To_Integer(read_pointer));
+    process (read_pointer, queue_array)
+	variable data_out_var : std_logic_vector(data_width-1 downto 0);
+    begin
+	data_out_var := (others =>  '0');
+        for I in 0 to queue_depth-1 loop
+	    if(I = To_Integer(read_pointer)) then
+    		data_out_var := queue_array(I);
+	    end if;
+	end loop;
+	data_out <= data_out_var;
+    end process;
+
+    -- write to queue-array.
+    Wgen: for W in 0 to queue_depth-1 generate
+       process(clk, reset, write_flag, write_pointer, data_in) 
+       begin
+		if(clk'event and (clk = '1')) then
+			if(reset = '1') then
+                             queue_array(W) <= (others => '0');
+			elsif (write_flag and (W = write_pointer)) then
+			     queue_array(W) <= data_in;
+			end if;
+		end if;
+       end process;
+    end generate Wgen;
   
     -- single process..  Synopsys mangles the logic... split it into two.
-    process(clk, reset, read_pointer, write_pointer, queue_size, push_req, pop_req)
+    process(read_pointer, write_pointer, queue_size, push_req, pop_req)
       variable push,pop : boolean;
     begin
       push  := false;
@@ -188,17 +235,7 @@ begin  -- SimModel
       incr_queue_size <= push and (not pop);
       decr_queue_size <= pop and (not push);
   
-      if(clk'event and clk = '1') then
-        
-	if(reset = '1') then
-           queue_array(0) <= (others => '0'); -- initially 0.
-	else
-           if(push) then
-		queue_array(To_Integer(write_pointer)) <= data_in;
-	   end if;
-        end if;
-      end if;
-
+      write_flag <= push;
     end process;
 
    end block NTB;

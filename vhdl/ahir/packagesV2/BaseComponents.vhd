@@ -497,12 +497,27 @@ package BaseComponents is
            clk,reset: in std_logic);
   end component RegisterBase;
 
+  component SynchResetRegisterSlv is
+    generic(name: string; data_width: integer);
+    port(din: in std_logic_vector(data_width-1 downto 0);
+       dout: out std_logic_vector(data_width-1 downto 0);
+       clk,reset: in std_logic);
+  end component SynchResetRegisterSlv;
+
+  component SynchResetRegisterUnsigned is
+    generic(name: string; data_width: integer);
+    port(din: in unsigned(data_width-1 downto 0);
+       dout: out unsigned(data_width-1 downto 0);
+       clk,reset: in std_logic);
+  end component SynchResetRegisterUnsigned;
+
+
   -----------------------------------------------------------------------------
   -- queue, fifo, lifo
   -----------------------------------------------------------------------------
   
   component QueueBase 
-    generic(name : string; queue_depth: integer := 2; data_width: integer := 32);
+    generic(name : string; queue_depth: integer := 2; data_width: integer := 32; save_one_slot: Boolean := false);
     port(clk: in std_logic;
          reset: in std_logic;
          data_in: in std_logic_vector(data_width-1 downto 0);
