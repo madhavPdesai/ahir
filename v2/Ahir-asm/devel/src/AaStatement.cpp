@@ -6199,6 +6199,12 @@ bool AaCallStatement::Writes_To_Memory_Space(AaMemorySpace* ms)
 	return(ret_val);
 }
 
+
+bool AaCallStatement::Is_Opaque_Call_Statement()
+{
+	return(_called_module->Get_Opaque_Flag());
+}
+
 // return true on error.
 bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector<AaExpression*>& targets, 
 		vector<AaStatement*>& slist, int buffering, int line_number)

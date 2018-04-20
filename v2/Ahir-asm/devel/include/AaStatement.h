@@ -683,6 +683,7 @@ class AaCallStatement: public AaStatement
   virtual void Set_Pipeline_Parent(AaStatement* dws);
 
   virtual bool Is_Call_Statement() {return(true);}
+  virtual bool Is_Opaque_Call_Statement();
 
   // return true if module writes to pipe ..
   virtual bool Is_Write_To_Pipe(AaPipeObject* obj);

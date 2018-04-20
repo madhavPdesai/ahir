@@ -142,6 +142,8 @@ void AaModule::Print(ostream& ofile)
 
   if(this->Get_Noopt_Flag())
 	ofile << "$noopt ";
+  if(this->Get_Opaque_Flag())
+	ofile << "$opaque ";
  
 
   ofile << "$module [" << this->Get_Label() << "]" << endl;

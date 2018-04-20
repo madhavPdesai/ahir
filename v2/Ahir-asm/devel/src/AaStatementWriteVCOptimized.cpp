@@ -758,87 +758,90 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag,
 		{
 			AaRoot* expr = (*iter).second[idx];
 			// expr can be call statement.
-			bool is_store = expr->Writes_To_Memory_Space(ms);
-			ofile << "//  " << expr->Get_VC_Name() <<  (is_store ? " store" : " load") << endl;
-
-			if(pipeline_flag)
+			if(!expr->Is_Opaque_Call_Statement())
 			{
-				// keep track of the leading and trailing accesses in
-				// the sequence..  In the pipeline case, the trailing
-				// access set will reenable the leading accesses..
-				// the scheme: scan the list, and create a leading
-				// set of loads (or a singleton store).  At the same
-				// time create a trailing set of loads (or a singleton
-				// store).  It is possible for the leading and trailing
-				// sets to be the same.
-				if(is_store)
+				bool is_store = expr->Writes_To_Memory_Space(ms);
+				ofile << "//  " << expr->Get_VC_Name() <<  (is_store ? " store" : " load") << endl;
+
+				if(pipeline_flag)
 				{
-					if(!leading_store_found)
+					// keep track of the leading and trailing accesses in
+					// the sequence..  In the pipeline case, the trailing
+					// access set will reenable the leading accesses..
+					// the scheme: scan the list, and create a leading
+					// set of loads (or a singleton store).  At the same
+					// time create a trailing set of loads (or a singleton
+					// store).  It is possible for the leading and trailing
+					// sets to be the same.
+					if(is_store)
 					{
-						if(leading_accesses.size() == 0)
+						if(!leading_store_found)
+						{
+							if(leading_accesses.size() == 0)
+								leading_accesses.insert(expr);
+
+							leading_store_found = true;	
+						}
+
+						trailing_accesses.clear();
+						trailing_accesses.insert(expr);
+					}
+					else
+					{
+						if(!leading_store_found)
 							leading_accesses.insert(expr);
 
-						leading_store_found = true;	
+						trailing_accesses.insert(expr);
 					}
-
-					trailing_accesses.clear();
-					trailing_accesses.insert(expr);
 				}
-				else
-				{
-					if(!leading_store_found)
-						leading_accesses.insert(expr);
 
-					trailing_accesses.insert(expr);
-				}
-			}
-
-			if(is_store)
-			{
-				if(active_loads.size() > 0)
+				if(is_store)
 				{
-					// dependency between active loads and
-					// expr start.
-					for(int lsi = 0, flsi = active_loads.size(); lsi < flsi; lsi++)
+					if(active_loads.size() > 0)
 					{
-						Write_VC_Load_Store_Dependency(pipeline_flag, 
-								ms,
-								active_loads[lsi],
-								expr, ofile);
-					}
+						// dependency between active loads and
+						// expr start.
+						for(int lsi = 0, flsi = active_loads.size(); lsi < flsi; lsi++)
+						{
+							Write_VC_Load_Store_Dependency(pipeline_flag, 
+									ms,
+									active_loads[lsi],
+									expr, ofile);
+						}
 
-					// active load dependencies are taken care of
-					active_loads.clear();
-					last_store = expr;
-				}
-				else
-				{
-					if(last_store != NULL)
-						Write_VC_Load_Store_Dependency(pipeline_flag, 
+						// active load dependencies are taken care of
+						active_loads.clear();
+						last_store = expr;
+					}
+					else
+					{
+						if(last_store != NULL)
+							Write_VC_Load_Store_Dependency(pipeline_flag, 
 									ms,
 									last_store,
 									expr,
 									ofile);
 
-					last_store = expr;
+						last_store = expr;
+					}
 				}
-			}
-			else if(last_store != NULL && !is_store)
-			{
-				// dependency between last store and expr.
-				Write_VC_Load_Store_Dependency(pipeline_flag, 
-								ms,
-								last_store,
-								expr, 
-								ofile);
+				else if(last_store != NULL && !is_store)
+				{
+					// dependency between last store and expr.
+					Write_VC_Load_Store_Dependency(pipeline_flag, 
+							ms,
+							last_store,
+							expr, 
+							ofile);
 
-				// keep track of active loads.
-				active_loads.push_back(expr);
-			}
-			else if(last_store == NULL && !is_store)
-			{
-				active_loads.push_back(expr);
-			}
+					// keep track of active loads.
+					active_loads.push_back(expr);
+				}
+				else if(last_store == NULL && !is_store)
+				{
+					active_loads.push_back(expr);
+				}
+			} // ignore opaque
 		}
 
 		// TODO: in the pipeline case, the last store in the list must
@@ -848,9 +851,9 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag,
 		if(pipeline_flag)
 		{
 			Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(ms,
-							leading_accesses,
-							trailing_accesses,
-							ofile);
+					leading_accesses,
+					trailing_accesses,
+					ofile);
 			leading_store_found = false;
 			leading_accesses.clear();
 			trailing_accesses.clear();
@@ -888,12 +891,16 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<AaPipeObject*,vector<AaRoot*>
 		{
 
 			AaRoot* expr = (*iter).second[idx];
-			if(is_signal)
-				signal_access_vector.push_back(expr);
-			else if(expr->Is_Write_To_Pipe(obj))
-				write_expr_vector.push_back(expr);
-			else
-				read_expr_vector.push_back(expr);
+			if(!expr->Is_Opaque_Call_Statement())
+				// opaque calls are ignored... up to 1-level.
+			{
+				if(is_signal)
+					signal_access_vector.push_back(expr);
+				else if(expr->Is_Write_To_Pipe(obj))
+					write_expr_vector.push_back(expr);
+				else
+					read_expr_vector.push_back(expr);
+			}
 		}
 
 		ofile << "// read-dependencies for pipe " << pipe_name << endl;
@@ -1611,7 +1618,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	   ofile << "$transitionmerge [" << req_merge_name << "] (" 
 	   << merge_from_entry << " " << merge_from_loop_back << ") (" << msample_req << ")" << endl;
 	   __F(msample_req, "$null"); // merged the two and tied the merge as open.
-	 */
+	   */
 
 	vector<string> triggers;
 	vector<string> src_sample_reqs;

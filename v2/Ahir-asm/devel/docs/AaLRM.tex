@@ -1504,6 +1504,26 @@ A volatile module cannot make any memory accesses or
 reads/writes to pipes.  Inside a volatile module, 
 a function call must be to volatile modules only.
 
+\subsection{Opaque Modules}
+
+The {\bf Aa} compiler normally looks inside module
+descriptions to identify load/store or pipe access
+dependencies.  If you mark a module as opaque, then
+the calling module will ignore dependencies inside
+this module while generating the control path.
+
+An example of an opaque module:
+\begin{verbatim}
+$opaque $module [foo] $in (a: $uint<9>)
+   $out (b: $uint<8>) $is
+{
+    // out_pipe is a pipe.
+    out_pipe := a
+
+    b := in_pipe
+}
+\end{verbatim}
+
 
 \subsection{Inlined Modules}
 

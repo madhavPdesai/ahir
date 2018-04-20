@@ -190,6 +190,8 @@ class AaRoot
   virtual bool Is_Null_Like_Statement() {return(false); }
   virtual bool Is_Assignment_Statement() {return(false); }
   virtual bool Is_Call_Statement() {return(false); }
+  virtual bool Is_Opaque_Call_Statement() {return(false);}
+
 
   // do we really need this? keep it for now
   virtual bool Is(string class_name);

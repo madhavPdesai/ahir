@@ -103,6 +103,7 @@ class AaModule: public AaSeriesBlockStatement
   bool _writes_to_shared_pipe;
   bool _reads_from_shared_pipe;
   bool _noopt_flag;
+  bool _opaque_flag;
 
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
@@ -131,6 +132,9 @@ class AaModule: public AaSeriesBlockStatement
 
   virtual void Set_Noopt_Flag(bool v) {_noopt_flag = v;}
   virtual bool Get_Noopt_Flag() {return(_noopt_flag);}
+
+  virtual void Set_Opaque_Flag(bool v) {_opaque_flag = v;}
+  virtual bool Get_Opaque_Flag() {return(_opaque_flag);}
 
   virtual bool Is_Part_Of_Fullrate_Pipeline()
   {
