@@ -758,7 +758,10 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag,
 		{
 			AaRoot* expr = (*iter).second[idx];
 			// expr can be call statement.
-			if(!expr->Is_Opaque_Call_Statement())
+			if(expr->Is_Expression() ||
+					(!AaProgram::_treat_all_modules_as_opaque && 
+							expr->Is_Call_Statement() && 
+							!expr->Is_Opaque_Call_Statement()))
 			{
 				bool is_store = expr->Writes_To_Memory_Space(ms);
 				ofile << "//  " << expr->Get_VC_Name() <<  (is_store ? " store" : " load") << endl;
@@ -891,7 +894,10 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<AaPipeObject*,vector<AaRoot*>
 		{
 
 			AaRoot* expr = (*iter).second[idx];
-			if(!expr->Is_Opaque_Call_Statement())
+			if(expr->Is_Expression() ||
+					(!AaProgram::_treat_all_modules_as_opaque && 
+							expr->Is_Call_Statement() && 
+							!expr->Is_Opaque_Call_Statement()))
 				// opaque calls are ignored... up to 1-level.
 			{
 				if(is_signal)

@@ -175,6 +175,7 @@ class AaProgram
   static bool _print_inlined_functions_in_caller;
   static bool _optimize_flag;
   static bool _unordered_memory_flag;
+  static bool _treat_all_modules_as_opaque;
 
   static bool _trace_on;
 

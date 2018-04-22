@@ -57,7 +57,7 @@ void Handle_Segfault(int signal)
 void Usage_Aa2VC()
 {
   cerr << "brief description: reads source Aa program, analyzes it,\n and writes out vC program.  " << endl;
-  cerr << "Usage: Aa2VC [-O] [-C] [-I <extmem-obj-name>] <filename> (<filename>) ... " << endl;
+  cerr << "Usage: Aa2VC [-O] [-C] [-P] [-I <extmem-obj-name>] <filename> (<filename>) ... " << endl;
   cerr << " options " << endl;
   cerr <<  " -h (or --help): print help and quit.. " << endl
        <<  " -I (or --internal_ext_mem_pool)  <mem-pool-name> : all orphan memory references (which cannot be resolved" << endl
@@ -68,6 +68,7 @@ void Usage_Aa2VC()
   cerr <<  " -U (or --unordered): memory subsystems will be unordered (ordered is default) " << endl;
   cerr <<  " -C (or --c_stubs): generate C stubs for all modules. These can be used later in mixed C-VHDL simulation." << endl;
   cerr <<  " -r (or --root_module) <mod-name>:  mod-name will be marked as a root-module." << endl;
+  cerr <<  " -P treat all modules as opaque..." << endl;
 
   cerr << endl;
   cerr << "example: " << endl
@@ -107,7 +108,7 @@ int main(int argc, char* argv[])
       {0, 0, 0, 0}
     };
 
-
+  AaProgram::_treat_all_modules_as_opaque = false;
   AaProgram::_tool_name = "Aa2VC";
 
   string fname;
@@ -118,7 +119,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "OUCI:hr:",
+		      "OUCPI:hr:",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -144,6 +145,10 @@ int main(int argc, char* argv[])
           mod_name = optarg;
 	  AaProgram::Mark_As_Root_Module(mod_name);
 	  std::cerr << "Info: module " << mod_name << " will be marked as a root module." << endl;
+	  break;
+	case 'P':
+	  AaProgram::_treat_all_modules_as_opaque = true;
+	  std::cerr << "Info: all modules will be treated as opaque" << endl;
 	  break;
 	case 'h':
 	  Usage_Aa2VC();

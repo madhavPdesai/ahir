@@ -88,6 +88,7 @@ string AaProgram::_aa2c_output_directory = ".";
 bool AaProgram::_optimize_flag = false;
 bool AaProgram::_unordered_memory_flag = false;
 bool AaProgram::_balance_loop_pipeline_bodies = false;
+bool AaProgram::_treat_all_modules_as_opaque = false;
 
 
 AaGraphBase AaProgram::_call_graph;
