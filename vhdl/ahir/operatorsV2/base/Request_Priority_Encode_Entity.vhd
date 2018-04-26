@@ -39,6 +39,10 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 entity Request_Priority_Encode_Entity is
   generic (
     name: string;
@@ -120,6 +124,8 @@ end Behave;
 architecture Fair of Request_Priority_Encode_Entity is
   signal reqR_register, reqR_priority_encoded : std_logic_vector(num_reqs-1 downto 0);
   signal reqR_reg_is_non_zero: std_logic;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin  -- Behave
 
    SingleRequester: if num_reqs = 1 generate

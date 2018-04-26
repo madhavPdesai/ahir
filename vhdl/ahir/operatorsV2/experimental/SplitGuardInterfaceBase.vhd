@@ -41,6 +41,10 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 use ahir.GlobalConstants.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 
 -- a guard-interface to conform with the split protocol.
 -- With this interface, the guard at the time of initiation
@@ -93,6 +97,10 @@ architecture Behave of SplitGuardInterfaceBase is
   -- constant g_queue_number_of_stages : integer := 1;
  
   signal sr_in_q : Boolean;
+
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
+
 begin
 	ca_out <= ca_out_d or ca_out_u;
 

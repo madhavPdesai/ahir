@@ -39,6 +39,10 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 
 -- make sure that there is no starvation..
 --
@@ -62,6 +66,8 @@ end entity;
 architecture Fair of NobodyLeftBehind is
   signal reqIn_register: std_logic_vector(num_reqs-1 downto 0);
   signal reqIn_reg_is_non_zero: std_logic;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin  -- Behave
 
 

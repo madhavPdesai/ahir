@@ -39,6 +39,10 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 entity InterlockBuffer is
   generic (name: string; buffer_size: integer := 2; 
   in_data_width : integer := 32;
@@ -66,6 +70,9 @@ architecture default_arch of InterlockBuffer is
   type LoadFsmState is (l_idle, l_busy);
   signal l_fsm_state : LoadFsmState;
   
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
+
 begin  -- default_arch
 
   -- interlock buffer must have buffer-size > 0

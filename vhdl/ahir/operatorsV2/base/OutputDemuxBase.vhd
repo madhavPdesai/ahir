@@ -39,6 +39,10 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 -------------------------------------------------------------------------------
 -- a single level requester on the left, and nreq requesters on the right.
 --
@@ -77,6 +81,8 @@ architecture Behave of OutputDeMuxBase is
   signal ackL_sig : std_logic_vector(nreqs-1 downto 0);
   signal ackR_sig : BooleanArray(nreqs-1 downto 0);
   
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin  -- Behave
 
   assert(owidth = iwidth*nreqs) report "word-length mismatch in output demux " & name severity failure;

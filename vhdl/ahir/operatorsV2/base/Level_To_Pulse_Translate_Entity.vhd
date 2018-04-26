@@ -33,6 +33,10 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 -- a level to pulse translator used at the
 -- output end of a data-path operator in order
 -- to interface to the control path.
@@ -51,6 +55,8 @@ end entity;
 architecture Behave of Level_To_Pulse_Translate_Entity is
   type L2PState is (Idle,WaitForAckL);
   signal l2p_state : L2PState;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin  -- Behave
 
   process(clk, reset, aL, rR, l2p_state)

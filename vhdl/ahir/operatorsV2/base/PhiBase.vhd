@@ -39,6 +39,10 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 entity PhiBase is
   generic (
     name: string;
@@ -54,12 +58,15 @@ entity PhiBase is
 end PhiBase;
 
 
+
 architecture Behave of PhiBase is
    signal muxed_idata: std_logic_vector(data_width-1 downto 0);
    signal odata_reg: std_logic_vector(data_width-1 downto 0);
    signal there_is_a_req: boolean;
    signal ack_internal: boolean;
    signal req_registered, final_req : BooleanArray(num_reqs-1 downto 0);
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin  -- Behave
 
   assert(idata'length = (odata'length * req'length)) report "data size mismatch in PhiBase " & name severity failure;

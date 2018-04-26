@@ -43,6 +43,9 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 use ahir.GlobalConstants.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
 
 entity loop_terminator is
   
@@ -87,6 +90,8 @@ architecture Behave of loop_terminator is
   signal lbe_place_preds, lbe_place_succs : BooleanArray(0 downto 0);
   signal clear_lbe_place, lbe_place_token: boolean;  
   
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin  -- Behave
 
   -- places to remember loop-continue, loop-terminate, loop-body-exit

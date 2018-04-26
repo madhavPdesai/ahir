@@ -40,6 +40,9 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 use ahir.GlobalConstants.all;
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
 
 --
 -- The unload buffer is used all over the place.  We will use
@@ -98,6 +101,8 @@ architecture default_arch of UnloadBuffer is
 
   constant shallow_flag : boolean :=    (buffer_size < global_pipe_shallowness_threshold);
 
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin  -- default_arch
 
   DeepCase: if not shallow_flag generate

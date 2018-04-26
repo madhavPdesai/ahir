@@ -39,6 +39,10 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 entity SplitCallArbiterNoOutArgs is
   generic(name: string;
 	  num_reqs: integer;
@@ -73,6 +77,8 @@ architecture Struct of SplitCallArbiterNoOutArgs is
     signal return_data : std_logic_vector(num_reqs-1 downto 0);
     signal return_mdata : std_logic_vector(0 downto 0);
 
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin
 	return_mdata <= (others => '0');
 

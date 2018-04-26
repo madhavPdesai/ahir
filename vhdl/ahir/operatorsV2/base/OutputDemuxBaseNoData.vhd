@@ -39,6 +39,10 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 entity OutputDeMuxBaseNoData is
   generic(name : string;
           twidth: integer;
@@ -61,6 +65,8 @@ end OutputDeMuxBaseNoData;
 architecture Behave of OutputDeMuxBaseNoData is
   signal ackL_sig : std_logic_vector(nreqs-1 downto 0);
 
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin  -- Behave
 
   assert detailed_buffering_per_output'length = reqR'length report "Mismatch." severity failure;

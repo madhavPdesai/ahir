@@ -43,6 +43,10 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 entity ReceiveBuffer  is
   generic (name: string; buffer_size: integer ; data_width : integer ; full_rate: boolean);
   port ( write_req: in boolean;
@@ -64,6 +68,9 @@ architecture default_arch of ReceiveBuffer is
 
   type RxBufFsmState is (idle, busy);
   signal fsm_state : RxBufFsmState;
+
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 
 
 

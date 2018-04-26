@@ -39,6 +39,10 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 --
 -- in pull_mode, rL/aL accepts data which is sent by rR/aR.
 -- rL -> rR is 0 delay, but aR -> aL MUST have a delay.
@@ -56,6 +60,8 @@ end entity;
 architecture Behave of Pulse_To_Level_Translate_Entity is
   type PullModeState is (Idle,Ack,Waiting);
   signal pull_mode_state : PullModeState;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin  -- Behave
 
   process(clk, rL, aR, pull_mode_state)

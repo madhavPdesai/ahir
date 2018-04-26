@@ -41,6 +41,10 @@ use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 use ahir.mem_component_pack.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 entity SynchFifoWithDPRAM is
   generic(name: string; queue_depth: integer := 3; data_width: integer := 72);
   port(clk: in std_logic;
@@ -83,6 +87,8 @@ architecture behave of SynchFifoWithDPRAM is
   signal read_data_reg: std_logic_vector(data_width-1 downto 0);
 
   signal ready_for_bypass: std_logic;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 
 begin  -- SimModel
 

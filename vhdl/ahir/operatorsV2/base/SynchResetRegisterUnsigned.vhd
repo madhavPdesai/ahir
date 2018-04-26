@@ -34,6 +34,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 -- a simple register
 entity SynchResetRegisterUnsigned is
   generic(name: string; data_width: integer);
@@ -44,6 +48,8 @@ end SynchResetRegisterUnsigned;
 
 
 architecture Simplest of SynchResetRegisterUnsigned is
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin
 
   process(din,reset,clk)

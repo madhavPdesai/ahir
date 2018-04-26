@@ -40,6 +40,10 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 -- uses an aggressive pulse-to-level translation
 -- that allows back-to-back transfers to an output
 -- port.  The combinational paths are a bit longer
@@ -77,6 +81,8 @@ architecture Base of OutputPortRevised is
   constant input_buf_sizes: IntegerArray(num_reqs-1 downto 0) :=  input_buffering;
 
   signal zero_sig: std_logic;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin
 
   zero_sig <= '0';

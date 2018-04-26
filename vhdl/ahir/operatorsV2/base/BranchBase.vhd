@@ -36,6 +36,10 @@ library ahir;
 use ahir.Utilities.all;
 use ahir.SubPrograms.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 entity BranchBase is
   generic (name: string; condition_width: integer := 1; bypass_flag: boolean := false);
   port (condition: in std_logic_vector(condition_width-1 downto 0);
@@ -47,6 +51,10 @@ end entity;
 
 
 architecture Behave of BranchBase is
+
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
+
 begin
 
  noBypass: if not bypass_flag generate

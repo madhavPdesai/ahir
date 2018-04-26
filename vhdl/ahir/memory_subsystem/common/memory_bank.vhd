@@ -33,6 +33,10 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 library ahir;
 use ahir.mem_function_pack.all;
 use ahir.mem_component_pack.all;
@@ -82,6 +86,9 @@ architecture SimModel of memory_bank is
   
   type FsmState is (IDLE, RDONE, WDONE);
   signal fsm_state : FsmState;
+
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 
 begin  -- behave
 

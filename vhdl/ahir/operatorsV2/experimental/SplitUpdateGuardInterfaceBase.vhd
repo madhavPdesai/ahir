@@ -40,6 +40,10 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
 
 -- A half guard interface which forwards only
 -- the update.  (used on input ports).
@@ -65,6 +69,8 @@ architecture Behave of SplitUpdateGuardInterfaceBase is
 	signal fsm_state: FsmState;
 	signal ca_out_u, ca_out_d: Boolean;
 	signal sampled_guard_interface: std_logic;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin
 		
 	-- sr/sa interface is a dummy... no need to forward to the

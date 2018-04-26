@@ -40,6 +40,9 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
 
 -- A half guard interface which forwards only
 -- the sample.  (used on output ports).
@@ -63,6 +66,8 @@ end entity;
 architecture Behave of SplitSampleGuardInterfaceBase is
 	Type FsmState is (Idle, Busy);
 	signal fsm_state: FsmState;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
 begin
 
 	-- cr/ca interface is a dummy... no need to forward to the
