@@ -761,6 +761,8 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag,
 			if(expr->Is_Expression() ||
 					(!AaProgram::_treat_all_modules_as_opaque && 
 							expr->Is_Call_Statement() && 
+							// volatiles are ignored, as they should be
+							!(((AaCallStatement*)expr)->Get_Is_Volatile()) && 
 							!expr->Is_Opaque_Call_Statement()))
 			{
 				bool is_store = expr->Writes_To_Memory_Space(ms);
@@ -897,6 +899,8 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<AaPipeObject*,vector<AaRoot*>
 			if(expr->Is_Expression() ||
 					(!AaProgram::_treat_all_modules_as_opaque && 
 							expr->Is_Call_Statement() && 
+							// volatiles are ignored, as they should be
+							!(((AaCallStatement*)expr)->Get_Is_Volatile()) && 
 							!expr->Is_Opaque_Call_Statement()))
 				// opaque calls are ignored... up to 1-level.
 			{
