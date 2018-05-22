@@ -125,7 +125,7 @@ void vcPipe::Print_VHDL_Pipe_Signals(ostream& ofile)
 			if(num_writes > 0)
 			{
 				ofile << "-- signal decl. for read from internal signal pipe " << pipe_id << endl;
-				ofile << "signal " << pipe_id << ": std_logic_vector(" << (num_reads*pipe_width)-1 << " downto 0);" << endl;
+				ofile << "signal " << pipe_id << ": std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
 			}
 		}
 		else
