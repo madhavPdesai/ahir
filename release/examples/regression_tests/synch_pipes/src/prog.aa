@@ -1,0 +1,20 @@
+$pipe in_data  : $uint<32> $depth 2
+$pipe out_data_count : $uint<32> $depth 2
+$pipe out_data : $uint<32> $depth 2
+
+$module [p2p_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 9 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi I := _b0 $on $entry next_I $on $loopback
+		$endmerge
+
+		a := in_data $mark READ
+		out_data :=  a
+		out_data_count := I $synch (READ)
+
+		$volatile next_I := (I+1)
+		$while 1
+	}
+}
