@@ -995,6 +995,12 @@ void AaStatement::Set_Guard_Expression(AaSimpleObjectReference* oref)
 	oref->Set_Guarded_Statement(this);
 }
 
+string AaStatement::Get_VC_Synch_Transition_Name()
+{
+ 	string ret_val = __SCT(this);
+	return(ret_val);
+}
+
 //---------------------------------------------------------------------
 // AaNullStatement: public AaStatement
 //---------------------------------------------------------------------
@@ -1381,6 +1387,22 @@ string AaAssignmentStatement::Get_VC_Buffering_String()
 	}
 	return(ret_string);
 }
+  
+string AaAssignmentStatement::Get_VC_Synch_Transition_Name()
+{
+	string ret_val;
+	if(this->_source->Is_Pipe_Read() &&
+		this->_target->Is_Implicit_Variable_Reference())
+	{
+		ret_val = __UCT(this);
+	}
+	else
+	{
+		ret_val = __SCT(this);
+	}
+	return(ret_val);
+}
+
 void AaAssignmentStatement::Print(ostream& ofile)
 {
 	assert(this->Get_Target()->Get_Type() && this->Get_Source()->Get_Type());

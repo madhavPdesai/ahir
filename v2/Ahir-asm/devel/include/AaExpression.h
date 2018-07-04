@@ -419,6 +419,8 @@ class AaExpression: public AaRoot
 	virtual int Get_Existing_Buffering() {return(0);}
 	virtual AaMemorySpace* Get_VC_Memory_Space();
 
+	virtual bool Is_Pipe_Read()  {return(false);}
+	virtual bool Is_Pipe_Write() {return(false);}
 };
 
 
@@ -815,7 +817,8 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual void Set_Guarded_Expression(AaExpression* expr) {_guarded_expression = expr;}
 	virtual AaExpression* Get_Guarded_Expression() {return(_guarded_expression);}
 
-	bool Is_Pipe_Read();
+	virtual bool Is_Pipe_Read();
+	virtual bool Is_Pipe_Write();
 	AaSimpleObjectReference(AaScope* scope_tpr, string object_ref_string);
 	AaSimpleObjectReference(AaScope* scope_tpr, AaAssignmentStatement* root_object);
 

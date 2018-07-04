@@ -872,6 +872,16 @@ bool AaSimpleObjectReference::Is_Pipe_Read()
 	}
 }
 
+bool AaSimpleObjectReference::Is_Pipe_Write()
+{
+	if(this->_object == NULL)
+		return(false);
+	if(this->_object->Is_Pipe_Object())
+	{
+		return(this->Get_Is_Target());
+	}
+}
+
 //
 // from guard expression guard_expr to this.
 //

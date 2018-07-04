@@ -150,6 +150,8 @@ class AaStatement: public AaScope
 
   virtual string Get_VC_Guard_String();
 
+  virtual string Get_VC_Synch_Transition_Name();
+
   virtual void Map_Target(AaObjectReference* obj_ref);
 
   virtual string Tab();
@@ -653,6 +655,7 @@ class AaAssignmentStatement: public AaStatement
 
   virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
   virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements);
+  virtual string Get_VC_Synch_Transition_Name();
 
   virtual string Get_VC_Sample_Start_Transition_Name();
   virtual string Get_VC_Sample_Completed_Transition_Name();
