@@ -12,9 +12,9 @@ $module [p2p_check_daemon] $in() $out () $is
 
 		a := in_data $mark READ
 		out_data :=  a
-		out_data_count := I $synch (READ)
+		next_I := (I+1) $mark INCR
+		out_data_count := I $synch (READ INCR)
 
-		$volatile next_I := (I+1)
 		$while 1
 	}
 }

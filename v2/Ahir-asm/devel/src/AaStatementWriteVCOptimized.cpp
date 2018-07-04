@@ -51,11 +51,18 @@ void AaStatement::Write_VC_Synch_Dependency(set<AaRoot*>& visited_elements, bool
 			{
 				ofile << "// forced synch: synched statement will start after marked statement" 
 					<< endl;
-				string stmt_synch_transition = stmt->Get_VC_Synch_Transition_Name();
+
+				bool synch_has_delay;
+				string stmt_synch_transition = stmt->Get_VC_Synch_Transition_Name(synch_has_delay);
 				string synch_transition_name = 
 					string ("synch_") + __SST(this) + "_" + stmt_synch_transition;
 
-				ofile << "$T [" << synch_transition_name <<"] $delay" << endl;
+				ofile << "$T [" << synch_transition_name <<"] ";
+				if(!synch_has_delay)
+					ofile << " $delay" << endl;
+				else
+					ofile << endl;
+
 				__J(synch_transition_name, stmt_synch_transition) 
 					__J(__SST(this), synch_transition_name);
 				if(pipeline_flag)
