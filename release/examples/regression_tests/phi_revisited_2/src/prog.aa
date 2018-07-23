@@ -1,14 +1,19 @@
 $pipe out_data : $uint<32> $depth 2
 $pipe in_data : $uint<32> $depth 2
 
+$pipe dummy : $uint<32> $signal
+
 $module [phi_check_daemon] $in() $out () $is
 {
+	dummy := 0
 	$branchblock[lOoP] {
-		$dopipeline $depth 3 $buffering 2 $fullrate
+		$dopipeline $depth 7 $buffering 2 $fullrate
 		$merge $entry $loopback 
 			$phi CMD := ($bitcast ($uint<32>) 0) $on $entry in_data $on $loopback
+			$phi DD  := ($bitcast ($uint<32>) 0) $on $entry dummy   $on $loopback
 		$endmerge
-		out_data :=  CMD
+		$volatile odata := (CMD + DD)
+		out_data :=  odata
 		$while 1
 	}
 }

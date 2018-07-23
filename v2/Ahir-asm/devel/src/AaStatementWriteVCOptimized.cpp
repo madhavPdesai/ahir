@@ -1769,7 +1769,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 		// relayed to i/o of phi-sequencer.
 		//  This will be taken care of in a unified way.
-		if(source_expr->Is_Implicit_Variable_Reference() || source_expr->Is_Constant())
+		if(source_expr->Is_Implicit_Variable_Reference() || source_expr->Is_Constant() ||
+			source_expr->Is_Signal_Read())
 		{
 			ofile << "// Phi start dependency for implicit/constant alternative." << endl;
 			__J(__SST(source_expr), (__SST(source_expr) + "_ps"));

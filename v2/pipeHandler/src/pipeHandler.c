@@ -377,6 +377,11 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
 		  __UNLOCKLOG__
 	  }
   }
+  else
+  {
+	// yield.  so the writer may get a look in.
+	PTHREAD_YIELD();
+  }
   return(ret_val);
 }
 
@@ -439,6 +444,11 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 			__UNLOCKLOG__
 		}
 	}
+	else
+	{
+		// yield.  so the reader may get a look in.
+		PTHREAD_YIELD();
+  	}
 
 	return(ret_val);
 }
