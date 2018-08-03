@@ -30,20 +30,63 @@
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 -- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
 ------------------------------------------------------------------------------------------------
-package GlobalConstants is
-    constant global_debug_flag: boolean := false;
-    constant global_pipe_report_flag: boolean := true;
-    constant global_use_vivado_bbank_dual_port : boolean := false;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
-    --
-    -- for guarded statements... increase this with care!
-    --
-    constant max_single_bit_queue_depth_per_stage : integer := 16;  -- this is huge.. make it smaller for effect (carefully)
+--
+-- dual port synchronous memory.
+--   similar to a flip-flop as far as simultaneous read/write  is concerned
+--   if both ports try to write to the same address, the second port (1) wins
+--
+entity base_bank_dual_port_for_vivado is
+   generic ( name: string;  g_addr_width: natural := 10; g_data_width : natural := 16);
+	port(
+		clka : in std_logic;
+		clkb : in std_logic;
+		ena : in std_logic;
+		enb : in std_logic;
+		wea : in std_logic;
+		web : in std_logic;
+		addra : in std_logic_vector(g_addr_width-1 downto 0);
+		addrb : in std_logic_vector(g_addr_width-1 downto 0);
+		dia : in std_logic_vector(g_data_width-1 downto 0);
+		dib : in std_logic_vector(g_data_width-1 downto 0);
+		doa : out std_logic_vector(g_data_width-1 downto 0);
+		dob : out std_logic_vector(g_data_width-1 downto 0)
+		);
+end entity base_bank_dual_port_for_vivado;
 
-    -- threshold for deciding if a pipe is deep or shallow
-    -- pipes shallower than this are implemented using FF's
-    -- this or deeper pipes with DPRAM.  Note: this is a hack!
-    constant global_pipe_shallowness_threshold : integer := 10;  
+
+architecture XilinxBramInfer of base_bank_dual_port_for_vivado is
+  type MemArray is array (natural range <>) of std_logic_vector(g_data_width-1 downto 0);
+  shared variable mem_array : MemArray((2**g_addr_width)-1 downto 0) := (others => (others => '0'));
+begin  -- XilinxBramInfer
 
 
-end package GlobalConstants;
+ process(CLKA)	
+	begin
+	if CLKA'event and CLKA = '1' then
+			if ENA = '1' then
+					DOA <= mem_array(to_integer(unsigned(ADDRA)));
+				if WEA = '1' then
+					mem_array(to_integer(unsigned(ADDRA))) := DIA;
+				end if;
+			end if;
+		end if;
+	end process;
+
+	process(CLKB)
+	begin
+		if CLKB'event and CLKB = '1' then
+			if ENB = '1' then
+				DOB <= mem_array(to_integer(unsigned(ADDRB)));
+				if WEB = '1' then
+					mem_array(to_integer(unsigned(ADDRB))) := DIB;
+				end if;
+			end if;
+		end if;
+	end process;
+end XilinxBramInfer;
+
+

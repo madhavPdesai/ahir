@@ -1483,7 +1483,8 @@ void sock_read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv)
 
 
 // to enable setting break point in gdb.
-void __trace(const char* trace_string, int trace_index)
+void __trace(int pflag, const char* trace_string, int trace_index)
 {
-	fprintf(stderr,"TRACE %s %d\n", trace_string, trace_index);
+	if(pflag)
+		fprintf(stderr,"TRACE %s %d\n", trace_string, trace_index);
 }

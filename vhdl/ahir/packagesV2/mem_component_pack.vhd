@@ -156,6 +156,41 @@ component base_bank_dual_port is
          reset : in std_logic);
 end component base_bank_dual_port;
 
+component base_bank_dual_port_for_vivado is
+   generic ( name: string;  g_addr_width: natural := 10; g_data_width : natural := 16);
+	port(
+		clka : in std_logic;
+		clkb : in std_logic;
+		ena : in std_logic;
+		enb : in std_logic;
+		wea : in std_logic;
+		web : in std_logic;
+		addra : in std_logic_vector(g_addr_width-1 downto 0);
+		addrb : in std_logic_vector(g_addr_width-1 downto 0);
+		dia : in std_logic_vector(g_data_width-1 downto 0);
+		dib : in std_logic_vector(g_data_width-1 downto 0);
+		doa : out std_logic_vector(g_data_width-1 downto 0);
+		dob : out std_logic_vector(g_data_width-1 downto 0)
+		);
+end component base_bank_dual_port_for_vivado;
+
+component base_bank_dual_port_for_xst is
+   generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
+   port (
+	 datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         dataout_0: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         writebar_0 : in std_logic;
+	 datain_1 : in std_logic_vector(g_data_width-1 downto 0);
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+         writebar_1 : in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+end component base_bank_dual_port_for_xst;
+
 component base_bank_with_registers
    generic ( name: string;
 	g_addr_width: natural; g_data_width : natural);

@@ -34,15 +34,12 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.GlobalConstants.all;
 --
 -- dual port synchronous memory.
 --   similar to a flip-flop as far as simultaneous read/write  is concerned
 --   if both ports try to write to the same address, the second port (1) wins
 --
-entity base_bank_dual_port is
+entity base_bank_dual_port_for_xst is
    generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
    port (
 	 datain_0 : in std_logic_vector(g_data_width-1 downto 0);
@@ -57,55 +54,69 @@ entity base_bank_dual_port is
          writebar_1 : in std_logic;
          clk: in std_logic;
          reset : in std_logic);
-end entity base_bank_dual_port;
+end entity base_bank_dual_port_for_xst;
 
 
-architecture XilinxBramInfer of base_bank_dual_port is
-	signal wea, web: std_logic;
+architecture XilinxBramInfer of base_bank_dual_port_for_xst is
+  type MemArray is array (natural range <>) of std_logic_vector(g_data_width-1 downto 0);
+  signal mem_array : MemArray((2**g_addr_width)-1 downto 0) := (others => (others => '0'));
+  signal addr_reg_0 : std_logic_vector(g_addr_width-1 downto 0);
+  signal rd_enable_reg_0 : std_logic;
+  signal addr_reg_1 : std_logic_vector(g_addr_width-1 downto 0);
+  signal rd_enable_reg_1 : std_logic;
 begin  -- XilinxBramInfer
 
-	wea <= not writebar_0;
-	web <= not writebar_1;
+  --
+  -- try to flag read/write clash!
+  --
+  process(clk, enable_0, enable_1, addrin_0, addrin_1) 
+  begin
+	if(clk'event and clk = '1') then
+		if((enable_0 = '1') and (enable_1 = '1') and (addrin_0 = addrin_1) and
+			(writebar_0 /= writebar_1)) then
+			assert false report
+				"Read and Write port clash in base_bank_dual_port " & name 
+					severity error;
+		end if;
+	end if;
+  end process; 
 
-	-- global constant: use_vivado_bbank_dual_port.
-	ifVivado: if global_use_vivado_bbank_dual_port generate
-		vivadobb: base_bank_dual_port_for_vivado
-				generic map (name => name & "_vivado",
-						g_addr_width => g_addr_width,
-						g_data_width => g_data_width)
-				port map (
-					clka => clk,
-					clkb => clk,
-					ena  => enable_0,
-					enb => enable_1,
-					wea => wea,
-					web => web,
-					addra => addrin_0,
-					addrb => addrin_1,
-					dia => datain_0,
-					dib => datain_1,
-					doa => dataout_0,
-					dob => dataout_1
-				);
-	end generate ifVivado;
+  -- read/write process
+  process(clk, addrin_0,enable_0,writebar_0, addrin_1,enable_1,writebar_1)
+  begin
 
-	ifXst: if (not global_use_vivado_bbank_dual_port) generate
-		xstbb: base_bank_dual_port_for_xst
-				generic map (name => name & "_xst",
-						g_addr_width => g_addr_width,
-						g_data_width => g_data_width)
-				port map (
-	 				datain_0 => datain_0,
-         				dataout_0 => dataout_0,
-         				addrin_0 => addrin_0,
-         				enable_0 => enable_0,
-         				writebar_0 => writebar_0,
-	 				datain_1 => datain_1,
-         				dataout_1 => dataout_1,
-         				addrin_1 => addrin_1,
-         				enable_1 => enable_1,
-         				writebar_1 => writebar_1,
-         				clk => clk,
-         				reset => reset);
-	end generate ifXst;
+    -- synch read-write memory
+    if(clk'event and clk ='1') then
+
+      -- register the address
+      -- and use it in a separate assignment
+      -- for the delayed read.
+      addr_reg_0 <= addrin_0;
+      addr_reg_1 <= addrin_1;
+
+	-- generate a registered read enable
+      if(reset = '1') then
+	rd_enable_reg_0 <= '0';
+	rd_enable_reg_1 <= '0';
+      else
+	rd_enable_reg_0 <= enable_0 and writebar_0;
+	rd_enable_reg_1 <= enable_1 and writebar_1;
+      end if;
+
+      -- both ports write.. second one wins if writes
+      -- are to the same address.
+      if(enable_0 = '1' and writebar_0 = '0') then
+        mem_array(To_Integer(unsigned(addrin_0))) <= datain_0;
+      end if;
+      if(enable_1 = '1' and writebar_1 = '0') then
+        mem_array(To_Integer(unsigned(addrin_1))) <= datain_1;
+      end if;
+    end if;
+  end process;
+      	
+  -- use the registered read enable with the registered address to 
+  -- describe the read
+  dataout_0 <= mem_array(To_Integer(unsigned(addr_reg_0)));
+  dataout_1 <= mem_array(To_Integer(unsigned(addr_reg_1)));
+
 end XilinxBramInfer;

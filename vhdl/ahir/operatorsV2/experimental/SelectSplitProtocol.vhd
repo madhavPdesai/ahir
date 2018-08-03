@@ -61,8 +61,8 @@ begin
     
      -- if mux select is X during normal operations then we
      -- have a problem.
-     assert (not (sample_req and clk'event  and (clk = '1') and (reset = '0')) 
-		or (not is_x(sel(0)))) report "mux " & name & " select is X" severity error;
+     -- assert (not (sample_req and clk'event  and (clk = '1') and (reset = '0')) 
+		-- or (not is_x(sel(0)))) report "mux " & name & " select is X" severity error;
 
      ilb_data_in <=  x when (sel(0) = '1') else y;
 
