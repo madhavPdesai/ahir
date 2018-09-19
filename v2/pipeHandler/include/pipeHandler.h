@@ -51,6 +51,7 @@ struct PipeRec_
   char* pipe_name;
   int pipe_depth;
   int pipe_width;
+  int watermark;
 
   int read_pointer;
   int write_pointer;
@@ -169,6 +170,10 @@ void close_pipe_handler();
 //      PIPE_LIFO_MODE  1
 //      PIPE_FIFO_NON_BLOCK_READ 2
 uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int pipe_mode);
+
+// set watermark..   if exceeded, emit a warning.
+void set_watermark (char* pipe_name, int wmark);
+
 // set pipe status.. this tells the pipe-handler that the pipe
 // will be written into or read from 
 void set_pipe_is_written_into(char* pipe_name);

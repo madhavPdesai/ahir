@@ -33,14 +33,14 @@
 
 #define MUTEX_DECL(x) static pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER;
 #define MUTEX_DECL_NONSTATIC(x) pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER;
-#define MUTEX_LOCK(x) pthread_mutex_lock(&x);
-#define MUTEX_UNLOCK(x) pthread_mutex_unlock(&x);
+#define MUTEX_LOCK(x) pthread_mutex_lock(&(x));
+#define MUTEX_UNLOCK(x) pthread_mutex_unlock(&(x));
 
 // in the header..
 #define DECLARE_THREAD(x)  void* __##x();
 
-#define DEFINE_THREAD(x)  void* __##x() {  x(); }
-#define DEFINE_THREAD_WITH_ARG(x,arg)  void* __##x(void* arg) {  x(arg); }
+#define DEFINE_THREAD(x)  void* __##x() {  x(); return NULL;}
+#define DEFINE_THREAD_WITH_ARG(x,arg)  void* __##x(void* arg) {  x(arg); return NULL;}
 
 #define PTHREAD_DECL(x)  pthread_t  __thread_##x;
 

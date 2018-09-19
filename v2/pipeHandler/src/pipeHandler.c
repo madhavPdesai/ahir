@@ -214,6 +214,7 @@ uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int pipe
   new_p->pipe_name = strdup(pipe_name);
   new_p->pipe_width = pipe_width;
   new_p->pipe_depth = pipe_depth;
+  new_p->watermark = pipe_depth + 1;
   new_p->number_of_entries = 0;
   new_p->write_pointer = 0;
   new_p->read_pointer = 0;
@@ -385,6 +386,15 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
   return(ret_val);
 }
 
+void set_watermark (char* pipe_name,  int wmark)
+{
+	PipeRec* p = find_pipe(pipe_name);
+	if(p != NULL)
+	{
+		p->watermark = wmark;
+	}
+}
+
 uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested, void* burst_payload)
 {
 	if(log_file != NULL)
@@ -443,12 +453,18 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 			print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);
 			__UNLOCKLOG__
 		}
+		if(p->number_of_entries >= p->watermark)
+		{
+			fprintf(stderr,"\nInfo:pipeHandler: watermark on pipe %s reached.\n", pipe_name);
+		}
 	}
 	else
 	{
 		// yield.  so the reader may get a look in.
 		PTHREAD_YIELD();
   	}
+
+
 
 	return(ret_val);
 }
