@@ -189,6 +189,7 @@ class AaProgram
   // functions/entities created as part of a hierarchical
   // system build.
   static string _c_vhdl_module_prefix;
+  static string _c_module_name;
 
   // directory in which aa2c products will be created..
   static string _aa2c_output_directory;

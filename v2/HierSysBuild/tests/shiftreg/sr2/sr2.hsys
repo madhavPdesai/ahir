@@ -1,0 +1,19 @@
+
+$parameter PPPP2 8
+
+$pipe A :$uint<16> $depth PPPP2
+$pipe B :$uint<16> $depth PPPP2
+
+
+$system sr2  $library SR2_LIB
+	$in 
+		$pipe A 16
+	$out 
+		$pipe B 16
+{
+	$pipe MIDPIPE 16
+        
+	$instance sr1_base_1  SR1_LIB:sr1   A => A  B => MIDPIPE
+	$instance sr1_base_2  SR1_LIB:sr1   A => MIDPIPE  B => B
+}
+

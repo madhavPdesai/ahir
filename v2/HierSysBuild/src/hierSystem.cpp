@@ -37,6 +37,15 @@
 #include <rtlStatement.h>
 #include <rtlThread.h>
 
+uint32_t getGlobalInstanceId ()
+{
+	static uint32_t global_instance_id = 0;
+
+	global_instance_id++;
+	return(global_instance_id);
+}
+
+
 uint32_t IntPower(uint32_t A, uint32_t B)
 {
 	uint32_t ret_val = 1;
@@ -84,6 +93,7 @@ void hierRoot::Print(ofstream& ofile)
 
 hierPipe::hierPipe(string pname, int w, int d):hierRoot(pname)
 {
+	_scope = NULL;
 	_name = pname;
 	_width = w;
 	_depth = d;
@@ -201,8 +211,11 @@ hierSystemInstance::hierSystemInstance(hierSystem* parent, hierSystem* base_sys,
 {	
 	_parent = parent;
 	_base_system = base_sys; 
-	if(parent != NULL)
-		parent->Increment_Instance_Count();
+	if(base_sys != NULL)
+		base_sys->Increment_Instance_Count();
+
+	// global instance id
+	_global_instance_id = getGlobalInstanceId ();
 }
 
 bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
@@ -315,6 +328,7 @@ void hierSystemInstance::Print(ostream& ofile)
 {
 	
 
+	ofile << "// global instance id = " << this->Get_Global_Instance_Id() << endl;
 	ofile << "$instance " << this->Get_Id() << " " <<  this->_base_system->Get_Library() << " : "
 		<< this->_base_system->Get_Id() << " " << endl;
 	for(map<string,string>::iterator iter = _port_map.begin(), fiter = _port_map.end(); iter != fiter; iter++)

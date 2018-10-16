@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "I:T:P:o:G",
+		      "I:T:P:o:Ga:",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -97,6 +97,9 @@ int main(int argc, char* argv[])
 	case 'I':
 	  AaProgram::_keep_extmem_inside  = true;
 	  AaProgram::_extmem_object_name = optarg;
+	  break;
+	case 'a':
+	  AaProgram::_c_module_name = optarg;
 	  break;
 	case 'T':
 	  opt_string = optarg; 

@@ -62,7 +62,10 @@ class rtlObject;
 class rtlThread;
 class rtlString;
 
+uint32_t getGlobalInstanceId ();
 uint32_t IntPower(uint32_t A, uint32_t B); // return A**B
+string  Make_C_Legal(string x);
+
 class hierRoot
 {
 	public:
@@ -122,6 +125,7 @@ class hierSystem;
 class hierPipe: public hierRoot
 {
 	public:
+	hierSystem* _scope;
 	string _name;
 	int    _width;
 	int    _depth;
@@ -186,6 +190,11 @@ class hierSystemInstance: public hierRoot
 	hierSystem* _parent;
 	hierSystemInstance* _parent_instance;
 	hierSystem* _base_system;
+
+	uint32_t _global_instance_id;
+	void  	  Set_Global_Instance_Id(uint32_t u) { _global_instance_id = u;}
+	uint32_t  Get_Global_Instance_Id() {return (_global_instance_id);}
+
 	map<string, string> _port_map;
 	map<string, string> _reverse_port_map;
 
@@ -419,6 +428,7 @@ public:
 			p = new hierPipe(pid, pipe_width, pipe_depth);
 			_pipe_map[pid] = p;
 			_pipe_set.insert(p);
+			p->_scope =  this;
 		}
 		return(p);
 	}
@@ -700,6 +710,8 @@ class hierPipeInstance: public hierRoot
 			_instance_graph_node = g;
 			_root_actual_pipe = NULL;
 		}
+
+		string Hierarchical_Name();
 };
 
 class hierInstanceGraphArc: public hierRoot
@@ -832,6 +844,8 @@ class FlatLeafGraph: public hierRoot
 
 		void Print_Hsys_File(string top_name, string top_lib_name, ostream& ofile);
 		void Print_Pipe_Classifications(set<string>& hw_instances, ostream& ofile);
+
+		void Print_Uniquification_File (string top_name, string top_lib_name, ostream& ofile);
 
 };
 

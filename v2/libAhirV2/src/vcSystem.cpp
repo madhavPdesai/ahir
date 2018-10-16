@@ -1369,7 +1369,7 @@ void vcSystem::Print_Hsys_File(string file_name)
 		vcPipe* p = in_pipes[I];
 		bool is_signal =  p->Get_Signal();
 		ofile << (is_signal ? "    $signal" : "    $pipe") << "  ";
-		ofile << p->Get_Id() << endl;
+		ofile << p->Get_Id() <<  " " << p->Get_Width()  << " $depth " << p->Get_Depth() << endl;
 	}      
 
 	ofile << "   $out " << endl;
@@ -1378,7 +1378,7 @@ void vcSystem::Print_Hsys_File(string file_name)
 		vcPipe* p = out_pipes[J];
 		bool is_signal = p->Get_Signal();
 		ofile << (is_signal ? "    $signal" : "    $pipe") <<  "  ";
-		ofile << p->Get_Id() << endl;
+		ofile << p->Get_Id() <<  " " << p->Get_Width()  << " $depth " << p->Get_Depth() << endl;
 	}      
 	ofile << "{ " << endl;
 	ofile << "} " << endl;

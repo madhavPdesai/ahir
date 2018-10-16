@@ -56,25 +56,35 @@ bool matchPrefix(string entire_name, set<string>& prefixes)
 	return(ret_val);
 }
 
+string hierPipeInstance::Hierarchical_Name()
+{
+	string ret_val;
+	if(this->_pipe && this->_pipe->_scope != NULL)
+		ret_val  = this->_instance_graph_node->Hierarchical_Name() + "/";
+	ret_val = ret_val + this->_pipe->Get_Id();
+	return (ret_val);
+}
+
+
 void hierInstanceGraphArc::Print(ostream& ofile)
 {
 	for(int I = 0; I < _parent->_depth; I++)
 		ofile << "  ";
 
 	if(_driver != NULL)
-		ofile << _driver->Get_Id() << " --> ";
+		ofile << _driver->Hierarchical_Name() << " --> ";
 	else
 		ofile << "ENV --> ";
 	
 
 	if(_receiver != NULL)
-		ofile <<  _receiver->Get_Id();
+		ofile <<  _receiver->Hierarchical_Name();
 	else
 		ofile << " ENV";
 
 	ofile << " formal=" << 
-			((_formal_pipe == NULL) ? "null" : _formal_pipe->_pipe->Get_Id()) << ", actual=" 
-			<< ((_actual_pipe != NULL) ? _actual_pipe->_pipe->Get_Id()  : "null");
+			((_formal_pipe == NULL) ? "null" : _formal_pipe->Hierarchical_Name()) << ", actual=" 
+			<< ((_actual_pipe != NULL) ? _actual_pipe->Hierarchical_Name()  : "null");
 	ofile << endl;
 }
 
@@ -483,6 +493,95 @@ void FlatLeafGraph::Print_Hsys_File(string top_name, string top_lib_name, ostrea
    ofile << "}" << endl;
 }
 		
+
+void FlatLeafGraph::Print_Uniquification_File (string top_name, string top_lib_name, ostream& ofile)
+{
+	ofile << "! Uniguification file for system " << top_name << " library " << top_lib_name
+				<< endl;
+	ofile << "! Prefix renames.. " << endl;
+	for(set<hierInstanceGraph*>::iterator iiter = _instances.begin(), fiiter = _instances.end();
+			iiter != fiiter; iiter++)
+	{
+		hierInstanceGraph* g = *iiter;
+		string g_c_name = Make_C_Legal(g->Hierarchical_Name());
+		hierSystem* gs = g->_system;
+
+		ofile << "prefix_rename  " << gs->Get_Library() << " "  << gs->Get_Id() << "  " 
+						<< " " << 
+						g_c_name << endl;
+
+		vector<hierPipe*> int_pipes;
+		gs->List_Internal_Pipes (int_pipes);
+		if(int_pipes.size() > 0)
+			ofile << "! internal pipe renames.. for instance " 
+						<< g->Hierarchical_Name() << endl;
+		for(int P=0, fP = int_pipes.size(); P < fP; P++)
+		{
+			ofile << "rpipe_rename  " << gs->Get_Library() << " "  << 
+								gs->Get_Id() << " " <<
+								g_c_name << "  " 
+								<< int_pipes[P]->Get_Id() << " "
+								<<  g_c_name << "_"
+								<< int_pipes[P] << endl;
+			ofile << "wpipe_rename  " << gs->Get_Library() << " "  << 
+								gs->Get_Id() << " " <<
+								g_c_name << "  " 
+								<< int_pipes[P]->Get_Id() << " "
+								<<  g_c_name << "_"
+								<< int_pipes[P] << endl;
+		}
+
+		vector<hierPipe*> in_pipes;
+		gs->List_In_Pipes (in_pipes);
+		if(in_pipes.size() > 0)
+			ofile << "! in pipe renames.. for instance " 
+						<< g->Hierarchical_Name() << endl;
+		for(int P=0, fP = in_pipes.size(); P < fP; P++)
+		{
+			hierPipeInstance* ip = g->_pipe_instance_map[in_pipes[P]];
+
+			bool top_level = false;
+			if((ip->_root_actual_pipe->_pipe->_scope->Get_Id() == top_name) && 
+				(ip->_root_actual_pipe->_pipe->_scope->Get_Library() == top_lib_name))
+				top_level = true;
+			string rename_name = (top_level ? ip->_root_actual_pipe->_pipe->Get_Id() :
+						Make_C_Legal(ip->_root_actual_pipe->Hierarchical_Name()));
+
+			ofile << "rpipe_rename  " << gs->Get_Library() << " "  << 
+								gs->Get_Id() << " " <<
+								g_c_name << "  " 
+								<< ip->_pipe->Get_Id() << " "
+								<< rename_name << endl;
+		}
+
+		vector<hierPipe*> out_pipes;
+		gs->List_Out_Pipes (out_pipes);
+		if(out_pipes.size() > 0)
+			ofile << "! out pipe renames.. for instance " 
+						<< g->Hierarchical_Name() << endl;
+		for(int P=0, fP = out_pipes.size(); P < fP; P++)
+		{
+			hierPipeInstance* op = g->_pipe_instance_map[out_pipes[P]];
+
+			bool top_level = false;
+			if((op->_root_actual_pipe->_pipe->_scope->Get_Id() == top_name) && 
+				(op->_root_actual_pipe->_pipe->_scope->Get_Library() == top_lib_name))
+				top_level = true;
+
+			string rename_name = (top_level ? op->_root_actual_pipe->_pipe->Get_Id() :
+						Make_C_Legal(op->_root_actual_pipe->Hierarchical_Name()));
+
+			ofile << "wpipe_rename  " << gs->Get_Library() << " "  << 
+								gs->Get_Id() << " " <<
+								g_c_name << "  " 
+								<< op->_pipe->Get_Id() << " "
+								<< rename_name << endl;
+		}
+
+	}
+}
+
+
 void FlatLeafGraph::Print_Pipe_Classifications(set<string>& hw_instance_names, ostream& ofile)
 {
 	for(set<hierPipeInstance*>::iterator iter = this->_flat_pipes.begin(), fiter = this->_flat_pipes.end();
@@ -496,11 +595,11 @@ void FlatLeafGraph::Print_Pipe_Classifications(set<string>& hw_instance_names, o
 		bool receiver_in_hw = ((receiver != NULL) && matchPrefix(receiver->Hierarchical_Name(), hw_instance_names));
 
 		ofile << pi->_pipe->Get_Id() << " " 
-				<< pi->_pipe->Get_Width() << " " << pi->_pipe->Get_Depth() 
-				<< " " << (pi->_pipe->Get_Is_Signal() ? "signal" : "pipe") << " "
-				<< (pi->_pipe->Get_Is_Noblock() ? "noblock" : "block") << " " 
-				<< ((driver == NULL) ? "ENV" : (driver_in_hw ? "HW" : "SW")) << " " 
-				<< ((receiver == NULL) ? "ENV" : (receiver_in_hw ? "HW" : "SW"))  << endl;
+			<< pi->_pipe->Get_Width() << " " << pi->_pipe->Get_Depth() 
+			<< " " << (pi->_pipe->Get_Is_Signal() ? "signal" : "pipe") << " "
+			<< (pi->_pipe->Get_Is_Noblock() ? "noblock" : "block") << " " 
+			<< ((driver == NULL) ? "ENV" : (driver_in_hw ? "HW" : "SW")) << " " 
+			<< ((receiver == NULL) ? "ENV" : (receiver_in_hw ? "HW" : "SW"))  << endl;
 	}
 }
 

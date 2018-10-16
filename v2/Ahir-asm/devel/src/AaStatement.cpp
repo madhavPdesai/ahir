@@ -6277,38 +6277,38 @@ bool Make_Split_Statement(AaScope* scope, string src, vector<int>& sizes, vector
 
 string AaStatement::Get_C_Macro_Name()
 {
-	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_Label() + "_" 
 			+ this->Get_VC_Name() + "_c_macro_");
 }
 
 string AaStatement::Get_C_Mutex_Name()
 {
-	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_Label() + "_" 
 			+ this->Get_VC_Name() + "_c_mutex_");
 }
 
 string AaStatement::Get_Export_Declare_Macro()
 {
-	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_Label() + "_" 
 			+ this->Get_VC_Name() + "_c_export_decl_macro_");
 }
 
 string AaStatement::Get_Export_Apply_Macro()
 {
-	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_Label() + "_" 
 			+ this->Get_VC_Name() + "_c_export_apply_macro_");
 }
 
 string AaStatement::Get_C_Preamble_Macro_Name() 
 {
-	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_Label() + "_" 
 			+ this->Get_VC_Name() + "_c_preamble_macro_");
 }
 
 
 string AaStatement::Get_C_Postamble_Macro_Name()
 {
-	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_C_Name() + "_" 
+	return(AaProgram::_c_vhdl_module_prefix + "_" + this->Get_Root_Scope()->Get_Label() + "_" 
 			+ this->Get_VC_Name() + "_c_postamble_macro_");
 }
 

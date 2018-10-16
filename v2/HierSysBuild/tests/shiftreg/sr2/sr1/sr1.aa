@@ -1,0 +1,16 @@
+
+$parameter PPPP1 8
+$pipe A :$uint<16> $depth PPPP1
+$pipe B :$uint<16> $depth PPPP1
+
+$module [sr1_daemon] $in () $out () $is
+{
+	$branchblock[loop]
+	{
+	    $merge $entry loopback $endmerge
+		x := A
+		B := (x	+ x)
+	    $place [loopback]
+	}
+}
+

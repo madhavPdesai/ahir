@@ -82,6 +82,12 @@ std::map<string, int> AaProgram::_integer_parameter_map;
 // 
 string AaProgram::_c_vhdl_module_prefix="";
 
+//
+// Module name to be given to C model source.
+//
+string AaProgram::_c_module_name="";
+
+
 // directory for aa2c outputs.
 string AaProgram::_aa2c_output_directory = ".";
 
@@ -1138,13 +1144,25 @@ void AaProgram::Equalize_Paths_Of_Pipelined_Modules()
 
 void AaProgram::Write_C_Model()
 {
+	string sys_prefix = AaProgram::_c_vhdl_module_prefix;
+	string prefix_file_name = AaProgram::_aa2c_output_directory  + "/PREFIX";
+	ofstream prefix_file;
+	prefix_file.open(prefix_file_name.c_str());
+	prefix_file << sys_prefix << endl;
+	prefix_file.close();
+
 	ofstream header_file;
-	string header = AaProgram::_c_vhdl_module_prefix + "aa_c_model.h";
+	string header = sys_prefix + "aa_c_model.h";
 	string header_file_name = AaProgram::_aa2c_output_directory + "/" + header;
 	header_file.open(header_file_name.c_str());
 
+	ofstream internal_header_file;
+	string internal_header = sys_prefix + "aa_c_model_internal.h";
+	string internal_header_file_name = AaProgram::_aa2c_output_directory + "/" + internal_header;
+	internal_header_file.open(internal_header_file_name.c_str());
+
 	ofstream source_file;
-	string source = AaProgram::_c_vhdl_module_prefix + "aa_c_model.c";
+	string source = sys_prefix + "aa_c_model.c";
 	string source_file_name = AaProgram::_aa2c_output_directory + "/" + source;
 	source_file.open(source_file_name.c_str());
 
@@ -1155,7 +1173,13 @@ void AaProgram::Write_C_Model()
 	header_file << "#include <stdio.h>" << endl;
 	header_file << "#include <BitVectors.h>" << endl;
 	header_file << "#include <pipeHandler.h>" << endl;
-	// declare all the record types that you have encountered.
+
+	internal_header_file << "#include <stdlib.h>" << endl;
+	internal_header_file << "#include <unistd.h>" << endl; // for usleep.
+	internal_header_file << "#include <assert.h>" << endl;
+	internal_header_file << "#include <stdio.h>" << endl;
+	internal_header_file << "#include <BitVectors.h>" << endl;
+	internal_header_file << "#include <pipeHandler.h>" << endl;
 
 	if(AaProgram::_use_gnu_pth) 
 	{
@@ -1168,6 +1192,7 @@ void AaProgram::Write_C_Model()
 		source_file << "#include <pthreadUtils.h>" << endl;
 	}
 	source_file << "#include <Pipes.h>" << endl;
+	source_file << "#include <" << internal_header << ">" << endl;
 	source_file << "#include <" << header << ">" << endl;
 
 	source_file << "FILE* " << AaProgram::Report_Log_File_Name() << " = NULL;" << endl;
@@ -1195,7 +1220,7 @@ void AaProgram::Write_C_Model()
 		}
 	}
 
-	header_file << "// object initialization " << endl;
+	internal_header_file << "// object initialization " << endl;
 	for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
 			miter != AaProgram::_objects.end();
 			miter++)
@@ -1231,9 +1256,8 @@ void AaProgram::Write_C_Model()
 		AaModule* m = (*miter).second;
 		if(!m->Get_Foreign_Flag() && (AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end()))
 		{
-			// Each module is printed in two parts:
 			(*miter).second->Write_C_Header(header_file);
-			(*miter).second->Write_C_Source(source_file, header_file);
+			(*miter).second->Write_C_Source(source_file, internal_header_file);
 
 			string mname = m->Get_Label();
 			if(AaProgram::_top_level_daemons.find(mname) != AaProgram::_top_level_daemons.end())
@@ -1257,6 +1281,8 @@ void AaProgram::Write_C_Model()
 	for(int I = 0, fI = top_daemons.size(); I < fI; I++)
 	{
 		AaModule* m = top_daemons[I];
+
+		//TODO: register pipes declared inside module..
 		source_file << "PTHREAD_CREATE(" << m->Get_C_Outer_Wrap_Function_Name() << ");" << endl;
 	}
 	source_file << "}" << endl;
@@ -1278,6 +1304,7 @@ void AaProgram::Write_C_Model()
 
 	source_file.close();
 	header_file.close();
+	internal_header_file.close();
 }
 
 

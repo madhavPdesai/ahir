@@ -43,172 +43,143 @@ extern char *optarg;
 int opt;
 int option_index = 0;
 
-  
+
 // global variables
 map<string, hierPipe* > __pmap;
 map<string, int > __parameter_map;
 
 struct option long_options[] = {
-    {"relaxed-component-visibility", 0, 0, 0},
-    {"depend", required_argument, 0, 0},
-    {0, 0, 0, 0}
+	{"relaxed-component-visibility", 0, 0, 0},
+	{"depend", required_argument, 0, 0},
+	{0, 0, 0, 0}
 };
 
 void Handle_Segfault(int signal)
 {
-  cerr << "Error: in hierSys2C: segmentation fault! giving up!!" << endl;
-  exit(-1);
+	cerr << "Error: in hierSys2C: segmentation fault! giving up!!" << endl;
+	exit(-1);
 }
 
 void Usage_hierSys2C()
 {
-  cerr << "brief description: reads hierarchical system description and produces C code for the system, " << endl;
-  cerr << "Usage: " << endl;
-  cerr << "hierSys2C [-n <function-prefix>] [-o <out-directory>] <file-name> (<file-name>)* " << endl;
-  cerr << "Options: " << endl;
-  cerr << "   -n system-name:  a prefix of system-name will be added to all generated functions. " << endl;
-  cerr << "   -o out-directory:  generated source and header files will be printed into out-directory. " << endl;
-  cerr << "   -G  (to use Gnu Pth.. slower, but more reliable than pthreads)" << endl;
+	cerr << "brief description: reads hierarchical system description and produces C code for the system, " << endl;
+	cerr << "Usage: " << endl;
+	cerr << "hierSys2C [-n <function-prefix>] [-o <out-directory>] <file-name> (<file-name>)* " << endl;
+	cerr << "Options: " << endl;
+	cerr << "   -n system-name:  a prefix of system-name will be added to all generated functions. " << endl;
+	cerr << "   -u  (optional: will flatten and use unique ids for each instance " << endl;
+	cerr << "   -o out-directory:  generated source and header files will be printed into out-directory. " << endl;
+	cerr << "   -G  (to use Gnu Pth.. slower, but more reliable than pthreads)" << endl;
 }
 
 
 int  Parse(string filename, vector<hierSystem*>& sys_vec)
 {
-  int ret_val = 0;
-  hierSystem* sys = NULL;
-  ifstream infile;
-  
-  infile.open(filename.c_str());
-  if(!infile.is_open())
-    {
-      cerr << "Error: Could not read file " << filename << endl;
-      exit(1);
-    }
+	int ret_val = 0;
+	hierSystem* sys = NULL;
+	ifstream infile;
 
-  hierSysLexer* lexer = new hierSysLexer(infile);
-  hierSysParser* parser = new hierSysParser(*lexer);
-  
-  lexer->setFilename(filename);
-  parser->setFilename(filename);
-  
-  try
-    {
-      parser->sys_Description(sys_vec, __pmap, __parameter_map);
-    }
-  catch(ANTLR_USE_NAMESPACE(antlr)RecognitionException& re)
-    {
-      cerr << "Error: Parsing Exception: " << re.toString() << endl;
-    }
-  
-  infile.close();
-  delete parser;
+	infile.open(filename.c_str());
+	if(!infile.is_open())
+	{
+		cerr << "Error: Could not read file " << filename << endl;
+		exit(1);
+	}
 
-  return(0);
+	hierSysLexer* lexer = new hierSysLexer(infile);
+	hierSysParser* parser = new hierSysParser(*lexer);
+
+	lexer->setFilename(filename);
+	parser->setFilename(filename);
+
+	try
+	{
+		parser->sys_Description(sys_vec, __pmap, __parameter_map);
+	}
+	catch(ANTLR_USE_NAMESPACE(antlr)RecognitionException& re)
+	{
+		cerr << "Error: Parsing Exception: " << re.toString() << endl;
+	}
+
+	infile.close();
+	delete parser;
+
+	return(0);
 
 }
 
-int main(int argc, char* argv[])
+void printUniquifiedStartDaemons(vector<hierSystem*>& sys_vec, 
+		FlatLeafGraph* fg,
+		ostream& header_file,
+		ostream& source_file)
 {
+	hierSystem* top_sys = sys_vec[sys_vec.size() - 1];
 
-  int ret_val = 0;
-  string c_prefix = "";
-  string o_dir   = "./";
-
-  string opt_string;
-
-  bool use_gnu_pth = false;
-
-  signal(SIGSEGV, Handle_Segfault);
-
-  if(argc < 2)
-    {
-	Usage_hierSys2C();
-      	exit(1);
-    }
-
-  while ((opt = getopt_long(argc, argv, "n:o:G", long_options, &option_index)) != -1) {
-	switch(opt) {
-		case 'n': 
-			c_prefix = optarg;
-			cerr << "Info: C-prefix set to " << c_prefix  << "." << endl;
-			break;
-		case 'o':
-			o_dir = optarg;
-			cerr << "Info: output-directory set to " << o_dir  << "." << endl;
-			break;
-		case 'G':
-			use_gnu_pth  = true;
-			cerr << "Info: will link to Gnu Pth." << endl;
-			break;
-		default: cerr << "Error: unknown option " << opt << endl; ret_val = 1; break;
-	}
-    }
-
-  if(ret_val) return(ret_val);
-
-  vector<hierSystem*> sys_vec;
-  for(int I = optind;  I < argc; I++) {
-  	string filename = argv[I];
-  	int pstat = Parse(filename, sys_vec);
-  	if(pstat) {
-		cerr << "Error: in parsing file " << filename << endl;
-		ret_val = 1;
-	}
-  }
-      
-  if(ret_val) return(ret_val);
-
-  for(int I = 0, fI = sys_vec.size(); I < fI; I++) {
-	hierSystem* sys = sys_vec[I];
-	if(sys->Get_Error() || sys->Check_For_Errors()) {
-		cerr << "Error: in building system " << sys->Get_Id() << endl;
-		ret_val = 1;	
-	}
-	else 
-		sys->Print(cerr);
-  }
-
-
-  if(ret_val == 0) {
-  	hierSystem* top_sys = sys_vec.back();
-  	string base_source_file_name = c_prefix + "_" + top_sys->Get_Id() + ".c";
-  	string source_file_name = o_dir + "/" + c_prefix + "_" + top_sys->Get_Id() + ".c";
-  	ofstream source_file;
-	source_file.open(source_file_name.c_str());
-
-  	string base_header_file_name = c_prefix + "_" + top_sys->Get_Id() + ".h";
-  	string header_file_name = o_dir + "/" + base_header_file_name;
-  	ofstream header_file;
-  	header_file.open(header_file_name.c_str());
-
-	header_file << "#include <stdio.h>"  << endl;
-	header_file << "void " << c_prefix << "_start_daemons(FILE* fp, int trace_on);" << endl;
-	header_file << "void " << c_prefix << "_stop_daemons();" << endl;
-
-	source_file << "#include <string.h>"  << endl;
-	source_file << "#include <pipeHandler.h>"  << endl;
-
-	if(use_gnu_pth)
-		source_file << "#include <GnuPthUtils.h>"  << endl;
-	else
-		source_file << "#include <pthreadUtils.h>"  << endl;
-
-	source_file << "#include <rtl2AaMatcher.h>"  << endl;
-	source_file << "#include <" << base_header_file_name << ">" << endl;
-
-	map<hierSystem*, vector<string> >  match_daemon_map;
-	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
+	// register all pipes
+	for(set<hierPipeInstance*>::iterator pter = fg->_flat_pipes.begin(), fpter = fg->_flat_pipes.end();
+			pter != fpter; pter++)
 	{
-		hierSystem* sys = sys_vec[I];
-		vector<string> match_daemons;
-		if(sys->Number_Of_Strings() > 0)
+		hierPipeInstance* pi = *pter;
+		bool top_level_pipe  = (pi->_instance_graph_node->_system == top_sys);
+
+		hierPipe* p = pi->_pipe;
+		int W = p->Get_Width();
+		int D = p->Get_Depth();
+
+		if (D <= 0) D = 1;
+		int eW = (((W == 8) || (W == 16) || (W == 32) || (W ==64)) ? W : 8);
+		int eD = D*((((W/eW)*eW) == W) ? W/eW  : (W/eW)+1);
+
+		string pname;
+		if(!top_level_pipe)
+			pname= Make_C_Legal(pi->Hierarchical_Name());
+		else
+			pname= pi->_pipe->Get_Id();
+
+		if(p->Get_Is_Signal())
 		{
-			sys->Print_C_String_Ticker(header_file, source_file, match_daemons);
+			source_file << " register_signal(\"" << pname <<  "\", " << eW << ");" << endl;
 		}
-		match_daemon_map[sys] = match_daemons;
+		else
+		{
+			int pipe_type = (p->Get_Is_Noblock() ? 2 : 0);
+			source_file << " register_pipe(\"" << pname << "\", "  << eD << ", " << eW << ", "
+				<< pipe_type << ");" << endl;
+		}
+
+		if(fg->_driven_instance_map.find(pi) != fg->_driven_instance_map.end())
+		{
+			source_file  << "set_pipe_is_written_into(\"" << pname << "\");" << endl;
+		}
+		if(fg->_driving_instance_map.find(pi) != fg->_driving_instance_map.end())
+		{
+			source_file  << "set_pipe_is_read_from(\"" << pname << "\");" << endl;
+		}
 	}
 
-	source_file << "void " << c_prefix << "_start_daemons(FILE* fp, int trace_on) {" << endl;
+
+	// start all leaf daemons.
+	for(set<hierInstanceGraph*>::iterator iiter = fg->_instances.begin(),
+			fiiter = fg->_instances.end();
+			iiter != fiiter; iiter++)
+	{
+		hierInstanceGraph* g = *iiter;
+		string g_c_name = Make_C_Legal(g->Hierarchical_Name());
+		hierSystem* gs = g->_system;
+		string gs_prefix = gs->Get_Library() + "_" + g_c_name + "_";
+
+		header_file << "void " << gs_prefix << "start_daemons(FILE*fp, int trace_on);" << endl;
+		source_file << gs_prefix << "start_daemons(fp,trace_on);" << endl;
+
+	}
+}
+
+int printNonuniquifiedStartDaemons(vector<hierSystem*>& sys_vec,
+		map<hierSystem*, vector<string> >&  match_daemon_map,
+		ostream& header_file,
+		ostream& source_file)
+{
+	int ret_val = 0;
 	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
 	{
 
@@ -239,7 +210,7 @@ int main(int argc, char* argv[])
 			{
 				int pipe_type = (sys->Is_Noblock_Pipe(pname) ? 2 : 0);
 				source_file << " register_pipe(" << q_pname << ", "  << eD << ", " << eW << ", "
-									<< pipe_type << ");" << endl;
+					<< pipe_type << ");" << endl;
 			}
 
 			source_file << " set_pipe_is_read_from(" << q_pname << ");" << endl;
@@ -259,7 +230,7 @@ int main(int argc, char* argv[])
 			{
 				int pipe_type = (sys->Is_Noblock_Pipe(pname) ? 2 : 0);
 				source_file << " register_pipe(" << q_pname << ", "  << eD << ", " << eW << ", "
-									<< pipe_type << ");" << endl;
+					<< pipe_type << ");" << endl;
 			}
 			source_file << " set_pipe_is_written_into(" << q_pname << ");" << endl;
 		}
@@ -278,13 +249,13 @@ int main(int argc, char* argv[])
 			{
 				int pipe_type = (sys->Is_Noblock_Pipe(pname) ? 2 : 0);
 				source_file << " register_pipe(" << q_pname << ", "  << eD << ", " << eW << ", "
-									<< pipe_type << ");" << endl;
+					<< pipe_type << ");" << endl;
 			}
 			source_file << " set_pipe_is_read_from(" << q_pname << ");" << endl;
 			source_file << " set_pipe_is_written_into(" << q_pname << ");" << endl;
 		}
 	}
-	
+
 	// print daemons etc.
 	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
 	{
@@ -318,16 +289,41 @@ int main(int argc, char* argv[])
 			string lib = sys->Get_Library();
 			string id  = sys->Get_Id();
 
-			string init_fn_name = lib + "_start_daemons";
+			string init_fn_name = lib + "_" + id + "_start_daemons";
 			header_file << "void " << init_fn_name << "(FILE* fp, int trace_on);" << endl;
 			source_file << init_fn_name << "(fp, trace_on);" << endl;
 		}	
+	}
+	return(ret_val);
+}
 
+void printUniquifiedStopDaemons(vector<hierSystem*>& sys_vec,
+		FlatLeafGraph* fg,
+		ostream& header_file,
+		ostream& source_file)
+{
+	// stop all leaf daemons.
+	for(set<hierInstanceGraph*>::iterator iiter = fg->_instances.begin(),
+			fiiter = fg->_instances.end();
+			iiter != fiiter; iiter++)
+	{
+		hierInstanceGraph* g = *iiter;
+		string g_c_name = Make_C_Legal(g->Hierarchical_Name());
+		hierSystem* gs = g->_system;
+		string gs_prefix = gs->Get_Library() + "_" + g_c_name + "_";
 
+		header_file << "void " << gs_prefix << "stop_daemons();" << endl;
+		source_file << gs_prefix << "stop_daemons();" << endl;
 
 	}
-	source_file << "}" << endl;
-	source_file << "void " << c_prefix << "_stop_daemons() {" << endl;
+}
+
+
+int printNonuniquifiedStopDaemons(vector<hierSystem*>& sys_vec,
+		ostream& header_file,
+		ostream& source_file)
+{
+	int ret_val = 0;
 	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
 	{
 		hierSystem* sys = sys_vec[I];
@@ -342,20 +338,173 @@ int main(int argc, char* argv[])
 			}
 			string lib = sys->Get_Library();
 			string id  = sys->Get_Id();
-			string stop_fn_name = lib + "_stop_daemons";
+			string stop_fn_name = lib + "_" + id + "_stop_daemons";
 			header_file << "void " << stop_fn_name << "();" << endl;
 			source_file << stop_fn_name << "();" << endl;
 		}	
 	}
-	source_file << "}" << endl;
-	header_file.close();
-	source_file.close();
-  }
+	return(ret_val);
+}
 
-  if(hierRoot::_error_count > 0)
-  {
-	cerr << "Error: there were " << hierRoot::_error_count << " errors. " << endl;
-	ret_val = 1;
-  }
-  return(ret_val);
+int main(int argc, char* argv[])
+{
+
+	int ret_val = 0;
+	string c_prefix = "";
+	string o_dir   = "./";
+
+	string opt_string;
+
+	bool use_gnu_pth = false;
+	bool uniquify_flag = false;
+
+	signal(SIGSEGV, Handle_Segfault);
+
+	if(argc < 2)
+	{
+		Usage_hierSys2C();
+		exit(1);
+	}
+
+	while ((opt = getopt_long(argc, argv, "n:o:Gu", long_options, &option_index)) != -1) {
+		switch(opt) {
+			case 'n': 
+				c_prefix = optarg;
+				cerr << "Info: C-prefix set to " << c_prefix  << "." << endl;
+				break;
+			case 'u': 
+				uniquify_flag = true;
+				cerr << "Info: uniquify-flag = true."  << endl;
+				break;
+			case 'o':
+				o_dir = optarg;
+				cerr << "Info: output-directory set to " << o_dir  << "." << endl;
+				break;
+			case 'G':
+				use_gnu_pth  = true;
+				cerr << "Info: will link to Gnu Pth." << endl;
+				break;
+			default: cerr << "Error: unknown option " << opt << endl; ret_val = 1; break;
+		}
+	}
+
+	if(ret_val) return(ret_val);
+
+	vector<hierSystem*> sys_vec;
+	for(int I = optind;  I < argc; I++) {
+		string filename = argv[I];
+		int pstat = Parse(filename, sys_vec);
+		if(pstat) {
+			cerr << "Error: in parsing file " << filename << endl;
+			ret_val = 1;
+		}
+	}
+
+	if(ret_val) return(ret_val);
+
+	for(int I = 0, fI = sys_vec.size(); I < fI; I++) {
+		hierSystem* sys = sys_vec[I];
+		if(sys->Get_Error() || sys->Check_For_Errors()) {
+			cerr << "Error: in building system " << sys->Get_Id() << endl;
+			ret_val = 1;	
+		}
+		else 
+			sys->Print(cerr);
+	}
+
+
+	if(ret_val == 0) {		
+
+
+		hierSystem* top_sys = sys_vec.back();
+		hierInstanceGraph* g = NULL;
+		map<hierPipeInstance*, hierPipeInstance*> root_pipe_map;
+		FlatLeafGraph* fg = NULL;
+
+		if(uniquify_flag)
+		{
+
+			hierSystem* top_sys = sys_vec[sys_vec.size()-1];
+
+			top_sys->Build_Instance_Hierarchy(&g);
+
+			assert (g != NULL);
+
+			g->Build_Connectivity();
+			g->Set_Root_Pipes(root_pipe_map);
+			g->Build_Flat_Leaf_Graph(&fg);
+
+			assert(fg != NULL);
+
+		}
+
+		string base_source_file_name = c_prefix + "_" + top_sys->Get_Id() + ".c";
+		string source_file_name = o_dir + "/" + c_prefix + "_" + top_sys->Get_Id() + ".c";
+		ofstream source_file;
+		source_file.open(source_file_name.c_str());
+
+		string base_header_file_name = c_prefix + "_" + top_sys->Get_Id() + ".h";
+		string header_file_name = o_dir + "/" + base_header_file_name;
+		ofstream header_file;
+		header_file.open(header_file_name.c_str());
+
+		header_file << "#include <stdio.h>"  << endl;
+		header_file << "void " << c_prefix << "_start_daemons(FILE* fp, int trace_on);" << endl;
+		header_file << "void " << c_prefix << "_stop_daemons();" << endl;
+
+		source_file << "#include <string.h>"  << endl;
+		source_file << "#include <pipeHandler.h>"  << endl;
+
+		if(use_gnu_pth)
+			source_file << "#include <GnuPthUtils.h>"  << endl;
+		else
+			source_file << "#include <pthreadUtils.h>"  << endl;
+
+		source_file << "#include <rtl2AaMatcher.h>"  << endl;
+		source_file << "#include <" << base_header_file_name << ">" << endl;
+
+		map<hierSystem*, vector<string> >  match_daemon_map;
+		for(int I = 0, fI = sys_vec.size(); I < fI; I++)
+		{
+			hierSystem* sys = sys_vec[I];
+			vector<string> match_daemons;
+			if(sys->Number_Of_Strings() > 0)
+			{
+				sys->Print_C_String_Ticker(header_file, source_file, match_daemons);
+			}
+			match_daemon_map[sys] = match_daemons;
+		}
+
+		source_file << "void " << c_prefix << "_start_daemons(FILE* fp, int trace_on) {" << endl;
+		if(uniquify_flag)
+		{
+			printUniquifiedStartDaemons(sys_vec,fg,header_file,source_file);
+		}
+		else
+		{
+			ret_val = printNonuniquifiedStartDaemons(sys_vec, match_daemon_map, 
+								header_file, source_file);
+		}
+		source_file << "}" << endl;
+		source_file << "void " << c_prefix << "_stop_daemons() {" << endl;
+		if(uniquify_flag)
+		{
+			printUniquifiedStopDaemons(sys_vec, fg, header_file, source_file);
+		}
+		else
+		{
+			ret_val = printNonuniquifiedStopDaemons(sys_vec, header_file, source_file);
+		}
+
+		source_file << "}" << endl;
+		header_file.close();
+		source_file.close();
+	}
+
+	if(hierRoot::_error_count > 0)
+	{
+		cerr << "Error: there were " << hierRoot::_error_count << " errors. " << endl;
+		ret_val = 1;
+	}
+	return(ret_val);
 }

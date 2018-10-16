@@ -199,7 +199,17 @@ void AaObject::PrintC_Declaration(ofstream& ofile)
 void AaObject::PrintC_Global_Declaration(ofstream& ofile)
 {
 	AaType* t = this->Get_Type();
-	Print_C_Global_Declaration(this->C_Reference_String(), t, ofile);
+
+	// 
+	// For uniquification, each global object name must be qualified with the
+	// prefix which will be modified for each instance of a module.
+	//
+	string declared_name = AaProgram::_c_vhdl_module_prefix + "_" + this->C_Reference_String();
+	Print_C_Global_Declaration(declared_name, t, ofile);
+	
+	// a convenient handle to refer to this global is the declared name
+	// Use a define.
+	ofile << "#define " << this->C_Reference_String() << " (" << declared_name << ")" << endl;
 }
    
 

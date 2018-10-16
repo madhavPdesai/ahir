@@ -34,6 +34,7 @@ Release:
 	cp -f $(HIERSYSBUILD)/bin/hierSys2Vhdl $(RELEASE)/bin/
 	cp -f $(HIERSYSBUILD)/bin/hierSys2C $(RELEASE)/bin/
 	cp -f $(HIERSYSBUILD)/bin/hierSysPartition $(RELEASE)/bin/
+	cp -f $(HIERSYSBUILD)/bin/hierSysUniquify $(RELEASE)/bin/
 	cp -f $(HIERSYSBUILD)/bin/hierSysCheck $(RELEASE)/bin/
 	# copy the IOLIB
 	#cp -f $(IOLIB)/*.h $(RELEASE)/iolib/include/

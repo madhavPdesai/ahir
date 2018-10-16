@@ -37,3 +37,18 @@ string IntToStr(int u)
   string_stream << u;
   return(string_stream.str());
 }
+
+string  Make_C_Legal(string x)
+{
+	string ret_string;
+	int I = 0;
+	for (I =0; I < x.length(); I++)
+	{
+		if (isalnum(x[I]))
+			ret_string += x[I];
+		else
+			ret_string += "_";
+	}
+	return(ret_string);
+}
+
