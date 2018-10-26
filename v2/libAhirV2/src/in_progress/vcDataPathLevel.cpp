@@ -39,1137 +39,12 @@
 #include <vcModule.hpp>
 #include <vcSystem.hpp>
 
-void vcPipe::Register_Pipe_Read(vcModule* m, int idx)
-{
-	_pipe_read_map[m].push_back(idx);
-	_pipe_read_count++;
-	if(this->Get_P2P() && (_pipe_read_count > 1))
-	{
-		vcSystem::Error("P2P pipe " + this->Get_VHDL_Id() + " cannot have multiole readers.");
-		this->Set_P2P(false);
-	}
-}
-
-void vcPipe::Register_Pipe_Write(vcModule* m, int idx)
-{
-	_pipe_write_map[m].push_back(idx);
-	_pipe_write_count++;
-	if(this->Get_P2P() && (_pipe_write_count > 1))
-	{
-		vcSystem::Error("P2P pipe " + this->Get_VHDL_Id() + " cannot have multiple writers.");
-		this->Set_P2P(false);
-	}
-}
-
-void vcPipe::Print_VHDL_Pipe_Port_Signals(ostream& ofile)
-{
-	string pipe_id = To_VHDL(this->Get_Id());
-	int pipe_width = this->Get_Width();
-
-	int num_reads = this->Get_Pipe_Read_Count();
-	int num_writes = this->Get_Pipe_Write_Count();
-
-	bool is_input_pipe  = ((num_reads > 0) && (num_writes == 0));
-	bool is_output_pipe = ((num_reads == 0) && (num_writes > 0));
-	bool is_internal_pipe = ((num_reads > 0) && (num_writes > 0));
-
-	if(is_input_pipe)
-	{
-		ofile << "-- write to pipe " << pipe_id << endl;
-		ofile << "signal " 
-			<< pipe_id 
-			<< "_pipe_write_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		ofile << "signal " << pipe_id << "_pipe_write_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
-		ofile << "signal " << pipe_id << "_pipe_write_ack : std_logic_vector(0 downto 0);" << endl;
-		if(this->Get_Signal())
-		{
-			ofile << "signal " 
-				<< pipe_id 
-				<< ": std_logic_vector(" << (pipe_width-1) << " downto 0);" << endl;
-		}
-	}
-
-	if(is_output_pipe)
-	{
-		ofile << "-- read from pipe " << pipe_id << endl;
-		ofile << "signal "
-			<< pipe_id << "_pipe_read_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		ofile << "signal " << pipe_id << "_pipe_read_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
-		ofile << "signal " << pipe_id << "_pipe_read_ack : std_logic_vector(0 downto 0);" << endl;
-		if(this->Get_Signal())
-			ofile << "signal " << pipe_id << ": std_logic_vector(" << (pipe_width-1) << " downto 0);" << endl;
-	}
-}
-
-
-void vcPipe::Print_VHDL_Pipe_Signals(ostream& ofile)
-{
-	string pipe_id = this->Get_Id();
-	int pipe_width = this->Get_Width();
-
-	int num_reads = this->Get_Pipe_Read_Count();
-	int num_writes = this->Get_Pipe_Write_Count();
-
-	if(num_writes >  0)
-	{
-		ofile << "-- aggregate signals for write to pipe " << pipe_id << endl;
-		ofile << "signal " << pipe_id << "_pipe_write_data: std_logic_vector(" << (num_writes*pipe_width)-1 << " downto 0);" << endl;
-		ofile << "signal " << pipe_id << "_pipe_write_req: std_logic_vector(" << num_writes-1 << " downto 0);" << endl;
-		ofile << "signal " << pipe_id << "_pipe_write_ack: std_logic_vector(" << num_writes-1 << " downto 0);" << endl;
-	}
-
-	if(num_reads > 0)
-	{
-		if(this->Get_Signal())
-		{
-			if(num_writes > 0)
-			{
-				ofile << "-- signal decl. for read from internal signal pipe " << pipe_id << endl;
-				ofile << "signal " << pipe_id << ": std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-			}
-		}
-		else
-		{
-			ofile << "-- aggregate signals for read from pipe " << pipe_id << endl;
-			ofile << "signal " << pipe_id << "_pipe_read_data: std_logic_vector(" << (num_reads*pipe_width)-1 << " downto 0);" << endl;
-			ofile << "signal " << pipe_id << "_pipe_read_req: std_logic_vector(" << num_reads-1 << " downto 0);" << endl;
-			ofile << "signal " << pipe_id << "_pipe_read_ack: std_logic_vector(" << num_reads-1 << " downto 0);" << endl;
-		}
-	}
-
-}
-
-void vcPipe::Print_VHDL_Instance(ostream& ofile)
-{
-	string pipe_id = To_VHDL(this->Get_Id());
-	int pipe_width = this->Get_Width();
-	int pipe_depth = this->Get_Depth();
-
-	int num_reads = this->Get_Pipe_Read_Count();
-	int num_writes = this->Get_Pipe_Write_Count();
-
-	bool is_input_pipe  = ((num_reads > 0) && (num_writes == 0));
-	bool is_output_pipe = ((num_reads == 0) && (num_writes > 0));
-	bool is_internal_pipe = ((num_reads > 0) && (num_writes > 0));
-	bool is_unused_pipe = ((num_reads == 0) && (num_writes == 0));
-
-	bool is_no_block = this->Get_No_Block_Mode();
-	bool p2p_flag = this->Get_P2P();
-
-	if(!is_unused_pipe)
-	{
-		// the pipe may be used in one of three modes.
-		// - as an in-flag to pipe converter.
-		//     (pulse_mode implies that input pulses are held
-		//      until sampled by the reader).
-		// - as a pipe to out-flag converter
-		//     (pulse mode implies that a single output pulse
-		//      is created by each successful writer).
-		// - as a normal pipe with read and write interfaces.
-		if(is_input_pipe && this->Get_Signal())
-		{
-			// nothing.
-			ofile << " -- input signal-pipe " << pipe_id << " accessed directly. " << endl;
-		}
-		else if(this->Get_Signal())
-		{ 
-			string volatile_string = ((pipe_depth == 0) ? "true" : "false");
-			ofile << pipe_id << "_Signal: SignalBase -- {" << endl;
-			ofile << "generic map( -- { " << endl;
-			ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
-			ofile << "volatile_flag => " << volatile_string << "," << endl;
-			ofile << "num_writes => " << num_writes << "," << endl;
-			ofile << "data_width => " << pipe_width << " --} ) \n" << endl;
-			ofile << "port map( -- { " << endl;
-			ofile << "read_data => "<< pipe_id << "," << endl ;
-			ofile << "write_req => " << pipe_id << "_pipe_write_req," << endl 
-				<< "write_ack => " << pipe_id << "_pipe_write_ack," << endl 
-				<< "write_data => "<< pipe_id << "_pipe_write_data," << endl 
-				<< "clk => clk,"
-				<< "reset => reset -- }\n ); -- }" << endl;
-		}
-		else
-		{
-			num_reads = MAX(num_reads,1);
-			num_writes = MAX(num_writes,1);
-
-			int actual_pipe_depth = pipe_depth;
-			if(this->Get_P2P() ||
-				((is_input_pipe || is_output_pipe) && vcSystem::_suppress_io_pipes))
-			{
-				actual_pipe_depth = 0; // P2P pipe storage absorbed into INPORTs.
-				is_no_block = false;
-			}
-
-			if(this->Get_No_Block_Mode())
-			{
-				ofile << "-- non-blocking pipe... Input-ports must have non-blocking-flag => true"
-						<< endl;
-			}
-
-			int fifo_register_bits = pipe_width * actual_pipe_depth;
-			vcSystem::Increment_Fifo_Register_Count (fifo_register_bits);
-			ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
-			ofile << "generic map( -- { " << endl;
-			ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
-			ofile << "num_reads => " << num_reads << "," << endl;
-			ofile << "num_writes => " << num_writes << "," << endl;
-			ofile << "data_width => " << pipe_width << "," << endl;
-			ofile << "lifo_mode => " << (this->Get_Lifo_Mode() ? "true" : "false") << "," << endl;
-			ofile << "full_rate => " << (this->Get_Full_Rate() ? "true" : "false") << "," << endl;
-			ofile << "shift_register_mode => " << (this->Get_Shift_Reg() ? "true" : "false") << "," << endl;
-			ofile << "bypass => " << (this->Get_Bypass() ? "true" : "false") << "," << endl;
-			ofile << "depth => " << actual_pipe_depth << " --}\n)" << endl;
-			ofile << "port map( -- { " << endl;
-			ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
-				<< "read_ack => " << pipe_id << "_pipe_read_ack," << endl 
-				<< "read_data => "<< pipe_id << "_pipe_read_data," << endl 
-				<< "write_req => " << pipe_id << "_pipe_write_req," << endl 
-				<< "write_ack => " << pipe_id << "_pipe_write_ack," << endl 
-				<< "write_data => "<< pipe_id << "_pipe_write_data," << endl 
-				<< "clk => clk,"
-				<< "reset => reset -- }\n ); -- }" << endl;
-		}
-	}
-	else
-	{
-		vcSystem::Warning("pipe " + pipe_id + " not used in the system, ignored");
-	}
-}
-
-bool vcPipe::Get_Pipe_Module_Section(vcModule* caller_module, 
-		string read_or_write, 
-		int& hindex, 
-		int& lindex)
-{
-
-	bool ret_val = false;
-	hindex = 
-		((read_or_write == "read") ? this->Get_Pipe_Read_Count()-1 :
-		 this->Get_Pipe_Write_Count() -1);
-
-
-	map<vcModule*, vector<int> >::iterator iter, fiter;
-
-	if(read_or_write == "read")
-	{
-		iter = this->_pipe_read_map.begin();
-		fiter = this->_pipe_read_map.end();
-	}
-	else
-	{
-		iter = this->_pipe_write_map.begin();
-		fiter = this->_pipe_write_map.end();
-	}
-
-	for(; iter != fiter; iter++ )
-	{
-		if(caller_module == (*iter).first)
-		{
-			lindex = (hindex + 1) - (*iter).second.size();
-			ret_val = true;
-			break;
-		}
-		else
-		{
-			hindex -= (*iter).second.size();
-		}
-	}
-	return(ret_val);
-}
-
-string vcPipe::Get_Pipe_Aggregate_Section(string pid, 
-		int hindex, 
-		int lindex) 
-{
-
-	int data_width;
-	string ret_string = this->Get_VHDL_Pipe_Interface_Port_Name(pid);
-
-	// find data_width.
-	if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
-		data_width = 1;
-	else if(pid.find("data") != string::npos)
-		data_width = this->Get_Width();
-	else
-		assert(0); // fatal
-
-	ret_string += "(";
-	ret_string += IntToStr(((hindex+1)*data_width)-1);
-	ret_string += " downto ";
-	ret_string += IntToStr(lindex*data_width);
-	ret_string += ")";
-	return(ret_string);
-}
-
-vcWire::vcWire(string id, vcType* t) :vcRoot(id)
-{
-	this->_type = t;
-}
-
-void vcWire::Print(ostream& ofile)
-{
-	ofile << vcLexerKeywords[__WIRE] << " " << this->Get_Id() << vcLexerKeywords[__COLON] << " " ;
-	this->Get_Type()->Print(ofile);
-  ofile << endl;
-}
-
-void vcWire::Print_VHDL_Std_Logic_Declaration(ostream& ofile)
-{
-  if((this->Kind() != "vcInputWire") && (this->Kind() != "vcOutputWire"))
-  	ofile << "signal " << this->Get_VHDL_Signal_Id() << " : " << this->Get_Type()->Get_VHDL_Type_Name() << ";" << endl;
-}
-
-int vcWire::Get_Size() {return(this->_type->Size());}
-
-vcConstantWire::vcConstantWire(string id, vcValue* v): vcWire(id,v->Get_Type())
-{
-  assert(!(v->Is("vcArrayType") || v->Is("vcRecordType")));
-  this->_value = v;
-};
-
-void vcConstantWire::Print(ostream& ofile)
-{
-  ofile << vcLexerKeywords[__CONSTANT] << " ";
-  ofile << vcLexerKeywords[__WIRE] << " " << this->Get_Id() << vcLexerKeywords[__COLON] << " " ;
-  this->Get_Type()->Print(ofile);
-  ofile << vcLexerKeywords[__ASSIGNEQUAL] << " ";
-  this->_value->Print(ofile);
-  ofile << endl;
-}
-
-void vcConstantWire::Print_VHDL_Constant_Declaration(ostream& ofile)
-{
-  ofile << "constant " << this->Get_VHDL_Signal_Id() << " : " ;
-  ofile << this->Get_Type()->Get_VHDL_Type_Name()  << " := ";
-  ofile << this->_value->To_VHDL_String() << ";" << endl;
-}
-
-vcInputWire::vcInputWire(string id, vcType* t): vcWire(id,t)
+void vcDatapathElement::Print_VHDL_Level_Logger(vcModule* m, ostream& ofile)
 {
 }
 
-vcOutputWire::vcOutputWire(string id, vcType* t): vcWire(id,t)
-{
-}
- 
-bool vcDatapathElement::Is_Part_Of_Pipelined_Loop(int& depth, int& buffering)
-{
-	bool ret_val = false;
-	depth = 1;
-	buffering = 1;
-	vcCPElement* t = NULL;
-	// just check a req or an ack and see if it
-	// is part of a pipelined loop.
-	if(this->Get_Number_Of_Reqs() > 0)
-		t = this->Get_Req(0);
-	else if(this->Get_Number_Of_Acks() > 0)
-		t = this->Get_Ack(0);
-	
-	if(t != NULL)
-	{
-		vcCPBlock* p  = t->Get_Pipeline_Parent();
-		if(p != NULL)
-		{
-			vcCPElement* pp = p->Get_Parent();
-			if(pp->Is("vcCPSimpleLoopBlock"))
-			{
-				ret_val = true;
-				buffering = ((vcCPSimpleLoopBlock*) pp)->Get_Pipeline_Buffering();
-				depth = ((vcCPSimpleLoopBlock*) pp)->Get_Pipeline_Depth();
-			}
-			else if(pp->Is("vcControlPath"))
-			{
-				ret_val = true;
-				buffering = ((vcControlPath*) pp)->Get_Pipeline_Buffering();
-				depth = ((vcControlPath*) pp)->Get_Pipeline_Depth();
-			}
-		}
-	}
-	return(ret_val);
-}
 
-int vcDatapathElement::Get_Output_Buffering(vcWire* w)
-{
-	int R = 1;
-	if(_output_wire_buffering_map.find(w) != _output_wire_buffering_map.end())
-	{
-		R = (_output_wire_buffering_map[w]);
-	}
-	return(R);
-}
-
-int vcDatapathElement::Get_Output_Buffering(vcWire* w, int num_reqs)
-{
-	int R = this->Get_Output_Buffering(w);
-	if(num_reqs > 1)
-	{
-		int pl_depth, pl_buffering;
-		this->Is_Part_Of_Pipelined_Loop(pl_depth, pl_buffering);
-		R = ((R < pl_buffering) ? pl_buffering : R );
-	}
-	return(R);
-}
-
-void vcDatapathElement::Generate_Flowthrough_Logger_Sensitivity_List(string& log_string)
-{
-	for(int idx = 0, fidx = this->Get_Number_Of_Output_Wires(); idx < fidx; idx++)
-	{
-		if(idx > 0)
-			log_string += ", ";
-		string op_name = this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
-		log_string  +=  op_name;
-	}
-}
-
-void vcDatapathElement::Generate_Input_Log_Strings(string& log_string)
-{
-	bool guard_flag = false;
-	if(this->_guard_wire != NULL)
-	{
-		string gw_name = this->_guard_wire->Get_VHDL_Signal_Id();
-		log_string   += "\" ";
-		log_string   += gw_name + " (guard" + (this->_guard_complement ? " complement " : "") + ")";
-		log_string   += "= \" & Convert_SLV_To_String(" + gw_name + ")";
-		guard_flag = true;
-	}
-
-	if(this->Get_Number_Of_Input_Wires() > 0)
-	{
-		for(int idx = 0, fidx = this->Get_Number_Of_Input_Wires(); idx < fidx; idx++)
-		{
-			if(guard_flag || (idx > 0))
-				log_string += " & ";
-
-			string inp_name = this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
-			log_string  += "\" "  +  inp_name + " = \"";
-			log_string +=  "& Convert_SLV_To_Hex_String(" + inp_name + ")";
-		}
-	}
-	else if(!guard_flag)
-	{
-		log_string += "\" no-guard, no-inputs \"";
-	}
-}
-
-void vcDatapathElement::Generate_Output_Log_Strings(string& log_string)
-{
-	if(this->Get_Number_Of_Output_Wires() > 0)
-	{
-		for(int idx = 0, fidx = this->Get_Number_Of_Output_Wires(); idx < fidx; idx++)
-		{
-			if(idx > 0)
-				log_string += " & ";
-			string op_name = this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
-			log_string  +=  "\" " + op_name + "= \" ";
-			log_string +=  " & Convert_SLV_To_Hex_String(" + op_name + ")";
-		}
-	}
-	else
-	{
-		log_string += "\" no-outputs \"";
-	}
-}
-void vcDatapathElement::Print_VHDL_Logger(vcModule* m, ostream& ofile)
-{
-	string id = this->Get_Id();
-	for(int idx = 0, fidx = _reqs.size(); idx < fidx; idx++)
-	{
-		vcTransition* r = _reqs[idx];
-		if(r != NULL)
-		{
-			ofile << "LogCPEvent(clk, reset, global_clock_cycle_count,";
-			ofile << r->Get_CP_To_DP_Symbol() << ","
-				<< '"' 
-				<< " req" << idx << " " << id
-				<< '"'
-				<< ");" << endl;
-		}
-	}
-	for(int idx = 0, fidx = _acks.size(); idx < fidx; idx++)
-	{
-		vcTransition* a = _acks[idx];
-		if(a != NULL)
-		{
-			ofile << "LogCPEvent(clk, reset, global_clock_cycle_count,";
-			ofile << a->Get_DP_To_CP_Symbol() << ","
-				<< '"' 
-				<< " ack" << idx << " " << id
-				<< '"'
-				<< ");" << endl;
-		}
-	}
-}
-
-vcDataPath::vcDataPath(vcModule* m, string id):vcRoot(id)
-{
-	this->_parent = m;
-}
-
-void vcDataPath::Get_Label_Interval(vcControlPath* cp, vcDatapathElement* dpe, vector<vcCompatibilityLabel*>& ret_vector)
-{
-	int i, i_f;
-	for(i = 0, i_f = dpe->Get_Number_Of_Reqs(); i < i_f; i++)
-	{
-		vcCPElement* r = dpe->Get_Req(i);
-		assert(r != NULL);
-
-		ret_vector.push_back(r->Get_Compatibility_Label());
-	}
-	for(i = 0, i_f = dpe->Get_Number_Of_Acks(); i < i_f; i++)
-	{
-		vcCPElement* a = dpe->Get_Ack(i);
-		assert(a != NULL);
-
-		ret_vector.push_back(a->Get_Compatibility_Label());
-	}
-}
-
-vcDataPipeline* vcDataPath::Find_Or_Add_DataPipeline(string dpe_name)
-{
-	vcDataPipeline* r = NULL;
-	if(this->_dpipeline_map.find(dpe_name) != this->_dpipeline_map.end())
-	{
-		r = this->_dpipeline_map[dpe_name];
-	}
-	else
-	{
-		r = new vcDataPipeline(dpe_name);
-		this->_dpipeline_map[dpe_name] = r;
-	}
-	return(r);
-}
-
-void vcDataPath::Add_To_DataPipeline(string pname, string dpe_name)
-{
-	vcDataPipeline* dpp = this->Find_Or_Add_DataPipeline(pname);
-	if(dpp != NULL)
-	{
-		vcDatapathElement* dpe = this->Find_DPE(dpe_name);
-		if(dpe != NULL)
-		{
-			dpp->Add_Dpe(dpe);
-		}
-		else
-		{
-			vcSystem::Error("In spec of  pipeline " + pname + ", DPE " + dpe_name + " not found");
-		}
-	}
-}
-
-vcDatapathElement* vcDataPath::Find_DPE(string dpe_name)
-{
-	map<string, vcDatapathElement*>::iterator iter = this->_dpe_map.find(dpe_name);
-	if(iter != this->_dpe_map.end())
-		return((*iter).second);
-	else
-		return(NULL);
-}
-
-vcWire* vcDataPath::Find_Wire(string wname)
-{
-	vcWire* ret_wire = NULL;
-	map<string, vcWire*>::iterator iter = this->_wire_map.find(wname);
-	if(iter != this->_wire_map.end())
-		ret_wire = ((*iter).second);
-	else
-	{
-		if(this->Get_Parent() != NULL)
-		{
-			ret_wire = this->Get_Parent()->Get_Argument(wname,"in");
-			if(ret_wire == NULL)
-				ret_wire = this->Get_Parent()->Get_Argument(wname,"out");
-		}
-	}
-
-	if(ret_wire == NULL)
-    {
-      // perhaps it is a constant defined at the Program scope
-      ret_wire = (vcWire*) this->Get_Parent()->Get_Parent()->Find_Constant_Wire(wname);
-    }
-
-  return(ret_wire);
-}
-
-void vcDataPath::Add_Wire(string wname, vcType* t)
-{
-  if(this->Find_Wire(wname) != NULL)
-  {
-	vcSystem::Error("redeclaration of wire " + wname);
-  }
-  else
-  {
-  	this->_wire_map[wname] = new vcWire(wname, t);
-  }
-}
-
-void vcDataPath::Add_Intermediate_Wire(string wname, vcType* t)
-{
-  if(this->Find_Wire(wname) != NULL)
-  {
-	vcSystem::Error("redeclaration of wire " + wname);
-  }
-  else
-  {
-	  this->_wire_map[wname] = new vcIntermediateWire(wname, t);
-  }
-}
-
-void vcDataPath::Add_Constant_Wire(string wname, vcValue* v)
-{
-  assert(v != NULL);
-  vcType* t = v->Get_Type();
-  assert(!(t->Is("vcArrayType") || t->Is("vcRecordType")));
-  this->_wire_map[wname] = (vcWire*) ( new vcConstantWire(wname,v));
-};
-
-#define __PRINT_MAP(_map_id,_map_iter,ofile)  for(_map_iter=_map_id.begin();_map_iter!=_map_id.end();_map_iter++)\
-    { (*_map_iter).second->Print(ofile);}
-
-void vcDataPath::Print(ostream& ofile)
-{
-  ofile << vcLexerKeywords[__DATAPATH] << " { " << endl;
-
-  map<string,vcWire*>::iterator wires;
-  __PRINT_MAP(_wire_map,wires,ofile);
-
-  map<string,vcPhi*>::iterator phis;
-  __PRINT_MAP(_phi_map,phis,ofile);
-
-  map<string,vcSelect*>::iterator selects;
-  __PRINT_MAP(_select_map,selects,ofile);
-
-  map<string,vcSlice*>::iterator slices;
-  __PRINT_MAP(_slice_map,slices,ofile);
-
-  map<string,vcBranch*>::iterator branches;
-  __PRINT_MAP(_branch_map,branches,ofile);
-
-  map<string,vcLoad*>::iterator loads;
-  __PRINT_MAP(_load_map,loads,ofile);
-
-  map<string,vcStore*>::iterator stores;
-  __PRINT_MAP(_store_map,stores,ofile);
-
-  map<string,vcSplitOperator*>::iterator split_operators;
-  __PRINT_MAP(_split_operator_map,split_operators,ofile);
-
-  map<string,vcInport*>::iterator input_ports;
-  __PRINT_MAP(_inport_map,input_ports,ofile);
-
-  map<string,vcOutport*>::iterator output_ports;
-  __PRINT_MAP(_outport_map,output_ports,ofile);
-
-  this->Print_Attributes(ofile);
-  ofile << "} " << endl;
-}
-
-#define _ADD(_map_id,_id,_ptr) _map_id[_id]=_ptr;\
-  if(_dpe_map.find(_id)!=_dpe_map.end())\
-    vcSystem::Error("multiple DPE instances with id " + _id);\
-  else\
-    _dpe_map[_id]=(vcDatapathElement*)_ptr;
-
-#define __FIND(_map_id,_id) (_map_id.find(_id) != _map_id.end() ? _map_id[_id] : NULL) 
-
-void vcDataPath::Add_Phi(vcPhi* p) {_ADD(_phi_map,p->Get_Id(), p);}
-vcPhi* vcDataPath::Find_Phi(string id) {return(__FIND(_phi_map,id));}
-
-void vcDataPath::Add_Load(vcLoad* ld) 
-{
-  _ADD(_load_map,ld->Get_Id(), ld);
-  this->Get_Parent()->Add_Accessed_Memory_Space(ld->Get_Memory_Space());
-}
-vcLoad* vcDataPath::Find_Load(string id) {return(__FIND(_load_map,id));}
-
-void vcDataPath::Add_Store(vcStore* st) 
-{
-  _ADD(_store_map,st->Get_Id(), st);
-  this->Get_Parent()->Add_Accessed_Memory_Space(st->Get_Memory_Space());
-}
-vcStore* vcDataPath::Find_Store(string id)  {return(__FIND(_store_map,id));}
-
-void vcDataPath::Add_Call(vcCall* c)  
-{
-  _ADD(_call_map,c->Get_Id(), c);
-  this->Get_Parent()->Add_Called_Module(c->Get_Called_Module());
-}
-vcCall* vcDataPath::Find_Call(string id) {return(__FIND(_call_map,id));}
-
-void vcDataPath::Add_Inport(vcInport* p) 
-{
-  _ADD(_inport_map,p->Get_Id(), p);
-}
-vcInport* vcDataPath::Find_Inport(string id) {return(__FIND(_inport_map,id));}
-
-void vcDataPath::Add_Outport(vcOutport* p) 
-{
-  _ADD(_outport_map,p->Get_Id(), p);
-}
-vcOutport* vcDataPath::Find_Outport(string id) {return(__FIND(_outport_map,id));}
-
-
-void vcDataPath::Add_Split_Operator(vcSplitOperator* p)  {_ADD(_split_operator_map,p->Get_Id(), p);}
-vcSplitOperator* vcDataPath::Find_Split_Operator(string id) {return(__FIND(_split_operator_map,id));}
-
-void vcDataPath::Add_Select(vcSelect* p)   {_ADD(_select_map,p->Get_Id(), p);}
-vcSelect* vcDataPath::Find_Select(string id) {return(__FIND(_select_map,id));}
-
-void vcDataPath::Add_Slice(vcSlice* p)   {_ADD(_slice_map,p->Get_Id(), p);}
-vcSlice* vcDataPath::Find_Slice(string id) {return(__FIND(_slice_map,id));}
-
-void vcDataPath::Add_Permutation(vcPermutation* p)   {_ADD(_permutation_map,p->Get_Id(), p);}
-vcPermutation* vcDataPath::Find_Permutation(string id) {return(__FIND(_permutation_map,id));}
-
-void vcDataPath::Add_Branch(vcBranch* p)  {_ADD(_branch_map,p->Get_Id(), p);}
-vcBranch* vcDataPath::Find_Branch(string id) {return(__FIND(_branch_map,id));}
-
-void vcDataPath::Add_Register(vcRegister* p)  {_ADD(_register_map,p->Get_Id(), p);}
-vcRegister* vcDataPath::Find_Register(string id) {return(__FIND(_register_map,id));}
-
-void vcDataPath::Add_Interlock_Buffer(vcInterlockBuffer* p)  
-	{_ADD(_interlock_buffer_map,p->Get_Id(), p);}
-vcInterlockBuffer* vcDataPath::Find_Interlock_Buffer(string id) 
-	{return(__FIND(_interlock_buffer_map,id));}
-
-void vcDataPath::Add_Equivalence(vcEquivalence* p)  {_ADD(_equivalence_map,p->Get_Id(), p);}
-vcEquivalence* vcDataPath::Find_Equivalence(string id) {return(__FIND(_equivalence_map,id));}
-
-
-void vcDataPath::Compute_Maximal_Groups(vcControlPath* cp)
-{
-  for(map<string, vcDatapathElement*>::iterator dpe_iter = _dpe_map.begin();
-      dpe_iter != _dpe_map.end();
-      dpe_iter++)
-    {
-      if((*dpe_iter).second->Kind() == "vcUnarySplitOperator" ||
-	 (*dpe_iter).second->Kind() == "vcBinarySplitOperator")
-	{
-	  this->Update_Maximal_Groups(cp,(*dpe_iter).second, _compatible_split_operator_groups);
-	}
-      else if((*dpe_iter).second->Kind() == "vcLoad")
-	{
-	  this->Update_Maximal_Groups(cp, (*dpe_iter).second, _compatible_load_groups);
-	}
-      else if((*dpe_iter).second->Kind() == "vcStore")
-	{
-	  this->Update_Maximal_Groups(cp, (*dpe_iter).second, _compatible_store_groups);
-	}
-      else if((*dpe_iter).second->Kind() == "vcCall")
-	{
-	  this->Update_Maximal_Groups(cp, (*dpe_iter).second, _compatible_call_groups);
-	}
-      else if((*dpe_iter).second->Kind() == "vcOutport")
-	{
-	  this->Update_Maximal_Groups(cp, (*dpe_iter).second, _compatible_outport_groups);
-	}
-      else if((*dpe_iter).second->Kind() == "vcInport")
-	{
-	  this->Update_Maximal_Groups(cp, (*dpe_iter).second, _compatible_inport_groups);
-	}
-    }
-
-  // load, store and call groups linked with the respective 
-  // objects.
-  for(int idx = 0; idx < this->_compatible_load_groups.size(); idx++)
-    {
-      vcMemorySpace* ms = ((vcLoad*) (*(_compatible_load_groups[idx].begin())))->Get_Memory_Space();
-      ms->Register_Load_Group(this->_parent, idx, _compatible_load_groups[idx].size());
-    }
-
-  for(int idx = 0; idx < this->_compatible_store_groups.size(); idx++)
-    {
-      vcMemorySpace* ms = ((vcStore*) (*(_compatible_store_groups[idx].begin())))->Get_Memory_Space();
-      ms->Register_Store_Group(this->_parent, idx, _compatible_store_groups[idx].size());
-    }
-
-  for(int idx = 0; idx < this->_compatible_call_groups.size(); idx++)
-    {
-      vcModule* cm = ((vcCall*) (*(_compatible_call_groups[idx].begin())))->Get_Called_Module();
-      cm->Register_Call_Group(this->_parent, idx, _compatible_call_groups[idx].size());
-    }
-
-  for(int idx = 0; idx < this->_compatible_inport_groups.size(); idx++)
-    {
-      vcPipe* p = ((vcInport*) (*(_compatible_inport_groups[idx].begin())))->Get_Pipe();
-      _inport_group_map[p].push_back(idx);
-      p->Register_Pipe_Read(this->_parent,idx);
-    }
-
-  for(int idx = 0; idx < this->_compatible_outport_groups.size(); idx++)
-    {
-      vcPipe* p = ((vcOutport*) (*(_compatible_outport_groups[idx].begin())))->Get_Pipe();
-      _outport_group_map[p].push_back(idx);
-      p->Register_Pipe_Write(this->_parent,idx);
-    }
-
-}
-
-
-void vcDataPath::Update_Maximal_Groups(vcControlPath* cp, 
-				       vcDatapathElement* dpe, 
-				       vector<set<vcDatapathElement*> >& dpe_group)
-{
-
-	bool volatile_module = this->Get_Parent()->Get_Volatile_Flag();
-	bool new_group = true;
-	int idx_of_group_to_which_added = -1;
-
-
-	vector<vcCompatibilityLabel*> labels_1;
-	if(!volatile_module && !vcSystem::_min_area_flag)
-		this->Get_Label_Interval(cp,dpe,labels_1);
-
-	if(!volatile_module)
-	{	
-		for(int idx = 0; idx < dpe_group.size(); idx++)
-		{
-			if(dpe->Is_Shareable_With(*(dpe_group[idx].begin())))
-			{
-				bool is_compatible = true;
-				if(dpe->Get_Full_Rate() != (*(dpe_group[idx].begin()))->Get_Full_Rate())
-					is_compatible = false;
-
-				if(is_compatible && !vcSystem::_min_area_flag && !dpe->Is_Pipelined_Operator())
-				{
-					for(set<vcDatapathElement*>::iterator dpe_iter = dpe_group[idx].begin();
-							dpe_iter != dpe_group[idx].end();
-							dpe_iter++)
-					{
-						vector<vcCompatibilityLabel*> labels_2;
-						this->Get_Label_Interval(cp,*dpe_iter, labels_2);
-
-						if(!cp->Are_Compatible(labels_1, labels_2))
-						{
-							is_compatible = false;
-							break;
-						}
-					}
-				}
-
-				if(is_compatible)
-				{
-					new_group = false;
-					idx_of_group_to_which_added = idx;
-					dpe_group[idx].insert(dpe);
-					break;
-				}
-			}
-		}
-	}
-
-	if(new_group)
-	{
-
-		idx_of_group_to_which_added = dpe_group.size();
-		set<vcDatapathElement*> nset;
-		nset.insert(dpe);
-		dpe_group.push_back(nset);
-	}
-
-	if(vcSystem::_verbose_flag)
-	{
-		std::cerr << "Info: " << dpe->Get_Id();
-		if(!volatile_module && !vcSystem::_min_area_flag)
-		{
-			std::cerr << " (";
-			for(int i = 0, i_f = labels_1.size(); i < i_f; i++)
-			{
-				std::cerr << " " << labels_1[i]->Get_Id();
-			}
-			std::cerr << ") ";
-		}
-		std::cerr << " included in " 
-			<< dpe->Kind() << " group "
-			<< idx_of_group_to_which_added << endl;
-	}
-}
-
-
-void vcDataPath::Print_Compatible_Operator_Groups(ostream& ofile)
-{
-	ofile << "Compatible share-able operator groups " << endl;
-	this->Print_Compatible_Operator_Groups(ofile,_compatible_split_operator_groups);
-	this->Print_Compatible_Operator_Groups(ofile,_compatible_load_groups);
-	this->Print_Compatible_Operator_Groups(ofile,_compatible_store_groups);
-	this->Print_Compatible_Operator_Groups(ofile,_compatible_call_groups);
-	this->Print_Compatible_Operator_Groups(ofile,_compatible_outport_groups);
-	this->Print_Compatible_Operator_Groups(ofile,_compatible_inport_groups);
-}
-
-void vcDataPath::Print_Compatible_Operator_Groups(ostream& ofile, vector<set<vcDatapathElement*> >& dpe_groups)
-{
-
-	for(int idx = 0; idx < dpe_groups.size(); idx++)
-	{
-		ofile << "Operator " << (*(dpe_groups[idx].begin()))->Get_Operator_Type() << endl;
-		ofile << "{ " << endl;
-		for(set<vcDatapathElement*>::iterator iter = dpe_groups[idx].begin();
-				iter != dpe_groups[idx].end();
-				iter++)
-		{
-			ofile << (*iter)->Get_Id() << "  ";
-			ofile << "   ("
-				<< (*iter)->_reqs.front()->Get_Compatibility_Label()->Get_Id()
-				<< ","
-				<< (*iter)->_acks.back()->Get_Compatibility_Label()->Get_Id()
-				<< ")" << endl;
-		}
-
-		ofile << "} " << endl;
-	}
-}
-
-
-
-//
-// for each memory space accessed by this module
-// add interface ports.
-//
-// the width of the interface ports is determined by number
-// of load/store groups associated with the memory space.
-string vcDataPath::Print_VHDL_Memory_Interface_Ports(string semi_colon, ostream& ofile)
-{
-	map<vcMemorySpace*, vector<int> > ms_to_load_group_map;
-	vcMemorySpace* ms = NULL;
-
-
-	// Each load group to a memory space contributes one request 
-	// and one complete bundle.
-	for(int idx = 0; idx < _compatible_load_groups.size(); idx++)
-	{
-		ms = ((vcLoad*) (*(_compatible_load_groups[idx].begin())))->Get_Memory_Space();
-		if(ms->Get_Scope() == NULL)
-			ms_to_load_group_map[ms].push_back(idx);
-	}
-
-	// for each memory space, add a port with the appropriate
-	// width..
-	for(map<vcMemorySpace*,vector<int> >::iterator ms_iter = ms_to_load_group_map.begin();
-			ms_iter != ms_to_load_group_map.end();
-			ms_iter++)
-	{
-		ofile << semi_colon << endl;
-
-		ms = (*ms_iter).first;
-
-		int num_reqs = (*ms_iter).second.size();
-		int tag_width = ms->Get_Tag_Length();
-		int time_stamp_width = ms->Calculate_Time_Stamp_Width();
-
-		// load ports to this memory space from this module
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_req") 
-			<< " : out  std_logic_vector(" << num_reqs-1  << " downto 0);" << endl;
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_ack") 
-			<< " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_addr") 
-			<< " : out  std_logic_vector(" << (num_reqs*ms->Get_Address_Width())-1 << " downto 0);" << endl;
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_tag") 
-			<< " :  out  std_logic_vector(" << (num_reqs*(time_stamp_width+tag_width))-1  << " downto 0);" << endl;
-
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_req") 
-			<< " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_ack") 
-			<< " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_data") 
-			<< " : in   std_logic_vector(" << (num_reqs*ms->Get_Word_Size())-1 << " downto 0);" << endl;
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_tag") 
-			<< " :  in  std_logic_vector("  << (num_reqs*tag_width)-1  << " downto 0)";
-		semi_colon = ";";
-	}
-
-	map<vcMemorySpace*, vector<int> > ms_to_store_group_map;
-
-	// Each load group to a memory space contributes one request 
-	// and one complete bundle.
-	for(int idx = 0; idx < _compatible_store_groups.size(); idx++)
-	{
-		ms = ((vcStore*) (*(_compatible_store_groups[idx].begin())))->Get_Memory_Space();
-		if(ms->Get_Scope() == NULL)
-			ms_to_store_group_map[ms].push_back(idx);
-	}
-
-	// for each memory space, add a port with the appropriate
-	// width..
-	for(map<vcMemorySpace*,vector<int> >::iterator ms_iter = ms_to_store_group_map.begin();
-			ms_iter != ms_to_store_group_map.end();
-			ms_iter++)
-	{
-		ofile << semi_colon << endl;
-
-		int num_stores = (*ms_iter).first->Get_Num_Stores();
-
-		ms = (*ms_iter).first;
-
-		int num_reqs = (*ms_iter).second.size();
-		int tag_width = ms->Get_Tag_Length();
-		int time_stamp_width = ms->Calculate_Time_Stamp_Width();
-
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_req") 
-			<< " : out  std_logic_vector(" << num_reqs-1  << " downto 0);" << endl;
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_ack") 
-			<< " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_addr") 
-			<< " : out  std_logic_vector(" << (num_reqs*ms->Get_Address_Width())-1 << " downto 0);" << endl;
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_data") 
-			<< " : out  std_logic_vector(" << (num_reqs*ms->Get_Word_Size())-1 << " downto 0);" << endl;
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_tag") 
-			<< " :  out  std_logic_vector(" << (num_reqs*(tag_width+time_stamp_width))-1  << " downto 0);" << endl;
-
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_req") 
-			<< " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_ack") 
-			<< " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-		ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_tag") 
-			<< " :  in  std_logic_vector("  << (num_reqs*tag_width)-1  << " downto 0)";
-		semi_colon = ";";
-	}
-	return(semi_colon);
-}
-
-string vcDataPath::Print_VHDL_IO_Interface_Ports(string semi_colon, ostream& ofile)
-{
-	map<vcPipe*, vector<int> > pipe_to_inport_group_map;
-	string pipe_id;
-	int word_size;
-
-	set<vcPipe*> input_signal_set;
-	for(int idx = 0; idx < _compatible_inport_groups.size(); idx++)
-	{
-		vcPipe* p = ((vcInport*) 
-				(*(_compatible_inport_groups[idx].begin())))->Get_Pipe();
-		if(!p->Get_Signal())
-			pipe_to_inport_group_map[p].push_back(idx);
-		else
-			input_signal_set.insert(p);
-	}
-
-	for(map<vcPipe*,vector<int> >::iterator ms_iter = pipe_to_inport_group_map.begin();
-			ms_iter != pipe_to_inport_group_map.end();
-			ms_iter++)
-	{
-		vcPipe* p = (*ms_iter).first;
-		if(p->Get_Parent() == NULL)
-		{
-			word_size = p->Get_Width();
-			string pipe_id = p->Get_Id();
-
-			int num_reqs = (*ms_iter).second.size();
-			ofile << semi_colon << endl;
-
-
-			ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"read_req")
-				<< " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-			ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"read_ack")
-				<< " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-			ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"read_data")
-				<< " : in   std_logic_vector(" << (num_reqs * word_size)-1 << " downto 0)";
-
-			semi_colon = ";";
-		}
-	}
-
-	for(set<vcPipe*>::iterator iter = input_signal_set.begin(), fiter = input_signal_set.end(); iter != fiter; iter++)
-	{
-		vcPipe* ip = *iter;
-		if(ip->Get_Parent() == NULL)
-		{
-			ofile << semi_colon << endl;
-			ofile << ip->Get_Id() << " : in std_logic_vector(" << ip->Get_Width() -1 << " downto 0)";
-			semi_colon = ";";
-		}
-	}
-
-	map<vcPipe*, vector<int> > pipe_to_outport_group_map;
-	for(int idx = 0; idx < _compatible_outport_groups.size(); idx++)
-	{
-		vcPipe* p = ((vcOutport*) (*(_compatible_outport_groups[idx].begin())))->Get_Pipe();
-		pipe_to_outport_group_map[p].push_back(idx);
-	}
-
-	for(map<vcPipe*,vector<int> >::iterator ms_iter = pipe_to_outport_group_map.begin();
-			ms_iter != pipe_to_outport_group_map.end();
-			ms_iter++)
-	{
-		vcPipe* p = (*ms_iter).first;
-		if(p->Get_Parent() == NULL)
-		{
-			string pipe_id = p->Get_Id();
-			word_size = p->Get_Width();
-
-			ofile << semi_colon << endl;
-
-			int num_reqs = (*ms_iter).second.size();
-			ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"write_req")
-				<< " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-			ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"write_ack")
-				<< " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-			ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"write_data")
-				<< " : out  std_logic_vector(" << (num_reqs * word_size)-1 << " downto 0)";
-			semi_colon = ";";
-		}
-	}
-	return(semi_colon);
-}
-
-string  vcDataPath::Print_VHDL_Call_Interface_Ports(string semi_colon, ostream& ofile)
-{
-	map<vcModule*, vector<int> > called_module_to_call_group_map;
-	vcModule* called_module;
-
-	// Each call group to a module contributes one request 
-	// and one complete bundle.
-	for(int idx = 0; idx < _compatible_call_groups.size(); idx++)
-	{
-		called_module = ((vcCall*) (*(_compatible_call_groups[idx].begin())))->Get_Called_Module();
-
-		if(!(called_module->Get_Operator_Flag() || called_module->Get_Volatile_Flag()))
-			called_module_to_call_group_map[called_module].push_back(idx);
-	}
-
-	// for each call group
-	// width..
-	for(map<vcModule*,vector<int> >::iterator called_module_iter = called_module_to_call_group_map.begin();
-			called_module_iter != called_module_to_call_group_map.end();
-			called_module_iter++)
-	{
-
-		ofile << semi_colon << endl;
-
-		called_module = (*called_module_iter).first;
-
-		int num_reqs = (*called_module_iter).second.size();
-		int tag_width = called_module->Get_Caller_Tag_Length();
-
-		ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_reqs")
-			<< " : out  std_logic_vector(" << num_reqs-1 <<  " downto 0);" << endl;
-		ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_acks") 
-			<< " : in   std_logic_vector(" << num_reqs-1 <<  " downto 0);" << endl;
-
-		if(called_module->Get_In_Arg_Width() > 0)
-			ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_data") 
-				<< " : out  std_logic_vector(" << (num_reqs * called_module->Get_In_Arg_Width())-1 << " downto 0);" << endl;
-
-		ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_tag") 
-			<< "  :  out  std_logic_vector(" << (num_reqs * tag_width)-1 << " downto 0);" << endl;
-
-		ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_reqs") 
-			<< " : out  std_logic_vector(" << num_reqs-1 <<  " downto 0);" << endl;
-		ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_acks") 
-			<< " : in   std_logic_vector(" << num_reqs-1 <<  " downto 0);" << endl;
-		if(called_module->Get_Out_Arg_Width() > 0)
-			ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_data") 
-				<< " : in   std_logic_vector(" << (num_reqs * called_module->Get_Out_Arg_Width())-1 << " downto 0);" << endl;
-		ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_tag") 
-			<< " :  in   std_logic_vector(" << (num_reqs * tag_width)-1 << " downto 0)";
-		semi_colon = ";";
-	}
-	return(semi_colon);
-
-}
-
-
-void vcDataPath::Print_VHDL(ostream& ofile)
+void vcDataPath::Print_VHDL_Level(ostream& ofile)
 {
 	ofile << "data_path: Block -- { " << endl;
 
@@ -1179,12 +54,18 @@ void vcDataPath::Print_VHDL(ostream& ofile)
 			iter++)
 	{
 		(*iter).second->Print_VHDL_Std_Logic_Declaration(ofile);
+		this->Print_VHDL_Level_Protocol_Signals((*iter).second, ofile);
 	}
 
 	this->Get_Parent()->Print_VHDL_Pipe_Signals(ofile);
 
 
+	// TODO: for each DPE, print a pair of sample req/ack  level signals
+	//	  and a pair of update req/ack level signals.
+
+
 	ofile << "-- }" << endl << "begin -- { " << endl;
+
 
 	// tie constant wires to their values.
 	for(map<string, vcWire*>::iterator iter = _wire_map.begin();
@@ -1193,137 +74,89 @@ void vcDataPath::Print_VHDL(ostream& ofile)
 	{
 		if((*iter).second->Is("vcConstantWire"))
 			ofile << ((*iter).second)->Get_VHDL_Signal_Id() << " <= " << ((vcConstantWire*)((*iter).second))->Get_Value()->To_VHDL_String() << ";" << endl;
+		else
+			this->Print_VHDL_Level_Forks((*iter).second, ofile);
 	}
 
 	// now instantiate each group. 
-	this->Print_VHDL_Phi_Instances(ofile); // done
-	this->Print_VHDL_Select_Instances(ofile); // done
-	this->Print_VHDL_Slice_Instances(ofile);  // done.
-	this->Print_VHDL_Permutation_Instances(ofile);  // done.
-	this->Print_VHDL_Register_Instances(ofile); // done (no changes)
-	this->Print_VHDL_Interlock_Buffer_Instances(ofile); // done.
-	this->Print_VHDL_Equivalence_Instances(ofile); // done (no changes)
-	this->Print_VHDL_Branch_Instances(ofile);  // done (no changes)
-	this->Print_VHDL_Split_Operator_Instances(ofile); // done
-	this->Print_VHDL_Load_Instances(ofile); // done
-	this->Print_VHDL_Store_Instances(ofile); // done
-	this->Get_Parent()->Print_VHDL_Pipe_Instances(ofile); // done (no changes)
-	this->Print_VHDL_Inport_Instances(ofile); // done
-	this->Print_VHDL_Outport_Instances(ofile); // done
-	this->Print_VHDL_Call_Instances(ofile); // done
+	this->Print_VHDL_Select_Instances_Level(ofile); 
+	this->Print_VHDL_Slice_Instances_Level(ofile); 
+	this->Print_VHDL_Permutation_Instances_Level(ofile);
+	this->Print_VHDL_Register_Instances_Level(ofile);
+	this->Print_VHDL_Interlock_Buffer_Instances_Level(ofile); 
+	this->Print_VHDL_Equivalence_Instances_Level(ofile);
+	this->Print_VHDL_Split_Operator_Instances(ofile);
+	this->Print_VHDL_Load_Instances(ofile); 
+	this->Print_VHDL_Store_Instances(ofile);
+	this->Get_Parent()->Print_VHDL_Pipe_Instances(ofile);
+	this->Print_VHDL_Inport_Instances_Level(ofile);
+	this->Print_VHDL_Outport_Instances_Level(ofile);
+	this->Print_VHDL_Call_Instances_Level(ofile);
 
 
 	ofile << "-- }" << endl << "end Block; -- data_path" << endl;
 }
 
 
-void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
+
+void vcDataPath::Print_VHDL_Select_Instances_Level(ostream& ofile)
 { 
-	for(map<string, vcPhi*>::iterator iter = _phi_map.begin();
-			iter != _phi_map.end();
-			iter++)
-	{
-		vcPhi* p = (*iter).second;
-		if(vcSystem::_enable_logging)
-		{
-			p->Print_VHDL_Logger(this->Get_Parent(), ofile);
-		}
-
-		p->Print_VHDL(ofile);
-	}
-}
-
-
-
-
-
-void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
-{ 
-	int idx = 0;
-	string parent_name = this->Get_Parent()->Get_Id();
 	for(map<string, vcSelect*>::iterator iter = _select_map.begin();
 			iter != _select_map.end();
 			iter++)
 	{
 		vcSelect* s = (*iter).second;
 		if(vcSystem::_enable_logging)
-			s->vcSplitOperator::Print_VHDL_Logger(this->Get_Parent(), ofile);
-		if(!s->Get_Flow_Through() && !this->Get_Parent()->Get_Volatile_Flag())
-		{
-			s->Print_VHDL(ofile);
+			s->vcSplitOperator::Print_VHDL_Logger_Level(this->Get_Parent(), ofile);
 		}
-		else
-			s->Print_Flow_Through_VHDL(ofile);
-		idx++;
+		s->Print_VHDL_Level(ofile);
 	}
 }
 
 
-void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
+void vcDataPath::Print_VHDL_Slice_Instances_Level(ostream& ofile)
 { 
-	int idx = 0;
-	string parent_name = this->Get_Parent()->Get_Id();
-
 	for(map<string, vcSlice*>::iterator iter = _slice_map.begin();
 			iter != _slice_map.end();
 			iter++)
 	{
 		vcSlice* s = (*iter).second;
 		if(vcSystem::_enable_logging)
-			s->vcSplitOperator::Print_VHDL_Logger(this->Get_Parent(), ofile);
+			s->vcSplitOperator::Print_VHDL_Logger_Level(this->Get_Parent(), ofile);
 
-		if(!s->Get_Flow_Through() && !this->Get_Parent()->Get_Volatile_Flag())
-		{
-
-			s->Print_VHDL(ofile);
-		}
-		else
-			s->Print_Flow_Through_VHDL(ofile);
-		idx++;
+		s->Print_VHDL_Level(ofile);
 	}
 }
 
-void vcDataPath::Print_VHDL_Permutation_Instances(ostream& ofile)
+void vcDataPath::Print_VHDL_Permutation_Instances_Level(ostream& ofile)
 { 
-	int idx = 0;
-	string parent_name = this->Get_Parent()->Get_Id();
-
 	for(map<string, vcPermutation*>::iterator iter = _permutation_map.begin();
 			iter != _permutation_map.end();
 			iter++)
 	{
 		vcPermutation* s = (*iter).second;
 		if(vcSystem::_enable_logging)
-			s->vcSplitOperator::Print_VHDL_Logger(this->Get_Parent(), ofile);
-		if(!s->Get_Flow_Through() && !this->Get_Parent()->Get_Volatile_Flag())
-		{
+			s->vcSplitOperator::Print_VHDL_Logger_Level(this->Get_Parent(), ofile);
 
-			s->Print_VHDL(ofile);
-		}
-		else
-			s->Print_Flow_Through_VHDL(ofile);
-		idx++;
+		s->Print_VHDL_Level(ofile);
 	}
 }
 
-void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
+void vcDataPath::Print_VHDL_Register_Instances_Level(ostream& ofile)
 { 
 
-	int idx = 0;
-	string parent_name = this->Get_Parent()->Get_Id();
 	for(map<string, vcRegister*>::iterator iter = _register_map.begin();
 			iter != _register_map.end();
 			iter++)
 	{
 		vcRegister* s = (*iter).second;
 		if(vcSystem::_enable_logging)
-			s->vcOperator::Print_VHDL_Logger(this->Get_Parent(), ofile);
-		s->Print_VHDL(ofile);
-		idx++;
+			s->vcOperator::Print_VHDL_Logger_Level(this->Get_Parent(), ofile);
+		s->Print_VHDL_Level(ofile);
 	}
 }
 
-void vcDataPath::Print_VHDL_Interlock_Buffer_Instances(ostream& ofile)
+void vcDataPath::Print_VHDL_Interlock_Buffer_Instances_Level(ostream& ofile)
 {
 	string parent_name = this->Get_Parent()->Get_Id();
 	for(map<string, vcInterlockBuffer*>::iterator iter = _interlock_buffer_map.begin();
@@ -1333,127 +166,24 @@ void vcDataPath::Print_VHDL_Interlock_Buffer_Instances(ostream& ofile)
 		vcInterlockBuffer* p = (*iter).second;
 		if(vcSystem::_enable_logging)
 		{
-			p->vcSplitOperator::Print_VHDL_Logger(this->Get_Parent(), ofile);
+			p->vcSplitOperator::Print_VHDL_Logger_Level(this->Get_Parent(), ofile);
 		}
-		if(!p->Get_Flow_Through() && !this->Get_Parent()->Get_Volatile_Flag())
-		{
-			p->Print_VHDL(ofile);
-		}
-		else
-			p->Print_Flow_Through_VHDL(ofile);
-
-
+		p->Print_VHDL_Level(ofile);
 	}
 }
 
 
-void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
+void vcDataPath::Print_VHDL_Equivalence_Instances_Level(ostream& ofile)
 { 
-	string parent_name = this->Get_Parent()->Get_Id();
-
 	for(map<string, vcEquivalence*>::iterator iter = _equivalence_map.begin();
 			iter != _equivalence_map.end();
 			iter++)
 	{
 		vcEquivalence* s = (*iter).second;
 		if(vcSystem::_enable_logging)
-			s->vcOperator::Print_VHDL_Logger(this->Get_Parent(), ofile);
-		if(s->Get_Flow_Through() || this->Get_Parent()->Get_Volatile_Flag())
-		{
-			s->Print_Flow_Through_VHDL(ofile);
-			continue;
-		}
-		ofile << s->Get_VHDL_Id() << ": Block -- { " << endl;
-		ofile << "signal in_aggregated_sig: std_logic_vector("
-			<< s->_in_width-1 << " downto 0);" << endl;
-		ofile << "signal out_aggregated_sig: std_logic_vector("
-			<< s->_out_width-1 << " downto 0);" << endl;
-		if(s->_out_width > s->_in_width)
-		{
-			ofile << "constant in_pad : std_logic_vector(" << 
-				(s->_out_width-s->_in_width)-1 << " downto 0) := (others => '0');" << endl;
-		}
-		ofile <<  "--}" << endl;
-		ofile << "begin -- {" << endl;
-		ofile << s->Get_Ack(0)->Get_DP_To_CP_Symbol()  
-			<< " <= "
-			<< s->Get_Req(0)->Get_CP_To_DP_Symbol() 
-			<< ";" << endl;
-		ofile << " in_aggregated_sig <= ";
-		for(int idx = 0, fidx = s->Get_Number_Of_Input_Wires(); idx < fidx;  idx++)
-		{
-			if(idx > 0)
-				ofile << " & ";
-			ofile << s->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
-		}
-		ofile << ";" << endl;
+			s->vcOperator::Print_VHDL_Logger_Level(this->Get_Parent(), ofile);
 
-		if(s->Get_Output_Width() > s->Get_Input_Width())
-		{
-			ofile << "out_aggregated_sig <= in_pad & in_aggregated_sig; " << endl;
-		}
-		else if(s->Get_Output_Width() < s->Get_Input_Width())
-		{
-			ofile << "out_aggregated_sig <= in_aggregated_sig(" << s->Get_Output_Width()-1 << " downto 0);" << endl;
-		}
-		else
-			ofile << "out_aggregated_sig <= in_aggregated_sig;" << endl;
-
-
-		int top_index = s->Get_Output_Width()-1;
-		for(int idx = 0, fidx = s->Get_Number_Of_Output_Wires(); idx < fidx;  idx++)
-		{
-			ofile << s->Get_Output_Wire(idx)->Get_VHDL_Signal_Id() 
-				<< " <= out_aggregated_sig("
-				<< top_index
-				<< " downto "
-				<< (top_index - s->Get_Output_Wire(idx)->Get_Size())+1
-				<< ");" << endl;
-			top_index -= s->Get_Output_Wire(idx)->Get_Size();
-		}
-		ofile << "--}" << endl;
-		ofile << "end Block;" << endl;
-	}
-}
-
-void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
-{ 
-	string parent_name = this->Get_Parent()->Get_Id();
-	for(map<string, vcBranch*>::iterator iter = _branch_map.begin();
-			iter != _branch_map.end();
-			iter++)
-	{
-		vcBranch* s = (*iter).second;
-		string bypass_val = (s->Get_Bypass_Flag() ? "true" : "false");
-		if(vcSystem::_enable_logging)
-			s->vcDatapathElement::Print_VHDL_Logger(this->Get_Parent(), ofile);
-
-		int in_width = s->Get_Input_Width();
-		ofile << s->Get_VHDL_Id() << ": Block -- { -- branch-block" << endl;
-		ofile << "signal condition_sig : std_logic_vector(" << in_width-1 << " downto 0);" << endl;
-		ofile << "begin " << endl;
-		ofile << "condition_sig <= ";
-		for(int idx = 0, fidx = s->Get_Number_Of_Input_Wires(); idx < fidx; idx++)
-		{
-			if(idx > 0)
-				ofile << " & ";
-			ofile << s->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
-		}
-		ofile << ";" << endl;
-		ofile << "branch_instance: BranchBase -- {" << endl;
-		ofile << " generic map( name => \"" << s->Get_VHDL_Id() << "\", condition_width => " << in_width << ",  bypass_flag => " << bypass_val << ")" << endl;
-		ofile << " port map( -- { " << endl << " condition => condition_sig";
-		ofile << "," << endl;
-		ofile << "req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() << "," <<  endl
-			<< "ack0 => " << ((s->Get_Ack(0) != NULL) ? s->Get_Ack(0)->Get_DP_To_CP_Symbol() : 
-					"open" )
-			<< "," << endl
-			<< "ack1 => " << ((s->Get_Ack(1) != NULL) ? s->Get_Ack(1)->Get_DP_To_CP_Symbol() : 
-					"open" )
-			<< "," << endl
-			<< "clk => clk," << endl
-			<< "reset => reset); -- }}" << endl;
-		ofile << "--}\n end Block; -- branch-block" << endl;
+		s->Print_VHDL_Level(ofile);
 	}
 }
 
@@ -1474,7 +204,7 @@ void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 //
 // added a bypass to handle the flow-through case separately.
 //
-void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
+void vcDataPath::Print_VHDL_Split_Operator_Instances_Level(ostream& ofile)
 {
 	string group_name;
 	string no_arb_string; 
@@ -1499,8 +229,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		if(flow_through && (num_reqs == 1))
 		{
 			if(vcSystem::_enable_logging)
-				lead_op->vcSplitOperator::Print_VHDL_Logger(this->Get_Parent(), ofile);
-			lead_op->Print_Flow_Through_VHDL(ofile);
+				lead_op->vcSplitOperator::Print_VHDL_Logger_Level(this->Get_Parent(), ofile);
+			lead_op->Print_VHDL_Level(ofile);
 			continue;
 		}
 
@@ -1508,10 +238,10 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		vector<vcWire*> inwires;
 		vector<int> inwire_buffering;
 
-		vector<vcTransition*> reqL;
-		vector<vcTransition*> ackL;
-		vector<vcTransition*> reqR;
-		vector<vcTransition*> ackR;
+		vector<string> reqL;
+		vector<string> ackL;
+		vector<string> reqR;
+		vector<string> ackR;
 
 		vector<vcWire*> outwires;
 		vector<int> outwire_buffering;
@@ -1577,16 +307,17 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 			so->Append_Outwires(outwires);
 			so->Append_Outwire_Buffering(outwire_buffering, num_reqs);
 
-			reqL.push_back(so->Get_Req(0));
-			ackL.push_back(so->Get_Ack(0));
-			reqR.push_back(so->Get_Req(1));
-			ackR.push_back(so->Get_Ack(1));
+			/*
+				TODO: redo this
+				reqL.push_back(so->Get_Req(0));
+				ackL.push_back(so->Get_Ack(0));
+				reqR.push_back(so->Get_Req(1));
+				ackR.push_back(so->Get_Ack(1));
+			*/
 
 			so->Append_Guard(guard_wires,guard_complements);
 		}
 
-		//string buffering_string;
-		//this->Generate_Buffering_Constant_Declaration(dpe_elements, buffering_string);
 
 		string input_buffering_string;
 		int max_inbuf = this->Generate_Buffering_String("inBUFs", inwire_buffering, input_buffering_string);
@@ -1656,10 +387,10 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		ofile << "signal data_in: std_logic_vector(" << in_width-1 << " downto 0);" << endl;
 		ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
 		// in and out acks.
-		ofile << "signal reqR, ackR, reqL, ackL : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
-		ofile << "signal reqR_unguarded, ackR_unguarded, reqL_unguarded, ackL_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+		ofile << "signal reqR, ackR, reqL, ackL : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
+		ofile << "signal reqR_unguarded, ackR_unguarded, reqL_unguarded, ackL_unguarded : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 		if(use_regulator)
-			ofile << "signal reqL_unregulated, ackL_unregulated : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+			ofile << "signal reqL_unregulated, ackL_unregulated : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 		ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 
 		ofile << input_buffering_string << endl;
@@ -1695,8 +426,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 			Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
 			Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
 
-			this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
-			Print_VHDL_Guard_Instance(false, false, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+			this->Print_VHDL_Regulator_Instance_Level(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
+			Print_VHDL_Guard_Instance_Level(false, false, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 					"reqL_unguarded", "ackL_unguarded",
 					"reqL_unregulated", "ackL_unregulated",
 					"reqR_unguarded", "ackR_unguarded",
@@ -1713,7 +444,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 
 			if(!flow_through)
 			{
-				Print_VHDL_Guard_Instance(false,false,group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+				Print_VHDL_Guard_Instance_Level(false,false,group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 						"reqL_unguarded", "ackL_unguarded",
 						"reqL", "ackL",
 						"reqR_unguarded", "ackR_unguarded",
@@ -1727,35 +458,6 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 				ofile << "ackR_unguarded <= ackR;" << endl;
 			}
 
-			/*
-			   if(guard_wires[0] != NULL)
-			   {
-			   ofile << "reqL(0) <= " << reqL[0]->Get_CP_To_DP_Symbol() 
-			   << " when " << guard_wires[0]->Get_VHDL_Id() 
-			   << "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else false;" << endl; 
-			   ofile << ackL[0]->Get_DP_To_CP_Symbol() << " <= ackL(0) " 
-			   << " when " << guard_wires[0]->Get_VHDL_Id()
-			   << "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else " 
-			   << reqL[0]->Get_CP_To_DP_Symbol()  << ";" 
-			   << endl; 
-
-			   ofile << "reqR(0) <= " << reqR[0]->Get_CP_To_DP_Symbol() 
-			   << " when " << guard_wires[0]->Get_VHDL_Id() 
-			   << "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else false;" << endl; 
-			   ofile << ackR[0]->Get_DP_To_CP_Symbol() << " <= ackR(0) " 
-			   << " when " << guard_wires[0]->Get_VHDL_Id()
-			   << "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else " 
-			   << reqR[0]->Get_CP_To_DP_Symbol()  << ";" 
-			   << endl; 
-			   }
-			   else
-			   {
-			   ofile << "reqL(0) <= " << reqL[0]->Get_CP_To_DP_Symbol() << ";" << endl;
-			   ofile << "reqR(0) <= " << reqR[0]->Get_CP_To_DP_Symbol() << ";" << endl;
-			   ofile << ackL[0]->Get_DP_To_CP_Symbol() << " <= ackL(0); "  << endl;
-			   ofile << ackR[0]->Get_DP_To_CP_Symbol() << " <= ackR(0); "  << endl;
-			   }
-			   */
 		}
 
 
@@ -1778,7 +480,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 			int exp_width =  ((vcFloatType*) input_type)->Get_Characteristic_Width();
 			int frac_width =  ((vcFloatType*) input_type)->Get_Mantissa_Width();
 
-			ofile << "PipedFpOp: PipelinedFPOperator -- {" << endl;
+			ofile << "PipedFpOp: PipelinedFPOperatorLevel -- {" << endl;
 			ofile << " generic map( -- { " << endl 
 				<< " name => " << '"' << group_name << '"' << "," << endl 
 				<< " operator_id => " << vhdl_op_id << "," << endl
@@ -1787,7 +489,6 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 				<< " no_arbitration => " << no_arb_string << ","  << endl
 				<< " num_reqs => " << num_reqs << "," << endl
 				<< " use_input_buffering => true," << endl
-				<< " full_rate => " << (full_rate ? "true," : "false,") << endl
 				<< " detailed_buffering_per_input => inBUFs," << endl
 				<< " detailed_buffering_per_output => outBUFs -- } \n )" << endl;
 			ofile << "port map ( reqL => reqL , ackL => ackL, reqR => reqR, ackR => ackR, dataL => data_in, dataR => data_out, clk => clk, reset => reset); -- }" << endl;
@@ -1801,7 +502,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 				//   note: float-to-float will be unshared, but we still stuff
 				//         it in here.  There is no extra cost.
 
-				ofile << "SplitOperator: SplitOperatorShared -- {" << endl;
+				ofile << "SplitOperator: SplitOperatorSharedLevel -- {" << endl;
 				ofile << "generic map ( -- { " ;
 				ofile << " name => " << '"' << group_name << '"' << "," << endl;
 				// a ton of generics..
@@ -1841,7 +542,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	    {
 	      string iname = '"' + group_name + '"';
 	      int bufv = ( (max_inbuf > max_outbuf) ? max_inbuf : max_outbuf);
-	      ofile << "UnsharedOperator: UnsharedOperatorWithBuffering -- {" << endl;
+	      ofile << "UnsharedOperator: UnsharedOperatorWithBufferingLevel -- {" << endl;
 	      ofile << "generic map ( -- { " ;
 	      // a ton of generics..
 	      ofile << " operator_id => " << vhdl_op_id << "," << endl  // operator-id
@@ -1890,7 +591,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 
 
 
-void vcDataPath::Print_VHDL_Regulator_Instance(string inst_id, 
+void vcDataPath::Print_VHDL_Regulator_Instance_Level(string inst_id, 
 			int num_reqs,  
 			string reqs, string acks,
 			string regulated_reqs, string regulated_acks, 
@@ -1925,7 +626,7 @@ void vcDataPath::Print_VHDL_Regulator_Instance(string inst_id,
 		bool cf = dpe->Is_Part_Of_Pipelined_Loop(depth, num_slots);
 
 		ofile << inst_id_idx 
-			<< ": access_regulator_base generic map ("
+			<< ": access_regulator_base_level generic map ("
 			<< "name => " 
 			<< '"' << inst_id_idx  << '"'
 			<< ", num_slots => " 
@@ -1940,102 +641,7 @@ void vcDataPath::Print_VHDL_Regulator_Instance(string inst_id,
 	}
 }
 
-int vcDataPath::Generate_Buffering_String(string const_name,
-		vector<int>& buf_sizes, 
-		string& buffering_string)
-{
-	int maxbuf = 0;
-	int N = buf_sizes.size();
-	buffering_string = "(";
-	buffering_string = "constant " + const_name + " : IntegerArray(" + IntToStr(N-1)
-		+ " downto 0) := (";
-	int J;
-	for(J = 0; J <  N; J++)
-	{
-		if(J > 0)
-			buffering_string += ", ";
-		int bufv = buf_sizes[J];
-		maxbuf = ((bufv > maxbuf) ? bufv : maxbuf);
-		buffering_string += IntToStr((N-J)-1) + " => " + IntToStr(bufv);
-	}
-	buffering_string += ");";
-	return(maxbuf);
-}
-
-int vcDataPath::Generate_Pipeline_Slot_Demands(vector<vcDatapathElement*>& dpe_elements,
-				vector<int>& slot_demands)
-{
-	int max_buf_size = 0;
-	int idx;
-	int num_reqs = dpe_elements.size();
-	int depth, num_slots;
-
-	if(num_reqs == 1)
-	{
-	   bool cf = dpe_elements[0]->Is_Part_Of_Pipelined_Loop(depth,num_slots);
-	   if(cf)
-		slot_demands.push_back(2);
-	   else
-		slot_demands.push_back(1);
-	}
-
-	for(idx = 0; idx < num_reqs;  idx++)
-	{
-		vcDatapathElement* dpe = dpe_elements[(num_reqs-idx)-1];
-		
-		// needs to get more sophisticated...
-		bool cf = dpe->Is_Part_Of_Pipelined_Loop(depth,num_slots);
-
-		slot_demands.push_back(num_slots);
-		max_buf_size = (max_buf_size < num_slots ? num_slots : max_buf_size);
-         }
-	return(max_buf_size);
-}
-
-
-void vcDataPath::Generate_Buffering_Constant_Declaration(vector<vcDatapathElement*>& dpe_elements, 
-							string& buffering_string)
-{
-	vector<int> buf_sizes;
-	int idx;
-
-	int depth, num_slots;
-	
-	int num_reqs = dpe_elements.size();
-	int max_buf_size = Generate_Pipeline_Slot_Demands(dpe_elements, buf_sizes);
-
-	// if single request is present, buffering
-	// will be limited to 2.
-        if(num_reqs == 1)
-	{
-	   vcDatapathElement* dpe = dpe_elements[0];
-	   bool cf = dpe->Is_Part_Of_Pipelined_Loop(depth,num_slots);
-	   if(cf) 
-	   	buffering_string = 
-			"constant buffering_per_output : IntegerArray(0 downto 0) := (0 => 2);";
-	   else
-	   	buffering_string = 
-			"constant buffering_per_output : IntegerArray(0 downto 0) := (0 => 1);";
-	   return;
-	}	
-
-
-	// generate the buffering string..
-	int N = buf_sizes.size();
-	buffering_string = "(";
-	buffering_string = "constant buffering_per_output : IntegerArray(" + IntToStr(N-1)
-		+ " downto 0) := (";
-	int J;
-	for(J = 0; J <  N; J++)
-	{
-		if(J > 0)
-			buffering_string += ", ";
-		buffering_string += IntToStr((N-J)-1) + " => " + IntToStr(buf_sizes[J]);
-	}
-	buffering_string += ");";
-}
-
-void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
+void vcDataPath::Print_VHDL_Load_Instances_Level(ostream& ofile)
 { 
 
   string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
@@ -2059,10 +665,13 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 
       vector<vcWire*> guard_wires;
       vector<bool> guard_complements;
+
+	/* TODO: transition-> string.
       vector<vcTransition*> reqL;
       vector<vcTransition*> ackL;
       vector<vcTransition*> reqR;
       vector<vcTransition*> ackR;
+	*/
 
       vector<vcWire*> outwires;
       vector<int> outwire_buffering;
@@ -2082,7 +691,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	  assert((*iter)->Is("vcLoad"));
 	  vcLoad* so = (vcLoad*) (*iter);
 	  if(vcSystem::_enable_logging)
-	  	so->vcSplitOperator::Print_VHDL_Logger(this->Get_Parent(), ofile);
+	  	so->vcSplitOperator::Print_VHDL_Logger_Level(this->Get_Parent(), ofile);
 
 	  if(ms == NULL)
 	    ms = ((vcLoad*) so)->Get_Memory_Space();
@@ -2098,10 +707,12 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	  so->Append_Outwires(outwires);
 	  so->Append_Outwire_Buffering(outwire_buffering, num_reqs);
    
+	/* TODO: level protocol sigs
 	  reqL.push_back(so->Get_Req(0));
 	  ackL.push_back(so->Get_Ack(0));
 	  reqR.push_back(so->Get_Req(1));
 	  ackR.push_back(so->Get_Ack(1));
+	*/
 
 	  so->Append_Guard(guard_wires,guard_complements);
 	}
@@ -2159,9 +770,9 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
       ofile << "signal data_in: std_logic_vector(" << in_width-1 << " downto 0);" << endl;
       ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
       // in and out acks.
-      ofile << "signal reqR, ackR, reqL, ackL : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
-      ofile << "signal reqR_unguarded, ackR_unguarded, reqL_unguarded, ackL_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
-      ofile << "signal reqL_unregulated, ackL_unregulated: BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal reqR, ackR, reqL, ackL : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal reqR_unguarded, ackR_unguarded, reqL_unguarded, ackL_unguarded : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal reqL_unregulated, ackL_unregulated: std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
       ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
       //ofile << buffering_string  <<  endl;
       ofile << input_buffering_string  <<  endl;
@@ -2177,6 +788,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	  for(int u = 0; u < inwires.size(); u++)
 	    {
 
+		/* TODO: redo..
 	      vcTransition* lrr = reqL[u];
 	      vcTransition* lra = ackL[u];
 	      vcTransition* lcr = reqR[u];
@@ -2196,6 +808,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 		    << "\"" << ow->Get_VHDL_Signal_Id() << "\"," << endl
 		    << "\"" << iw->Get_VHDL_Signal_Id() << "\" -- } " << endl
 		    << ");" << endl;
+		*/
 	    }
 	}
 
@@ -2210,9 +823,9 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 
       // access regulator: limits the number of pending requests to the operator
       // from a particular request point.
-      this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
+      this->Print_VHDL_Regulator_Instance_Level(group_name + "_accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
 
-      Print_VHDL_Guard_Instance(false,false,group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+      Print_VHDL_Guard_Instance_Level(false,false,group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 		      "reqL_unguarded", "ackL_unguarded",
 		      "reqL_unregulated", "ackL_unregulated",
 		      "reqR_unguarded", "ackR_unguarded",
@@ -2229,7 +842,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
       // now the operator instances 
       string name = '"' + group_name + '"';
 
-      ofile << "LoadReq: LoadReqSharedWithInputBuffers -- {" << endl;
+      ofile << "LoadReq: LoadReqSharedWithInputBuffersLevel -- {" << endl;
       ofile << "generic map ( name => " << name << ", addr_width => " << addr_width << "," << endl
 	      << "  num_reqs => " << num_reqs << "," << endl
 	      << "  tag_length => " << tag_length << "," << endl
@@ -2250,7 +863,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	      << ms->Get_VHDL_Memory_Interface_Port_Section(m , "load", "lr_tag",idx) << "," << endl
 	      << "  clk => clk, reset => reset -- }\n); -- }" << endl;
 
-      ofile << "LoadComplete: LoadCompleteShared -- {" << endl;
+      ofile << "LoadComplete: LoadCompleteSharedLevel -- {" << endl;
       ofile << "generic map ( name => " << '"' <<  group_name 
 	      << " load-complete "  << '"' << "," << endl
 	      << " data_width => " << data_width << "," << endl
@@ -2276,7 +889,8 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
     }
 }
 
-void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
+
+void vcDataPath::Print_VHDL_Store_Instances_Level(ostream& ofile)
 { 
   string parent_name = this->Get_Parent()->Get_Id();
 	string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");

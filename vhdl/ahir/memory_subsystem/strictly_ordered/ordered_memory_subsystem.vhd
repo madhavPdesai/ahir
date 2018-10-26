@@ -143,6 +143,8 @@ architecture bufwrap of ordered_memory_subsystem is
 
 begin
 
+
+  ifMoreThanOneLoad: if num_loads > 1 generate
   -- instantiate repeaters for each load and store input
   LoadRepGen: for LOAD in 0 to num_loads-1 generate
 
@@ -173,8 +175,19 @@ begin
         ack_in   => lr_ack_out_core(LOAD));
     
   end generate LoadRepGen;
+  end generate ifMoreThanOneLoad;
+
+  onlyOneLoad: if num_loads = 1 generate
+      lr_tag_in_core <= lr_tag_in((tag_width+time_stamp_width) - 1 downto  time_stamp_width);
+      lr_time_stamp_in_core <= lr_tag_in(time_stamp_width - 1 downto  0);
+      lr_req_in_core <= lr_req_in;
+      lr_addr_in_core <= lr_addr_in;
+
+      lr_ack_out  <= lr_ack_out_core;
+  end generate onlyOneLoad;
 
 
+  ifMoreThanOneStore: if num_stores > 1 generate
   StoreRepGen: for STORE in 0 to num_stores-1 generate
     store_repeater_data_in(STORE) <= sr_data_in((STORE+1)*data_width-1 downto STORE*data_width) &
                                      sr_addr_in((STORE+1)*addr_width-1 downto STORE*addr_width) &
@@ -204,7 +217,20 @@ begin
         ack_in   => sr_ack_out_core(STORE));
     
   end generate StoreRepGen;
+  end generate ifMoreThanOneStore;
 
+  onlyOneStore: if num_stores = 1 generate
+
+      sr_tag_in_core <= sr_tag_in((tag_width+time_stamp_width) - 1 downto  time_stamp_width);
+      sr_time_stamp_in_core <= sr_tag_in(time_stamp_width - 1 downto  0);
+      sr_req_in_core  <= sr_req_in;
+      sr_addr_in_core <= sr_addr_in;
+      sr_data_in_core <= sr_data_in;
+
+      sr_ack_out  <= sr_ack_out_core;
+  end generate onlyOneStore;
+
+  nonTrivGen: if (num_loads > 0) and (num_stores > 0) generate
   core: memory_subsystem_core
     generic map (
       name => name & "-core",
@@ -240,5 +266,6 @@ begin
       sc_tag_out  => sc_tag_out,
       clock       => clock,
       reset       => reset);    
+   end generate nonTrivGen;
 end bufwrap;
 

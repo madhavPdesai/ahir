@@ -81,6 +81,9 @@ begin  -- Behave
       signal rhs_state : std_logic;
 
       signal lhs_state : unsigned ((Ceil_Log2(detailed_buffering_per_output(I)+1))-1 downto 0); 
+      signal lhs_valid: Boolean;
+
+      signal aR, aR_reg: Boolean;
 
     begin  -- block Reg
       
@@ -97,25 +100,28 @@ begin  -- Behave
       process(clk,lhs_state, lhs_clear,reset,valid)
         variable nstate : unsigned ((Ceil_Log2(detailed_buffering_per_output(I)+1))-1 downto 0); 
         variable aL_var : std_logic;
+	variable lhs_valid_var: Boolean;
       begin
         nstate := lhs_state;
         aL_var := '0';
+        lhs_valid_var := false;
         
         if(lhs_state < detailed_buffering_per_output(I)) then
+            aL_var := '1';
             if(valid = '1') then
               nstate := lhs_state + 1;
-              aL_var := '1';
             end if;
         end if;
 
-        if(lhs_state > 0) then
+        if(nstate > 0) then
+	    lhs_valid_var := true;
             if(lhs_clear = '1') then
               nstate := nstate-1;
             end if;
 	end if;
 
-
         ackL_sig(I) <= aL_var;
+        lhs_valid   <= lhs_valid_var;
         
         if(clk'event and clk = '1') then
            if(reset = '1') then
@@ -130,43 +136,39 @@ begin  -- Behave
       -------------------------------------------------------------------------
       -- rhs state machine
       -------------------------------------------------------------------------
-     process(clk,rhs_state,reset,reqR(I),lhs_state)
+     process(clk,rhs_state,reset,reqR(I),lhs_valid)
        variable nstate : std_logic;
-       variable aR_var : boolean;
+       variable aR_var: boolean;
        variable lhs_clear_var : std_logic;
      begin
         nstate := rhs_state;
-        aR_var := false;
+        aR_var     := false;
         lhs_clear_var := '0';
         
         case rhs_state is
           when '0' =>
             if(reqR(I)) then
-              if(lhs_state > 0) then
-                aR_var := true;
-                lhs_clear_var := '1';
-              else
-                nstate := '1';
-              end if;
+	      nstate := '1';
             end if;
           when '1' =>
-            if(lhs_state > 0) then
-              lhs_clear_var := '1';
+            if(lhs_valid) then
               aR_var := true;
-              nstate := '0';
+              lhs_clear_var := '1';
+	      if (not reqR(I)) then
+                 nstate := '0';
+	      end if;
             end if;
           when others => null;
         end case;
 
         lhs_clear <= lhs_clear_var;
+        ackR(I) <= aR_var;
         
         if(clk'event and clk = '1') then
 	  if(reset = '1') then 
-		ackR(I) <= false;
           	rhs_state <= '0';
 	  else
           	rhs_state <= nstate;
-          	ackR(I) <= aR_var;
 	  end if;
         end if;
      end process;

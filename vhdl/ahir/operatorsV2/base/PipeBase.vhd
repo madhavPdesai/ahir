@@ -42,8 +42,9 @@ use ahir.GlobalConstants.all;
 
 --
 -- base Pipe.
---  If full_rate is true, we will go for an implementation which
---  gives a throughput of one word/cycle.
+--   Implementation guarantees registering of every in->out path
+--   unless save_slot flag is true, in which case there will be
+--   a combi path from write_req -> read_ack.
 --
 
 entity PipeBase is

@@ -1,0 +1,85 @@
+$pipe wr_bar_pipe: $uint<1> $depth 2
+$pipe addr_pipe: $uint<8> $depth 2
+$pipe write_data_pipe: $uint<16> $depth 2
+$pipe read_data_pipe: $uint<16> $depth 2
+$pipe in_data : $uint<32> $depth 2
+$pipe out_data: $uint<16> $depth 2
+
+	
+$storage MEMARRAY: $array [256] $of $uint<16>
+
+$pipeline $depth 7 $fullrate $module 
+	[write_port] 
+	$in (addr: $uint<8> din : $uint<16>) 
+	$out (ok: $uint<1>) $is
+{
+	MEMARRAY[addr] := din
+        ok := (addr [] 0)  $buffering 2
+
+	$attribute input_buffering 0
+	$attribute output_buffering 0
+	$attribute delay 6
+}
+
+$pipeline $depth 7 $fullrate $module 
+	[read_port] 
+	$in (addr: $uint<8>)
+	$out (dout: $uint<16>) $is
+{
+	dout := MEMARRAY[addr] 
+
+	$attribute input_buffering 0
+	$attribute output_buffering 0
+	$attribute delay 6
+}
+
+$module [memDaemon] 
+	$in ()
+	$out () $is
+{
+	$storage MEMARRAY: $array [256] $of $uint<16>
+
+	$branchblock[lOoP] {
+
+		$dopipeline $depth 15 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+
+		wr_bar := wr_bar_pipe
+		addr   := addr_pipe
+		wdata   := write_data_pipe
+
+		$guard (wr_bar)  $call  read_port  (addr) (rdata_16)
+		$guard (~wr_bar) $call  write_port (addr wdata) (wok)
+
+		read_data_pipe := rdata_16
+
+	$while 1
+    }
+}
+
+
+$module [mem_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] 
+	{
+		$dopipeline $depth 15 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+			
+		icmd := in_data
+
+		$volatile $split (icmd 8 8 16) (rd_wr_bar addr wdata)
+		$volatile wr_bar := (rd_wr_bar != 0)
+
+		wr_bar_pipe := wr_bar
+		addr_pipe   := addr
+		write_data_pipe := wdata
+
+		rdata := read_data_pipe
+		out_data := rdata
+
+		$while 1
+	}
+}
+
+
+

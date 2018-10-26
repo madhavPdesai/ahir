@@ -1,0 +1,16 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2
+
+$module [collapse_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 9 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+	 	CMD := in_data
+
+		$volatile $split (CMD 4 4 4 4 4 4 4 4) (c0 c1 c2 c3 c4 c5 c6 c7)
+		out_val :=  (((c0 && c1) && (c2 && c3)) && ((c4 && c5) && (c6 && c7)))
+		out_data :=  out_val
+		$while 1
+	}
+}

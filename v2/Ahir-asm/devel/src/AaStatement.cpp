@@ -6071,7 +6071,10 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 	if(!this->Get_Is_Volatile())
 	{
 		if(src_expression->Is_Implicit_Variable_Reference())
-			delay = INTERLOCK_DELAY;
+		{
+			if(tgt_expression->Is_Implicit_Variable_Reference())
+				delay = INTERLOCK_DELAY;
+		}
 		else
 			delay = src_expression->Get_Delay();
 	}

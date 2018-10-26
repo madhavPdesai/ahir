@@ -301,6 +301,7 @@ public:
 class vcTransition;
 class vcCompatibilityLabel;
 class vcControlPath;
+class vcDataPipeline;
 class vcDataPath;
 class vcModule;
 class vcDatapathElement: public vcRoot
@@ -325,6 +326,7 @@ protected:
   int _in_width;
   int _out_width;
 
+  vcDataPipeline* _data_pipeline;
  public:
 
   vcDatapathElement(string id):vcRoot(id) 
@@ -336,6 +338,7 @@ protected:
 		_delay = 1;
 		_in_width = 0;
 		_out_width = 0;
+		_data_pipeline = NULL;
 	}
 
   vcDatapathElement(string id, vector<vcWire*>& iwires, vector<vcWire*>& owires):vcRoot(id) 
@@ -347,6 +350,7 @@ protected:
 		_delay = 1;
 		_in_width = 0;
 		_out_width = 0;
+		_data_pipeline = NULL;
 		this->Set_Input_Wires(iwires);
 		this->Set_Output_Wires(owires);
 	}
@@ -374,6 +378,9 @@ protected:
       		  w->Connect_Driver(this);
 	  }
   }
+
+  vcDataPipeline* Get_Data_Pipeline () {return (_data_pipeline);}
+  void Set_Data_Pipeline (vcDataPipeline* p) {_data_pipeline = p;}
 
   int Get_Input_Width() {return(_in_width);}
   int Get_Output_Width() { return(_out_width);}
@@ -567,12 +574,26 @@ class vcModule;
 class vcControlPath;
 class vcMemorySpace;
 class vcEquivalence;
+class vcDataPipeline: public vcDatapathElement 
+{
+	string pipeline_name;
+	set<vcDatapathElement*> dpe_set;
+	public:
+	vcDataPipeline (string pname): vcDatapathElement(pname) {}
+	void Add_Dpe(vcDatapathElement* dpe) { dpe_set.insert(dpe); }
+
+	friend class vcDataPath;
+};
+
 class vcDataPath: public vcRoot
 {
   vcModule* _parent;
 
   // lots of maps.
-  map<string, vcDatapathElement*> _dpe_map; // all dpes are recorded here
+  map<string, vcDatapathElement*> _dpe_map; // all dpes are recorded here (except for pipelines).
+
+  // lots of maps.
+  map<string, vcDataPipeline*> _dpipeline_map; // all dpipelines are recorded here
 
   // separated maps for convenience
   map<string, vcPhi*> _phi_map;
@@ -613,6 +634,8 @@ class vcDataPath: public vcRoot
  public:
   vcDataPath(vcModule* m, string id);
 
+  vcDataPipeline* Find_Or_Add_DataPipeline(string dpipeline);
+  void Add_To_DataPipeline(string pname, string dpe_name);
   void Add_Load(vcLoad* ld);
   vcLoad* Find_Load(string id);
 
@@ -731,6 +754,7 @@ class vcDataPath: public vcRoot
 						string pid,
 						int idx);
 
+   void Build_Data_Pipelines ();
 };
 
 void Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,

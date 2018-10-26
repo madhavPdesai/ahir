@@ -63,6 +63,8 @@ architecture behave of mem_demux is
 
 begin  -- behave
 
+ -- demux is required only if there is more than one output...
+ MoreThanOneOutputGen:  if (g_number_of_outputs > 1) generate
 
   process(ack_in_sig)
     variable ack_out_var : std_logic;
@@ -100,6 +102,16 @@ begin  -- behave
       ack_in   => ack_in(I));
 
     data_out((I+1)*g_data_width -1 downto I*g_data_width) <= repeater_out_sig(I);
+
   end generate gen;
+ end generate MoreThanOneOutputGen;
+
+ OnlyOneOutputGen: if (g_number_of_outputs = 1) generate
+
+      data_out <= data_in;
+      ack_out <= ack_in(0);
+      req_out(0) <= req_in;
+
+ end generate OnlyOneOutputGen;
 
 end behave;

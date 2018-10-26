@@ -79,7 +79,7 @@ begin --
 					enable => enable_base);
 
    ureg: UnloadRegister 
-		generic map (name => "genericAccessTlbMemoryBase_Operator:ureg",
+		generic map (name => "ram1024x32:ureg",
 				data_width => 32,
 				  bypass_flag => true, nonblocking_read_flag => false)
 		port map (write_data => dataout,
@@ -197,7 +197,7 @@ begin
 							enable => enable_base);
 
    ureg: UnloadRegister 
-		generic map (name => "genericAccessTlbMemoryBase_Operator:ureg",
+		generic map (name => "dpram_1w_1r_1024x32_base_bank_dual_port:ureg",
 				data_width => 32,
 				  bypass_flag => true, nonblocking_read_flag => false)
 		port map (write_data => data_to_ulreg,

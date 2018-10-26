@@ -727,7 +727,8 @@ vc_Datapath[vcSystem* sys,vcModule* m]
             vc_Branch_Instantiation[dp] |
             vc_Phi_Instantiation[dp] | 
             vc_PhiPipelined_Instantiation[dp] | 
-	    vc_AttributeSpec[dp] | vc_ModuleBufferingSpec[m]  | vc_ModuleDelaySpec[m] )*
+	    vc_AttributeSpec[dp] | vc_ModuleBufferingSpec[m]  | vc_ModuleDelaySpec[m] |
+		vc_PipelineSpec[dp] )*
             RBRACE
 ;
 
@@ -1691,6 +1692,18 @@ ATTRIBUTE  kid: SIMPLE_IDENTIFIER {key = kid->getText();} IMPLIES vid:QUOTED_STR
 
 ;
 
+//----------------------------------------------------------------------------------------------------------
+// vc_PipelineSpec: PIPELINE SIMPLE_IDENTIFIER LPAREN (SIMPLE_IDENTIFIER+)  RPAREN
+//----------------------------------------------------------------------------------------------------------
+vc_PipelineSpec[vcDataPath* dp]
+{
+	string pname;
+	string dpe_name;
+}
+:
+PIPELINE  kid: SIMPLE_IDENTIFIER {pname = kid->getText();} 
+		LPAREN (SIMPLE_IDENTIFIER { dp->Add_To_DataPipeline(pname,dpe_name); })+ RPAREN
+;
 
 //----------------------------------------------------------------------------------------------------------
 // vc_Identifier: SIMPLE_IDENTIFIER

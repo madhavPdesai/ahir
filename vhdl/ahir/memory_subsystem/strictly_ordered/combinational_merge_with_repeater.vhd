@@ -79,6 +79,8 @@ begin
 			 out_req => rep_req_in,
 			 out_ack => rep_ack_out);
 
+    -- instantiate repeater only if the number of inputs is > 1.
+    moreThanOneInputGen: if (g_number_of_inputs > 1) generate
     rptr:  mem_repeater generic map (name => name & "-rptr", g_data_width => g_data_width)
 		port map(clk => clk, reset => reset,
 			 data_in => rep_data_in,
@@ -87,5 +89,12 @@ begin
 			 data_out => out_data,
 			 req_out => out_req,
 			 ack_in => out_ack);	
+    end generate moreThanOneInputGen;
+
+    OneInputGen: if (g_number_of_inputs = 1) generate
+         out_data <= rep_data_in;
+         out_req  <= rep_req_in;
+         rep_ack_out <= out_ack;
+    end generate OneInputGen;
   
 end Struct;

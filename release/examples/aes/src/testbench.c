@@ -155,6 +155,8 @@ int main(void)
 
 #ifdef SW
 	init_pipe_handler();
+	register_pipe ("input_block_pipe",  16, 8, PIPE_FIFO_MODE);
+	register_pipe ("output_block_pipe", 16, 8, PIPE_FIFO_MODE);
 	PTHREAD_DECL(Daemon);
 	PTHREAD_CREATE(Daemon);
 #endif
