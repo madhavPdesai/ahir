@@ -42,18 +42,22 @@
 
 void vcModule::Print_VHDL_Inarg_Level_Forks(ostream& ofile)
 {
+	// TODO
 }
 
 void vcModule::Print_VHDL_Outarg_Level_Joins(ostream& ofile)
 {
+	// TODO
 }
 
 void vcModule::Print_VHDL_Sample_Pulse_To_Level(ostream& ofile)
 {
+	// TODO
 }
 
 void vcModule::Print_VHDL_Update_Level_To_Pulse(ostream& ofile)
 {
+	// TODO
 }
 
 void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
@@ -175,10 +179,9 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 	}
 
 		
-	// TODO: in operator case, print pulse->level and level->pulse converts.
 	if(this->Get_Operator_Flag())
 	{
-		this->Print_VHDL_Sample_Pulse_To_Level(ofile);
+		this->Print_VHDL_Sample_Pulse_To_Level(ofile); 
 		this->Print_VHDL_Update_Level_To_Pulse(ofile);
 	}
 
@@ -193,7 +196,6 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 			ofile << w->Get_VHDL_Signal_Id() << " <= " << w->Get_VHDL_Id() << ";" << endl;
 		}
 
-		// TODO: print 
 
 	}
 	ofile << "-- output handling  -------------------------------------------------------" << endl;

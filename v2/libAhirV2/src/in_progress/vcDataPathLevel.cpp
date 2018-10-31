@@ -41,8 +41,18 @@
 
 void vcDatapathElement::Print_VHDL_Level_Logger(vcModule* m, ostream& ofile)
 {
+	// TODO
 }
 
+void vcDatapathElement::Print_VHDL_Level_Protocol_Signals(vcWire* w, ostream& ofile)
+{
+	// TODO.
+}
+
+void vcDatapathElement::Print_VHDL_DPE_Level_Protocol_Signals(ostream& ofile)
+{
+	// TODO.
+}
 
 void vcDataPath::Print_VHDL_Level(ostream& ofile)
 {
@@ -60,8 +70,9 @@ void vcDataPath::Print_VHDL_Level(ostream& ofile)
 	this->Get_Parent()->Print_VHDL_Pipe_Signals(ofile);
 
 
-	// TODO: for each DPE, print a pair of sample req/ack  level signals
-	//	  and a pair of update req/ack level signals.
+	// for each DPE, print a pair of sample req/ack  level signals
+	//  and a pair of update req/ack level signals.
+	this->Print_VHDL_DPE_Level_Protocol_Signals(ofile);
 
 
 	ofile << "-- }" << endl << "begin -- { " << endl;
@@ -307,13 +318,10 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances_Level(ostream& ofile)
 			so->Append_Outwires(outwires);
 			so->Append_Outwire_Buffering(outwire_buffering, num_reqs);
 
-			/*
-				TODO: redo this
-				reqL.push_back(so->Get_Req(0));
-				ackL.push_back(so->Get_Ack(0));
-				reqR.push_back(so->Get_Req(1));
-				ackR.push_back(so->Get_Ack(1));
-			*/
+			reqL.push_back(so->Get_Req_Level(0));
+			ackL.push_back(so->Get_Ack_Level(0));
+			reqR.push_back(so->Get_Req_Level(1));
+			ackR.push_back(so->Get_Ack_Level(1));
 
 			so->Append_Guard(guard_wires,guard_complements);
 		}
@@ -427,7 +435,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances_Level(ostream& ofile)
 			Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
 
 			this->Print_VHDL_Regulator_Instance_Level(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
-			Print_VHDL_Guard_Instance_Level(false, false, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+			this->Print_VHDL_Guard_Instance_Level(false, false, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 					"reqL_unguarded", "ackL_unguarded",
 					"reqL_unregulated", "ackL_unregulated",
 					"reqR_unguarded", "ackR_unguarded",
@@ -666,12 +674,10 @@ void vcDataPath::Print_VHDL_Load_Instances_Level(ostream& ofile)
       vector<vcWire*> guard_wires;
       vector<bool> guard_complements;
 
-	/* TODO: transition-> string.
-      vector<vcTransition*> reqL;
-      vector<vcTransition*> ackL;
-      vector<vcTransition*> reqR;
-      vector<vcTransition*> ackR;
-	*/
+      vector<string> reqL;
+      vector<string> ackL;
+      vector<string> reqR;
+      vector<string> ackR;
 
       vector<vcWire*> outwires;
       vector<int> outwire_buffering;
@@ -707,12 +713,10 @@ void vcDataPath::Print_VHDL_Load_Instances_Level(ostream& ofile)
 	  so->Append_Outwires(outwires);
 	  so->Append_Outwire_Buffering(outwire_buffering, num_reqs);
    
-	/* TODO: level protocol sigs
-	  reqL.push_back(so->Get_Req(0));
-	  ackL.push_back(so->Get_Ack(0));
-	  reqR.push_back(so->Get_Req(1));
-	  ackR.push_back(so->Get_Ack(1));
-	*/
+	  reqL.push_back(so->Get_Req_Level(0));
+	  ackL.push_back(so->Get_Ack_Level(0));
+	  reqR.push_back(so->Get_Req_Level(1));
+	  ackR.push_back(so->Get_Ack_Level(1));
 
 	  so->Append_Guard(guard_wires,guard_complements);
 	}
@@ -788,19 +792,18 @@ void vcDataPath::Print_VHDL_Load_Instances_Level(ostream& ofile)
 	  for(int u = 0; u < inwires.size(); u++)
 	    {
 
-		/* TODO: redo..
-	      vcTransition* lrr = reqL[u];
-	      vcTransition* lra = ackL[u];
-	      vcTransition* lcr = reqR[u];
-	      vcTransition* lca = ackR[u];
+	      string lrr = reqL[u];
+	      string lra = ackL[u];
+	      string lcr = reqR[u];
+	      string lca = ackR[u];
 	      vcWire* iw = inwires[u];
 	      vcWire* ow = outwires[u];
 
-	      ofile << "LogMemRead(clk, reset, global_clock_cycle_count,-- { "  << endl
-		    << lrr->Get_CP_To_DP_Symbol() << "," << endl
-		    << lra->Get_DP_To_CP_Symbol() << "," << endl
-		    << lcr->Get_CP_To_DP_Symbol() << "," << endl
-		    << lca->Get_DP_To_CP_Symbol() << "," << endl
+	      ofile << "LogMemReadLevel(clk, reset, global_clock_cycle_count,-- { "  << endl
+		    << lrr << "," << endl
+		    << lra << "," << endl
+		    << lcr << "," << endl
+		    << lca << "," << endl
 		    << "\"" << elements[u] << "\"," << endl
 		    << "\"" << ms->Get_VHDL_Id() << "\" ," << endl
 		    << ow->Get_VHDL_Signal_Id() << "," << endl
@@ -808,7 +811,6 @@ void vcDataPath::Print_VHDL_Load_Instances_Level(ostream& ofile)
 		    << "\"" << ow->Get_VHDL_Signal_Id() << "\"," << endl
 		    << "\"" << iw->Get_VHDL_Signal_Id() << "\" -- } " << endl
 		    << ");" << endl;
-		*/
 	    }
 	}
 
@@ -912,11 +914,11 @@ void vcDataPath::Print_VHDL_Store_Instances_Level(ostream& ofile)
 		vector<vcWire*> datawires;
 		vector<int> outwire_buffering;
 
-		vector<vcTransition*> reqL;
+		vector<string> reqL;
+		vector<string> ackL;
+		vector<string> reqR;
+		vector<string> ackR;
 
-		vector<vcTransition*> ackL;
-		vector<vcTransition*> reqR;
-		vector<vcTransition*> ackR;
 		vector<vcWire*> guard_wires;
 		vector<bool> guard_complements;
 
@@ -969,10 +971,10 @@ void vcDataPath::Print_VHDL_Store_Instances_Level(ostream& ofile)
 			// output buffering  set above..
 			outwire_buffering.push_back(default_op_buffering);
 
-			reqL.push_back(so->Get_Req(0));
-			ackL.push_back(so->Get_Ack(0));
-			reqR.push_back(so->Get_Req(1));
-			ackR.push_back(so->Get_Ack(1));
+			reqL.push_back(so->Get_Req_Level(0));
+			ackL.push_back(so->Get_Ack_Level(0));
+			reqR.push_back(so->Get_Req_Level(1));
+			ackR.push_back(so->Get_Ack_Level(1));
 
 			so->Append_Guard(guard_wires,guard_complements);
 		}
@@ -990,20 +992,20 @@ void vcDataPath::Print_VHDL_Store_Instances_Level(ostream& ofile)
 			for(int u = 0; u < addrwires.size(); u++)
 			{
 
-				vcTransition* srr = reqL[u];
-				vcTransition* sra = ackL[u];
-				vcTransition* scr = reqR[u];
-				vcTransition* sca = ackR[u];
+				string srr = reqL[u];
+				string sra = ackL[u];
+				string scr = reqR[u];
+				string sca = ackR[u];
 
 				vcWire* aw = addrwires[u];
 				vcWire* dw = datawires[u];
 
 
-				ofile << "LogMemWrite(clk, reset,global_clock_cycle_count,  -- { "  << endl
-					<< srr->Get_CP_To_DP_Symbol() << "," << endl
-					<< sra->Get_DP_To_CP_Symbol() << "," << endl
-					<< scr->Get_CP_To_DP_Symbol() << "," << endl
-					<< sca->Get_DP_To_CP_Symbol() << "," << endl
+				ofile << "LogMemWriteLevel(clk, reset,global_clock_cycle_count,  -- { "  << endl
+					<< srr << "," << endl
+					<< sra << "," << endl
+					<< scr << "," << endl
+					<< sca << "," << endl
 					<< "\"" << elements[u] << "\"," << endl
 					<< "\"" << ms->Get_VHDL_Id() << "\" ," << endl
 					<< dw->Get_VHDL_Signal_Id() << "," << endl
@@ -1073,10 +1075,10 @@ void vcDataPath::Print_VHDL_Store_Instances_Level(ostream& ofile)
 		Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
 
 
-		this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
+		this->Print_VHDL_Regulator_Instance_Level(group_name + "_accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
 
 
-		Print_VHDL_Guard_Instance(false,false,group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+		Print_VHDL_Guard_Instance_Level(false,false,group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 				"reqL_unguarded", "ackL_unguarded",
 				"reqL_unregulated", "ackL_unregulated",
 				"reqR_unguarded", "ackR_unguarded",
@@ -1154,10 +1156,10 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 		// number of requesters.
 		int num_reqs = _compatible_inport_groups[idx].size();
 
-		vector<vcTransition*> reqL;
-		vector<vcTransition*> ackL;
-		vector<vcTransition*> reqR;
-		vector<vcTransition*> ackR;
+		vector<string> reqL;
+		vector<string> ackL;
+		vector<string> reqR;
+		vector<string> ackR;
 
 		vector<vcWire*> outwires;
 		vector<int> outwire_buffering;
@@ -1199,10 +1201,10 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 			so->Append_Outwires(outwires);
 			so->Append_Outwire_Buffering(outwire_buffering, num_reqs);
 
-			reqL.push_back(so->Get_Req(0));
-			ackL.push_back(so->Get_Ack(0));
-			reqR.push_back(so->Get_Req(1));
-			ackR.push_back(so->Get_Ack(1));
+			reqL.push_back(so->Get_Req_Level(0));
+			ackL.push_back(so->Get_Ack_Level(0));
+			reqR.push_back(so->Get_Req_Level(1));
+			ackR.push_back(so->Get_Ack_Level(1));
 
 			so->Append_Guard(guards, guard_complements);
 		}
@@ -1275,7 +1277,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 		string group_name = p->Get_VHDL_Id() + "_read_" + IntToStr(idx);
 		string name = '"' + group_name + '"';
 
-		Print_VHDL_Guard_Instance(false, true, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+		Print_VHDL_Guard_Instance_Level(false, true, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 				"reqL_unguarded", "ackL_unguarded",
 				"reqL", "ackL",
 				"reqR_unguarded", "ackR_unguarded",
@@ -1470,7 +1472,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 		string group_name = p->Get_VHDL_Id() + "_write_" + IntToStr(idx);
 		string name = '"' + p->Get_VHDL_Id() + '"';
 
-		Print_VHDL_Guard_Instance(true, false, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+		Print_VHDL_Guard_Instance_Level(true, false, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 				"sample_req_unguarded", "sample_ack_unguarded",
 				"sample_req", "sample_ack",
 				"update_req_unguarded", "update_ack_unguarded",
@@ -1755,9 +1757,9 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 		Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
 
 
-		this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements,  ofile);
+		this->Print_VHDL_Regulator_Instance_Level(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements,  ofile);
 
-		Print_VHDL_Guard_Instance(false, false, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+		Print_VHDL_Guard_Instance_Level(false, false, group_name + "_gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 				"reqL_unguarded", "ackL_unguarded",
 				"reqL_unregulated", "ackL_unregulated",
 				"reqR_unguarded", "ackR_unguarded",
@@ -2290,21 +2292,7 @@ void Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vc
 	}
 }
 
-void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, string req, string ack, bool delay_flag, ostream& ofile)
-{
-
-	ofile << inst_id << ": GuardInterface generic map(name => \"" << inst_id << "\", nreqs => " << num_reqs 
-		<< ", delay_flag => " << (delay_flag ? "true" : "false") << ") -- { " << endl
-		<< "port map(reqL => " << req_unguarded << "," << endl
-		<< "ackL => " << ack_unguarded << "," << endl
-		<< "reqR => " << req << "," << endl
-		<< "ackR => " << ack << "," << endl
-		<< "clk => clk, " << endl
-		<< "reset => reset, " << endl
-		<< "guards => " << guards << "); -- }" << endl;
-}
-
-void Print_VHDL_Guard_Instance(bool sample_only, bool update_only,
+void Print_VHDL_Guard_Instance_Level(bool sample_only, bool update_only,
 		string inst_id, int num_reqs, string buffering, string guard_flags, string guards, 
 		string sr_in, string sa_out,  string sr_out, string sa_in,
 		string cr_in, string ca_out,  string cr_out, string ca_in, ostream& ofile)

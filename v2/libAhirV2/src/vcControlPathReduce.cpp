@@ -37,6 +37,7 @@
 #include <BGLWrap.hpp>
 
 int _flip_flop_count;
+int _saved_flip_flop_count;
 int _mux2_count;
 int _and2_count;
 
@@ -626,81 +627,91 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 		  {
 			  if(!this->_is_cp_entry && !this->_is_left_open)
 			  {
-		  vcSystem::Warning("CP element " + Int64ToStr(this->Get_Group_Index()) + " has no predecessors.. tie to false");
-                  this->Print(cerr);
-		  ofile << this->Get_VHDL_Id() << " <= false; " << endl;	      		  
-		}
-	    }
-	}
-    }
+				  vcSystem::Warning("CP element " + Int64ToStr(this->Get_Group_Index()) + " has no predecessors.. tie to false");
+				  this->Print(cerr);
+				  ofile << this->Get_VHDL_Id() << " <= false; " << endl;	      		  
+			  }
+		  }
+	  }
+  }
   else
-    {
-      // here, if there is a marked predecessor, force a join.
-      // all elements in the group are either part of a pipeline or not.
-      // if they are part of a pipelined loop body, then all joins must have internal
-      // places with a certain capacity... either forced from a global parameter
-      // or etc. etc.
-      // instantiate join element.
-      bool is_true_join = (is_pipelined ? 
-			((_predecessors.size() > 1) || 
-				(_marked_predecessors.size() > 0)) :
-			(_predecessors.size() > 1));
-      if(is_true_join && (this->_input_transition == NULL))
-	{
-		vector<string> preds; 
-		vector<int> pred_markings;
-		vector<int> pred_capacities;
-		vector<int> pred_delays;
-		string joined_symbol = this->Get_VHDL_Id();
-		string join_name = module_name + "_cp_element_group_" + IntToStr(this->Get_Group_Index());
-	  
-		if(_predecessors.size() > 1)
-			_and2_count += (_predecessors.size() - 1);
+  {
+	  // here, if there is a marked predecessor, force a join.
+	  // all elements in the group are either part of a pipeline or not.
+	  // if they are part of a pipelined loop body, then all joins must have internal
+	  // places with a certain capacity... either forced from a global parameter
+	  // or etc. etc.
+	  // instantiate join element.
+	  bool is_true_join = (is_pipelined ? 
+			  ((_predecessors.size() > 1) || 
+			   (_marked_predecessors.size() > 0)) :
+			  (_predecessors.size() > 1));
+	  if(is_true_join && (this->_input_transition == NULL))
+	  {
+		  vector<string> preds; 
+		  vector<int> pred_markings;
+		  vector<int> pred_capacities;
+		  vector<int> pred_delays;
+		  string joined_symbol = this->Get_VHDL_Id();
+		  string join_name = module_name + "_cp_element_group_" + IntToStr(this->Get_Group_Index());
 
-		for(set<vcCPElementGroup*>::iterator iter = _predecessors.begin(),
-				fiter = _predecessors.end();
-				iter != fiter;
-				iter++)
-		{
-			preds.push_back((*iter)->Get_VHDL_Id());
-			pred_markings.push_back(0);
-			pred_capacities.push_back(max_iterations_in_flight);
-			pred_delays.push_back(bypass_delay);
+		  if(_predecessors.size() > 1)
+			  _and2_count += (_predecessors.size() - 1);
 
-			_flip_flop_count += CeilLog2(max_iterations_in_flight);
+		  int saved_flop_count = 0;
+		  for(set<vcCPElementGroup*>::iterator iter = _predecessors.begin(),
+				  fiter = _predecessors.end();
+				  iter != fiter;
+				  iter++)
+		  {
+			  vcCPElementGroup* pg = (*iter);
+			  preds.push_back((*iter)->Get_VHDL_Id());
+			  pred_markings.push_back(0);
 
-			if(bypass_delay == 0)
-				_mux2_count++;
+			  // If the predecessor is in the same SCC, then it can
+			  // never have more than one token.
+			  int pred_capacity = max_iterations_in_flight;
+			  if((pg->Get_SCC_Index() > 0) && (pg->Get_SCC_Index() == this->Get_SCC_Index()))
+				pred_capacity = 1;
+			  pred_capacities.push_back(pred_capacity);
 
-		}
+			  pred_delays.push_back(bypass_delay);
 
-	  	for(set<vcCPElementGroup*>::iterator iter = this->_marked_predecessors.begin(),
-			fiter = _marked_predecessors.end();
-	      		iter != fiter;
-	      		iter++)
-	    	{
-			preds.push_back((*iter)->Get_VHDL_Id());
-			pred_markings.push_back(1);
-			pred_capacities.push_back(1);
-			int dly = this->Get_Marked_Predecessor_Delay(*iter);
-			pred_delays.push_back(dly);
-			_flip_flop_count++;
-			if(dly == 0)
-				_mux2_count++;
-	    	}
+			  _flip_flop_count += CeilLog2(pred_capacity);
+			  _saved_flip_flop_count += CeilLog2(max_iterations_in_flight) - CeilLog2(pred_capacity);
 
-		Print_VHDL_Join(join_name, preds, pred_markings, pred_capacities, pred_delays, joined_symbol, ofile);
-	}
-      else if((_predecessors.size() == 1) && (this->_input_transition == NULL))
-      {
-	      ofile << this->Get_VHDL_Id() << " <= ";	      
-	      ofile << (*(_predecessors.begin()))->Get_VHDL_Id() << ";" << endl;
-      }
-      else if(this->_input_transition == NULL)
-      {
-	      vcSystem::Warning("CP-element group " + this->Get_VHDL_Id() + " has no true predecessors.\n");
-      }
-    }
+			  if(bypass_delay == 0)
+				  _mux2_count++;
+
+		  }
+
+		  for(set<vcCPElementGroup*>::iterator iter = this->_marked_predecessors.begin(),
+				  fiter = _marked_predecessors.end();
+				  iter != fiter;
+				  iter++)
+		  {
+			  preds.push_back((*iter)->Get_VHDL_Id());
+			  pred_markings.push_back(1);
+			  pred_capacities.push_back(1);
+			  int dly = this->Get_Marked_Predecessor_Delay(*iter);
+			  pred_delays.push_back(dly);
+			  _flip_flop_count++;
+			  if(dly == 0)
+				  _mux2_count++;
+		  }
+
+		  Print_VHDL_Join(join_name, preds, pred_markings, pred_capacities, pred_delays, joined_symbol, ofile);
+	  }
+	  else if((_predecessors.size() == 1) && (this->_input_transition == NULL))
+	  {
+		  ofile << this->Get_VHDL_Id() << " <= ";	      
+		  ofile << (*(_predecessors.begin()))->Get_VHDL_Id() << ";" << endl;
+	  }
+	  else if(this->_input_transition == NULL)
+	  {
+		  vcSystem::Warning("CP-element group " + this->Get_VHDL_Id() + " has no true predecessors.\n");
+	  }
+  }
 }
 
 void vcCPElementGroup::Print_DP_To_CP_VHDL_Link(ostream& ofile)
@@ -751,6 +762,7 @@ void vcControlPath::Construct_Reduced_Group_Graph()
 	{
 		vcSystem::Error("malformed group graph after reduction.");
 	}
+	this->Identify_Strongly_Connected_Components();
 	//this->Print_Groups(cerr);	
 }
 
@@ -807,7 +819,7 @@ void vcControlPath::Reduce_CPElement_Group_Graph()
 	this->Update_Group_Bypass_Flags();
 }
 
-  
+
 //
 // find connected components of pure transitions.
 // A transition is pure if
@@ -819,7 +831,7 @@ void vcControlPath::Reduce_CPElement_Group_Graph()
 void vcControlPath::Collapse_Pure_Transition_Components()
 {
 	UGraphBase  t_graph;
-	
+
 	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
 			fiter = _cpelement_groups.end();
 			iter != fiter;
@@ -839,7 +851,7 @@ void vcControlPath::Collapse_Pure_Transition_Components()
 		if(g->Is_Pure_Transition_Group())
 		{
 			for(set<vcCPElementGroup*>::iterator succ_iter = g->_successors.begin(), fsucc_iter = g->_successors.end();
-				succ_iter != fsucc_iter; succ_iter++)
+					succ_iter != fsucc_iter; succ_iter++)
 			{
 				vcCPElementGroup* s = *succ_iter;
 				if(s->Is_Pure_Transition_Group())
@@ -864,7 +876,7 @@ void vcControlPath::Collapse_Pure_Transition_Components()
 }
 
 
-  
+
 void vcControlPath::Collapse_Pure_Transition_Set(set<void*>& tset)
 {
 	if(tset.size() > 1)
@@ -930,6 +942,66 @@ void vcControlPath::Collapse_Pure_Transition_Set(set<void*>& tset)
 }
 
 
+void vcControlPath::Identify_Strongly_Connected_Components()
+{
+	GraphBase  t_graph;
+
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
+			iter++)
+	{
+		vcCPElementGroup* g = *iter;
+		t_graph.Add_Vertex ((void*) g);
+	}
+
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
+			iter++)
+	{
+		vcCPElementGroup* g = *iter;
+		for(set<vcCPElementGroup*>::iterator succ_iter = g->_successors.begin(), fsucc_iter = g->_successors.end();
+				succ_iter != fsucc_iter; succ_iter++)
+		{
+			vcCPElementGroup* s = *succ_iter;
+			if(g->_pipeline_parent == s->_pipeline_parent)
+				t_graph.Add_Edge(g,s);	
+		}
+		for(set<vcCPElementGroup*>::iterator msucc_iter = g->_marked_successors.begin(), fmsucc_iter = g->_marked_successors.end();
+				msucc_iter != fmsucc_iter; msucc_iter++)
+		{
+			vcCPElementGroup* s = *msucc_iter;
+			if(g->_pipeline_parent == s->_pipeline_parent)
+				t_graph.Add_Edge(g,s);	
+		}
+
+	}
+
+	map<void*, int>   scc_map;
+	t_graph.Strongly_Connected_Components(scc_map);
+
+
+	map<int, vector<vcCPElementGroup*> >  scc_member_map;
+	for(map<void*,int>::iterator miter=scc_map.begin(), fmiter = scc_map.end(); miter != fmiter; miter++)
+	{
+		vcCPElementGroup* g = (vcCPElementGroup*) ((*miter).first);
+		int scc_index = (*miter).second;
+
+		g->Set_SCC_Index(scc_index);
+		scc_member_map[scc_index].push_back(g);
+	}
+
+	for(map<int, vector<vcCPElementGroup*> >::iterator mmiter=scc_member_map.begin(), fmmiter = scc_member_map.end(); mmiter != fmmiter; mmiter++)
+	{
+		int I = (*mmiter).first;
+		cerr << "Info: SCC " << I << endl;
+		for(int J = 0, fJ = (*mmiter).second.size();  J < fJ; J++)
+		{
+			cerr << "\t" <<  (*mmiter).second[J]->Get_Dot_Id() << endl;
+		}
+	}
+}
 
 void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole)
 {
@@ -1358,6 +1430,7 @@ void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
 {
 
 	_flip_flop_count = 0;
+	_saved_flip_flop_count = 0;
 	_mux2_count = 0;
 	_and2_count = 0;
 
@@ -1412,9 +1485,9 @@ void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
 	this->Print_VHDL_Export_Cleanup_Optimized(ofile);
 	ofile << "-- }" << endl << "end Block; -- " << id << endl;
 
-	vcSystem::Info("resources used by CP "  + this->Get_VHDL_Id() + ": ff-count=" + IntToStr(_flip_flop_count) + ","
-				+ " mux2-count= " + IntToStr(_mux2_count) + ","
-				+ " and2-count= " + IntToStr(_and2_count));
+	vcSystem::Info("resources used by CP "  + this->Get_VHDL_Id() + ": ff-count=" + IntToStr(_flip_flop_count) + " (saved " + IntToStr(_saved_flip_flop_count) +"),"
+			+ " mux2-count= " + IntToStr(_mux2_count) + ","
+			+ " and2-count= " + IntToStr(_and2_count));
 }
 
 void vcControlPath::Print_VHDL_Export_Cleanup_Optimized(ostream& ofile)
@@ -1465,7 +1538,7 @@ void vcCPSimpleLoopBlock::Print_VHDL_Terminator(vcControlPath* cp, ostream& ofil
 		t_name = m->Get_VHDL_Id() + "_" + _terminator->Get_VHDL_Id();
 	else
 		t_name =  _terminator->Get_VHDL_Id();
-		
+
 	ofile <<  t_name << ": loop_terminator -- {" << endl;
 	ofile <<  "generic map (name => \" " << t_name 
 		<< "\", max_iterations_in_flight =>" <<  this->Get_Pipeline_Depth() << ") " << endl;

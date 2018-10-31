@@ -833,6 +833,8 @@ public:
   virtual string Kind() {return("vcCPForkBlock");}
   vcCPForkBlock(vcCPBlock* parent, string id);
 
+  virtual void Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec, vector<int>& join_markings) {}
+  virtual void Add_Marked_Join_Point(vcTransition* jp, int join_marking, vcCPElement* jre) {}
 
   virtual void Print(ostream& ofile);
   void Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_vec);
@@ -959,6 +961,7 @@ class vcCPElementGroup: public vcRoot
 {
   vcControlPath* _cp;
   int64_t _group_index;
+  int _scc_index;
   set<vcCPElement*> _elements;
 
   set<vcCPElementGroup*> _successors;
@@ -1036,6 +1039,7 @@ public:
     _associated_cp_region = NULL;
     _bypass_flag = false;
     _is_left_open = false;
+    _scc_index = -1; // unassigned..
   }
 
 
@@ -1062,6 +1066,17 @@ public:
   {
     _group_index = idx;
   }
+
+  void Set_SCC_Index(int idx)
+  {
+    _scc_index = idx;
+  }
+
+  int Get_SCC_Index()
+  {
+	return(_scc_index);
+  }
+
 
   void Add_Successor(vcCPElementGroup* g)
   {
@@ -1286,6 +1301,7 @@ public:
 
   // ensure correct connectivity.
   bool Check_Group_Graph_Structure();
+  void Identify_Strongly_Connected_Components();
 
 };
 

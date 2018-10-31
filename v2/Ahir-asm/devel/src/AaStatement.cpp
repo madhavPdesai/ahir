@@ -1418,14 +1418,47 @@ void AaAssignmentStatement::Print(ostream& ofile)
 	int awidth = AaProgram::_foreign_address_width;
 	bool flag = AaProgram::_keep_extmem_inside;
 
+		
 	string guard_string;
-	if(this->_guard_expression != NULL)
+
+	AaScope* ps = this->Get_Scope();
+	AaModule* pm = NULL;
+	if(ps->Is_Module())
+		pm = (AaModule*) ps;
+
+	if((pm != NULL) && pm->Get_Macro_Flag() && AaProgram::_print_inlined_functions_in_caller)
 	{
-		guard_string = "$guard (";
-		if(this->_guard_complement)
-			guard_string += " ~ ";
-		guard_string += this->_guard_expression->To_String();
-		guard_string += ") ";
+	
+		string as_g_var = "as_guard_" + pm->Get_Print_Prefix() + "_"  +  Int64ToStr(this->Get_Index());
+
+		if(this->_guard_expression != NULL)
+		{
+			ofile << "$volatile " << as_g_var  << " := " << (this->_guard_complement ? "(~" : "") << 
+					"($bitcast ($uint<1>)  " << this->_guard_expression->To_String() << ")" 
+					<< (this->_guard_complement ? ")" : "") << endl;
+		}
+
+		if((pm != NULL) && (pm->Get_Print_Guard_String() != ""))
+		{
+			if(this->_guard_expression != NULL)
+			{
+				string mg_var = "macro_guard_" + pm->Get_Print_Prefix() + "_" +  Int64ToStr(this->Get_Index());
+				ofile << "$volatile " << mg_var  <<  " := ( " << pm->Get_Print_Guard_String() << " & " << as_g_var << ")" << endl;
+				guard_string += "$guard ( " + mg_var + ") ";
+			}
+			else
+			{
+				guard_string = "$guard (" + pm->Get_Print_Guard_String() + ") ";
+			}
+		}
+		else if(this->_guard_expression != NULL)
+		{
+			guard_string = "$guard (" + as_g_var + ") ";
+		}
+	}
+	else if(this->_guard_expression != NULL)
+	{
+		guard_string = "$guard (" + this->_guard_expression->To_String() + ") ";
 	}
 
 
@@ -1511,7 +1544,7 @@ void AaAssignmentStatement::Print(ostream& ofile)
 
 		AaModule* m = this->Get_Module();
 		if(!this->Get_Is_Volatile() && (m != NULL) && !m->Get_Is_Volatile() &&
-					(this->_target != NULL))
+				(this->_target != NULL))
 		{
 			int bits_of_buffering = bufval * this->_target->Get_Type()->Size();
 			ofile << "// bits of buffering = " << bits_of_buffering << " ";
@@ -1577,7 +1610,7 @@ void AaAssignmentStatement::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_
 		AaRoot::Error("Cycle in searching for non-trivial source refs ", this);
 		return;
 	}
-   	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
+	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
 	if(visited_elements.find(this) != visited_elements.end())
 	{
 		if(this->Get_Is_Volatile())
@@ -2140,7 +2173,7 @@ void AaCallStatement::Set_Is_Volatile(bool v)
 void AaCallStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
 	_pipeline_parent = dws;
-	
+
 	//
 	// set buffering to 2 if dws and called-module are both full-rate.
 	if((dws != NULL) && (this->_called_module != NULL) && this->_called_module->Get_Pipeline_Flag() && 
@@ -2176,185 +2209,85 @@ void AaCallStatement::Print(ostream& ofile)
 	AaModule* cm = (AaModule*) _called_module;
 	string guard_string;
 
+	AaScope* pscope = this->Get_Scope();
+	AaModule* pm = NULL;
+	if(pscope->Is_Module())
+		pm = (AaModule*) pscope;
 
-	if(this->_guard_expression != NULL)
+
+	if(cm->Get_Macro_Flag() && AaProgram::_print_inlined_functions_in_caller)
 	{
-		guard_string = "$guard (";
-		if(this->_guard_complement)
-			guard_string += " ~ ";
+		string pprefix = ((pm != NULL) ? pm->Get_Print_Prefix() + "_" : "")  + this->Get_Function_Name() + "_" + Int64ToStr(this->Get_Index()) + "_";
+		cm->Set_Print_Prefix(pprefix);
 
-		guard_string += this->_guard_expression->To_String();
-		guard_string += ") ";
+		ofile << "// begin inlined macro " << this->Get_Function_Name() << endl;
+
+		if(cm->Get_Number_Of_Input_Arguments() > 0) 
+		{
+
+			for(int arg_index = 0; arg_index < cm->Get_Number_Of_Input_Arguments(); arg_index++)
+			{	
+				cm->Set_Print_Remap(cm->Get_Input_Argument(arg_index), this->_input_args[arg_index]);
+			}
+		}	
+
+		if(cm->Get_Number_Of_Output_Arguments() > 0)
+		{
+			for(int arg_index = 0; arg_index < cm->Get_Number_Of_Output_Arguments(); arg_index++)
+			{	
+				cm->Set_Print_Remap(cm->Get_Output_Argument(arg_index), this->_output_args[arg_index]);
+			}
+
+		}
+
+		string cg_var = "macro_guard_" + pprefix;
+		bool guard_flag = false;
+
+		string pm_guard_string;
+		if((pm != NULL) && (pm->Get_Print_Guard_String() != ""))
+		{
+			pm_guard_string = pm->Get_Print_Guard_String();
+		}
+
+		if(this->_guard_expression != NULL)
+		{
+			string cge =  this->_guard_expression->To_String();
+
+			string bgs = (this->_guard_complement ? "(~" + cge + ")" : cge);
+			if(pm_guard_string != "")
+			{
+				ofile << "$volatile " << cg_var << " := (" << bgs << " & " << pm_guard_string << ")" << endl;
+			}
+			else
+			{
+				ofile << "$volatile " << cg_var << " := " << bgs << endl;
+			}
+			guard_flag = true;
+		}
+		else if(pm_guard_string != "")
+		{
+			guard_flag = true;
+			ofile << "$volatile " << cg_var << " := " << pm_guard_string << endl;
+		}
+
+		if(guard_flag)
+		{
+			cm->Set_Print_Guard_String(cg_var);
+		}
+
+		cm->Print_Body(ofile);
+
+		ofile << "// end inlined macro " << this->Get_Function_Name() << endl;
+
+		cm->Clear_Print_Prefix();
+		cm->Clear_Print_Remap();
+		cm->Clear_Print_Guard_String();
+
+		return;
 	}
 
 	if(this->Get_Is_Volatile())
 		ofile << " $volatile ";
-
-	if((cm->Get_Inline_Flag() || cm->Get_Macro_Flag()) && AaProgram::_print_inlined_functions_in_caller)
-	{
-
-		if(cm->Get_Inline_Flag())
-			cm->Set_Print_Prefix(this->Get_Function_Name() + "_" + Int64ToStr(this->Get_Index()) + "_");
-		else
-		{
-			if(cm->Get_Number_Of_Input_Arguments() > 0) 
-			{
-
-				for(int arg_index = 0; arg_index < cm->Get_Number_Of_Input_Arguments(); arg_index++)
-				{	
-					cm->Set_Print_Remap(cm->Get_Input_Argument(arg_index), this->_input_args[arg_index]);
-				}
-			}	
-
-			if(cm->Get_Number_Of_Output_Arguments() > 0)
-			{
-				for(int arg_index = 0; arg_index < cm->Get_Number_Of_Output_Arguments(); arg_index++)
-				{	
-					cm->Set_Print_Remap(cm->Get_Output_Argument(arg_index), this->_output_args[arg_index]);
-				}
-
-			}
-		}
-
-
-		vector<AaSimpleObjectReference*> exports;
-
-		if(this->_guard_expression)
-		{
-			ofile << this->Tab();
-			ofile << "$if (";
-			if(this->_guard_complement)
-				guard_string += " ~ ";
-			this->_guard_expression->Print(ofile);
-			ofile << ") $then " << endl;
-		}
-
-		ofile << "$seriesblock[" << this->Get_Function_Name() << "_" <<  this->Get_Index()
-			<< "] { " << endl;
-
-		if(cm->Get_Inline_Flag())
-		{
-			if(cm->Get_Number_Of_Input_Arguments() > 0)
-			{
-				ofile << "$parallelblock[InArgs] { " << endl;
-				for(int arg_index = 0; arg_index < cm->Get_Number_Of_Input_Arguments(); arg_index++)
-				{
-					ofile << cm->Get_Input_Argument(arg_index)->Get_Name();
-					ofile << " := ";
-					this->_input_args[arg_index]->Print(ofile);
-					ofile << endl;
-				}
-				ofile << "} (" ;
-				for(int arg_index = 0; arg_index < cm->Get_Number_Of_Input_Arguments(); arg_index++)
-				{
-					ofile << " ";
-					ofile << cm->Get_Input_Argument(arg_index)->Get_Name();
-					ofile << " => ";
-					ofile << cm->Get_Input_Argument(arg_index)->Get_Name();
-				}
-				ofile << " )" << endl;
-			}
-
-		}
-
-		if(cm->Get_Inline_Flag())
-			ofile << "$seriesblock[body] {" << endl;
-
-		cm->Print_Body(ofile);
-
-		if(cm->Get_Inline_Flag())
-			ofile << "} ";
-
-		if(cm->Get_Inline_Flag())
-		{
-			if(cm->Get_Number_Of_Output_Arguments() > 0)
-			{
-				ofile << "( " ;
-				for(int arg_index = 0; arg_index < cm->Get_Number_Of_Output_Arguments(); arg_index++)
-				{
-					ofile << " ";
-					ofile << cm->Get_Output_Argument(arg_index)->Get_Name();
-					ofile << " => ";
-					ofile << cm->Get_Output_Argument(arg_index)->Get_Name();
-				}
-				ofile << " )";
-			}
-			ofile << endl;
-		}
-
-		if(cm->Get_Number_Of_Output_Arguments() > 0)
-		{
-
-			if(cm->Get_Inline_Flag())
-			{
-				ofile << "$parallelblock[OutArgs] { " << endl;
-			}
-
-			for(int arg_index = 0; arg_index < cm->Get_Number_Of_Output_Arguments(); arg_index++)
-			{
-
-				if(cm->Get_Inline_Flag())
-				{
-					this->_output_args[arg_index]->Print(ofile);
-					ofile << " := " <<  cm->Get_Output_Argument(arg_index)->Get_Name() << endl;
-					ofile << endl;
-				}
-
-				if(this->_output_args[arg_index]->Is_Implicit_Variable_Reference())
-				{
-					assert(this->_output_args[arg_index]->Is("AaSimpleObjectReference"));
-					exports.push_back(((AaSimpleObjectReference*) this->_output_args[arg_index]));
-				}
-			}
-
-			if(cm->Get_Inline_Flag())
-				ofile << "}" ;
-
-			if(cm->Get_Inline_Flag())
-			{
-				if(exports.size() > 0)
-				{
-					ofile << "(" ;
-					for(int eindex = 0; eindex < exports.size() ; eindex++)
-					{
-						ofile << " ";
-						exports[eindex]->Print(ofile);		
-						ofile << " => ";
-						exports[eindex]->Print(ofile);
-					}
-					ofile << " )" << endl;
-				}
-			}
-		}
-
-
-		ofile << "}" ;
-		if(exports.size() > 0)
-		{
-			ofile << "(" ;
-			for(int eindex = 0; eindex < exports.size() ; eindex++)
-			{
-				ofile << " ";
-				exports[eindex]->Print(ofile);		
-				ofile << " => ";
-				exports[eindex]->Print(ofile);
-			}
-			ofile << " )" << endl;
-		}
-
-		if(cm->Get_Inline_Flag())
-			cm->Clear_Print_Prefix();
-		else if(cm->Get_Macro_Flag())
-			cm->Clear_Print_Remap();
-
-		if(this->_guard_expression)
-		{
-			ofile << endl;
-			ofile << "$endif " << endl;
-		}
-
-		return;
-	}
 
 
 	// not inlined or macro
@@ -2813,8 +2746,8 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	// Rationalized earlier...
 	//if((dws != NULL)  && (dws->Get_Pipeline_Full_Rate_Flag()))
 	//{
-		//if(buffering < 2) 
-			//buffering = 2;
+	//if(buffering < 2) 
+	//buffering = 2;
 	//}
 
 	//
@@ -3316,7 +3249,7 @@ void AaSeriesBlockStatement::Add_Delayed_Versions( map<AaRoot*, vector< pair<AaR
 
 		// add delayed versions of curr if required..
 		this->AaStatement::Add_Delayed_Versions(curr, adjacency_map, visited_elements,
-							longest_paths_from_root_map, this->_statement_sequence);
+				longest_paths_from_root_map, this->_statement_sequence);
 	}
 }
 
@@ -5787,7 +5720,7 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 		// This is REQUIRED to take care of a WAR dependency
 		// across the PHI's.
 		//
-  		__MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true);
+		__MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true);
 	}
 
 	// write the PHI statements.
@@ -5822,7 +5755,7 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 			trailing_barrier,
 			ofile);
 
-	
+
 	// this delay prevents a loop in the whole shebang.. we will
 	// be making branch-base have the option of bypass.
 	ofile << "$T [loop_body_delay_to_condition_start] $delay" << endl;
@@ -6034,7 +5967,7 @@ void AaDoWhileStatement::Add_Delayed_Versions( map<AaRoot*, vector< pair<AaRoot*
 	{
 		AaRoot* curr = *iter;
 		this->AaStatement::Add_Delayed_Versions(curr, adjacency_map, visited_elements,
-							longest_paths_from_root_map, this->_loop_body_sequence);
+				longest_paths_from_root_map, this->_loop_body_sequence);
 	}
 }
 
@@ -6173,7 +6106,7 @@ void AaCallStatement::Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_source
 		AaRoot::Error("Cycle in searching for non-trivial source refs ", this);
 		return;
 	}
-   	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
+	this->Set_Is_On_Search_For_Non_Trivial_Refs_Stack(true);
 	if(visited_elements.find(this) != visited_elements.end())
 	{
 		if(this->Get_Is_Volatile())
@@ -6315,5 +6248,5 @@ string AaStatement::Get_C_Postamble_Macro_Name()
 			+ this->Get_VC_Name() + "_c_postamble_macro_");
 }
 
-  
+
 

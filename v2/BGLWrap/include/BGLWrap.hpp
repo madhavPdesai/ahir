@@ -36,12 +36,17 @@
 #include <utility>                   // for std::pair
 #include <algorithm>                 // for std::for_each
 #include <deque>
+#include <vector>
+#include <map>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/topological_sort.hpp>
+#include <boost/config.hpp>
+#include <boost/graph/strong_components.hpp>
+#include <boost/graph/graph_utility.hpp>
 
 
 using namespace boost;
@@ -180,6 +185,29 @@ class GraphBase
       {
         prec_order.push_back(this->_bgl_graph[reverse_prec_order[idx] ]._aa_rep);
       }
+  }
+
+  bool Strongly_Connected_Components (std::map<void*,int>& scc_map)
+  {
+	  std::vector<int> component(num_vertices(this->_bgl_graph)), discover_time(num_vertices(this->_bgl_graph));
+	  std::vector<default_color_type> color(num_vertices(this->_bgl_graph));
+	  std::vector<Vertex> root(num_vertices(this->_bgl_graph));
+
+	  int num = strong_components(this->_bgl_graph, 
+					make_iterator_property_map(component.begin(), get(vertex_index, this->_bgl_graph)), 
+                              		root_map(make_iterator_property_map(root.begin(), get(vertex_index, this->_bgl_graph))).
+                              		color_map(make_iterator_property_map(color.begin(), get(vertex_index, this->_bgl_graph))).
+                              		discover_time_map(make_iterator_property_map(discover_time.begin(), get(vertex_index, this->_bgl_graph))));
+    
+  	std::cout << "Info:  Total number of strongly-connected-components is " << num << std::endl;
+  	std::vector<int>::size_type i;
+  	for (i = 0; i != component.size(); ++i)
+	{
+		scc_map[ this->_bgl_graph[i]._aa_rep ] = component[i];
+#ifdef DEBUG
+    		std::cout << "Vertex " << i <<" is in component " << component[i] << std::endl;
+#endif
+	}
   }
 
   void Print(ostream& ofile)

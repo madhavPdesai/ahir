@@ -2848,6 +2848,12 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
 		for(int idx = 0; idx < unforked_elements.size(); idx++)
 		{
 			this->Add_Fork_Point(this->_entry,unforked_elements[idx]);
+			/*
+ 				if(this->Is_Pipelined())
+				{
+					this->Add_Marked_Join_Point(this->_entry,1, unforked_elements[idx]); 
+				}
+			*/
 		}
 	}
 

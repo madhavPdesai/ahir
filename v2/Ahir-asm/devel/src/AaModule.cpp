@@ -1012,18 +1012,18 @@ void AaModule::Set_Statement_Sequence(AaStatementSequence* statement_sequence)
 				s->Set_Pipeline_Parent(this);
 		}
 
-		if(this->Get_Operator_Flag() || this->Get_Volatile_Flag())
+		if(this->Get_Operator_Flag() || this->Get_Volatile_Flag() || this->Get_Macro_Flag() || this->Get_Inline_Flag())
 		{
 			if(!(s->Is("AaAssignmentStatement") || s->Is_Null_Like_Statement()))
 			{
-				if(!s->Is("AaCallStatement") && this->Get_Volatile_Flag())
+				if(!s->Is("AaCallStatement") && (this->Get_Volatile_Flag() || this->Get_Macro_Flag() || this->Get_Inline_Flag()))
 				{
-					AaRoot::Error("volatile module can contain only assignment/null statements.", s);
+					AaRoot::Error("volatile/macro/inline module can contain only assignment/null statements.", s);
 					err_flag = true;
 				}
 				else if(s->Is("AaCallStatement"))
 				{
-					AaRoot::Warning("volatile/operator module " + this->Get_Label() + "  has call statement.", s);
+					AaRoot::Warning("volatile/operator/macro/inline module " + this->Get_Label() + "  has call statement.", s);
 				}
 			}
 		}

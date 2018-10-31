@@ -1,0 +1,58 @@
+$pipe out_data_1 : $uint<32> $depth 2
+$pipe out_data_2 : $uint<32> $depth 16
+
+$pipe in_data_1 : $uint<32> $depth 2
+$pipe in_data_2 : $uint<32> $depth 2
+
+$macro $module [subroutine] $in (X: $uint<32>) $out (Y: $uint<32>) $is
+{
+	Y := X
+}
+
+$macro $module [get_data_in_1] $in () $out (X: $uint<32>) $is
+{
+	U := 0
+	R := in_data_1
+	X := (U+R)
+}
+
+$macro $module [get_data_in_2] $in () $out (X: $uint<32>) $is
+{
+	X := in_data_2
+}
+
+$macro $module [send_data_out] $in (S: $uint<1> X: $uint<32>) $out () $is
+{
+	t := X
+	$guard (~S) out_data_1  := t
+	$guard (S)  out_data_2  := X
+}
+
+$module [main_daemon_1] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$merge $entry loopback $endmerge
+		
+			$call get_data_in_1 () (X0) 
+			$call subroutine (X0) (Y0)
+			$call send_data_out (0 Y0) () 
+
+		$place [loopback]
+	}
+}
+
+$module [main_daemon_2] $in() $out () $is
+{
+	$branchblock[lOoP] {
+	   $dopipeline $depth 3 $fullrate
+		$merge $entry $loopback $endmerge
+		
+			$call get_data_in_2 () (X0) 
+			g := (X0 == X0)
+			$guard (g) $call subroutine (X0) (Y0)
+			$guard (g) $call send_data_out (1 Y0) () 
+
+	  $while 1
+	}
+}
+

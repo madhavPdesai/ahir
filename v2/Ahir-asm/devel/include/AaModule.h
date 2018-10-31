@@ -76,6 +76,7 @@ class AaModule: public AaSeriesBlockStatement
   map<string,string> _attribute_map;
 
   string _print_prefix;
+  string _print_guard_string;
 
   map<AaInterfaceObject*, AaExpression*> _print_remap;
 
@@ -94,6 +95,7 @@ class AaModule: public AaSeriesBlockStatement
   set<AaStorageObject*> _objects_that_are_read;
   set<AaStorageObject*> _objects_that_are_written;
 
+
   bool _foreign_flag;
   bool _inline_flag;
   bool _macro_flag;
@@ -104,6 +106,7 @@ class AaModule: public AaSeriesBlockStatement
   bool _reads_from_shared_pipe;
   bool _noopt_flag;
   bool _opaque_flag;
+  bool _print_guard_complement;
 
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
@@ -157,6 +160,10 @@ class AaModule: public AaSeriesBlockStatement
   void Set_Print_Prefix(string str) { _print_prefix = str;}
   string Get_Print_Prefix() {return(_print_prefix);}
   void Clear_Print_Prefix() {_print_prefix = "";}
+
+  void Set_Print_Guard_String(string str) { _print_guard_string = str;}
+  string Get_Print_Guard_String() {return(_print_guard_string);}
+  void Clear_Print_Guard_String() {_print_guard_string = "";}
 
   void Add_Called_Module(AaModule* m)
   {

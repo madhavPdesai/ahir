@@ -1245,9 +1245,33 @@ void AaSimpleObjectReference::Print(ostream& ofile)
 	}
 
 	if(this->_object->Is("AaInterfaceObject"))
+	{
 		ofile << this->_object->Get_Name();
+	}
 	else
-		ofile << this->Get_Object_Ref_String();
+	{
+		string ret_val  = this->Get_Object_Ref_String();
+
+		// Get scope
+		AaScope* sm =  NULL;
+		if(this->_object->Is_Object())
+			sm = ((AaObject*) this->_object)->Get_Scope();
+		else if(this->_object->Is_Expression())
+			sm = ((AaExpression*) this->_object)->Get_Scope();
+		else if(this->_object->Is_Statement())
+			sm = ((AaStatement*) this->_object)->Get_Scope();
+
+		if((sm != NULL) && sm->Is_Module())
+		{
+			AaModule* m = (AaModule*) sm;
+			if((m->Get_Macro_Flag() || m->Get_Inline_Flag()) && AaProgram::_print_inlined_functions_in_caller)
+			{
+				ret_val = m->Get_Print_Prefix() + this->Get_Object_Ref_String();
+			}
+		}
+		
+		ofile << ret_val;
+	}
 
 	this->Print_Buffering(ofile);
 }
