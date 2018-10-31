@@ -1409,7 +1409,7 @@ This is done by the {\bf AaLinkExtMem} utility
 which is described in a separate document.
 
 
-\section{Module classes: pipeline, volatile, operator, inline, macro, foreign }
+\section{Module classes: pipeline, volatile, operator,  macro, foreign }
 
 By default, each distinct module in an \Aa program
 is eventually implemented as a separate VHDL entity
@@ -1525,69 +1525,6 @@ $opaque $module [foo] $in (a: $uint<9>)
 \end{verbatim}
 
 
-\subsection{Inlined Modules}
-
-An inlined module is substituted into the
-point of a call to it in a three-step manner.
-The input arguments are sampled at the point
-of the call, the body of
-the module is invoked and the output arguments
-are transferred.  The semantics of an inlined
-function call are defined by this three step
-procedure.  The input arguments are sampled
-at the point of the call, and the output
-arguments are updated at the termination of
-the call.
-
-For example, the following
-program 
-\begin{verbatim}
-$inline $module [add] $in (a: $uint<32> b: $uint<32>)
-    $out (c: $uint<32>) $is
-{
-    c := (a+b)
-}  
-
-$module [add_check] $in (p: $uint<32> q: $uint<32>) 
-    $out (r : $uint<32>) $is
-{
-    $call add (p q) (r)
-}
-\end{verbatim}
-is translated to
-\begin{verbatim}
-$module [add_check]
-$in ( p : $uint<32>   q : $uint<32>  )
-$out ( r : $uint<32>  )
-$is
-{
-  $seriesblock[add_18] 
-  {
-    $parallelblock[InArgs] 
-    {
-      add_18_a := p
-      add_18_b := q
-    }
-    ( add_18_a => add_18_a add_18_b => add_18_b )
-    $seriesblock[body] 
-    {
-      add_18_c := (add_18_a + add_18_b)
-    }
-    (  add_18_c => add_18_c )
-    $parallelblock[OutArgs] 
-    {
-      r := add_18_c
-    }
-    ( r => r )
-  }
-  ( r => r )
-}
-\end{verbatim}
-The three step substitution of add into add\_check
-is clearly seen.  
-There are no restrictions on the
-module that is being inlined.
-
 
 \subsection{Macro Modules}
 
@@ -1630,18 +1567,12 @@ $in ()
 $out ()
 $is
 {
-  $seriesblock[shift_14] 
-  {
     midpipe := inpipe
-  }
-  $seriesblock[shift_17] 
-  {
     outpipe := midpipe
-  }
 }
 \end{verbatim}
 The two calls to shift are replaced by
-series blocks with input/output arguments
+the body of the shift module with input/output arguments
 replaced by the expressions passed to them
 at the point of the call.
 
@@ -1651,8 +1582,9 @@ to violate the rule that there should
 be at most one write to an interface object
 within a module.
 
-There are no restrictions on the
-module that is being inlined.
+Macro modules should consist of only assignment
+statements and call statements.  There should
+be no object declarations inside a macro module.
 
 \section{Foreign Modules}
 
