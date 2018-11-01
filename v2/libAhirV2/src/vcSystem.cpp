@@ -1367,8 +1367,10 @@ void vcSystem::Print_Hsys_File(string file_name)
 	for(int I = 0, fI = in_pipes.size(); I < fI; I++)
 	{
 		vcPipe* p = in_pipes[I];
-		bool is_signal =  p->Get_Signal();
-		ofile << (is_signal ? "    $signal" : "    $pipe") << "  ";
+		bool is_noblock = p->Get_No_Block_Mode();
+		bool is_signal =  p->Get_Signal()  &&  (~is_noblock);
+		ofile << (is_noblock ? "    $noblock" : "    ") << "  ";
+		ofile << (is_signal ?  "    $signal" : "    $pipe") << "  ";
 		ofile << p->Get_Id() <<  " " << p->Get_Width()  << " $depth " << p->Get_Depth() << endl;
 	}      
 
@@ -1376,7 +1378,9 @@ void vcSystem::Print_Hsys_File(string file_name)
 	for(int J = 0, fJ = out_pipes.size(); J < fJ; J++)
 	{
 		vcPipe* p = out_pipes[J];
-		bool is_signal = p->Get_Signal();
+		bool is_noblock = p->Get_No_Block_Mode();
+		bool is_signal =  p->Get_Signal()  &&  (~is_noblock);
+		ofile << (is_noblock ? "    $noblock" : "    ") << "  ";
 		ofile << (is_signal ? "    $signal" : "    $pipe") <<  "  ";
 		ofile << p->Get_Id() <<  " " << p->Get_Width()  << " $depth " << p->Get_Depth() << endl;
 	}      

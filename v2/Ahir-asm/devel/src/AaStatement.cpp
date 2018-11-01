@@ -1429,7 +1429,8 @@ void AaAssignmentStatement::Print(ostream& ofile)
 	if((pm != NULL) && pm->Get_Macro_Flag() && AaProgram::_print_inlined_functions_in_caller)
 	{
 	
-		string as_g_var = "as_guard_" + pm->Get_Print_Prefix() + "_"  +  Int64ToStr(this->Get_Index());
+		string as_g_var = "as_guard_" + pm->Get_Print_Prefix() + "_"  +  
+							Int64ToStr(this->Get_Index());
 
 		if(this->_guard_expression != NULL)
 		{
@@ -1458,7 +1459,8 @@ void AaAssignmentStatement::Print(ostream& ofile)
 	}
 	else if(this->_guard_expression != NULL)
 	{
-		guard_string = "$guard (" + this->_guard_expression->To_String() + ") ";
+		guard_string = string("$guard (") + (this->_guard_complement ? "~" : "") + 
+							this->_guard_expression->To_String() + ") ";
 	}
 
 
@@ -2214,81 +2216,112 @@ void AaCallStatement::Print(ostream& ofile)
 	if(pscope->Is_Module())
 		pm = (AaModule*) pscope;
 
-
-	if(cm->Get_Macro_Flag() && AaProgram::_print_inlined_functions_in_caller)
+	string pm_guard_string;
+	if((pm != NULL) && (pm->Get_Print_Guard_String() != ""))
 	{
-		string pprefix = ((pm != NULL) ? pm->Get_Print_Prefix() + "_" : "")  + this->Get_Function_Name() + "_" + Int64ToStr(this->Get_Index()) + "_";
-		cm->Set_Print_Prefix(pprefix);
+		pm_guard_string = pm->Get_Print_Guard_String();
+	}
 
-		ofile << "// begin inlined macro " << this->Get_Function_Name() << endl;
+	string cg_var;
+	string pprefix;
 
-		if(cm->Get_Number_Of_Input_Arguments() > 0) 
+	if((pm_guard_string != "") ||
+			(cm->Get_Macro_Flag() && AaProgram::_print_inlined_functions_in_caller))
+	{
+		pprefix = ((pm != NULL) ? pm->Get_Print_Prefix() + "_" : "")  + 
+					this->Get_Function_Name() + "_" + 
+					Int64ToStr(this->Get_Index()) + "_";
+
+		if(cm->Get_Macro_Flag() && AaProgram::_print_inlined_functions_in_caller)
 		{
 
-			for(int arg_index = 0; arg_index < cm->Get_Number_Of_Input_Arguments(); arg_index++)
-			{	
-				cm->Set_Print_Remap(cm->Get_Input_Argument(arg_index), this->_input_args[arg_index]);
-			}
-		}	
-
-		if(cm->Get_Number_Of_Output_Arguments() > 0)
-		{
-			for(int arg_index = 0; arg_index < cm->Get_Number_Of_Output_Arguments(); arg_index++)
-			{	
-				cm->Set_Print_Remap(cm->Get_Output_Argument(arg_index), this->_output_args[arg_index]);
-			}
-
-		}
-
-		string cg_var = "macro_guard_" + pprefix;
-		bool guard_flag = false;
-
-		string pm_guard_string;
-		if((pm != NULL) && (pm->Get_Print_Guard_String() != ""))
-		{
-			pm_guard_string = pm->Get_Print_Guard_String();
-		}
-
-		if(this->_guard_expression != NULL)
-		{
-			string cge =  this->_guard_expression->To_String();
-
-			string bgs = (this->_guard_complement ? "(~" + cge + ")" : cge);
-			if(pm_guard_string != "")
+			cm->Set_Print_Prefix(pprefix);
+			ofile << "// begin inlined macro " << this->Get_Function_Name() << endl;
+			if(cm->Get_Number_Of_Input_Arguments() > 0) 
 			{
-				ofile << "$volatile " << cg_var << " := (" << bgs << " & " << pm_guard_string << ")" << endl;
-			}
-			else
+				for(int arg_index = 0; arg_index < cm->Get_Number_Of_Input_Arguments(); arg_index++)
+				{	
+					cm->Set_Print_Remap(cm->Get_Input_Argument(arg_index), this->_input_args[arg_index]);
+				}
+			}	
+
+			if(cm->Get_Number_Of_Output_Arguments() > 0)
 			{
-				ofile << "$volatile " << cg_var << " := " << bgs << endl;
+				for(int arg_index = 0; arg_index < cm->Get_Number_Of_Output_Arguments(); arg_index++)
+				{	
+					cm->Set_Print_Remap(cm->Get_Output_Argument(arg_index), this->_output_args[arg_index]);
+				}
+
 			}
-			guard_flag = true;
+
+			cg_var = "macro_guard_" + pprefix;
+			bool guard_flag = false;
+
+
+			if(this->_guard_expression != NULL)
+			{
+				string cge =  this->_guard_expression->To_String();
+				string bgs = (this->_guard_complement ? "(~" + cge + ")" : cge);
+				if(pm_guard_string != "")
+				{
+					ofile << "$volatile " << cg_var << " := (" << bgs << " & " << pm_guard_string << ")" << endl;
+				}
+				else
+				{
+					ofile << "$volatile " << cg_var << " := " << bgs << endl;
+				}
+				guard_flag = true;
+			}
+			else if(pm_guard_string != "")
+			{
+				guard_flag = true;
+				ofile << "$volatile " << cg_var << " := " << pm_guard_string << endl;
+			}
+
+			if(guard_flag)
+			{
+				cm->Set_Print_Guard_String(cg_var);
+			}
+
+			cm->Print_Body(ofile);
+
+			ofile << "// end inlined macro " << this->Get_Function_Name() << endl;
+
+			cm->Clear_Print_Prefix();
+			cm->Clear_Print_Remap();
+			cm->Clear_Print_Guard_String();
+
+			return;
 		}
-		else if(pm_guard_string != "")
+	}
+
+	if(this->_guard_expression != NULL)
+	{
+		string cge =  this->_guard_expression->To_String();
+		string bgs = (this->_guard_complement ? "(~" + cge + ")" : cge);
+			
+		cg_var = "macro_guard_" + pprefix;
+
+		if(pm_guard_string != "")
 		{
-			guard_flag = true;
-			ofile << "$volatile " << cg_var << " := " << pm_guard_string << endl;
+			ofile << "$volatile " << cg_var << " := (" << bgs << " & " << pm_guard_string << ")" << endl;
+			guard_string = "$guard (" + cg_var + ") ";
 		}
-
-		if(guard_flag)
+		else
 		{
-			cm->Set_Print_Guard_String(cg_var);
+			guard_string =  string("$guard (") + 
+						(this->_guard_complement ? "~" : "") +  
+						this->_guard_expression->To_String() + ") ";
 		}
-
-		cm->Print_Body(ofile);
-
-		ofile << "// end inlined macro " << this->Get_Function_Name() << endl;
-
-		cm->Clear_Print_Prefix();
-		cm->Clear_Print_Remap();
-		cm->Clear_Print_Guard_String();
-
-		return;
+	}
+	else if(pm_guard_string != "")
+	{
+		ofile << "$volatile " << cg_var << " := " << pm_guard_string << endl;
+		guard_string = "$guard (" + cg_var + ") ";
 	}
 
 	if(this->Get_Is_Volatile())
 		ofile << " $volatile ";
-
 
 	// not inlined or macro
 	ofile << this->Tab();

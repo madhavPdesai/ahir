@@ -453,7 +453,7 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 			print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);
 			__UNLOCKLOG__
 		}
-		if(p->number_of_entries >= p->watermark)
+		if(!p->is_signal && (p->number_of_entries >= p->watermark))
 		{
 			fprintf(stderr,"\nInfo:pipeHandler: watermark on pipe %s reached.\n", pipe_name);
 		}
