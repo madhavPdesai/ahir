@@ -49,6 +49,8 @@ vcModule::vcModule(vcSystem* sys, string module_name):vcRoot(module_name)
 	this->_max_number_of_caller_tags_needed = 0;
 	this->_foreign_flag = false;
 	this->_pipeline_flag = false;
+	this->_pipeline_full_rate_flag = false;
+	this->_pipeline_deterministic_flag = false;
 	this->_operator_flag = false;
 	this->_volatile_flag = false;
 	this->_pipeline_depth = 1;
@@ -70,6 +72,8 @@ void vcModule::Print(ostream& ofile)
 		ofile << vcLexerKeywords[__FOREIGN] << " ";
 	if(this->_pipeline_flag)
 		ofile << vcLexerKeywords[__PIPELINE] << " ";
+	if(this->_pipeline_deterministic_flag)
+		ofile << vcLexerKeywords[__DETERMINISTIC] << " ";
 	if(this->_operator_flag)
 		ofile << vcLexerKeywords[__OPERATOR] << " ";
 	if(this->_volatile_flag)
@@ -618,8 +622,13 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	if(this->_foreign_flag)
 		return;
 
+	if(this->Get_Pipeline_Deterministic_Flag())
+	{
+		this->Print_VHDL_Level_Architecture(ofile);
+		return;
+	}
+	else  if(this->Get_Operator_Flag())
 	// operator form?
-	if(this->Get_Operator_Flag())
 	{
 		this->Print_VHDL_Operator_Architecture(ofile);
 		return;
@@ -745,25 +754,8 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 
 
 
-	ofile << "-- volatile/operator module components. " << endl;
-	for(set<vcModule*>::iterator mciter = _called_modules.begin(), fmciter = _called_modules.end();
-			mciter != fmciter; mciter++)
-	{
-		vcModule* mc = *mciter;
+        this->Print_VHDL_Called_Module_Components(ofile);
 
-		// if this is volatile, mc must be volatile.
-		if(this->Get_Volatile_Flag() && !mc->Get_Volatile_Flag())
-		{
-			vcSystem::Error("module " + mc->Get_Label() + " called from volatile module " + this->Get_Label()
-					+ " is not volatile");
-		}
-
-		if(!mc->Get_Is_Function_Library_Module() || (mc->Get_Function_Library_Vhdl_Lib() == "work"))
-			mc->Print_VHDL_Component(ofile);
-		else
-			ofile << "-- function library module " << mc->Get_Label() << " component not printed." << endl;
-
-	}
 
 	// print link signals between CP and DP
 	if(!volatile_form)
@@ -1128,6 +1120,28 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 	ofile << "-- }" << endl << "end " << arch_name << ";" << endl;
 }
 
+void vcModule::Print_VHDL_Called_Module_Components(ostream& ofile)
+{
+	ofile << "-- volatile/operator module components. " << endl;
+	for(set<vcModule*>::iterator mciter = _called_modules.begin(), fmciter = _called_modules.end();
+			mciter != fmciter; mciter++)
+	{
+		vcModule* mc = *mciter;
+
+		// if this is volatile, mc must be volatile.
+		if(this->Get_Volatile_Flag() && !mc->Get_Volatile_Flag())
+		{
+			vcSystem::Error("module " + mc->Get_Label() + " called from volatile module " + this->Get_Label()
+					+ " is not volatile");
+		}
+
+		if(!mc->Get_Is_Function_Library_Module() || (mc->Get_Function_Library_Vhdl_Lib() == "work"))
+			mc->Print_VHDL_Component(ofile);
+		else
+			ofile << "-- function library module " << mc->Get_Label() << " component not printed." << endl;
+
+	}
+}
 
 
 void vcModule::Print_VHDL_Tag_Logic(ostream& ofile)

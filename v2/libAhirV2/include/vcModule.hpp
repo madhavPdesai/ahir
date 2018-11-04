@@ -88,6 +88,7 @@ class vcModule: public vcRoot
   bool _operator_flag; 
   bool _volatile_flag; 
   bool _pipeline_full_rate_flag;
+  bool _pipeline_deterministic_flag;
   bool _is_function_library_module;
 
   
@@ -102,6 +103,9 @@ class vcModule: public vcRoot
   bool Get_Foreign_Flag() {return(_foreign_flag);}
   void Set_Pipeline_Flag(bool v) {_pipeline_flag = v; }
   bool Get_Pipeline_Flag() {return(_pipeline_flag);}
+
+  void Set_Pipeline_Deterministic_Flag(bool v) {_pipeline_deterministic_flag = v; }
+  bool Get_Pipeline_Deterministic_Flag() {return(_pipeline_deterministic_flag);}
 
   void Set_Pipeline_Depth(int d) {_pipeline_depth = d;}
   int  Get_Pipeline_Depth() {return(_pipeline_depth);}
@@ -191,6 +195,12 @@ class vcModule: public vcRoot
     assert(idx >= 0 && idx < this->_ordered_output_arguments.size());
     return(this->_ordered_output_arguments[idx]);
   }
+  vcWire* Get_Output_Wire(int idx)
+  {
+    assert(idx >= 0 && idx < this->_ordered_output_arguments.size());
+    return(this->_output_arguments[this->_ordered_output_arguments[idx]]);
+  }
+
 
 
   bool Get_Inline() { return this->_inline;}
@@ -257,6 +267,8 @@ class vcModule: public vcRoot
   void Print_VHDL_Volatile_Component(ostream& ofile);
   void Print_VHDL_Volatile_Entity(ostream& ofile);
 
+  void Print_VHDL_Level_Architecture(ostream& ofile);
+
   string Get_VHDL_Architecture_Name()
   {
 	if(this->Get_Volatile_Flag())
@@ -308,6 +320,7 @@ class vcModule: public vcRoot
 
   void Print_Reduced_CP_As_Dot_File();
   void Print_VHDL_Tag_Logic(ostream& ofile);
+  void Print_VHDL_Called_Module_Components(ostream& ofile);
 };
 
 #endif // vcModule

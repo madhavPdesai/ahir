@@ -73,7 +73,7 @@ public:
   virtual string Kind() {return("vcEquivalence");}    
   virtual void Print(ostream& ofile);
   virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
-  virtual void Print_Flow_Through_VHDL(ostream& ofile);
+  virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);
   friend class vcDataPath;
 };
 
@@ -97,7 +97,7 @@ public:
 
   virtual void Print_VHDL_Logger(vcModule* parent_module, ostream& ofile);
 
-  virtual void Print_Flow_Through_VHDL(ostream& ofile) {assert(0);}
+  virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile) {assert(0);}
   virtual void Print_VHDL_Instantiation_Preamble(bool flow_through_flag, ostream& ofile);
   virtual string Get_Logger_Description() {return ("");}
   friend class vcDataPath;
@@ -137,7 +137,7 @@ public:
   virtual int Get_Delay();
 
   // combinational operator..
-  virtual void Print_Flow_Through_VHDL(ostream& ofile);
+  virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);
 
   // operator instance..
   virtual void Print_Operator_VHDL(ostream& ofile);
@@ -338,6 +338,9 @@ class vcBinarySplitOperator: public vcSplitOperator
 protected:
   string _op_id;
 
+  bool _x_war_flag;
+  bool _y_war_flag;
+
 public:
 
   vcBinarySplitOperator(string id, string op_id, vcWire* x, vcWire* y, vcWire* z);
@@ -369,7 +372,8 @@ public:
   virtual string Get_Operator_Type() {return(this->Kind() + " (" + this->_op_id + ")");}
 
   // combinational operator..
-  virtual void Print_Flow_Through_VHDL(ostream& ofile);
+  virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);
+  virtual bool Is_Floating_Point_Dpe();
   friend class vcDataPath;
 };
 
@@ -406,7 +410,8 @@ public:
   virtual vcType* Get_Output_Type() {if(_output_wires.size() > 0) return(this->_output_wires[0]->Get_Type()); else return(NULL);}
 
   // combinational operator..
-  virtual void Print_Flow_Through_VHDL(ostream& ofile);
+  virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);
+  virtual bool Is_Floating_Point_Dpe();
   friend class vcDataPath;
 };
 
@@ -419,6 +424,10 @@ protected:
   // input wires sel x y
   // output wire z
 
+  bool _sel_war_flag;
+  bool _x_war_flag;
+  bool _y_war_flag;
+
 public:
   vcSelect(string id, vcWire* sel, vcWire* x, vcWire* y, vcWire* z);
   virtual void Print(ostream& ofile);
@@ -430,8 +439,9 @@ public:
   vcWire* Get_Y() {return(this->Get_Input_Wire(2));}
   vcWire* Get_Z() {return(this->Get_Output_Wire(0));}
 
+
   // combinational operator..
-  virtual void Print_Flow_Through_VHDL(ostream& ofile);
+  virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);
 
   friend class vcDataPath;
 };
@@ -479,7 +489,7 @@ class vcInterlockBuffer: public vcSplitOperator
   virtual vcWire* Get_Dout() {return(this->Get_Output_Wire(0));}
 
   // combinational operator..
-  virtual void Print_Flow_Through_VHDL(ostream& ofile);
+  virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);
 };
 // dout := din[_high_index downto _low_index]
 class vcSlice: public vcInterlockBuffer
@@ -497,7 +507,7 @@ public:
 
 
   // combinational operator..
-  virtual void Print_Flow_Through_VHDL(ostream& ofile);
+  virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);
 
   friend class vcDataPath;
 };
@@ -516,7 +526,7 @@ class vcPermutation: public vcInterlockBuffer
   	virtual void Print_VHDL(ostream& ofile);
   
 	// combinational operator..
-  	virtual void Print_Flow_Through_VHDL(ostream& ofile);
+  	virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);
 
   	friend class vcDataPath;
 };

@@ -158,12 +158,14 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
     int depth = 1;
     int buffering = 1;
     bool full_rate_flag = false;
+    bool deterministic_flag = false;
 }
     : ((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true;} 
 		(DEPTH did: UINTEGER {depth = atoi(did->getText().c_str());})? 
 		(BUFFERING bid: UINTEGER {buffering = atoi(bid->getText().c_str());})? 
 		(FULLRATE {full_rate_flag = true;})? 
+		(DETERMINISTIC {deterministic_flag = true;})? 
 	))?
 	( (OPERATOR {operator_flag = true;} ) | (VOLATILE {volatile_flag = true;}) )?
         MODULE lbl = vc_Label 
@@ -176,6 +178,7 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 		m->Set_Pipeline_Depth(depth);
 		m->Set_Pipeline_Buffering(buffering);
 		m->Set_Pipeline_Full_Rate_Flag(full_rate_flag);
+		m->Set_Pipeline_Deterministic_Flag(deterministic_flag);
 	    }
 	    m->Set_Operator_Flag(operator_flag);
 	    m->Set_Volatile_Flag(volatile_flag);
@@ -733,6 +736,24 @@ vc_Datapath[vcSystem* sys,vcModule* m]
 ;
 
 //-----------------------------------------------------------------------------------------------------------------------------
+// WAR? vc_Identifier
+//-----------------------------------------------------------------------------------------------------------------------------
+
+vc_Wire_Connection [vector<bool>& war_flags, vcDataPath* dp ] returns [vcWire* w]
+{
+   string wid;
+   w = NULL;
+   bool wflag = false;
+}:
+  (WAR {wflag = true;})?
+	wid = vc_Identifier 
+	{ 
+		w = dp->Find_Wire(wid); 
+		war_flags.push_back(wflag);
+	}
+;
+
+//-----------------------------------------------------------------------------------------------------------------------------
 // vc_Guarded_Operator_Instantiation: vc_BinaryOperator_Instantiation | vc_UnaryOperator_Instantiation | vc_Select_Instantiation | vc_Branch_Instantiation | vc_Register_Instantiation
 //----------------------------------------------------------------------------------------------------------------------------
 vc_Guarded_Operator_Instantiation[vcSystem* sys, vcDataPath* dp]
@@ -741,18 +762,21 @@ vc_Guarded_Operator_Instantiation[vcSystem* sys, vcDataPath* dp]
   	bool guard_complement = false;
 	string gwid;
 	vcDatapathElement* dpe = NULL;
+	vector<bool> wvec;
 }:
   (dpe=vc_Operator_Instantiation[dp] |
             dpe=vc_Call_Instantiation[sys,dp] | 
             dpe=vc_IOPort_Instantiation[dp] |
             dpe=vc_LoadStore_Instantiation[sys,dp] )
-  (gid:GUARD LPAREN ( NOT_OP {guard_complement = true;} )? gwid = vc_Identifier { guard_wire = dp->Find_Wire(gwid); NOT_FOUND__("wire",guard_wire, gwid,gid) } RPAREN 
+  (gid:GUARD LPAREN ( NOT_OP {guard_complement = true;} )? guard_wire = vc_Wire_Connection [wvec,dp]
+	RPAREN 
   )?
 	{
 		if((dpe != NULL) && (guard_wire != NULL))
 		{
 			dpe->Set_Guard_Wire(guard_wire);
 			dpe->Set_Guard_Complement(guard_complement);
+			dpe->Set_Guard_WAR_Flag(wvec[0]);
 		}
 	}
  (FLOWTHROUGH {dpe->Set_Flow_Through(true);} )?
@@ -789,6 +813,8 @@ vc_BinaryOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   vcWire* y = NULL;
   vcWire* z = NULL;
   vcValue* val = NULL;
+
+  vector<bool> war_flags;
 }
 :
   ((plus_id: PLUS_OP {op_id = plus_id->getText();}) |
@@ -820,27 +846,28 @@ vc_BinaryOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   (slt_id:SLT_OP  {op_id = slt_id->getText();}) |
   (sle_id:SLE_OP  {op_id = sle_id->getText();})) id = vc_Label 
  lpid: LPAREN 
-    wid = vc_Identifier 
+    x = vc_Wire_Connection [war_flags, dp]
      {
-       x = dp->Find_Wire(wid);
-       NOT_FOUND__("wire",x,wid,lpid)
-      }
-    wid = vc_Identifier 
+        NOT_FOUND__("wire",x,wid,lpid);
+     }
+    y = vc_Wire_Connection[war_flags, dp]
      {
-       y = dp->Find_Wire(wid); 
-       NOT_FOUND__("wire", y,wid,lpid)
-
+       NOT_FOUND__("wire", y,wid,lpid);
      }
  RPAREN
  lpid2: LPAREN
     wid = vc_Identifier 
      {
        z = dp->Find_Wire(wid);
-       NOT_FOUND__("wire", z,wid,lpid2)
+       NOT_FOUND__("wire", z,wid,lpid2);
      }
  RPAREN
- { new_op = new vcBinarySplitOperator(id,op_id,x,y,z); dp->Add_Split_Operator(new_op); 
-	dpe = (vcDatapathElement*)new_op; }
+ { 	new_op = new vcBinarySplitOperator(id,op_id,x,y,z); 
+
+	dp->Add_Split_Operator(new_op); 
+	dpe = (vcDatapathElement*)new_op; 
+	dpe->Set_Input_WAR_Flags(war_flags);
+ }
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
@@ -855,6 +882,7 @@ vc_UnaryOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   string wid;
   vcWire* x = NULL;
   vcWire* z = NULL;
+  vector<bool> war_flags;
 }
 :
 
@@ -877,8 +905,7 @@ vc_UnaryOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   )
     id = vc_Label 
  lpid: LPAREN 
-    wid = vc_Identifier {
-      x = dp->Find_Wire(wid); 
+    x = vc_Wire_Connection[war_flags,dp] {
       NOT_FOUND__("wire",x,wid,lpid)
      }
  RPAREN
@@ -892,6 +919,7 @@ vc_UnaryOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
     { 
 	new_op = new vcUnarySplitOperator(id,op_id,x,z); dp->Add_Split_Operator(new_op);
 	dpe = (vcDatapathElement*) new_op;
+	dpe->Set_Input_WAR_Flags (war_flags);
     }
 ;
 
@@ -931,13 +959,14 @@ vc_Select_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   vcWire* y = NULL;
   vcWire* z = NULL;
   vcValue* val = NULL;
+  vector<bool> war_flags;
 }
 :
  sel_id:SELECT_OP id = vc_Label
  LPAREN 
-    wid = vc_Identifier {sel = dp->Find_Wire(wid); NOT_FOUND__("wire",sel,wid,sel_id) }
-    wid = vc_Identifier {x = dp->Find_Wire(wid); NOT_FOUND__("wire",x,wid,sel_id) }
-    wid = vc_Identifier {y = dp->Find_Wire(wid); NOT_FOUND__("wire",y,wid,sel_id) }
+    sel = vc_Wire_Connection[war_flags,dp] {NOT_FOUND__("wire",sel,wid,sel_id) }
+    x   = vc_Wire_Connection[war_flags,dp] {NOT_FOUND__("wire",x,wid,sel_id) }
+    y   = vc_Wire_Connection[war_flags,dp] {NOT_FOUND__("wire",y,wid,sel_id) }
  RPAREN
  LPAREN
     wid = vc_Identifier {z = dp->Find_Wire(wid); NOT_FOUND__("wire",z,wid,sel_id) }
@@ -945,6 +974,7 @@ vc_Select_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
  { 
 	new_op = new vcSelect(id,sel,x,y,z); dp->Add_Select(new_op);   
 	dpe = (vcDatapathElement*) new_op;
+	dpe->Set_Input_WAR_Flags(war_flags);
  }
 ;
 
@@ -958,14 +988,16 @@ vc_Slice_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   string id;
   string wid;
   int h, l;
-  vcWire* sel = NULL;
   vcWire* din = NULL;
   vcWire* dout = NULL;
+
+  vector<bool> war_flags;
 }
 :
  slice_id:SLICE_OP id = vc_Label
  LPAREN 
-        wid = vc_Identifier {din = dp->Find_Wire(wid); NOT_FOUND__("wire",din,wid,slice_id) }
+        din = vc_Wire_Connection[war_flags, dp]
+		 {NOT_FOUND__("wire",din,wid,slice_id) }
         hid: UINTEGER { h = atoi(hid->getText().c_str()); }
         lid: UINTEGER { l = atoi(lid->getText().c_str()); }
  RPAREN
@@ -975,6 +1007,7 @@ vc_Slice_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
  { 
 	new_op = new vcSlice(id,din,dout,h,l); dp->Add_Slice(new_op);    
 	dpe = (vcDatapathElement*) new_op;
+	dpe->Set_Input_WAR_Flags(war_flags);
  }
 ;
 
@@ -992,11 +1025,13 @@ vc_Bitmap_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   vcWire* din = NULL;
   vcWire* dout = NULL;
   int s,t;
+  vector<bool> war_flags;
 }
 :
  permute_id:PERMUTE_OP id = vc_Label
  LPAREN 
-        wid = vc_Identifier {din = dp->Find_Wire(wid); NOT_FOUND__("wire",din,wid,permute_id) }
+        din = vc_Wire_Connection[war_flags, dp] 
+	{NOT_FOUND__("wire",din,wid,permute_id) }
         ( tid: UINTEGER { t = atoi(tid->getText().c_str()); }
         	sid: UINTEGER { s = atoi(sid->getText().c_str()); bmapv.push_back(pair<int,int>(t,s)); } )+
  RPAREN
@@ -1005,7 +1040,9 @@ vc_Bitmap_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
  RPAREN
  { 
 	new_op = new vcPermutation(id,din,dout,bmapv); dp->Add_Permutation(new_op);    
+
 	dpe = (vcDatapathElement*) new_op;
+	dpe->Set_Input_WAR_Flags(war_flags);
  }
 ;
 
@@ -1022,15 +1059,17 @@ vc_Register_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   string id;
   string din;
   string dout;
-}: as_id: ASSIGN_OP id = vc_Label LPAREN din = vc_Identifier { x = dp->Find_Wire(din); 
-                               NOT_FOUND__("wire",x,din,as_id) }
+  vector<bool> war_flags;
+}: as_id: ASSIGN_OP id = vc_Label LPAREN x = vc_Wire_Connection[war_flags,dp] 
+				{NOT_FOUND__("wire",x,din,as_id) }
                           RPAREN
                           LPAREN dout = vc_Identifier { y = dp->Find_Wire(dout); 
                                NOT_FOUND__("wire",y,dout,as_id) }
                           RPAREN
    {  
       new_reg = new vcRegister(id, x, y); dp->Add_Register(new_reg);
-	dpe = (vcDatapathElement*) new_reg;
+      dpe = (vcDatapathElement*) new_reg;
+      dpe->Set_Input_WAR_Flags(war_flags);
    }
 ;
  
@@ -1046,8 +1085,9 @@ vc_InterlockBuffer_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   string id;
   string din;
   string dout;
-}: HASH  as_id: ASSIGN_OP id = vc_Label LPAREN din = vc_Identifier { x = dp->Find_Wire(din); 
-                               NOT_FOUND__("wire",x,din,as_id) }
+  vector<bool> war_flags;
+}: HASH  as_id: ASSIGN_OP id = vc_Label LPAREN x = vc_Wire_Connection[war_flags,dp]
+			 {NOT_FOUND__("wire",x,din,as_id) }
                           RPAREN
                           LPAREN dout = vc_Identifier { y = dp->Find_Wire(dout); 
                                NOT_FOUND__("wire",y,dout,as_id) }
@@ -1056,6 +1096,7 @@ vc_InterlockBuffer_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
       new_reg = new vcInterlockBuffer(id, x, y); 
       dp->Add_Interlock_Buffer(new_reg);
       dpe = (vcDatapathElement*) new_reg;
+      dpe->Set_Input_WAR_Flags(war_flags);
    }
 ;
  
@@ -1072,12 +1113,12 @@ vc_Equivalence_Instantiation[vcDataPath* dp] returns [vcDatapathElement* dpe]
     vector<vcWire*> outwires;
     vcWire* w;
     string wid;
+    vector<bool> war_flags;
 }
     :
         eq_id: EQUIVALENCE_OP id = vc_Label LPAREN
-        (wid = vc_Identifier 
+        (w = vc_Wire_Connection [war_flags,dp]
          { 
-           w = dp->Find_Wire(wid); 
            NOT_FOUND__("wire",w,wid,eq_id) 
            inwires.push_back(w);
          })+
@@ -1094,6 +1135,7 @@ vc_Equivalence_Instantiation[vcDataPath* dp] returns [vcDatapathElement* dpe]
             nm = new vcEquivalence(id,inwires,outwires);
             dp->Add_Equivalence(nm);
 	    dpe = (vcDatapathElement*) nm;
+	    dpe->Set_Input_WAR_Flags(war_flags);
         }
     ;
 
@@ -1112,19 +1154,24 @@ vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp] returns[vcDatapathElement* 
   vcModule* m;
   vector<vcWire*> inwires;
   vector<vcWire*> outwires;
+  vcWire* w;
+  vector<bool> war_flags;
 }
 :
   cid:CALL (INLINE {inline_flag = true;})? id = vc_Label MODULE mid=vc_Identifier 
        {m = sys->Find_Module(mid); NOT_FOUND__("module",m,mid,cid) }
-       lpid1: LPAREN (mid = vc_Identifier {vcWire* w = dp->Find_Wire(mid); 
-                                    NOT_FOUND__("wire",w,mid,lpid1)
-                                    inwires.push_back(w);})* RPAREN
-       lpid2: LPAREN (mid = vc_Identifier {vcWire* w = dp->Find_Wire(mid); 
-                                    NOT_FOUND__("wire",w,mid,lpid2)
-                                    outwires.push_back(w);})* RPAREN
+       lpid1: LPAREN (w = vc_Wire_Connection[war_flags,dp] 
+			{
+				NOT_FOUND__("wire",w,mid,lpid1)
+				inwires.push_back(w);
+			})* RPAREN
+       lpid2: LPAREN (mid = vc_Identifier {vcWire* ow = dp->Find_Wire(mid); 
+                                    NOT_FOUND__("wire",ow,mid,lpid2)
+                                    outwires.push_back(ow);})* RPAREN
        	{ 
 	 nc = new vcCall(id, dp->Get_Parent(), m, inwires, outwires, inline_flag); dp->Add_Call(nc); 
 	 dpe = (vcDatapathElement*) nc;
+	 dpe->Set_Input_WAR_Flags(war_flags);
 	}
 ;
 
@@ -1900,6 +1947,9 @@ FLOWTHROUGH : "$flowthrough";
 // full-rate indicator.
 FULLRATE      : "$fullrate";
 BYPASS	      : "$bypass";
+
+WAR : "$war";
+DETERMINISTIC: "$deterministic";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

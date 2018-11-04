@@ -100,6 +100,7 @@ class AaModule: public AaSeriesBlockStatement
   bool _inline_flag;
   bool _macro_flag;
   bool _pipeline_flag;
+  bool _pipeline_deterministic_flag;
   bool _operator_flag;
   bool _volatile_flag;
   bool _writes_to_shared_pipe;
@@ -126,6 +127,9 @@ class AaModule: public AaSeriesBlockStatement
 
   virtual void Set_Pipeline_Full_Rate_Flag(bool v) {_pipeline_full_rate_flag = v;}
   virtual bool Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
+
+  virtual void Set_Pipeline_Deterministic_Flag(bool v) {_pipeline_deterministic_flag = v;}
+  virtual bool Get_Pipeline_Deterministic_Flag() {return(_pipeline_deterministic_flag);}
 
   virtual void Set_Operator_Flag(bool v) {_operator_flag = v;}
   virtual bool Get_Operator_Flag() {return(_operator_flag);}

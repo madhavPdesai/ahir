@@ -25,6 +25,7 @@ cat ../ahir/operatorsV2/base/*.vhd >> ahirForAsicFpga.vhdl
 cat ../ahir/operatorsV2/ieee754/*.vhd >> ahirForAsicFpga.vhdl
 cat ../ahir/operatorsV2/experimental/*.vhd >> ahirForAsicFpga.vhdl
 cat ../ahir/operatorsV2/glue/*.vhd* >> ahirForAsicFpga.vhdl
+cat ../ahir/operatorsV2/level_core/*.vhd >> ahirForAsicFpga.vhdl
 cat ../ahir/operatorsV2/functionLibrary/*.vhd >> ahirForAsicFpga.vhdl
 cat ../ahir/operatorsV2/ap_int/*.vhd >> ahirForAsicFpga.vhdl
 cat ../aHiR_ieee_proposed/trimmed/math_utility_pkg.vhd >> aHiR_ieee_proposed.vhdl

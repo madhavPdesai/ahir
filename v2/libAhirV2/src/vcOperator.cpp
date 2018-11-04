@@ -94,7 +94,7 @@ void vcEquivalence::Print(ostream& ofile)
 }
 
 
-void vcEquivalence::Print_Flow_Through_VHDL(ostream& ofile)
+void vcEquivalence::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	ofile << "-- equivalence " << this->Get_VHDL_Id() << endl;
 	ofile << "process(";
@@ -132,8 +132,11 @@ void vcEquivalence::Print_Flow_Through_VHDL(ostream& ofile)
   	for(int idx = 0; idx < _output_wires.size(); idx++)
     	{
 		vcWire* w = _output_wires[idx];
+		string Z = (level_flag ? w->Get_VHDL_Level_Rptr_In_Id() : w->Get_VHDL_Signal_Id());
+
 		int L = (H- w->Get_Size())+1;
-		ofile << w->Get_VHDL_Signal_Id() << " <= ov(" << H << " downto " << L << ");" << endl;
+		ofile << Z
+			<< " <= ov(" << H << " downto " << L << ");" << endl;
 		H = H-L;
     	}
 	ofile << "--}" << endl;
@@ -605,7 +608,7 @@ void vcCall::Print(ostream& ofile)
 	this->Print_Delay(ofile);
 }
 
-void vcCall::Print_Flow_Through_VHDL(ostream& ofile)
+void vcCall::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	assert(this->_called_module->Get_Volatile_Flag());
 
@@ -624,13 +627,14 @@ void vcCall::Print_Flow_Through_VHDL(ostream& ofile)
 	}
 	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Output_Arguments(); idx < fidx; idx++)
 	{
+		vcWire* ow = this->Get_Output_Wire(idx);
+		string ow_name = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());
 		if(!first_one)
 		{
 			ofile << ", ";
 		}
 		first_one = false;
-		ofile << this->_called_module->Get_Output_Argument(idx) << " => "
-			<< this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
+		ofile << this->_called_module->Get_Output_Argument(idx) << " => " << ow_name;
 	}
 	if(vcSystem::_enable_logging)
 	{
@@ -785,6 +789,13 @@ vcUnarySplitOperator::vcUnarySplitOperator(string id, string op_id, vcWire* x, v
 	this->_op_id = op_id;
 }
 
+bool vcUnarySplitOperator::Is_Floating_Point_Dpe()
+{
+	bool ip_is_float = (this->Get_X()->Get_Type()->Is("vcFloatType")); 
+	bool op_is_float = (this->Get_Z()->Get_Type()->Is("vcFloatType")); 
+	return(ip_is_float || op_is_float);
+}
+
 bool vcUnarySplitOperator::Is_Float_To_Float_Operator()
 {
 	vcType* input_type =   this->Get_Input_Type();
@@ -810,10 +821,12 @@ void vcUnarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_bufferi
 	outwire_buffering.push_back(this->Get_Output_Buffering(this->Get_Z(), num_reqs));
 }
 
-void vcUnarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
+void vcUnarySplitOperator::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	string X = this->Get_X()->Get_VHDL_Signal_Id();
-	string Z = this->Get_Z()->Get_VHDL_Signal_Id();
+
+	vcWire* ow = this->Get_Z();
+	string Z = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());
 
 	if(this->_op_id == "$decode")
 	{
@@ -1052,7 +1065,7 @@ void vcBinarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_buffer
 	outwire_buffering.push_back(this->Get_Output_Buffering(this->Get_Z(), num_reqs));
 }
 
-void vcBinarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
+void vcBinarySplitOperator::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	ofile << "-- binary operator " << this->Get_VHDL_Id() << endl;
 	ofile << "process(";
@@ -1097,7 +1110,10 @@ void vcBinarySplitOperator::Print_Flow_Through_VHDL(ostream& ofile)
 		ofile << X << ", " << Y ;
 		ofile << ", tmp_var);" << endl;
 	}
-	ofile << this->Get_Z()->Get_VHDL_Signal_Id()  << " <= tmp_var; -- }" << endl;
+
+	vcWire* ow = this->Get_Z();
+	string Z = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());
+	ofile << Z << " <= tmp_var; --}" << endl;
 	ofile << "end process;" << endl; 
 }
 
@@ -1117,6 +1133,12 @@ void vcBinarySplitOperator::Print(ostream& ofile)
 	this->Print_Flow_Through(ofile);
 	ofile << endl;
 	this->Print_Delay(ofile);
+}
+
+bool vcBinarySplitOperator::Is_Floating_Point_Dpe()
+{
+	bool op_is_float = (this->Get_Z()->Get_Type()->Is("vcFloatType")); 
+	return(op_is_float);
 }
 
 vcSelect::vcSelect(string id, vcWire* sel, vcWire* x, vcWire* y, vcWire* z):vcSplitOperator(id)
@@ -1147,10 +1169,14 @@ void vcSelect::Print(ostream& ofile)
 	this->Print_Delay(ofile);
 }
 
-void vcSelect::Print_Flow_Through_VHDL(ostream& ofile)
+void vcSelect::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	ofile << "-- flow-through select operator " << this->Get_VHDL_Id() << endl;
-	ofile << this->Get_Z()->Get_VHDL_Signal_Id() << " <= ";
+
+	vcWire* ow = this->Get_Z();
+	string Z = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());
+	ofile << Z << " <= ";
+
 	ofile << this->Get_X()->Get_VHDL_Signal_Id() << " when (" << this->Get_Sel()->Get_VHDL_Signal_Id() 
 		<< "(0) /=  '0') else " << this->Get_Y()->Get_VHDL_Signal_Id() << ";" << endl;
 }
@@ -1253,7 +1279,7 @@ vcInterlockBuffer::vcInterlockBuffer(string id, vcWire* din, vcWire* dout):vcSpl
 	this->Set_Output_Wires(owires);
 }
 
-void vcInterlockBuffer::Print_Flow_Through_VHDL(ostream& ofile)
+void vcInterlockBuffer::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	ofile << "-- interlock " << this->Get_VHDL_Id() << endl;
 	ofile << "process(" << this->Get_Din()->Get_VHDL_Signal_Id() << ") -- {" << endl;
@@ -1268,7 +1294,11 @@ void vcInterlockBuffer::Print_Flow_Through_VHDL(ostream& ofile)
 	ofile << "tmp_var := (others => '0'); " << endl;
 	ofile << "tmp_var( " << min_w-1 << " downto 0) := " << this->Get_Din()->Get_VHDL_Signal_Id()
 		<< "(" << min_w -1 << " downto 0);" << endl;
-	ofile << this->Get_Dout()->Get_VHDL_Signal_Id() << " <= tmp_var; -- }" << endl;
+
+	vcWire* ow = this->Get_Dout();
+	string Z = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());
+	ofile << Z << " <= tmp_var; -- }" << endl;
+
 	ofile << "end process;" << endl; 
 }
 
@@ -1413,10 +1443,14 @@ void vcSlice::Print(ostream& ofile)
 	this->Print_Delay(ofile);
 }
 
-void vcSlice::Print_Flow_Through_VHDL(ostream& ofile)
+void vcSlice::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	ofile << "-- flow-through slice operator " << this->Get_VHDL_Id() << endl;
-	ofile << this->Get_Dout()->Get_VHDL_Signal_Id() << " <= ";
+
+	vcWire* ow = this->Get_Dout();
+	string Z = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());
+
+	ofile << Z << " <= ";
 	ofile << this->Get_Din()->Get_VHDL_Signal_Id() << "(" << this->_high_index << " downto " << this->_low_index << ");" << endl;
 }
 
@@ -1537,10 +1571,12 @@ void vcPermutation::Print(ostream& ofile)
 	this->Print_Delay(ofile);
 }
 
-void vcPermutation::Print_Flow_Through_VHDL(ostream& ofile)
+void vcPermutation::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	string src_net = this->Get_Din()->Get_VHDL_Signal_Id();
-	string dest_net = this->Get_Dout()->Get_VHDL_Signal_Id();
+
+	vcWire* ow = this->Get_Dout();
+	string dest_net = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());
 
 	ofile << " -- permutation " << this->Get_VHDL_Id() << endl;
 	set<int> mapped_dests;

@@ -532,7 +532,9 @@ int AaStatement::Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >&
 				lp  = curr_dist;
 				
 			ret_val = ((ret_val < lp) ? lp : ret_val);
-			AaRoot::DebugInfo("longest path to " + v->Get_VC_Name() + " is " + IntToStr(lp));
+			AaRoot::DebugInfo("longest path to " + 
+					    ((v == AaProgram::_dummy_root)? "EXIT" : v->Get_VC_Name()) + 
+						" is " + IntToStr(lp));
 		}
 		else
 			 AaRoot::DebugInfo("longest path to NULL is 0");
@@ -575,6 +577,8 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 	if((curr_expr_root != NULL) &&
 		(visited_elements.find(curr_expr_root) == visited_elements.end()))
 	{
+		if(!curr_expr_root->Is_Interface_Object() ||
+					!curr_expr->Get_Scope()->Is_Module())
 		 	return;
 	}
 
@@ -671,17 +675,31 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 			int dist =  adjacency_map[curr][idx].second;
 			int slack = longest_paths_from_root_map[nbr] - (dist + longest_paths_from_root_map[curr]);
 
+			if(nbr == AaProgram::_dummy_root)
+			//
+			// This is for writes to output arguments.
+			//
+			{
+				AaStatement* stmt = curr_expr->Get_Associated_Statement();
+				if(stmt != NULL)
+				{
+					int sbuff = stmt->Get_Buffering();
+					stmt->Set_Buffering(slack + sbuff);
+				}
+			}
+			else
+			{
+				if(slack_map.find(nbr) == slack_map.end())
+					slack_map[nbr] = slack;
+				else if(slack_map[nbr] < slack)
+					slack_map[nbr] = slack;
 
-			if(slack_map.find(nbr) == slack_map.end())
-				slack_map[nbr] = slack;
-			else if(slack_map[nbr] < slack)
-				slack_map[nbr] = slack;
+				if(slack > max_slack)
+					max_slack = slack;
 
-			if(slack > max_slack)
-				max_slack = slack;
-
-			if(slack > 0)
-				slack_set.insert(slack);
+				if(slack > 0)
+					slack_set.insert(slack);
+			}
 		}
 
 

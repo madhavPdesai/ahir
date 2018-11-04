@@ -41,26 +41,28 @@
 #include <vcSystem.hpp>
 
 
-void Print_VHDL_Sample_Pulse_To_Level(string sample_req, string sample_ack,
-							string start_req, string start_ack,
-							ostream& ofile)
+void Print_VHDL_Sample_Pulse_To_Level(string mod_name,
+						string sample_req, string sample_ack,
+						string start_req, string start_ack,
+						ostream& ofile)
 {
-	ofile << "p2l: Sample_Pulse_To_Level_Translate_Entity " << endl;
-	ofile << "  generic map (name => name & \"p2l\")" << endl;
+	ofile << "p2l: Sample_Pulse_To_Level_Translate_Entity -- {" << endl;
+	ofile << "  generic map (name => \"" <<  mod_name << ":p2l\")" << endl;
 	ofile << "  port map (rL => " << sample_req << ", aL => " << sample_ack << ", " << endl;
 	ofile << "            rR => " << start_req << ", aR => " << start_ack << "," << endl;
-	ofile << "            clk => clk, reset => reset);" << endl;
+	ofile << "            clk => clk, reset => reset); -- }" << endl;
 }
 
-void Print_VHDL_Update_Stall_To_Pulse(string valid_sig, string stall_sig, 
-							string update_req, string update_ack,
-							ostream& ofile)
+void Print_VHDL_Update_Stall_To_Pulse(string mod_name,
+						string valid_sig, string stall_sig, 
+						string update_req, string update_ack,
+						ostream& ofile)
 {
-	ofile << "s2p: Stall_To_Pulse_Translate_Entity " << endl;
-	ofile << "  generic map (name => name & \"s2p\")" << endl;
+	ofile << "s2p: Stall_To_Pulse_Translate_Entity -- {" << endl;
+	ofile << "  generic map (name => \"" << mod_name << ":s2p\")" << endl;
 	ofile << "  port map (valid_in => " << valid_sig 
 		<< ", stall_out => " <<  stall_sig <<  ", " << endl;
-	ofile << "              rR => " << update_req << ", aR => " << update_ack << ", clk => clk, reset => reset);" << endl;
+	ofile << "              rR => " << update_req << ", aR => " << update_ack << ", clk => clk, reset => reset); -- }" << endl;
 }
 
 void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
@@ -78,7 +80,7 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 
 	ofile << "-- always 1/0..." << endl;
 	ofile << "signal constant_one_1 : std_logic; " << endl;
-	ofile << "signal constant_one_0 : std_logic; " << endl;
+	ofile << "signal constant_zero_1 : std_logic; " << endl;
 
 	string stall_sig = this->Get_VHDL_Id() + "_stall";
         ofile << "signal " << stall_sig << ": std_logic;" << endl;
@@ -94,8 +96,8 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 		ofile << "signal update_ack_symbol: Boolean;" << endl;
 		ofile << "signal default_zero_sig: std_logic;" << endl;
 
-		// level start/fin signals..
-		ofile << "signal start_req, start_ack, fin_req, fin_ack: std_logic;" << endl;
+		// level start signals..
+		ofile << "signal start_req, start_ack: std_logic;" << endl;
 	}
 	else
 	{
@@ -128,6 +130,7 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 
 		ofile << "signal " << w->Get_VHDL_Signal_Id() << " : " 
 			<<  " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
+		ofile << "signal " << w->Get_VHDL_Signal_Id() << "_valid : std_logic;" << endl;
 	}
 
 	// output port buffer signals.
@@ -150,8 +153,8 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 
 			at_least_one_non_constant = true;
 		
-			ofile << "signal " << w->Get_VHDL_Signal_Id() << "_valid_rptr_in : std_logic;" 
-			ofile << "signal " << w->Get_VHDL_Signal_Id() << "_valid : std_logic;" 
+			ofile << "signal " << w->Get_VHDL_Signal_Id() << "_valid_rptr_in : std_logic;" << endl;
+			ofile << "signal " << w->Get_VHDL_Signal_Id() << "_valid : std_logic;" << endl;
 		}
 	}
 
@@ -165,6 +168,8 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 	{
 		ofile << "signal global_clock_cycle_count: integer := 0;" << endl;
 	}
+
+	this->Print_VHDL_Called_Module_Components(ofile);
 
 	ofile << "-- }" << endl << "begin --  {" << endl;
 
@@ -188,24 +193,30 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 	ofile << "constant_one_1 <= '1';" << endl;
 	ofile << "constant_zero_1 <= '0';" << endl;
 
+	ofile << "-- stall related to start_ack . " << endl;
+	ofile << "start_ack <= not " << stall_sig << ";" << endl;
+
 	if(this->Get_Operator_Flag())
 	{
-		Print_VHDL_Sample_Pulse_To_Level(sample_req,sample_ack,start_req, start_ack,
+		ofile << "-- protocol converters in operator mode.." << endl;
+		Print_VHDL_Sample_Pulse_To_Level(entity_name, sample_req,sample_ack,start_req, start_ack,
 								ofile); 
-		Print_VHDL_Update_Stall_To_Pulse(module_valid_sig, stall_sig,
+		Print_VHDL_Update_Stall_To_Pulse(entity_name, module_valid_sig, stall_sig,
 								update_req, update_ack, ofile); 
 	}
 	else
 	{
+
+		ofile << "-- valid,stall related to fin_ack/req in non-operator mode. " << endl;
 		ofile << "fin_ack <= " << module_valid_sig << ";" << endl;
 		ofile << stall_sig << " <= (not fin_req) and " << module_valid_sig << ";" << endl;
 
 		// print tag repeater.
 		ofile << "tag_valid_in <= start_req;" << endl;
 		ofile << "tagRptr: LevelRepeater generic map (name => \"tagRptr\","
-			<< " g_data_width => tag_Width,"
+			<< " g_data_width => tag_length,"
 			<< " g_depth => " << tag_depth << ")" << endl;
-		ofile << "  port map (clk => clk, reset=> reset, enable => constant_one_1, data_in => tag_in, valid_in => tag_valid_in, data_out => tag_out, valid_out => tag_valid, stall => " stall_sig << ");" << endl;
+		ofile << "  port map (clk => clk, reset=> reset, enable => constant_one_1, data_in => tag_in, valid_in => tag_valid_in, data_out => tag_out, valid_out => tag_valid, stall => " << stall_sig << ");" << endl;
 
 		ofile << "assert (tag_valid =" << module_valid_sig << ") report \"tag valid mismatch\""
 			<< " severity error;" << endl;
@@ -217,6 +228,7 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 		{
 			vcWire* w = inarg_wires[idx];
 			ofile << w->Get_VHDL_Signal_Id() << " <= " << w->Get_VHDL_Id() << ";" << endl;
+			ofile << w->Get_VHDL_Signal_Id() << "_valid <= start_req;" << endl;
 		}
 	}
 	ofile << "-- output handling  -------------------------------------------------------" << endl;
@@ -235,7 +247,6 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 			else
 			{
 				non_triv_outs.push_back(w);
-				this->_data_path->Print_VHDL_Level_For_Wire(w,stall_sig,ofile);
 				ofile << w->Get_VHDL_Id() << " <= " << w->Get_VHDL_Signal_Id() << ";"  
 					<< endl;
 			}
@@ -260,8 +271,8 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 				valid_assgn += sig_v_sig;
 
 				ofile << "assert " + module_valid_sig + " = " + sig_v_sig + " report ";
-				ofile << "  valid-mismatch for " 
-						<<  sig_v_sig + "  severity error;" << endl;
+				ofile << "\"  valid-mismatch for " 
+						<<  sig_v_sig + "\"  severity error;" << endl;
 			}
 			valid_assgn += ";" ;
 			ofile << valid_assgn << endl;

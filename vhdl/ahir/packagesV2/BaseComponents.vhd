@@ -172,7 +172,7 @@ package BaseComponents is
 	clk: in std_logic;
 	reset: in std_logic);
   end component;
-
+  
   component auto_run 
     generic (use_delay : boolean);
     port (clk   : in  std_logic;
@@ -884,7 +884,6 @@ package BaseComponents is
   end component OutputDeMuxBaseWithBuffering;
   
 
-  
   -----------------------------------------------------------------------------
   -- call arbiters
   -- there are four forms for the four possibilities of the
@@ -1529,6 +1528,17 @@ package BaseComponents is
           aR : in std_logic;
           clk : in std_logic;
           reset : in std_logic);
+  end component;
+
+  component Stall_To_Pulse_Translate_Entity is
+    generic (name : string);
+    port(
+	stall_out : out std_logic;
+        rR : in  boolean;
+        valid_in : in std_logic;
+        aR : out boolean;
+        clk : in std_logic;
+        reset : in std_logic);
   end component;
 
   component Sample_Pulse_To_Level_Translate_Entity 
@@ -2270,6 +2280,19 @@ package BaseComponents is
     tagR                : out std_logic_vector(twidth-1 downto 0);
     clk, reset          : in std_logic);
   end component InputMuxWithBuffering;
+
+
+  component LevelRepeater is
+    generic(name: string; g_data_width: integer := 32; g_depth: integer := 1);
+    port(clk: in std_logic;
+       reset: in std_logic;
+       enable: in std_logic;
+       data_in: in std_logic_vector(g_data_width-1 downto 0);
+       valid_in: in std_logic;
+       data_out: out std_logic_vector(g_data_width-1 downto 0);
+       valid_out : out std_logic;
+       stall: in std_logic);
+  end component;
 
   component InterlockBuffer 
     generic (name: string; buffer_size: integer := 2; 

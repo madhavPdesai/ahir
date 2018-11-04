@@ -77,6 +77,9 @@ std::set<AaModule*> AaProgram::_reachable_modules;
 std::set<string> AaProgram::_mutex_set;
 std::map<string, int> AaProgram::_integer_parameter_map;
 
+// use as a filler whenever you need.
+AaRoot* AaProgram::_dummy_root = NULL;
+
 //
 // prefix to be attached to c/vhdl modules.
 // 
@@ -1123,6 +1126,7 @@ void AaProgram::Elaborate()
 
 void AaProgram::Equalize_Paths_Of_Pipelined_Modules()
 {
+	AaProgram::_dummy_root = new AaRoot();
 	for(int idx = 0, fidx = AaProgram::_ordered_module_vector.size(); idx < fidx; idx++)
 	{
 		AaModule* m = ((AaModule*)(AaProgram::_ordered_module_vector[idx]));

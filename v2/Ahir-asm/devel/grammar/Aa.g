@@ -153,12 +153,14 @@ aA_Module returns [AaModule* new_module]
     bool macro_flag = false;
     bool noopt_flag = false;
     int lno;
+    bool deterministic_flag = false;
 }
     : ((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true; } 
 		(DEPTH (depth = aA_Integer_Parameter_Expression [lno] ))?
 		(BUFFERING (buffering = aA_Integer_Parameter_Expression [lno] ))?
-		(FULLRATE {full_rate_flag = true;})? 
+		(FULLRATE {full_rate_flag = true;})?
+		(DETERMINISTIC {deterministic_flag = true;})?
 	) | (INLINE {inline_flag = true;}) | (MACRO {macro_flag = true;}) )? 
 	((OPERATOR {operator_flag = true;}) | (VOLATILE {volatile_flag = true;}) | (OPAQUE {opaque_flag = true;}))?
 	(NOOPT {noopt_flag = true;})?
@@ -189,6 +191,7 @@ aA_Module returns [AaModule* new_module]
 		new_module->Set_Pipeline_Depth(depth);
 		new_module->Set_Pipeline_Buffering(buffering);
 		new_module->Set_Pipeline_Full_Rate_Flag(full_rate_flag);
+		new_module->Set_Pipeline_Deterministic_Flag(deterministic_flag);
 	    }
 
             new_module->Set_Line_Number(mt->getLine());
@@ -2582,6 +2585,7 @@ NOOPT      : "$noopt";
 OPAQUE     : "$opaque";
 
 
+DETERMINISTIC: "$deterministic";
 // data format
 UINTEGER          : DIGIT (DIGIT)*;
 FLOATCONST : "_f" ('-')? DIGIT '.' (DIGIT)+ 'e' ('+' | '-') (DIGIT)+;

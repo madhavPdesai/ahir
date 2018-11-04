@@ -31,6 +31,7 @@ cat ../ahir/operatorsV2/base/*.vhd >> ahir.vhdl
 cat ../ahir/operatorsV2/ieee754/*.vhd >> ahir.vhdl
 cat ../ahir/operatorsV2/experimental/*.vhd >> ahir.vhdl
 cat ../ahir/operatorsV2/glue/*.vhd* >> ahir.vhdl
+cat ../ahir/operatorsV2/level_core/*.vhd >> ahir.vhdl
 cat ../ahir/operatorsV2/functionLibrary/*.vhd >> ahir.vhdl
 cat ../ahir/operatorsV2/ap_int/*.vhd >> ahir.vhdl
 cat ../aHiR_ieee_proposed/trimmed/math_utility_pkg.vhd >> aHiR_ieee_proposed.vhdl

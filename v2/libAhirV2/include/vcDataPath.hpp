@@ -239,11 +239,14 @@ public:
   virtual void Print_VHDL_Std_Logic_Declaration(ostream& ofile);
 
   virtual string Get_VHDL_Signal_Id() { return(this->Get_VHDL_Id());}
+  virtual string Get_VHDL_Level_Rptr_In_Id() { return(this->Get_VHDL_Signal_Id() + "_in");}
 
   int Get_Size();
   virtual bool Is_Constant() {return(false);}
   int Get_Number_Of_Receivers() {return(this->_receivers.size());}
   int Get_Number_Of_Drivers() {return((this->_driver != NULL) ? 1 : 0);}
+
+  void Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile);
 };
 
 class vcIntermediateWire: public vcWire
@@ -312,6 +315,7 @@ protected:
 
   vcWire* _guard_wire;
   bool    _guard_complement;
+  bool    _guard_war_flag;
 
   map<vcWire*, int> _input_wire_buffering_map;
   map<vcWire*, int> _output_wire_buffering_map;
@@ -322,6 +326,7 @@ protected:
 
   vector<vcWire*>  _input_wires;
   vector<vcWire*>  _output_wires;
+  vector<bool>     _input_war_flags;
 
   int _in_width;
   int _out_width;
@@ -333,6 +338,7 @@ protected:
 	{
 		_guard_wire = NULL; 
 		_guard_complement = false; 
+		_guard_war_flag = false;
 		_flow_through = false;
 		_full_rate = false;
 		_delay = 1;
@@ -366,6 +372,15 @@ protected:
       		  w->Connect_Receiver(this);
 	  }
   }
+  void Get_Input_Wire_Indices(vcWire* w, vector<int>& indices)
+  {
+	  for(int idx = 0; idx < _input_wires.size(); idx++)
+	  {
+		  vcWire* u = _input_wires[idx];
+		  if(w == u)
+			  indices.push_back(idx);
+	  }
+  }
 
   void Set_Output_Wires(vector<vcWire*>& owires)
   {
@@ -378,6 +393,33 @@ protected:
       		  w->Connect_Driver(this);
 	  }
   }
+  void Get_Output_Wire_Indices(vcWire* w, vector<int>& indices)
+  {
+	  for(int idx = 0; idx < _output_wires.size(); idx++)
+	  {
+		  vcWire* u = _output_wires[idx];
+		  if(w == u)
+			  indices.push_back(idx);
+	  }
+  }
+
+  void Set_Input_WAR_Flags(vector<bool>& war_flags)
+  {
+	//assert(war_flags.size() == _input_wires.size());	
+	for(int idx = 0; idx < war_flags.size(); idx++)
+		_input_war_flags.push_back(war_flags[idx]);
+	
+  }
+  bool Get_Input_WAR_Flag(int idx)
+  {
+	assert((idx >= 0) && (idx < _input_war_flags.size()));
+	return(_input_war_flags[idx]);
+  }
+
+  virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile) {assert(0);}
+
+  void Set_Guard_WAR_Flag(bool v) {_guard_war_flag = v;}
+  bool Get_Guard_WAR_Flag() {return _guard_war_flag;}
 
   vcDataPipeline* Get_Data_Pipeline () {return (_data_pipeline);}
   void Set_Data_Pipeline (vcDataPipeline* p) {_data_pipeline = p;}
@@ -565,6 +607,7 @@ protected:
   void Generate_Flowthrough_Logger_Sensitivity_List(string& log_string);
 
   virtual void Print_VHDL_Logger(vcModule* parent_module, ostream& ofile);
+  virtual bool Is_Floating_Point_Dpe() {return(false);}
   friend class vcDataPath;
 
 };
@@ -714,6 +757,8 @@ class vcDataPath: public vcRoot
   string Print_VHDL_Call_Interface_Port_Map(string comma, ostream& ofile);
 
   void Print_VHDL(ostream& ofile);
+  void Print_VHDL_Level(string stall_sig, ostream& ofile);
+  void Print_VHDL_Level_For_Wire(vcWire* w, string stall_sig, ostream& ofile);
 
   void Print_VHDL_Phi_Instances(ostream& ofile);
   void Print_VHDL_Select_Instances(ostream& ofile);
@@ -754,6 +799,8 @@ class vcDataPath: public vcRoot
 						string pid,
 						int idx);
 
+   int Get_Driving_Dpe_Buffering(vcWire* w);
+   bool Is_Legal_In_Level_Module(vcDatapathElement* dpe);
    void Build_Data_Pipelines ();
 };
 

@@ -183,7 +183,9 @@ enum vcLexerKeytags
     __HASH,
     __FLOWTHROUGH,
     __FULLRATE,
-    __BYPASS
+    __BYPASS,
+    __WAR,
+    __DETERMINISTIC
   };
 
 static string vcLexerKeywords[] = 
@@ -338,7 +340,9 @@ static string vcLexerKeywords[] =
       "#",
       "$flowthrough",
       "$fullrate",
-      "$bypass"
+      "$bypass",
+      "$war",
+      "$deterministic"
   };
 
 string To_VHDL(string x);

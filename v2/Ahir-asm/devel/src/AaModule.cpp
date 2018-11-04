@@ -54,6 +54,7 @@ AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
   _inline_flag = false;
   _macro_flag = false;
   _pipeline_flag = false;
+  _pipeline_deterministic_flag = false;
   _pipeline_depth = 1;
   _pipeline_buffering = 1;
   _pipeline_full_rate_flag = false;
@@ -134,6 +135,8 @@ void AaModule::Print(ostream& ofile)
     ofile << "$buffering " << this->Get_Pipeline_Buffering() << " ";
     if(this->Get_Pipeline_Full_Rate_Flag())
 	ofile << "$fullrate ";
+    if(this->Get_Pipeline_Deterministic_Flag())
+	ofile << "$deterministic ";
   }
   if(this->Get_Operator_Flag())
 	ofile << "$operator ";
@@ -702,6 +705,8 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
     ofile << "$buffering " << this->Get_Pipeline_Buffering() << " ";
     if(this->Get_Pipeline_Full_Rate_Flag())
 	ofile << "$fullrate ";
+    if(this->Get_Pipeline_Deterministic_Flag())
+	ofile << "$deterministic ";
   }
 
   if(this->Get_Operator_Flag())

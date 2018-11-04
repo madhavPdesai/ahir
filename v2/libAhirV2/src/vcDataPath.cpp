@@ -1253,7 +1253,7 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
 			s->Print_VHDL(ofile);
 		}
 		else
-			s->Print_Flow_Through_VHDL(ofile);
+			s->Print_Flow_Through_VHDL(false, ofile);
 		idx++;
 	}
 }
@@ -1278,7 +1278,7 @@ void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
 			s->Print_VHDL(ofile);
 		}
 		else
-			s->Print_Flow_Through_VHDL(ofile);
+			s->Print_Flow_Through_VHDL(false, ofile);
 		idx++;
 	}
 }
@@ -1301,7 +1301,7 @@ void vcDataPath::Print_VHDL_Permutation_Instances(ostream& ofile)
 			s->Print_VHDL(ofile);
 		}
 		else
-			s->Print_Flow_Through_VHDL(ofile);
+			s->Print_Flow_Through_VHDL(false, ofile);
 		idx++;
 	}
 }
@@ -1340,7 +1340,7 @@ void vcDataPath::Print_VHDL_Interlock_Buffer_Instances(ostream& ofile)
 			p->Print_VHDL(ofile);
 		}
 		else
-			p->Print_Flow_Through_VHDL(ofile);
+			p->Print_Flow_Through_VHDL(false, ofile);
 
 
 	}
@@ -1360,7 +1360,7 @@ void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
 			s->vcOperator::Print_VHDL_Logger(this->Get_Parent(), ofile);
 		if(s->Get_Flow_Through() || this->Get_Parent()->Get_Volatile_Flag())
 		{
-			s->Print_Flow_Through_VHDL(ofile);
+			s->Print_Flow_Through_VHDL(false, ofile);
 			continue;
 		}
 		ofile << s->Get_VHDL_Id() << ": Block -- { " << endl;
@@ -1500,7 +1500,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		{
 			if(vcSystem::_enable_logging)
 				lead_op->vcSplitOperator::Print_VHDL_Logger(this->Get_Parent(), ofile);
-			lead_op->Print_Flow_Through_VHDL(ofile);
+			lead_op->Print_Flow_Through_VHDL(false, ofile);
 			continue;
 		}
 
@@ -3024,7 +3024,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
 			if(so->Get_Flow_Through() || called_module->Get_Volatile_Flag())
 			{
-				so->Print_Flow_Through_VHDL(ofile);
+				so->Print_Flow_Through_VHDL(false, ofile);
 				skip_because_volatile = true;
 			}
 			else if(called_module->Get_Operator_Flag())

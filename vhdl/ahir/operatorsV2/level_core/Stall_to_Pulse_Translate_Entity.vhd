@@ -32,42 +32,70 @@
 ------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
-library ahir;
 
-use ahir.Types.all;
-use ahir.subprograms.all;
-use ahir.BaseComponents.all;
-use ahir.utilities.all;
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
 
+-- a stall protocol to pulse translator used at the
+-- output end of a data-path operator in order
+-- to interface to the control path.
+-- Madhav Desai.
+entity Stall_To_Pulse_Translate_Entity is
+  generic (name : string);
+  port(
+	stall_out : out std_logic;
+        rR : in  boolean;
+        valid_in : in std_logic;
+        aR : out boolean;
+        clk : in std_logic;
+        reset : in std_logic);
+end entity;
 
---
--- There is 0-delay path from 
---    req_in -> req_out.
---    req_in -> ack_out.
---    ack_in -> ack_out.
---
--- Because of these paths, the level-join is
--- to be used only in constructing level protocol
--- based pipelines.
---
-entity generic_level_join is
-  generic(name: string; num_reqs: integer)
-  port ( req_in      : in   std_logic_vector(num_reqs-1 downto 0);
-         ack_out     : out  std_logic_vector(num_reqs-1 downto 0);
-    	 req_out : out  std_logic;
-	 ack_in  : in   std_logic;
-	 clk: in std_logic;
-	 reset: in std_logic);
-end generic_level_join;
+architecture Behave of Stall_To_Pulse_Translate_Entity is
+  type S2PState is (Idle,WaitForValid);
+  signal s2p_state : S2PState;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
+begin  -- Behave
 
-architecture default_arch of generic_level_join is
-  signal   req_out_sig: std_logic;
-  constant const_one: std_logic_vector((num_reqs-1) downto 0) := (others => '1');
-  constant const_zero: std_logic_vector((num_reqs-1) downto 0) := (others => '0');
-begin  -- default_arch
+  process(clk, reset, valid_in, rR, s2p_state)
+    variable nstate : S2PState;
+    variable stall_out_var: std_logic;
+  begin
+    nstate := s2p_state;
+    stall_out_var := '1';
+    aR <= false;
 
-  req_out_sig <= OrReduce(req_in);
-  req_out <= req_out_sig;
-  ack_out <= const_one when (req_out_sig = '1') and (ack_in = '1') else const_zero;
-  
-end default_arch;
+    case s2p_state is
+        when Idle =>
+          if(rR) then
+              nstate := WaitForValid;
+          end if;
+	  if (valid_in = '0') then
+		stall_out_var := '0';  -- not valid at dest.. keep it coming.
+	  end if;
+        when WaitForValid =>
+          stall_out_var := '0'; -- keep it coming...
+          if(valid_in = '1') then
+            aR <= true;
+	    if(rR)  then
+               nstate := WaitForValid;
+            else
+	       stall_out_var := '1'; -- avoid tripping over.
+               nstate := Idle;
+	    end if;
+          end if; 
+        when others => null;
+      end case;
+
+    stall_out <= stall_out_var;
+    if(clk'event and clk = '1') then
+	if reset = '1' then
+		s2p_state <= Idle;
+	else
+      		s2p_state <= nstate;
+	end if;
+    end if;
+  end process;
+end Behave;

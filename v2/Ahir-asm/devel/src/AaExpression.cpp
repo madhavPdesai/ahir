@@ -2305,6 +2305,10 @@ void AaSimpleObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaR
 	}
 	else 
 	{
+		if(this->_object->Is_Interface_Object())
+		{
+			__InsMap(adjacency_map,this, AaProgram::_dummy_root, 0);
+		}
 		visited_elements.insert(this);
 	}
 }

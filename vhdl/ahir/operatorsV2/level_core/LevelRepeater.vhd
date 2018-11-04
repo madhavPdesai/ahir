@@ -38,65 +38,51 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.BaseComponents.all;
 
--- effectively a delay stage, which
--- has just one combinational path from ack_in -> ack_out.
--- Works at full speed.
 entity LevelRepeater is
-    generic(name: string; g_data_width: integer := 32);
+    generic(name: string; g_data_width: integer := 32; g_depth : integer := 1);
     port(clk: in std_logic;
-       reset: in std_logic;
-       data_in: in std_logic_vector(g_data_width-1 downto 0);
-       req_in: in std_logic;
-       ack_out : out std_logic;
-       data_out: out std_logic_vector(g_data_width-1 downto 0);
-       req_out : out std_logic;
-       ack_in: in std_logic);
+       		reset: in std_logic;
+		enable: in std_logic;
+       		data_in: in std_logic_vector(g_data_width-1 downto 0);
+       		valid_in: in std_logic;
+       		data_out: out std_logic_vector(g_data_width-1 downto 0);
+       		valid_out : out std_logic;
+       		stall: in std_logic);
 end entity LevelRepeater;
 
 architecture behave of LevelRepeater is
-	Type FsmState is (Empty, Full);
-	signal fsm_state: FsmState;
+	signal ivalids: std_logic_vector(0 to g_depth);
+	type DwordArray is array (natural range <>) of std_logic_vector (g_data_width-1 downto 0);
+	signal data_regs: DwordArray(0 to g_depth);
 begin  -- SimModel
 
-	process(clk, reset, fsm_state, req_in, ack_in)
-		variable next_fsm_state_var: FsmState;
-		variable ack_out_var, req_out_var, latch_var: std_logic;
-	begin
-		next_fsm_state_var := fsm_state;
-		ack_out_var := '0';
-		req_out_var := '0';
-		latch_var   := '0';
-		case fsm_state is
-			when Empty =>
-				ack_out_var := '1';
-				if (req_in = '1') then
-					latch_var := '1';
-					next_fsm_state_var := Full;
-				end if;
-			when Full =>
-				req_out_var := '1';
-				if(ack_in = '1') then
-					ack_out_var := '1';
-					if(req_in = '1') then
-						latch_var := '1';
-					else
-						next_fsm_state_var := Empty;
-					end if;
-				end if;
-		end case;
-		
-		ack_out <= ack_out_var;
-		req_out <= req_out_var;
+        assert (g_depth > 0) report "LevelRepeater:" & name & " depth must be > 0" severity error;
 
+	ivalids(0) <= valid_in;
+	-- if enable is low, we stuff the data-in else we stuff in the
+	-- last data seen..  (repeat it..)
+ 	nontriv: if (g_depth > 0) generate
+        	data_regs(0) <= data_in when (enable = '1') else data_regs(1);
+	end generate nontriv;
+ 	triv: if (g_depth = 0) generate
+        	data_regs(0) <= data_in;
+	end generate triv;
+
+	valid_out  <= ivalids(g_depth);
+        data_out   <= data_regs(g_depth);
+
+        genSR: for I in 1 to g_depth generate 
+	  process(clk, reset)
+	  begin
 		if(clk'event and clk = '1') then
 			if(reset = '1') then
-				fsm_state <= Empty;
-			else
-				fsm_state <= next_fsm_state_var;
-			end if;
-			if(latch_var = '1') then
-				data_out <= data_in;
+				ivalids(I) <= '0';
+			elsif (stall = '0') then
+				ivalids(I) <= ivalids(I-1);
+				data_regs(I)  <= data_regs(I-1);
 			end if;
 		end if;
-	end process;
+   	   end process;
+        end generate genSR;
+
 end behave;
