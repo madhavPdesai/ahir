@@ -795,7 +795,8 @@ void vcCall::Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostrea
 	for(int idx = 0, fidx = iwires.size(); idx < fidx; idx++)
 	{
 		ofile << "iwire_valids(" << idx << ") <= " << iwires[idx]->Get_VHDL_Signal_Id() << "_valid;" << endl;
-		ofile << "assert (not (clk'event and clk = '0')) or (iwire_valids(" << idx << ") = " << valid_in_sig << ") report \"valid mismatch on call operator\" severity error;" << endl;
+		if(vcSystem::_enable_logging)
+			ofile << "assert (not (clk'event and clk = '0')) or (iwire_valids(" << idx << ") = " << valid_in_sig << ") report \"valid mismatch on call operator\" severity error;" << endl;
 	}
 	ofile << valid_in_sig << " <= AndReduce(iwire_valids);" << endl;
 

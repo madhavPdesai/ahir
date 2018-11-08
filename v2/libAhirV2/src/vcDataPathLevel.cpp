@@ -95,13 +95,14 @@ void vcWire::Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile)
 		// The assertion.. either all inputs to the dpe are valid
 		// or none are valid..
 		//
-		ofile << "assert (not (clk'event and clk = '0')) or (" << vin_sig << " = " << gw_valid << ") report \"valid flag (guard) mismatch for wire " + this->Get_VHDL_Id() + "\" severity error;" << endl; 
+		if(vcSystem::_enable_logging)
+			ofile << "assert (not (clk'event and clk = '0')) or (" << vin_sig << " = " << gw_valid << ") report \"valid flag (guard) mismatch for wire " + this->Get_VHDL_Id() + "\" severity error;" << endl; 
 
 		if(dpe->Get_Guard_Complement())
 			enable_string = "not " + gw->Get_VHDL_Signal_Id() + "(0)";
 		else
 			enable_string =  gw->Get_VHDL_Signal_Id() + "(0)";
-	
+
 	}
 
 	//
@@ -112,14 +113,15 @@ void vcWire::Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile)
 		vcWire* iw = dpe->Get_Input_Wire(I);
 		if(!iw->Is_Constant() && !dpe->Get_Input_WAR_Flag(I))
 		{
-			
+
 			if(!f) v_string += " and ";
 			string iw_valid =  iw->Get_VHDL_Signal_Id() + "_valid"; 
 			v_string +=  iw_valid;
 
 			f = false;
 
-			ofile << "assert (not (clk'event and clk = '0')) or (" << vin_sig << " = " << iw_valid << ") report \"valid flag mismatch (" << I << ") for wire " + this->Get_VHDL_Signal_Id() << "\" severity error;" << endl; 
+			if(vcSystem::_enable_logging)
+				ofile << "assert (not (clk'event and clk = '0')) or (" << vin_sig << " = " << iw_valid << ") report \"valid flag mismatch (" << I << ") for wire " + this->Get_VHDL_Signal_Id() << "\" severity error;" << endl; 
 		}
 	}
 
@@ -127,7 +129,7 @@ void vcWire::Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile)
 
 	// this is the valid for the repeater..
 	if(!f)
-	  ofile << vin_sig << " <= " << v_string << ";" << endl;
+		ofile << vin_sig << " <= " << v_string << ";" << endl;
 
 	// f flag = true implies wire dpe has no useful inputs.
 	if(f)
@@ -137,7 +139,7 @@ void vcWire::Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile)
 		return;
 	}
 
-	
+
 	// now instantiate the repeater.
 	if(dpe->Get_Flow_Through())
 	{
@@ -150,7 +152,7 @@ void vcWire::Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile)
 		ofile << "-- non-flow-through dpe, pass valids, values through repeater" << endl;
 		vcWire* gw = dpe->Get_Guard_Wire();
 		string rptr_name = this->Get_VHDL_Id() + "_rptr";
-			
+
 		if((gw != NULL) && dpe->Get_Guard_Complement())
 		{
 			ofile << rptr_name << "_block: block -- { " <<endl;
@@ -162,15 +164,15 @@ void vcWire::Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile)
 		// repeater.
 		ofile << rptr_name << ": LevelRepeater --{" << endl;
 		ofile << "generic map (name => \"" << rptr_name << "\","
-				<< " g_data_width => " << this->Get_Size() << ","
-				<< " g_depth => " << bufsize << ")" << endl;
+			<< " g_data_width => " << this->Get_Size() << ","
+			<< " g_depth => " << bufsize << ")" << endl;
 		ofile << "port map (clk=>clk, reset=>reset,"
-				<< " enable => " << enable_string << ","
-				<< " data_in => " << this->Get_VHDL_Level_Rptr_In_Id() << ","
-				<< " data_out => " << this->Get_VHDL_Signal_Id() << ","
-				<< " valid_in => " << vin_sig << ","
-				<< " valid_out => " << v_sig << ","
-				<< " stall => " << stall_sig << "); --}" << endl;
+			<< " enable => " << enable_string << ","
+			<< " data_in => " << this->Get_VHDL_Level_Rptr_In_Id() << ","
+			<< " data_out => " << this->Get_VHDL_Signal_Id() << ","
+			<< " valid_in => " << vin_sig << ","
+			<< " valid_out => " << v_sig << ","
+			<< " stall => " << stall_sig << "); --}" << endl;
 
 		if((gw != NULL) && dpe->Get_Guard_Complement())
 		{
@@ -185,17 +187,17 @@ void vcWire::Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile)
 bool vcDataPath::Is_Legal_In_Level_Module(vcDatapathElement* dpe)
 {
 	bool ret_val = false;
-  	string kind = dpe->Kind();
+	string kind = dpe->Kind();
 	if( (kind == "vcEquivalence") ||
-		(kind == "vcBinarySplitOperator") ||
-		(kind == "vcUnarySplitOperator") ||
-		(kind == "vcSelect") ||
-		((kind == "vcCall") && 
-			(dpe->Get_Flow_Through() || dpe->Is_Deterministic_Pipeline_Operator())) ||
-		(kind == "vcRegister") ||
-		(kind == "vcInterlockBuffer") ||
-		(kind == "vcSlice") ||
-		(kind == "vcPermutation"))
+			(kind == "vcBinarySplitOperator") ||
+			(kind == "vcUnarySplitOperator") ||
+			(kind == "vcSelect") ||
+			((kind == "vcCall") && 
+			 (dpe->Get_Flow_Through() || dpe->Is_Deterministic_Pipeline_Operator())) ||
+			(kind == "vcRegister") ||
+			(kind == "vcInterlockBuffer") ||
+			(kind == "vcSlice") ||
+			(kind == "vcPermutation"))
 	{
 		ret_val = !dpe->Is_Floating_Point_Dpe();
 	}
@@ -204,7 +206,7 @@ bool vcDataPath::Is_Legal_In_Level_Module(vcDatapathElement* dpe)
 }
 
 
-				
+
 int vcDataPath::Get_Driving_Dpe_Buffering(vcWire* w)
 {
 	int ret_val = 0;
@@ -216,13 +218,13 @@ int vcDataPath::Get_Driving_Dpe_Buffering(vcWire* w)
 	return(ret_val);
 }
 
-		
+
 
 void vcDataPath::Print_VHDL_Level(string stall_sig, ostream& ofile)
 {
 	set<vcDatapathElement*> printed_dpe_set;
 	ofile << "data_path: Block -- { " << endl;
-	
+
 
 	// print wires.
 	for(map<string, vcWire*>::iterator iter = _wire_map.begin();

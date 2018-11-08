@@ -42,9 +42,9 @@
 
 
 void Print_VHDL_Sample_Pulse_To_Level(string mod_name,
-						string sample_req, string sample_ack,
-						string start_req, string start_ack,
-						ostream& ofile)
+		string sample_req, string sample_ack,
+		string start_req, string start_ack,
+		ostream& ofile)
 {
 	ofile << "p2l: Sample_Pulse_To_Level_Translate_Entity -- {" << endl;
 	ofile << "  generic map (name => \"" <<  mod_name << ":p2l\")" << endl;
@@ -54,9 +54,9 @@ void Print_VHDL_Sample_Pulse_To_Level(string mod_name,
 }
 
 void Print_VHDL_Update_Stall_To_Pulse(string mod_name,
-						string valid_sig, string stall_sig, 
-						string update_req, string update_ack,
-						ostream& ofile)
+		string valid_sig, string stall_sig, 
+		string update_req, string update_ack,
+		ostream& ofile)
 {
 	ofile << "s2p: Stall_To_Pulse_Translate_Entity -- {" << endl;
 	ofile << "  generic map (name => \"" << mod_name << ":s2p\")" << endl;
@@ -81,17 +81,17 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 	ofile << "signal constant_zero_1 : std_logic; " << endl;
 
 	string stall_sig = this->Get_VHDL_Id() + "_stall";
-        ofile << "signal " << stall_sig << ": std_logic;" << endl;
+	ofile << "signal " << stall_sig << ": std_logic;" << endl;
 
 	string module_valid_sig = this->Get_VHDL_Id() + "_valid";
-        ofile << "signal " << module_valid_sig << ": std_logic;" << endl;
+	ofile << "signal " << module_valid_sig << ": std_logic;" << endl;
 
 
 	int tag_depth = this->Get_Delay();
 	if(this->Get_Operator_Flag())
 	{
 		ofile << "signal " << this->_control_path->Get_Always_True_Symbol() 
-									<< ": Boolean;" << endl;
+			<< ": Boolean;" << endl;
 		ofile << "signal update_ack_symbol: Boolean;" << endl;
 		ofile << "signal default_zero_sig: std_logic;" << endl;
 
@@ -102,7 +102,7 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 	}
 	else
 	{
-	
+
 		tag_depth = tag_depth - 2;
 		ofile << "signal tag_valid_in, tag_valid: std_logic;" << endl;
 	}
@@ -138,7 +138,7 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 		ofile << " ---------------------------------------------------------- " << endl;
 	}
 
-		
+
 	ofile << "constant_one_1 <= '1';" << endl;
 	ofile << "constant_zero_1 <= '0';" << endl;
 
@@ -149,9 +149,9 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 	{
 		ofile << "-- protocol converters in operator mode.." << endl;
 		Print_VHDL_Sample_Pulse_To_Level(entity_name, sample_req,sample_ack,start_req, start_ack,
-								ofile); 
+				ofile); 
 		Print_VHDL_Update_Stall_To_Pulse(entity_name, module_valid_sig, stall_sig,
-								update_req, update_ack, ofile); 
+				update_req, update_ack, ofile); 
 	}
 	else
 	{
@@ -167,8 +167,9 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 			<< " g_depth => " << tag_depth << ")" << endl;
 		ofile << "  port map (clk => clk, reset=> reset, enable => constant_one_1, data_in => tag_in, valid_in => tag_valid_in, data_out => tag_out, valid_out => tag_valid, stall => " << stall_sig << ");" << endl;
 
-		ofile << "assert (not (clk'event and clk = '0')) or (tag_valid =" << module_valid_sig << ") report \"tag valid mismatch\""
-			<< " severity error;" << endl;
+		if(vcSystem::_enable_logging)
+			ofile << "assert (not (clk'event and clk = '0')) or (tag_valid =" << module_valid_sig << ") report \"tag valid mismatch\""
+				<< " severity error;" << endl;
 	}
 
 	string inst_name = "core_deterministic_pipeline_operator_" + this->Get_VHDL_Id() + "_" + Int64ToStr(this->Get_Root_Index());
@@ -190,24 +191,24 @@ void vcModule::Print_VHDL_Level_Architecture(ostream& ofile)
 	}
 	ofile << "clk => clk, reset => reset  " << endl;
 	ofile << "-- }" << endl << ");" << endl;
-		
+
 	ofile << endl;
 	ofile << "-- }" << endl << "end " << arch_name << ";" << endl;
 }
 
 void vcModule::Print_VHDL_Deterministic_Pipeline_Operator_Entity(ostream& ofile)
 {
-  ofile << "entity " << this->Get_VHDL_Deterministic_Pipeline_Operator_Entity_Name() << " is -- {" << endl;
-  ofile << "port ( -- {" << endl;
-  ofile << "  valid_in: in std_logic;" << endl;
-  ofile << "  valid_out: out std_logic;" << endl;
-  ofile << "  stall: in std_logic;" << endl;
-  ofile << "  enable: in std_logic;" << endl;
-  string sc = this->Print_VHDL_Argument_Ports("", ofile);
-  ofile << sc << endl;
-  ofile << "clk, reset: in std_logic" << endl;
-  ofile << "-- } " << endl << ");" << endl;
-  ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Deterministic_Pipeline_Operator_Entity_Name() << ";" << endl;
+	ofile << "entity " << this->Get_VHDL_Deterministic_Pipeline_Operator_Entity_Name() << " is -- {" << endl;
+	ofile << "port ( -- {" << endl;
+	ofile << "  valid_in: in std_logic;" << endl;
+	ofile << "  valid_out: out std_logic;" << endl;
+	ofile << "  stall: in std_logic;" << endl;
+	ofile << "  enable: in std_logic;" << endl;
+	string sc = this->Print_VHDL_Argument_Ports("", ofile);
+	ofile << sc << endl;
+	ofile << "clk, reset: in std_logic" << endl;
+	ofile << "-- } " << endl << ");" << endl;
+	ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Deterministic_Pipeline_Operator_Entity_Name() << ";" << endl;
 }
 
 
@@ -226,10 +227,10 @@ void vcModule::Print_VHDL_Deterministic_Pipeline_Operator_Architecture(ostream& 
 	ofile << "signal constant_zero_1 : std_logic; " << endl;
 
 	string module_valid_sig = this->Get_VHDL_Id() + "_valid";
-        ofile << "signal " << module_valid_sig << ": std_logic;" << endl;
+	ofile << "signal " << module_valid_sig << ": std_logic;" << endl;
 
 	string stall_sig = this->Get_VHDL_Id() + "_stall";
-        ofile << "signal " << stall_sig << ": std_logic;" << endl;
+	ofile << "signal " << stall_sig << ": std_logic;" << endl;
 
 	// input port buffer signals.
 	ofile << "-- input port buffer signals" << endl;
@@ -265,7 +266,7 @@ void vcModule::Print_VHDL_Deterministic_Pipeline_Operator_Architecture(ostream& 
 				<< " downto 0);" << endl;
 
 			at_least_one_non_constant = true;
-		
+
 			ofile << "signal " << w->Get_VHDL_Signal_Id() << "_valid_rptr_in : std_logic;" << endl;
 			ofile << "signal " << w->Get_VHDL_Signal_Id() << "_valid : std_logic;" << endl;
 		}
@@ -309,8 +310,8 @@ void vcModule::Print_VHDL_Deterministic_Pipeline_Operator_Architecture(ostream& 
 	ofile << "-- stall, valid propagation " << endl;
 	ofile << stall_sig << " <= stall;" << endl;
 	ofile << "valid_out <= " << module_valid_sig << ";" << endl;
-	
-		
+
+
 	ofile << "-- input handling ------------------------------------------------" << endl;
 	{
 		for(int idx = 0, fidx = inarg_wires.size(); idx < fidx; idx++)
@@ -359,9 +360,12 @@ void vcModule::Print_VHDL_Deterministic_Pipeline_Operator_Architecture(ostream& 
 				string sig_v_sig = ntw->Get_VHDL_Signal_Id() + "_valid";
 				valid_assgn += sig_v_sig;
 
-				ofile << "assert (not (clk'event and clk = '0')) or (" + module_valid_sig + " = " + sig_v_sig + ") report ";
-				ofile << "\"  valid-mismatch for " 
+				if(vcSystem::_enable_logging)
+				{
+					ofile << "assert (not (clk'event and clk = '0')) or (" + module_valid_sig + " = " + sig_v_sig + ") report ";
+					ofile << "\"  valid-mismatch for " 
 						<<  sig_v_sig + "\"  severity error;" << endl;
+				}
 			}
 			valid_assgn += ";" ;
 			ofile << valid_assgn << endl;
@@ -392,7 +396,7 @@ void vcModule::Print_VHDL_Deterministic_Pipeline_Operator_Component(ostream& ofi
 	ofile << " valid_in, enable, stall: in std_logic;" << endl;
 	ofile << " valid_out: out std_logic;" << endl;
 	string sc = this->Print_VHDL_Argument_Ports("", ofile);
-  	ofile << sc << endl;
+	ofile << sc << endl;
 	ofile << "  clk, reset: in std_logic" << endl;
 	ofile << "-- } " << endl << ");" << endl;
 	ofile << "-- }" << endl << "end component;" << endl;
