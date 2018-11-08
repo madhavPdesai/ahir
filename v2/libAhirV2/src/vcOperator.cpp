@@ -734,6 +734,79 @@ void vcCall::Print_Operator_VHDL(ostream& ofile)
 	ofile << "-- }" << endl << "end block;" << endl;
 }
 
+  
+bool vcCall::Is_Deterministic_Pipeline_Operator()
+{
+	bool ret_val = false;
+	if(this->_called_module != NULL)
+		ret_val = this->_called_module->Get_Operator_Flag() && this->_called_module->Get_Pipeline_Deterministic_Flag();
+	return(ret_val);
+}
+
+void vcCall::Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostream& ofile)
+{
+	vector<vcWire*> iwires;
+	vector<vcWire*> owires;
+
+	string inst_name = "deterministic_pipeline_operator_" + this->_called_module->Get_VHDL_Id() + "_" + 
+					Int64ToStr(this->Get_Root_Index());
+	string block_name = inst_name + "_block"; 
+	string name = '"' + inst_name + '"';
+
+	ofile << block_name << " : block -- { " << endl;
+	ofile << "signal iwire_valids: std_logic_vector ( " << this->_called_module->Get_Number_Of_Input_Arguments()  << "-1 downto 0);" << endl;
+	ofile << "signal ttt_valid_in, ttt_valid_out, ttt_enable, ttt_stall: std_logic;" << endl;
+	string valid_in_sig = "ttt_valid_in";
+	string valid_out_sig = "ttt_valid_out";
+	string enable_sig = "ttt_enable";
+	ofile << "begin -- {" << endl;
+
+	if(this->Get_Guard_Wire())
+	{
+		ofile << this->Get_Guard_Wire()->Get_VHDL_Signal_Id();
+	}
+	else
+	{
+		ofile << enable_sig << (this->Get_Guard_Complement() ? " <= '0';" :  " <= '1';") << endl;
+	} 
+
+	ofile << inst_name << ": " << this->_called_module->Get_VHDL_Deterministic_Pipeline_Operator_Entity_Name() << " ";
+	ofile << " port map ( -- {" << endl;
+	ofile <<     "valid_in  => " << valid_in_sig << ", " << endl;
+	ofile <<     "valid_out => " << valid_out_sig << ", " << endl;
+	ofile <<     "enable    => " << enable_sig << ", " << endl; 
+	ofile <<     "stall    => " << stall_sig << ", " << endl; 
+	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Input_Arguments(); idx < fidx; idx++)
+	{
+		iwires.push_back(this->Get_Input_Wire(idx));
+		ofile << this->_called_module->Get_Input_Argument(idx) << " => "
+			<< this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id() << "," << endl;
+	}
+	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Output_Arguments(); idx < fidx; idx++)
+	{
+		owires.push_back(this->Get_Output_Wire(idx));
+		ofile  <<  this->_called_module->Get_Output_Argument(idx) << " => "
+			<< this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id() << "," << endl;
+	}
+	ofile << "clk => clk, reset => reset  " << endl;
+	ofile << "-- }" << endl << ");" << endl;
+		
+
+	for(int idx = 0, fidx = iwires.size(); idx < fidx; idx++)
+	{
+		ofile << "iwire_valids(" << idx << ") <= " << iwires[idx]->Get_VHDL_Signal_Id() << "_valid;" << endl;
+		ofile << "assert (not (clk'event and clk = '0')) or (iwire_valids(" << idx << ") = " << valid_in_sig << ") report \"valid mismatch on call operator\" severity error;" << endl;
+	}
+	ofile << valid_in_sig << " <= AndReduce(iwire_valids);" << endl;
+
+	for(int idx = 0, fidx = owires.size(); idx < fidx; idx++)
+	{
+		ofile << owires[idx]->Get_VHDL_Signal_Id() << "_valid <= " << valid_out_sig << ";" << endl;
+	}
+
+	ofile << "-- }" << endl << "end block;" << endl;
+}
+
 vcIOport::vcIOport(string id, vcPipe* pipe): vcSplitOperator(id)
 {
 	_pipe = pipe;

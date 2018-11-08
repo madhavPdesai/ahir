@@ -1,0 +1,41 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2
+
+$pipeline $depth 3 $fullrate $deterministic $operator
+	$module [addOp] $in (X Y: $uint<32>) $out (Z: $uint<32>) $is
+{
+	Z := (X + Y)
+}
+
+$pipeline $depth 3 $fullrate $deterministic $operator
+	$module [poprtr] $in (X Y: $uint<32>) $out (Z: $uint<32>) $is
+{
+	U := (X + Y)  
+	$call addOp (U X) (V)
+        W := (U + Y)
+	Z := (V + W) // 3(X+Y)
+}
+
+$pipeline $depth 3 $fullrate $deterministic 
+	$module [core] $in (CMD: $uint<32>) $out (D: $uint<32>) $is
+{
+	$call addOp (CMD CMD) (A)
+	$call poprtr (CMD A) (B)  // 9CMD
+	C := (B - CMD) // 8CMD
+	D := (C >> 3)  // CMD
+}
+
+$module [p2p_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 15 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+	 	CMD := in_data
+
+		$call core (CMD) (D)
+		
+
+		out_data :=  D
+		$while 1
+	}
+}

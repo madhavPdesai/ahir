@@ -53,7 +53,7 @@ entity Stall_To_Pulse_Translate_Entity is
 end entity;
 
 architecture Behave of Stall_To_Pulse_Translate_Entity is
-  type S2PState is (Idle,WaitForValid);
+  type S2PState is (Idle,WaitForValid, WaitForRr);
   signal s2p_state : S2PState;
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
@@ -71,22 +71,36 @@ begin  -- Behave
         when Idle =>
           if(rR) then
               nstate := WaitForValid;
+	  elsif (valid_in = '1') then
+		-- have valid-in but no rR.. Stall
+		-- and wait for rR..
+		stall_out_var := '1';
+		nstate := WaitForRr;
           end if;
-	  if (valid_in = '0') then
-		stall_out_var := '0';  -- not valid at dest.. keep it coming.
-	  end if;
         when WaitForValid =>
+	  -- rR has been observed, we are waiting for valid-in.
           stall_out_var := '0'; -- keep it coming...
           if(valid_in = '1') then
+	    -- valid-in?  OK aR..
             aR <= true;
 	    if(rR)  then
                nstate := WaitForValid;
             else
 	       stall_out_var := '1'; -- avoid tripping over.
-               nstate := Idle;
+               nstate := WaitForRr;
 	    end if;
           end if; 
-        when others => null;
+        when WaitForRr =>
+	      -- we have valid-in but we are waiting
+	      -- for Rr.
+	      stall_out_var := '1';
+	      if (rR) then
+		 nstate := WaitForValid;
+		 stall_out_var := '0';
+	      elsif (valid_in = '0') then
+		 stall_out_var := '0';
+		 nstate := Idle;
+	      end if;
       end case;
 
     stall_out <= stall_out_var;

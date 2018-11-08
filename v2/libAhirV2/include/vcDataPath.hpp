@@ -247,6 +247,7 @@ public:
   int Get_Number_Of_Drivers() {return((this->_driver != NULL) ? 1 : 0);}
 
   void Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile);
+  void Print_VHDL_Level_For_Wire(set<vcDatapathElement*>& printed_dpe_set, vcWire* w, string stall_sig, ostream& ofile);
 };
 
 class vcIntermediateWire: public vcWire
@@ -608,6 +609,10 @@ protected:
 
   virtual void Print_VHDL_Logger(vcModule* parent_module, ostream& ofile);
   virtual bool Is_Floating_Point_Dpe() {return(false);}
+
+  virtual bool Is_Deterministic_Pipeline_Operator() {return(false);}
+				
+  virtual void Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostream& ofile) {assert(0);}
   friend class vcDataPath;
 
 };
@@ -758,7 +763,7 @@ class vcDataPath: public vcRoot
 
   void Print_VHDL(ostream& ofile);
   void Print_VHDL_Level(string stall_sig, ostream& ofile);
-  void Print_VHDL_Level_For_Wire(vcWire* w, string stall_sig, ostream& ofile);
+  void Print_VHDL_Level_For_Wire(set<vcDatapathElement*>& printed_dpe_set, vcWire* w, string stall_sig, ostream& ofile);
 
   void Print_VHDL_Phi_Instances(ostream& ofile);
   void Print_VHDL_Select_Instances(ostream& ofile);

@@ -142,6 +142,9 @@ public:
   // operator instance..
   virtual void Print_Operator_VHDL(ostream& ofile);
   virtual string Get_Logger_Description();
+   
+  virtual bool Is_Deterministic_Pipeline_Operator();
+  virtual void Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostream& ofile);
 
   friend class vcDataPath;
 };

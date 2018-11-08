@@ -123,7 +123,7 @@ class vcModule: public vcRoot
   bool Get_Volatile_Flag() {return(_volatile_flag);}
 
   void Set_Delay(int d) {_delay = d;}
-  int  Get_Delay() {return(_delay);}
+  int  Get_Delay();
 
   void Set_Is_Function_Library_Module(bool d) {_is_function_library_module = d;}
   int  Get_Is_Function_Library_Module() {return(_is_function_library_module);}
@@ -268,6 +268,9 @@ class vcModule: public vcRoot
   void Print_VHDL_Volatile_Entity(ostream& ofile);
 
   void Print_VHDL_Level_Architecture(ostream& ofile);
+  void Print_VHDL_Deterministic_Pipeline_Operator_Component(ostream& ofile);
+  void Print_VHDL_Deterministic_Pipeline_Operator_Entity(ostream& ofile);
+  void Print_VHDL_Deterministic_Pipeline_Operator_Architecture(ostream& ofile);
 
   string Get_VHDL_Architecture_Name()
   {
@@ -287,6 +290,16 @@ class vcModule: public vcRoot
 	else 
 		return(this->Get_VHDL_Id());	
   }
+
+  string Get_VHDL_Deterministic_Pipeline_Operator_Entity_Name()
+  {
+	return(this->Get_VHDL_Id() + "_deterministic_pipeline_operator");	
+  }
+  string Get_VHDL_Deterministic_Pipeline_Operator_Architecture_Name()
+  {
+	return(this->Get_VHDL_Id() + "_deterministic_pipeline_operator_arch");	
+  }
+
   string Get_VHDL_Call_Interface_Port_Name(string pid);
   string Get_VHDL_Call_Interface_Port_Section(vcModule* m,
 		  string call_or_return,

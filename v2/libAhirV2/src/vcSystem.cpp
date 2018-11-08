@@ -1101,7 +1101,12 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
 
       // module component declarations
       if((vhdl_lib == "work") || (!is_function_library_module && !is_volatile_or_operator))
+      {
       	m->Print_VHDL_Component(ofile);
+	if(m->Get_Pipeline_Deterministic_Flag())
+		m->Print_VHDL_Deterministic_Pipeline_Operator_Component(ofile);
+      }
+
 
 	// volatile/operators are instantiated in module data-paths.
       if(is_volatile_or_operator)

@@ -58,6 +58,18 @@ vcModule::vcModule(vcSystem* sys, string module_name):vcRoot(module_name)
 	this->_delay = 2;
 }
 
+int vcModule::Get_Delay()
+{
+	int ret_val = this->_delay;
+	string delay_str = this->Find_Attribute_Value("delay");
+	if(delay_str != "")
+	{
+		string idelay_str = delay_str.substr(1,delay_str.size()-1);
+		ret_val = atoi(idelay_str.c_str());
+	}
+	return(ret_val);
+}
+
 void vcModule::Set_Data_Path(vcDataPath* dp)
 {
 	assert(dp != NULL);
@@ -330,6 +342,13 @@ void vcModule::Print_VHDL(ostream& ofile)
 		vcSystem::Print_VHDL_Inclusions(ofile);
 		this->Print_VHDL_Entity(ofile);
 		this->Print_VHDL_Architecture(ofile);
+
+		if(this->Get_Pipeline_Deterministic_Flag())
+		{
+			vcSystem::Print_VHDL_Inclusions(ofile);
+			this->Print_VHDL_Deterministic_Pipeline_Operator_Entity(ofile);
+			this->Print_VHDL_Deterministic_Pipeline_Operator_Architecture(ofile);
+		}
 	}
 }
 
@@ -606,7 +625,9 @@ void vcModule::Print_VHDL_Entity(ostream& ofile)
 	if(this->Get_Volatile_Flag())
 		this->Print_VHDL_Volatile_Entity(ofile);
 	else if(this->Get_Operator_Flag())
+	{
 		this->Print_VHDL_Operator_Entity(ofile);
+	}
 	else
 	{
 		ofile << "entity " << this->Get_VHDL_Id() << " is -- {" << endl;
@@ -1136,7 +1157,11 @@ void vcModule::Print_VHDL_Called_Module_Components(ostream& ofile)
 		}
 
 		if(!mc->Get_Is_Function_Library_Module() || (mc->Get_Function_Library_Vhdl_Lib() == "work"))
+		{
 			mc->Print_VHDL_Component(ofile);
+			if(mc->Get_Operator_Flag() && mc->Get_Pipeline_Deterministic_Flag())
+				mc->Print_VHDL_Deterministic_Pipeline_Operator_Component(ofile);
+		}
 		else
 			ofile << "-- function library module " << mc->Get_Label() << " component not printed." << endl;
 

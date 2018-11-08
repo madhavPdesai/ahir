@@ -95,7 +95,7 @@ void vcWire::Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile)
 		// The assertion.. either all inputs to the dpe are valid
 		// or none are valid..
 		//
-		ofile << "assert (" << vin_sig << " = " << gw_valid << ") report \"valid flag (guard) mismatch for wire " + this->Get_VHDL_Id() + "\" severity error;" << endl; 
+		ofile << "assert (not (clk'event and clk = '0')) or (" << vin_sig << " = " << gw_valid << ") report \"valid flag (guard) mismatch for wire " + this->Get_VHDL_Id() + "\" severity error;" << endl; 
 
 		if(dpe->Get_Guard_Complement())
 			enable_string = "not " + gw->Get_VHDL_Signal_Id() + "(0)";
@@ -119,7 +119,7 @@ void vcWire::Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile)
 
 			f = false;
 
-			ofile << "assert (" << vin_sig << " = " << iw_valid << ") report \"valid flag mismatch (" << I << ") for wire " + this->Get_VHDL_Signal_Id() << "\" severity error;" << endl; 
+			ofile << "assert (not (clk'event and clk = '0')) or (" << vin_sig << " = " << iw_valid << ") report \"valid flag mismatch (" << I << ") for wire " + this->Get_VHDL_Signal_Id() << "\" severity error;" << endl; 
 		}
 	}
 
@@ -190,7 +190,8 @@ bool vcDataPath::Is_Legal_In_Level_Module(vcDatapathElement* dpe)
 		(kind == "vcBinarySplitOperator") ||
 		(kind == "vcUnarySplitOperator") ||
 		(kind == "vcSelect") ||
-		((kind == "vcCall") && dpe->Get_Flow_Through()) ||
+		((kind == "vcCall") && 
+			(dpe->Get_Flow_Through() || dpe->Is_Deterministic_Pipeline_Operator())) ||
 		(kind == "vcRegister") ||
 		(kind == "vcInterlockBuffer") ||
 		(kind == "vcSlice") ||
@@ -219,6 +220,7 @@ int vcDataPath::Get_Driving_Dpe_Buffering(vcWire* w)
 
 void vcDataPath::Print_VHDL_Level(string stall_sig, ostream& ofile)
 {
+	set<vcDatapathElement*> printed_dpe_set;
 	ofile << "data_path: Block -- { " << endl;
 	
 
@@ -242,7 +244,7 @@ void vcDataPath::Print_VHDL_Level(string stall_sig, ostream& ofile)
 	for(int I = 0, fI = this->Get_Parent()->Get_Number_Of_Output_Arguments(); I < fI; I++)
 	{
 		vcWire* ow = this->Get_Parent()->Get_Output_Wire(I);
-		this->Print_VHDL_Level_For_Wire(ow,stall_sig,ofile);
+		this->Print_VHDL_Level_For_Wire(printed_dpe_set, ow,stall_sig,ofile);
 	}
 
 	// wires in the data path.
@@ -251,13 +253,14 @@ void vcDataPath::Print_VHDL_Level(string stall_sig, ostream& ofile)
 			iter++)
 	{
 		vcWire* w = (*iter).second;
-		this->Print_VHDL_Level_For_Wire(w,stall_sig,ofile);
+		this->Print_VHDL_Level_For_Wire(printed_dpe_set, w,stall_sig,ofile);
 	}
 
 	ofile << "-- }" << endl << "end Block; -- data_path" << endl;
+	printed_dpe_set.clear();
 }
 
-void vcDataPath::Print_VHDL_Level_For_Wire(vcWire* w, string stall_sig, ostream& ofile)
+void vcDataPath::Print_VHDL_Level_For_Wire(set<vcDatapathElement*>& printed_dpe_set, vcWire* w, string stall_sig, ostream& ofile)
 {	
 	if(w->Is("vcConstantWire"))
 	{
@@ -267,10 +270,18 @@ void vcDataPath::Print_VHDL_Level_For_Wire(vcWire* w, string stall_sig, ostream&
 	else
 	{
 		vcDatapathElement* dpe = w->Get_Driver();
-		if(dpe != NULL)
+		if((dpe != NULL) && (printed_dpe_set.find(dpe) == printed_dpe_set.end()))
 		{
-			dpe->Print_Flow_Through_VHDL(true,ofile);
-			w->Print_VHDL_Level_Repeater(stall_sig, ofile);
+			if(dpe->Is_Deterministic_Pipeline_Operator())
+				dpe->Print_Deterministic_Pipeline_Operator_VHDL(stall_sig, ofile);
+			else
+				dpe->Print_Flow_Through_VHDL(true,ofile);
+			printed_dpe_set.insert(dpe);
 		}
+
+		// deterministic pipeline operator will have 	
+		// at least one unit of delay.
+		if(!dpe->Is_Deterministic_Pipeline_Operator())
+			w->Print_VHDL_Level_Repeater(stall_sig, ofile);
 	}
 }
