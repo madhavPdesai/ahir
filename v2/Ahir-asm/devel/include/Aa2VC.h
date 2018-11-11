@@ -83,6 +83,7 @@
 #define __SelfReleaseSplitProtocolPattern {\
   ofile << "// self-release: " << endl;\
   __MJ(__SST(this),__SCT(this),false);\
+  __F("$null", __UST(this));\
   __MJ(__UST(this),__UCT(this),true);}
 
 #define __SelfReleaseChainedSplitProtocolPattern {\
