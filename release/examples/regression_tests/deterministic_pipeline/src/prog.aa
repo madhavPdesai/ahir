@@ -1,0 +1,52 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2
+
+$volatile $module [sub] $in (X Y: $uint<32>) $out (Z: $uint<32>) $is
+{
+	Z := (X - Y)
+}
+
+$pipeline $fullrate $deterministic $operator
+	$module[foo] $in(S: $uint<1> X: $uint<32>  Y: $uint<32>)
+			$out(Z ZZ: $uint<32>)
+$is
+{
+	U := (X + Y)
+	V := (U + (X + Y))
+	$volatile $call sub (X Y) (W)
+	$guard (S) Z := ((V + W) >> 2)
+	ZZ := X
+}
+
+$pipeline $fullrate $deterministic 
+	$module[bar] $in(S: $uint<1> X: $uint<32>  Y: $uint<32>)
+			$out(Z ZZ: $uint<32>)
+$is
+{
+	U := (X + Y)
+	V := (U + (X + Y))
+	$volatile W := (X - Y)
+	$guard (~S) Z := ((V + W) >> 2)
+	ZZ := X
+
+}
+
+$module [p2p_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+
+		$dopipeline $depth 9 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+
+	 	CMD := in_data
+
+		$volatile S := (CMD [] 0)
+
+		$call foo (S CMD CMD) (RESP RESPI)
+		$call bar (S CMD CMD) (URESP URESPI)
+
+		$volatile oval := ($mux S RESP  URESP)
+		out_data := oval
+		$while 1
+	}
+}

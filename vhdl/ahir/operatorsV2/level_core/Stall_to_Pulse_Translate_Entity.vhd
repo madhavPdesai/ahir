@@ -69,8 +69,15 @@ begin  -- Behave
 
     case s2p_state is
         when Idle =>
+	  stall_out_var := '0';
           if(rR) then
               nstate := WaitForValid;
+	      if(valid_in = '1') then
+                -- valid and rR, stall for one cycle.
+		--   can advance the pipeline only after
+		--   we see another rR.
+	      	stall_out_var := '1';
+	      end if;
 	  elsif (valid_in = '1') then
 		-- have valid-in but no rR.. Stall
 		-- and wait for rR..

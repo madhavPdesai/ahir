@@ -2310,6 +2310,19 @@ package BaseComponents is
         clk : in std_logic;
         reset: in std_logic);
   end component InterlockBuffer;
+ 
+  component InterlockBufferSimplified is
+    generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
+    port (write_req: in boolean;
+        write_ack: out boolean;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        read_req: in boolean;
+        read_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+        clk : in std_logic;
+        reset: in std_logic);
+  end component InterlockBufferSimplified;
+
 
   component ReceiveBuffer  is
     generic (name: string; buffer_size: integer ; data_width : integer ;
@@ -2510,6 +2523,17 @@ package BaseComponents is
     read_ack       : out std_logic;
     read_data     : out std_logic_vector(data_width-1 downto 0);
     clk, reset : in  std_logic);
+  end component;
+
+  component PipeSizeMonitor is
+   generic (name : string; depth: integer);
+   port (
+    write_req   : in  std_logic;
+    write_ack   : in  std_logic;
+    read_req    : in  std_logic;
+    read_ack    : in  std_logic;
+    has_data    : out Boolean;
+    clk, reset  : in  std_logic);
   end component;
 
   component BypassRegister is

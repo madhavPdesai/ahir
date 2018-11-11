@@ -16,7 +16,7 @@ $pipeline $depth 3 $fullrate $deterministic $operator
 	Z := (V + W) // 3(X+Y)
 }
 
-$pipeline $depth 3 $fullrate $deterministic 
+$pipeline $depth 7 $fullrate $deterministic 
 	$module [core] $in (CMD: $uint<32>) $out (D: $uint<32>) $is
 {
 	$call addOp (CMD CMD) (A)
@@ -28,12 +28,14 @@ $pipeline $depth 3 $fullrate $deterministic
 $module [p2p_check_daemon] $in() $out () $is
 {
 	$branchblock[lOoP] {
-		$dopipeline $depth 15 $buffering 2 $fullrate
+		$dopipeline $depth 15 $buffering 4 $fullrate
 		$merge $entry $loopback $endmerge
 	 	CMD := in_data
 
-		$call core (CMD) (D)
+		$call core (CMD) (D1) 
+		$call core (CMD) (D2)
 		
+		D := ((D1 + D2) >> 1)
 
 		out_data :=  D
 		$while 1

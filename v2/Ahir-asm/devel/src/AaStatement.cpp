@@ -2199,7 +2199,7 @@ void AaCallStatement::Set_Pipeline_Parent(AaStatement* dws)
 	if((dws != NULL) && (this->_called_module != NULL) && this->_called_module->Get_Pipeline_Flag() && 
 			this->_called_module->Get_Pipeline_Full_Rate_Flag() && dws->Get_Pipeline_Full_Rate_Flag())
 	{
-		this->_buffering = 2;
+		if(this->_buffering < 2) this->_buffering = 2;
 	}
 
 	for(unsigned int i = 0; i < _input_args.size(); i++)
@@ -2400,7 +2400,7 @@ void AaCallStatement::Set_Called_Module(AaModule* m)
 	if((dws != NULL) && (this->_called_module != NULL) && this->_called_module->Get_Pipeline_Flag() && 
 			this->_called_module->Get_Pipeline_Full_Rate_Flag() && dws->Get_Pipeline_Full_Rate_Flag())
 	{
-		this->_buffering = 2;
+		if(this->_buffering < 2) this->_buffering = 2;
 	}
 }
 
