@@ -84,6 +84,7 @@ class vcSystem: public vcRoot
   static set<string> _non_ahir_function_library_libs;
 
   static string _top_entity_name;
+  static int _estimated_buffering_bits;
 
   static int _bypass_stride;
   static bool _generate_hsys_file;

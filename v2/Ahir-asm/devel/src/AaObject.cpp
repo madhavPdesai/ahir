@@ -205,11 +205,12 @@ void AaObject::PrintC_Global_Declaration(ofstream& ofile)
 	// prefix which will be modified for each instance of a module.
 	//
 	string declared_name = AaProgram::_c_vhdl_module_prefix + "_" + this->C_Reference_String();
-	Print_C_Global_Declaration(declared_name, t, ofile);
 	
 	// a convenient handle to refer to this global is the declared name
 	// Use a define.
+	Print_C_Global_Declaration(declared_name, t, ofile);
 	ofile << "#define " << this->C_Reference_String() << " (" << declared_name << ")" << endl;
+	ofile << endl;
 }
    
 

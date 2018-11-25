@@ -391,7 +391,12 @@ void AaStatement::Equalize_Paths_For_Pipelining()
 
 	// Now, for each expression in visited-elements..  introduce delayed
 	// versions of them as needed.
-	this->Add_Delayed_Versions(adjacency_map, visited_elements, longest_paths_from_root_map);
+	//
+	// Note: do not do this if the module is marked as a deterministic pipeline
+	//	(this balancing will be taken care of in vc2vhdl0
+	//
+	if(!this->Get_Module()->Get_Pipeline_Deterministic_Flag())
+		this->Add_Delayed_Versions(adjacency_map, visited_elements, longest_paths_from_root_map);
 }
 
 void AaStatement::Calculate_And_Update_Longest_Path()
@@ -2199,7 +2204,7 @@ void AaCallStatement::Set_Pipeline_Parent(AaStatement* dws)
 	if((dws != NULL) && (this->_called_module != NULL) && this->_called_module->Get_Pipeline_Flag() && 
 			this->_called_module->Get_Pipeline_Full_Rate_Flag() && dws->Get_Pipeline_Full_Rate_Flag())
 	{
-		if(this->_buffering < 2) this->_buffering = 2;
+		//if(this->_buffering < 2) this->_buffering = 2;
 	}
 
 	for(unsigned int i = 0; i < _input_args.size(); i++)
@@ -2246,7 +2251,8 @@ void AaCallStatement::Print(ostream& ofile)
 	if((pm_guard_string != "") ||
 			(cm->Get_Macro_Flag() && AaProgram::_print_inlined_functions_in_caller))
 	{
-		pprefix = ((pm != NULL) ? pm->Get_Print_Prefix() + "_" : "")  + 
+		pprefix = (((pm != NULL) && (pm->Get_Print_Prefix() != "")) ?
+					pm->Get_Print_Prefix()  + "_" : "")  + 
 					this->Get_Function_Name() + "_" + 
 					Int64ToStr(this->Get_Index()) + "_";
 
@@ -2400,7 +2406,7 @@ void AaCallStatement::Set_Called_Module(AaModule* m)
 	if((dws != NULL) && (this->_called_module != NULL) && this->_called_module->Get_Pipeline_Flag() && 
 			this->_called_module->Get_Pipeline_Full_Rate_Flag() && dws->Get_Pipeline_Full_Rate_Flag())
 	{
-		if(this->_buffering < 2) this->_buffering = 2;
+		//if(this->_buffering < 2) this->_buffering = 2;
 	}
 }
 

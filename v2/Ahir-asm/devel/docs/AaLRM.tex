@@ -13,7 +13,9 @@
 \section{Introduction}
 
 {\bf Aa} is a programming language for the 
-description of algorithms.   The control-flow
+description of algorithms, with the ultimate aim
+being the conversion of these algorithms into 
+a hardware implementation.   The control-flow
 in an \Aa program corresponds to a petri net
 of a specific class.
 The data-flow is constructed using static
@@ -1449,8 +1451,50 @@ $pipeline ($depth <integer>)? ($buffering <integer>)? ($fullrate)?
 The pipeline parameters are similar to the {\bf \$dopipeline} 
 construct.
 
+\subsection{Deterministic Pipelined Modules}
 
-\subsection{Operator Modules}
+In certain situations, we are sure that all operations inside
+a module are deterministic, that is, we know that they take
+a fixed amount of time.  Examples of such operations are 
+addition, subtraction etc. which are mapped to unshared
+operators.  Examples of operations which are not deterministic
+are pipe accesses and accesses to shared memory.
+
+If we are sure that all operations are deterministic, then
+we can add a qualifier to the pipelined module.  For instance
+\begin{verbatim}
+$pipeline $depth 3 $deterministic $operator
+        $module [foo] $in (A B: $uint<8>) $out (C: $uint<8>) $is
+{
+   U := A
+   V := (U + B)
+   W := (V + A)
+   C  := (W + B)
+}
+\end{verbatim}
+This module will then eventually be implemented in VHDL
+using much simpler control logic.
+
+Pipelined modules have the following restrictions:
+\begin{itemize}
+\item Their internal structure is that of an
+operator module (Section \ref{sec:OperatorModules}).
+\item They can not access memory.
+\item They can not access pipes.
+\item The only write-after-read sequences permitted
+are of an accumulation type, for example
+\begin{verbatim}
+a := (a + 1)
+\end{verbatim}
+\item They can call other modules only if the called
+modules are either volatile (Section \ref{sec:VolatileModules}) or deterministic pipelines.
+\end{itemize}
+
+In many cases, the core computation is completely
+deterministic, and we can save considerable hardware
+by collecting it into a deterministic pipeline.
+
+\subsection{Operator Modules} \label{sec:OperatorModules}
 
 A module is marked as an operator-module if it
 is to be substituted at every point where it
@@ -1480,7 +1524,7 @@ An operator module is not allowed to access pipes from within.
 Inside an operator module, function calls can be made only
 to operator/volatile modules.
 
-\subsection{Volatile Modules}
+\subsection{Volatile Modules} \label{sec:VolatileModules}
 
 A module is marked as a volatile-module if 
 \begin{itemize}

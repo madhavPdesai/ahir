@@ -489,7 +489,9 @@ int vcMemorySpace::Calculate_Time_Stamp_Width()
 {
 
   if(_ordered_flag && (_num_loads > 0) && (_num_stores > 0))
-    return(Log(_num_stores + _num_loads,2) + 2);
+  {
+    return(Log(_num_stores + _num_loads,2) + 8);
+  }
   else
     return(0);
 }

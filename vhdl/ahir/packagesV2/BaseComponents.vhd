@@ -2281,6 +2281,29 @@ package BaseComponents is
     clk, reset          : in std_logic);
   end component InputMuxWithBuffering;
 
+  component FullRateRepeater is
+    generic(name : string;  data_width: integer := 32);
+    port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+  end component FullRateRepeater;
+
+  component NullRepeater is
+    generic(name : string;  data_width: integer := 32);
+    port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+  end component NullRepeater;
 
   component LevelRepeater is
     generic(name: string; g_data_width: integer := 32; g_depth: integer := 1);
@@ -2293,6 +2316,26 @@ package BaseComponents is
        valid_out : out std_logic;
        stall: in std_logic);
   end component;
+
+  component SquashLevelRepeater is
+    generic(name: string; g_data_width: integer := 32; g_depth : integer := 1);
+    port(clk: in std_logic;
+       		reset: in std_logic;
+		enable: in std_logic;
+       		data_in: in std_logic_vector(g_data_width-1 downto 0);
+       		data_out: out std_logic_vector(g_data_width-1 downto 0);
+       		stall_vector: in std_logic_vector(1 to g_depth));
+  end component SquashLevelRepeater;
+
+  component ValidPropagator is
+    generic(name: string; g_depth : integer := 1);
+    port(clk: in std_logic;
+       		reset: in std_logic;
+       		stall_in: in std_logic;
+       		valid_in: in std_logic;
+       		valid_out : out std_logic;
+       		stall_vector: out std_logic_vector(1 to  g_depth));
+  end component ValidPropagator;
 
   component InterlockBuffer 
     generic (name: string; buffer_size: integer := 2; 

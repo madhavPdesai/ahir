@@ -424,6 +424,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				// evaluation of "a = (b+c)"
 				if(pipeline_flag)
 				{
+					
 					ofile << "// WAR dependency: release  Read: " 
 						<< this->To_String() 
 						<< " with Write: " << w_root->To_String() << endl;
@@ -432,6 +433,17 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						if(r_index <= w_index)
 						{
 							__MJ(__SST(r_root), __UCT(w_root), true);
+						}
+						if(r_root != w_root)
+						{
+							AaModule* rsm = this->Get_Module();
+							if(rsm != NULL) 
+							{
+								if (rsm->Get_Pipeline_Deterministic_Flag())
+								{
+									AaRoot::Error ("non-accumulative WAR dependency in deterministic pipeline not permitted.", this);
+								}
+							}
 						}
 					}
 					else

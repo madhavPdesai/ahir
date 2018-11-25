@@ -32,6 +32,7 @@
 ------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 package mem_component_pack is
 component mem_demux 
@@ -110,6 +111,47 @@ component memory_bank
      read_result_ready: out std_logic
      );
 end component memory_bank;
+
+component memory_bank_revised is
+   generic (
+     name: string;
+     g_addr_width: natural;
+     g_data_width: natural;
+     g_write_tag_width : natural;
+     g_write_port_id_width : natural;
+     g_read_tag_width : natural;
+     g_read_port_id_width : natural;
+     g_time_stamp_width: natural;
+     g_base_bank_addr_width: natural;
+     g_base_bank_data_width: natural
+	);
+   port (
+     clk : in std_logic;
+     reset: in std_logic;
+     write_data     : in  std_logic_vector(g_data_width-1 downto 0);
+     write_addr     : in std_logic_vector(g_addr_width-1 downto 0);
+     write_tag      : in std_logic_vector(g_write_tag_width-1 downto 0);
+     write_time_stamp: in std_logic_vector(g_time_stamp_width-1 downto 0);
+     write_tag_out  : out std_logic_vector(g_write_tag_width-1 downto 0);
+     write_port_id      : in unsigned(g_write_port_id_width-1 downto 0);
+     write_port_id_out  : out unsigned(g_write_port_id_width-1 downto 0);
+     write_enable   : in std_logic;
+     write_ack   : out std_logic;
+     write_result_accept : in std_logic;
+     write_result_ready : out std_logic;
+     read_data     : out std_logic_vector(g_data_width-1 downto 0);
+     read_addr     : in std_logic_vector(g_addr_width-1 downto 0);
+     read_tag      : in std_logic_vector(g_read_tag_width-1 downto 0);
+     read_time_stamp: in std_logic_vector(g_time_stamp_width-1 downto 0);
+     read_tag_out  : out std_logic_vector(g_read_tag_width-1 downto 0);
+     read_port_id      : in unsigned(g_read_port_id_width-1 downto 0);
+     read_port_id_out  : out unsigned(g_read_port_id_width-1 downto 0);
+     read_enable   : in std_logic;
+     read_ack      : out std_logic;
+     read_result_accept: in std_logic;
+     read_result_ready: out std_logic
+     );
+end component memory_bank_revised;
 
 component memory_bank_base 
    generic ( name: string;

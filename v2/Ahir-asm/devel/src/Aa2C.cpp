@@ -127,7 +127,8 @@ void Print_C_Global_Declaration(string obj_name, AaType* t, ofstream& ofile)
 	{
 		if(t->Is_Integer_Type())
 		{
-			ofile << "bit_vector " << obj_name << ";" << __endl__;
+			//ofile << "bit_vector " << obj_name << ";" << __endl__;
+			ofile << "bit_vector " << obj_name << ";" << endl;
 		}
 		else 
 		{
@@ -135,7 +136,8 @@ void Print_C_Global_Declaration(string obj_name, AaType* t, ofstream& ofile)
 				<< " " 
 				<< obj_name
 				<< t->C_Dimension_String();
-			ofile << ";" << __endl__;
+			//ofile << ";" << __endl__;
+			ofile << ";" << endl;
 		}
 	}
 	else

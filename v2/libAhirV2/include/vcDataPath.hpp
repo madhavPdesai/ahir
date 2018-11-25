@@ -222,6 +222,7 @@ protected:
   vcType* _type;
   vcDatapathElement* _driver;
   set<vcDatapathElement*> _receivers;
+  int _deterministic_level;
 
 public:
 
@@ -240,6 +241,16 @@ public:
 
   virtual string Get_VHDL_Signal_Id() { return(this->Get_VHDL_Id());}
   virtual string Get_VHDL_Level_Rptr_In_Id() { return(this->Get_VHDL_Signal_Id() + "_in");}
+  virtual string Get_VHDL_Deterministic_Delayed_Id(int slack) 
+  {
+	  if(slack == 0)
+		  return(this->Get_VHDL_Signal_Id());
+	  else
+		  return(this->Get_VHDL_Signal_Id() + "_deterministic_delayed_" + IntToStr(slack));
+  }
+
+  void Set_Deterministic_Level(int v) {_deterministic_level = v;}
+  int  Get_Deterministic_Level() {return(_deterministic_level);}
 
   int Get_Size();
   virtual bool Is_Constant() {return(false);}
@@ -247,7 +258,9 @@ public:
   int Get_Number_Of_Drivers() {return((this->_driver != NULL) ? 1 : 0);}
 
   void Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile);
-  void Print_VHDL_Level_For_Wire(set<vcDatapathElement*>& printed_dpe_set, vcWire* w, string stall_sig, ostream& ofile);
+  void Print_VHDL_Level_For_Wire(set<vcDatapathElement*>& printed_dpe_set, 
+					map<vcWire*, set<int> >& wire_slack_map,
+					vcWire* w, string stall_sig, ostream& ofile);
 };
 
 class vcIntermediateWire: public vcWire
@@ -317,6 +330,7 @@ protected:
   vcWire* _guard_wire;
   bool    _guard_complement;
   bool    _guard_war_flag;
+  int     _guard_slack;
 
   map<vcWire*, int> _input_wire_buffering_map;
   map<vcWire*, int> _output_wire_buffering_map;
@@ -328,6 +342,7 @@ protected:
   vector<vcWire*>  _input_wires;
   vector<vcWire*>  _output_wires;
   vector<bool>     _input_war_flags;
+  vector<int>	   _input_slacks;
 
   int _in_width;
   int _out_width;
@@ -404,6 +419,8 @@ protected:
 	  }
   }
 
+  virtual int Estimate_Buffering_Bits();
+
   void Set_Input_WAR_Flags(vector<bool>& war_flags)
   {
 	//assert(war_flags.size() == _input_wires.size());	
@@ -419,6 +436,20 @@ protected:
 
   virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile) {assert(0);}
 
+  void Clear_Input_Slacks() {_input_slacks.clear();}
+  void Push_Back_Input_Slack(int slack) {_input_slacks.push_back(slack);}
+  int  Get_Input_Slack(int idx) 
+  { 
+	  if((idx >= 0) && (idx < _input_slacks.size())) 
+		  return(_input_slacks[idx]);
+	  else
+		  return(0);
+  }
+
+  void Set_Guard_Slack(int slack) {_guard_slack = slack;}
+  int  Get_Guard_Slack() {return(_guard_slack);}
+
+
   void Set_Guard_WAR_Flag(bool v) {_guard_war_flag = v;}
   bool Get_Guard_WAR_Flag() {return _guard_war_flag;}
 
@@ -430,6 +461,10 @@ protected:
 
   void Set_Delay(int d) {_delay = d;}
   virtual int Get_Delay() {return(_delay);}
+  virtual int Get_Deterministic_Pipeline_Delay()
+  {
+	return(this->_flow_through ? 0 : 1);
+  } 
 
   virtual void Print_Delay(ostream& ofile)
   {
@@ -679,6 +714,7 @@ class vcDataPath: public vcRoot
   map<vcPipe*, vector<int> > _inport_group_map;
   map<vcPipe*, vector<int> > _outport_group_map;
 
+  int _estimated_buffering_bits;
  public:
   vcDataPath(vcModule* m, string id);
 
@@ -763,7 +799,9 @@ class vcDataPath: public vcRoot
 
   void Print_VHDL(ostream& ofile);
   void Print_VHDL_Level(string stall_sig, ostream& ofile);
-  void Print_VHDL_Level_For_Wire(set<vcDatapathElement*>& printed_dpe_set, vcWire* w, string stall_sig, ostream& ofile);
+  void Print_VHDL_Level_For_Wire(set<vcDatapathElement*>& printed_dpe_set, 
+					map<vcWire*,set<int> >& wire_slack_map,
+					vcWire* w, string stall_sig, ostream& ofile);
 
   void Print_VHDL_Phi_Instances(ostream& ofile);
   void Print_VHDL_Select_Instances(ostream& ofile);
@@ -807,6 +845,9 @@ class vcDataPath: public vcRoot
    int Get_Driving_Dpe_Buffering(vcWire* w);
    bool Is_Legal_In_Level_Module(vcDatapathElement* dpe);
    void Build_Data_Pipelines ();
+   int Calculate_Longest_Paths_From_Inputs();
+   void Calculate_Wire_Slacks(std::map<vcWire*, std::set<int> >& wire_slack_map);
+   int Estimate_Buffering_Bits();
 };
 
 void Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,

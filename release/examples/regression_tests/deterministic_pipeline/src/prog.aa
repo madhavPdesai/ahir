@@ -16,6 +16,7 @@ $is
 	$volatile $call sub (X Y) (W)
 	$guard (S) Z := ((V + W) >> 2)
 	ZZ := X
+//	$attribute delay 3
 }
 
 $pipeline $fullrate $deterministic 
@@ -23,19 +24,23 @@ $pipeline $fullrate $deterministic
 			$out(Z ZZ: $uint<32>)
 $is
 {
-	U := (X + Y)
-	V := (U + (X + Y))
+	U := Y 
+	V := (U + X)
 	$volatile W := (X - Y)
-	$guard (~S) Z := ((V + W) >> 2)
+	$guard (~S) Z0 := ((V + W) >> 1)
+	Z1  := (Z0 + X)
+        Z   := (Z1 - X)
 	ZZ := X
 
+//	$attribute delay 6
 }
+
 
 $module [p2p_check_daemon] $in() $out () $is
 {
 	$branchblock[lOoP] {
 
-		$dopipeline $depth 9 $buffering 2 $fullrate
+		$dopipeline $depth 15 $buffering 2 $fullrate
 		$merge $entry $loopback $endmerge
 
 	 	CMD := in_data

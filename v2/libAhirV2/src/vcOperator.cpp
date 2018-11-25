@@ -102,7 +102,10 @@ void vcEquivalence::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 	{
 		if(idx > 0)
 			ofile << ", ";
-		ofile << _input_wires[idx]->Get_VHDL_Signal_Id();
+		if(level_flag)
+			ofile << _input_wires[idx]->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(idx));
+		else
+			ofile << _input_wires[idx]->Get_VHDL_Signal_Id();
 	}
 	ofile << ") --{" << endl;
 	int iW  = this->Get_Input_Width();
@@ -117,7 +120,10 @@ void vcEquivalence::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 	{
 		if(idx > 0)
 			ofile << " & ";
-		ofile << _input_wires[idx]->Get_VHDL_Signal_Id();
+		if(level_flag)
+			ofile << _input_wires[idx]->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(idx));
+		else
+			ofile << _input_wires[idx]->Get_VHDL_Signal_Id();
 	}
 	ofile << ";" << endl;
 	if(iW > oW)
@@ -500,12 +506,48 @@ vcCall::vcCall(string id, vcModule* pm, vcModule* m, vector<vcWire*>& in_wires, 
 	_inline_flag = inline_flag;
 }
 
+int vcCall::Get_Deterministic_Pipeline_Delay()
+{
+	int ret_val = 0;
+	vcModule* called_module = this->_called_module;
+
+	assert(this->_called_module && 
+		(this->_called_module->Get_Volatile_Flag() ||
+				this->_called_module->Get_Pipeline_Deterministic_Flag()));
+	
+	if(!this->_called_module->Get_Volatile_Flag())
+	{
+		if(this->_called_module->Get_Deterministic_Longest_Path() < 0)
+		{
+			this->_called_module->Calculate_And_Set_Deterministic_Longest_Path();
+		}
+
+		ret_val = this->_called_module->Get_Deterministic_Longest_Path();
+	}
+	return(ret_val);
+}
+
+int vcCall::Estimate_Buffering_Bits()
+{
+	int ret_val = this->vcDatapathElement::Estimate_Buffering_Bits();
+	if(this->_called_module->Get_Operator_Flag())
+	{
+		ret_val += this->_called_module->Get_Data_Path()->Estimate_Buffering_Bits();
+	}
+	if(ret_val > 0)
+	{
+		vcSystem::Info("estimated buffering for operator " + this->Get_VHDL_Id() +  " (call to " + 
+				this->_called_module->Get_VHDL_Id()  + ")  = " +
+			IntToStr(ret_val));
+	}
+	return(ret_val);
+}
 
 bool vcCall::Is_Part_Of_Pipeline()
 {
 	bool ret_val = ((this->_parent_module != NULL) &&
 			this->_parent_module->Get_Pipeline_Flag()) ||
-			this->vcDatapathElement::Is_Part_Of_Pipeline();
+		this->vcDatapathElement::Is_Part_Of_Pipeline();
 	return(ret_val);
 }
 
@@ -622,8 +664,12 @@ void vcCall::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 			ofile << ", ";
 		}
 		first_one = false;
-		ofile << this->_called_module->Get_Input_Argument(idx) << " => "
-			<< this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
+		if(level_flag)
+			ofile << this->_called_module->Get_Input_Argument(idx) << " => "
+				<< this->Get_Input_Wire(idx)->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(idx));
+		else
+			ofile << this->_called_module->Get_Input_Argument(idx) << " => "
+				<< this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
 	}
 	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Output_Arguments(); idx < fidx; idx++)
 	{
@@ -704,7 +750,7 @@ void vcSplitOperator::Print_VHDL_Instantiation_Preamble(bool flow_through_flag, 
 void vcCall::Print_Operator_VHDL(ostream& ofile)
 {
 	string inst_name = "operator_" + this->_called_module->Get_VHDL_Id() + "_" + 
-					Int64ToStr(this->Get_Root_Index());
+		Int64ToStr(this->Get_Root_Index());
 	string block_name = inst_name + "_block"; 
 	string name = '"' + inst_name + '"';
 
@@ -748,17 +794,24 @@ void vcCall::Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostrea
 	vector<vcWire*> iwires;
 	vector<vcWire*> owires;
 
+	if(this->_called_module->Get_Deterministic_Longest_Path() < 0)
+		this->_called_module->Calculate_And_Set_Deterministic_Longest_Path();
+	int det_lp = 	this->_called_module->Get_Deterministic_Longest_Path();
+
+	assert(this->_called_module->Get_Number_Of_Output_Arguments() > 0);
+	int det_ol = this->Get_Output_Wire(0)->Get_Deterministic_Level();
+	int det_il = (det_ol - det_lp) + 1;
+
+	string local_stall_sig = stall_sig + "(" + IntToStr(det_il) + " to " + IntToStr(det_ol) + ")";
+
 	string inst_name = "deterministic_pipeline_operator_" + this->_called_module->Get_VHDL_Id() + "_" + 
 					Int64ToStr(this->Get_Root_Index());
 	string block_name = inst_name + "_block"; 
 	string name = '"' + inst_name + '"';
 
 	ofile << block_name << " : block -- { " << endl;
-	ofile << "signal iwire_valids: std_logic_vector ( " << this->_called_module->Get_Number_Of_Input_Arguments()  << "-1 downto 0);" << endl;
-	ofile << "signal ttt_valid_in, ttt_valid_out, ttt_enable, ttt_stall: std_logic;" << endl;
-	string valid_in_sig = "ttt_valid_in";
-	string valid_out_sig = "ttt_valid_out";
 	string enable_sig = "ttt_enable";
+	ofile << "signal " << enable_sig << ": std_logic; --}" << endl;
 	ofile << "begin -- {" << endl;
 
 	if(this->Get_Guard_Wire())
@@ -772,15 +825,13 @@ void vcCall::Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostrea
 
 	ofile << inst_name << ": " << this->_called_module->Get_VHDL_Deterministic_Pipeline_Operator_Entity_Name() << " ";
 	ofile << " port map ( -- {" << endl;
-	ofile <<     "valid_in  => " << valid_in_sig << ", " << endl;
-	ofile <<     "valid_out => " << valid_out_sig << ", " << endl;
 	ofile <<     "enable    => " << enable_sig << ", " << endl; 
-	ofile <<     "stall    => " << stall_sig << ", " << endl; 
+	ofile <<     "stall    => " << local_stall_sig << ", " << endl; 
 	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Input_Arguments(); idx < fidx; idx++)
 	{
 		iwires.push_back(this->Get_Input_Wire(idx));
 		ofile << this->_called_module->Get_Input_Argument(idx) << " => "
-			<< this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id() << "," << endl;
+			<< this->Get_Input_Wire(idx)->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(idx)) << "," << endl;
 	}
 	for(int idx = 0, fidx = this->_called_module->Get_Number_Of_Output_Arguments(); idx < fidx; idx++)
 	{
@@ -792,20 +843,7 @@ void vcCall::Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostrea
 	ofile << "-- }" << endl << ");" << endl;
 		
 
-	for(int idx = 0, fidx = iwires.size(); idx < fidx; idx++)
-	{
-		ofile << "iwire_valids(" << idx << ") <= " << iwires[idx]->Get_VHDL_Signal_Id() << "_valid;" << endl;
-		if(vcSystem::_enable_logging)
-			ofile << "assert (not (clk'event and clk = '0')) or (iwire_valids(" << idx << ") = " << valid_in_sig << ") report \"valid mismatch on call operator\" severity error;" << endl;
-	}
-	ofile << valid_in_sig << " <= AndReduce(iwire_valids);" << endl;
-
-	for(int idx = 0, fidx = owires.size(); idx < fidx; idx++)
-	{
-		ofile << owires[idx]->Get_VHDL_Signal_Id() << "_valid <= " << valid_out_sig << ";" << endl;
-	}
-
-	ofile << "-- }" << endl << "end block;" << endl;
+	ofile << "-- }" << endl << "end block; " << endl;
 }
 
 vcIOport::vcIOport(string id, vcPipe* pipe): vcSplitOperator(id)
@@ -897,7 +935,9 @@ void vcUnarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_bufferi
 
 void vcUnarySplitOperator::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
-	string X = this->Get_X()->Get_VHDL_Signal_Id();
+	string X = (level_flag  ? 
+			this->Get_X()->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(0))
+			: this->Get_X()->Get_VHDL_Signal_Id());
 
 	vcWire* ow = this->Get_Z();
 	string Z = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());
@@ -1142,17 +1182,21 @@ void vcBinarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_buffer
 void vcBinarySplitOperator::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	ofile << "-- binary operator " << this->Get_VHDL_Id() << endl;
+	string X = (level_flag  ? 
+			this->Get_X()->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(0))
+			: this->Get_X()->Get_VHDL_Signal_Id());
+	string Y = (level_flag  ? 
+			this->Get_Y()->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(1))
+			: this->Get_Y()->Get_VHDL_Signal_Id());
 	ofile << "process(";
-	ofile << this->Get_X()->Get_VHDL_Signal_Id();
+	ofile << X;
 	if(!this->Get_Y()->Is_Constant())
-		ofile << ", " << this->Get_Y()->Get_VHDL_Signal_Id();
+		ofile << ", " << Y;
 	ofile << ") -- {" << endl;
 	ofile << "variable tmp_var : " << this->Get_Output_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
 	ofile << "begin -- { " << endl;
 	string vhdl_op_id  = Get_VHDL_Op_Id(this->_op_id, this->Get_Input_Type(), this->Get_Output_Type(), false);
 
-	string X = this->Get_X()->Get_VHDL_Signal_Id();
-	string Y = this->Get_Y()->Get_VHDL_Signal_Id();
 	bool ip_is_float = (this->Get_X()->Get_Type()->Is("vcFloatType")); 
 	bool op_is_float = (this->Get_Z()->Get_Type()->Is("vcFloatType")); 
 	bool is_compare_op = Is_Compare_Op(this->_op_id);
@@ -1251,8 +1295,17 @@ void vcSelect::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 	string Z = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());
 	ofile << Z << " <= ";
 
-	ofile << this->Get_X()->Get_VHDL_Signal_Id() << " when (" << this->Get_Sel()->Get_VHDL_Signal_Id() 
-		<< "(0) /=  '0') else " << this->Get_Y()->Get_VHDL_Signal_Id() << ";" << endl;
+	if(level_flag)
+	{
+		ofile << this->Get_X()->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(1)) 
+			<< " when (" << this->Get_Sel()->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(0))
+			<< "(0) /=  '0') else " << this->Get_Y()->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(2)) << ";" << endl;
+	}
+	else
+	{
+		ofile << this->Get_X()->Get_VHDL_Signal_Id() << " when (" << this->Get_Sel()->Get_VHDL_Signal_Id() 
+			<< "(0) /=  '0') else " << this->Get_Y()->Get_VHDL_Signal_Id() << ";" << endl;
+	}
 }
 
 void vcSelect::Print_VHDL(ostream& ofile)
@@ -1356,7 +1409,10 @@ vcInterlockBuffer::vcInterlockBuffer(string id, vcWire* din, vcWire* dout):vcSpl
 void vcInterlockBuffer::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	ofile << "-- interlock " << this->Get_VHDL_Id() << endl;
-	ofile << "process(" << this->Get_Din()->Get_VHDL_Signal_Id() << ") -- {" << endl;
+	string din =  (level_flag ? 
+				this->Get_Din()->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(0))
+				: this->Get_Din()->Get_VHDL_Signal_Id());
+	ofile << "process(" << din << ") -- {" << endl;
 	ofile << "variable tmp_var : " << this->Get_Dout()->Get_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
 	ofile << "begin -- { " << endl;
 
@@ -1366,7 +1422,7 @@ void vcInterlockBuffer::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 	int min_w = ((in_size < out_size) ? in_size : out_size);
 
 	ofile << "tmp_var := (others => '0'); " << endl;
-	ofile << "tmp_var( " << min_w-1 << " downto 0) := " << this->Get_Din()->Get_VHDL_Signal_Id()
+	ofile << "tmp_var( " << min_w-1 << " downto 0) := " << din
 		<< "(" << min_w -1 << " downto 0);" << endl;
 
 	vcWire* ow = this->Get_Dout();
@@ -1376,6 +1432,7 @@ void vcInterlockBuffer::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 	ofile << "end process;" << endl; 
 }
 
+  
 void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 {
 	string inst_name = this->Get_VHDL_Id();
@@ -1520,12 +1577,15 @@ void vcSlice::Print(ostream& ofile)
 void vcSlice::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	ofile << "-- flow-through slice operator " << this->Get_VHDL_Id() << endl;
+	string din =  (level_flag ? 
+				this->Get_Din()->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(0))
+				: this->Get_Din()->Get_VHDL_Signal_Id());
 
 	vcWire* ow = this->Get_Dout();
 	string Z = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());
 
 	ofile << Z << " <= ";
-	ofile << this->Get_Din()->Get_VHDL_Signal_Id() << "(" << this->_high_index << " downto " << this->_low_index << ");" << endl;
+	ofile << din << "(" << this->_high_index << " downto " << this->_low_index << ");" << endl;
 }
 
 void vcSlice::Print_VHDL(ostream& ofile)
@@ -1647,7 +1707,10 @@ void vcPermutation::Print(ostream& ofile)
 
 void vcPermutation::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
-	string src_net = this->Get_Din()->Get_VHDL_Signal_Id();
+	string src_net = (level_flag ?
+				this->Get_Din()->
+					Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(0))
+				: this->Get_Din()->Get_VHDL_Signal_Id());
 
 	vcWire* ow = this->Get_Dout();
 	string dest_net = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());

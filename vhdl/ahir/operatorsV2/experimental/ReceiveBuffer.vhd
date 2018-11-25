@@ -64,7 +64,7 @@ architecture default_arch of ReceiveBuffer is
   signal push_req, push_ack, pop_req, pop_ack: std_logic_vector(0 downto 0);
   signal pipe_data_in:  std_logic_vector(data_width-1 downto 0);
 
-
+  constant use_full_rate_repeater : boolean := (full_rate and (buffer_size = 1));
 
   type RxBufFsmState is (idle, busy);
   signal fsm_state : RxBufFsmState;
@@ -77,27 +77,44 @@ architecture default_arch of ReceiveBuffer is
 begin  -- default_arch
 
   -- the output pipe.
-  bufPipe : PipeBase generic map (
-    name =>  name & "-bufPipe",
-    num_reads  => 1,
-    num_writes => 1,
-    data_width => data_width,
-    lifo_mode  => false,
-    shift_register_mode => false,
-    depth      => buffer_size,
-    full_rate  => full_rate)
+  notFRR: if not use_full_rate_repeater generate
+    bufPipe : PipeBase 
+    generic map (
+      name =>  name & "-bufPipe",
+      num_reads  => 1,
+      num_writes => 1,
+      data_width => data_width,
+      lifo_mode  => false,
+      shift_register_mode => false,
+      depth      => buffer_size,
+      full_rate  => full_rate)
     port map (
-      read_req   => pop_req,
-      read_ack   => pop_ack,
-      read_data  => read_data,
-      write_req  => push_req,
-      write_ack  => push_ack,
-      write_data => write_data,
-      clk        => clk,
-      reset      => reset);
+        read_req   => pop_req,
+        read_ack   => pop_ack,
+        read_data  => read_data,
+        write_req  => push_req,
+        write_ack  => push_ack,
+        write_data => write_data,
+        clk        => clk,
+        reset      => reset);
+  end generate notFRR;
+
+  FRR: if use_full_rate_repeater generate
+    bufRptr: FullRateRepeater
+    generic map (
+      name =>  name & "-frrptr",
+      data_width => data_width)
+    port map ( clk => clk,reset => reset,
+		data_in => write_data,
+		data_out => read_data,
+		push_req => push_req(0),
+		pop_req => pop_req(0),
+		push_ack => push_ack(0),
+		pop_ack => pop_ack(0));
+  end generate FRR;
+
   read_ack <= pop_ack(0);
   pop_req(0) <= read_req;
-
 
   -- FSM
   process(clk,reset, fsm_state, write_req, push_ack)

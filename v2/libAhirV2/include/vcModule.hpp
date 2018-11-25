@@ -77,6 +77,7 @@ class vcModule: public vcRoot
   int _pipeline_depth;
   int _pipeline_buffering;
   int _delay;
+  int _deterministic_longest_path;
 
   map<string,vcPipe*> _pipe_map;
 
@@ -106,6 +107,17 @@ class vcModule: public vcRoot
 
   void Set_Pipeline_Deterministic_Flag(bool v) {_pipeline_deterministic_flag = v; }
   bool Get_Pipeline_Deterministic_Flag() {return(_pipeline_deterministic_flag);}
+
+  void Set_Deterministic_Longest_Path(int v) {_pipeline_deterministic_flag = v; }
+  int  Get_Deterministic_Longest_Path() 
+  {
+	if(this->_is_function_library_module)
+		return(this->Get_Delay());
+	else
+		return(_deterministic_longest_path);
+  }
+
+  void Calculate_And_Set_Deterministic_Longest_Path();
 
   void Set_Pipeline_Depth(int d) {_pipeline_depth = d;}
   int  Get_Pipeline_Depth() {return(_pipeline_depth);}
@@ -188,6 +200,11 @@ class vcModule: public vcRoot
   {
     assert(idx >= 0 && idx < this->_ordered_input_arguments.size());
     return(this->_ordered_input_arguments[idx]);
+  }
+  vcWire* Get_Input_Wire(int idx)
+  {
+    assert(idx >= 0 && idx < this->_ordered_input_arguments.size());
+    return(this->_input_arguments[this->_ordered_input_arguments[idx]]);
   }
 
   string Get_Output_Argument(int idx)

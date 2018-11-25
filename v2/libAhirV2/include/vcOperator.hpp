@@ -119,6 +119,8 @@ public:
   bool Get_Inline() {return(this->_inline_flag);}
   vcModule* Get_Called_Module() {return(this->_called_module);}
 
+  virtual int Get_Deterministic_Pipeline_Delay();
+  virtual int Estimate_Buffering_Bits();
 
   virtual bool Is_Part_Of_Pipeline();
 

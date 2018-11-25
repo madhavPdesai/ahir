@@ -32,8 +32,11 @@
 ------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library ahir;
+use ahir.Subprograms.all;
+use ahir.BaseComponents.all;
 use ahir.mem_function_pack.all;
 use ahir.merge_functions.all;
 use ahir.mem_component_pack.all;
@@ -125,519 +128,340 @@ entity memory_subsystem_core is
 end entity memory_subsystem_core;
 
 
+-- simplified logic.  Use one memory bank only..
 architecture pipelined of memory_subsystem_core is
 
-  -----------------------------------------------------------------------------
-  -- configuration constants.  These should be determined by the
-  -- implementation itself based on the input generics.  For the moment
-  -- these are hardwired.
-  -----------------------------------------------------------------------------
-  constant c_mux_degree : natural :=  mux_degree;
-  constant c_demux_degree : natural := demux_degree;
-  constant log2_number_of_banks : natural := Ceil_Log2(number_of_banks);  --  
-  constant bank_addr_width : natural := addr_width - log2_number_of_banks;
-  constant c_load_merge_stages : natural := Maximum(1, Ceil_Log(num_loads,c_mux_degree));
-  constant c_store_merge_stages : natural := Maximum(1,Ceil_Log(num_stores,c_mux_degree));
-  constant c_number_of_merge_stages : natural := Maximum(c_load_merge_stages,c_store_merge_stages);
-  -----------------------------------------------------------------------------
+  	constant c_load_port_id_width : natural := Maximum(1,Ceil_Log2(num_loads));
+  	constant c_store_port_id_width : natural := Maximum(1,Ceil_Log2(num_stores));
 
-  -----------------------------------------------------------------------------
-  -- useful constants
-  constant c_number_of_inputs : natural := num_loads + num_stores;
-  constant c_log2_number_of_inputs : natural := Ceil_Log2(num_loads + num_stores);
-  -----------------------------------------------------------------------------
+	signal lc_ack_out_sig : std_logic_vector(num_loads-1 downto 0);
+	signal sc_ack_out_sig : std_logic_vector(num_stores-1 downto 0);
 
-  type LoadDataArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  type LoadDataTagArray is array (natural range <>) of std_logic_vector(data_width+tag_width-1 downto 0);
-  signal load_port_data : LoadDataTagArray(0 to num_loads-1);
-  
-  -----------------------------------------------------------------------------
-  -- Todo: create an array of port id tags to keep track of the
-  --       input port
-  -----------------------------------------------------------------------------
-  constant c_load_port_id_width : natural := Maximum(1,Ceil_Log2(num_loads));
-  constant c_store_port_id_width : natural := Maximum(1,Ceil_Log2(num_stores));
+	signal load_request_selected: std_logic;
+	signal load_request_accepted: std_logic;
+	signal load_request_address: std_logic_vector(addr_width-1 downto 0);
+	signal load_request_id, load_complete_id: unsigned(c_load_port_id_width-1 downto 0);
+	signal load_request_tag: std_logic_vector((tag_width-1) downto 0);
+	signal load_request_time_stamp: std_logic_vector((time_stamp_width-1) downto 0);
 
-  type LoadPortIdArray is array (natural range <>) of std_logic_vector(c_load_port_id_width-1 downto 0);
-  type StorePortIdArray is array (natural range <>) of std_logic_vector(c_store_port_id_width-1 downto 0);
-  
-  type TimeStampArray is array (natural range<>) of std_logic_vector(time_stamp_width-1 downto 0);
-  function StorePortIdGen (
-    constant x : natural;
-    constant width : natural
-    )
-    return StorePortIdArray
-  is
-    variable ret_var : StorePortIdArray(0 to x-1);
-    variable curr_value : std_logic_vector(width-1 downto 0);
-  begin
-    curr_value := (others => '0');
-    ret_var := (others => (others => '0'));
-    for I  in 0 to x-1 loop
-      ret_var(I) := curr_value;
-      curr_value := IncrementSLV(curr_value);
-    end loop;  -- I
-    return(ret_var);
-  end function StorePortIdGen;
+	signal load_request_selected_repeated: std_logic;
+	signal load_request_accepted_repeated: std_logic;
+	signal load_request_address_repeated: std_logic_vector(addr_width-1 downto 0);
+	signal load_request_id_repeated : unsigned(c_load_port_id_width-1 downto 0);
+	signal load_request_tag_repeated: std_logic_vector((tag_width-1) downto 0);
+	signal load_request_time_stamp_repeated: std_logic_vector((time_stamp_width-1) downto 0);
 
-  function LoadPortIdGen (
-    constant x : natural;
-    constant width : natural
-    )
-    return LoadPortIdArray
-  is
-    variable ret_var : LoadPortIdArray(0 to x-1);
-    variable curr_value : std_logic_vector(width-1 downto 0);
-  begin
-    curr_value := (others => '0');
-    ret_var := (others => (others => '0'));
-    for I  in 0 to x-1 loop
-      ret_var(I) := curr_value;
-      curr_value := IncrementSLV(curr_value);
-    end loop;  -- I
-    return(ret_var);
-  end function LoadPortIdGen;
+	signal load_complete_data: std_logic_vector(data_width-1 downto 0);
+	signal load_complete_ready: std_logic;
+	signal load_complete_accept: std_logic;
+	signal load_complete_tag: std_logic_vector((tag_width-1) downto 0);
+
+	signal store_request_selected: std_logic;
+	signal store_request_accepted: std_logic;
+	signal store_request_address: std_logic_vector(addr_width-1 downto 0);
+	signal store_request_data: std_logic_vector(data_width-1 downto 0);
+	signal store_request_id, store_complete_id: unsigned(c_store_port_id_width-1 downto 0);
+	signal store_request_tag: std_logic_vector((tag_width-1) downto 0);
+	signal store_request_time_stamp: std_logic_vector((time_stamp_width-1) downto 0);
+
+	signal store_request_selected_repeated: std_logic;
+	signal store_request_accepted_repeated: std_logic;
+	signal store_request_address_repeated: std_logic_vector(addr_width-1 downto 0);
+	signal store_request_data_repeated: std_logic_vector(data_width-1 downto 0);
+	signal store_request_id_repeated : unsigned(c_store_port_id_width-1 downto 0);
+	signal store_request_tag_repeated: std_logic_vector((tag_width-1) downto 0);
+	signal store_request_time_stamp_repeated: std_logic_vector((time_stamp_width-1) downto 0);
+
+	signal store_complete_ready: std_logic;
+	signal store_complete_accept: std_logic;
+	signal store_complete_tag: std_logic_vector((tag_width-1) downto 0);
 
 
-  constant c_load_port_id_array : LoadPortIdArray := LoadPortIdGen(num_loads, c_load_port_id_width);
-  signal s_load_port_id_array : LoadPortIdArray(0 to num_loads-1) := c_load_port_id_array;
+	signal store_complete_accept_array: std_logic_vector(num_stores-1 downto 0);
+	signal load_complete_accept_array: std_logic_vector(num_loads-1 downto 0);
 
-
-  constant c_store_port_id_array : StorePortIdArray := StorePortIdGen(num_stores, c_store_port_id_width);
-  signal s_store_port_id_array : StorePortIdArray(0 to num_stores-1) := c_store_port_id_array;
-  
-  constant c_load_merge_data_width : natural := (bank_addr_width) + tag_width + c_load_port_id_width + time_stamp_width;
-  constant c_load_demerge_data_width : natural := data_width + tag_width + c_load_port_id_width + time_stamp_width;
-  
-  constant c_store_merge_data_width : natural := (bank_addr_width) + data_width + tag_width + c_store_port_id_width + time_stamp_width;
-  constant c_store_demerge_data_width : natural := tag_width + c_store_port_id_width + time_stamp_width;
-  
-
-  signal load_time_stamp : TimeStampArray(num_loads-1 downto 0);
-  signal store_complete_time_stamp,store_time_stamp : TimeStampArray(num_stores-1 downto 0);
-
-  type LoadMergeArray is array(0 to number_of_banks-1) of std_logic_vector(num_loads*c_load_merge_data_width-1 downto 0);
-  type StoreMergeArray is array(0 to number_of_banks-1) of std_logic_vector(num_stores*c_store_merge_data_width-1 downto 0);
-  type LoadControlArray is array(0 to number_of_banks-1) of std_logic_vector(num_loads-1 downto 0);
-  
-  type LoadDemergeArray is array(0 to number_of_banks-1) of std_logic_vector(num_loads*c_load_demerge_data_width-1 downto 0);
-  type StoreDemergeArray is array(0 to number_of_banks-1) of std_logic_vector(num_stores*c_store_demerge_data_width-1 downto 0);
-  type StoreControlArray is array(0 to number_of_banks-1) of std_logic_vector(num_stores-1 downto 0);
-  
-  signal load_merge_data_in : LoadMergeArray;
-  signal load_merge_data_out : std_logic_vector((number_of_banks*c_load_merge_data_width)-1 downto 0);
-
-  -- port side load merge control
-  signal load_merge_from_port_req, load_merge_to_port_ack : LoadControlArray;
-
-  -- bank side load merge control
-  signal load_merge_to_bank_req, load_merge_from_bank_ack : std_logic_vector(number_of_banks-1 downto 0);
-  
-  signal load_demerge_data_in : std_logic_vector((number_of_banks*c_load_demerge_data_width)-1 downto 0);
-  signal load_demerge_data_out : LoadDemergeArray;
-
-  -- port side load demerge control
-  signal load_demerge_to_port_req, load_demerge_from_port_ack :LoadControlArray;
-
-  -- bank side load demerge control
-  signal load_demerge_from_bank_req, load_demerge_to_bank_ack : std_logic_vector(number_of_banks-1 downto 0);
-    
-  signal store_merge_data_in : StoreMergeArray;
-  signal store_merge_data_out : std_logic_vector((number_of_banks*c_store_merge_data_width)-1 downto 0);
-
-  -- port side store merge control
-  signal store_merge_from_port_req, store_merge_to_port_ack : StoreControlArray;
-  
-  -- bank side store merge control
-  signal store_merge_to_bank_req, store_merge_from_bank_ack : std_logic_vector(number_of_banks-1 downto 0);
-  signal store_demerge_data_in : std_logic_vector((number_of_banks*c_store_demerge_data_width)-1 downto 0);
-  signal store_demerge_data_out : StoreDemergeArray;
-
-  -- port side store demerge control
-  signal store_demerge_to_port_req, store_demerge_from_port_ack : StoreControlArray;
-
-  -- bank side store demerge control
-  signal store_demerge_from_bank_req, store_demerge_to_bank_ack : std_logic_vector(number_of_banks-1 downto 0);
-
-  signal load_req_state : std_logic_vector(num_loads-1 downto 0);
-  signal store_req_state : std_logic_vector(num_stores-1 downto 0);
-
-  type BankDataArray is array(natural range <>) of std_logic_vector(number_of_banks*(data_width+tag_width)-1 downto 0);
-  type BankTagArray is array(natural range <>) of std_logic_vector(number_of_banks*tag_width-1 downto 0);
-  type BankStorePortIdArray is array(natural range <>) of std_logic_vector(number_of_banks*c_store_port_id_width-1 downto 0);
-  type BankTimestampArray is array(natural range <>) of std_logic_vector(number_of_banks*time_stamp_width-1 downto 0);
-  type BankControlArray is array(natural range <>) of std_logic_vector(number_of_banks-1 downto 0);
-
-  signal load_data_from_banks : BankDataArray(0 to num_loads-1);
-  signal load_tstamp_from_banks : BankTimestampArray(0 to num_loads-1);
-  signal load_data_req_from_banks, load_data_ack_to_banks : BankControlArray(0 to num_loads-1);
-  signal store_tstamp_from_banks : BankTimestampArray(0 to num_stores-1);
-  signal store_port_id_from_banks : BankStorePortIdArray(0 to num_stores-1);
-  signal store_tag_from_banks : BankTagArray(0 to num_stores-1);
-  signal store_data_req_from_banks, store_data_ack_to_banks : BankControlArray(0 to num_stores-1);
-
-  type BankMemDataArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  type BankMemTagArray is array (natural range <>) of std_logic_vector(tag_width-1 downto 0);
-  type BankMemLoadTagArray is array (natural range <>) of std_logic_vector((tag_width+c_load_port_id_width+time_stamp_width)-1 downto 0);
-  type BankMemStoreTagArray is array (natural range <>) of std_logic_vector((tag_width+c_store_port_id_width+time_stamp_width)-1 downto 0);
-  type BankMemStorePortIdArray is array(natural range <>) of std_logic_vector(c_store_port_id_width-1 downto 0);
-  type BankMemAddressArray is array (natural range <>) of std_logic_vector(bank_addr_width-1 downto 0);
-  signal bank_mem_read_addr, bank_mem_write_addr: BankMemAddressArray(0 to number_of_banks-1);
-  signal bank_mem_read_data, bank_mem_write_data : BankMemDataArray(0 to number_of_banks-1);
-  signal bank_mem_read_tag : BankMemLoadTagArray(0 to number_of_banks-1);
-  signal bank_mem_read_tag_out: BankMemLoadTagArray(0 to number_of_banks-1);
-  signal bank_mem_write_tag : BankMemStoreTagArray(0 to number_of_banks-1);
-  signal bank_mem_write_tag_out : BankMemStoreTagArray(0 to number_of_banks-1);
-  signal bank_mem_store_port_id_out: BankMemStorePortIdArray(0 to number_of_banks-1);
-  signal bank_mem_store_tag_out: BankMemTagArray(0 to number_of_banks-1);
-  signal bank_mem_write_enable, bank_mem_write_ack, bank_mem_read_enable, bank_mem_read_ack : std_logic_vector(0 to number_of_banks-1);
-  signal bank_mem_write_result_ready, bank_mem_write_result_accept, bank_mem_read_result_ready, bank_mem_read_result_accept : std_logic_vector(0 to number_of_banks-1);
-  
+	signal lrr_data_in, lrr_data_out : 
+		std_logic_vector((time_stamp_width + c_load_port_id_width + addr_width + tag_width)-1
+					downto 0);
+	signal srr_data_in, srr_data_out : 
+		std_logic_vector(((time_stamp_width + c_store_port_id_width + addr_width + data_width + 
+						tag_width)-1) downto 0);
 
 begin
 
   -----------------------------------------------------------------------------
-  -- load merge logic
+  -- stage 1: choose a load and store request with lowest time-stamp.  The request could be
+  --          a read or a write.  
   -----------------------------------------------------------------------------
-  LoadMergeGen: for I in 0 to num_loads-1 generate
+  process(lr_req_in, lr_time_stamp_in, lr_addr_in, lr_tag_in)
+	variable load_request_selected_var: std_logic;
+	variable load_request_address_var: std_logic_vector(addr_width-1 downto 0);
+	variable load_request_id_var: unsigned(c_load_port_id_width-1 downto 0);
+	variable load_request_tag_var: std_logic_vector((tag_width-1) downto 0);
 
-    load_time_stamp(I) <= lr_time_stamp_in((I+1)*time_stamp_width -1 downto I*time_stamp_width);
-
-    ---------------------------------------------------------------------------
-    -- lr_ack
-    ---------------------------------------------------------------------------
-    process(load_merge_to_port_ack)
-      variable sig_var : std_logic;
-    begin
-      sig_var := '0';
-      for BANK in 0 to number_of_banks-1 loop
-        sig_var := sig_var or load_merge_to_port_ack(BANK)(I);
-      end loop;  -- BANK
-      lr_ack_out(I) <= sig_var;
-    end process;
+	variable smallest_time_stamp_var: std_logic_vector(time_stamp_width-1 downto 0);
+	variable curr_time_stamp_var: std_logic_vector(time_stamp_width-1 downto 0);
+	variable none_valid_so_far: std_logic;
 
 
-    ---------------------------------------------------------------------------
-    -- address & tag & port-id & time-stamp
-    BankGen: for BANK in 0 to number_of_banks-1 generate
 
-      -------------------------------------------------------------------------
-      -- distribution of data to banks
-      -------------------------------------------------------------------------
-      
-      -- data-in to merge tree for BANK. (from Ith port)
-      load_merge_data_in(BANK)((I+1)*c_load_merge_data_width - 1 downto I*c_load_merge_data_width)
-        <= lr_addr_in((I+1)*addr_width-1 downto (I*addr_width) + log2_number_of_banks) &
-        lr_tag_in((I+1)*tag_width-1 downto I*tag_width) & c_load_port_id_array(I) & load_time_stamp(I);
+  begin
+	none_valid_so_far := '1';
 
-      -- handshake between ports and load-merge
-      load_merge_from_port_req(BANK)(I) <=
-        lr_req_in(I) when Bank_Match(BANK,log2_number_of_banks,lr_addr_in((I+1)*addr_width-1 downto I*addr_width)) else '0';
-      -- ack through lr_ack process.
+	load_request_selected_var := '0';
+	load_request_address_var := (others => '0');
+	load_request_id_var := (others => '0');
+	load_request_tag_var := (others => '0');
+	smallest_time_stamp_var := (others => '0');
 
-      -------------------------------------------------------------------------
-      -- reverse data from banks
-      -------------------------------------------------------------------------
-      
-      -- data & tag &  port-id & time-stamp
-      load_data_from_banks(I)((BANK+1)*(tag_width+data_width)-1 downto BANK*(tag_width+data_width)) 
-        <= 
-        load_demerge_data_out(BANK)((I+1)*(c_load_demerge_data_width)-1 downto ((I+1)*(c_load_demerge_data_width)-data_width)-tag_width);
-
-      load_tstamp_from_banks(I)((BANK+1)*(time_stamp_width)-1 downto BANK*time_stamp_width)
-        <=
-        load_demerge_data_out(BANK)((I*c_load_demerge_data_width)+(time_stamp_width-1) downto 
-                                    ((I*c_load_demerge_data_width)));
-
-      -------------------------------------------------------------------------
-      -- port-side handshake
-      --  Ports   -> req    Merge  -> req   Bank
-      --          <- ack           <- ack
-      -------------------------------------------------------------------------
-      load_data_req_from_banks(I)(BANK) <= load_demerge_to_port_req(BANK)(I);
-      load_demerge_from_port_ack(BANK)(I) <=  load_data_ack_to_banks(I)(BANK);
-
-    end generate BankGen;
+	for I in  0 to num_loads-1 loop
+		if(lr_req_in(I) = '1') then
+			curr_time_stamp_var := 
+				lr_time_stamp_in (((I+1)*time_stamp_width)-1 downto
+								I*time_stamp_width);
+			if ((none_valid_so_far = '1') or 
+				IsGreaterThan(smallest_time_stamp_var,curr_time_stamp_var)) then
+				none_valid_so_far := '0';
+				smallest_time_stamp_var := curr_time_stamp_var;
+				load_request_id_var := to_unsigned(I,c_load_port_id_width);
+				load_request_selected_var := '1';
+				load_request_address_var := 
+					lr_addr_in(((I+1)*addr_width)-1 downto I*addr_width);
+				load_request_tag_var := 
+					lr_tag_in(((I+1)*tag_width)-1 downto I*tag_width);
+			end if;
+		end if;
+	end loop;
 
 
-    ---------------------------------------------------------------------------
-    -- merge for load-complete
-    ---------------------------------------------------------------------------
-    mergeComplete : combinational_merge_with_repeater generic map (
-      name => name & "-load-mergeComplete-" & Convert_Integer_To_String(I), 
-      g_data_width       => data_width + tag_width,
-      g_number_of_inputs => number_of_banks,
-      g_time_stamp_width => time_stamp_width)
-      port map (clk => clock, reset => reset,
-		in_data => load_data_from_banks(I),
-                in_tstamp => load_tstamp_from_banks(I),
-                out_data => load_port_data(I),
-                out_tstamp => open,
-                in_req => load_data_req_from_banks(I),
-                in_ack => load_data_ack_to_banks(I),
-                out_req => lc_ack_out(I),
-                out_ack => lc_req_in(I));
+	load_request_selected <= load_request_selected_var;
+	load_request_id <= load_request_id_var;
+	load_request_address <= load_request_address_var;
+	load_request_tag <= load_request_tag_var;
+	load_request_time_stamp <= smallest_time_stamp_var;
 
-    lc_data_out((I+1)*data_width-1 downto I*data_width) <= load_port_data(I)(data_width+tag_width-1 downto tag_width);
-    lc_tag_out((I+1)*tag_width -1 downto I*tag_width) <= load_port_data(I)(tag_width-1 downto 0);
-    
-  end generate LoadMergeGen;
+  end process;
 
-  -----------------------------------------------------------------------------
-  -- store merge
-  -----------------------------------------------------------------------------
-  StoreMergeGen: for I in 0 to num_stores-1 generate
-    
-    store_time_stamp(I) <= sr_time_stamp_in((I+1)*time_stamp_width -1 downto I*time_stamp_width);
+  lrr_data_in <= load_request_time_stamp & to_slv(load_request_id) & 
+					load_request_address & load_request_tag;
 
-    ---------------------------------------------------------------------------
-    -- sr_ack
-    ---------------------------------------------------------------------------
-    process(store_merge_to_port_ack)
-      variable sig_var : std_logic;
-    begin
-      sig_var := '0';
-      for BANK in 0 to number_of_banks-1 loop
-        sig_var := sig_var or store_merge_to_port_ack(BANK)(I);
-      end loop;  -- BANK
-      sr_ack_out(I) <= sig_var;
-    end process;
+  load_request_time_stamp_repeated <= 
+		lrr_data_out((time_stamp_width+c_load_port_id_width+addr_width+tag_width)-1 downto 
+							(c_load_port_id_width+addr_width+tag_width));
+  load_request_id_repeated <= to_unsigned(lrr_data_out((c_load_port_id_width+addr_width+tag_width)-1 
+							downto (addr_width+tag_width)));
+  load_request_address_repeated <= lrr_data_out((addr_width+tag_width)-1 downto tag_width);
+  load_request_tag_repeated <= lrr_data_out(tag_width-1 downto 0);
+  lrr : FullRateRepeater
+		generic map (name => name & ":lrr", 
+				-- queue_depth => 2,
+				data_width => (time_stamp_width + c_load_port_id_width + 
+								addr_width + tag_width))
+		port map (clk => clock, reset => reset,
+				data_in => lrr_data_in,
+				data_out => lrr_data_out,
+				push_req =>  load_request_selected,
+				push_ack =>  load_request_accepted,
+				pop_req  =>  load_request_accepted_repeated,
+				pop_ack  =>  load_request_selected_repeated);	
 
+  process(sr_req_in, sr_time_stamp_in, sr_addr_in, sr_data_in, sr_tag_in)
+	variable store_request_selected_var: std_logic;
+	variable store_request_address_var: std_logic_vector(addr_width-1 downto 0);
+	variable store_request_data_var: std_logic_vector(data_width-1 downto 0);
+	variable store_request_id_var: unsigned(c_store_port_id_width-1 downto 0);
+	variable store_request_tag_var: std_logic_vector((tag_width-1) downto 0);
+	variable smallest_time_stamp_var: std_logic_vector(time_stamp_width-1 downto 0);
+	variable curr_time_stamp_var: std_logic_vector(time_stamp_width-1 downto 0);
+	variable none_valid_so_far: std_logic;
 
-    BankGen: for BANK in 0 to number_of_banks-1 generate
-      
-      -------------------------------------------------------------------------
-      -- distribution of data to banks
-      -------------------------------------------------------------------------
-      -- address & data & tag & port_id & time_stamp
-      
-      store_merge_data_in(BANK)((I+1)*c_store_merge_data_width - 1 downto I*c_store_merge_data_width)
-        <= sr_addr_in((I+1)*addr_width-1 downto I*addr_width + log2_number_of_banks) &
-        sr_data_in((I+1)*data_width-1 downto I*data_width) & 
-        sr_tag_in((I+1)*tag_width-1 downto I*tag_width) &  c_store_port_id_array(I) & store_time_stamp(I);
+  begin
+	none_valid_so_far := '1';
 
-      store_merge_from_port_req(BANK)(I) <=
-        sr_req_in(I) when Bank_Match(BANK,log2_number_of_banks,sr_addr_in((I+1)*addr_width-1 downto I*addr_width)) else '0';
+	store_request_selected_var := '0';
+	store_request_address_var := (others => '0');
+	store_request_data_var := (others => '0');
+	store_request_id_var := (others => '0');
+	store_request_tag_var := (others => '0');
+	smallest_time_stamp_var := (others => '0');
 
-      -------------------------------------------------------------------------
-      -- reverse data from banks (tag only).
-      -------------------------------------------------------------------------
-      -- tag & port-id & time-stamp
-      store_tag_from_banks(I)((BANK+1)*(tag_width)-1 downto BANK*(tag_width)) 
-        <= 
-        store_demerge_data_out(BANK)((I+1)*(c_store_demerge_data_width)-1 downto ((I+1)*(c_store_demerge_data_width)-tag_width));
-
-      store_tstamp_from_banks(I)((BANK+1)*(time_stamp_width)-1 downto BANK*time_stamp_width)
-        <=
-        store_demerge_data_out(BANK)(I*c_store_demerge_data_width+(time_stamp_width-1) downto
-                                    (I*c_store_demerge_data_width));
-
-      store_port_id_from_banks(I)((BANK+1)*c_store_port_id_width -1 downto BANK*c_store_port_id_width)
-	<=
-        store_demerge_data_out(BANK)((I+1)*(c_store_demerge_data_width)-(tag_width+1) downto ((I+1)*(c_store_demerge_data_width)-(c_store_port_id_width + tag_width)));
+	for J in  0 to num_stores-1 loop
+		if(sr_req_in(J) = '1') then
+			curr_time_stamp_var := 
+				sr_time_stamp_in (((J+1)*time_stamp_width)-1 downto
+								J*time_stamp_width);
+			if((none_valid_so_far = '1') or
+				IsGreaterThan(smallest_time_stamp_var,
+							curr_time_stamp_var)) then
+				none_valid_so_far := '0';
+				smallest_time_stamp_var := curr_time_stamp_var;
+				store_request_id_var := to_unsigned(J, c_store_port_id_width);
+				store_request_selected_var := '1';
+				store_request_address_var := 
+					sr_addr_in(((J+1)*addr_width)-1 downto J*addr_width);
+				store_request_data_var := 
+					sr_data_in(((J+1)*data_width)-1 downto J*data_width);
+				store_request_tag_var := 
+						sr_tag_in(((J+1)*tag_width)-1 downto J*tag_width);
+			end if;
+		end if;
+	end loop;
 	
-      -- port side handshake
-      store_data_req_from_banks(I)(BANK) <= store_demerge_to_port_req(BANK)(I);
-      store_demerge_from_port_ack(BANK)(I) <=  store_data_ack_to_banks(I)(BANK);
+	store_request_selected <= store_request_selected_var;
+	store_request_id <= store_request_id_var;
+	store_request_address <= store_request_address_var;
+	store_request_data <= store_request_data_var;
+	store_request_tag <= store_request_tag_var;
+	store_request_time_stamp <= smallest_time_stamp_var;
+  end process;
 
-    end generate BankGen;
+  srr_data_in <= store_request_time_stamp & 
+			to_slv(store_request_id) &  
+			store_request_address & store_request_data & store_request_tag;
+  store_request_time_stamp_repeated <= 
+			srr_data_out((time_stamp_width + c_store_port_id_width + 
+							addr_width+data_width+tag_width)-1 downto 
+					(c_store_port_id_width + addr_width+data_width + tag_width));
+  store_request_id_repeated <= to_unsigned(srr_data_out((c_store_port_id_width + 
+							addr_width+data_width+tag_width)-1 downto 
+							(addr_width+data_width + tag_width)));
+  store_request_address_repeated <= srr_data_out((addr_width+data_width+tag_width)-1 downto 
+							(data_width + tag_width));
+  store_request_data_repeated <= srr_data_out((data_width+tag_width)-1 downto tag_width);
+  store_request_tag_repeated  <= srr_data_out(tag_width-1 downto 0);
 
+  srr : FullRateRepeater
+		generic map (name => name & ":srr", 
+				-- queue_depth => 2,
+				data_width => (time_stamp_width + c_store_port_id_width +
+						addr_width + data_width + tag_width))
+		port map (clk => clock, reset => reset,
+				data_in => srr_data_in,
+				data_out => srr_data_out,
+				push_req =>  store_request_selected,
+				push_ack =>  store_request_accepted,
+				pop_req  =>  store_request_accepted_repeated,
+				pop_ack  =>  store_request_selected_repeated);	
 
-    ---------------------------------------------------------------------------
-    -- merge for store-complete
-    ---------------------------------------------------------------------------
-    mergeComplete : combinational_merge_with_repeater generic map (
-      name => name & "-store-mergeComplete-" & Convert_Integer_To_String(I), 
-      g_data_width       => tag_width,
-      g_number_of_inputs => number_of_banks,
-      g_time_stamp_width => time_stamp_width)
-      port map (clk => clock,
-		reset => reset,
-		in_data => store_tag_from_banks(I),
-                in_tstamp => store_tstamp_from_banks(I),
-                out_data => sc_tag_out((I+1)*tag_width-1 downto I*tag_width),
-                out_tstamp => store_complete_time_stamp(I),
-                in_req => store_data_req_from_banks(I),
-                in_ack => store_data_ack_to_banks(I),
-                out_req => sc_ack_out(I),
-                out_ack => sc_req_in(I));
+  loadReqAcceptGen: for L in 0 to num_loads-1 generate
+	lr_ack_out(L) <= '1' when ((load_request_selected = '1')  and 
+						(load_request_accepted = '1')
+					and (load_request_id = to_unsigned(L, c_load_port_id_width))) else '0';
+  end generate loadReqAcceptGen;
 
-  end generate StoreMergeGen;
-
+  storeReqAcceptGen: for S in 0 to num_stores-1 generate
+	sr_ack_out(S) <= '1' when ((store_request_selected = '1')  and 
+						(store_request_accepted = '1')
+					and (store_request_id = to_unsigned(S,c_store_port_id_width))) else '0';
+  end generate storeReqAcceptGen;
 
   -----------------------------------------------------------------------------
-  -- now the banks
+  -- stage 2: memory access through memory bank.
   -----------------------------------------------------------------------------
-  BankGen: for BANK in 0 to number_of_banks-1 generate
+  mb: memory_bank_revised
+	generic map (name => name & ":memory_bank",
+			g_addr_width => addr_width,
+			g_data_width => data_width,
+			g_write_tag_width => tag_width,
+			g_read_tag_width => tag_width,
+			g_read_port_id_width => c_load_port_id_width,
+			g_write_port_id_width => c_store_port_id_width,
+			g_time_stamp_width => time_stamp_width,
+     			g_base_bank_addr_width => addr_width,
+     			g_base_bank_data_width => data_width)
+	port map ( clk => clock, reset => reset,
+			write_data => store_request_data_repeated,
+			write_addr => store_request_address_repeated,
+			write_port_id => store_request_id_repeated,
+			write_port_id_out => store_complete_id,
+			write_tag  => store_request_tag_repeated,
+			write_time_stamp => store_request_time_stamp_repeated,
+			write_tag_out => store_complete_tag,
+			write_enable => store_request_selected_repeated,
+			write_ack => store_request_accepted_repeated,
+			write_result_ready => store_complete_ready,
+			write_result_accept => store_complete_accept,
+			read_data => load_complete_data,
+			read_addr => load_request_address_repeated,
+			read_tag =>  load_request_tag_repeated,
+			read_time_stamp => load_request_time_stamp_repeated,
+			read_tag_out => load_complete_tag,
+			read_port_id => load_request_id_repeated,
+			read_port_id_out => load_complete_id,
+			read_enable => load_request_selected_repeated,
+			read_ack => load_request_accepted_repeated,
+			read_result_ready => load_complete_ready,
+			read_result_accept => load_complete_accept);
+			
 
-    ---------------------------------------------------------------------------
-    -- todo: instantiate merge trees for load and store
-    ---------------------------------------------------------------------------
-    loadMerge : merge_tree
-      generic map(name => name & "-loadMerge-" & Convert_Integer_To_String(BANK),
-	     	  g_mux_degree => c_mux_degree,
-                  g_number_of_inputs => num_loads,
-                  g_data_width => c_load_merge_data_width,
-                  g_time_stamp_width => time_stamp_width,
-                  g_num_stages => c_number_of_merge_stages,
-                  g_port_id_width => c_load_port_id_width,
-                  g_tag_width => tag_width)
-      port map (merge_data_in  => load_merge_data_in(BANK),
-                merge_req_in   => load_merge_from_port_req(BANK),
-                merge_ack_out  => load_merge_to_port_ack(BANK),
-                merge_data_out => load_merge_data_out((BANK+1)*c_load_merge_data_width-1 downto BANK*c_load_merge_data_width),
-                merge_req_out  => load_merge_to_bank_req(BANK),
-                merge_ack_in   => load_merge_from_bank_ack(BANK),
-                clock => clock,
-                reset => reset);
+  -----------------------------------------------------------------------------
+  -- stage 3:  write to appropriate destination.
+  -----------------------------------------------------------------------------
+  load_complete_accept <= OrReduce(load_complete_accept_array);
+  loadCompleteAcceptGen: for CL in 0 to num_loads-1 generate
+    llogic: block
+	signal pop_req,pop_ack,push_req,push_ack: std_logic;
+	signal rdata_in, rdata_out: std_logic_vector((data_width+tag_width)-1 downto 0);
+    begin
+	lnr: NullRepeater  -- a place-holder
+		generic map (name => name & ":lfrr",
+				data_width => (data_width + tag_width))
+		port map (clk => clock, reset => reset,
+				data_in => rdata_in,
+				data_out => rdata_out,
+				push_req => push_req,
+				push_ack => push_ack,
+				pop_req => pop_req,
+				pop_ack => pop_ack);
+				
+	
+	rdata_in <= load_complete_data & load_complete_tag;
+	push_req <= '1' when ((load_complete_ready = '1') 
+					and (load_complete_id = to_unsigned(CL,c_load_port_id_width)))
+						else '0';
+	load_complete_accept_array(CL) <= push_ack when 
+				(load_complete_id = to_unsigned(CL,c_load_port_id_width)) else '0';
 
-    ---------------------------------------------------------------------------
-    -- store merge (from ports to bank)
-    ---------------------------------------------------------------------------
-    storeMerge : merge_tree
-      generic map(name => name & "-storeMerge-" & Convert_Integer_To_String(BANK),
-		  g_mux_degree => c_mux_degree,
-                  g_number_of_inputs => num_stores,
-                  g_data_width => c_store_merge_data_width,
-                  g_num_stages => c_number_of_merge_stages,
-                  g_time_stamp_width => time_stamp_width,
-                  g_port_id_width => c_store_port_id_width,
-                  g_tag_width => tag_width)
-      port map (merge_data_in => store_merge_data_in(BANK),
-                merge_req_in => store_merge_from_port_req(BANK),
-                merge_ack_out => store_merge_to_port_ack(BANK),
-                merge_data_out => store_merge_data_out((BANK+1)*c_store_merge_data_width-1 downto BANK*c_store_merge_data_width),
-                merge_req_out => store_merge_to_bank_req(BANK),
-                merge_ack_in => store_merge_from_bank_ack(BANK),
-                clock => clock,
-                reset => reset);
-    
-    
-    ---------------------------------------------------------------------------
-    -- connections to memory bank
-    ---------------------------------------------------------------------------
+	pop_req <= lc_req_in(CL);
+	lc_ack_out(CL) <= pop_ack;
 
-    -- write side
-    bank_mem_write_addr(BANK) <= store_merge_data_out((BANK+1)*c_store_merge_data_width-1 downto
-                                                      (BANK+1)*c_store_merge_data_width - bank_addr_width);
-    bank_mem_write_data(BANK) <= store_merge_data_out((BANK+1)*c_store_merge_data_width-(bank_addr_width+1)
-                                                      downto
-                                                      (BANK+1)*c_store_merge_data_width -
-                                                      (bank_addr_width + data_width));
-    bank_mem_write_tag(BANK) <=
-      store_merge_data_out(
-        (BANK+1)*c_store_merge_data_width-(bank_addr_width+data_width+1) downto
-        (BANK*c_store_merge_data_width));
+	lc_data_out(((CL+1)*data_width)-1 downto CL*data_width) 
+		<= rdata_out((data_width + tag_width)-1 downto tag_width);
+	lc_tag_out(((CL+1)*tag_width)-1 downto CL*tag_width) <= rdata_out(tag_width-1 downto 0);
+     end block;
+  end generate loadCompleteAcceptGen;
 
-    -- write handshake (push all the way)
-    bank_mem_write_enable(BANK) <=  store_merge_to_bank_req(BANK);
-    store_merge_from_bank_ack(BANK) <= bank_mem_write_ack(BANK);
+  store_complete_accept <= OrReduce(store_complete_accept_array);
+  storeCompleteAcceptGen: for CS in 0 to num_stores-1 generate
+    slogic: block
+	signal pop_req,pop_ack,push_req,push_ack: std_logic;
+	signal rdata_in, rdata_out: std_logic_vector(tag_width-1 downto 0);
+    begin
+	snr: NullRepeater 
+		generic map (name => name & ":sfrr",
+				data_width => tag_width)
+		port map (clk => clock, reset => reset,
+				data_in => rdata_in,
+				data_out => rdata_out,
+				push_req => push_req,
+				push_ack => push_ack,
+				pop_req => pop_req,
+				pop_ack => pop_ack);
 
-    -- read side
-    bank_mem_read_addr(BANK) <= load_merge_data_out((BANK+1)*c_load_merge_data_width-1 downto
-                                                      (BANK+1)*c_load_merge_data_width - bank_addr_width);
-    bank_mem_read_tag(BANK) <=
-      load_merge_data_out(
-        (BANK+1)*c_load_merge_data_width-(bank_addr_width+1) downto
-        (BANK*c_load_merge_data_width));
+	rdata_in <= store_complete_tag;
+	push_req <= '1' when ((store_complete_ready = '1') 
+					and (store_complete_id = to_unsigned(CS, c_store_port_id_width)))
+					 else '0';
+	store_complete_accept_array(CS) <= push_ack when 
+				(store_complete_id = to_unsigned(CS, c_store_port_id_width)) else '0';
 
-    -- read handshake (push all the way)
-    bank_mem_read_enable(BANK) <=  load_merge_to_bank_req(BANK);
-    load_merge_from_bank_ack(BANK) <= bank_mem_read_ack(BANK);
+	pop_req <= sc_req_in(CS);
+	sc_ack_out(CS) <= pop_ack;
 
-                                                    
-    memBank : memory_bank generic map (
-      name => name & "-memory-bank-" & Convert_Integer_To_String(BANK), 
-      g_data_width       => data_width,
-      g_read_tag_width        => tag_width+c_load_port_id_width+time_stamp_width,
-      g_write_tag_width        => tag_width+c_store_port_id_width+time_stamp_width,
-      g_addr_width    => bank_addr_width,
-      g_time_stamp_width => time_stamp_width,
-      g_base_bank_addr_width => base_bank_addr_width,
-      g_base_bank_data_width => base_bank_data_width)
-      port map (
-        clk => clock,
-        reset => reset,
-        write_data => bank_mem_write_data(BANK),
-        write_addr => bank_mem_write_addr(BANK),
-        write_enable => bank_mem_write_enable(BANK),
-        write_tag => bank_mem_write_tag(BANK),
-        write_tag_out => bank_mem_write_tag_out(BANK),
-        write_ack => bank_mem_write_ack(BANK),
-        write_result_ready => bank_mem_write_result_ready(BANK),
-        write_result_accept => bank_mem_write_result_accept(BANK),
-        read_data => bank_mem_read_data(BANK),
-        read_addr => bank_mem_read_addr(BANK),
-        read_enable => bank_mem_read_enable(BANK),
-        read_ack => bank_mem_read_ack(BANK),
-        read_result_ready => bank_mem_read_result_ready(BANK),
-        read_result_accept => bank_mem_read_result_accept(BANK),
-        read_tag => bank_mem_read_tag(BANK),
-        read_tag_out => bank_mem_read_tag_out(BANK));
+	sc_tag_out(((CS+1)*tag_width)-1 downto CS*tag_width) <= rdata_out;
 
-    bank_mem_store_port_id_out(BANK) <= bank_mem_write_tag_out(BANK)(c_store_port_id_width + time_stamp_width-1 downto 
-				time_stamp_width);
-    bank_mem_store_tag_out(BANK) <=  bank_mem_write_tag_out(BANK)(c_store_port_id_width + time_stamp_width + tag_width-1 downto time_stamp_width + c_store_port_id_width); 
+     end block;
+  end generate storeCompleteAcceptGen;
 
-    ---------------------------------------------------------------------------
-    -- connections to store demerge tree
-    ---------------------------------------------------------------------------
-    store_demerge_data_in((BANK+1)*c_store_demerge_data_width -1 downto (BANK*c_store_demerge_data_width))
-      <= bank_mem_write_tag_out(BANK);
-
-    bank_mem_write_result_accept(BANK) <= store_demerge_to_bank_ack(BANK);
-    store_demerge_from_bank_req(BANK) <= bank_mem_write_result_ready(BANK);
-
-    ---------------------------------------------------------------------------
-    -- store demerge tree
-    ---------------------------------------------------------------------------
-    
-    storeDemerge: demerge_tree
-      generic map (name => name & "-storeDemerge-" & Convert_Integer_To_String(BANK),
-		   g_demux_degree => c_demux_degree,
-                   g_number_of_outputs => num_stores,
-                   g_data_width => c_store_demerge_data_width,
-                   g_id_width => c_store_port_id_width,
-                   g_stage_id => 0)
-      port map (demerge_data_out => store_demerge_data_out(BANK),
-                demerge_ack_out => store_demerge_to_bank_ack(BANK),
-                demerge_req_in => store_demerge_from_bank_req(BANK),
-                demerge_data_in => store_demerge_data_in((BANK+1)*c_store_demerge_data_width-1 downto BANK*c_store_demerge_data_width),
-                demerge_ready_out => store_demerge_to_port_req(BANK),
-                demerge_accept_in =>  store_demerge_from_port_ack(BANK),
-                demerge_sel_in => bank_mem_write_tag_out(BANK)(time_stamp_width+c_store_port_id_width-1 downto time_stamp_width),
-                clock => clock,
-                reset => reset);
-
-    ---------------------------------------------------------------------------
-    -- data/control connections to load demerge tree
-    ---------------------------------------------------------------------------
-    load_demerge_data_in((BANK+1)*c_load_demerge_data_width -1 downto (BANK*c_load_demerge_data_width))
-      <= bank_mem_read_data(BANK) & bank_mem_read_tag_out(BANK);
-    
-    bank_mem_read_result_accept(BANK) <= load_demerge_to_bank_ack(BANK);
-    load_demerge_from_bank_req(BANK) <= bank_mem_read_result_ready(BANK);
-    
-    ---------------------------------------------------------------------------
-    -- load demerge tree
-    ---------------------------------------------------------------------------
-    loadDemerge: demerge_tree
-      generic map (name => name & "-loadDemerge-" & Convert_Integer_To_String(BANK),
-		   g_demux_degree => c_demux_degree,
-                   g_number_of_outputs => num_loads,
-                   g_data_width => c_load_demerge_data_width,
-                   g_id_width => c_load_port_id_width,
-                   g_stage_id => 0)
-      port map (demerge_data_out => load_demerge_data_out(BANK),
-                demerge_ack_out => load_demerge_to_bank_ack(BANK),
-                demerge_req_in => load_demerge_from_bank_req(BANK),
-                demerge_data_in => load_demerge_data_in((BANK+1)*c_load_demerge_data_width-1 downto BANK*c_load_demerge_data_width),
-                demerge_ready_out => load_demerge_to_port_req(BANK),
-                demerge_accept_in =>  load_demerge_from_port_ack(BANK),
-                demerge_sel_in => bank_mem_read_tag_out(BANK)(time_stamp_width+c_load_port_id_width-1 downto time_stamp_width),
-                clock => clock,
-                reset => reset);
-
-  end generate BankGen;
 end pipelined;
 

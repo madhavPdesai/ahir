@@ -83,6 +83,7 @@ string vcSystem::_vhdl_work_library = "work";
 
 string vcSystem::_tool_name;
 string vcSystem::_top_entity_name = "ahir_system";
+int    vcSystem::_estimated_buffering_bits = 0;
 
 
 vcSystem::vcSystem(string id):vcRoot(id)
@@ -462,14 +463,17 @@ void  vcSystem::Print_VHDL(ostream& ofile)
 
       if(!is_fn_mod)
 	{
-      		cerr << "Info: printing VHDL model for module " << (*moditer).first << endl;
-      		(*moditer).second->Print_VHDL(ofile);
+		vcModule* m = (*moditer).second;
+      		vcSystem::Info("printing VHDL model for module " + (*moditer).first);
+      		m->Print_VHDL(ofile);
 	}
        else
 	{
       		cerr << "Info: skipped printing VHDL model for function-library module " << (*moditer).first << endl;
 	}
     }
+  vcSystem::Info("total estimated buffering in system " + vcSystem::_top_entity_name + " is " +
+		  IntToStr(vcSystem::_estimated_buffering_bits));
 
   this->Print_VHDL_Inclusions(ofile);
   this->Print_VHDL_Entity(ofile);

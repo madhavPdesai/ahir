@@ -305,6 +305,7 @@ string vcPipe::Get_Pipe_Aggregate_Section(string pid,
 vcWire::vcWire(string id, vcType* t) :vcRoot(id)
 {
 	this->_type = t;
+	this->_driver = NULL;
 }
 
 void vcWire::Print(ostream& ofile)
@@ -411,6 +412,36 @@ int vcDatapathElement::Get_Output_Buffering(vcWire* w, int num_reqs)
 	return(R);
 }
 
+  
+int vcDatapathElement::Estimate_Buffering_Bits()
+{
+	int ret_val = 0;
+
+	if(this->Get_Flow_Through())
+		return(0);
+
+	for(int I = 0, fI = _input_wires.size(); I < fI; I++)
+	{
+		vcWire* iw = _input_wires[I];
+		int ibuf = this->Get_Input_Buffering(iw);
+		ret_val += (ibuf * iw->Get_Size());
+	}
+	for(int J = 0, fJ = _output_wires.size(); J < fJ; J++)
+	{
+		vcWire* ow = _output_wires[J];
+		int obuf = this->Get_Output_Buffering(ow);
+		ret_val += (obuf * ow->Get_Size());
+	}
+
+
+	if(ret_val > 0)
+	{
+		vcSystem::Info("estimated buffering for operator " + this->Get_VHDL_Id() +  " = " +
+			IntToStr(ret_val));
+	}
+	return(ret_val);
+}
+
 void vcDatapathElement::Generate_Flowthrough_Logger_Sensitivity_List(string& log_string)
 {
 	for(int idx = 0, fidx = this->Get_Number_Of_Output_Wires(); idx < fidx; idx++)
@@ -504,6 +535,7 @@ void vcDatapathElement::Print_VHDL_Logger(vcModule* m, ostream& ofile)
 vcDataPath::vcDataPath(vcModule* m, string id):vcRoot(id)
 {
 	this->_parent = m;
+	this->_estimated_buffering_bits = -1;
 }
 
 void vcDataPath::Get_Label_Interval(vcControlPath* cp, vcDatapathElement* dpe, vector<vcCompatibilityLabel*>& ret_vector)
@@ -1171,6 +1203,13 @@ string  vcDataPath::Print_VHDL_Call_Interface_Ports(string semi_colon, ostream& 
 
 void vcDataPath::Print_VHDL(ostream& ofile)
 {
+	int mb = this->Estimate_Buffering_Bits();
+	if(!this->Get_Parent()->Get_Operator_Flag())
+		vcSystem::_estimated_buffering_bits += mb;
+
+	vcSystem::Info("estimated buffering in module " + this->Get_Parent()->Get_VHDL_Id() + " is " +
+					IntToStr(mb));
+
 	ofile << "data_path: Block -- { " << endl;
 
 	// print wires.
@@ -3763,5 +3802,30 @@ void vcDataPath::Build_Data_Pipelines ()
 	*/
 	
 }
+
+   
+int vcDataPath::Estimate_Buffering_Bits()
+{
+	int ret_val = 0;
+
+	if(this->_estimated_buffering_bits >= 0)
+	{
+		ret_val = (this->_estimated_buffering_bits);
+	}
+	else if(!this->Get_Parent()->Get_Volatile_Flag())
+	{
+
+		for(map<string,vcDatapathElement*>::iterator iter =_dpe_map.begin(), fiter = _dpe_map.end();
+				iter != fiter; iter++)
+		{
+			vcDatapathElement* dpe = (*iter).second;
+			ret_val += dpe->Estimate_Buffering_Bits();
+		}
+	}
+
+	this->_estimated_buffering_bits = ret_val;
+	return(ret_val);
+}
+
 
 

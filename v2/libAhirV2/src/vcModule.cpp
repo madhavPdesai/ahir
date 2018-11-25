@@ -56,6 +56,7 @@ vcModule::vcModule(vcSystem* sys, string module_name):vcRoot(module_name)
 	this->_pipeline_depth = 1;
 	this->_is_function_library_module = false;
 	this->_delay = 2;
+	this->_deterministic_longest_path = -1;
 }
 
 int vcModule::Get_Delay()
@@ -345,6 +346,9 @@ void vcModule::Print_VHDL(ostream& ofile)
 
 		if(this->Get_Pipeline_Deterministic_Flag())
 		{
+			if(this->Get_Deterministic_Longest_Path() < 0)
+				this->Calculate_And_Set_Deterministic_Longest_Path();
+
 			vcSystem::Print_VHDL_Inclusions(ofile);
 			this->Print_VHDL_Deterministic_Pipeline_Operator_Entity(ofile);
 			this->Print_VHDL_Deterministic_Pipeline_Operator_Architecture(ofile);
