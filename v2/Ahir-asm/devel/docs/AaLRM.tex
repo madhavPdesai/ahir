@@ -349,12 +349,12 @@ the \$mark and \$synch constructs.  For example
 \begin{verbatim}
 a := (b + c) $mark FIRST
 e := (f + g) $mark SECOND $synch (FIRST)
-h := (i + j) $synch (FIRST SECOND)
+h := (i + j) $synch ($update FIRST SECOND)
 \end{verbatim}
 means that the second statement will be {\em started}
 only after the first statement has {\em started}.  The
 third statement will be started only after the first
-two have started. This
+has finished and the second has started. This
 is necessary in some cases where dependency analysis
 says that two statements are independent, but you wish
 to force explicit ordering.
