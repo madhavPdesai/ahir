@@ -298,12 +298,14 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
     vector<AaStatement*> llist;
 
     vector<string> synch_stmts;
+    vector<bool> synch_update_flags;
     vector<pair<string,int> > delay_stmts;
 
     bool volatile_flag = false;
     int delay_val;
     int lno;
     AaSimpleObjectReference* guard_expr = NULL;
+    bool update_flag = false;
 }
     :  
       ( 
@@ -327,10 +329,14 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 			ms = mid->getText();
 		}
 	   )?
-	   (SYNCH LPAREN (syid: SIMPLE_IDENTIFIER 
+	   (SYNCH LPAREN 
+		((UPDATE {update_flag = true;})? syid: SIMPLE_IDENTIFIER 
 			{
 				ss = syid->getText();
 				synch_stmts.push_back(ss);
+				synch_update_flags.push_back(update_flag);
+				update_flag = false;
+				
 			})+ RPAREN )? 
 	   (DELAY LPAREN (dlid: SIMPLE_IDENTIFIER delay_val = aA_Integer_Parameter_Expression[lno]
 				{
@@ -363,11 +369,12 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 			int J,fJ;
 			for(J = 0,fJ = synch_stmts.size(); J < fJ; J++)
 			{	
-				stmt->Add_Synch_Or_Marked_Delay(true, synch_stmts[J],0);
+				stmt->Add_Synch_Or_Marked_Delay(true, synch_stmts[J],0,
+									synch_update_flags[J]);
 			}
 			for(J = 0,fJ = delay_stmts.size(); J < fJ; J++)
 			{	
-				stmt->Add_Synch_Or_Marked_Delay(false, delay_stmts[J].first, delay_stmts[J].second);
+				stmt->Add_Synch_Or_Marked_Delay(false, delay_stmts[J].first, delay_stmts[J].second, false);
 			}
 
 			// add the statement!
@@ -2569,6 +2576,7 @@ VOID            : "$void";
 MARK            : "$mark";
 SYNCH           : "$synch";
 DELAY		: "$delay";
+UPDATE          : "$update";
 
 // point-to-point pipe attribute.
 P2P		: "$p2p";

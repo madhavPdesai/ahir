@@ -1,0 +1,177 @@
+$pipe out_data: $uint<16> $depth 2
+
+	
+$storage MEMARRAY_0: $array [128] $of $uint<16>
+$storage MEMARRAY_1: $array [128] $of $uint<16>
+
+$macro $module [read_mem]
+	$in (a: $uint<8>) $out (d: $uint<16>) $is
+{
+	$volatile a0 := (a [] 0)
+	$volatile a_r := ($slice a 7 1)
+	$guard (a0) d1 := MEMARRAY_1[a_r]
+	$guard (~a0) d0 := MEMARRAY_0[a_r]
+
+	$volatile d := ($mux a0 d1 d0)
+}
+
+$macro $module [write_mem]
+	$in (a: $uint<8> d: $uint<16>) $out () $is
+{
+	$volatile a0 := (a [] 0)
+	$volatile a_r := ($slice a 7 1)
+
+	$guard (a0)  MEMARRAY_1[a_r] := d
+	$guard (~a0)  MEMARRAY_0[a_r] := d
+}
+
+
+$pipeline $depth 7 $fullrate $module 
+	[increment] 
+	$in (a0 a1 a2 a3 a4 a5 a6 a7: $uint<8> din : $uint<16>) 
+	$out (retval: $uint<1>) $is
+{
+	$call read_mem  (a0) (t0)
+	$call read_mem  (a1) (t1)
+	$call read_mem  (a2) (t2)
+	$call read_mem  (a3) (t3)
+	$call read_mem  (a4) (t4)
+	$call read_mem  (a5) (t5)
+	$call read_mem  (a6) (t6)
+	$call read_mem  (a7) (t7)
+
+	$call write_mem (a0 (din + t0)) ()
+	$call write_mem (a1 (din + t1)) ()
+	$call write_mem (a2 (din + t2)) ()
+	$call write_mem (a3 (din + t3)) ()
+	$call write_mem (a4 (din + t4)) ()
+	$call write_mem (a5 (din + t5)) ()
+	$call write_mem (a6 (din + t6)) ()
+	$call write_mem (a7 (din + t7)) ()
+
+	retval := (din [] 0)
+}
+
+$module [initMem] 
+	$in ()
+	$out () $is
+{
+
+	$branchblock[lOoP] {
+
+		$dopipeline $depth 15 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi A := ($bitcast ($uint<8>) 0) $on $entry nA $on $loopback
+		$endmerge
+
+		$volatile nA := (A + 1)
+
+		MEMARRAY_1[A] := 0
+		MEMARRAY_0[A] := 0
+
+	$while (A < 127)
+    }
+}
+
+
+$opaque $module [mem_incr_0] $in(dval: $uint<16>) $out () $is
+{
+	$branchblock[lOoP] 
+	{
+		$dopipeline $depth 15 $buffering 2 $fullrate
+			$merge $entry $loopback 
+				$phi aroot := ($bitcast ($uint<8>) 0) $on $entry
+						n_aroot $on $loopback
+			$endmerge
+			
+			$volatile n_aroot := (aroot + 8)
+	
+			$call increment (aroot (aroot+1) (aroot+2) (aroot+3)
+					(aroot + 4) (aroot + 5) (aroot + 6) (aroot + 7) dval)
+						(r)
+
+		$while (aroot < 248)
+	}
+}
+
+$opaque $module [mem_incr_1] $in(dval: $uint<16>) $out () $is
+{
+	$branchblock[lOoP] 
+	{
+		$dopipeline $depth 15 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi aroot := ($bitcast ($uint<8>) 0) $on $entry
+					n_aroot $on $loopback
+		$endmerge
+			
+		$volatile n_aroot := (aroot + 8)
+
+		$call increment (aroot (aroot+1) (aroot+2) (aroot+3)
+					(aroot + 4) (aroot + 5) (aroot + 6) (aroot + 7) dval)
+							(r)
+
+		$while (aroot < 248)
+	}
+}
+
+$opaque $module [mem_incr_2] $in(dval: $uint<16>) $out () $is
+{
+	$branchblock[lOoP] 
+	{
+		$dopipeline $depth 15 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi aroot := ($bitcast ($uint<8>) 0) $on $entry
+					n_aroot $on $loopback
+		$endmerge
+			
+		$volatile n_aroot := (aroot + 8)
+
+		$call increment (aroot (aroot+1) (aroot+2) (aroot+3)
+					(aroot + 4) (aroot + 5) (aroot + 6) (aroot + 7) dval)
+							(r)
+
+		$while (aroot < 248)
+	}
+}
+
+
+$module [memCheckDaemon] $in() $out () $is
+{
+	$call initMem () ()
+
+	$call mem_incr_0 (1) ()
+	$call mem_incr_1 (2) ()
+	$call mem_incr_2 (4) ()
+
+	$call mem_incr_0 (8) ()
+	$call mem_incr_1 (16) ()
+	$call mem_incr_2 (32) ()
+
+	$call mem_incr_0 (64) ()
+	$call mem_incr_1 (128) ()
+	$call mem_incr_2 (256) ()
+
+	$branchblock[loop] {
+		$dopipeline $depth 15 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi A := ($bitcast ($uint<8>) 0) $on $entry nA $on $loopback
+		$endmerge
+			$volatile nA := (A + 1)
+		
+			$call read_mem (A) (rval)
+
+			out_data := rval	
+
+		$while (A < 255)
+
+		// Spin...
+		$merge $entry inf_loop 
+			//
+			// need to put phi here to avoid combinational loop.
+			//
+			$phi TT := ($bitcast ($uint<1>) 0) $on $entry 1 $on inf_loop
+		$endmerge
+		$place [inf_loop]
+	}
+}
+

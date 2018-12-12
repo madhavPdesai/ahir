@@ -49,6 +49,17 @@ AaStatement::AaStatement(AaScope* p): AaScope(p)
 
 AaStatement::~AaStatement() {};
 
+void AaStatement::Mark_Statement(string mid, AaStatement* stmt)
+{
+	// TODO: check if stmt exists in block.
+	if(!stmt->Get_Is_Volatile())
+		_marked_statement_map[mid] = stmt;
+	else
+		AaRoot::Error("cannot put a mark on a volatile statement", stmt);
+
+}
+
+
 AaModule* AaStatement::Get_Module()
 {
 	AaScope* root_scope = this->Get_Root_Scope();

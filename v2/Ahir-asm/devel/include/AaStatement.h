@@ -70,6 +70,7 @@ class AaStatement: public AaScope
   string _mark;
   set<AaStatement*> _synch_statements;
   map<AaStatement*,int> _marked_delay_statements;
+  map<AaStatement*,bool> _synch_update_flag_map;
 
   map<string,AaStatement*> _marked_statement_map;
 
@@ -81,11 +82,7 @@ class AaStatement: public AaScope
   virtual void Set_Mark(string mid) {_mark = mid;}
   virtual string Get_Mark() {return(_mark);}
 
-  virtual void Mark_Statement(string mid, AaStatement* stmt)
-  {
-	// TODO: check if stmt exists in block.
-	_marked_statement_map[mid] = stmt;
-  }
+  virtual void Mark_Statement(string mid, AaStatement* stmt);
 
   virtual int Get_Buffering() {return(1);}
   virtual void Set_Buffering(int b) {}
@@ -100,7 +97,8 @@ class AaStatement: public AaScope
 	else
 		return(NULL);
   }
-  virtual void Add_Synch_Or_Marked_Delay(bool synch_flag, string syid, int delay_value)
+  virtual void Add_Synch_Or_Marked_Delay(bool synch_flag, string syid, int delay_value,
+						bool update_flag)
   {
 	if(this->Get_Scope()->Is_Statement())
 	{
@@ -109,7 +107,10 @@ class AaStatement: public AaScope
 		if(synch != NULL)
 		{
 			if(synch_flag)
+			{
 				_synch_statements.insert(synch);
+				_synch_update_flag_map[synch] = update_flag;
+			}
 			else
 				_marked_delay_statements[synch] = delay_value;
 

@@ -47,6 +47,7 @@ void AaStatement::Write_VC_Synch_Dependency(set<AaRoot*>& visited_elements, bool
 				siter != fiter; siter++)
 		{
 			AaStatement* stmt = *siter;
+			bool update_flag = this->_synch_update_flag_map[stmt];
 			if(visited_elements.find(stmt) != visited_elements.end())
 			{
 				ofile << "// forced synch: synched statement will start after marked statement" 
@@ -63,11 +64,28 @@ void AaStatement::Write_VC_Synch_Dependency(set<AaRoot*>& visited_elements, bool
 				else
 					ofile << endl;
 
-				__J(synch_transition_name, stmt_synch_transition) 
-					__J(__SST(this), synch_transition_name);
+				
+				if(update_flag)
+				{
+					__J(synch_transition_name, __UCT(stmt));
+				}
+				else
+				{
+					__J(synch_transition_name, stmt_synch_transition);
+				}
+
+				__J(__SST(this), synch_transition_name);
+
 				if(pipeline_flag)
 				{
-					__MJ(__SST(stmt), __SCT(this), true); // bypass
+					if(update_flag)
+					{
+						__MJ(__UST(stmt), __SCT(this), true); // bypass
+					}
+					else
+					{
+						__MJ(__SST(stmt), __SCT(this), true); // bypass
+					}
 				}
 			}
 		}

@@ -35,6 +35,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 use ahir.mem_function_pack.all;
@@ -252,9 +253,9 @@ begin
 							downto (addr_width+tag_width)));
   load_request_address_repeated <= lrr_data_out((addr_width+tag_width)-1 downto tag_width);
   load_request_tag_repeated <= lrr_data_out(tag_width-1 downto 0);
-  lrr : FullRateRepeater
+  lrr : QueueBase
 		generic map (name => name & ":lrr", 
-				-- queue_depth => 2,
+				queue_depth => 2,
 				data_width => (time_stamp_width + c_load_port_id_width + 
 								addr_width + tag_width))
 		port map (clk => clock, reset => reset,
@@ -330,9 +331,9 @@ begin
   store_request_data_repeated <= srr_data_out((data_width+tag_width)-1 downto tag_width);
   store_request_tag_repeated  <= srr_data_out(tag_width-1 downto 0);
 
-  srr : FullRateRepeater
+  srr : QueueBase
 		generic map (name => name & ":srr", 
-				-- queue_depth => 2,
+				queue_depth => 2,
 				data_width => (time_stamp_width + c_store_port_id_width +
 						addr_width + data_width + tag_width))
 		port map (clk => clock, reset => reset,
@@ -358,6 +359,33 @@ begin
   -----------------------------------------------------------------------------
   -- stage 2: memory access through memory bank.
   -----------------------------------------------------------------------------
+  DebugGen: if (global_debug_flag) generate
+      process(clock)
+      begin
+	if(clock'event and clock='1') then
+		if(reset = '0') then
+			if((store_request_selected_repeated = '1') and
+				(store_request_accepted_repeated = '1'))  then
+				assert false report
+				"MS:" & name & "STORE TS=" & 
+					Convert_Integer_To_String(To_Integer(store_request_time_stamp_repeated)) & 
+		" ADDR=" & Convert_To_String(store_request_address_repeated) & 
+		" DATA="  & Convert_To_String(store_request_data_repeated) 
+				severity note;
+			end if;
+			if((load_request_selected_repeated = '1') and
+				(load_request_accepted_repeated = '1'))  then
+				assert false report
+				"MS:" & name & "LOAD  TS=" & 
+					Convert_To_String(load_request_time_stamp_repeated) & 
+		" ADDR=" & Convert_Integer_To_String(To_Integer(load_request_address_repeated)) 
+				severity note;
+			end if;
+		end if;
+	end if;
+      end process;
+  end generate DebugGen;
+
   mb: memory_bank_revised
 	generic map (name => name & ":memory_bank",
 			g_addr_width => addr_width,

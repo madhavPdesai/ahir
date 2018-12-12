@@ -490,7 +490,10 @@ int vcMemorySpace::Calculate_Time_Stamp_Width()
 
   if(_ordered_flag && (_num_loads > 0) && (_num_stores > 0))
   {
-    return(Log(_num_stores + _num_loads,2) + 8);
+    // time-stamp should never roll over...
+    // in an ordered memory subsystem.
+    // 2^16 should be a large enough window..
+    return(Log(_num_stores + _num_loads,2) + 16);
   }
   else
     return(0);
