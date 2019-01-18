@@ -1239,6 +1239,7 @@ class AaPhiStatement: public AaStatement
   vector<pair<string,AaExpression*> > _source_pairs;
   set<string> _merged_labels;
   bool _in_do_while;
+  map<AaExpression*,vector<string> > _source_label_vector;
 
  public:
   AaPhiStatement(AaBranchBlockStatement* scope, AaMergeStatement* pm);
@@ -1249,6 +1250,7 @@ class AaPhiStatement: public AaStatement
 
   virtual bool Is_Phi_Statement() {return(true);}
   void Add_Source_Pair(string label, AaExpression* expr);
+  void Add_Source_Label_Vector(AaExpression* expr, vector<string>& labels);
 
   AaExpression* Get_Source_Expression(int index)
   {

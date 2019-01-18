@@ -943,9 +943,9 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
                 (bid: LOOPBACK {label = bid->getText(); labels.push_back(label); }) 
             )
 	    ( COMMA 
-			(asid: SIMPLE_IDENTIFIER {labels.push_back(asid->getText());}) |
+		(	(asid: SIMPLE_IDENTIFIER {labels.push_back(asid->getText());}) |
 			(aeid: ENTRY {labels.push_back(aeid->getText());}) |
-			(abid: LOOPBACK {labels.push_back(abid->getText());}) 
+			(abid: LOOPBACK {labels.push_back(abid->getText());}) )
 	    )*
             {
 		int I;
@@ -971,6 +971,7 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
                     		new_ps->Add_Source_Pair(label,expr); 
                 	}
 		}
+		new_ps->Add_Source_Label_Vector(expr,labels);
 		labels.clear();
             }
         )+ 

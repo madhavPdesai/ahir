@@ -4178,10 +4178,11 @@ void AaPhiStatement::Print(ostream& ofile)
 	ofile << this->Tab() << "$phi ";
 	this->_target->Print(ofile);
 	ofile << " := ";
-	for(unsigned int i=0; i < this->_source_pairs.size(); i++)
+	for(map<AaExpression*,vector<string> >::iterator iter = this->_source_label_vector.begin(),
+		fiter = this->_source_label_vector.end(); iter != fiter; iter++)
 	{
 		ofile << this->Tab() << "  ";
-		AaExpression* expr = this->_source_pairs[i].second;
+		AaExpression* expr = (*iter).first;
 		AaExpression* ge = expr->Get_Guard_Expression();
 		if(ge != NULL)
 		{
@@ -4192,8 +4193,14 @@ void AaPhiStatement::Print(ostream& ofile)
 			ofile << ") ";
 		}
 		expr->Print(ofile);
-		ofile << " $on " << this->_source_pairs[i].first;
+		ofile << " $on ";
+		for(int J = 0, fJ = (*iter).second.size(); J < fJ; J++)
+		{
+			if(J > 0) ofile << ", ";
+			ofile << "  " << (*iter).second[J] << " ";
+		}
 	}
+	ofile << endl;
 	if(this->_target->Get_Type())
 	{
 		ofile <<" // type of target is ";
@@ -4262,6 +4269,16 @@ void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
 
 	this->_source_pairs.push_back(pair<string,AaExpression*>(label,expr));
 }
+
+
+void AaPhiStatement::Add_Source_Label_Vector(AaExpression* expr, vector<string>& labels)
+{
+	for(int I = 0,fI = labels.size(); I < fI; I++)
+	{
+		this->_source_label_vector[expr].push_back(labels[I]);
+	}
+}
+
 
 void AaPhiStatement::Map_Source_References()
 {
