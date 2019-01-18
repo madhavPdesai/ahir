@@ -11,7 +11,7 @@ $module [p2p_check_daemon] $in() $out () $is
 		$endmerge
 
 		out_data :=  X
-		$volatile nIDX := (IDX + 1)
+		$volatile nIDX := (X + 1)
 
 		$while 1
 	}

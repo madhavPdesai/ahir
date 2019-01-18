@@ -337,7 +337,7 @@ void vcCPElement::Set_Associated_CP_Function(vcCPElement* c)
 {
 	if(_associated_cp_function == NULL) 
 		_associated_cp_function = c; 
-	else 
+	else if (_associated_cp_function != c)
 	{
 		vcSystem::Error("CP Element " + this->Get_Id() + " is associated with two CP functions..");
 	}

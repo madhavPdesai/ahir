@@ -1224,6 +1224,7 @@ public:
   void Identify_Nucleii(set<vcCPElementGroup*>& nucleii);
   void Reduce_From_Nucleus(vcCPElementGroup* nucleus, set<vcCPElementGroup*>& absorbed_elements,
 						set<vcCPElementGroup*>& unabsorbed_elements);
+  void Last_Gasp_Reduce();
 
   void Index_Groups();
 

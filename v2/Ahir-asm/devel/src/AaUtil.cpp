@@ -404,3 +404,17 @@ uint32_t IntPower(uint32_t A, uint32_t B)
 	return(ret_val);
 }
 
+
+string Replace_Dollar(string x)
+{
+  string ret_string;
+  for(int i =0; i< x.size(); i++)
+  {
+	if(x[i] == '$') 
+		ret_string += "_";
+	else
+		ret_string += x[i];
+  }
+  return(ret_string);
+}
+

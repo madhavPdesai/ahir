@@ -70,6 +70,8 @@ int GCD(set<int>& s);
 string Augment_Hier_Id(string hid, string suffix);
 uint32_t IntPower(uint32_t A, uint32_t B); // A**B
 
+string Replace_Dollar (string x);
+
 
 
 #endif

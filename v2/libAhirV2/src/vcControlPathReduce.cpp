@@ -242,7 +242,7 @@ bool vcCPElementGroup::Can_Absorb(vcCPElementGroup* g)
       // g must have one predecessor and it must be this 
       if((g->_predecessors.size() == 1) && 
 	 //(this->_successors.size() == 1) && 
-	 (*(g->_predecessors.begin())) == this)
+	 ((*(g->_predecessors.begin())) == this))
 	{
 	  // dont mess with dead transitions..
 	  // there are not too many of them.
@@ -809,6 +809,8 @@ void vcControlPath::Reduce_CPElement_Group_Graph()
 		this->Reduce_From_Nucleus(nucleus, absorbed_elements, nucleii);
 	}
 
+	this->Last_Gasp_Reduce();
+
 
 	// index the groups.. again..
 	this->Index_Groups();
@@ -819,6 +821,32 @@ void vcControlPath::Reduce_CPElement_Group_Graph()
 	this->Update_Group_Bypass_Flags();
 }
 
+void vcControlPath::Last_Gasp_Reduce()
+{
+	vector<vcCPElementGroup*> reduction_candidates;
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
+			iter++)
+	{
+		vcCPElementGroup* g = (*iter);
+		if((!g->_is_bound_as_output_from_cp_function) &&
+		   (!g->_has_input_transition) &&
+		   (g->_marked_predecessors.size() == 0) &&
+		   (!g->_is_delay_element) &&
+		   (g->_predecessors.size() == 1))
+		{
+			reduction_candidates.push_back(g);
+		} 	  
+	}
+
+	for(int I = 0, fI = reduction_candidates.size(); I < fI; I++)
+	{
+		vcCPElementGroup* g = reduction_candidates[I];
+	 	vcCPElementGroup* pg = *(g->_predecessors.begin());
+		this->Merge_Groups(g,pg);	
+	}
+}
 
 //
 // find connected components of pure transitions.

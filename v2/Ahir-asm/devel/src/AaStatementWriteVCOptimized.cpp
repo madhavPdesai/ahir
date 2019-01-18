@@ -1672,131 +1672,149 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	__T(phi_mux_ack_ps);
 	__J(phi_mux_ack_ps, phi_mux_ack);
 
-	// the source control paths.
-	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
+	// source transitions..
+	for(map<AaExpression*, vector<string> >::iterator iter = _source_label_vector.begin(), fiter = _source_label_vector.end();
+			iter != fiter; iter++)
 	{
-		AaExpression* source_expr = _source_pairs[idx].second;
-		string trig_place = _source_pairs[idx].first;
-
-
+		AaExpression* source_expr = (*iter).first;
 		__T(__SST(source_expr) + "_ps");
 		__T(__SCT(source_expr) + "_ps");
 		__T(__UST(source_expr) + "_ps");
 		__T(__UCT(source_expr) + "_ps");
 
-		src_sample_reqs.push_back(__SST(source_expr) + "_ps");
+	}
+	
+	// the source control paths.
+	set<AaExpression*> source_set;
+	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
+	{
+	
+		AaExpression* source_expr = _source_pairs[idx].second;
+		string trig_place = _source_pairs[idx].first;
+
+		bool source_expr_not_yet_processed = (source_set.find(source_expr) == source_set.end());
+
+		string ss = __SST(source_expr) + "_" + Replace_Dollar(trig_place);
+		string us = __UST(source_expr) + "_" + Replace_Dollar(trig_place);
+		string ss_ps = ss + "_ps";
+		string us_ps = us + "_ps";
+
+		__T(ss_ps);
+		__T(us_ps);
+
+		__T(ss);
+		__T(us);
+
+		__J (ss, ss_ps);
+		__J (us, us_ps);
+
+		src_sample_reqs.push_back(ss_ps);
 		src_sample_acks.push_back(__SCT(source_expr) + "_ps");
-		src_update_reqs.push_back(__UST(source_expr) + "_ps");
+		src_update_reqs.push_back(us_ps);
 		src_update_acks.push_back(__UCT(source_expr) + "_ps");
-
-		if(!source_expr->Is_Constant())
+	
+ 
+		if(source_expr_not_yet_processed)
 		{
-			AaExpression* sge = source_expr->Get_Guard_Expression();
-			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
-					!sge->Is_Implicit_Variable_Reference() && 
-					!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
+			if(!source_expr->Is_Constant())
 			{
-				ofile << "// guard in Phi alternative" << endl;
-				sge->Write_VC_Control_Path_Optimized(pipeline_flag,
-						visited_elements,
-						ls_map,pipe_map,barrier,
-						ofile);
-
-				//
-				// This will be taken care of in a unified way.
-				//
-				//__J(__SST(sge), (__SST(source_expr) + "_ps"));
-
-			}
-
-			if((sge != NULL) && (sge != source_expr))
-				sge->Mark_As_Visited(visited_elements);
-
-			bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
-			if(src_has_no_dpe)
-			{
-				ofile << "// interlock for implicit-variable-ref/signal-read in Phi alternative " 
-					<<  idx <<  endl;
-				__T(__SST(source_expr));
-				__T(__SCT(source_expr));
-				__T(__UST(source_expr));
-				__T(__UCT(source_expr));
-
-				string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
-				ofile <<  ";;[" << sample_region_name << "] { " << endl;
-				ofile << "$T [req] $T [ack] // interlock-sample." << endl;
-				ofile << "}" << endl;
-				__F(__SST(source_expr), sample_region_name);
-				__J(__SCT(source_expr), sample_region_name);
-
-				string update_region_name = source_expr->Get_VC_Name() + "_Update";
-				ofile <<  ";;[" << update_region_name << "] { " << endl;
-				ofile << "$T [req] $T [ack] // interlock-update." << endl;
-				ofile << "}" << endl;
-				__F(__UST(source_expr), update_region_name);
-				__J(__UCT(source_expr), update_region_name);
-
-
-				// dont forget!
-				source_expr->Mark_As_Visited(visited_elements);
-			}
-			else
-			{
-				ofile << "// source expression in Phi alternative " 
-					<<  idx <<  endl;
-				source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
-						visited_elements,
-						ls_map,pipe_map,barrier,
-						ofile);
-			}
-
-
-			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
-					!sge->Is_Implicit_Variable_Reference() && 
-					!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
-			{
-				ofile << "// Guard dependency in PHI alternative.." << endl;
-				__J(__SST(source_expr), __UCT(sge));
-			}
-
-			if(pipeline_flag)
-			{
+				AaExpression* sge = source_expr->Get_Guard_Expression();
 				if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
 						!sge->Is_Implicit_Variable_Reference() && 
 						!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 				{
-					sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+					ofile << "// guard in Phi alternative" << endl;
+					sge->Write_VC_Control_Path_Optimized(pipeline_flag,
+							visited_elements,
+							ls_map,pipe_map,barrier,
+							ofile);
+
+					//
+					// This will be taken care of in a unified way.
+					//
+					//__J(__SST(sge), (__SST(source_expr) + "_ps"));
+
 				}
 
-				source_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+				if((sge != NULL) && (sge != source_expr))
+					sge->Mark_As_Visited(visited_elements);
+
+				bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
+				if(src_has_no_dpe)
+				{
+					ofile << "// interlock for implicit-variable-ref/signal-read in Phi alternative " 
+						<<  idx <<  endl;
+					__T(__SST(source_expr));
+					__T(__SCT(source_expr));
+					__T(__UST(source_expr));
+					__T(__UCT(source_expr));
+
+					string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
+					ofile <<  ";;[" << sample_region_name << "] { " << endl;
+					ofile << "$T [req] $T [ack] // interlock-sample." << endl;
+					ofile << "}" << endl;
+					__F(__SST(source_expr), sample_region_name);
+					__J(__SCT(source_expr), sample_region_name);
+
+					string update_region_name = source_expr->Get_VC_Name() + "_Update";
+					ofile <<  ";;[" << update_region_name << "] { " << endl;
+					ofile << "$T [req] $T [ack] // interlock-update." << endl;
+					ofile << "}" << endl;
+					__F(__UST(source_expr), update_region_name);
+					__J(__UCT(source_expr), update_region_name);
+
+
+					// dont forget!
+					source_expr->Mark_As_Visited(visited_elements);
+				}
+				else
+				{
+					ofile << "// source expression in Phi alternative " 
+						<<  idx <<  endl;
+					source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
+							visited_elements,
+							ls_map,pipe_map,barrier,
+							ofile);
+				}
+
+
+				if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
+						!sge->Is_Implicit_Variable_Reference() && 
+						!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
+				{
+					ofile << "// Guard dependency in PHI alternative.." << endl;
+					__J(__SST(source_expr), __UCT(sge));
+				}
+
+				if(pipeline_flag)
+				{
+					if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
+							!sge->Is_Implicit_Variable_Reference() && 
+							!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
+					{
+						sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+					}
+
+					source_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+				}
 			}
-		}
-		else
-		{
-			// source is constant... but phi-sequencer needs dummies.
-			ofile << "// dummies for constant expression source for phi" << endl;
-			__T(__SST(source_expr));
-			__T(__SCT(source_expr));
-			__J(__SCT(source_expr), __SST(source_expr));
+			else
+			{
+				// source is constant... but phi-sequencer needs dummies.
+				ofile << "// dummies for constant expression source for phi" << endl;
+				__T(__SST(source_expr));
+				__T(__SCT(source_expr));
+				__J(__SCT(source_expr), __SST(source_expr));
 
-			__T(__UST(source_expr));
-			// delay needed from UST -> UCT.
-			ofile << "$T [" << __UCT(source_expr) << "] $delay " << endl;
-			__J(__UCT(source_expr), __UST(source_expr));
-		}
+				__T(__UST(source_expr));
+				// delay needed from UST -> UCT.
+				ofile << "$T [" << __UCT(source_expr) << "] $delay " << endl;
+				__J(__UCT(source_expr), __UST(source_expr));
+			}
 
-		// relayed to i/o of phi-sequencer.
-		//  This will be taken care of in a unified way.
-		if(source_expr->Is_Implicit_Variable_Reference() || source_expr->Is_Constant() ||
-			source_expr->Is_Signal_Read())
-		{
-			ofile << "// Phi start dependency for implicit/constant alternative." << endl;
-			__J(__SST(source_expr), (__SST(source_expr) + "_ps"));
-			__J(__UST(source_expr), (__UST(source_expr) + "_ps"));
+
+			source_set.insert(source_expr);
 		}
-		ofile << "// Phi complete dependency." << endl;
-		__J((__SCT(source_expr) + "_ps"), __SCT(source_expr));
-		__J((__UCT(source_expr) + "_ps"), __UCT(source_expr));
 
 		if(trig_place == "$loopback")
 		{
@@ -1808,6 +1826,49 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			triggers.push_back(trigger_from_entry);
 			phi_mux_reqs.push_back(sample_from_entry_ps);
 		}
+	}
+
+	ofile << "// merges for sample-starts and update-starts. " << endl;
+	for(map<AaExpression*, vector<string> >::iterator iter = _source_label_vector.begin(), fiter = _source_label_vector.end();
+			iter != fiter; iter++)
+	{
+		AaExpression* source_expr = (*iter).first;
+
+		string sample_req_tmerge = __SST(source_expr) + "_tmerge";
+		ofile << "$transitionmerge [" << sample_req_tmerge << "] (";
+		for(int I = 0, fI = (*iter).second.size(); I < fI; I++)
+		{
+			if(I > 0)
+				ofile << " " ;
+			ofile << (__SST(source_expr) + "_" +  Replace_Dollar((*iter).second[I]));
+		}
+		ofile << ") (" << __SST(source_expr) + "_ps)" << endl;
+
+		string update_req_tmerge = __UST(source_expr) + "_tmerge";
+		ofile << "$transitionmerge [" << update_req_tmerge << "] (";
+		for(int I = 0, fI = (*iter).second.size(); I < fI; I++)
+		{
+			if(I > 0)
+				ofile << " " ;
+			ofile << (__UST(source_expr) + "_" + Replace_Dollar((*iter).second[I]));
+		}
+		ofile << ") (" << __UST(source_expr) + "_ps)" << endl;
+
+		ofile << "// hookups for to phi-sequencer. " << endl;
+		// relayed to i/o of phi-sequencer.
+		//  This will be taken care of in a unified way.
+		if(source_expr->Is_Implicit_Variable_Reference() || source_expr->Is_Constant() ||
+				source_expr->Is_Signal_Read())
+		{
+			ofile << "// Phi start dependency for implicit/constant alternative." << endl;
+			__J(__SST(source_expr), (__SST(source_expr) + "_ps"));
+			__J(__UST(source_expr), (__UST(source_expr) + "_ps"));
+		}
+
+		ofile << "// Phi complete dependency." << endl;
+		__J((__SCT(source_expr) + "_ps"), __SCT(source_expr));
+		__J((__UCT(source_expr) + "_ps"), __UCT(source_expr));
+
 	}
 
 	// the control-sequencing for the PHI is too complicated to
@@ -1883,29 +1944,34 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 	acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_phi_mux_ack");
 	Write_VC_Link(this->Get_VC_Name(),reqs,acks,ofile);
 
+	set<AaExpression*> sset;
 	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
 	{
 		AaExpression* source_expr = _source_pairs[idx].second;
-		bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
-		bool src_has_trivial_dpe = (!src_has_no_dpe && (source_expr->Is_Trivial() && source_expr->Get_Is_Intermediate()));
-		if(!source_expr->Is_Constant() && (src_has_no_dpe || src_has_trivial_dpe))
+		if(sset.find(source_expr) == sset.end())
 		{
-			// interlock.
-			vector<string> reqs;
-			vector<string> acks;
-			string dpe_name = source_expr->Get_VC_Driver_Name() + "_" +
-				Int64ToStr(source_expr->Get_Index()) +  "_buf";
-			string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
-			string update_region_name = source_expr->Get_VC_Name() + "_Update";
-			reqs.push_back(hier_id + "/" + sample_region_name + "/req");
-			reqs.push_back(hier_id + "/" + update_region_name + "/req");
-			acks.push_back(hier_id + "/" + sample_region_name + "/ack");
-			acks.push_back(hier_id + "/" + update_region_name + "/ack");
-			Write_VC_Link(dpe_name, reqs, acks, ofile);
-		}
-		else
-		{
-			source_expr->Write_VC_Links_Optimized(hier_id, ofile);
+			sset.insert(source_expr);
+			bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
+			bool src_has_trivial_dpe = (!src_has_no_dpe && (source_expr->Is_Trivial() && source_expr->Get_Is_Intermediate()));
+			if(!source_expr->Is_Constant() && (src_has_no_dpe || src_has_trivial_dpe))
+			{
+				// interlock.
+				vector<string> reqs;
+				vector<string> acks;
+				string dpe_name = source_expr->Get_VC_Driver_Name() + "_" +
+					Int64ToStr(source_expr->Get_Index()) +  "_buf";
+				string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
+				string update_region_name = source_expr->Get_VC_Name() + "_Update";
+				reqs.push_back(hier_id + "/" + sample_region_name + "/req");
+				reqs.push_back(hier_id + "/" + update_region_name + "/req");
+				acks.push_back(hier_id + "/" + sample_region_name + "/ack");
+				acks.push_back(hier_id + "/" + update_region_name + "/ack");
+				Write_VC_Link(dpe_name, reqs, acks, ofile);
+			}
+			else
+			{
+				source_expr->Write_VC_Links_Optimized(hier_id, ofile);
+			}
 		}
 	}
 }
