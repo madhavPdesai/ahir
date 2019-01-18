@@ -4498,43 +4498,52 @@ void AaPhiStatement::Write_VC_Control_Path(ostream& ofile)
 void AaPhiStatement::Write_VC_Source_Control_Paths(string& mplace, ostream& ofile)
 {
 	ofile << "// sources for " << this->To_String();
+	set<AaExpression*> printed_expr_set;
 	for(int idx = 0; idx < _source_pairs.size(); idx++)
 	{
 		AaExpression* src_expr = _source_pairs[idx].second;
-		bool src_is_constant = src_expr->Is_Constant();
-		bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
-		bool src_has_trivial_dpe = (!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
-		string place_name = _source_pairs[idx].first;
-
-		if(mplace != place_name)
-			continue;
-
-		if(src_expr->Is_Constant())
+		if(printed_expr_set.find(src_expr) == printed_expr_set.end())
 		{
-			// constant source. nothing is necessary..
-			ofile << "// constant source .... delay transition " << endl;
-			ofile << "$T [" << src_expr->Get_VC_Name() << "_konst_delay_trans] $delay" << endl;
-		}
-		else
-		{
-			ofile << "// trivial non-constant source .... interlock-buffer introduced " << endl;
-			if(src_expr->Get_Guard_Expression())
-				src_expr->Get_Guard_Expression()->Write_VC_Control_Path(ofile);
-			if(src_has_no_dpe || src_has_trivial_dpe)
+			printed_expr_set.insert(src_expr);
+			bool src_is_constant = src_expr->Is_Constant();
+			bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
+			bool src_has_trivial_dpe = (!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
+			string place_name = _source_pairs[idx].first;
+
+			if(mplace != place_name)
+				continue;
+
+			if(src_expr->Is_Constant())
 			{
-				ofile << "|| [Interlock] {" << endl;
-				ofile << " ;;[Sample] {" << endl;
-				ofile << "$T [req] $T [ack]" << endl;
-				ofile << "}" << endl;
-				ofile << " ;;[Update] {" << endl;
-				ofile << "$T [req] $T [ack]" << endl;
-				ofile << "}" << endl;
-				ofile << "}" << endl;
+				// constant source. nothing is necessary..
+				ofile << "// constant source .... delay transition " << endl;
+				ofile << "$T [" << src_expr->Get_VC_Name() << "_konst_delay_trans] $delay" << endl;
 			}
 			else
 			{
-				src_expr->Write_VC_Control_Path(ofile);
+				ofile << "// trivial non-constant source .... interlock-buffer introduced " << endl;
+				if(src_expr->Get_Guard_Expression())
+					src_expr->Get_Guard_Expression()->Write_VC_Control_Path(ofile);
+				if(src_has_no_dpe || src_has_trivial_dpe)
+				{
+					ofile << "|| [Interlock] {" << endl;
+					ofile << " ;;[Sample] {" << endl;
+					ofile << "$T [req] $T [ack]" << endl;
+					ofile << "}" << endl;
+					ofile << " ;;[Update] {" << endl;
+					ofile << "$T [req] $T [ack]" << endl;
+					ofile << "}" << endl;
+					ofile << "}" << endl;
+				}
+				else
+				{
+					src_expr->Write_VC_Control_Path(ofile);
+				}
 			}
+		}
+		else
+		{
+			AaRoot::Error("multiple merge labels mapped to the same expression not implemented in non-opt case.", this);
 		}
 	}
 }
@@ -4547,9 +4556,16 @@ void AaPhiStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 	this->Print(ofile);
 	ofile << "// " << this->Get_Source_Info() << endl;
 
+	set<AaExpression*> printed_expr_set;
 	for(int idx = 0; idx < _source_pairs.size(); idx++)
 	{
-		_source_pairs[idx].second->Write_VC_Constant_Wire_Declarations(ofile);
+		AaExpression* src_expr = _source_pairs[idx].second;
+
+		if(printed_expr_set.find(src_expr) == printed_expr_set.end())
+		{
+			printed_expr_set.insert(src_expr);
+			src_expr->Write_VC_Constant_Wire_Declarations(ofile);
+		}
 	}
 
 	this->_target->Write_VC_Constant_Wire_Declarations(ofile);
@@ -4561,21 +4577,27 @@ void AaPhiStatement::Write_VC_Wire_Declarations(ostream& ofile)
 	ofile << "// " << this->Get_Source_Info() << endl;
 
 
+	set<AaExpression*> printed_expr_set;
 	for(int idx = 0; idx < _source_pairs.size(); idx++)
 	{
 		AaExpression* src_expr = _source_pairs[idx].second;
-		bool src_is_constant = src_expr->Is_Constant();
-		bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
-		bool src_has_trivial_dpe = (!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
-
-		src_expr->Write_VC_Wire_Declarations(false,ofile);
-
-		// additional wire for the buffer.
-		if(!src_is_constant && (src_has_no_dpe || src_has_trivial_dpe))
+		if(printed_expr_set.find(src_expr) == printed_expr_set.end())
 		{
-			Write_VC_Wire_Declaration(src_expr->Get_VC_Driver_Name() +  "_" + 
-					Int64ToStr(src_expr->Get_Index()) + "_buffered",
-					src_expr->Get_Type(), ofile);	
+			printed_expr_set.insert(src_expr);
+
+			bool src_is_constant = src_expr->Is_Constant();
+			bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
+			bool src_has_trivial_dpe = (!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
+
+			src_expr->Write_VC_Wire_Declarations(false,ofile);
+
+			// additional wire for the buffer.
+			if(!src_is_constant && (src_has_no_dpe || src_has_trivial_dpe))
+			{
+				Write_VC_Wire_Declaration(src_expr->Get_VC_Driver_Name() +  "_" + 
+						Int64ToStr(src_expr->Get_Index()) + "_buffered",
+						src_expr->Get_Type(), ofile);	
+			}
 		}
 	}
 
@@ -4591,37 +4613,43 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	AaStatement* dws = this->Get_Pipeline_Parent();
 	bool full_rate = this->Is_Part_Of_Fullrate_Pipeline();
 
+	set<AaExpression*> printed_expr_set;
 	vector<pair<string,AaType*> > sources;
 	for(int i = 0; i < _source_pairs.size(); i++)
 	{
 		AaExpression* src_expr = _source_pairs[i].second;
-		bool src_is_constant = src_expr->Is_Constant();
-		bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
-
-		string src_driver_name = src_expr->Get_VC_Driver_Name();
-
-		if(!src_is_constant && src_has_no_dpe)
+		if(printed_expr_set.find(src_expr) == printed_expr_set.end())
 		{
-			src_driver_name = src_expr->Get_VC_Driver_Name() +  "_"  + 
-				Int64ToStr(src_expr->Get_Index()) + "_buffered";
-			string dpe_name = src_expr->Get_VC_Driver_Name() + "_" + 
-				Int64ToStr(src_expr->Get_Index()) +  "_buf";
-			Write_VC_Interlock_Buffer(dpe_name, src_expr->Get_VC_Driver_Name(),
-					src_driver_name, "", false, full_rate,  ofile);
-			if(dws != NULL)
+			printed_expr_set.insert(src_expr);
+
+			bool src_is_constant = src_expr->Is_Constant();
+			bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
+
+			string src_driver_name = src_expr->Get_VC_Driver_Name();
+
+			if(!src_is_constant && src_has_no_dpe)
 			{
-				int src_buffering = src_expr->Get_Buffering();
-				ofile << "$buffering $out " << dpe_name <<  " " << 
-					src_driver_name  << "  " << src_expr->Get_Buffering()  << endl;
+				src_driver_name = src_expr->Get_VC_Driver_Name() +  "_"  + 
+					Int64ToStr(src_expr->Get_Index()) + "_buffered";
+				string dpe_name = src_expr->Get_VC_Driver_Name() + "_" + 
+					Int64ToStr(src_expr->Get_Index()) +  "_buf";
+				Write_VC_Interlock_Buffer(dpe_name, src_expr->Get_VC_Driver_Name(),
+						src_driver_name, "", false, full_rate,  ofile);
+				if(dws != NULL)
+				{
+					int src_buffering = src_expr->Get_Buffering();
+					ofile << "$buffering $out " << dpe_name <<  " " << 
+						src_driver_name  << "  " << src_expr->Get_Buffering()  << endl;
+				}
 			}
-		}
 
-		if(!src_is_constant)
-		{
-			_source_pairs[i].second->Write_VC_Datapath_Instances(NULL,ofile);
-		}
+			if(!src_is_constant)
+			{
+				src_expr->Write_VC_Datapath_Instances(NULL,ofile);
+			}
 
-		sources.push_back(pair<string,AaType*>(src_driver_name, _source_pairs[i].second->Get_Type()));
+			sources.push_back(pair<string,AaType*>(src_driver_name, src_expr->Get_Type()));
+		}
 	}
 
 	string dpe_name = this->Get_VC_Name();
