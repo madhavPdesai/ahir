@@ -1582,6 +1582,26 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 	assert(pipeline_flag);
 
+	if(this->_target->Is_Constant())
+	{
+		ofile << "// constant  PHI statement " << this->Get_VC_Name() << " ignored " << endl;
+		ofile << "// " << this->To_String() << endl;
+		visited_elements.insert(this);
+		return;
+	}
+
+	if(this->_source_label_vector.size() == 1)
+	{
+
+		this->Write_VC_Control_Path_Optimized_Single_Source(pipeline_flag,
+									visited_elements,
+									ls_map,
+									pipe_map,
+									barrier,
+									ofile);
+		return;
+	}
+	
 	ofile << "// start:  PHI statement " << this->Get_VC_Name() << endl;
 	ofile << "// " << this->To_String() << endl;
 	__DeclTransSplitProtocolPattern;
@@ -1590,20 +1610,20 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	// PHI synchronization.
 	//
 	__T(__SST(this) + "_ps");
-	__J("aggregated_phi_sample_req", __SST(this));
 	__J((__SST(this) + "_ps"), "aggregated_phi_sample_req");
 
 	__T(__SCT(this) + "_ps");
 	__F((__SCT(this) + "_ps"),"aggregated_phi_sample_ack");
-	__F("aggregated_phi_sample_ack", __SCT(this));
 
 	__T(__UST(this) + "_ps");
-	__J("aggregated_phi_update_req", __UST(this));
 	__J((__UST(this) + "_ps"), "aggregated_phi_update_req");
 
 	__T(__UCT(this) + "_ps");
 	__J(__UCT(this), __UCT(this) + "_ps");
 
+	__J("aggregated_phi_sample_req", __SST(this));
+	__F("aggregated_phi_sample_ack", __SCT(this));
+	__J("aggregated_phi_update_req", __UST(this));
 
 
 	// the active, completed and the active transitions
@@ -1672,149 +1692,131 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	__T(phi_mux_ack_ps);
 	__J(phi_mux_ack_ps, phi_mux_ack);
 
-	// source transitions..
-	for(map<AaExpression*, vector<string> >::iterator iter = _source_label_vector.begin(), fiter = _source_label_vector.end();
-			iter != fiter; iter++)
+	// the source control paths.
+	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
 	{
-		AaExpression* source_expr = (*iter).first;
+		AaExpression* source_expr = _source_pairs[idx].second;
+		string trig_place = _source_pairs[idx].first;
+
+
 		__T(__SST(source_expr) + "_ps");
 		__T(__SCT(source_expr) + "_ps");
 		__T(__UST(source_expr) + "_ps");
 		__T(__UCT(source_expr) + "_ps");
 
-	}
-	
-	// the source control paths.
-	set<AaExpression*> source_set;
-	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
-	{
-	
-		AaExpression* source_expr = _source_pairs[idx].second;
-		string trig_place = _source_pairs[idx].first;
-
-		bool source_expr_not_yet_processed = (source_set.find(source_expr) == source_set.end());
-
-		string ss = __SST(source_expr) + "_" + Replace_Dollar(trig_place);
-		string us = __UST(source_expr) + "_" + Replace_Dollar(trig_place);
-		string ss_ps = ss + "_ps";
-		string us_ps = us + "_ps";
-
-		__T(ss_ps);
-		__T(us_ps);
-
-		__T(ss);
-		__T(us);
-
-		__J (ss, ss_ps);
-		__J (us, us_ps);
-
-		src_sample_reqs.push_back(ss_ps);
+		src_sample_reqs.push_back(__SST(source_expr) + "_ps");
 		src_sample_acks.push_back(__SCT(source_expr) + "_ps");
-		src_update_reqs.push_back(us_ps);
+		src_update_reqs.push_back(__UST(source_expr) + "_ps");
 		src_update_acks.push_back(__UCT(source_expr) + "_ps");
-	
- 
-		if(source_expr_not_yet_processed)
+
+		if(!source_expr->Is_Constant())
 		{
-			if(!source_expr->Is_Constant())
+			AaExpression* sge = source_expr->Get_Guard_Expression();
+			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
+					!sge->Is_Implicit_Variable_Reference() && 
+					!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 			{
-				AaExpression* sge = source_expr->Get_Guard_Expression();
-				if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
-						!sge->Is_Implicit_Variable_Reference() && 
-						!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
-				{
-					ofile << "// guard in Phi alternative" << endl;
-					sge->Write_VC_Control_Path_Optimized(pipeline_flag,
-							visited_elements,
-							ls_map,pipe_map,barrier,
-							ofile);
+				ofile << "// guard in Phi alternative" << endl;
+				sge->Write_VC_Control_Path_Optimized(pipeline_flag,
+						visited_elements,
+						ls_map,pipe_map,barrier,
+						ofile);
 
-					//
-					// This will be taken care of in a unified way.
-					//
-					//__J(__SST(sge), (__SST(source_expr) + "_ps"));
+				//
+				// This will be taken care of in a unified way.
+				//
+				//__J(__SST(sge), (__SST(source_expr) + "_ps"));
 
-				}
+			}
 
-				if((sge != NULL) && (sge != source_expr))
-					sge->Mark_As_Visited(visited_elements);
+			if((sge != NULL) && (sge != source_expr))
+				sge->Mark_As_Visited(visited_elements);
 
-				bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
-				if(src_has_no_dpe)
-				{
-					ofile << "// interlock for implicit-variable-ref/signal-read in Phi alternative " 
-						<<  idx <<  endl;
-					__T(__SST(source_expr));
-					__T(__SCT(source_expr));
-					__T(__UST(source_expr));
-					__T(__UCT(source_expr));
+			bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
+			if(src_has_no_dpe)
+			{
+				ofile << "// interlock for implicit-variable-ref/signal-read in Phi alternative " 
+					<<  idx <<  endl;
+				__T(__SST(source_expr));
+				__T(__SCT(source_expr));
+				__T(__UST(source_expr));
+				__T(__UCT(source_expr));
 
-					string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
-					ofile <<  ";;[" << sample_region_name << "] { " << endl;
-					ofile << "$T [req] $T [ack] // interlock-sample." << endl;
-					ofile << "}" << endl;
-					__F(__SST(source_expr), sample_region_name);
-					__J(__SCT(source_expr), sample_region_name);
+				string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
+				ofile <<  ";;[" << sample_region_name << "] { " << endl;
+				ofile << "$T [req] $T [ack] // interlock-sample." << endl;
+				ofile << "}" << endl;
+				__F(__SST(source_expr), sample_region_name);
+				__J(__SCT(source_expr), sample_region_name);
 
-					string update_region_name = source_expr->Get_VC_Name() + "_Update";
-					ofile <<  ";;[" << update_region_name << "] { " << endl;
-					ofile << "$T [req] $T [ack] // interlock-update." << endl;
-					ofile << "}" << endl;
-					__F(__UST(source_expr), update_region_name);
-					__J(__UCT(source_expr), update_region_name);
+				string update_region_name = source_expr->Get_VC_Name() + "_Update";
+				ofile <<  ";;[" << update_region_name << "] { " << endl;
+				ofile << "$T [req] $T [ack] // interlock-update." << endl;
+				ofile << "}" << endl;
+				__F(__UST(source_expr), update_region_name);
+				__J(__UCT(source_expr), update_region_name);
 
 
-					// dont forget!
-					source_expr->Mark_As_Visited(visited_elements);
-				}
-				else
-				{
-					ofile << "// source expression in Phi alternative " 
-						<<  idx <<  endl;
-					source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
-							visited_elements,
-							ls_map,pipe_map,barrier,
-							ofile);
-				}
-
-
-				if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
-						!sge->Is_Implicit_Variable_Reference() && 
-						!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
-				{
-					ofile << "// Guard dependency in PHI alternative.." << endl;
-					__J(__SST(source_expr), __UCT(sge));
-				}
-
-				if(pipeline_flag)
-				{
-					if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
-							!sge->Is_Implicit_Variable_Reference() && 
-							!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
-					{
-						sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
-					}
-
-					source_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
-				}
+				// dont forget!
+				source_expr->Mark_As_Visited(visited_elements);
 			}
 			else
 			{
-				// source is constant... but phi-sequencer needs dummies.
-				ofile << "// dummies for constant expression source for phi" << endl;
-				__T(__SST(source_expr));
-				__T(__SCT(source_expr));
-				__J(__SCT(source_expr), __SST(source_expr));
-
-				__T(__UST(source_expr));
-				// delay needed from UST -> UCT.
-				ofile << "$T [" << __UCT(source_expr) << "] $delay " << endl;
-				__J(__UCT(source_expr), __UST(source_expr));
+				ofile << "// source expression in Phi alternative " 
+					<<  idx <<  endl;
+				source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
+						visited_elements,
+						ls_map,pipe_map,barrier,
+						ofile);
 			}
 
 
-			source_set.insert(source_expr);
+			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
+					!sge->Is_Implicit_Variable_Reference() && 
+					!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
+			{
+				ofile << "// Guard dependency in PHI alternative.." << endl;
+				__J(__SST(source_expr), __UCT(sge));
+			}
+
+			if(pipeline_flag)
+			{
+				if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
+						!sge->Is_Implicit_Variable_Reference() && 
+						!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
+				{
+					sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+				}
+
+				source_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+			}
 		}
+		else
+		{
+			// source is constant... but phi-sequencer needs dummies.
+			ofile << "// dummies for constant expression source for phi" << endl;
+			__T(__SST(source_expr));
+			__T(__SCT(source_expr));
+			__J(__SCT(source_expr), __SST(source_expr));
+
+			__T(__UST(source_expr));
+			// delay needed from UST -> UCT.
+			ofile << "$T [" << __UCT(source_expr) << "] $delay " << endl;
+			__J(__UCT(source_expr), __UST(source_expr));
+		}
+
+		// relayed to i/o of phi-sequencer.
+		//  This will be taken care of in a unified way.
+		if(source_expr->Is_Implicit_Variable_Reference() || source_expr->Is_Constant() ||
+			source_expr->Is_Signal_Read())
+		{
+			ofile << "// Phi start dependency for implicit/constant alternative." << endl;
+			__J(__SST(source_expr), (__SST(source_expr) + "_ps"));
+			__J(__UST(source_expr), (__UST(source_expr) + "_ps"));
+		}
+		ofile << "// Phi complete dependency." << endl;
+		__J((__SCT(source_expr) + "_ps"), __SCT(source_expr));
+		__J((__UCT(source_expr) + "_ps"), __UCT(source_expr));
 
 		if(trig_place == "$loopback")
 		{
@@ -1826,49 +1828,6 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			triggers.push_back(trigger_from_entry);
 			phi_mux_reqs.push_back(sample_from_entry_ps);
 		}
-	}
-
-	ofile << "// merges for sample-starts and update-starts. " << endl;
-	for(map<AaExpression*, vector<string> >::iterator iter = _source_label_vector.begin(), fiter = _source_label_vector.end();
-			iter != fiter; iter++)
-	{
-		AaExpression* source_expr = (*iter).first;
-
-		string sample_req_tmerge = __SST(source_expr) + "_tmerge";
-		ofile << "$transitionmerge [" << sample_req_tmerge << "] (";
-		for(int I = 0, fI = (*iter).second.size(); I < fI; I++)
-		{
-			if(I > 0)
-				ofile << " " ;
-			ofile << (__SST(source_expr) + "_" +  Replace_Dollar((*iter).second[I]));
-		}
-		ofile << ") (" << __SST(source_expr) + "_ps)" << endl;
-
-		string update_req_tmerge = __UST(source_expr) + "_tmerge";
-		ofile << "$transitionmerge [" << update_req_tmerge << "] (";
-		for(int I = 0, fI = (*iter).second.size(); I < fI; I++)
-		{
-			if(I > 0)
-				ofile << " " ;
-			ofile << (__UST(source_expr) + "_" + Replace_Dollar((*iter).second[I]));
-		}
-		ofile << ") (" << __UST(source_expr) + "_ps)" << endl;
-
-		ofile << "// hookups for to phi-sequencer. " << endl;
-		// relayed to i/o of phi-sequencer.
-		//  This will be taken care of in a unified way.
-		if(source_expr->Is_Implicit_Variable_Reference() || source_expr->Is_Constant() ||
-				source_expr->Is_Signal_Read())
-		{
-			ofile << "// Phi start dependency for implicit/constant alternative." << endl;
-			__J(__SST(source_expr), (__SST(source_expr) + "_ps"));
-			__J(__UST(source_expr), (__UST(source_expr) + "_ps"));
-		}
-
-		ofile << "// Phi complete dependency." << endl;
-		__J((__SCT(source_expr) + "_ps"), __SCT(source_expr));
-		__J((__UCT(source_expr) + "_ps"), __UCT(source_expr));
-
 	}
 
 	// the control-sequencing for the PHI is too complicated to
@@ -1920,6 +1879,119 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	ofile << "// done: PHI Statement " << this->Get_VC_Name() << endl;
 }
 
+
+//
+// This is a hack.. useful when the two alternatives of the phi
+// are the same..
+//
+void AaPhiStatement::Write_VC_Control_Path_Optimized_Single_Source(bool pipeline_flag,
+		set<AaRoot*>& visited_elements,
+		map<AaMemorySpace*, vector<AaRoot*> >& ls_map,
+		map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
+		AaRoot* barrier,
+		ostream& ofile)
+{
+
+	ofile << "// start:  single source PHI statement " << this->Get_VC_Name() << endl;
+	ofile << "// " << this->To_String() << endl;
+
+	__DeclTransSplitProtocolPattern;
+
+	__J("aggregated_phi_sample_req", __SST(this));
+	__F("aggregated_phi_sample_ack", __SCT(this));
+	__J("aggregated_phi_update_req", __UST(this));
+
+	AaExpression* source_expr = (*(this->_source_label_vector.begin())).first;
+
+	AaExpression* sge = source_expr->Get_Guard_Expression();
+	if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
+			!sge->Is_Implicit_Variable_Reference() && 
+			!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
+	{
+		ofile << "// guard in Phi alternative" << endl;
+		sge->Write_VC_Control_Path_Optimized(pipeline_flag,
+				visited_elements,
+				ls_map,pipe_map,barrier,
+				ofile);
+
+		//
+		// This will be taken care of in a unified way.
+		//
+		//__J(__SST(sge), (__SST(source_expr) + "_ps"));
+
+	}
+
+	if((sge != NULL) && (sge != source_expr))
+		sge->Mark_As_Visited(visited_elements);
+
+	bool src_has_no_dpe  = 
+		(source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
+	if(src_has_no_dpe)
+	{
+		ofile << "// interlock for implicit-variable-ref/signal-read in single-source phi" 
+			<<   endl;
+		__T(__SST(source_expr));
+		__T(__SCT(source_expr));
+		__T(__UST(source_expr));
+		__T(__UCT(source_expr));
+
+		string sample_region_name = source_expr->Get_VC_Name() + "_Sample";
+		ofile <<  ";;[" << sample_region_name << "] { " << endl;
+		ofile << "$T [req] $T [ack] // interlock-sample." << endl;
+		ofile << "}" << endl;
+		__F(__SST(source_expr), sample_region_name);
+		__J(__SCT(source_expr), sample_region_name);
+
+		string update_region_name = source_expr->Get_VC_Name() + "_Update";
+		ofile <<  ";;[" << update_region_name << "] { " << endl;
+		ofile << "$T [req] $T [ack] // interlock-update." << endl;
+		ofile << "}" << endl;
+		__F(__UST(source_expr), update_region_name);
+		__J(__UCT(source_expr), update_region_name);
+
+
+		// dont forget!
+		source_expr->Mark_As_Visited(visited_elements);
+	}
+	else
+	{
+		ofile << "// non-implicit source expression in single-source phi" <<  endl;
+		source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
+				visited_elements,
+				ls_map,pipe_map,barrier,
+				ofile);
+	}
+
+
+	if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
+			!sge->Is_Implicit_Variable_Reference() && 
+			!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
+	{
+		ofile << "// Guard dependency in PHI alternative.." << endl;
+		__J(__SST(source_expr), __UCT(sge));
+	}
+
+	if(pipeline_flag)
+	{
+		if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
+				!sge->Is_Implicit_Variable_Reference() && 
+				!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
+		{
+			sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+		}
+
+		source_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+	}
+
+	__F ("aggregated_phi_sample_req", __SST(source_expr));
+	__J ("aggregated_phi_sample_ack", __SCT(source_expr));
+	__F ("aggregated_phi_update_req", __UST(source_expr));
+	__J (__UCT(this), __UCT(source_expr));
+
+	visited_elements.insert(this);
+	ofile << "// done: PHI Statement " << this->Get_VC_Name() << endl;
+}
+
 // called only if it appears in a do-while loop.
 void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
@@ -1927,22 +1999,25 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 	if(!ok_flag)
 		assert(0);
 
-	vector<string> reqs;
-	vector<string> acks;
-
-	string sample_from_loop_back = this->Get_VC_Name() + "_loopback_sample_req";
-	string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
-
-	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
+	if(!this->Is_Single_Source() && !this->_target->Is_Constant())
 	{
-		string trig_place = _source_pairs[idx].first;
-		if(trig_place == "$loopback")
-			reqs.push_back(hier_id + "/" + sample_from_loop_back);
-		else
-			reqs.push_back(hier_id + "/" + sample_from_entry);
+		vector<string> reqs;
+		vector<string> acks;
+
+		string sample_from_loop_back = this->Get_VC_Name() + "_loopback_sample_req";
+		string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
+
+		for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
+		{
+			string trig_place = _source_pairs[idx].first;
+			if(trig_place == "$loopback")
+				reqs.push_back(hier_id + "/" + sample_from_loop_back);
+			else
+				reqs.push_back(hier_id + "/" + sample_from_entry);
+		}
+		acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_phi_mux_ack");
+		Write_VC_Link(this->Get_VC_Name(),reqs,acks,ofile);
 	}
-	acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_phi_mux_ack");
-	Write_VC_Link(this->Get_VC_Name(),reqs,acks,ofile);
 
 	set<AaExpression*> sset;
 	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)

@@ -301,8 +301,7 @@ void vcCPElementGroup::Add_Element(vcCPElement* cpe)
 
 
  	// is delay element?
-      this->_is_delay_element = (((vcTransition*)cpe)->Get_Is_Delay_Element());
-
+      this->_is_delay_element |= (((vcTransition*)cpe)->Get_Is_Delay_Element());
       this->_has_input_transition  |= ((vcTransition*)cpe)->Get_Is_Input();
       this->_has_output_transition |= ((vcTransition*)cpe)->Get_Is_Output();
       this->_has_dead_transition   |= ((vcTransition*)cpe)->Get_Is_Dead();
@@ -378,6 +377,8 @@ void vcCPElementGroup::Print(ostream& ofile)
     ofile << " output ";
   if(_has_dead_transition)
     ofile << " dead ";
+  if(_is_delay_element)
+    ofile << " delay-element ";
   if(_has_tied_high_transition)
     ofile << " tied-high ";
   if(_has_left_open_transition)
@@ -520,6 +521,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
   string module_name = this->_cp->Get_Parent_Module()->Get_VHDL_Id();
   string bypass_string = (this->_bypass_flag ?  "true" : "false");
   int bypass_delay = (this->_bypass_flag ? 0 : 1);
+  string delay_element = (this->_is_delay_element ? " delay-element ": "");
 
   // print out the group into the VHDL file.
   this->Print(ofile);
@@ -1035,7 +1037,9 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
 {
 
 
+
 	assert(part->_predecessors.size() == 1);
+	assert(!part->_is_delay_element);
 
 	// get part out of the succ. list. of whole
 	whole->_successors.erase(part);

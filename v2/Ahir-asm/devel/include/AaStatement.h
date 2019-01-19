@@ -1251,6 +1251,8 @@ class AaPhiStatement: public AaStatement
   virtual bool Is_Phi_Statement() {return(true);}
   void Add_Source_Pair(string label, AaExpression* expr);
   void Add_Source_Label_Vector(AaExpression* expr, vector<string>& labels);
+  
+  bool Is_Single_Source() {return(_source_label_vector.size() == 1);}
 
   AaExpression* Get_Source_Expression(int index)
   {
@@ -1309,6 +1311,15 @@ class AaPhiStatement: public AaStatement
 					       map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
 						AaRoot* barrier,
 					       ostream& ofile);
+   // when there is only a single source in the phi, things are a lot simpler.
+  virtual void Write_VC_Control_Path_Optimized_Single_Source
+				(bool pipeline_flag,
+					       set<AaRoot*>& visited_elements,
+					       map<AaMemorySpace*, vector<AaRoot*> >& ls_map,
+					       map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
+						AaRoot* barrier,
+					       ostream& ofile);
+
 
 
 

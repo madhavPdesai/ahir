@@ -4562,53 +4562,70 @@ void AaPhiStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 	ofile << "// constant-declarations for phi:  ";
 	this->Print(ofile);
 	ofile << "// " << this->Get_Source_Info() << endl;
-
-	set<AaExpression*> printed_expr_set;
-	for(int idx = 0; idx < _source_pairs.size(); idx++)
+	if(this->_target->Is_Constant())
 	{
-		AaExpression* src_expr = _source_pairs[idx].second;
-
-		if(printed_expr_set.find(src_expr) == printed_expr_set.end())
+		if(!this->_target->Is_Interface_Object_Reference())
 		{
-			printed_expr_set.insert(src_expr);
-			src_expr->Write_VC_Constant_Wire_Declarations(ofile);
+			// declare the target as a constant...
+			Write_VC_Constant_Declaration(this->_target->Get_VC_Constant_Name(),
+					this->_target->Get_Type()->Get_VC_Name(),
+					this->_target->Get_Expression_Value()->To_VC_String() + " // " +
+					this->_target->Get_Expression_Value()->To_C_String(),
+					ofile);
 		}
+
 	}
-
-	this->_target->Write_VC_Constant_Wire_Declarations(ofile);
-}
-void AaPhiStatement::Write_VC_Wire_Declarations(ostream& ofile)
-{
-
-	ofile << "// " << this->To_String() << endl;
-	ofile << "// " << this->Get_Source_Info() << endl;
-
-
-	set<AaExpression*> printed_expr_set;
-	for(int idx = 0; idx < _source_pairs.size(); idx++)
+	else
 	{
-		AaExpression* src_expr = _source_pairs[idx].second;
-		if(printed_expr_set.find(src_expr) == printed_expr_set.end())
+		set<AaExpression*> printed_expr_set;
+		for(int idx = 0; idx < _source_pairs.size(); idx++)
 		{
-			printed_expr_set.insert(src_expr);
+			AaExpression* src_expr = _source_pairs[idx].second;
 
-			bool src_is_constant = src_expr->Is_Constant();
-			bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
-			bool src_has_trivial_dpe = (!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
-
-			src_expr->Write_VC_Wire_Declarations(false,ofile);
-
-			// additional wire for the buffer.
-			if(!src_is_constant && (src_has_no_dpe || src_has_trivial_dpe))
+			if(printed_expr_set.find(src_expr) == printed_expr_set.end())
 			{
-				Write_VC_Wire_Declaration(src_expr->Get_VC_Driver_Name() +  "_" + 
-						Int64ToStr(src_expr->Get_Index()) + "_buffered",
-						src_expr->Get_Type(), ofile);	
+				printed_expr_set.insert(src_expr);
+				src_expr->Write_VC_Constant_Wire_Declarations(ofile);
 			}
 		}
 	}
+}
 
-	this->_target->Write_VC_Wire_Declarations_As_Target(ofile);
+void AaPhiStatement::Write_VC_Wire_Declarations(ostream& ofile)
+{
+
+	if(!this->_target->Is_Constant())
+	{
+		ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->Get_Source_Info() << endl;
+
+
+		set<AaExpression*> printed_expr_set;
+		for(int idx = 0; idx < _source_pairs.size(); idx++)
+		{
+			AaExpression* src_expr = _source_pairs[idx].second;
+			if(printed_expr_set.find(src_expr) == printed_expr_set.end())
+			{
+				printed_expr_set.insert(src_expr);
+
+				bool src_is_constant = src_expr->Is_Constant();
+				bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
+				bool src_has_trivial_dpe = (!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
+
+				src_expr->Write_VC_Wire_Declarations(false,ofile);
+
+				// additional wire for the buffer.
+				if(!src_is_constant && (src_has_no_dpe || src_has_trivial_dpe))
+				{
+					Write_VC_Wire_Declaration(src_expr->Get_VC_Driver_Name() +  "_" + 
+							Int64ToStr(src_expr->Get_Index()) + "_buffered",
+							src_expr->Get_Type(), ofile);	
+				}
+			}
+		}
+
+		this->_target->Write_VC_Wire_Declarations_As_Target(ofile);
+	}
 }
 
 // Some ordering problem here!
@@ -4616,6 +4633,12 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 {
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+
+	if(this->_target->Is_Constant())
+	{
+		ofile << "// constant phi." << endl;
+		return;
+	}
 
 	AaStatement* dws = this->Get_Pipeline_Parent();
 	bool full_rate = this->Is_Part_Of_Fullrate_Pipeline();
@@ -4662,24 +4685,39 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	string dpe_name = this->Get_VC_Name();
 	string tgt_name = _target->Get_VC_Receiver_Name(); 
 
-
-	Write_VC_Phi_Operator(dpe_name,
-			sources,
-			tgt_name,
-			_target->Get_Type(),
-			this->Get_In_Do_While(), // pipelined case.
-			full_rate,
-			ofile);
-
-	// in the extreme pipelining case, output buffering
-	// will be kept to 2...  NOTE: not relevant in new scheme
-	// since source expressions will be buffered.
-	if(dws != NULL)
+	if(this->Is_Single_Source())
 	{
-		// PHI statement is always double buffered
-		// to cut long combinational paths.
-		ofile << "// $buffering  $out " << dpe_name << " "
-			<< tgt_name << " 2" << endl;
+		AaExpression* ssrc =(* _source_label_vector.begin()).first;	
+		Write_VC_Interlock_Buffer("ssrc_" + dpe_name,
+				ssrc->Get_VC_Driver_Name(),
+				tgt_name,
+				"",
+				true, // flow-through-flag
+				true,
+				ofile);
+	}
+	else
+	{
+
+
+		Write_VC_Phi_Operator(dpe_name,
+				sources,
+				tgt_name,
+				_target->Get_Type(),
+				this->Get_In_Do_While(), // pipelined case.
+				full_rate,
+				ofile);
+
+		// in the extreme pipelining case, output buffering
+		// will be kept to 2...  NOTE: not relevant in new scheme
+		// since source expressions will be buffered.
+		if(dws != NULL)
+		{
+			// PHI statement is always double buffered
+			// to cut long combinational paths.
+			ofile << "// $buffering  $out " << dpe_name << " "
+				<< tgt_name << " 2" << endl;
+		}
 	}
 }
 
@@ -4696,22 +4734,30 @@ void AaPhiStatement::Propagate_Constants()
 {
 	bool all_values_equal = true;
 	AaValue* last_expr_value = NULL;
+	set<AaExpression*>  sset;
 	for(int idx = 0; idx < _source_pairs.size(); idx++)
 	{
-		_source_pairs[idx].second->Evaluate();
-		if(all_values_equal && _source_pairs[idx].second->Is_Constant())
+		AaExpression* expr = _source_pairs[idx].second;
+		if(sset.find(expr) == sset.end())
 		{
-			if( last_expr_value  == NULL)
-				last_expr_value = _source_pairs[idx].second->Get_Expression_Value();
-			else
-				all_values_equal = last_expr_value->Equals(_source_pairs[idx].second->Get_Expression_Value());
+			sset.insert(expr);
+			expr->Evaluate();
+			if(all_values_equal && expr->Is_Constant())
+			{
+				if( last_expr_value  == NULL)
+					last_expr_value = expr->Get_Expression_Value();
+				else
+					all_values_equal = 
+						last_expr_value->Equals(expr->Get_Expression_Value());
+			}
+			else 
+			{
+				all_values_equal = false;
+			}
 		}
-		else if(! _source_pairs[idx].second->Is_Constant())
-			all_values_equal = false;
 	}
 
-	// target is a constant if _source_pairs.size() == 1.
-	if(all_values_equal && (_source_pairs.size() > 1))
+	if(all_values_equal)
 		_target->Assign_Expression_Value(_source_pairs[0].second->Get_Expression_Value());
 }
 

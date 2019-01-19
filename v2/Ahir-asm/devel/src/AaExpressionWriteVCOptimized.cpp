@@ -50,7 +50,7 @@ void AaExpression::Write_VC_Phi_Start_Dependency(ostream& ofile)
 	if(!this->Is_Flow_Through() && !this->Get_Is_Target())
 	{
 		AaPhiStatement* phi = this->Get_Associated_Phi_Statement();
-		if(phi != NULL)
+		if((phi != NULL) && !phi->Is_Single_Source())
 		{
 			ofile << "// Phi start dependency" << endl;
 			int src_index = this->Get_Phi_Source_Index();
