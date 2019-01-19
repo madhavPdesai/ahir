@@ -4348,15 +4348,22 @@ void AaPhiStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	srcfile <<  this->Get_C_Macro_Name() << "; " << endl;
 
 	AaExpression* default_src = NULL;
+	set<AaExpression*> decl_set;
 	for(unsigned int i=0; i < this->_source_pairs.size(); i++)
 	{
-		AaExpression* ge = this->_source_pairs[i].second->Get_Guard_Expression();
-		if(ge != NULL)
+		AaExpression* src_expr = this->_source_pairs[i].second;
+		if(decl_set.find(src_expr) == decl_set.end())
 		{
-			ge->PrintC_Declaration(headerfile);
-			ge->PrintC(headerfile);
+			decl_set.insert(src_expr);
+
+			AaExpression* ge = this->_source_pairs[i].second->Get_Guard_Expression();
+			if(ge != NULL)
+			{
+				ge->PrintC_Declaration(headerfile);
+				ge->PrintC(headerfile);
+			}
+			this->_source_pairs[i].second->PrintC_Declaration(headerfile);
 		}
-		this->_source_pairs[i].second->PrintC_Declaration(headerfile);
 	}
 
 	if(this->_target->Get_Root_Object() != ((AaRoot*) this))

@@ -32,6 +32,7 @@ aalink: $(SRC)/prog.aa
 aa2vc: prog.linked.opt.aa
 	Aa2VC -O -C prog.linked.opt.aa | vcFormat > prog.vc
 
+
 # vC to VHDL
 vc2vhdl: prog.vc
 	vc2vhdl  -O -S 4 -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES)  -f prog.vc
