@@ -4687,9 +4687,17 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 	if(this->Is_Single_Source())
 	{
-		AaExpression* ssrc =(* _source_label_vector.begin()).first;	
+		AaExpression* ssrc_expr = (* _source_label_vector.begin()).first;	
+		string ssrc_driver_name = ssrc_expr->Get_VC_Driver_Name();
+
+		bool ssrc_is_constant = ssrc_expr->Is_Constant();
+		bool ssrc_has_no_dpe  = (ssrc_expr->Is_Implicit_Variable_Reference() ||  ssrc_expr->Is_Signal_Read());
+		if(!ssrc_is_constant && ssrc_has_no_dpe)
+			ssrc_driver_name += "_" + 
+					Int64ToStr(ssrc_expr->Get_Index()) + "_buffered";
+	
 		Write_VC_Interlock_Buffer("ssrc_" + dpe_name,
-				ssrc->Get_VC_Driver_Name(),
+				ssrc_driver_name,
 				tgt_name,
 				"",
 				true, // flow-through-flag
