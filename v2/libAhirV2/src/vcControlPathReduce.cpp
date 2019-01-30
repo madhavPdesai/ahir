@@ -846,7 +846,12 @@ void vcControlPath::Last_Gasp_Reduce()
 	{
 		vcCPElementGroup* g = reduction_candidates[I];
 	 	vcCPElementGroup* pg = *(g->_predecessors.begin());
-		this->Merge_Groups(g,pg);	
+
+		if((g->_pipeline_parent == pg->_pipeline_parent) &&
+			(g->_associated_cp_function == pg->_associated_cp_function))
+		{
+			this->Merge_Groups(g,pg);	
+		}
 	}
 }
 

@@ -1,2 +1,29 @@
 An example to check the uniquification feature..
 required for multi-core AJIT!
+
+A four stage shift-register (SR4) is
+constructed using two copies of a two
+stage shift-register (SR2)
+
+The two stage shift-register is 
+constructed using two copies of a one
+stage shift-register (SR1)
+
+The 
+  build.sh 
+script is used to elaborate SR4.   
+Note the -u flag passed to the 
+buildHierarchicalModel.py script.
+
+The VHDL that is generated is correctly 
+constructed.
+
+However, the Aa2C generated code
+needs to be specialized using the
+
+ uniquify.sh 
+
+script, which produces
+multiple renamed copies of the 
+code corresponding to each
+leaf-level module.

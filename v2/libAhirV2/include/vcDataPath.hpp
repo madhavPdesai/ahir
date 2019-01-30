@@ -848,6 +848,8 @@ class vcDataPath: public vcRoot
    int Calculate_Longest_Paths_From_Inputs();
    void Calculate_Wire_Slacks(std::map<vcWire*, std::set<int> >& wire_slack_map);
    int Estimate_Buffering_Bits();
+
+   void Rationalize_Outwire_Buffering(vector<int>& obuf, bool is_part_of_pipeline);
 };
 
 void Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,

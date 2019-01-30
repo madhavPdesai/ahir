@@ -1596,6 +1596,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		vector<vcDatapathElement*> dpe_elements;
 
 
+		bool part_of_pipeline = false;
+
 		// ok. collect all the information..
 		for(set<vcDatapathElement*>::iterator iter = _compatible_split_operator_groups[idx].begin();
 				iter != _compatible_split_operator_groups[idx].end();
@@ -1622,7 +1624,11 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 			ackR.push_back(so->Get_Ack(1));
 
 			so->Append_Guard(guard_wires,guard_complements);
+		
+			part_of_pipeline = (part_of_pipeline | so->Is_Part_Of_Pipeline());
+
 		}
+		this->Rationalize_Outwire_Buffering(outwire_buffering,part_of_pipeline);
 
 		//string buffering_string;
 		//this->Generate_Buffering_Constant_Declaration(dpe_elements, buffering_string);
@@ -2598,6 +2604,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 		vcPipe* p = NULL;
 		int data_width = -1;
 
+		bool part_of_pipeline = false;
 		// ok. collect all the information..
 		for(set<vcDatapathElement*>::iterator iter = _compatible_inport_groups[idx].begin();
 				iter != _compatible_inport_groups[idx].end();
@@ -2630,7 +2637,10 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 			ackR.push_back(so->Get_Ack(1));
 
 			so->Append_Guard(guards, guard_complements);
+			part_of_pipeline = (part_of_pipeline | so->Is_Part_Of_Pipeline());
 		}
+		this->Rationalize_Outwire_Buffering(outwire_buffering,part_of_pipeline);
+
 		assert(p != NULL);
 		assert(data_width > 0);
 
@@ -3026,6 +3036,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 		// lead operator.. is it full-rate?
 		vcDatapathElement* lo = *(_compatible_call_groups[idx].begin());
 		bool full_rate = lo->Get_Full_Rate();
+		bool part_of_pipeline = false;
 
 		// ok. collect all the information..
 		for(set<vcDatapathElement*>::iterator iter = _compatible_call_groups[idx].begin();
@@ -3100,7 +3111,9 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 			ackR.push_back(so->Get_Ack(1));
 
 			so->Append_Guard(guard_wires,guard_complements);
+			part_of_pipeline = (part_of_pipeline | so->Is_Part_Of_Pipeline());
 		}
+		this->Rationalize_Outwire_Buffering(outwire_buffering,part_of_pipeline);
 		assert(called_module != NULL);
 
 
@@ -3828,4 +3841,20 @@ int vcDataPath::Estimate_Buffering_Bits()
 }
 
 
+
+void vcDataPath::Rationalize_Outwire_Buffering(vector<int>& obuf, bool is_part_of_pipeline)
+{
+	if(is_part_of_pipeline && (obuf.size() > 1))
+	{
+		for(int I = 0, fI = obuf.size(); I < fI; I++)
+		{
+			int bufval = obuf[I];
+			if(is_part_of_pipeline && (bufval < 2))
+			{
+				vcSystem::Warning("shared data-path element in pipelined section has buffering < 2... in data-path for module " +
+						this->Get_Parent()->Get_Id());
+			}
+		}
+	}
+}
 
