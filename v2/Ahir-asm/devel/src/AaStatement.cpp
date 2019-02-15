@@ -1197,10 +1197,14 @@ AaReportStatement::AaReportStatement(AaScope* parent,
 	AaNullStatement(parent)
 {
 	_assert_expression = assert_expr;
+	if(assert_expr != NULL)
+		_assert_expression->Set_Associated_Statement(this);
+
 	_tag = tag;
 	_synopsys = synopsys;
 	for(int I = 0, fI = descr_pairs.size(); I < fI; I++)
 	{
+		descr_pairs[I].second->Set_Associated_Statement(this);
 		_descr_pairs.push_back(pair<string,AaExpression*>(descr_pairs[I].first, descr_pairs[I].second));
 	}
 }

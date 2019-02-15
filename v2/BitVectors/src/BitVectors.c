@@ -37,6 +37,12 @@
 #include <SockPipes.h>
 
 #define __nbytes(x) ((x % 8 == 0) ? x/8 : (x/8) + 1)
+uint64_t allocated_byte_count = 0;
+uint64_t get_allocated_byte_count()
+{
+	return(allocated_byte_count);
+}
+
 // ---------------  local functions --------------------------------------
 uint64_t unpack_bit_vector_into_uint64(uint8_t signed_flag, bit_vector* bv)
 {
@@ -115,6 +121,8 @@ void allocate_sized_u8_array(sized_u8_array* a, uint32_t sz)
 {
 	a->byte_array = calloc(1, sz*sizeof(uint8_t));
 	a->undefined_byte_array = calloc(1, sz*sizeof(uint8_t));
+
+	allocated_byte_count += 2*sz;
 
 	int I;
 	for(I = 0; I < sz; I++)

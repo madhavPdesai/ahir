@@ -183,7 +183,7 @@ aA_Module returns [AaModule* new_module]
 	    }
 	    else
 	    {
-                        AaRoot::Error("foreign module cannot be marked as operator/volatile ",new_module);
+                        AaRoot::Warning("foreign module cannot be marked as operator/volatile ",new_module);
 	    }
 
 	    if(pipeline_flag)

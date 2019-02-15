@@ -220,4 +220,6 @@ void write_bit_vector_to_pipe(char* pipe_name, bit_vector* bv);
 void read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv);
 void sock_write_bit_vector_to_pipe(char* pipe_name, bit_vector* bv);
 void sock_read_bit_vector_from_pipe(char* pipe_name, bit_vector* bv);
+
+uint64_t get_allocated_byte_count();
 #endif

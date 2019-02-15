@@ -1,38 +1,16 @@
-//
-// Copyright (C) 2010-: Madhav P. Desai
-// All Rights Reserved.
-//  
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal with the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to
-// permit persons to whom the Software is furnished to do so, subject to
-// the following conditions:
-// 
-//  * Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimers.
-//  * Redistributions in binary form must reproduce the above
-//    copyright notice, this list of conditions and the following
-//    disclaimers in the documentation and/or other materials provided
-//    with the distribution.
-//  * Neither the names of the AHIR Team, the Indian Institute of
-//    Technology Bombay, nor the names of its contributors may be used
-//    to endorse or promote products derived from this Software
-//    without specific prior written permission.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-// IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR
-// ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-// TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-// SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
-#include <Pipes.h>
 #include <pthread.h>
 #include <pthreadUtils.h>
+#include <Pipes.h>
+#include <aa_c_model_internal.h>
 #include <aa_c_model.h>
 FILE *__report_log_file__ = NULL;
+int __trace_on__ = 0;
+void
+_set_trace_file (FILE * fp)
+{
+  __report_log_file__ = fp;
+}
+
 void
 __init_aa_globals__ ()
 {
@@ -40,15 +18,6 @@ __init_aa_globals__ ()
   register_pipe ("midpipe", 3, 8, 0);
   register_pipe ("outpipe", 1, 16, 0);
 }
-
-void
-stage_0 ()
-{
-  _stage_0_outer_arg_decl_macro__;
-  _stage_0_ ();
-  _stage_0_outer_op_xfer_macro__;
-}
-
 
 void
 _stage_0_ ()
@@ -72,11 +41,11 @@ _stage_0_ ()
 }
 
 void
-stage_1 ()
+stage_0 ()
 {
-  _stage_1_outer_arg_decl_macro__;
-  _stage_1_ ();
-  _stage_1_outer_op_xfer_macro__;
+  _stage_0_outer_arg_decl_macro__;
+  _stage_0_ ();
+  _stage_0_outer_op_xfer_macro__;
 }
 
 
@@ -91,9 +60,9 @@ _stage_1_ ()
 // merge  file ShiftRegister.aa, line 27
     _stage_1_merge_stmt_15_c_preamble_macro_;
     _stage_1_merge_stmt_15_c_postamble_macro_;
-//              tval := ($bitcast ($uint<20>) inpipe )
+//              tval := ($bitcast ($uint<20>) inpipe )// bits of buffering = 20 
     _stage_1_assign_stmt_19_c_macro_;
-//              midpipe := tval
+//              midpipe := tval// bits of buffering = 20 
     _stage_1_assign_stmt_22_c_macro_;
 // $report (stage_1 sent                 midpipe tval )
     _stage_1_stmt_24_c_macro_;
@@ -106,11 +75,11 @@ _stage_1_ ()
 }
 
 void
-stage_2 ()
+stage_1 ()
 {
-  _stage_2_outer_arg_decl_macro__;
-  _stage_2_ ();
-  _stage_2_outer_op_xfer_macro__;
+  _stage_1_outer_arg_decl_macro__;
+  _stage_1_ ();
+  _stage_1_outer_op_xfer_macro__;
 }
 
 
@@ -125,9 +94,9 @@ _stage_2_ ()
 // merge  file ShiftRegister.aa, line 41
     _stage_2_merge_stmt_30_c_preamble_macro_;
     _stage_2_merge_stmt_30_c_postamble_macro_;
-//              tval := ($bitcast ($uint<16>) midpipe )
+//              tval := ($bitcast ($uint<16>) midpipe )// bits of buffering = 16 
     _stage_2_assign_stmt_34_c_macro_;
-//              outpipe := tval
+//              outpipe := tval// bits of buffering = 16 
     _stage_2_assign_stmt_37_c_macro_;
 // $report (stage_2 sent                 output tval )
     _stage_2_stmt_39_c_macro_;
@@ -140,11 +109,11 @@ _stage_2_ ()
 }
 
 void
-stage_3 ()
+stage_2 ()
 {
-  _stage_3_outer_arg_decl_macro__;
-  _stage_3_ ();
-  _stage_3_outer_op_xfer_macro__;
+  _stage_2_outer_arg_decl_macro__;
+  _stage_2_ ();
+  _stage_2_outer_op_xfer_macro__;
 }
 
 
@@ -161,7 +130,9 @@ _stage_3_ ()
     _stage_3_merge_stmt_45_c_postamble_macro_;
     {
 // do-while:   file ShiftRegister.aa, line 57
-      __declare_bit_vector (konst_51, 1);
+      __declare_static_bit_vector (konst_51, 1);
+      bit_vector_clear (&konst_51);
+      konst_51.val.byte_array[0] = 1;
       uint8_t do_while_entry_flag;
       do_while_entry_flag = 1;
       uint8_t do_while_loopback_flag;
@@ -187,6 +158,15 @@ _stage_3_ ()
   MUTEX_UNLOCK (_stage_3_series_block_stmt_43_c_mutex_);
 }
 
+void
+stage_3 ()
+{
+  _stage_3_outer_arg_decl_macro__;
+  _stage_3_ ();
+  _stage_3_outer_op_xfer_macro__;
+}
+
+
 DEFINE_THREAD (stage_0);
 PTHREAD_DECL (stage_0);
 DEFINE_THREAD (stage_1);
@@ -196,9 +176,10 @@ PTHREAD_DECL (stage_2);
 DEFINE_THREAD (stage_3);
 PTHREAD_DECL (stage_3);
 void
-start_daemons (FILE * fp)
+start_daemons (FILE * fp, int trace_on)
 {
   __report_log_file__ = fp;
+  __trace_on__ = trace_on;
   __init_aa_globals__ ();
   PTHREAD_CREATE (stage_0);
   PTHREAD_CREATE (stage_1);

@@ -449,7 +449,7 @@ void AaModule::Write_C_Source(ofstream& srcfile, ofstream& headerfile)
 
 	  if(t->Is_Integer_Type())
 	    {
-	      headerfile << "__declare_bit_vector(" << n_name << ", " << t->Size() << ");\\" << endl;
+	      headerfile << "__declare_static_bit_vector(" << n_name << ", " << t->Size() << ");\\" << endl;
 	      headerfile << "bit_vector_assign_uint64(0, &" << n_name << ", " << o_name << ");\\" << endl;
 	    }
 	  else
@@ -467,7 +467,7 @@ void AaModule::Write_C_Source(ofstream& srcfile, ofstream& headerfile)
 
 	  if(t->Is_Integer_Type())
 	    {
-	      headerfile << "__declare_bit_vector(" << n_name << ", " << t->Size() << ");\\" << endl;
+	      headerfile << "__declare_static_bit_vector(" << n_name << ", " << t->Size() << ");\\" << endl;
 	    }
 	  else
 	    {

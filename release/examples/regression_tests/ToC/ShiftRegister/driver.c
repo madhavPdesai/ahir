@@ -31,14 +31,15 @@
 #include <stdio.h>
 #include <aa_c_model.h>
 #include <pthreadUtils.h>
+#include <pipeHandler.h>
 
 
 // the main program which calls the shift register
 int main(int argc, char* argv[])
 {
-	init_pipe_handler_with_log();
+	init_pipe_handler();
 
-	start_daemons(stderr);
+	start_daemons(NULL, 0);
 
 	uint8_t done = read_uint8("done_pipe");
 
