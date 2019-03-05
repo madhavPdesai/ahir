@@ -261,6 +261,8 @@ public:
   void Print_VHDL_Level_For_Wire(set<vcDatapathElement*>& printed_dpe_set, 
 					map<vcWire*, set<int> >& wire_slack_map,
 					vcWire* w, string stall_sig, ostream& ofile);
+
+  void Print_Dot_Entry(ostream& ofile);
 };
 
 class vcIntermediateWire: public vcWire
@@ -648,8 +650,11 @@ protected:
   virtual bool Is_Deterministic_Pipeline_Operator() {return(false);}
 				
   virtual void Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostream& ofile) {assert(0);}
+
+  virtual void Print_Dot_Entry(ostream& ofile);
   friend class vcDataPath;
 
+	
 };
 
 
@@ -850,6 +855,8 @@ class vcDataPath: public vcRoot
    int Estimate_Buffering_Bits();
 
    void Rationalize_Outwire_Buffering(vector<int>& obuf, bool is_part_of_pipeline);
+	
+   void Print_Data_Path_As_Dot_File(ostream& dp_file);
 };
 
 void Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,

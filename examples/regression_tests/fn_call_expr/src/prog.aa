@@ -1,0 +1,41 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2
+
+$volatile $module [v_pass_through] $in (x: $uint<32>) $out (z: $uint<32>) $is
+{
+	z := x
+}
+
+$operator $module [op_pass_through] $in (x: $uint<32>) $out (z: $uint<32>) $is
+{
+	z := x
+}
+
+$module [add2] $in (x y: $uint<32>) $out (z: $uint<32>) $is
+{
+	z := (x + y)
+}
+
+$module [p2p_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 9 $buffering 2 $fullrate
+		$merge $entry $loopback 
+	 		$phi CMD := 0 $on $entry ($call v_pass_through (cmd_raw)) 
+									$on $loopback
+			$phi RES := 0 $on $entry ($call add2 (tval tval)) 
+									$on $loopback
+			$phi first_time := ($bitcast ($uint<1>) 1) $on $entry 0 
+									$on $loopback
+		$endmerge
+
+		cmd_raw := in_data
+
+		tval_0 :=  ($call op_pass_through (($call v_pass_through (($call add2 (CMD CMD))))))
+		tval := ($call v_pass_through (tval_0))
+
+		$guard (~first_time) out_data := RES
+
+		$while 1
+	}
+}

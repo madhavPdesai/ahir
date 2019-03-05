@@ -1800,7 +1800,8 @@ void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
 		// an implicit variable, and if _target is an object
 		// reference which refers to an implicit variable,
 		// then you will need to instantiate a register..
-		if((_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference()) && _target->Is_Implicit_Variable_Reference())
+		if((_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference() 
+			|| _source->Is_Volatile_Function_Call()) && _target->Is_Implicit_Variable_Reference())
 		{
 			ofile << "|| [Interlock] {" << endl;
 			ofile << " ;;[Sample] {" << endl;
@@ -1879,7 +1880,10 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 		if(this->_target->Is_Implicit_Variable_Reference())
 		{
-			bool src_is_implicit = (this->_source->Is_Implicit_Variable_Reference() || this->_source->Is_Signal_Read());
+			bool src_is_implicit = 
+				(this->_source->Is_Implicit_Variable_Reference() || 
+					this->_source->Is_Volatile_Function_Call() ||
+							this->_source->Is_Signal_Read());
 			if(src_is_implicit)
 			{
 				string dpe_name = this->_target->Get_VC_Datapath_Instance_Name();
@@ -1908,9 +1912,11 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				}
 			}
 
-			if(!src_is_implicit || this->_source->Is_Signal_Read())
+			if(!src_is_implicit || this->_source->Is_Volatile_Function_Call() 
+					|| this->_source->Is_Signal_Read())
 			{
-				if(this->_source->Is_Signal_Read())
+				if(this->_source->Is_Volatile_Function_Call() ||
+						this->_source->Is_Signal_Read())
 				{
 					// we will create an inport which writes to 
 					// the source wire.
@@ -1952,7 +1958,9 @@ void AaAssignmentStatement::Write_VC_Links(string hier_id,ostream& ofile)
 
 		if(this->_target->Is_Implicit_Variable_Reference())
 		{
-			if(this->_source->Is_Implicit_Variable_Reference() || this->_source->Is_Signal_Read())
+			if(this->_source->Is_Implicit_Variable_Reference() || 
+				this->_source->Is_Volatile_Function_Call() ||	
+					this->_source->Is_Signal_Read())
 			{
 				if(!this->Get_Is_Volatile())
 				{
@@ -1998,7 +2006,9 @@ void AaAssignmentStatement::Propagate_Constants()
 
 string AaAssignmentStatement::Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
 {
-	bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
+	bool source_is_implicit = (_source->Is_Signal_Read() || 
+					_source->Is_Volatile_Function_Call() ||
+						_source->Is_Implicit_Variable_Reference());
 	bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
 	// if target is not implicit variable reference, then the final register
 	// will be in the source, return the reenable update transition for the
@@ -2021,7 +2031,9 @@ string AaAssignmentStatement::Get_VC_Reenable_Update_Transition_Name(set<AaRoot*
 
 string AaAssignmentStatement::Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
 {
-	bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
+	bool source_is_implicit = (_source->Is_Signal_Read() ||
+					_source->Is_Volatile_Function_Call() ||
+						 _source->Is_Implicit_Variable_Reference());
 	bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
 	if(!target_is_implicit)
 	{
@@ -2041,7 +2053,9 @@ string AaAssignmentStatement::Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*
 
 string AaAssignmentStatement::Get_VC_Sample_Start_Transition_Name()
 {
-	bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
+	bool source_is_implicit = (_source->Is_Signal_Read() ||
+					_source->Is_Volatile_Function_Call() ||
+						 _source->Is_Implicit_Variable_Reference());
 	bool target_is_implicit = this->_target->Is_Implicit_Variable_Reference();
 	// if target is implicit or interface object..
 	if(source_is_implicit && target_is_implicit)
@@ -2061,7 +2075,9 @@ string AaAssignmentStatement::Get_VC_Sample_Start_Transition_Name()
 
 string AaAssignmentStatement::Get_VC_Sample_Completed_Transition_Name()
 {
-	bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
+	bool source_is_implicit = (_source->Is_Signal_Read() ||
+					_source->Is_Volatile_Function_Call() ||
+						 _source->Is_Implicit_Variable_Reference());
 	bool target_is_implicit = this->_target->Is_Implicit_Variable_Reference();
 	//  if target is implicit or interface object..
 	if(source_is_implicit && target_is_implicit)
@@ -2081,7 +2097,9 @@ string AaAssignmentStatement::Get_VC_Sample_Completed_Transition_Name()
 
 string AaAssignmentStatement::Get_VC_Update_Start_Transition_Name()
 {
-	bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
+	bool source_is_implicit = (_source->Is_Signal_Read() ||
+					_source->Is_Volatile_Function_Call() ||
+						 _source->Is_Implicit_Variable_Reference());
 	bool target_is_implicit = this->_target->Is_Implicit_Variable_Reference();
 	// if target is implicit or interface object..
 	if(source_is_implicit && target_is_implicit)
@@ -2101,7 +2119,9 @@ string AaAssignmentStatement::Get_VC_Update_Start_Transition_Name()
 
 string AaAssignmentStatement::Get_VC_Update_Completed_Transition_Name()
 {
-	bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
+	bool source_is_implicit = (_source->Is_Signal_Read() || 
+					_source->Is_Volatile_Function_Call() ||
+					_source->Is_Implicit_Variable_Reference());
 	bool target_is_implicit = this->_target->Is_Implicit_Variable_Reference();
 	// if target is implicit or interface object..
 	if(source_is_implicit && target_is_implicit)
@@ -4134,6 +4154,7 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 				if(!src_expr->Is_Constant() &&
 						(src_expr->Is_Implicit_Variable_Reference() ||
 						 src_expr->Is_Signal_Read() ||
+						 src_expr->Is_Volatile_Function_Call() ||
 						 (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate())))
 				{
 					string dpe_name = src_expr->Get_VC_Driver_Name() +  "_" 
@@ -4519,6 +4540,8 @@ void AaPhiStatement::Write_VC_Source_Control_Paths(string& mplace, ostream& ofil
 			bool src_is_constant = src_expr->Is_Constant();
 			bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
 			bool src_has_trivial_dpe = (!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
+			bool src_is_volatile_fn_call = src_expr->Is_Volatile_Function_Call();
+
 			string place_name = _source_pairs[idx].first;
 
 			if(mplace != place_name)
@@ -4535,7 +4558,8 @@ void AaPhiStatement::Write_VC_Source_Control_Paths(string& mplace, ostream& ofil
 				ofile << "// trivial non-constant source .... interlock-buffer introduced " << endl;
 				if(src_expr->Get_Guard_Expression())
 					src_expr->Get_Guard_Expression()->Write_VC_Control_Path(ofile);
-				if(src_has_no_dpe || src_has_trivial_dpe)
+				if(src_has_no_dpe || src_has_trivial_dpe ||
+						src_is_volatile_fn_call)
 				{
 					ofile << "|| [Interlock] {" << endl;
 					ofile << " ;;[Sample] {" << endl;
@@ -4614,12 +4638,17 @@ void AaPhiStatement::Write_VC_Wire_Declarations(ostream& ofile)
 
 				bool src_is_constant = src_expr->Is_Constant();
 				bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
-				bool src_has_trivial_dpe = (!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
+				bool src_has_trivial_dpe = 
+					(!src_has_no_dpe && (src_expr->Is_Trivial() && src_expr->Get_Is_Intermediate()));
+				bool src_is_volatile_fn_call = 
+							src_expr->Is_Volatile_Function_Call();
 
 				src_expr->Write_VC_Wire_Declarations(false,ofile);
 
 				// additional wire for the buffer.
-				if(!src_is_constant && (src_has_no_dpe || src_has_trivial_dpe))
+				if(!src_is_constant && 
+					(src_is_volatile_fn_call ||
+						src_has_no_dpe || src_has_trivial_dpe))
 				{
 					Write_VC_Wire_Declaration(src_expr->Get_VC_Driver_Name() +  "_" + 
 							Int64ToStr(src_expr->Get_Index()) + "_buffered",
@@ -4658,10 +4687,12 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 			bool src_is_constant = src_expr->Is_Constant();
 			bool src_has_no_dpe  = (src_expr->Is_Implicit_Variable_Reference() ||  src_expr->Is_Signal_Read());
+			bool src_is_volatile_fn_call = src_expr->Is_Volatile_Function_Call();
 
 			string src_driver_name = src_expr->Get_VC_Driver_Name();
 
-			if(!src_is_constant && src_has_no_dpe)
+			if(!src_is_constant && 
+				(src_has_no_dpe || src_is_volatile_fn_call))
 			{
 				src_driver_name = src_expr->Get_VC_Driver_Name() +  "_"  + 
 					Int64ToStr(src_expr->Get_Index()) + "_buffered";
@@ -4696,7 +4727,8 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 		bool ssrc_is_constant = ssrc_expr->Is_Constant();
 		bool ssrc_has_no_dpe  = (ssrc_expr->Is_Implicit_Variable_Reference() ||  ssrc_expr->Is_Signal_Read());
-		if(!ssrc_is_constant && ssrc_has_no_dpe)
+		bool ssrc_is_volatile_fn_call = ssrc_expr->Is_Volatile_Function_Call();
+		if(!ssrc_is_constant && (ssrc_has_no_dpe || ssrc_is_volatile_fn_call))
 			ssrc_driver_name += "_" + 
 					Int64ToStr(ssrc_expr->Get_Index()) + "_buffered";
 	

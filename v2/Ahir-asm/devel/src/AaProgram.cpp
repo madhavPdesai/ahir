@@ -683,11 +683,11 @@ bool AaProgram::Propagate_Types()
 	  AaType* itype = NULL;
 	  
 	  // two passes: first find the type and then set it
-	  for(set<AaRoot*>::iterator siter = type_eq_class_map[i].begin();
-	      siter != type_eq_class_map[i].end();
-	      siter++)
+	  for(set<AaRoot*>::iterator ssiter = type_eq_class_map[i].begin();
+	      ssiter != type_eq_class_map[i].end();
+	      ssiter++)
 	    {
-	      AaRoot* item = *siter;
+	      AaRoot* item = *ssiter;
 	      AaType* ntype = NULL;
 	      if(item->Is_Expression())
 		{

@@ -2278,7 +2278,7 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 			ofile << "}" << endl;
 			
 			//
-			// TODO: Really should be using connect-split-protocol here... as in the binary case.
+			// split protocol.
 			//
 			__F(__SST(this),this->Get_VC_Start_Region_Name());
 			__J(__SCT(this),this->Get_VC_Start_Region_Name());
@@ -2319,6 +2319,125 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 void AaTernaryExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 		map<AaMemorySpace*,vector<AaRoot*> >& ls_map,
 		map<AaPipeObject*, vector<AaRoot*> >& pipe_map,
+		AaRoot* barrier,
+		ostream& ofile)
+{
+	assert(0);
+}
+
+	
+void AaFunctionCallExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
+{
+	if(!this->Is_Constant())
+	{
+		for(int I = 0, fI = _arguments.size(); I < fI; I++)
+		{
+			AaExpression* expr = _arguments[I];
+			expr->Write_VC_Links_Optimized(hier_id,ofile);
+		}
+
+		ofile << "// " << this->To_String() << endl;
+		bool flow_through = this->Is_Trivial();
+		if(flow_through)
+			return;
+
+		string sample_regn = this->Get_VC_Name() + "_Sample";
+		string update_regn = this->Get_VC_Name() + "_Update";
+
+		vector<string> reqs,acks;
+		reqs.push_back(hier_id + "/" + sample_regn + "/req");
+		reqs.push_back(hier_id + "/" + update_regn + "/req");
+		acks.push_back(hier_id + "/" + sample_regn + "/ack");
+		acks.push_back(hier_id + "/" + update_regn + "/ack");
+
+		Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),
+				reqs,
+				acks,
+				ofile);
+	}
+}
+
+void AaFunctionCallExpression::Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile)
+{
+	assert(0);
+}
+
+void AaFunctionCallExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag,
+			set<AaRoot*>& visited_elements,
+			map<AaMemorySpace*,vector<AaRoot*> >& ls_map,
+			map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
+			AaRoot* barrier,
+			ostream& ofile)
+{
+	if(!this->Is_Constant())
+	{
+
+		this->Check_Volatile_Inconsistency();
+		ofile << "// " << this->To_String() << endl;
+
+		if(!this->Is_Trivial())
+		{
+			__DeclTransSplitProtocolPattern;
+
+			if(barrier != NULL)
+			{
+				ofile << "// barrier " << endl;
+				__J(__SST(this), __UCT(barrier));
+			}
+
+			this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
+		}
+	
+		for(int I = 0, fI = _arguments.size(); I < fI; I++)
+		{
+			AaExpression* expr = _arguments[I];
+			expr->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,
+								ls_map,pipe_map,barrier, ofile);
+
+			if(!this->Is_Trivial())
+			{
+				string sst = __SST(this);
+				if(!expr->Is_Constant())
+				{
+					expr->Write_Forward_Dependency_From_Roots(sst, this->Get_Index(),
+							visited_elements, ofile);
+
+					if(pipeline_flag)
+					{
+						expr->Write_VC_Update_Reenables(this, __SCT(this), false, 
+								visited_elements, ofile);
+					}
+				}
+			}
+		}
+
+		if(!this->Is_Trivial())
+		{
+
+			string sample_regn = this->Get_VC_Name() + "_Sample";
+			string update_regn = this->Get_VC_Name() + "_Update";
+
+			ofile << ";;[" << sample_regn <<"] { // fn-call expression " << endl;
+			ofile << "$T [req] $T [ack]  // (split) fn-call binary operation " << endl;
+			ofile << "}" << endl;
+
+			ofile << ";;[" << update_regn << "] { // fn-call binary expression " << endl;
+			ofile << "$T [req] $T [ack] // (split) fn-call binary operation " << endl;
+			ofile << "}" << endl;
+
+			__ConnectSplitProtocolPattern;
+			__SelfReleaseSplitProtocolPattern;
+		}
+
+		this->Write_VC_Phi_Start_Dependency(ofile);
+	}
+	visited_elements.insert(this);
+}
+
+void AaFunctionCallExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag,
+		set<AaRoot*>& visited_elements,
+		map<AaMemorySpace*,vector<AaRoot*> >& ls_map,
+		map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
 		AaRoot* barrier,
 		ostream& ofile)
 {
@@ -2377,9 +2496,9 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 		ofile << "// reenable-joins" << endl;
 		Write_VC_Reenable_Joins(active_reenables, active_reenable_bypass_flags, at,false, ofile); // do not force bypass, decide based on active bypass flags
 		Write_VC_Unmarked_Joins(active_unmarked_reenables, at, ofile); 
-		
+
 	}
-		
+
 	active_reenables.clear();
 	active_unmarked_reenables.clear();
 }

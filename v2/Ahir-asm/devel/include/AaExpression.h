@@ -315,6 +315,7 @@ class AaExpression: public AaRoot
 
 	virtual bool Is_Implicit_Variable_Reference() {return(false);}
 	virtual bool Is_Interface_Object_Reference() {return(false);}
+	virtual bool Is_Volatile_Function_Call() {return(false);}
 
 	virtual bool Is_Implicit_Object() {return(false);}
 
@@ -1759,6 +1760,119 @@ class AaTernaryExpression: public AaExpression
 	virtual bool Is_Trivial() {return(this->Get_Is_Intermediate());}
 	//virtual bool Is_Trivial() {return(false);}
 };
+
+class AaFunctionCallExpression: public AaExpression
+{
+	string _module_identifier;
+	AaModule* _called_module;
+
+	vector<AaExpression*> _arguments;
+	public:
+
+	AaFunctionCallExpression(AaScope* scope, string module_id,
+					vector<AaExpression*>& arguments);
+	~AaFunctionCallExpression();	
+
+	virtual void Print(ostream& ofile); 
+
+	AaExpression*      Get_Argument(int id) 
+	{
+		if((id >= 0) && (id < _arguments.size()))
+			return(_arguments[id]);
+		else
+			return(NULL);
+	}
+	virtual string Kind() {return("AaFunctionCallExpression");}
+	virtual void Map_Source_References(set<AaRoot*>& source_objects);
+	virtual void Mark_As_Visited(set<AaRoot*>& visited_elements)
+	{
+		visited_elements.insert(this);
+		for(int I = 0, fI = _arguments.size(); I < fI; I++)
+		{
+			this->_arguments[I]->Mark_As_Visited(visited_elements);
+		}
+	}
+
+	virtual void Set_Associated_Statement(AaStatement* stmt)
+	{
+		_associated_statement = stmt;
+		for(int I = 0, fI = _arguments.size(); I < fI; I++)
+		{
+			this->_arguments[I]->Set_Associated_Statement(stmt);
+		}
+	}
+	virtual void Set_Phi_Source_Index(int v)
+	{
+		_phi_source_index = v;
+		for(int I = 0, fI = _arguments.size(); I < fI; I++)
+		{
+			this->_arguments[I]->Set_Phi_Source_Index(v);
+		}
+	}
+	virtual void Set_Pipeline_Parent(AaStatement* dws)
+	{
+		_pipeline_parent = dws;
+		for(int I = 0, fI = _arguments.size(); I < fI; I++)
+		{
+			this->_arguments[I]->Set_Pipeline_Parent(dws);
+		}
+	}
+
+
+	virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
+	{
+		for(int I = 0, fI = _arguments.size(); I < fI; I++)
+		{
+			this->_arguments[I]->Get_Leaf_Expression_Set(leaf_expression_set);
+		}
+	}
+
+	virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
+	{
+		return(this->Get_VC_Update_Start_Transition_Name());
+	}
+	virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
+	{
+		return(this->Get_VC_Sample_Start_Transition_Name());
+	}
+
+	virtual void PrintC_Declaration( ofstream& ofile);
+	virtual void PrintC( ofstream& ofile);
+	virtual void Write_VC_Control_Path( ostream& ofile);
+	virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+	virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
+	virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+	virtual void Write_VC_Links(string hier_id, ostream& ofile);
+	virtual void Evaluate();
+	string Get_VC_Name();
+
+	virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
+	virtual void Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile);
+
+	virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag,
+			set<AaRoot*>& visited_elements,
+			map<AaMemorySpace*,vector<AaRoot*> >& ls_map,
+			map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
+			AaRoot* barrier,
+			ostream& ofile);
+	virtual void Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag,
+			set<AaRoot*>& visited_elements,
+			map<AaMemorySpace*,vector<AaRoot*> >& ls_map,
+			map<AaPipeObject*,vector<AaRoot*> >& pipe_map,
+			AaRoot* barrier,
+			ostream& ofile);
+
+
+
+	virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
+	virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
+
+
+	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
+	virtual bool Is_Trivial(); // return false if called module is volatile.
+	virtual bool Is_Volatile_Function_Call() {return(this->Is_Trivial());}
+};
+
 
 
 

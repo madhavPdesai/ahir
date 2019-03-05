@@ -1690,3 +1690,13 @@ void vcModule::Print_Reduced_CP_As_Dot_File()
 	this->_control_path->Print_Reduced_Control_Path_As_Dot_File(cp_file);
 	cp_file.close();	
 }
+
+void vcModule::Print_DP_As_Dot_File()
+{
+	string dp_file_name = this->Get_VHDL_Id() + "_DP.dot";
+	ofstream dp_file;
+	dp_file.open(dp_file_name.c_str());
+	this->_data_path->Print_Data_Path_As_Dot_File(dp_file);
+	dp_file.close();	
+}
+

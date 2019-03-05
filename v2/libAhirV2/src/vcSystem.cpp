@@ -1331,6 +1331,26 @@ bool vcSystem::Is_Function_Library_Module(int& delay, string& mod_name, string& 
 		return(false);
 }
 
+void vcSystem::Print_Data_Paths_As_Dot_Files()
+{
+	for(map<string,vcModule*>::iterator moditer = _modules.begin();
+			moditer != _modules.end();
+			moditer++)
+	{
+
+		string mod_name = (*moditer).first;
+		string lib_name;
+		int D;
+		bool is_fn_mod = this->Is_Function_Library_Module(D,mod_name, lib_name);
+
+		if(!is_fn_mod)
+		{
+			cerr << "Info: printing Dot-file of DP for module " << (*moditer).first << endl;
+			(*moditer).second->Print_DP_As_Dot_File();
+		}
+	}
+}
+
 void vcSystem::Print_Reduced_Control_Paths_As_Dot_Files()
 {
 	for(map<string,vcModule*>::iterator moditer = _modules.begin();

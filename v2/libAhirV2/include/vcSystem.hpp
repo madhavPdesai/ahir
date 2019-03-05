@@ -207,6 +207,7 @@ class vcSystem: public vcRoot
   bool Is_Function_Library_Module(int& delay, string& mod_name, string& lib_name);
 
   void Print_Reduced_Control_Paths_As_Dot_Files();
+  void Print_Data_Paths_As_Dot_Files();
 };
 
 

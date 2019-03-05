@@ -422,6 +422,7 @@ int main(int argc, char* argv[])
 	if(vcSystem::_opt_flag && vcSystem::_verbose_flag)
 	{
 		test_system.Print_Reduced_Control_Paths_As_Dot_Files();
+		test_system.Print_Data_Paths_As_Dot_Files();
 	}
 
 	if(vcSystem::_generate_hsys_file)

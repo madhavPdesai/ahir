@@ -212,7 +212,11 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		if(this->Get_Is_Volatile())
 			ofile << "// volatile! " << endl;
 
-		bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
+		bool source_is_implicit = 
+			(_source->Is_Signal_Read() ||
+			 _source->Is_Volatile_Function_Call() ||
+			 _source->Is_Implicit_Variable_Reference());
+
 		bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
 
 		if(!this->Get_Is_Volatile() && source_is_implicit && target_is_implicit)
@@ -355,7 +359,11 @@ void AaAssignmentStatement::Write_VC_Links_Optimized(string hier_id, ostream& of
 				ofile);
 		this->_target->Write_VC_Links_As_Target_Optimized(hier_id,
 				ofile);
-		bool source_is_implicit = (_source->Is_Signal_Read() || _source->Is_Implicit_Variable_Reference());
+		bool source_is_implicit = 
+			(_source->Is_Signal_Read() ||
+			 _source->Is_Volatile_Function_Call() ||
+			 _source->Is_Implicit_Variable_Reference());
+
 		bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
 
 		if(source_is_implicit && target_is_implicit)
@@ -1713,6 +1721,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		{
 			AaExpression* sge = source_expr->Get_Guard_Expression();
 			if((sge != NULL) && !sge->Is_Constant() && (sge != source_expr) && 
+					!sge->Is_Volatile_Function_Call() && 
 					!sge->Is_Implicit_Variable_Reference() && 
 					!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 			{
@@ -1733,7 +1742,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				sge->Mark_As_Visited(visited_elements);
 
 			bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
-			if(src_has_no_dpe)
+			bool src_is_volatile_fn_call  = source_expr->Is_Volatile_Function_Call();
+			if(src_has_no_dpe || src_is_volatile_fn_call)
 			{
 				ofile << "// interlock for implicit-variable-ref/signal-read in Phi alternative " 
 					<<  idx <<  endl;
@@ -1760,7 +1770,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				// dont forget!
 				source_expr->Mark_As_Visited(visited_elements);
 			}
-			else
+
+			if(!src_has_no_dpe)
 			{
 				ofile << "// source expression in Phi alternative " 
 					<<  idx <<  endl;
@@ -1807,7 +1818,9 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 		// relayed to i/o of phi-sequencer.
 		//  This will be taken care of in a unified way.
-		if(source_expr->Is_Implicit_Variable_Reference() || source_expr->Is_Constant() ||
+		if(source_expr->Is_Implicit_Variable_Reference() || 
+			source_expr->Is_Volatile_Function_Call() ||
+			source_expr->Is_Constant() ||
 			source_expr->Is_Signal_Read())
 		{
 			ofile << "// Phi start dependency for implicit/constant alternative." << endl;
@@ -1926,7 +1939,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized_Single_Source(bool pipeline
 
 	bool src_has_no_dpe  = 
 		(source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
-	if(src_has_no_dpe)
+	bool src_is_volatile_fn_call = source_expr->Is_Volatile_Function_Call();
+	if(src_has_no_dpe || src_is_volatile_fn_call)
 	{
 		ofile << "// interlock for implicit-variable-ref/signal-read in single-source phi" 
 			<<   endl;
@@ -1951,9 +1965,11 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized_Single_Source(bool pipeline
 
 
 		// dont forget!
-		source_expr->Mark_As_Visited(visited_elements);
+		if(src_has_no_dpe)
+			source_expr->Mark_As_Visited(visited_elements);
 	}
-	else
+
+	if(!src_has_no_dpe)
 	{
 		ofile << "// non-implicit source expression in single-source phi" <<  endl;
 		source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
@@ -2028,7 +2044,9 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 			sset.insert(source_expr);
 			bool src_has_no_dpe  = (source_expr->Is_Implicit_Variable_Reference() ||  source_expr->Is_Signal_Read());
 			bool src_has_trivial_dpe = (!src_has_no_dpe && (source_expr->Is_Trivial() && source_expr->Get_Is_Intermediate()));
-			if(!source_expr->Is_Constant() && (src_has_no_dpe || src_has_trivial_dpe))
+			bool src_is_volatile_fn_call  = source_expr->Is_Volatile_Function_Call();
+			if(!source_expr->Is_Constant() && 
+				(src_has_no_dpe || src_has_trivial_dpe || src_is_volatile_fn_call))
 			{
 				// interlock.
 				vector<string> reqs;

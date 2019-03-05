@@ -1252,7 +1252,8 @@ aA_Expression[AaScope* scope] returns [AaExpression* expr]
 	    (expr = aA_PriorityMux_Expression[scope]) |
 	    (expr = aA_ExclusiveMux_Expression[scope]) |
 	    (expr = aA_Reduce_Expression[scope]) |
-	    (expr = aA_VectorConcatenate_Expression[scope])
+	    (expr = aA_VectorConcatenate_Expression[scope]) |
+	    (expr = aA_FunctionCall_Expression[scope])
         )
 ;
 
@@ -1494,6 +1495,32 @@ aA_VectorConcatenate_Expression[AaScope* scope] returns [AaExpression* expr]
         {
             expr = Make_Reduce_Expression(scope, lp->getLine(), __CONCAT, expr_vector);
         }
+	(aA_Expression_Buffering_Spec[expr])?
+  RPAREN
+;   
+
+
+//----------------------------------------------------------------------------------------------------------
+// aA_FunctionCall_Expression: LPAREN CALL simpleIdentifier LPAREN (aA_Expression)+ RPAREN RPAREN
+//----------------------------------------------------------------------------------------------------------
+aA_FunctionCall_Expression[AaScope* scope] returns [AaExpression* expr]
+{
+    vector<AaExpression*> expr_vector;
+    AaExpression* nexpr = NULL;
+    expr = NULL;
+}
+: lp: LPAREN 
+	CALL
+	fid: SIMPLE_IDENTIFIER
+	LPAREN
+		(
+		nexpr = aA_Expression[scope]  {expr_vector.push_back(nexpr);}
+		)*
+	RPAREN
+	{ 
+	    expr =new AaFunctionCallExpression (scope, fid->getText(), expr_vector);
+            expr->Set_Line_Number(lp->getLine());
+	}
 	(aA_Expression_Buffering_Spec[expr])?
   RPAREN
 ;   

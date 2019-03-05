@@ -1,8 +1,8 @@
 \documentclass{beamer}
 \usepackage{epsfig}
 \title{An introduction to the {\bf Aa} language}
-\author{Madhav P. Desai}
-\date{March 8, 2018}
+\author{Madhav P. Desai\\ Department of Electrical Engg.\\ IIT Bombay\\ Mumbai, India}
+
 \begin{document}
 \maketitle
 
@@ -130,12 +130,14 @@ treated like SSA variables.  Inputs cannot be written into.
 \item Non-blocking pipes: return a 0 if read is attempted on an empty pipe.
 \end{itemize}
 }
+
 \frame[containsverbatim]{\frametitle{{\bf Aa} SSA Objects}
+
 \begin{itemize}
 \item Implemented as registers.
 \item Fast access (immediate read, single cycle write).
 \item Should use as often as possible.
-\item Note that the type of these objects is inferred from the
+\item Type of these objects is inferred from the
 context in which they appear.
 \begin{verbatim}
 a := (A + B)
@@ -143,6 +145,7 @@ a := (A + B)
 $A$ and $B$ must have the same type, and the type of $a$ is
 inferred to be the type of $A$.
 \end{itemize}
+
 }
 
 
@@ -172,6 +175,7 @@ e.g.  (~ a)
 (a <op> B)
 <op> can be +,-,*,/,<<,>>,|,&,~|,~&,^,~^
             ==,!=,>,>=,<,<=
+e.g. (a + b)
 \end{verbatim}
 \end{itemize}
 }
@@ -205,6 +209,16 @@ a store, else it is a load.
 \end{itemize}
 }
 
+\frame[containsverbatim]{\frametitle{{\bf Aa} Complex Expressions}
+\begin{verbatim}
+(a [] I)
+($slice a 9 4)
+($concat a b c d)
+($reduce | a b c d)
+\end{verbatim}
+
+}
+
 \frame[containsverbatim]{\frametitle{{\bf Aa} Statements}
 \begin{itemize}
 \item {\em Atomic} statements.
@@ -232,6 +246,9 @@ a := (b + c)
 $call fpadd32 (A B) (C)
 \end{verbatim}
 \end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Atomic Simple Statements}
 }
 
 \frame[containsverbatim]{\frametitle{{\bf Aa} Atomic Block Statements}

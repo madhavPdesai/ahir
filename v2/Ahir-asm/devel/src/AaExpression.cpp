@@ -5669,7 +5669,6 @@ void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)
 {
 
 	ofile << "// " << this->To_String() << endl;
-
 	this->Check_Volatile_Inconsistency();
 
 	// if _test is constant, print dummy.
@@ -5733,8 +5732,6 @@ void AaTernaryExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
 
 	ofile << "// " << this->To_String() << endl;
-
-
 	if(this->Is_Constant())
 	{
 		Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
@@ -5752,9 +5749,6 @@ void AaTernaryExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 }
 void AaTernaryExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
-
-
-
 	if(!this->Is_Constant())
 	{
 		this->_test->Write_VC_Wire_Declarations(false,ofile);
@@ -5879,6 +5873,369 @@ void AaTernaryExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 
 		this->Set_Is_On_Collect_Root_Sources_Stack(false);
 	}
+}
+
+/////////////////////////////////////////////////  Function Call  /////////////////////////////////////////
+AaFunctionCallExpression::AaFunctionCallExpression
+	(AaScope* scope, string module_id, vector<AaExpression*>& args):AaExpression(scope)
+{
+	_module_identifier = module_id;
+	_called_module = NULL;
+	for(int I = 0, fI = args.size();I < fI; I++)
+	{
+		AaExpression* expr = args[I];
+		_arguments.push_back(expr);
+		expr->Add_Target(this);
+	}
+}
+
+AaFunctionCallExpression::~AaFunctionCallExpression()  {};
+
+void AaFunctionCallExpression::Print(ostream& ofile)
+{
+	ofile << "( $call " << _module_identifier << " (";
+	for(int I = 0, fI = _arguments.size();I < fI; I++)
+	{
+		_arguments[I]->Print(ofile);
+		ofile << " ";
+	}
+	ofile << ") )";
+}
+
+
+
+void AaFunctionCallExpression::Map_Source_References(set<AaRoot*>& source_objects) 
+{
+	AaModule* called_module = AaProgram::Find_Module(this->_module_identifier);
+	if(called_module != NULL)
+	{
+		this->_called_module = called_module;
+
+		if(called_module->Get_Number_Of_Output_Arguments() == 1)
+		{
+			called_module->Increment_Number_Of_Times_Called();
+			this->Set_Type(called_module->Get_Output_Argument(0)->Get_Type());
+
+			AaModule* caller_module = this->Get_Module();
+			assert(caller_module != NULL);
+			AaProgram::Add_Call_Pair(caller_module,called_module);
+
+			for(int I = 0, fI = _arguments.size(); I < fI; I++)
+			{
+				this->_arguments[I]->Map_Source_References(source_objects);
+				this->_arguments[I]->Set_Type(called_module->Get_Input_Argument(I)->Get_Type());
+			}
+		}
+		else
+		{
+			AaRoot::Error("In function-call-expression, called module must have exactly one output arg.",
+					this);
+		}
+	}
+	else
+	{
+		AaRoot::Error("In function-call-expression, called module not found.",
+				this);
+	}
+}
+	
+string AaFunctionCallExpression::Get_VC_Name()
+{
+	string ret_val = "call_" + this->_module_identifier  + "_expr_" + Int64ToStr(this->Get_Index());
+	return(ret_val);
+}
+
+	
+void AaFunctionCallExpression::PrintC_Declaration( ofstream& ofile)
+{
+	
+	for(int I = 0, fI = _arguments.size(); I < fI; I++)
+	{
+		this->_arguments[I]->PrintC_Declaration(ofile);
+	}
+	this->AaExpression::PrintC_Declaration(ofile);
+}
+
+	
+void AaFunctionCallExpression::PrintC( ofstream& ofile)
+{
+	for(int I = 0, fI = _arguments.size(); I < fI; I++)
+	{
+		this->_arguments[I]->PrintC(ofile);
+	}
+	bool first_one = true;
+	ofile << this->_called_module->Get_C_Inner_Wrap_Function_Name()
+		<< "(";
+	for(int i=0,fi=_arguments.size(); i < fi; i++)
+	{
+		if(!first_one)
+			ofile << ", ";
+		ofile << " &(" << this->_arguments[i]->C_Reference_String() << ")";
+		first_one = false;
+	}
+	if(!first_one) ofile << ", "; 
+	ofile << "&(";
+	ofile << this->C_Reference_String() << ")";
+	ofile  <<  ");\\" << endl;
+}
+	
+void AaFunctionCallExpression::Write_VC_Control_Path( ostream& ofile)
+{
+	ofile << "// " << this->To_String() << endl;
+	this->Check_Volatile_Inconsistency();
+
+	if(!this->Is_Constant())
+	{
+		ofile << ";;[" << this->Get_VC_Name() << "] { // function-call expression: " << endl;
+		ofile << "||[" << this->Get_VC_Name() << "_inputs] { " << endl;
+		for(int i=0,fi=_arguments.size(); i < fi; i++)
+		{
+			AaExpression* expr = _arguments[i];
+			if(!expr->Is_Constant())
+				expr->Write_VC_Control_Path(ofile);
+		}
+		ofile << "}" << endl;
+
+		if(!this->Is_Trivial())
+		{
+			ofile << "|| [Call] { " << endl;
+
+			ofile << ";; [Sample] {" << endl;
+			ofile << "$T [req] $T [ack] // select req/ack" << endl;
+			ofile << "}" << endl;
+			ofile << ";; [Update] {" << endl;
+			ofile << "$T [req] $T [ack] // select req/ack" << endl;
+			ofile << "}" << endl;
+			ofile << "}" << endl;
+
+			ofile << "}" << endl;
+		}
+	}
+}
+
+void AaFunctionCallExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
+{
+	ofile << "// " << this->To_String() << endl;
+	if(this->Is_Constant())
+	{
+		Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
+				this->Get_Type(),
+				this->Get_Expression_Value(),
+				ofile);
+	}
+	else
+	{
+		for(int i=0,fi=_arguments.size(); i < fi; i++)
+		{
+			AaExpression* expr = _arguments[i];
+			expr->Write_VC_Constant_Wire_Declarations(ofile);
+		}
+	}
+}
+
+void AaFunctionCallExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
+{
+	if(!this->Is_Constant())
+	{
+		for(int i=0,fi=_arguments.size(); i < fi; i++)
+		{
+			AaExpression* expr = _arguments[i];
+			if(!expr->Is_Constant())
+				expr->Write_VC_Wire_Declarations(false,ofile);
+		}
+
+		// NOTE:
+		// skip_immediate is ignored for function-call expressions
+		// because they are handled a bit differently from normal
+		// expressions (cannot embed a register into a volatile fn call).
+		//
+		if(this->Is_Trivial() || !skip_immediate)
+		{
+			ofile << "// " << this->To_String() << endl;
+			Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
+					this->Get_Type(),
+					ofile);
+		}
+	}
+}
+
+void AaFunctionCallExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
+{
+	ofile << "// " << this->To_String() << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
+
+	int delay = (this->_called_module->Get_Volatile_Flag() ? 0 : 
+			((AaModule*)_called_module)->Get_Delay());
+	bool full_rate = this->Is_Part_Of_Fullrate_Pipeline();
+
+	vector<pair<string,AaType*> > inargs, outargs;
+
+	for(int idx = 0, fidx =  _arguments.size(); idx < fidx;  idx++)
+	{
+		_arguments[idx]->Write_VC_Datapath_Instances(NULL, ofile);
+		inargs.push_back(pair<string,AaType*>(_arguments[idx]->Get_VC_Driver_Name(),
+					_arguments[idx]->Get_Type()));
+	}
+
+	if(target == NULL)
+	{
+		outargs.push_back(pair<string,AaType*>(this->Get_VC_Receiver_Name(),
+					this->Get_Type()));
+	}
+	else
+	{
+		outargs.push_back(pair<string,AaType*>(target->Get_VC_Receiver_Name(),
+					target->Get_Type()));
+	}
+
+	string dpe_name = this->Get_VC_Datapath_Instance_Name();
+	Write_VC_Call_Operator(dpe_name,
+			_module_identifier,
+			inargs,
+			outargs,
+			"",	// guard-string
+			this->Is_Trivial(), // volatile.
+			full_rate,		      
+			ofile);
+
+	// no need for additional buffering if volatile..
+	if(this->Is_Trivial())
+		return;
+
+	ofile << "$delay " << dpe_name <<  " " << delay << endl;
+
+	// extreme pipelining.
+	AaStatement* dws = this->Get_Pipeline_Parent();
+	int buffering = this->Get_Buffering();
+
+	//
+	// Rationalized earlier...
+	//if((dws != NULL)  && (dws->Get_Pipeline_Full_Rate_Flag()))
+	//{
+	//if(buffering < 2) 
+	//buffering = 2;
+	//}
+
+	//
+	// input buffering is used to decouple the
+	// two sides.
+	//
+	for(int i = 0; i < inargs.size(); i++)
+	{
+		string src_name = inargs[i].first;
+		ofile << "$buffering  $in " << dpe_name << " "
+			<< src_name << " " << buffering << endl;
+	}
+
+	//
+	// output buffering is used to decouple the
+	// two sides.
+	//
+	string tgt_name = outargs[0].first;
+	ofile << "$buffering  $out " << dpe_name << " "
+		<< tgt_name << " " << buffering << endl;
+}
+
+void AaFunctionCallExpression::Write_VC_Links(string hier_id, ostream& ofile)
+{
+	if(!this->Is_Constant())
+	{
+
+		for(int idx = 0, fidx =  _arguments.size(); idx < fidx;  idx++)
+		{
+			_arguments[idx]->Write_VC_Links(hier_id + "/" + this->Get_VC_Name() + "/" +
+					this->Get_VC_Name() + "_inputs", ofile);
+		}
+
+		bool flow_through = this->Is_Trivial();
+		if(!flow_through) 
+		{
+
+			ofile << "// " << this->To_String() << endl;
+
+			vector<string> reqs,acks;
+			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Call/Sample/req");
+			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Call/Update/req");
+			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Call/Sample/ack");
+			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Call/Update/ack");
+
+			Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),
+					reqs,
+					acks,
+					ofile);
+		}
+	}
+}
+
+void AaFunctionCallExpression::Evaluate()
+{
+	for(int idx = 0, fidx = _arguments.size(); idx < fidx; idx++)
+	{
+		_arguments[idx]->Evaluate();
+	}
+}
+
+
+
+void AaFunctionCallExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+{
+	for(int I = 0, fI = _arguments.size(); I < fI; I++)
+	{
+		_arguments[I]->Update_Adjacency_Map(adjacency_map, visited_elements);
+		__InsMap(adjacency_map,_arguments[I],this,_called_module->Get_Delay());
+	}
+	this->Update_Guard_Adjacency(adjacency_map,visited_elements);
+	visited_elements.insert(this);
+}
+
+
+
+void AaFunctionCallExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
+{
+	vector<AaExpression*> vec;
+	for(int I = 0, fI = _arguments.size(); I < fI; I++)
+	{
+		AaExpression* expr = _arguments[I];
+		this->Replace_Field_Expression(&expr, used_expr, replacement);
+		vec.push_back(expr);
+	}
+	_arguments.clear();
+	for(int J = 0, fJ = vec.size(); J < fJ; J++)
+	{
+		_arguments.push_back(vec[J]);
+	}
+}
+
+
+
+void AaFunctionCallExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
+{
+	if(!this->Is_Constant())
+	{
+		if(this->Get_Is_On_Collect_Root_Sources_Stack())
+			AaRoot::Error("Cycle in collect-root-sources", this);
+		this->Set_Is_On_Collect_Root_Sources_Stack(true);
+		bool flow_through = this->Is_Trivial();
+
+		if(flow_through)
+		{
+			for(int I = 0, fI = _arguments.size(); I < fI; I++)
+			{
+				AaExpression* expr = _arguments[I];
+				expr->Collect_Root_Sources(root_set);
+			}
+		}
+		else
+			root_set.insert(this);
+
+		this->Set_Is_On_Collect_Root_Sources_Stack(false);
+	}
+}
+
+
+bool AaFunctionCallExpression::Is_Trivial() // return false if called module is volatile.
+{
+	return(_called_module->Get_Volatile_Flag());
 }
 
 /////////////////////////////////////////////////  Utilities //////////////////////////////////////////////

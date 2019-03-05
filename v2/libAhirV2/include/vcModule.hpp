@@ -349,6 +349,8 @@ class vcModule: public vcRoot
   void Delink_From_Modules_And_Memory_Spaces();
 
   void Print_Reduced_CP_As_Dot_File();
+  void Print_DP_As_Dot_File();
+
   void Print_VHDL_Tag_Logic(ostream& ofile);
   void Print_VHDL_Called_Module_Components(ostream& ofile);
 };

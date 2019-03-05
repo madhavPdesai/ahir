@@ -3857,4 +3857,54 @@ void vcDataPath::Rationalize_Outwire_Buffering(vector<int>& obuf, bool is_part_o
 		}
 	}
 }
+   
+void vcWire::Print_Dot_Entry (ostream& ofile)
+{
+	ofile << "  " << this->Get_VHDL_Id() << " [shape=ellipse];" << endl;
+}
+
+void vcDatapathElement::Print_Dot_Entry (ostream& ofile)
+{
+	string tnode_id = this->Get_VHDL_Id();
+
+	if(this->Get_Flow_Through())
+		ofile << "  " << tnode_id << " [shape=diamond];" << endl;
+	else
+		ofile << "  " << tnode_id << " [shape=rectangle];" << endl;
+
+	for(int I = 0, fI = _input_wires.size(); I < fI; I++)
+	{
+		vcWire* iw = _input_wires[I];
+		ofile << iw->Get_VHDL_Id() << "  -> " << tnode_id << ";" << endl;
+	}
+	for(int J = 0, fJ = _output_wires.size(); J < fJ; J++)
+	{
+		vcWire* ow = _output_wires[J];
+		ofile << tnode_id << " -> " <<  ow->Get_VHDL_Id() << ";" << endl;
+	}
+}
+
+void vcDataPath::Print_Data_Path_As_Dot_File(ostream& dp_file)
+{
+	dp_file << "digraph data_path {" << endl;
+
+	// print wires as circles.
+	for(map<string,vcWire*>::iterator witer=_wire_map.begin(), fwiter = _wire_map.end();
+		witer != fwiter; witer++)
+	{
+		(*witer).second->Print_Dot_Entry(dp_file);
+	}
+
+
+	// print data-path elements as boxes..
+	for(map<string,vcDatapathElement*>::iterator dpiter=_dpe_map.begin(), 
+			fdpiter = _dpe_map.end();
+		dpiter != fdpiter; dpiter++)
+	{
+		(*dpiter).second->Print_Dot_Entry(dp_file);
+	}
+
+	dp_file << "}" << endl;
+}
+
 
