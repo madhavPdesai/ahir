@@ -1,0 +1,43 @@
+$pipe out_data : $uint<8> $depth 0 $signal
+$pipe in_data  : $uint<8> $signal
+
+$parameter PHI 0
+$parameter A   1
+$parameter B   2
+$parameter AB  3
+$parameter BA  4
+$parameter ABA 5
+$parameter BAB 6
+$module [fsm_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 9 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi fsm_state := ($bitcast ($uint<3>) PHI) $on $entry next_fsm_state $on $loopback
+		$endmerge
+
+	 	X := in_data
+		$volatile is_a   := (X == 0)
+		$volatile is_b   := (X == 1)
+		$volatile is_rst := (X [] 1)
+
+		$volatile next_fsm_state_raw :=
+				($excmux 
+					(fsm_state == PHI) ($mux  is_a A B)
+					(fsm_state == A)   ($mux  is_a A AB)
+					(fsm_state == B)   ($mux  is_a BA B)
+					(fsm_state == AB)  ($mux  is_a ABA B)
+					(fsm_state == BA)  ($mux  is_b BAB A)
+					(fsm_state == ABA) ($mux  is_b BAB A)
+					(fsm_state == BAB) ($mux  is_a ABA B))
+		$volatile oval_raw := ($mux is_a (fsm_state == BAB) (fsm_state == ABA))
+
+		$volatile next_fsm_state := ($mux is_rst A next_fsm_state_raw)
+		$volatile oval := ($bitcast ($uint<8>) ($mux is_rst 0 oval_raw))
+
+
+		out_data := oval
+
+		$while 1
+	}
+}
