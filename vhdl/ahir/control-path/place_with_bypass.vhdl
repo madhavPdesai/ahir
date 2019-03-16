@@ -76,7 +76,7 @@ architecture default_arch of place_with_bypass is
 
 begin  -- default_arch
 
-  assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;
+  assert capacity > 0 report "in place " & name & ": place must have capacity > 0." severity error;
   assert marking <= capacity report "in place " & name & ": initial marking must be less than place capacity." severity error;
 
   -- At most one of the preds can send a pulse.

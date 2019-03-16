@@ -72,7 +72,7 @@ architecture default_arch of place is
 --##decl_synopsys_sync_set_reset##
 begin  -- default_arch
 
-  assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;
+  assert capacity > 0 report "in place " & name & ": place must have capacity > 0." severity error;
   assert marking <= capacity report "in place " & name & ": initial marking must be less than place capacity." severity error;
 
 
