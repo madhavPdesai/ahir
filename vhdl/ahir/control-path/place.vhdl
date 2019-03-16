@@ -65,7 +65,7 @@ architecture default_arch of place is
   signal incoming_token : boolean;      -- true if a pred fires
   signal backward_reset : boolean;      -- true if a succ fires
   signal token_sig      : boolean;  -- asynchronously computed value of the token
-  signal token_latch    : unsigned (Ceil_Log2(capacity+1)-1 downto 0);
+  signal token_latch    : unsigned (LogWidth(capacity)-1 downto 0);
   
   constant debug_flag : boolean := global_debug_flag;
 -- see comment above..

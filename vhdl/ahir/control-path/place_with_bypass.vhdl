@@ -64,8 +64,8 @@ architecture default_arch of place_with_bypass is
 
   signal incoming_token : boolean;      -- true if a pred fires
   signal backward_reset : boolean;      -- true if a succ fires
-  signal token_latch    : unsigned (Ceil_Log2(capacity+1)-1 downto 0);
-  constant U0    : unsigned (Ceil_Log2(capacity+1)-1 downto 0) := (others => '0');
+  signal token_latch    : unsigned (LogWidth(capacity)-1 downto 0);
+  constant U0    : unsigned (LogWidth(capacity)-1 downto 0) := (others => '0');
 
   signal non_zero       : boolean;
 
