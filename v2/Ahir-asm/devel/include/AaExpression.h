@@ -216,6 +216,8 @@ class AaExpression: public AaRoot
 	virtual void Add_Target(AaExpression* expr) {this->_targets.insert(expr);}
 	virtual void Remove_Target(AaExpression* expr) {this->_targets.erase(expr);}
 
+	virtual int Get_Number_Of_Targets() {return (this->_targets.size());}
+
 	virtual string Get_C_Name() {return(this->Get_VC_Name());}
 	virtual string Get_VC_Name();
 

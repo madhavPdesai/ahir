@@ -75,12 +75,16 @@ class AaStatement: public AaScope
   map<string,AaStatement*> _marked_statement_map;
 
   int _longest_path;
+  bool _keep_flag;
 
  public:
   AaStatement(AaScope* scope);
   
   virtual void Set_Mark(string mid) {_mark = mid;}
   virtual string Get_Mark() {return(_mark);}
+
+  virtual void Set_Keep_Flag(bool v) {_keep_flag = v;}
+  virtual bool Get_Keep_Flag() {return(_keep_flag);}
 
   virtual void Mark_Statement(string mid, AaStatement* stmt);
 
@@ -125,15 +129,9 @@ class AaStatement: public AaScope
 
   // return implicit target with supplied name, NULL if none found.
   virtual AaSimpleObjectReference* Get_Implicit_Target(string tgt_name) {assert(0);}
-  // add map entries in parent's lookup map for easy access
-  virtual void Map_Targets() 
-  {
-    // derived statements will map their targets
-    // in their containing scopes.
-    assert(0); 
-  }
 
   virtual void Set_Guard_Expression(AaSimpleObjectReference* oref);
+  virtual void Replace_Guard_Expression(AaSimpleObjectReference* oref);
 
   virtual AaExpression* Get_Guard_Expression()
   {
@@ -176,6 +174,7 @@ class AaStatement: public AaScope
   ~AaStatement();
 
   virtual string Kind() {return("AaStatement");}
+  virtual void Map_Targets() { assert(0);}
   virtual void Map_Source_References() { assert(0);}
 
   bool Is_Dependent_On_Phi();
@@ -330,6 +329,8 @@ class AaStatement: public AaScope
    //
    virtual void Check_Volatility_Ordering_Condition();
    virtual bool Is_Part_Of_Pipelined_Module();
+  
+   virtual bool Is_Orphaned() {return(false);}
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -381,7 +382,11 @@ class AaStatementSequence: public AaScope
     for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
       this->_statement_sequence[i]->Set_Pipeline_Parent(dws);
   }
-
+  virtual void Map_Targets() 
+  {
+    for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+      this->_statement_sequence[i]->Map_Targets();
+  }
   virtual void Map_Source_References() 
   {
     for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
@@ -479,6 +484,7 @@ class AaNullStatement: public AaStatement
 
   virtual void Print(ostream& ofile) { ofile << this->Tab() << "$null" << endl; }
   virtual string Kind() {return("AaNullStatement");}
+  virtual void Map_Targets () {} // do nothing
   virtual void Map_Source_References() {} // do nothing
 
   virtual void PrintC(ofstream& srcfile, ofstream& headerfile)
@@ -512,6 +518,7 @@ class AaTraceStatement: public AaNullStatement
 	AaTraceStatement(AaScope* prnt, string tid):AaNullStatement(prnt) {_trace_identifier = tid; _trace_index = 0;}
 	AaTraceStatement(AaScope* prnt, string tid, int tindex):AaNullStatement(prnt) {_trace_identifier = tid; _trace_index = tindex;}
         virtual void Print(ostream& ofile);
+  	virtual void Map_Targets () {} // do nothing
   	virtual void Map_Source_References();
 
   	virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
@@ -529,6 +536,7 @@ class AaReportStatement: public AaNullStatement
 	AaReportStatement(AaScope* parent, AaExpression* assert_expr, 
 				string tag, string synopsys, vector<pair<string,AaExpression*> >& descr_pairs);
         virtual void Print(ostream& ofile);
+  	virtual void Map_Targets () {} // do nothing
   	virtual void Map_Source_References();
   	virtual void PrintC(ofstream& srcfile, ofstream& headerfile);
         virtual string Kind() {return("AaReportStatement");}
@@ -582,7 +590,6 @@ class AaAssignmentStatement: public AaStatement
   AaExpression* Get_Target() {return(this->_target);}
   AaExpression* Get_Source() {return(this->_source);}
 
-  virtual void Map_Targets();
 
   AaAssignmentStatement(AaScope* scope,AaExpression* target, AaExpression* source, int lineno);
   ~AaAssignmentStatement();
@@ -602,6 +609,8 @@ class AaAssignmentStatement: public AaStatement
 
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaAssignmentStatement");}
+
+  virtual void Map_Targets();
   virtual void Map_Source_References();
 
   virtual AaSimpleObjectReference* Get_Implicit_Target(string tgt_name);
@@ -665,6 +674,8 @@ class AaAssignmentStatement: public AaStatement
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
    virtual void Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_set, set<AaRoot*>& visited_elements);
+
+  virtual bool Is_Orphaned();
 };
 
 
@@ -716,9 +727,9 @@ class AaCallStatement: public AaStatement
   
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaCallStatement");}
-  virtual void Map_Source_References();
 
-  //  virtual void Map_Targets();
+  virtual void Map_Targets();
+  virtual void Map_Source_References();
 
   virtual AaSimpleObjectReference* Get_Implicit_Target(string tgt_name);
 
@@ -865,6 +876,8 @@ class AaBlockStatement: public AaStatement
   ~AaBlockStatement();
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaBlockStatement");}
+
+  virtual void Map_Targets();
   virtual void Map_Source_References();
 
 
@@ -1067,6 +1080,7 @@ class AaJoinForkStatement: public AaParallelBlockStatement
   AaJoinForkStatement(AaForkBlockStatement* scope);
   ~AaJoinForkStatement();
   virtual string Kind() {return("AaJoinForkStatement");}
+
   virtual void Map_Source_References();
 
 
@@ -1114,6 +1128,7 @@ class AaPlaceStatement: public AaStatement
     ofile << this->Tab() << "$place[" << this->Get_Label() << "]"  << endl; 
   }
   virtual string Kind() {return("AaPlaceStatement");}
+  virtual void Map_Targets() {} // do nothing
   virtual void Map_Source_References() {} // do nothing
 
   virtual bool Is_Control_Flow_Statement() {return(true);}
@@ -1202,7 +1217,7 @@ class AaMergeStatement: public AaSeriesBlockStatement
     _has_entry_place = v;
   }
 
-
+  virtual void Map_Targets();
   virtual void Map_Source_References();
 
   virtual string C_Reference_String()
@@ -1273,6 +1288,8 @@ class AaPhiStatement: public AaStatement
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPhiStatement");}
+
+  virtual void Map_Targets();
   virtual void Map_Source_References();
 
   virtual AaSimpleObjectReference* Get_Implicit_Target(string tgt_name);
@@ -1379,6 +1396,8 @@ class AaSwitchStatement: public AaStatement
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaSwitchStatement");}
+
+  virtual void Map_Targets();
   virtual void Map_Source_References();
 
   virtual bool Can_Block(bool pipeline_flag);
@@ -1463,6 +1482,13 @@ class AaIfStatement: public AaStatement
 		  this->_else_sequence->PrintC_Implicit_Declarations(ofile);
   }
   virtual string Kind() {return("AaIfStatement");}
+  virtual void Map_Targets()
+  {
+    if(this->_if_sequence)
+    	this->_if_sequence->Map_Targets();
+    if(this->_else_sequence)
+      this->_else_sequence->Map_Targets();
+  }
   virtual void Map_Source_References()
   {
     if(this->_test_expression)
@@ -1563,6 +1589,13 @@ class AaDoWhileStatement: public AaStatement
   ~AaDoWhileStatement();
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaDoWhileStatement");}
+  virtual void Map_Targets()
+  {
+    if(this->_merge_statement)
+    	this->_merge_statement->Map_Targets();
+    if(this->_loop_body_sequence)
+      this->_loop_body_sequence->Map_Targets();
+  }
   virtual void Map_Source_References()
   {
     if(this->_test_expression)

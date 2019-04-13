@@ -45,6 +45,7 @@ AaStatement::AaStatement(AaScope* p): AaScope(p)
   _guard_complement = false;
   _pipeline_parent = NULL;
   _longest_path    = 2; // default value.
+  _keep_flag = false;
 }
 
 AaStatement::~AaStatement() {};
@@ -647,10 +648,11 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 			new_stmt->Set_Buffering(buf_val);
 			AaProgram::Increment_Buffering_Bit_Count(buf_val * new_target->Get_Type()->Size());
 
+			new_stmt->Map_Targets();
 			new_stmt->Map_Source_References();
 
 			AaSimpleObjectReference* new_guard_expr = new AaSimpleObjectReference(prnt_scope, new_stmt);
-			gstmt->Set_Guard_Expression(new_guard_expr);			
+			gstmt->Replace_Guard_Expression(new_guard_expr);			
 
 			// lost track of curr_expr, but it doesnt matter..
 			vector<AaStatement*> dv;
@@ -782,6 +784,7 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 						new_target,
 						new_src,
 						0);
+				new_stmt->Map_Targets();
 
 				int buf_val = curr_slack;
 				//if(this->Is_Part_Of_Fullrate_Pipeline()) buf_val = ((buf_val < 2) ? 2 : buf_val);
@@ -815,6 +818,8 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 
 			assert(slack <= max_slack);
 
+			AaRoot* curr_expr_root = curr_expr->Get_Root_Object();
+
 			// Replace uses of curr_expr in nbr_expr by 
 			// a simple object reference to the appropriately
 			// delayed version.
@@ -825,35 +830,66 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 				if(nbr->Is_Expression())
 				{
 					AaExpression* nbr_expr = (AaExpression*) nbr;
-					nbr_expr->Replace_Uses_By(curr_expr, rs);
+					AaStatement* nbr_stmt = nbr_expr->Get_Associated_Statement();
+					if((nbr_stmt == NULL) || (nbr_stmt != curr_expr_root))
+					{
+						nbr_expr->Replace_Uses_By(curr_expr, rs);
+						if(nbr_stmt != NULL)
+							nbr_stmt->Map_Source_References();
+					}
+
 				}
 				else if(nbr->Is_Call_Statement())
 				{
-					AaScope* prnt_scope = this->Get_Scope();
-					if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
-						prnt_scope = this; 
-					AaSimpleObjectReference* new_arg = new AaSimpleObjectReference(prnt_scope, 
-							rs->Get_Target()->Get_Name());
-					new_arg->Set_Type(curr_expr->Get_Type());
-
 					AaCallStatement* cnbr = (AaCallStatement*) nbr;
-					cnbr->Replace_Input_Argument(curr_expr, new_arg);
+					if(cnbr != curr_expr_root)
+					{
+						AaScope* prnt_scope = this->Get_Scope();
+						if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
+							prnt_scope = this; 
+						AaSimpleObjectReference* new_arg = new AaSimpleObjectReference(prnt_scope, 
+													rs->Get_Target()->Get_Name());
+						new_arg->Set_Type(curr_expr->Get_Type());
+
+						cnbr->Replace_Input_Argument(curr_expr, new_arg);
+					}
 				}
 				else if(nbr->Is_Assignment_Statement())
 				{
-					AaScope* prnt_scope = this->Get_Scope();
-					if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
-						prnt_scope = this; 
-					AaSimpleObjectReference* new_arg = new AaSimpleObjectReference(prnt_scope, 
-							rs->Get_Target()->Get_Name());
-					new_arg->Set_Type(curr_expr->Get_Type());
-
 					AaAssignmentStatement* astmt = ((AaAssignmentStatement*) nbr);
-					astmt->Replace_Source_Expression(curr_expr, new_arg);
+					if(astmt != curr_expr_root)
+					{
+						AaScope* prnt_scope = this->Get_Scope();
+						if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
+							prnt_scope = this; 
+
+						AaSimpleObjectReference* new_arg = new AaSimpleObjectReference(prnt_scope, 
+								rs->Get_Target()->Get_Name());
+						new_arg->Set_Type(curr_expr->Get_Type());
+						astmt->Replace_Source_Expression(curr_expr, new_arg);
+
+					}
 				}
 			}
 		}
 	}
+}
+
+void AaStatement::Replace_Guard_Expression(AaSimpleObjectReference* new_arg)
+{
+	if(this->_guard_expression != NULL)
+	{
+		AaSimpleObjectReference* old_arg = this->_guard_expression;
+
+		old_arg->Set_Associated_Statement(NULL);
+		old_arg->Remove_Target_Reference(this);
+
+		this->Remove_Source_Reference(old_arg);
+		this->_source_objects.erase(old_arg->Get_Object());
+	}
+
+	this->_guard_expression = new_arg;
+	this->_guard_expression->Map_Source_References(this->_source_objects);
 }
 
 
@@ -889,7 +925,14 @@ bool AaStatementSequence::Can_Block(bool pipeline_flag)
 void AaStatementSequence::Print(ostream& ofile)
 {
 	for(unsigned int i=0; i < this->_statement_sequence.size();i++)
-		this->_statement_sequence[i]->Print(ofile);
+	{
+		if(!this->_statement_sequence[i]->Is_Orphaned() || !AaProgram::_do_not_print_orphans || this->_statement_sequence[i]->Get_Keep_Flag())
+			this->_statement_sequence[i]->Print(ofile);
+		else
+		{
+			AaRoot::Info("ignored orphan statement: " + this->_statement_sequence[i]->To_String());
+		}
+	}
 }
 
 
@@ -1339,9 +1382,6 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 	this->_target = tgt;
 	this->_target->Set_Is_Target(true);
 
-	if(tgt->Is_Object_Reference())
-		this->Map_Target((AaObjectReference*)tgt);
-
 	tgt->Add_RHS_Source(src);
 	this->_source = src;
 	this->_source->Add_Target(this->_target);
@@ -1359,19 +1399,7 @@ bool AaAssignmentStatement::Get_Is_Volatile()
 
 void AaAssignmentStatement::Set_Is_Volatile(bool v)
 {
-	AaScope* sc = this->Get_Root_Scope();
-	assert(sc && sc->Is("AaModule"));
-	AaModule* parent_module = (AaModule*) sc;
 
-	if(v && parent_module->Get_Operator_Flag())
-	{
-		AaRoot* tobj = _target->Get_Object();
-		if(tobj->Is_Interface_Object())
-		{
-			AaRoot::Error("operator module has volatile update of interface object " + tobj->Get_Name(), this); 
-			return;
-		}
-	}
 	_is_volatile = v;
 	if(this->_source)
 	{
@@ -1448,9 +1476,23 @@ string AaAssignmentStatement::Get_VC_Synch_Transition_Name(bool& has_delay)
 	return(ret_val);
 }
 
+  
+bool AaAssignmentStatement::Is_Orphaned()
+{
+	bool ret_val = 0;
+	if(this->_target->Is_Implicit_Variable_Reference() && !this->_target->Is_Interface_Object_Reference())
+	{
+		if(this->_target->Get_Number_Of_Things_Driven_By_This() == 0)
+			ret_val = 1;
+	}
+	return(ret_val);
+}
+
+
 void AaAssignmentStatement::Print(ostream& ofile)
 {
 	assert(this->Get_Target()->Get_Type() && this->Get_Source()->Get_Type());
+
 	int twidth = this->Get_Target()->Get_Type()->Size();
 	int swidth = this->Get_Source()->Get_Type()->Size();
 	int awidth = AaProgram::_foreign_address_width;
@@ -1553,6 +1595,7 @@ void AaAssignmentStatement::Print(ostream& ofile)
 		if(bufval > 1)
 			ofile << " $buffering " << bufval;
 
+
 		if(this->_mark != "")
 			ofile << " $mark " << _mark << " ";
 
@@ -1582,18 +1625,23 @@ void AaAssignmentStatement::Print(ostream& ofile)
 			ofile << ")  ";
 		}
 
+		if(this->Get_Keep_Flag())
+			ofile << " $keep ";
+
 		AaModule* m = this->Get_Module();
 		if(!this->Get_Is_Volatile() && (m != NULL) && !m->Get_Is_Volatile() &&
 				(this->_target != NULL))
 		{
 			int bits_of_buffering = bufval * this->_target->Get_Type()->Size();
-			ofile << "// bits of buffering = " << bits_of_buffering << " ";
+			ofile << "// bits of buffering = " << bits_of_buffering << ". ";
+			if(this->Is_Orphaned())
+				ofile << " Orphaned statement with target " << _target->To_String() << " ?? ";
 		}
 	}
 
-
 	if(AaProgram::_verbose_flag)
 		ofile << endl << Debug_Info();
+
 
 	ofile << endl;
 }
@@ -1603,8 +1651,25 @@ void AaAssignmentStatement::Map_Targets()
 	// only one target which can serve as a handle
 	// to this statement
 	if(this->_target->Is_Object_Reference())
+	{
 		this->Map_Target((AaObjectReference*)this->Get_Target());
+	
+		AaScope* sc = this->Get_Root_Scope();
+		assert(sc && sc->Is("AaModule"));
+		AaModule* parent_module = (AaModule*) sc;
+		if(this->Get_Is_Volatile() && parent_module->Get_Operator_Flag())
+		{
+			AaRoot* tobj = _target->Get_Object();
+			assert(tobj != NULL);
+			if(tobj->Is_Interface_Object())
+			{
+				AaRoot::Error("operator module has volatile update of interface object " + tobj->Get_Name(), this); 
+				return;
+			}
+		}
+	}
 }
+
 
 void AaAssignmentStatement::Map_Source_References()
 {
@@ -2139,6 +2204,8 @@ string AaAssignmentStatement::Get_VC_Update_Completed_Transition_Name()
 	}
 }
 
+
+
 void AaAssignmentStatement::Replace_Source_Expression(AaExpression* old_arg, AaSimpleObjectReference* new_arg)
 {
 	if(this->_source == old_arg)
@@ -2155,6 +2222,12 @@ void AaAssignmentStatement::Replace_Source_Expression(AaExpression* old_arg, AaS
 		this->Add_Source_Reference(new_arg);
 		new_arg->Map_Source_References(this->_source_objects);
 	}
+	else
+	{
+		this->_source->Replace_Uses_By(old_arg,new_arg);
+		new_arg->Map_Source_References(this->_source_objects);
+	}
+
 }
 //---------------------------------------------------------------------
 // AaCallStatement
@@ -2186,9 +2259,17 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 		outargs[i]->Set_Is_Target(true);
 
 		this->_output_args.push_back(outargs[i]);
-		this->Map_Target(outargs[i]);
 	}
 }
+
+void AaCallStatement::Map_Targets()
+{
+	for(unsigned int i = 0; i < this->_output_args.size(); i++)
+	{
+		this->Map_Target(this->_output_args[i]);
+	}
+}
+
 AaCallStatement::~AaCallStatement() {};
 
 bool AaCallStatement::Get_Is_Volatile()
@@ -2953,23 +3034,8 @@ void AaBlockStatement::Add_Object(AaObject* obj)
 
 void AaBlockStatement::Add_Export(string formal, string actual)
 {
-	AaRoot* formal_ref = this->Find_Child(formal);
-	if(formal_ref == NULL)
-	{
-		AaRoot::Error("in export, did not find object " + formal + " in " + this->Get_Label(),this);
-	}
-	else
-	{
-		if(this->Get_Scope() != NULL)
-		{
-			this->Get_Scope()->Map_Child(actual, formal_ref);
-			this->_exports[formal] = actual;
-		}
-		else
-		{
-			AaRoot::Warning("export " + formal + " => " + actual + " ignored for block " + this->Get_Label(), this);
-		}
-	}
+	this->_exports[formal] = actual;
+
 }
 
 void AaBlockStatement::Coalesce_Storage()
@@ -3128,6 +3194,37 @@ void AaBlockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	headerfile << ";" << endl;
 	srcfile << this->Get_Export_Apply_Macro() << ";" << endl;
 	srcfile << "}" << endl;
+}
+
+void AaBlockStatement::Map_Targets()
+{
+	if(this->_statement_sequence)
+		this->_statement_sequence->Map_Targets();	
+
+	// map exports
+	for (map<string,string>::iterator miter = this->_exports.begin(), fiter = this->_exports.end();
+			miter != fiter; miter++)
+	{
+		string formal = (*miter).first;
+		string actual = (*miter).second;
+
+		AaRoot* formal_ref = this->Find_Child(formal);
+		if(formal_ref == NULL)
+		{
+			AaRoot::Error("in export, did not find object " + formal + " in " + this->Get_Label(),this);
+		}
+		else
+		{
+			if(this->Get_Scope() != NULL)
+			{
+				this->Get_Scope()->Map_Child(actual, formal_ref);
+			}
+			else
+			{
+				AaRoot::Warning("export " + formal + " => " + actual + " ignored for block " + this->Get_Label(), this);
+			}
+		}
+	}
 }
 
 void AaBlockStatement::Map_Source_References()
@@ -3934,6 +4031,11 @@ void AaMergeStatement::Map_Source_References()
 	// also the phi statements!
 	this->AaBlockStatement::Map_Source_References();
 }
+  
+void AaMergeStatement::Map_Targets()
+{
+	this->AaBlockStatement::Map_Targets();
+}
 
 
 void AaMergeStatement::Set_In_Do_While(bool v)
@@ -4242,18 +4344,6 @@ void AaPhiStatement::Set_Target(AaObjectReference* tgt)
 
 	tgt->Set_Associated_Statement(this);
 	tgt->Set_Is_Intermediate(false);
-	this->Map_Target(tgt);
-
-	if(!tgt->Is_Implicit_Variable_Reference())
-	{
-		AaRoot::Error("target of a PHI statement must be an implicit (SSA) variable.", this);
-	}
-	else if(tgt->Is_Interface_Object_Reference())
-	{
-		// This warning should be an error if the module is
-		// a pipelined one.
-		AaRoot::Warning("target of a PHI statement is an interface object!", this);
-	}
 
 	if(this->_source_pairs.size() > 0)
 	{
@@ -4304,10 +4394,25 @@ void AaPhiStatement::Add_Source_Label_Vector(AaExpression* expr, vector<string>&
 	}
 }
 
+void AaPhiStatement::Map_Targets()
+{
+	this->Map_Target(this->_target);
+	if(!this->_target->Is_Implicit_Variable_Reference())
+	{
+		AaRoot::Error("target of a PHI statement must be an implicit (SSA) variable.", this);
+	}
+	else if(this->_target->Is_Interface_Object_Reference())
+	{
+		// This warning should be an error if the module is
+		// a pipelined one.
+		AaRoot::Warning("target of a PHI statement is an interface object!", this);
+	}
+
+}
+
 
 void AaPhiStatement::Map_Source_References()
 {
-
 	this->_target->Map_Source_References(this->_target_objects);
 
 	for(unsigned int i=0; i < this->_source_pairs.size(); i++)
@@ -4884,6 +4989,11 @@ void AaSwitchStatement::Map_Source_References()
 	}
 	if(this->_default_sequence)
 		this->_default_sequence->Map_Source_References();
+}
+void AaSwitchStatement::Map_Targets()
+{
+	if(this->_default_sequence)
+		this->_default_sequence->Map_Targets();
 }
 
 void AaSwitchStatement::Print(ostream& ofile)

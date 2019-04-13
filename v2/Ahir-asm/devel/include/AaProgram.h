@@ -161,6 +161,7 @@ class AaProgram
 
   static bool _balance_loop_pipeline_bodies;
   static string _tool_name;
+  static bool  _do_not_print_orphans;
 
 
   static bool _keep_extmem_inside;
@@ -263,6 +264,7 @@ class AaProgram
   static AaRecordType* Make_Named_Record_Type(string rname);
   static AaRecordType* Find_Named_Record_Type(string rname);
 
+  static void Map_Targets();
   static void Map_Source_References();
 
   // Check for cycles

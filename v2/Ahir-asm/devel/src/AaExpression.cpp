@@ -266,7 +266,11 @@ void AaExpression::Replace_Field_Expression(AaExpression** eptr, AaExpression* u
 
 			if(match_flag)
 			{
+
 				new_expr = new AaSimpleObjectReference(this->Get_Scope(),replacement);
+				
+				replacement->Get_Target()->Add_Target(new_expr);
+
 				*eptr  = new_expr;
 				this->AaExpression::Replace_Uses_By(fexpr, new_expr);
 			}
@@ -1044,7 +1048,7 @@ bool AaSimpleObjectReference::Is_Write_To_Pipe(AaPipeObject* obj)
 
 AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, AaAssignmentStatement* root_obj):AaObjectReference(parent_tpr, root_obj) 
 {
-	this->Set_Object(root_obj);
+	this->Set_Object(root_obj->Get_Target());
 	this->Set_Type(root_obj->Get_Target()->Get_Type());
 }
 
@@ -2290,9 +2294,16 @@ void AaSimpleObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaR
 			}		
 			else
 			{
-				root = NULL;
-				__InsMap(adjacency_map,root,this,0);
-				visited_elements.insert(this);
+				bool is_war = ((root != NULL) && root->Is_Statement() &&
+						(((AaStatement*)root)->Get_Scope() == this->Get_Scope()));
+
+				if(!is_war)
+				{
+					root = NULL;
+					__InsMap(adjacency_map,root,this,0);
+					visited_elements.insert(this);
+				}
+
 			}
 		}
 		else
@@ -2318,7 +2329,11 @@ void AaSimpleObjectReference::Replace_Uses_By(AaExpression* used_expr, AaAssignm
 	if(this->_object == used_expr->Get_Root_Object())
 	{
 		AaRoot* obj   = this->_object;
-		this->_object = replacement;
+		this->_object = replacement->Get_Target();
+
+		// need to link replacement to this else we
+		// have an orphan.
+		replacement->Get_Target()->Add_Target(this);
 	}
 }
 

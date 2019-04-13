@@ -82,6 +82,7 @@ int main(int argc, char* argv[])
 
   // inline in outfile
   AaProgram::_print_inlined_functions_in_caller = true;
+  AaProgram::_do_not_print_orphans = true;
 
   AaProgram::_tool_name = "AaOpt";
   AaProgram::_buffering_bits_added_during_path_balancing = 0;

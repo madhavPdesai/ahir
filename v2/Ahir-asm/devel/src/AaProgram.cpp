@@ -52,6 +52,8 @@ bool AaProgram::_keep_extmem_inside = false;
 bool AaProgram::_verbose_flag = false;
 bool AaProgram::_print_inlined_functions_in_caller = false;
 bool AaProgram::_use_gnu_pth = false;
+bool AaProgram::_do_not_print_orphans = false;
+
 AaStorageObject* AaProgram::_extmem_object = NULL;
 string AaProgram::_extmem_object_name;
 int AaProgram::_extmem_size;
@@ -439,6 +441,8 @@ AaObject* AaProgram::Find_Object(string obj_name)
 
 void AaProgram::Add_Module(AaModule* obj) 
 { 
+  AaRoot::Info("Added module " + obj->Get_Label());
+
   if(AaProgram::Find_Module(obj->Get_Label()) == NULL)
     {
       AaProgram::_modules[obj->Get_Label()] = obj;
@@ -617,6 +621,13 @@ void AaProgram::Init_Call_Graph()
       AaProgram::_call_graph.Add_Vertex((*miter).second, mod_name);
       AaProgram::Add_Call_Pair((AaModule*) NULL, (*miter).second);
     }
+}
+void AaProgram::Map_Targets()
+{
+  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+      miter != AaProgram::_modules.end();
+      miter++)
+    (*miter).second->Map_Targets();
 }
 void AaProgram::Map_Source_References()
 {
@@ -1110,7 +1121,9 @@ void AaProgram::Elaborate()
 {
 	AaRoot::Info("elaborating the program .... initializing the call-graph");
 	AaProgram::Init_Call_Graph();
-	AaRoot::Info("mapping object references..");
+	AaRoot::Info("mapping target object references..");
+	AaProgram::Map_Targets();
+	AaRoot::Info("mapping source object references..");
 	AaProgram::Map_Source_References();
 	AaRoot::Info("checking for cycles in the call-graph ... ");
 	AaProgram::Check_For_Cycles_In_Call_Graph();

@@ -264,6 +264,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 			if(!read_expr->Is_Constant())
 			{
+
 				//
 				// the rhs source expression which is to be assigned to "this"
 				// must be started only after read_expr has finished sampling its
@@ -297,6 +298,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				ofile << "// ignored out-of-scope w_root " << w_root->To_String() << endl;
 			continue;
 		}
+
 
 		// root not to be ignored.
 		for(set<AaRoot*>::iterator r_iter = read_root_set.begin(),
@@ -359,15 +361,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						string w_sct = __SCT(w_root);
 						string r_sct = __SCT(r_root);
 
-						// Aggressive timing and use of registers implies that
-						// this dependency must be delayed in order to prevent
-						// combinational cycles.	
-						string delay_trans_name = 
-							__SCT(r_root) + "_delay_to_" + __UST(w_root) + "_for_" + 
-							this->Get_VC_Name();
-						ofile << "$T [" << delay_trans_name << "] $delay" << endl;
-						__J(delay_trans_name, __SCT(r_root));
-						__J(__UST(w_root), delay_trans_name);
+						__J(__UST(w_root), __SCT(r_root));
 
 						// also, a dependency from sct to ust is added from r-root
 						// to w-root.  This can cause a dead-lock unless the
@@ -403,15 +397,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				}
 				else
 				{
-					// Aggressive timing and use of registers implies that
-					// this dependency must be delayed in order to prevent
-					// combinational cycles.	
-					string delay_trans_name = 
-						__SCT(r_phi) + "_delay_to_" + __UST(w_root) + "_for_" + 
-						this->Get_VC_Name();
-					ofile << "$T [" << delay_trans_name << "] $delay" << endl;
-					__J(delay_trans_name, __SCT(r_phi));
-					__J(__UST(w_root), delay_trans_name);
+					__J(__UST(w_root), __SCT(r_phi));
 
 					int rb = w_root->Get_Buffering();
 					if(rb < 2)
@@ -437,12 +423,9 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						if(r_root != w_root)
 						{
 							AaModule* rsm = this->Get_Module();
-							if(rsm != NULL) 
+							if((rsm != NULL)  && rsm->Get_Pipeline_Deterministic_Flag())
 							{
-								if (rsm->Get_Pipeline_Deterministic_Flag())
-								{
-									AaRoot::Error ("non-accumulative WAR dependency in deterministic pipeline not permitted.", this);
-								}
+								AaRoot::Error ("non-accumulative WAR dependency in deterministic pipeline not permitted.", this);
 							}
 						}
 					}

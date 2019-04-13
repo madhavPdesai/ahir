@@ -306,6 +306,7 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
     int lno;
     AaSimpleObjectReference* guard_expr = NULL;
     bool update_flag = false;
+    bool keep_flag = false;
 }
     :  
       ( 
@@ -342,6 +343,7 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 				{
 					ss = dlid->getText();
 					delay_stmts.push_back(pair<string,int>(ss, delay_val));})+ RPAREN )? 
+           (KEEP {keep_flag = true;})?
 	   {
 		for(int I = 0, fI = llist.size(); I < fI; I++)
 		{
@@ -349,6 +351,9 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 			stmt = llist[I];
 			if(volatile_flag)
 				stmt->Set_Is_Volatile(true);
+
+			stmt->Set_Keep_Flag(keep_flag);
+
 			if(guard_expr != NULL)
 			{
 				stmt->Set_Guard_Expression(guard_expr);
@@ -530,7 +535,7 @@ aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
 ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Assignment: ASSIGN aA_Object_Reference  aA_Expression
+// aA_Assignment: ASSIGN aA_Object_Reference  aA_Expression KEEP?
 //-----------------------------------------------------------------------------------------------
 aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
 {
@@ -2619,6 +2624,9 @@ VOLATILE   : "$volatile";
 OPERATOR   : "$operator";
 NOOPT      : "$noopt";
 OPAQUE     : "$opaque";
+
+// keep flag..
+KEEP     : "$keep";
 
 
 DETERMINISTIC: "$deterministic";

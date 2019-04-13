@@ -86,6 +86,9 @@ class AaRoot
 
   set<AaRoot*>& Get_Target_References() {return(_target_references);}
   set<AaRoot*>& Get_Source_References() {return(_source_references);}
+  virtual int Get_Number_Of_Things_Driven_By_This()
+	{ return(_source_references.size());}
+
 
   virtual bool Is_Write_To_Pipe(AaPipeObject* obj) {return(false);}
   virtual bool Writes_To_Memory_Space(AaMemorySpace* ms) {return(false);}

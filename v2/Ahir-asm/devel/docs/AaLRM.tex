@@ -372,6 +372,15 @@ between the write to to\_pipe and the read from from\_pipe.
 This delay information is used by the compiler to 
 balance pipelines.
 
+The {\bf Aa} compiler will optimize away dangling
+assignment statements (whose targets are not
+used any where in the program). In order to prevent
+this from happening, you can use the \$keep keyword.
+\begin{verbatim}
+sacrifical_value := signal_from_somwhere $keep
+\end{verbatim}
+The \$keep keyword must be placed after the \$delay
+keyword.
 
 More details of the syntax are provided in 
 Section \ref{sec:Syntax}.

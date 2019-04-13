@@ -166,6 +166,7 @@ int main(int argc, char* argv[])
       
       string filename = argv[i];      
       AaParse(filename);
+      cerr << "Info: finished parsing file " << filename << endl;
       
       if(AaRoot::Get_Error_Flag())
 	{

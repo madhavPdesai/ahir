@@ -222,6 +222,10 @@ AaRoot* AaModule::Find_Child(string tag)
   return(child);
 }
 
+void AaModule::Map_Targets()
+{
+  this->AaBlockStatement::Map_Targets();
+}
 
 void AaModule::Map_Source_References()
 {

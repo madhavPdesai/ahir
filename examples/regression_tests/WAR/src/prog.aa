@@ -1,0 +1,81 @@
+$storage a: $array [16] $of $uint<8>
+$storage b: $array [16] $of $uint<8>
+$module [init] $in () $out ()
+$is
+{
+	$branchblock[loop] {
+
+		$dopipeline $depth 7 $buffering 2 $fullrate
+
+			$merge $entry $loopback
+				$phi I := ($bitcast ($uint<8>) 0) $on $entry nI $on $loopback
+			$endmerge
+
+			$volatile nI := (I+1)
+			a[I] := I
+			b[I] := I
+
+		$while (I < 15)
+	} 
+}
+
+
+$module [dot_product] $in () $out (result: $uint<8>)
+$is
+{
+	$branchblock[loop] {
+
+		$dopipeline $depth 7 $buffering 2 $fullrate
+
+			$merge $entry $loopback
+				$phi I := ($bitcast ($uint<8>) 0) $on $entry nI $on $loopback
+			$endmerge
+
+			$volatile nI := (I+1)
+
+			a_val := a[I]
+			b_val := b[I]
+
+			$volatile p     := (a_val*b_val)
+
+			DP := ($mux (I == 0) p (p+DP))
+
+		$while (I < 15)
+	} (DP => r)
+	result := r
+}
+
+$module [dot_product_unrolled] $in () $out (result: $uint<8>)
+$is
+{
+	$branchblock[loop] {
+
+		$dopipeline $depth 7 $buffering 2 $fullrate
+
+			$merge $entry $loopback
+				$phi I := ($bitcast ($uint<8>) 0) $on $entry nI $on $loopback
+			$endmerge
+
+			$volatile nI := (I+2)
+
+			a_val_0 := a[I]
+			b_val_0 := b[I]
+		
+			a_val_1 := a[(I+1)]
+			b_val_1 := b[(I+1)]
+
+			$volatile p_0     := (a_val_0*b_val_0)
+			$volatile p_1     := (a_val_1*b_val_1)
+
+			s_0   := (p_0 + DP_0)
+			DP_0 := ($mux (I == 0) p_0 s_0)
+
+			$volatile s_1   := (p_1 + DP_1)
+			DP_1 := ($mux (I == 0) p_1 s_1)
+
+		$while (I < 15)
+	} (DP_0 => r_0 DP_1 => r_1)
+
+	result := (r_0 + r_1)
+}
+

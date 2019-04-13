@@ -274,6 +274,7 @@ class AaModule: public AaSeriesBlockStatement
   virtual string Kind() {return("AaModule");}
 
   virtual AaRoot* Find_Child(string tag);
+  virtual void Map_Targets();
   virtual void Map_Source_References();
 
   void Set_Foreign_Object_Representatives();
