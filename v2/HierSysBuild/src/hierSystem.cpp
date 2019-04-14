@@ -1160,7 +1160,7 @@ bool hierSystem::Check_For_Errors()
 	}
 
 	vector<string> in_pipes;
-	this->List_In_Pipe_Names(internal_pipes);
+	this->List_In_Pipe_Names(in_pipes);
 	for(int I = 0, fI = in_pipes.size(); I < fI; I++)
 	{
 		string pname = in_pipes[I];
@@ -1169,7 +1169,6 @@ bool hierSystem::Check_For_Errors()
 			hierRoot::Report_Error("in " + this->Get_Id() + ", in pipe " + pname + " does not drive anything.");
 			ret_val = true;
 		}
-		
 	}
 
 	vector<string> out_pipes;

@@ -1482,7 +1482,8 @@ bool AaAssignmentStatement::Is_Orphaned()
 	bool ret_val = 0;
 	if(this->_target->Is_Implicit_Variable_Reference() && !this->_target->Is_Interface_Object_Reference())
 	{
-		if(this->_target->Get_Number_Of_Things_Driven_By_This() == 0)
+		if((this->_target->Get_Number_Of_Things_Driven_By_This() == 0) &&
+			!this->Can_Block(false))
 			ret_val = 1;
 	}
 	return(ret_val);

@@ -283,6 +283,11 @@ public:
 	bool Is_Driving_Pipe(string pname) {return(_driving_pipes.find(pname) != _driving_pipes.end());}
 
 
+	bool Pipe_Is_Mapped_To_Subsystem(string pname)
+        {
+		bool ret_val = (_pipe_to_subsystem_connection_map.find(pname) !=  _pipe_to_subsystem_connection_map.end());
+		return(ret_val);
+        }
 	int Get_Instance_Count() {return(_instance_count);}
 	void Increment_Instance_Count() {_instance_count++;}
 
