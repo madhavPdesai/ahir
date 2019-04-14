@@ -361,7 +361,18 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						string w_sct = __SCT(w_root);
 						string r_sct = __SCT(r_root);
 
-						__J(__UST(w_root), __SCT(r_root));
+						// Aggressive timing and use of registers implies that
+						// this dependency must be delayed in order to prevent
+						// combinational cycles.        
+						//
+						// THIS DELAY IS REQUIRED TO PREVENT COMBINATIONAL LOOPS
+						//
+						string delay_trans_name = 
+							__SCT(r_root) + "_delay_to_" + __UST(w_root) + "_for_" + 
+							this->Get_VC_Name();
+						ofile << "$T [" << delay_trans_name << "] $delay" << endl;
+						__J(delay_trans_name, __SCT(r_root));
+						__J(__UST(w_root), delay_trans_name);
 
 						// also, a dependency from sct to ust is added from r-root
 						// to w-root.  This can cause a dead-lock unless the
@@ -397,7 +408,18 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				}
 				else
 				{
-					__J(__UST(w_root), __SCT(r_phi));
+					// Aggressive timing and use of registers implies that
+					// this dependency must be delayed in order to prevent
+					// combinational cycles.        
+					//
+					// THIS DELAY IS REQUIRED TO PREVENT COMBINATIONAL LOOPS
+					//
+					string delay_trans_name = 
+						__SCT(r_phi) + "_delay_to_" + __UST(w_root) + "_for_" + 
+						this->Get_VC_Name();
+					ofile << "$T [" << delay_trans_name << "] $delay" << endl;
+					__J(delay_trans_name, __SCT(r_phi));
+					__J(__UST(w_root), delay_trans_name);
 
 					int rb = w_root->Get_Buffering();
 					if(rb < 2)
@@ -410,7 +432,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				// evaluation of "a = (b+c)"
 				if(pipeline_flag)
 				{
-					
+
 					ofile << "// WAR dependency: release  Read: " 
 						<< this->To_String() 
 						<< " with Write: " << w_root->To_String() << endl;
