@@ -107,7 +107,19 @@ void AaExpression::Write_VC_Output_Buffering(string dpe_name, string tgt_name, o
 	{
 		AaAssignmentStatement* astmt = (AaAssignmentStatement*) stmt;
 		if(astmt->Get_Source() == this)
+		{
 			stmt_buf = astmt->Get_Buffering();
+			
+			//
+			// Buffering may be attached to the target of
+			// the assignment statement..
+			//
+			if(astmt->Get_Target()->Is_Implicit_Variable_Reference())
+			{
+				if(astmt->Get_Target()->Get_Buffering() > stmt_buf)
+					stmt_buf = astmt->Get_Target()->Get_Buffering();
+			}
+		}
 	}
 
 	if(stmt_buf > this_buffering)
