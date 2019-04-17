@@ -361,23 +361,33 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						string w_sct = __SCT(w_root);
 						string r_sct = __SCT(r_root);
 
+
 						// Aggressive timing and use of registers implies that
 						// this dependency must be delayed in order to prevent
 						// combinational cycles.        
 						//
 						// THIS DELAY IS REQUIRED TO PREVENT COMBINATIONAL LOOPS
 						//
-						string delay_trans_name = 
-							__SCT(r_root) + "_delay_to_" + __UST(w_root) + "_for_" + 
-							this->Get_VC_Name();
-						ofile << "$T [" << delay_trans_name << "] $delay" << endl;
-						__J(delay_trans_name, __SCT(r_root));
-						__J(__UST(w_root), delay_trans_name);
+						//bool add_double_buffering = (w_sct != r_sct);
+						bool add_double_buffering = true;
+						if(!add_double_buffering)
+						{
+							string delay_trans_name = 
+								__SCT(r_root) + "_delay_to_" + __UST(w_root) + "_for_" + 
+								this->Get_VC_Name();
+							ofile << "$T [" << delay_trans_name << "] $delay" << endl;
+							__J(delay_trans_name, __SCT(r_root));
+							__J(__UST(w_root), delay_trans_name);
+						}
+						else
+						{
+							__J(__UST(w_root), __SCT(r_root));
+						}
 
 						// also, a dependency from sct to ust is added from r-root
 						// to w-root.  This can cause a dead-lock unless the
 						// operator is double-buffered.
-						if(w_sct == r_sct)
+						if(add_double_buffering)
 						{
 							AaStatement* w_root_stmt =
 								(w_root->Is_Expression() ? ((AaExpression*)w_root)->Get_Associated_Statement() 
@@ -408,18 +418,12 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				}
 				else
 				{
-					// Aggressive timing and use of registers implies that
-					// this dependency must be delayed in order to prevent
-					// combinational cycles.        
 					//
-					// THIS DELAY IS REQUIRED TO PREVENT COMBINATIONAL LOOPS
+					// Double buffering is required to prevet combinational
+					// cycle here.  This prevents an UST -> SCT path
+					// in the control logic.
 					//
-					string delay_trans_name = 
-						__SCT(r_phi) + "_delay_to_" + __UST(w_root) + "_for_" + 
-						this->Get_VC_Name();
-					ofile << "$T [" << delay_trans_name << "] $delay" << endl;
-					__J(delay_trans_name, __SCT(r_phi));
-					__J(__UST(w_root), delay_trans_name);
+					__J(__UST(w_root), __SCT(r_phi));
 
 					int rb = w_root->Get_Buffering();
 					if(rb < 2)

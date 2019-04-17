@@ -517,6 +517,25 @@ AaType* AaObjectReference::Get_Object_Type()
 	return(ret_type);
 }
 
+int AaObjectReference::Get_Delay()
+{
+	int ret_val = this->AaExpression::Get_Delay();
+	if(this->_object && this->_object->Is_Storage_Object())
+	{
+		AaStorageObject* sobj = (AaStorageObject*) this->_object;
+		if(!this->Get_Is_Target())
+		{
+			if(sobj->Get_Number_Of_Reader_Modules() > 1)
+				ret_val++;
+		}
+		else
+		{
+			if(sobj->Get_Number_Of_Writer_Modules() > 1)
+				ret_val++;
+		}
+	}
+	return(ret_val);
+}
 
 // cannot assign a value to a storage object!
 void AaObjectReference::Assign_Expression_Value(AaValue* expr_value)
@@ -974,6 +993,10 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 			// object in the module if appropriate.
 		{
 			this->Update_Globally_Accessed_Objects((AaStorageObject*) obj);
+			if(this->Get_Is_Target())
+				((AaStorageObject*)obj)->Add_Writer_Expression(this);
+			else
+				((AaStorageObject*)obj)->Add_Reader_Expression(this);
 		}
 
 	}
@@ -1000,9 +1023,8 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 	{
 		this->Set_Delay(PIPE_ACCESS_DELAY);
 	}
-	else
+	else if(obj->Is_Storage_Object())
 	{
-
 		this->Set_Delay(MEMORY_ACCESS_DELAY);
 	}
 
@@ -2437,7 +2459,13 @@ void AaArrayObjectReference::Set_Object(AaRoot* obj)
 			this->Set_Does_Pipe_Access(true);
 
 		if(obj->Is_Storage_Object())
+		{
 			this->Update_Globally_Accessed_Objects((AaStorageObject*) obj);
+			if(this->Get_Is_Target())
+				((AaStorageObject*)obj)->Add_Writer_Expression(this);
+			else
+				((AaStorageObject*)obj)->Add_Reader_Expression(this);
+		}
 	}
 	else if(obj->Is_Expression())
 	{
@@ -3504,7 +3532,14 @@ AaPointerDereferenceExpression::AaPointerDereferenceExpression(AaScope* scope,
 	AaProgram::Add_Storage_Dependency_Graph_Vertex(this);
 	AaProgram::_pointer_dereferences.insert(this);
 
-	this->Set_Delay(MEMORY_ACCESS_DELAY);
+
+	// 1. multiple readers/writers,
+	//    we need to add an extra delay 
+	// 2. multiple modules accessing the
+	//    memory, we need to add an extra
+	//    delay.
+	int additional_delay = 2;
+	this->Set_Delay(MEMORY_ACCESS_DELAY + additional_delay);
 
 }
 
@@ -3629,6 +3664,7 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 				obj->Set_Is_Written_Into(true);
 				if(r_scope->Is_Module())
 					obj->Add_Writer_Module((AaModule*) r_scope);
+				
 			}
 			else
 			{
@@ -3637,6 +3673,10 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 					obj->Add_Reader_Module((AaModule*) r_scope);
 			}
 
+			if(this->Get_Is_Target())
+				((AaStorageObject*)obj)->Add_Writer_Expression(this);
+			else
+				((AaStorageObject*)obj)->Add_Reader_Expression(this);
 
 			if(!obj->Is_Foreign_Storage_Object())
 				// this expression accesses obj.

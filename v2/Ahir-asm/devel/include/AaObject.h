@@ -214,6 +214,9 @@ class AaStorageObject: public AaObject
   set<AaModule*> _writer_modules;
   set<AaModule*> _reader_modules;
 
+  set<AaExpression*> _writer_expressions;
+  set<AaExpression*> _reader_expressions;
+
   bool _is_written_into;
   bool _is_read_from;
   bool _register_flag;
@@ -250,6 +253,8 @@ class AaStorageObject: public AaObject
 		m_vec.push_back(*iter);
 	}
   }
+  int Get_Number_Of_Writer_Modules() { return(_writer_modules.size());}
+
   void Get_Reader_Modules (vector<AaModule*>& m_vec)
   {
 	for (set<AaModule*>::iterator iter = _reader_modules.begin(), fiter = _reader_modules.end();
@@ -258,6 +263,29 @@ class AaStorageObject: public AaObject
 		m_vec.push_back(*iter);
 	}
   }
+  int Get_Number_Of_Reader_Modules() { return(_reader_modules.size());}
+
+  void Get_Writer_Expressions (vector<AaExpression*>& m_vec)
+  {
+	for (set<AaExpression*>::iterator iter = _writer_expressions.begin(), fiter = _writer_expressions.end();
+			iter != fiter; iter++)
+	{
+		m_vec.push_back(*iter);
+	}
+  }
+  int Get_Number_Of_Writer_Expressions() { return(_writer_expressions.size());}
+  void Add_Reader_Expression(AaExpression* m) { _reader_expressions.insert(m); }
+
+  void Get_Reader_Expressions (vector<AaExpression*>& m_vec)
+  {
+	for (set<AaExpression*>::iterator iter = _reader_expressions.begin(), fiter = _reader_expressions.end();
+			iter != fiter; iter++)
+	{
+		m_vec.push_back(*iter);
+	}
+  }
+  int Get_Number_Of_Reader_Expressions() { return(_reader_expressions.size());}
+  void Add_Writer_Expression(AaExpression* m) { _writer_expressions.insert(m); }
 
   virtual void Set_Is_Read_From(bool v) { _is_read_from = v; }
   virtual bool Get_Is_Read_From() { return(_is_read_from); }

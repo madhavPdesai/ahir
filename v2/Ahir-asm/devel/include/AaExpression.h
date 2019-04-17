@@ -761,6 +761,8 @@ class AaObjectReference: public AaExpression
 
 	virtual bool Writes_To_Memory_Space(AaMemorySpace* ms);
 
+	virtual int Get_Delay();
+
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
