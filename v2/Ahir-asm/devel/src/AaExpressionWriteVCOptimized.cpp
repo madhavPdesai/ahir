@@ -389,25 +389,10 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						// operator is double-buffered.
 						if(add_double_buffering)
 						{
-							AaStatement* w_root_stmt =
-								(w_root->Is_Expression() ? ((AaExpression*)w_root)->Get_Associated_Statement() 
-								 : (w_root->Is_Statement() ? (AaStatement*)w_root : NULL));
-							AaStatement* r_root_stmt =
-								(r_root->Is_Expression() ? ((AaExpression*)r_root)->Get_Associated_Statement() 
-								 : (r_root->Is_Statement() ? (AaStatement*) r_root : NULL));
-
-							if(r_root_stmt == w_root_stmt)
+							int rb = w_root->Get_Buffering();
+							if(rb < 2)
 							{
-								int rb = w_root->Get_Buffering();
-								if(rb < 2)
-								{
-									w_root->Set_Buffering(2);
-								}
-								rb = r_root->Get_Buffering();
-								if(rb < 2)
-								{
-									r_root->Set_Buffering(2);
-								}
+								w_root->Set_Buffering(2);
 							}
 						}
 					}
