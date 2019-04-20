@@ -1308,6 +1308,60 @@ For example
 \end{verbatim}
 
 
+\section{Synthetic instructions}
+
+For convenience, there are some synthetic operations which
+you can use to simplify coding an Aa program.  These
+are listed below
+\begin{itemize}
+\item The \$reduce operation:
+\begin{verbatim}
+($reduce |  a  b  c)   
+    (note: this is the same as  ((a+b)+c))
+\end{verbatim}
+Any associative operation may be used instead
+of the or (add, mul, xor, and).
+\item The \$split operation:  Suppose you want
+to split a 32 bit variable into two 8-bit variables
+and four 4-bit variables.  This can be done using
+\begin{verbatim}
+($split X 8 8 4 4 4 4) (a8 b8 c4 d4 e4 f4)
+   (note: a8 := ($slice X 31 24) etc..)
+\end{verbatim}
+\item The \$concat operation:  This is the
+reverse of a \$split.  
+\begin{verbatim}
+Y := ($concat a8 b8 c4 d4 e4 f4)
+  (note: Y := (a8 && (b8 && (c4 && d4 ....))
+\end{verbatim}
+\item The \$excmux operations:  A multiplexor
+whose selects are expected to be mutually exclusive.
+\begin{verbatim}
+Y := ($excmux s0 X0 s1 X1 s2 X2)
+\end{verbatim}
+This is equivalent to 
+\begin{verbatim}
+Y := ($reduce |
+           ($mux s0 X0 0)
+           ($mux s1 X1 0)
+           ($mux s2 X2 0))
+\end{verbatim}
+Note that if all of s0,s1,s2 are 0, then
+Y is assigned to 0.
+\item The \$prioritymux operations:  A multiplexor
+whose selects may not be mutually exclusive.
+\begin{verbatim}
+Y := ($prioritymux s0 X0 s1 X1 s2 X2
+                $default 1)
+\end{verbatim}
+This is equivalent to 
+\begin{verbatim}
+Y := ($mux s0 X0
+           ($mux s1 X1
+                $mux s2 X2 1))
+\end{verbatim}
+\end{itemize}
+
 
 \section{Specifying buffering for expressions}
 

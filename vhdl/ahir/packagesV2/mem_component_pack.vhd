@@ -198,6 +198,18 @@ component base_bank_dual_port is
          reset : in std_logic);
 end component base_bank_dual_port;
 
+component fifo_mem_synch_write_asynch_read is
+   generic ( name: string; address_width: natural;  data_width : natural;
+			mem_size: natural);
+   port (
+	 write_enable: in std_logic;
+	 write_data: in std_logic_vector(data_width-1 downto 0);
+	 write_address: in std_logic_vector(address_width-1 downto 0);
+	 read_data: out std_logic_vector(data_width-1 downto 0);
+	 read_address: in std_logic_vector(address_width-1 downto 0);
+         clk: in std_logic);
+end component fifo_mem_synch_write_asynch_read;
+
 component base_bank_dual_port_for_vivado is
    generic ( name: string;  g_addr_width: natural := 10; g_data_width : natural := 16);
 	port(
