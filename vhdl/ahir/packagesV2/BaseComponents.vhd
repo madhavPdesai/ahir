@@ -118,10 +118,11 @@ package BaseComponents is
   end component;
 
   component join is
-     generic(place_capacity : integer := 1;
+     generic(number_of_predecessors: integer;
+		place_capacity : integer := 1;
 		bypass: boolean := true;
       		name : string );
-     port (preds      : in   BooleanArray;
+     port (preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
     	symbol_out : out  boolean;
 	clk: in std_logic;
 	reset: in std_logic);
@@ -155,10 +156,11 @@ package BaseComponents is
   end component;
 
   component join_with_input is
-     generic(place_capacity : integer := 1;
+     generic(number_of_predecessors: integer;
+		place_capacity : integer := 1;
 		bypass: boolean := false;
       		name : string );
-     port (preds      : in   BooleanArray;
+     port (preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -166,8 +168,9 @@ package BaseComponents is
   end component;
   
   component  generic_join 
-   generic(name: string; place_capacities: IntegerArray; place_markings: IntegerArray; place_delays: IntegerArray);
-   port ( preds      : in   BooleanArray;
+   generic(number_of_predecessors: integer;
+		name: string; place_capacities: IntegerArray; place_markings: IntegerArray; place_delays: IntegerArray);
+   port ( preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
     	symbol_out : out  boolean;
 	clk: in std_logic;
 	reset: in std_logic);
@@ -196,23 +199,27 @@ package BaseComponents is
   
 
   component marked_join is
-     generic(place_capacity : integer := 1;
+     generic(number_of_predecessors: integer;
+		number_of_marked_predecessors: integer;
+		place_capacity : integer := 1;
 		bypass: boolean := true;
       		name : string;
 		marked_predecessor_bypass: BooleanArray);
-     port (preds      : in   BooleanArray;
-           marked_preds      : in   BooleanArray;
+     port (preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
+           marked_preds      : in   BooleanArray(number_of_marked_predecessors-1 downto 0);
            symbol_out : out  boolean;
            clk: in std_logic;
            reset: in std_logic);
   end component;
 
   component marked_join_with_input is
-     generic(place_capacity : integer := 1;
+     generic(number_of_predecessors: integer;
+		number_of_marked_predecessors: integer;
+		place_capacity : integer := 1;
 		bypass: boolean := false;
       		name : string);
-     port (preds      : in   BooleanArray;
-           marked_preds      : in   BooleanArray;
+     port (preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
+           marked_preds      : in   BooleanArray(number_of_marked_predecessors-1 downto 0);
            symbol_in : in boolean;
            symbol_out : out  boolean;
            clk: in std_logic;

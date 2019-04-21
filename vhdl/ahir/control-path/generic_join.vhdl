@@ -40,8 +40,8 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity generic_join is
-  generic(name: string; place_capacities: IntegerArray; place_markings: IntegerArray; place_delays: IntegerArray);
-  port ( preds      : in   BooleanArray;
+  generic(number_of_predecessors: integer; name: string; place_capacities: IntegerArray; place_markings: IntegerArray; place_delays: IntegerArray);
+  port ( preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
     	symbol_out : out  boolean;
 	clk: in std_logic;
 	reset: in std_logic);
@@ -60,7 +60,7 @@ begin  -- default_arch
 		and (place_delays'length = place_markings'length) )
 	report "Mismatch in lengths of marking/capacity arrays." severity failure;
   
-  placegen: for I in 1 to pmarkings'length generate
+  placegen: for I in 1 to number_of_predecessors generate
     placeBlock: block
 	signal place_pred: BooleanArray(0 downto 0);
     begin

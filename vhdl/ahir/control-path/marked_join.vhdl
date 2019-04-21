@@ -39,9 +39,10 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity marked_join is
-  generic(place_capacity : integer := 1; bypass : boolean := true; name : string; marked_predecessor_bypass: BooleanArray);
-  port ( preds      : in   BooleanArray;
-         marked_preds : in BooleanArray;
+  generic(number_of_predecessors: integer; number_of_marked_predecessors: integer;
+		place_capacity : integer := 1; bypass : boolean := true; name : string; marked_predecessor_bypass: BooleanArray);
+  port ( preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
+         marked_preds : in BooleanArray(number_of_marked_predecessors-1 downto 0);
     	symbol_out : out  boolean;
 	clk: in std_logic;
 	reset: in std_logic);

@@ -51,7 +51,7 @@ begin  -- default_arch
 
   preds <= pred0 & pred1;
   baseJoin : join
-    generic map(bypass => bypass, name => name & ":base")
+    generic map(number_of_predecessors => 2, bypass => bypass, name => name & ":base")
     port map (preds => preds,
               symbol_out => symbol_out,
               clk => clk,
