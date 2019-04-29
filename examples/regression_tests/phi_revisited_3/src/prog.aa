@@ -5,6 +5,7 @@ $pipe in_signal: $uint<32> $signal
 $module [phi_check_daemon] $in() $out () $is
 {
 
+	in_signal := 1
 	$branchblock[lOoP] {
 		$dopipeline $depth 16 $buffering 2 $fullrate
 		$merge $entry $loopback 
