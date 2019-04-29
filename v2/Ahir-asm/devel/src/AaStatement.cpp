@@ -6055,22 +6055,40 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 				NULL,
 				ofile);
 
+			
+
 		// sampling ordering to control race
 		// issues
-		if(idx > 0)
-		{
-			int J;
-			for(J = 0; J < idx; J++)
-			{
-				AaStatement* last_phi = phi_stmts[J];
+		if(phi_stmts.size() > 1) {
 
-				ofile << "// Race prevention dependency in ordered.. PHI's." << endl;
+			ofile << "// Race prevention dependency in ordered.. PHI's." << endl;
+
+			string rotname = "phi_race_ordering_transition_" + IntToStr(idx);
+			
+			bool last_one = true;
+			if(idx < (phi_stmts.size() - 1))
+			{
+				__T(rotname);
+				string curr_sct = (((AaPhiStatement*)curr_phi)->Is_Single_Source() ?
+						__SCT(((AaPhiStatement*)curr_phi)->Get_Source_Expression(0)) : __SCT(curr_phi) + "_ps");
+
+				__J(rotname, curr_sct);
+
+				last_one = false;
+			}
+
+			if(idx > 0) {
+				int J = idx -1;
+				string prev_rotname = "phi_race_ordering_transition_" + IntToStr(J);
+				AaStatement* last_phi = phi_stmts[J];
 				string curr_ust = (((AaPhiStatement*)curr_phi)->Is_Single_Source() ?
 						__UST(((AaPhiStatement*)curr_phi)->Get_Source_Expression(0)) : __UST(curr_phi) + "_ps");
-				string last_sct = (((AaPhiStatement*)last_phi)->Is_Single_Source() ?
-						__SCT(((AaPhiStatement*)last_phi)->Get_Source_Expression(0)) : __SCT(last_phi) + "_ps");
+				if(!last_one)
+				{
+					__J(rotname, prev_rotname);
+				}
 
-				__J(curr_ust,last_sct);
+				__J(curr_ust,prev_rotname);
 			}
 		}
 	}

@@ -9,13 +9,15 @@ $module [phi_check_daemon] $in() $out () $is
 	$branchblock[lOoP] {
 		$dopipeline $depth 16 $buffering 2 $fullrate
 		$merge $entry $loopback 
+			$phi NCMD := 0 $on $entry CMD $on $loopback
+
 			$phi CMD := ($bitcast ($uint<32>) 0) $on $entry 
 					$guard (go_on) in_data $on $loopback
 			$phi SIG := 1 $on $entry in_signal $on $loopback
 		$endmerge
 
 		$volatile go_on := ((CMD [] 0) | (~(CMD [] 0)))
-		$volatile out_val := (CMD + SIG)
+		$volatile out_val := ((CMD + SIG) + (NCMD - NCMD))
 		out_data :=  out_val
 		$while 1
 	}
