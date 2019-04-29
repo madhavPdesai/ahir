@@ -6156,11 +6156,12 @@ void AaFunctionCallExpression::Write_VC_Datapath_Instances(AaExpression* target,
 	}
 
 	string dpe_name = this->Get_VC_Datapath_Instance_Name();
+	string guard_string = this->Get_VC_Guard_String();
 	Write_VC_Call_Operator(dpe_name,
 			_module_identifier,
 			inargs,
 			outargs,
-			"",	// guard-string
+			guard_string,	// guard-string
 			this->Is_Trivial(), // volatile.
 			full_rate,		      
 			ofile);

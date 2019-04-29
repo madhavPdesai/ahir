@@ -385,6 +385,24 @@ keyword.
 More details of the syntax are provided in 
 Section \ref{sec:Syntax}.
 
+\subsection{A synthetic statement: the \$split statement}
+
+Often, we need to split a large vector into several pieces.
+Suppose you want
+to split a 32 bit variable into two 8-bit variables
+and four 4-bit variables.  This can be done using
+\begin{verbatim}
+$split (X 8 8 4 4 4 4) (a8 b8 c4 d4 e4 f4)
+\end{verbatim}
+This is actually translated to the following
+sequence of assignment statements.
+\begin{verbatim}
+a8 := ($slice X 31 24)
+a7 := ($slice X 23 16)
+c4 := ($slice X 15 12)
+...
+f4 := ($slice X 3 0)
+\end{verbatim}
 
 \subsection{Complete Block Statements}
 
@@ -1321,13 +1339,6 @@ are listed below
 \end{verbatim}
 Any associative operation may be used instead
 of the or (add, mul, xor, and).
-\item The \$split operation:  Suppose you want
-to split a 32 bit variable into two 8-bit variables
-and four 4-bit variables.  This can be done using
-\begin{verbatim}
-($split X 8 8 4 4 4 4) (a8 b8 c4 d4 e4 f4)
-   (note: a8 := ($slice X 31 24) etc..)
-\end{verbatim}
 \item The \$concat operation:  This is the
 reverse of a \$split.  
 \begin{verbatim}
