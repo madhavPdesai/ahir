@@ -97,6 +97,7 @@ architecture Behave of SplitGuardInterfaceBase is
   -- constant g_queue_number_of_stages : integer := 1;
  
   signal sr_in_q : Boolean;
+  signal guard_interface_sustained, guard_interface_registered: std_logic;
 
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
@@ -125,11 +126,24 @@ begin
 					sr_in => sr_in, sr_in_q => sr_in_q,
 					push_req => push, push_ack => push_ack);
 
+	-- Race condition in PHI statements can be an issue!
+	process(clk, reset, guard_interface, sr_in)
+	begin
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				guard_interface_registered <= '0';
+			elsif(sr_in) then
+				guard_interface_registered <= guard_interface;
+			end if;
+		end if;
+	end process;
+	guard_interface_sustained <= guard_interface when sr_in else guard_interface_registered;
+
 	-- sr_out
-	sr_out <= sr_in_q when (guard_interface = '1') else false;
+	sr_out <= sr_in_q when (guard_interface_sustained = '1') else false;
 	
 	-- sa_out
-	sa_out <= sr_in_q when (guard_interface = '0') else sa_in;
+	sa_out <= sr_in_q when (guard_interface_sustained = '0') else sa_in;
 
 
 	-- RHS State machine.
