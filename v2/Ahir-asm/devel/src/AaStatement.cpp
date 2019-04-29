@@ -6054,6 +6054,21 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 				pipe_map,
 				NULL,
 				ofile);
+
+		// sampling ordering to control race
+		// issues
+		if(idx > 0)
+		{
+			AaStatement* last_phi = phi_stmts[idx-1];
+
+			ofile << "// Race prevention dependency in successive PHI's." << endl;
+			string curr_ust = (((AaPhiStatement*)curr_phi)->Is_Single_Source() ?
+								__UST(((AaPhiStatement*)curr_phi)->Get_Source_Expression(0)) : __UST(curr_phi) + "_ps");
+			string last_sct = (((AaPhiStatement*)last_phi)->Is_Single_Source() ?
+								__SCT(((AaPhiStatement*)last_phi)->Get_Source_Expression(0)) : __SCT(last_phi) + "_ps");
+
+			__J(curr_ust,last_sct);
+		}
 	}
 
 

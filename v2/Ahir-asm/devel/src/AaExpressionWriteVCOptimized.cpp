@@ -449,7 +449,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 			}
 			else
 			{
-				ofile << "// self dependency in WAR or PHI-PHI dependency in WAR ignored." << endl;
+				ofile << "//  WAR  PHI-PHI dependency ignored..." << endl;
 			}
 		}
 	}
