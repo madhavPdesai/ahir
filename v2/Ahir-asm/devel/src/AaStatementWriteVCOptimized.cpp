@@ -1646,10 +1646,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	__J(trigger_from_loop_back,"back_edge_to_loop_body");
 	__T(sample_from_loop_back);
 	__T(sample_from_loop_back_ps);
-	__J(sample_from_loop_back, sample_from_loop_back_ps)
+	__J(sample_from_loop_back, sample_from_loop_back_ps);
 
-		// loop body exit not determined by this guy.
-		__F(sample_from_loop_back, "$null");
+	// loop body exit not determined by this guy.
+	__F(sample_from_loop_back, "$null");
 
 	string trigger_from_entry = this->Get_VC_Name() + "_entry_trigger";
 	string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
@@ -1703,6 +1703,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	string phi_mux_ack_ps = this->Get_VC_Name() + "_phi_mux_ack_ps";
 	__T(phi_mux_ack_ps);
 	__J(phi_mux_ack_ps, phi_mux_ack);
+
+
+	// join update-ack to aggregated phi update ack
+	__J("aggregated_phi_update_ack", __UCT(this));
 
 	// the source control paths.
 	for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)

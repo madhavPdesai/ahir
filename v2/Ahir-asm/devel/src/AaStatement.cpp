@@ -6043,8 +6043,11 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 		// do not re-sample unless the result of the previous
 		// sample has been updated at the output.
 		//
-		// This is REQUIRED to take care of a WAR dependency
-		// across the PHI's.
+		// This is REQUIRED to partially take care of a WAR dependency
+		// across the PHI's. Note that this does not work "completely".
+		// The semantics of the PHI's has a WAR race condition.  To
+		// deal with this, use $barrier on the PHI which is a victim
+		// of this race.
 		//
 		__MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true);
 	}
