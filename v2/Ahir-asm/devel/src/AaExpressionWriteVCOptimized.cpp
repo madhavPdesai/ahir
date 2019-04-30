@@ -75,12 +75,16 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {
 
+	bool this_is_in_phi = (this->Get_Associated_Statement() != NULL)
+					&& this->Get_Associated_Statement()->Is_Phi_Statement();
+
 	ofile << "// start: Forward dependencies from " << this->To_String() 
 		<< " to transition " << dependent_transition << endl;
 
 	// special case.. signal read
-	if(this->Is_Signal_Read())
+	if(this->Is_Signal_Read() && !this_is_in_phi)
 	{
+		ofile << "// special case... expr is signal read" << endl;
 		__J(dependent_transition, __UCT(this));
 		return;
 	}
@@ -91,38 +95,59 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 			iter != fiter; iter++)
 	{
 		AaRoot* pred = *iter;
+
 		if(visited_elements.find(pred) != visited_elements.end())
 		{
+			bool pred_is_in_phi = false;
+			if(pred->Is_Expression())
+			{
+				AaExpression* pred_expr = (AaExpression*) pred;
 
-			if((to_index > 0) && (pred->Get_Index() > to_index))
-			{
-				AaRoot::Error("incorrect ordering of forward dependency for " + this->To_String() + 
-						" (from " + pred->To_String() + ")", this);
+				pred_is_in_phi = (pred_expr->Get_Associated_Statement() != NULL)
+					&& pred_expr->Get_Associated_Statement()->Is_Phi_Statement();
 			}
-			else 
+			else if(pred->Is_Statement())
 			{
-				if(pred->Is_Expression())
+				pred_is_in_phi = ((AaStatement*)pred)->Is_Phi_Statement();
+			}
+
+			if(!(this_is_in_phi && pred_is_in_phi)) 
+				// No PHI-PHI dependencies!
+			{
+				if((to_index > 0) && (pred->Get_Index() > to_index))
 				{
-					AaExpression* expr = ((AaExpression*) pred);
-					if(!expr->Is_Interface_Object_Reference())
-						//
-						// interface object references may be
-						// included in the root object set.
-						// But these do not have any control transitions.
-						//
+					AaRoot::Error("incorrect ordering of forward dependency for " + this->To_String() + 
+							" (from " + pred->To_String() + ")", this);
+				}
+				else 
+				{
+					if(pred->Is_Expression())
 					{
-						__J(dependent_transition,__UCT(pred));
+						AaExpression* expr = ((AaExpression*) pred);
+						if(!expr->Is_Interface_Object_Reference())
+							//
+							// interface object references may be
+							// included in the root object set.
+							// But these do not have any control transitions.
+							//
+						{
+							__J(dependent_transition,__UCT(pred));
+						}
+						else
+						{
+							ofile << "// Forward dependency from interface-object-ref omitted ("
+								<< expr->To_String() << ")" << endl;
+						}
 					}
 					else
 					{
-						ofile << "// Forward dependency from interface-object-ref omitted ("
-							<< expr->To_String() << ")" << endl;
+						__J(dependent_transition,__UCT(pred));
 					}
 				}
-				else
-				{
-					__J(dependent_transition,__UCT(pred));
-				}
+			}
+			else
+			{
+				ofile << "// Forward dependency from PHI->PHI omitted" << endl;
 			}
 		}
 	}
@@ -736,9 +761,9 @@ void AaSimpleObjectReference::Write_VC_Pipelined_Module_Enable_Joins(set<AaRoot*
 
 
 void AaSimpleObjectReference::Write_VC_Joins_To_Root_Source_Updates(string trig_trans, 
-							set<AaRoot*>& visited_elements, ostream& ofile)
+		set<AaRoot*>& visited_elements, ostream& ofile)
 {
-	
+
 	set<AaRoot*> root_set;
 	this->Collect_Root_Sources(root_set);
 	for(set<AaRoot*>::iterator iter = root_set.begin(), fiter = root_set.end();
@@ -1000,7 +1025,7 @@ string AaArrayObjectReference::Get_VC_Base_Address_Update_Unmarked_Reenable_Tran
 				if(pm)
 				{
 					base_addr_calc_reenable =
-						 (this->_object->Get_VC_Name() + "_update_enable_unmarked");
+						(this->_object->Get_VC_Name() + "_update_enable_unmarked");
 				}
 			}
 		}

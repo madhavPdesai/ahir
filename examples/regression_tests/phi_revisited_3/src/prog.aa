@@ -9,10 +9,12 @@ $module [phi_check_daemon] $in() $out () $is
 	$branchblock[lOoP] {
 		$dopipeline $depth 16 $buffering 2 $fullrate
 		$merge $entry $loopback 
-			$phi NCMD := 0 $on $entry CMD $on $loopback
 
 			$phi CMD := ($bitcast ($uint<32>) 0) $on $entry 
 					$guard (go_on) in_data $on $loopback
+
+			$phi NCMD := 0 $on $entry CMD $on $loopback
+
 			$phi SIG := 1 $on $entry in_signal $on $loopback
 		$endmerge
 
