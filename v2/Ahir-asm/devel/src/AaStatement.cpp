@@ -4296,6 +4296,7 @@ AaPhiStatement::AaPhiStatement(AaBranchBlockStatement* scope, AaMergeStatement* 
 	this->_target = NULL;
 	this->_parent_merge = pm;
 	this->_in_do_while = false;
+	this->_barrier_flag = false;
 }
 AaPhiStatement::~AaPhiStatement() 
 {
@@ -4328,6 +4329,10 @@ void AaPhiStatement::Print(ostream& ofile)
 			ofile << "  " << (*iter).second[J] << " ";
 		}
 	}
+
+	if(this->Get_Barrier_Flag())
+		ofile << " $barrier";
+
 	ofile << endl;
 	if(this->_target->Get_Type())
 	{
@@ -6045,6 +6050,7 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 	}
 
 	// write the PHI statements.
+	vector<AaPhiStatement*> barriers;
 	for(unsigned int idx = 0; idx < phi_stmts.size(); idx++)
 	{
 		AaStatement* curr_phi = phi_stmts[idx];
@@ -6055,42 +6061,31 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 				NULL,
 				ofile);
 
-			
+
 
 		// sampling ordering to control race
 		// issues
-		if(phi_stmts.size() > 1) {
+		if(barriers.size() > 0) {
 
-			ofile << "// Race prevention dependency in ordered.. PHI's." << endl;
-
-			string rotname = "phi_race_ordering_transition_" + IntToStr(idx);
-			
-			bool last_one = true;
-			if(idx < (phi_stmts.size() - 1))
-			{
-				__T(rotname);
-				string curr_sct = (((AaPhiStatement*)curr_phi)->Is_Single_Source() ?
-						__SCT(((AaPhiStatement*)curr_phi)->Get_Source_Expression(0)) : __SCT(curr_phi) + "_ps");
-
-				__J(rotname, curr_sct);
-
-				last_one = false;
-			}
-
-			if(idx > 0) {
-				int J = idx -1;
-				string prev_rotname = "phi_race_ordering_transition_" + IntToStr(J);
-				AaStatement* last_phi = phi_stmts[J];
-				string curr_ust = (((AaPhiStatement*)curr_phi)->Is_Single_Source() ?
+			string curr_ust = (((AaPhiStatement*)curr_phi)->Is_Single_Source() ?
 						__UST(((AaPhiStatement*)curr_phi)->Get_Source_Expression(0)) : __UST(curr_phi) + "_ps");
-				if(!last_one)
-				{
-					__J(rotname, prev_rotname);
-				}
 
-				__J(curr_ust,prev_rotname);
+
+			int J;
+			for(J=0; J < barriers.size(); J++)
+			{
+
+				AaPhiStatement* last_phi = barriers[J];
+ 				string barrier_sct = (last_phi->Is_Single_Source() ?
+                                                	__SCT(last_phi->Get_Source_Expression(0)) : __SCT(last_phi) + "_ps");
+
+				ofile << "// Race prevention dependency in ordered.. PHI's." << endl;
+				__J(curr_ust,barrier_sct)
 			}
 		}
+
+		if(((AaPhiStatement*) curr_phi)->Get_Barrier_Flag())
+			barriers.push_back((AaPhiStatement*) curr_phi);		
 	}
 
 

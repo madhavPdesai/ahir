@@ -1249,6 +1249,7 @@ class AaMergeStatement: public AaSeriesBlockStatement
 
 class AaPhiStatement: public AaStatement
 {
+  bool _barrier_flag;
   AaMergeStatement* _parent_merge;
   AaObjectReference* _target;
   vector<pair<string,AaExpression*> > _source_pairs;
@@ -1259,6 +1260,9 @@ class AaPhiStatement: public AaStatement
  public:
   AaPhiStatement(AaBranchBlockStatement* scope, AaMergeStatement* pm);
   ~AaPhiStatement();
+
+  void Set_Barrier_Flag(bool v) {_barrier_flag = v;}
+  bool Get_Barrier_Flag() {return(_barrier_flag);}
 
   void Set_Target(AaObjectReference* tgt);
   AaObjectReference* Get_Target() {return(_target);}

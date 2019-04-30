@@ -11,7 +11,7 @@ $module [phi_check_daemon] $in() $out () $is
 		$merge $entry $loopback 
 
 			$phi CMD := ($bitcast ($uint<32>) 0) $on $entry 
-					$guard (go_on) in_data $on $loopback
+					$guard (go_on) in_data $on $loopback $barrier
 
 			$phi NCMD := 0 $on $entry CMD $on $loopback
 

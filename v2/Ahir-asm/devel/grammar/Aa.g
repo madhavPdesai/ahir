@@ -897,7 +897,7 @@ aA_Join_Fork_Statement[AaForkBlockStatement* scope] returns [AaJoinForkStatement
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Phi_Statement: PHI SIMPLE_IDENTIFIER  :=  ( aA_Object_Reference  ON  (SIMPLE_IDENTIFIER | ENTRY | LOOPBACK))+
+// aA_Phi_Statement: PHI SIMPLE_IDENTIFIER  :=  ( aA_Object_Reference  ON  (SIMPLE_IDENTIFIER | ENTRY | LOOPBACK))+ ($barrier)?
 //-----------------------------------------------------------------------------------------------
 aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_set, AaMergeStatement* pm, bool do_while_flag] returns [AaPhiStatement* new_ps]
 {
@@ -909,6 +909,7 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
     set<string,StringCompare> tset;
     vector<string> labels;
     bool not_flag = false;
+    bool barrier_flag = false;
 }
     : pl: PHI tgt:SIMPLE_IDENTIFIER 
         {
@@ -952,6 +953,8 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
 			(aeid: ENTRY {labels.push_back(aeid->getText());}) |
 			(abid: LOOPBACK {labels.push_back(abid->getText());}) )
 	    )*
+
+
             {
 		int I;
 		for(I=0; I < labels.size(); I++)
@@ -980,6 +983,11 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
 		labels.clear();
             }
         )+ 
+	    
+	(BARRIER {barrier_flag = true;})?
+	{
+		new_ps->Set_Barrier_Flag(barrier_flag);
+	}
 ;
 
 
