@@ -320,6 +320,21 @@ vc_Controlpath[vcSystem* sys, vcModule* m]
 vc_CPElement[vcCPElement* p] returns [vcCPElement* cpe]
 : (cpe = vc_CPPlace[p]) | (cpe = vc_CPTransition[p]);
 
+//-----------------------------------------------------------------------------------------------
+// vc_CPAlias: ALIAS SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER 
+//-----------------------------------------------------------------------------------------------
+vc_CPAlias[vcCPElement* p]
+{
+	string alias_id, reference_id;
+}
+: ALIAS alias_id = vc_Label reference_id = vc_Label
+	{
+		p->Add_Alias (alias_id, reference_id);
+	}
+
+;
+
+
 
 //-----------------------------------------------------------------------------------------------
 // vc_CPPlace: PLACE vc_Label
@@ -620,12 +635,14 @@ vc_CPPipelinedForkBlock[vcCPBlock* cp, vcModule* m]
     	string internal_id;
 }
 : PIPELINEDFORKBLOCK lbl = vc_Label { fb = new vcCPPipelinedForkBlock(cp,lbl); fb->Set_Max_Iterations_In_Flight(m->Get_Pipeline_Depth());} LBRACE 
- ((vc_CPRegion[fb]) | 
- ( vc_CPFork[fb] ) |
- ( vc_CPJoin[fb] ) | 
- ( vc_CPMarkedJoin[fb] ) | 
- ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
-        (vc_AttributeSpec[fb])  )* RBRACE
+ (
+	(vc_CPRegion[fb]) | 
+ 	( vc_CPFork[fb] ) |
+ 	( vc_CPJoin[fb] ) | 
+ 	( vc_CPMarkedJoin[fb] ) | 
+ 	( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
+ 	(vc_AttributeSpec[fb])  
+ )* RBRACE
 { cp->Add_CPElement(fb); fb->Set_Pipeline_Parent(fb);}
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})* RPAREN ) 
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Output(internal_id);})* RPAREN ) 
@@ -651,6 +668,7 @@ vc_CPPipelinedLoopBody[vcCPBlock* cp]
             ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
             ( vc_CPPhiSequencer[fb]) |
             ( vc_CPTransitionMerge[fb]) |
+ 	    ( vc_CPAlias[fb] ) | 
             (vc_AttributeSpec[fb]) )* RBRACE
 { cp->Add_CPElement(fb); fb->Set_Pipeline_Parent(fb);}
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})* RPAREN ) 
@@ -1950,6 +1968,8 @@ BYPASS	      : "$bypass";
 
 WAR : "$war";
 DETERMINISTIC: "$deterministic";
+
+ALIAS: "$A";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

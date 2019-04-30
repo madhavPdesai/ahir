@@ -1612,7 +1612,11 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	
 	ofile << "// start:  PHI statement " << this->Get_VC_Name() << endl;
 	ofile << "// " << this->To_String() << endl;
-	__DeclTransSplitProtocolPattern;
+
+	__ALIAS(__SST(this), "aggregated_phi_sample_req");
+	__ALIAS(__SCT(this), "aggregated_phi_sample_ack");
+	__ALIAS(__UST(this), "aggregated_phi_update_req");
+	__ALIAS(__UCT(this), "aggregated_phi_update_ack");
 
 	//
 	// PHI synchronization.
@@ -1629,9 +1633,6 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	__T(__UCT(this) + "_ps");
 	__J(__UCT(this), __UCT(this) + "_ps");
 
-	__J("aggregated_phi_sample_req", __SST(this));
-	__F("aggregated_phi_sample_ack", __SCT(this));
-	__J("aggregated_phi_update_req", __UST(this));
 
 
 	// the active, completed and the active transitions
@@ -1870,8 +1871,6 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	ofile << "     ";
 	ofile << phi_mux_ack_ps << endl;
 
-	// join update-ack to aggregated phi update ack
-	__J("aggregated_phi_update_ack", __UCT(this));
 
 	// sample-ack from phi must join with condition-evaluated so that
 	// loop-back is delayed until the present PHI has sampled.
@@ -1907,12 +1906,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized_Single_Source(bool pipeline
 
 	ofile << "// start:  single source PHI statement " << this->Get_VC_Name() << endl;
 	ofile << "// " << this->To_String() << endl;
-
-	__DeclTransSplitProtocolPattern;
-
-	__J("aggregated_phi_sample_req", __SST(this));
-	__F("aggregated_phi_sample_ack", __SCT(this));
-	__J("aggregated_phi_update_req", __UST(this));
+	__ALIAS(__SST(this), "aggregated_phi_sample_req");
+	__ALIAS(__SCT(this), "aggregated_phi_sample_ack");
+	__ALIAS(__UST(this), "aggregated_phi_update_req");
+	__ALIAS(__UCT(this), "aggregated_phi_update_ack");
 
 	AaExpression* source_expr = (*(this->_source_label_vector.begin())).first;
 

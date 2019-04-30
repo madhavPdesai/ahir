@@ -36,6 +36,7 @@
 #define __T(x) ofile << "$T[" << x << "] " << endl; 
 #define __Place(x) ofile << "$P[" << x << "] " << endl; 
 #define __J(x,y) ofile << x << " <-& (" << y << ")" << endl;
+#define __ALIAS(x,y) ofile << "$A [" <<  x << "] [" << y <<  "]" << endl;
 // TODO: need to pass an integer to this..
 #define __MJ(x,y,epf) ofile << x << " o<-& (" << y <<  " " << (epf ? 0 : 1) << ")" << endl;
 #define __F(x,y) ofile << x << " &-> (" << y << ")" << endl;

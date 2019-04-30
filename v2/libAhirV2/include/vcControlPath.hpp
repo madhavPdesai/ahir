@@ -72,9 +72,16 @@ protected:
   bool _is_left_open;
 
   vcCPBlock* _pipeline_parent;
+
+
 public:
 
   vcCPElement(vcCPElement* parent, string id);
+
+
+  virtual void Add_Alias(string alias_string, string ref_string) {assert(0);}
+  virtual string Get_Alias_Reference_String(string alias_string) {assert(0);}
+
 
   void Add_Successor(vcCPElement* cpe);
   void Add_Predecessor(vcCPElement* cpe);
@@ -429,6 +436,7 @@ protected:
   map<string, vcCPElement*> _element_map;
   vector<vcCPElement*> _elements;
 
+  map<string, string> _alias_map;
   vcTransition* _entry;
   vcTransition* _exit;
 
@@ -447,6 +455,18 @@ public:
 	  this->_entry->Set_Pipeline_Parent(cpb);
 	  this->_exit->Set_Pipeline_Parent(cpb);
 	  _pipeline_parent = cpb;
+  }
+
+  virtual void Add_Alias(string alias_string, string ref_string)
+  {
+	_alias_map[alias_string] = ref_string;
+  }
+  virtual string Get_Alias_Reference_String(string alias_string)
+  {
+	string ret_val = alias_string;
+	if(_alias_map.find(alias_string) != _alias_map.end())
+		ret_val = _alias_map[alias_string];
+	return(ret_val);
   }
 
   virtual void Add_CPElement(vcCPElement* cpe);
