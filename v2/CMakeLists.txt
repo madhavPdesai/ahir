@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 
+# Otherwise linking errors with libantrl.a etc.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98")
+
 add_subdirectory(Value)
 add_subdirectory(iolib)
 add_subdirectory(libAhirV2)
