@@ -160,16 +160,17 @@ CAT_FILES("ahirForAsicFpga.vhdl" "${AHIR_FOR_ASIC_FPGA}")
 #######################################################################
 # Install. We are using GNUInstallDirs macros.
 #######################################################################
+include(GNUInstallDirs)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
     ${CMAKE_CURRENT_SOURCE_DIR}/CONTRIBUTORS
     DESTINATION ${CMAKE_INSTALL_DOCDIR}
     )
 
 install(FILES ${VHDL_TO_INSTALL} 
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/ahir/vhdl/
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/ahir/vhdl/
     )
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vhdl/unisims/ 
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/ahir/vhdl/
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/ahir/vhdl/
     )
 
 
