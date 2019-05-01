@@ -4,6 +4,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../antlr2.cmake)
 message(STATUS "Antlr library: ${ANTLR_LIBRARY}")
 include_directories(${ANTLR_INCLUDE_DIR})
 
+add_definitions(-std=c++98)
+
 ADD_ANTLR_GRAMMAR(
     ${CMAKE_CURRENT_SOURCE_DIR}/grammar/vc.g
     VC_GRAMMAR_OUTPUT_FILES VC_GRAMMAR_HTML_FILES
@@ -15,6 +17,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../BGLWrap/include)
 
 # This is where grammar is generated.
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+# Set definitions for antlr
+add_definitions(-UNO_STATIC_CONSTS)
 
 add_library(VC SHARED ${LIBVC_SRC} ${VC_GRAMMAR_OUTPUT_FILES})
 # set_target_properties(VC PROPERTIES COMPILE_FLAGS -fPIC)

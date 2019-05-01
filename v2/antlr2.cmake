@@ -9,12 +9,11 @@ else()
 endif()
 
 # Now setup ANTRL2
-set(ANTLR_HOME ${CMAKE_CURRENT_LIST_DIR}/../antlr2/${PKGARCH})
-set(ANTLR_INCLUDE_DIR ${ANTLR_HOME})
-set(ANTLR_JAR_FILE ${ANTLR_HOME}/jar/antlr.jar)
+set(ANTLR_HOME ${CMAKE_CURRENT_LIST_DIR}/external/_antlr_install)
+set(ANTLR_INCLUDE_DIR ${ANTLR_HOME}/include)
+set(ANTLR_JAR_FILE ${ANTLR_HOME}/lib/antlr.jar)
 set(ANTLR_LIBRARY ${ANTLR_HOME}/lib/libantlr.a)
-# For compatibility with 
-set(Antlr_LIBRARIES ${ANTLR_HOME}/lib/libantlr.a)
+set(Antlr_LIBRARIES ${ANTLR_LIBRARY})
 set(Antlr_EXECUTABLE java -cp ${ANTLR_JAR_FILE} antlr.Tool)
 
 macro(ADD_ANTLR_GRAMMAR grammar_file output_var output_html)

@@ -137,8 +137,13 @@ void allocate_sized_u8_array(sized_u8_array* a, uint32_t sz)
 
 void free_sized_u8_array(sized_u8_array* a)
 {
-	cfree (a->byte_array);
-	cfree (a->undefined_byte_array);
+    
+        // DEPRECATION: cfree has been removed. 
+        // See https://savannah.gnu.org/forum/forum.php?forum_id=8921
+	//cfree (a->byte_array);
+	//cfree (a->undefined_byte_array);
+	free (a->byte_array);
+	free (a->undefined_byte_array);
 }
 
 
