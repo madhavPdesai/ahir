@@ -29,7 +29,7 @@ add_custom_command(OUTPUT ${LLVMBC2AA_BIN}
     WORKING_DIRECTORY ${LLVMBC2AA_SOURCE_DIR} 
     )
 add_custom_target(llvm2a_tgt ALL DEPENDS ${LLVMBC2AA_BIN})
-add_dependencies(llvm2a_tgt llvm28) # in external
+add_dependencies(llvm2a_tgt llvm28 antlr27) # in external
 
 # INSTALL
 include(GNUInstallDirs)

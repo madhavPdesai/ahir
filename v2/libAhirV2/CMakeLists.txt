@@ -22,8 +22,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_definitions(-UNO_STATIC_CONSTS)
 
 add_library(VC SHARED ${LIBVC_SRC} ${VC_GRAMMAR_OUTPUT_FILES})
-# set_target_properties(VC PROPERTIES COMPILE_FLAGS -fPIC)
-target_link_libraries(VC)
+add_dependencies(VC antlr27) # in external 
 
 add_executable(vcParse util/vcParseMain.cpp)
 target_link_libraries(vcParse VC ${ANTLR_LIBRARY}) 

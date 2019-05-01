@@ -8,10 +8,11 @@ include_directories(${ANTLR_INCLUDE_DIR})
 
 # Build lexer and parser.
 add_library(parser ${GRAMMER_OUTPUT_FILES})
+add_dependencies(parser antlr27)
 set_source_files_properties(${GRAMMER_OUTPUT_FILES} PROPERTIES GENERATED TRUE)
 
 include_directories(
-    ${CMAKE_CURRENT_BINARY_DIR}  # grammar is generated here
+    ${CMAKE_CURRENT_BINARY_DIR}  # grammar is generated here by ADD_ANTLR_GRAMMAR 
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../Value/include
     ${Boost_INCLUDE_DIRS}
