@@ -11,7 +11,8 @@ set_target_properties(iostatic PROPERTIES PUBLIC_HEADER ${IO_HEADER})
 set_target_properties(iostatic PROPERTIES OUTPUT_NAME io)
 
 # install
+include(GNUInstallDirs)
 install(TARGETS io
-    LIBRARY DESTINATION lib
-    PUBLIC_HEADER DESTINATION include
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )

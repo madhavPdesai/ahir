@@ -59,8 +59,9 @@ target_link_libraries(llvm2aa ${LLVM_STATIC_LIBS})
 target_link_libraries(llvm2aa ${CMAKE_THREAD_LIBS_INIT})
 
 # install 
+include(GNUInstallDirs)
 install(TARGETS llvm2aa
-    RUNTIME DESTINATION bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 
 if(EXISTS ${PDF_FILE})

@@ -39,12 +39,15 @@ target_include_directories(hierSysUniquify PRIVATE src)
 target_link_libraries(hierSysUniquify HierSys Value parser ${ANTLR_LIBRARY})
 
 # install
+include(GNUInstallDirs)
 install(
     TARGETS HierSys hierSys2Vhdl hierSys2C hierSysCheck hierSysUniquify
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
 
-install(FILES ${GRAMMAR_HTML_FILES} DESTINATION share/doc/ahir/)
+install( FILES ${GRAMMAR_HTML_FILES} 
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
+    )
 
 

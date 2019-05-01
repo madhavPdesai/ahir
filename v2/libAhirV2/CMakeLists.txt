@@ -37,11 +37,12 @@ add_executable(vc2vhdl util/vc2vhdl.cpp)
 target_link_libraries(vc2vhdl VC ${ANTLR_LIBRARY}) 
 
 # INSTALL
+include(GNUInstallDirs)
 install(TARGETS VC vcParse vcAnalyze vcFormat vhdlFormat vc2vhdl
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 
 install(FILES ${VC_GRAMMAR_HTML_FILES} 
-    DESTINATION share/doc/ahir
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
     )

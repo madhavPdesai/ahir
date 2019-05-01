@@ -33,10 +33,9 @@ set_target_properties(SockPipes
     )
 
 # install
+include(GNUInstallDirs)
 install(TARGETS Vhpi SocketLibPipeHandler SockPipes
-    LIBRARY DESTINATION lib
-    PUBLIC_HEADER DESTINATION include
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
-install(FILES docs/CtestBench.pdf 
-    DESTINATION share/doc/ahir/pdf
-    )
+install(FILES docs/CtestBench.pdf DESTINATION ${CMAKE_INSTALL_DOCDIR}/pdf)

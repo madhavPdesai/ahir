@@ -35,8 +35,9 @@ add_executable(AaLinkExtMem util/AaLinkExtMem.cpp)
 target_link_libraries(AaLinkExtMem Aa Value ${ANTLR_LIBRARY})
 
 # INSTALL 
+include(GNUInstallDirs)
 install( 
     TARGETS Aa AaOpt Aa2VC Aa2C AaLinkExtMem 
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )

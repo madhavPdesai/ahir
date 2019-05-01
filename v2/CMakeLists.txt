@@ -30,11 +30,13 @@ add_custom_command(OUTPUT ${LLVMBC2AA_BIN}
 add_custom_target(llvm2a_tgt ALL DEPENDS ${LLVMBC2AA_BIN})
 add_dependencies(llvm2a_tgt llvm28) # in external
 
+# INSTALL
+include(GNUInstallDirs)
 install(PROGRAMS 
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/ghdlSanitize.sh 
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/formatVhdlFiles.py 
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/gdb_commands.txt  # FIXME: ??
-    DESTINATION bin
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 
 enable_testing()

@@ -7,6 +7,7 @@ add_library(timer SHARED src/timer.c)
 add_library(llvm_intrinsics SHARED src/llvm_intrinsics.c)
 
 # install
+include(GNUInstallDirs)
 install(TARGETS fpu timer llvm_intrinsics
-    LIBRARY DESTINATION lib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )

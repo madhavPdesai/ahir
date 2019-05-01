@@ -11,12 +11,6 @@ include_directories(
 add_library(Rtl2AaMatcher SHARED ${SRCS})
 set_target_properties(Rtl2AaMatcher PROPERTIES PUBLIC_HEADER "${INCLUDE_SRCS}")
 
-# install
-install(TARGETS Rtl2AaMatcher
-    LIBRARY DESTINATION lib
-    PUBLIC_HEADER DESTINATION include
-    )
-
 # Tests
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 find_package(Threads REQUIRED)
@@ -29,3 +23,11 @@ target_link_libraries(Rtl2AaMatcherTest Rtl2AaMatcher
 
 enable_testing()
 add_test(NAME Rtl2AaMatcherTest COMMAND $<TARGET_FILE:Rtl2AaMatcherTest>)
+
+# install
+include(GNUInstallDirs)
+install(TARGETS Rtl2AaMatcher
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+
