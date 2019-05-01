@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 
-# Build dependencies.
-find_package(Boost 1.58 REQUIRED)
-include_directories( ${Boost_INCLUDE_DIR})
-
 add_subdirectory(Value)
 add_subdirectory(iolib)
 add_subdirectory(libAhirV2)
