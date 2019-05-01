@@ -7,9 +7,16 @@ add_subdirectory(v2)
 #####################################################################
 # Create vhdl libraries. 
 ######################################################################
+include(GNUInstallDirs)
+
+# VHDL files created by concatnating multiple vhdl files. This variable stores
+# there path. Later we will install them.
 set(VHDL_TO_INSTALL "")
+
+# Where VHDL libraries are stored.
 set(VHDL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vhdl)
 
+# Function to concatnate multiple VHDL files to one file.
 function(CAT_FILES _outfile _files)
     list(LENGTH _files _num_files)
     file(REMOVE ${_outfile})
@@ -151,18 +158,18 @@ file(GLOB AHIR_FOR_ASIC_FPGA
 CAT_FILES("ahirForAsicFpga.vhdl" "${AHIR_FOR_ASIC_FPGA}")
 
 #######################################################################
-# Install.
+# Install. We are using GNUInstallDirs macros.
 #######################################################################
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
     ${CMAKE_CURRENT_SOURCE_DIR}/CONTRIBUTORS
-    DESTINATION share/doc/ahir
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
     )
 
 install(FILES ${VHDL_TO_INSTALL} 
-    DESTINATION lib/ahir/vhdl/
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/ahir/vhdl/
     )
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vhdl/unisims/ 
-    DESTINATION lib/ahir/vhdl/
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/ahir/vhdl/
     )
 
 

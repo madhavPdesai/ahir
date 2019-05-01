@@ -10,7 +10,9 @@ add_library(PipeHandler SHARED src/pipeHandler.c src/Pipes.c)
 
 set_target_properties(PipeHandler PROPERTIES PUBLIC_HEADER "${PIPEHANDLER_HEADERS}")
 
+# INSTALL
+include(GNUInstallDirs)
 install(TARGETS PipeHandler 
-    LIBRARY DESTINATION lib
-    PUBLIC_HEADER DESTINATION include
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
