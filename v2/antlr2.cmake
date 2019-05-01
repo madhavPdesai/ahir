@@ -14,7 +14,7 @@ set(ANTLR_INCLUDE_DIR ${ANTLR_HOME}/include)
 set(ANTLR_JAR_FILE ${ANTLR_HOME}/lib/antlr.jar)
 set(ANTLR_LIBRARY ${ANTLR_HOME}/lib/libantlr.a)
 set(Antlr_LIBRARIES ${ANTLR_LIBRARY})
-set(Antlr_EXECUTABLE java -cp ${ANTLR_JAR_FILE} antlr.Tool)
+set(Antlr_EXECUTABLE java -classpath ${ANTLR_JAR_FILE} antlr.Tool)
 
 macro(ADD_ANTLR_GRAMMAR grammar_file output_var output_html)
     get_filename_component(_grammar_dir ${grammar_file} DIRECTORY)
