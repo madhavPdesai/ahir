@@ -21,6 +21,7 @@ include_directories( ${ANTLR_INCLUDE_DIR})
 set_source_files_properties(${AA_GRAMMER_OUTPUT_FILES} PROPERTIES GENERATED TRUE)
 
 add_library(Aa SHARED ${AA_SRC} ${AA_GRAMMER_OUTPUT_FILES})
+add_dependencies(Aa antlr27) # in external
 
 add_executable(AaOpt util/AaOpt.cpp)
 target_link_libraries(AaOpt Aa Value ${ANTLR_LIBRARY})
