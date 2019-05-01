@@ -16,3 +16,14 @@ ExternalProject_Add(llvm28
     -DLLVM_TARGETS_TO_BUILD=X86;ARM
     BUILD_COMMAND $(MAKE) -j4
     )
+
+set(ANTLR_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/_antlr_install)
+ExternalProject_Add(antlr27
+    PREFIX _antlr
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/antlr-2.7.7
+    CONFIGURE_COMMAND 
+        <SOURCE_DIR>/configure --prefix=${ANTLR_INSTALL_DIR} 
+            --enable-cpp --disable-python
+    BUILD_COMMAND $(MAKE) VERBOSE=1 CXXFLAGS=-DANTLR_REALLY_NO_STRCASECMP
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )

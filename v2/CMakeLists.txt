@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 
+# This is tricky. We need to build llvm2.8 and antlr also 
+# before we can build llvmbc2Aa
+add_subdirectory(external)
+
 add_subdirectory(Value)
 add_subdirectory(iolib)
 add_subdirectory(libAhirV2)
@@ -15,9 +19,6 @@ add_subdirectory(rtl2AaMatcher)
 # Following two only have headers.
 add_subdirectory(pthreadUtils)
 add_subdirectory(GnuPthUtils)
-
-# This is tricky. We need to build llvm2.8 first before we can build llvmbc2Aa
-add_subdirectory(external)
 
 # add_subdirectory(llvmbc2Aa)
 set(LLVMBC2AA_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/llvmbc2Aa)
@@ -40,6 +41,3 @@ install(PROGRAMS
     )
 
 enable_testing()
-
-
-

@@ -30,6 +30,7 @@
 // SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
 #ifndef _VC_HEADER__
 #define _VC_HEADER__
+#include <cstdio>    // Otherwise EOF is not defined.
 #include <vcRoot.hpp>
 #include <vcType.hpp>
 #include <vcValue.hpp>

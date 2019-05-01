@@ -11,7 +11,7 @@ add_library(parser ${GRAMMER_OUTPUT_FILES})
 set_source_files_properties(${GRAMMER_OUTPUT_FILES} PROPERTIES GENERATED TRUE)
 
 include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}  # grammar is generated here
+    ${CMAKE_CURRENT_BINARY_DIR}  # grammar is generated here
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../Value/include
     ${Boost_INCLUDE_DIRS}
