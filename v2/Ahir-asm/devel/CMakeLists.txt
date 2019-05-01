@@ -13,6 +13,7 @@ include_directories(
 
 # parser is generated here
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
+include_directories( ${ANTLR_INCLUDE_DIR})
 
 # Build lexer and parser.
 # add_library(aa_parser ${AA_GRAMMER_OUTPUT_FILES})
@@ -22,16 +23,16 @@ set_source_files_properties(${AA_GRAMMER_OUTPUT_FILES} PROPERTIES GENERATED TRUE
 add_library(Aa SHARED ${AA_SRC} ${AA_GRAMMER_OUTPUT_FILES})
 
 add_executable(AaOpt util/AaOpt.cpp)
-target_link_libraries(AaOpt Aa Value antlr)
+target_link_libraries(AaOpt Aa Value ${ANTLR_LIBRARY})
 
 add_executable(Aa2VC util/Aa2VC.cpp)
-target_link_libraries(Aa2VC Aa Value antlr)
+target_link_libraries(Aa2VC Aa Value ${ANTLR_LIBRARY})
 
 add_executable(Aa2C util/Aa2C.cpp)
-target_link_libraries(Aa2C Aa Value antlr)
+target_link_libraries(Aa2C Aa Value ${ANTLR_LIBRARY})
 
 add_executable(AaLinkExtMem util/AaLinkExtMem.cpp)
-target_link_libraries(AaLinkExtMem Aa Value antlr)
+target_link_libraries(AaLinkExtMem Aa Value ${ANTLR_LIBRARY})
 
 # INSTALL 
 install( 
