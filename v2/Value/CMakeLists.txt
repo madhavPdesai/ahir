@@ -5,4 +5,8 @@ add_library(Value SHARED ${VALUE_SRC})
 add_executable(testValue util/TestValue.cpp)
 target_link_libraries(testValue Value)
 
-# NO INSTALL TARGETS HERE.
+# Install
+include(GNUInstallDirs)
+install(TARGETS Value 
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
