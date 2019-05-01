@@ -90,13 +90,26 @@ architecture default_arch of UnloadBuffer is
   signal write_to_pipe: boolean;
   signal unload_from_pipe : boolean;
 
+  signal empty, full: std_logic;
   --
   -- try to save a slot if buffer size is 1... this
   -- tries to prevent a 100% wastage of resources
   -- and allows us to use 2-depth buffers to cut long
   -- combinational paths.
   --
-  constant save_slot_flag : boolean := ((not bypass_flag) and (buffer_size = 1));
+  function DecrDepth (buffer_size: integer; bypass: boolean)
+	return integer is
+      variable actual_buffer_size: integer;
+  begin
+      actual_buffer_size := buffer_size;
+      if((not bypass) and (buffer_size = 1)) then
+	actual_buffer_size := buffer_size - 1;
+      end if;
+      return actual_buffer_size;
+  end function DecrDepth;
+
+  constant actual_buffer_size  : integer  := DecrDepth (buffer_size, bypass_flag);
+
   constant bypass_flag_to_ureg : boolean := (bypass_flag or (buffer_size = 0));
 
   constant shallow_flag : boolean :=    (buffer_size < global_pipe_shallowness_threshold);
@@ -121,27 +134,9 @@ begin  -- default_arch
   end generate DeepCase;
 
   ShallowCase: if shallow_flag generate
-    bufGt0: if buffer_size > 0 generate
+    bufGt0: if actual_buffer_size > 0 generate
 
-		-- count number of elements in pipe.
-	process(clk, reset)
-  	begin
-		if(clk'event and clk = '1') then
-			if(reset = '1') then
-				number_of_elements_in_pipe <= (others => '0');
-			else
-				if((pop_req(0) = '1') and (pop_ack(0) = '1')) then
-					if(not ((push_req(0) = '1') and (push_ack(0) = '1'))) then
-				          number_of_elements_in_pipe <= (number_of_elements_in_pipe -1);
-					end if;
-				elsif((push_req(0) = '1') and (push_ack(0) = '1')) then
-					number_of_elements_in_pipe <= (number_of_elements_in_pipe + 1);
-				end if;
-			end if;
-		end if;
-  	end process;
-	
-  	pipe_has_data <= (number_of_elements_in_pipe > 0);
+  	pipe_has_data <= (empty = '0');
 	write_to_pipe <= (pipe_has_data or (not unload_register_ready));
 	unload_from_pipe <= pipe_has_data;
 
@@ -157,23 +152,19 @@ begin  -- default_arch
 	data_to_unload_register <= pipe_data_out when unload_from_pipe else write_data;
 
   	-- the input pipe.
-  	bufPipe : PipeBase generic map (
+  	bufPipe : QueueBaseWithEmptyFull generic map (
         	name =>  name & "-blocking_read-bufPipe",
-        	num_reads  => 1,
-        	num_writes => 1,
         	data_width => data_width,
-        	lifo_mode  => false,
-		shift_register_mode => false,
-        	depth      => buffer_size,
-		save_slot  => save_slot_flag,
-		full_rate  => full_rate)
+        	queue_depth      => actual_buffer_size)
       	port map (
-        	read_req   => pop_req,
-        	read_ack   => pop_ack,
-        	read_data  => pipe_data_out,
-        	write_req  => push_req,
-        	write_ack  => push_ack,
-        	write_data => write_data,
+        	pop_req   => pop_req(0),
+        	pop_ack   => pop_ack(0),
+        	data_out  => pipe_data_out,
+        	push_req  => push_req(0),
+        	push_ack  => push_ack(0),
+        	data_in => write_data,
+		empty => empty,
+		full => full,
         	clk        => clk,
         	reset      => reset);
 
@@ -181,7 +172,7 @@ begin  -- default_arch
 	
 
    -- unload-register will provide bypassed buffering.
-   bufEq0: if (buffer_size = 0) generate
+   bufEq0: if (actual_buffer_size = 0) generate
 	data_to_unload_register <= write_data;
 	pop_ack_to_unload_register <= write_req;
 	write_ack  <= pop_req_from_unload_register;
