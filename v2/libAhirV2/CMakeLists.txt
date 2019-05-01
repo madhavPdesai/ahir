@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 2.8)
 include(${CMAKE_CURRENT_SOURCE_DIR}/../antlr2.cmake)
 message(STATUS "Antlr library: ${ANTLR_LIBRARY}")
 include_directories(${ANTLR_INCLUDE_DIR})
-add_definitions(-std=c++98)
 
 ADD_ANTLR_GRAMMAR(
     ${CMAKE_CURRENT_SOURCE_DIR}/grammar/vc.g
