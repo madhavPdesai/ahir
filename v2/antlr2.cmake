@@ -10,6 +10,7 @@ endif()
 
 # Now setup ANTRL2
 set(ANTLR_HOME ${CMAKE_CURRENT_LIST_DIR}/../antlr2/${PKGARCH})
+set(ANTLR_INCLUDE_DIR ${ANTLR_HOME})
 set(ANTLR_JAR_FILE ${ANTLR_HOME}/jar/antlr.jar)
 set(Antlr_LIBRARIES ${ANTLR_HOME}/lib/libantlr.a)
 set(Antlr_EXECUTABLE java -cp ${ANTLR_JAR_FILE} antlr.Tool)
