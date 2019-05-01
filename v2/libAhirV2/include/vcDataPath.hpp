@@ -591,7 +591,7 @@ protected:
 	}
   virtual vcWire* Get_Guard_Wire() { return(_guard_wire);}
 
-  virtual bool Set_Guard_Complement(bool gw) { _guard_complement = gw;}
+  virtual bool Set_Guard_Complement(bool gw) { _guard_complement = gw; return true;}
   virtual bool Get_Guard_Complement() { return(_guard_complement);}
 
   virtual void Append_Guard(vector<vcWire*>& guards, vector<bool>& guard_complements)

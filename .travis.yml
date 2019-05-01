@@ -1,0 +1,13 @@
+language: cpp
+compiler:
+- clang
+- gcc
+
+before_install:
+    - sudo apt install -y gcc g++ llvm-dev pdflatex 
+    - sudo apt install cmake 
+
+script:
+    - cmake -DCMAKE_INSTALL_PREFIX=/tmp/ahirv2 .
+    - make -j3
+    - make install

@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -x
+set -a
 export AHIR_RELEASE=$(pwd)/release
 export BOOST_VERSION=boost_1_58_0
 echo "setting boost version" to $BOOST_VERSION
