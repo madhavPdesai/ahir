@@ -4,7 +4,8 @@ compiler:
 - gcc
 
 before_install:
-    - sudo apt install -y gcc g++ llvm-dev texlive-latex-recommended 
+    - sudo apt update 
+    - sudo apt install -y gcc g++ texlive-latex-recommended 
     - sudo apt install cmake 
 
 script:
