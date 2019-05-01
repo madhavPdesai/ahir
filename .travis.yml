@@ -6,6 +6,8 @@ compiler:
 before_install:
     - sudo apt update 
     - sudo apt install -y gcc g++ texlive-latex-recommended 
+    - sudo apt install libboost-all-dev 
+    - sudo apt install default-jdk default-jre
     - sudo apt install cmake 
 
 script:
