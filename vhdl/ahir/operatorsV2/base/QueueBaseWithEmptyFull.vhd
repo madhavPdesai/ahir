@@ -201,7 +201,7 @@ begin  -- SimModel
     process(incr_write_pointer, write_pointer) 
     begin
 	if(incr_write_pointer) then
-		write_pointer <= write_pointer_plus_1;
+		next_write_pointer <= write_pointer_plus_1;
 	else
 		next_write_pointer <= write_pointer;
 	end if;
