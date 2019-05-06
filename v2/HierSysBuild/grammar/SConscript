@@ -2,7 +2,7 @@ import os
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
 # use a path to get to the antlr jar "later"
 # also: how does one force the action if the source has changed?
-ANTLR_JAR_PATH=os.environ['ANTLR_PATH'] + '/jar/'
+ANTLR_JAR_PATH=os.environ['ANTLR_PATH'] + '/lib/'
 ant = Builder(action = 'java -cp ' + ANTLR_JAR_PATH + '/antlr.jar antlr.Tool  -o HierSysBuild/src/ $SOURCE')
 antdoc = Builder(action = 'java -cp ' + ANTLR_JAR_PATH + '/antlr.jar antlr.Tool -html -o HierSysBuild/docs/ $SOURCE')
 env.Prepend(BUILDERS = {'antlr' : ant})

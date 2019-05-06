@@ -1,4 +1,4 @@
-// $ANTLR 2.7.7 (2006-11-01): hierSys.g -> hierSysParserTokenTypes.txt$
+// $ANTLR 2.7.7 (20190421): hierSys.g -> hierSysParserTokenTypes.txt$
 hierSysParser    // output token vocab name
 SYSTEM=4
 SIMPLE_IDENTIFIER=5

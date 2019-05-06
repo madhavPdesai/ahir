@@ -1,7 +1,7 @@
 #ifndef INC_hierSysParserTokenTypes_hpp_
 #define INC_hierSysParserTokenTypes_hpp_
 
-/* $ANTLR 2.7.7 (2006-11-01): "hierSys.g" -> "hierSysParserTokenTypes.hpp"$ */
+/* $ANTLR 2.7.7 (20190421): "hierSys.g" -> "hierSysParserTokenTypes.hpp"$ */
 
 #ifndef CUSTOM_API
 # define CUSTOM_API
