@@ -1170,6 +1170,7 @@ string  vcDataPath::Print_VHDL_Call_Interface_Ports(string semi_colon, ostream& 
 
 		called_module = (*called_module_iter).first;
 
+
 		int num_reqs = (*called_module_iter).second.size();
 		int tag_width = called_module->Get_Caller_Tag_Length();
 
@@ -1208,7 +1209,7 @@ void vcDataPath::Print_VHDL(ostream& ofile)
 		vcSystem::_estimated_buffering_bits += mb;
 
 	vcSystem::Info("estimated buffering in module " + this->Get_Parent()->Get_VHDL_Id() + " is " +
-					IntToStr(mb));
+			IntToStr(mb));
 
 	ofile << "data_path: Block -- { " << endl;
 
@@ -3046,14 +3047,16 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
 			assert((*iter)->Is("vcCall"));
 			vcCall* so = (vcCall*) (*iter);
-			if(vcSystem::_enable_logging)
-				so->vcSplitOperator::Print_VHDL_Logger(this->Get_Parent(), ofile);
+
+			
 
 			if(called_module == NULL)
 				called_module = so->Get_Called_Module();
 			else
 				assert(called_module == so->Get_Called_Module());
 
+			if(vcSystem::_enable_logging)
+				so->vcSplitOperator::Print_VHDL_Logger(this->Get_Parent(), ofile);
 
 			if((this->Get_Parent()->Get_Volatile_Flag() || so->Get_Flow_Through()) &&
 					!called_module->Get_Volatile_Flag())
@@ -3133,7 +3136,8 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 		else
 			output_buffering_string =  "constant outBUFs: IntegerArray(" + IntToStr(num_reqs-1) + " downto 0) := (others => 1);";
 
-
+			
+			
 		string guard_flags;
 		string guard_buffering;
 		Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guard_wires);
@@ -3177,9 +3181,21 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 		ofile << "signal reqL_unregulated, ackL_unregulated : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
 		ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 
+		string zero_output_buffering_string =  "constant outBUFs: IntegerArray(" + IntToStr(num_reqs-1) + " downto 0) := (others => 0);";
+		string zero_input_buffering_string  =  "constant inBUFs: IntegerArray(" + IntToStr(num_reqs-1) + " downto 0) := (others => 0);";
+
 		// ofile << buffering_string << endl;
-		ofile << input_buffering_string << endl;
-		ofile << output_buffering_string << endl;
+		if(called_module->Get_Use_Once_Flag())
+		{
+			ofile << zero_input_buffering_string << endl;
+			ofile << zero_output_buffering_string << endl;
+		}
+		else
+		{
+			ofile << input_buffering_string << endl;
+			ofile << output_buffering_string << endl;
+		}
+
 		ofile << guard_flags << endl;
 		ofile << guard_buffering << endl;
 		ofile << "-- }\n begin -- {" << endl;
@@ -3222,9 +3238,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 		{
 			ofile << " iwidth => " << in_width << "," << endl
 				<< " owidth => " << in_width/num_reqs << "," << endl;
-
 			ofile << " buffering => inBUFs,"  << endl;
-
 			ofile << " full_rate => " << (full_rate ? " true," : " false,") << endl;
 		}
 
@@ -3233,7 +3247,12 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 			<< " nreqs => " << num_reqs << "," << endl;
 
 
-		if(called_module->Get_In_Arg_Width() > 0)
+		if(called_module->Get_Use_Once_Flag())
+		{
+			ofile << "registered_output => false, " << endl;
+			no_arb_string = "true";
+		}
+		else if(called_module->Get_In_Arg_Width() > 0)
 			ofile << " registered_output => "
 				<< (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl;
 
@@ -3906,5 +3925,4 @@ void vcDataPath::Print_Data_Path_As_Dot_File(ostream& dp_file)
 
 	dp_file << "}" << endl;
 }
-
 

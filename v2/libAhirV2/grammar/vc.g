@@ -159,6 +159,7 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
     int buffering = 1;
     bool full_rate_flag = false;
     bool deterministic_flag = false;
+    bool use_once_flag = false;
 }
     : ((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true;} 
@@ -167,7 +168,8 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 		(FULLRATE {full_rate_flag = true;})? 
 		(DETERMINISTIC {deterministic_flag = true;})? 
 	))?
-	( (OPERATOR {operator_flag = true;} ) | (VOLATILE {volatile_flag = true;}) )?
+	((OPERATOR {operator_flag = true;} ) | (VOLATILE {volatile_flag = true;}))?
+	(USEONCE {use_once_flag = true;})?
         MODULE lbl = vc_Label 
         { 
             m = new vcModule(sys,lbl); 
@@ -182,6 +184,7 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 	    }
 	    m->Set_Operator_Flag(operator_flag);
 	    m->Set_Volatile_Flag(volatile_flag);
+	    m->Set_Use_Once_Flag(use_once_flag);
         } 
         LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
         (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
@@ -1801,6 +1804,7 @@ FOREIGN       : "$foreign";
 PIPELINE      : "$pipeline";
 OPERATOR      : "$operator";
 VOLATILE      : "$volatile";
+USEONCE       : "$useonce";
 SERIESBLOCK   : ";;";
 PARALLELBLOCK : "||";
 FORKBLOCK     : "::";

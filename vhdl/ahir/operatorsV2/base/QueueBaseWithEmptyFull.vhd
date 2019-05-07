@@ -99,6 +99,9 @@ begin  -- SimModel
 
      data_out <= base_data_out;
 
+     empty <= '1' when base_empty else '0';
+     full  <= '1' when base_full else '0';
+
  end generate oSideQGt0;
 
  qD1: if (queue_depth = 1) generate
@@ -111,6 +114,11 @@ begin  -- SimModel
 
       base_empty <= not full_flag;
       base_full  <= full_flag;
+
+      base_push_ack <= '0' when full_flag else '1';
+      base_pop_ack  <= '1' when full_flag else '0';
+	
+      base_data_out <= data_reg;
 
       process(clk, reset, base_push_req, base_pop_req, full_flag, data_in, data_reg)
 	variable next_full_flag_var: boolean;
@@ -154,31 +162,19 @@ begin  -- SimModel
 
   signal incr_read_pointer, incr_write_pointer: boolean;
   signal write_flag : boolean;
+  signal eq_flag : boolean;
 
   begin
     base_push_ack <= '0' when base_full else '1';
     base_pop_ack  <= '0' when base_empty else '1';
 
     -- empty/full logic.
-    process(clk, reset, incr_read_pointer, incr_write_pointer,
-			next_read_pointer, next_write_pointer)
-	variable ptrs_equal: boolean;
-    begin
-	ptrs_equal := (next_write_pointer = next_read_pointer);
- 	if(clk'event and clk ='1') then
-		if(reset = '1') then
-			base_full <= false;
-			base_empty <= true;
-		else
-			base_full <= ((not base_full) and incr_write_pointer and
-						(not incr_read_pointer) and ptrs_equal)
-						or (base_full and (not incr_read_pointer));
-			base_empty <= (base_empty and (not incr_write_pointer))
-					or ((not base_empty) and incr_write_pointer and
-						(not incr_read_pointer) and ptrs_equal);
-		end if;
-	end if;
-    end process;
+    eq_flag <= (next_read_pointer = next_write_pointer);
+    fe_logic: QueueEmptyFullLogic 
+	port map (clk => clk, reset => reset, 
+			read => incr_read_pointer, write => incr_write_pointer,
+				eq_flag => eq_flag,
+				full => base_full, empty => base_empty);
 
 
     -- next read pointer, write pointer.
@@ -198,7 +194,7 @@ begin  -- SimModel
 		port map (clk => clk, reset => reset, din => next_read_pointer, dout => read_pointer);
 
     write_pointer_plus_1 <= (others => '0') when (write_pointer = queue_depth-1) else (write_pointer + 1);
-    process(incr_write_pointer, write_pointer) 
+    process(incr_write_pointer, write_pointer, write_pointer_plus_1) 
     begin
 	if(incr_write_pointer) then
 		next_write_pointer <= write_pointer_plus_1;

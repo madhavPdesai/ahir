@@ -131,6 +131,7 @@ begin  -- SimModel
   signal incr_queue_size, decr_queue_size: boolean;
 
   signal write_flag : boolean;
+  signal eq_flag: boolean;
 
   begin
  
@@ -167,25 +168,12 @@ begin  -- SimModel
     end process;
 
     -- empty/full logic.
-    process(clk, reset, incr_read_pointer, incr_write_pointer,
-			next_read_pointer, next_write_pointer)
-	variable ptrs_equal: boolean;
-    begin
-	ptrs_equal := (next_write_pointer = next_read_pointer);
- 	if(clk'event and clk ='1') then
-		if(reset = '1') then
-			full_flag <= false;
-			empty_flag <= true;
-		else
-			full_flag <= ((not full_flag) and incr_write_pointer and
-						(not incr_read_pointer) and ptrs_equal)
-						or (full_flag and (not incr_read_pointer));
-			empty_flag <= (empty_flag and (not incr_write_pointer))
-					or ((not empty_flag) and incr_write_pointer and
-						(not incr_read_pointer) and ptrs_equal);
-		end if;
-	end if;
-    end process;
+    eq_flag <= (next_read_pointer = next_write_pointer);
+    fe_logic: QueueEmptyFullLogic 
+	port map (clk => clk, reset => reset, 
+			read => incr_read_pointer, write => incr_write_pointer,
+				eq_flag => eq_flag,
+				full => full_flag, empty => empty_flag);
 
     wrpReg: SynchResetRegisterUnsigned generic map (name => name & ":wrpreg", data_width => write_pointer'length)
 		port map (clk => clk, reset => reset, din => next_write_pointer, dout => write_pointer);

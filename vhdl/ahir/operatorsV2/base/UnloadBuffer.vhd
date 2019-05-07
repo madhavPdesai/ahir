@@ -70,6 +70,7 @@ entity UnloadBuffer is
         unload_req: in boolean;
         unload_ack: out boolean;
         read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
         clk : in std_logic;
         reset: in std_logic);
 end UnloadBuffer;
@@ -130,11 +131,14 @@ begin  -- default_arch
 				unload_ack => unload_ack,
 				write_data => write_data,
 				read_data => read_data, 
+				has_data => has_data,
 				clk => clk, reset => reset);
   end generate DeepCase;
 
   ShallowCase: if shallow_flag generate
     bufGt0: if actual_buffer_size > 0 generate
+
+  	has_data <= '1' when pipe_has_data else '0';
 
   	pipe_has_data <= (empty = '0');
 	write_to_pipe <= (pipe_has_data or (not unload_register_ready));
@@ -173,6 +177,12 @@ begin  -- default_arch
 
    -- unload-register will provide bypassed buffering.
    bufEq0: if (actual_buffer_size = 0) generate
+
+	empty <= '1';
+	full  <= '0';
+
+	has_data <= '0';
+
 	data_to_unload_register <= write_data;
 	pop_ack_to_unload_register <= write_req;
 	write_ack  <= pop_req_from_unload_register;

@@ -754,6 +754,7 @@ void vcCall::Print_Operator_VHDL(ostream& ofile)
 	string block_name = inst_name + "_block"; 
 	string name = '"' + inst_name + '"';
 
+
 	ofile << block_name << " : block -- { " << endl;
 	this->Print_VHDL_Instantiation_Preamble(false, ofile);
 
@@ -780,7 +781,7 @@ void vcCall::Print_Operator_VHDL(ostream& ofile)
 	ofile << "-- }" << endl << "end block;" << endl;
 }
 
-  
+
 bool vcCall::Is_Deterministic_Pipeline_Operator()
 {
 	bool ret_val = false;
@@ -805,7 +806,7 @@ void vcCall::Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostrea
 	string local_stall_sig = stall_sig + "(" + IntToStr(det_il) + " to " + IntToStr(det_ol) + ")";
 
 	string inst_name = "deterministic_pipeline_operator_" + this->_called_module->Get_VHDL_Id() + "_" + 
-					Int64ToStr(this->Get_Root_Index());
+		Int64ToStr(this->Get_Root_Index());
 	string block_name = inst_name + "_block"; 
 	string name = '"' + inst_name + '"';
 
@@ -841,7 +842,7 @@ void vcCall::Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostrea
 	}
 	ofile << "clk => clk, reset => reset  " << endl;
 	ofile << "-- }" << endl << ");" << endl;
-		
+
 
 	ofile << "-- }" << endl << "end block; " << endl;
 }

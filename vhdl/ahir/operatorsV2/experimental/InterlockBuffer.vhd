@@ -69,6 +69,8 @@ architecture default_arch of InterlockBuffer is
 
   type LoadFsmState is (l_idle, l_busy);
   signal l_fsm_state : LoadFsmState;
+
+  signal has_data: std_logic;
   
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
@@ -165,6 +167,7 @@ begin  -- default_arch
           unload_req  => read_req,
           unload_ack  => read_ack,
           read_data   => buf_read_data,
+ 	  has_data => has_data,
           clk         => clk,
           reset       => reset);
 

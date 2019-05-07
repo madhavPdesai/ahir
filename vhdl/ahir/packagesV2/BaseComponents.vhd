@@ -584,6 +584,12 @@ package BaseComponents is
          pop_req: in std_logic);
   end component QueueBaseWithEmptyFull;
 
+  component QueueEmptyFullLogic is
+	port (clk, reset: in std_logic;
+		read,write,eq_flag: in boolean;
+		full, empty: out boolean);
+  end component;
+
 
   --
   -- a special purpose queue which keeps a 1-bit data value.
@@ -2467,6 +2473,7 @@ package BaseComponents is
           unload_req: in boolean;
           unload_ack: out boolean;
           read_data: out std_logic_vector(data_width-1 downto 0);
+	  has_data: out std_logic;
           clk : in std_logic;
           reset: in std_logic);
   end component UnloadBuffer;
@@ -2478,6 +2485,7 @@ package BaseComponents is
         unload_req: in boolean;
         unload_ack: out boolean;
         read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
         clk : in std_logic;
         reset: in std_logic);
   end component UnloadBufferDeep;

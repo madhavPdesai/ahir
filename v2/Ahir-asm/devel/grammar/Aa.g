@@ -133,7 +133,7 @@ aA_Mutex_Declaration
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE)? (NOOPT)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
+// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE )? (NOOPT)? (USEONCE)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 aA_Module returns [AaModule* new_module]
 {
@@ -154,6 +154,7 @@ aA_Module returns [AaModule* new_module]
     bool noopt_flag = false;
     int lno;
     bool deterministic_flag = false;
+    bool use_once_flag = false;
 }
     : ((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true; } 
@@ -164,6 +165,7 @@ aA_Module returns [AaModule* new_module]
 	) | (INLINE {inline_flag = true;}) | (MACRO {macro_flag = true;}) )? 
 	((OPERATOR {operator_flag = true;}) | (VOLATILE {volatile_flag = true;}) | (OPAQUE {opaque_flag = true;}))?
 	(NOOPT {noopt_flag = true;})?
+	(USEONCE {use_once_flag = true;})?
 	mt: MODULE 
         lbl = aA_Label 
         {
@@ -175,6 +177,7 @@ aA_Module returns [AaModule* new_module]
             new_module->Set_Pipeline_Flag(pipeline_flag);
 	    new_module->Set_Noopt_Flag(noopt_flag);
 	    new_module->Set_Opaque_Flag(opaque_flag);
+	    new_module->Set_Use_Once_Flag(use_once_flag);
 
 	    if(!foreign_flag)
 	    {
@@ -2632,6 +2635,7 @@ VOLATILE   : "$volatile";
 OPERATOR   : "$operator";
 NOOPT      : "$noopt";
 OPAQUE     : "$opaque";
+USEONCE     : "$useonce";
 
 // keep flag..
 KEEP     : "$keep";
