@@ -2008,6 +2008,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized_Single_Source(bool pipeline
 	__J ("aggregated_phi_sample_ack", __SCT(source_expr));
 	__F ("aggregated_phi_update_req", __UST(source_expr));
 	__J (__UCT(this), __UCT(source_expr));
+        __J ("aggregated_phi_update_ack", __UCT(this));
 
 	visited_elements.insert(this);
 	ofile << "// done: PHI Statement " << this->Get_VC_Name() << endl;
