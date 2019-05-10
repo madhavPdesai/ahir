@@ -2266,6 +2266,7 @@ package BaseComponents is
 	   data_width: integer;
 	   queue_depth: integer;
 	   bypass_flag: boolean := false;
+	   barrier_flag: boolean := false;
 	   nonblocking_read_flag: boolean := false);
     port (
     -- pulse interface with the data-path

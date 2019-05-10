@@ -187,7 +187,8 @@ enum vcLexerKeytags
     __BYPASS,
     __WAR,
     __DETERMINISTIC,
-    __ALIAS
+    __ALIAS,
+    __BARRIER
   };
 
 static string vcLexerKeywords[] = 
@@ -346,7 +347,8 @@ static string vcLexerKeywords[] =
       "$bypass",
       "$war",
       "$deterministic",
-      "$A"
+      "$A",
+      "$barrier"
   };
 
 string To_VHDL(string x);

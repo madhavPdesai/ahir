@@ -2606,6 +2606,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 		int data_width = -1;
 
 		bool part_of_pipeline = false;
+		bool barrier_flag = false;
 		// ok. collect all the information..
 		for(set<vcDatapathElement*>::iterator iter = _compatible_inport_groups[idx].begin();
 				iter != _compatible_inport_groups[idx].end();
@@ -2616,6 +2617,9 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 			vcInport* so = (vcInport*) (*iter);
 			if(vcSystem::_enable_logging)
 				so->Print_VHDL_Logger(this->Get_Parent(), ofile);
+
+			barrier_flag = so->Get_Barrier_Flag();
+
 
 			if(p == NULL)
 				p = ((vcInport*) so)->Get_Pipe();
@@ -2735,9 +2739,10 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 			ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
 				<< "    bypass_flag => " << (bypass ? "true" : "false") << ","
 				<< "   	nonblocking_read_flag => " << (noblock_flag ? "true" : "false") << "," 
-				<< "  queue_depth =>  " << p->Get_Depth() << ")" << endl;
+				<< "  barrier_flag => " << (barrier_flag ? "true" : "false") <<  ", " 
+			 	<< "  queue_depth =>  " << p->Get_Depth() << ")" << endl;
 			ofile << "port map (-- {\n sample_req => reqL(0) " << ", " <<  endl
-				<< "    sample_ack => ackL(0)" << ", " <<  endl
+                               << "    sample_ack => ackL(0)" << ", " <<  endl
 				<< "    update_req => reqR(0)" << ", " <<  endl
 				<< "    update_ack => ackR(0)" << ", " <<  endl
 				<< "    data => data_out, " << endl

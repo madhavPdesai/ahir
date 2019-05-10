@@ -859,6 +859,7 @@ string vcIOport::Get_Pipe_Id()
 
 vcInport::vcInport(string id, vcPipe* pipe, vcWire* w):vcIOport(id,pipe) 
 {
+	_barrier_flag = false;
 	vector<vcWire*> owires; owires.push_back(w);
 	this->Set_Output_Wires(owires);
 }
@@ -868,6 +869,10 @@ void vcInport::Print(ostream& ofile)
 	ofile << vcLexerKeywords[__IOPORT] << " " <<  vcLexerKeywords[__IN] << " " << this->Get_Label() << "  " 
 		<< vcLexerKeywords[__LPAREN] << this->Get_Pipe_Id() << vcLexerKeywords[__RPAREN] << " "
 		<< vcLexerKeywords[__LPAREN] << this->Get_Data()->Get_Id() << vcLexerKeywords[__RPAREN] << " ";
+
+	if(_barrier_flag)
+		ofile << vcLexerKeywords[__BARRIER] << " ";
+
 	this->Print_Guard(ofile);
 	ofile << endl;
 	this->Print_Delay(ofile);

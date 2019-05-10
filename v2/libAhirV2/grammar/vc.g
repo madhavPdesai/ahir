@@ -1197,7 +1197,7 @@ vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp] returns[vcDatapathElement* 
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_IOPort_Instantiation[dp]: IOPORT  (IN | OUT) vc_LABEL LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN
+// vc_IOPort_Instantiation[dp]: IOPORT  (IN | OUT) vc_LABEL LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN (BARRIER?)
 //-------------------------------------------------------------------------------------------------------------------------
 vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
@@ -1205,9 +1205,10 @@ vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
  vcWire* w;
  vcPipe* p = NULL;
  bool in_flag = false;
+ bool barrier_flag = false;
 }
 : ipid: IOPORT (( IN {in_flag = true;})  | OUT)  id = vc_Label LPAREN in_id = vc_Identifier RPAREN 
-    lpid: LPAREN out_id = vc_Identifier RPAREN
+    lpid: LPAREN out_id = vc_Identifier RPAREN (BARRIER {barrier_flag = true;})?
        {
           if(in_flag)
           {
@@ -1236,6 +1237,7 @@ vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
              vcInport* np = new vcInport(id,p,w);
              dp->Add_Inport(np);
 	     dpe=(vcDatapathElement*) np;
+	     np->Set_Barrier_Flag(barrier_flag);
           }
           else
           {
@@ -1974,6 +1976,7 @@ WAR : "$war";
 DETERMINISTIC: "$deterministic";
 
 ALIAS: "$A";
+BARRIER: "$barrier";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

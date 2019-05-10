@@ -46,6 +46,7 @@ entity InputPort_P2P is
 	   data_width: integer;
 	   queue_depth: integer;
 	   bypass_flag: boolean := false;
+	   barrier_flag: boolean := false;
 	   nonblocking_read_flag: boolean);
   port (
     -- pulse interface with the data-path
@@ -70,19 +71,22 @@ architecture Base of InputPort_P2P is
   signal has_data: std_logic;
 begin
 
- 
+    noBarrier: if (not barrier_flag) or nonblocking_read_flag generate
+	sample_ack <= sample_req;
+    end generate noBarrier; 
 
+    withBarrier: if (barrier_flag and (not nonblocking_read_flag)) generate
      -- sample ack when there is something at the 
      -- input of the port.  This is useful in 
      -- setting up barriers.
-     process(clk, reset, fsm_state, sample_req, oack)
+       process(clk, reset, fsm_state, sample_req, oack)
        	variable next_fsm_state: SampleFsmState;
-     begin
+       begin
 	next_fsm_state := fsm_state;
 	sample_ack <= false;
 	case fsm_state is
 		when IDLE => 
-			if (nonblocking_read_flag or (oack = '1') or (has_data = '1')) then
+			if ((oack = '1') or (has_data = '1')) then
 				sample_ack <= sample_req;
 			elsif sample_req then
 				next_fsm_state := WAITING;
@@ -100,7 +104,8 @@ begin
 			fsm_state <= next_fsm_state;
 		end if;
 	end if;
-     end process;
+       end process;
+     end generate withBarrier;
 	
      ub: UnloadBuffer
 	generic map (name => name & "-ub", 
