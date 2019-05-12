@@ -14,7 +14,7 @@ architecture FSM of QueueEmptyFullLogic is
 
 begin
     
-    process(clk, reset, read, write, eq_flag)
+    process(clk, reset, fsm_state, read, write, eq_flag)
 	variable ptrs_equal: boolean;
 	variable next_fsm_state : QFsmState;
 	variable full_var, empty_var: boolean;

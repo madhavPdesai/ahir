@@ -65,6 +65,8 @@ architecture behave of QueueWithBypass is
 	signal qhas_data: Boolean;
 	signal bypass_active : Boolean;
 
+	signal empty, full: std_logic;
+
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
 
@@ -73,34 +75,16 @@ begin  -- SimModel
   assert (queue_depth > 0) report "QueueWithBypass "  &  name  & " must have depth > 0 "
 				severity failure;
 
-  -- count number of elements in queue.
-  process(clk, reset)
-  begin
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			number_of_elements_in_queue <= (others => '0');
-		else
-			if((qpop_req = '1') and (qpop_ack = '1')) then
-				if(not ((qpush_req = '1') and (qpush_ack = '1'))) then
-					number_of_elements_in_queue <= (number_of_elements_in_queue - 1);
-				end if;
-			elsif((qpush_req = '1') and (qpush_ack = '1')) then
-				number_of_elements_in_queue <= (number_of_elements_in_queue + 1);
-			end if;
-		end if;
-	end if;
-  end process;
-
-  qhas_data <= (number_of_elements_in_queue > 0);
+  qhas_data <= (empty = '0');
 
   -- queue will always accept if there is room.
   -- but it is possible that the accepted data goes 
   -- straight to the output.
-  push_ack <= '1' when (number_of_elements_in_queue < queue_depth) else '0';
+  push_ack <= '1' when (full = '0') else '0';
  
-  qinst: QueueBase 
+  qinst: QueueBaseWithEmptyFull 
 		generic map (name => name & "-qbase", queue_depth => queue_depth, data_width => data_width)
-		port map (clk => clk, reset => reset,
+		port map (clk => clk, reset => reset, empty => empty, full => full,
 				data_in => qdata_in, push_req => qpush_req, push_ack => qpush_ack,
 				data_out => qdata_out, pop_req => qpop_req, pop_ack => qpop_ack);
 
