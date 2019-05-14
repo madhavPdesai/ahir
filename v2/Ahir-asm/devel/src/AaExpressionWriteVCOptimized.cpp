@@ -75,12 +75,16 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {
 
+	bool this_is_in_phi = (this->Get_Associated_Statement() != NULL)
+					&& this->Get_Associated_Statement()->Is_Phi_Statement();
+
 	ofile << "// start: Forward dependencies from " << this->To_String() 
 		<< " to transition " << dependent_transition << endl;
 
 	// special case.. signal read
-	if(this->Is_Signal_Read())
+	if(this->Is_Signal_Read() && !this_is_in_phi)
 	{
+		ofile << "// special case... expr is signal read" << endl;
 		__J(dependent_transition, __UCT(this));
 		return;
 	}
@@ -91,38 +95,59 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 			iter != fiter; iter++)
 	{
 		AaRoot* pred = *iter;
+
 		if(visited_elements.find(pred) != visited_elements.end())
 		{
+			bool pred_is_in_phi = false;
+			if(pred->Is_Expression())
+			{
+				AaExpression* pred_expr = (AaExpression*) pred;
 
-			if((to_index > 0) && (pred->Get_Index() > to_index))
-			{
-				AaRoot::Error("incorrect ordering of forward dependency for " + this->To_String() + 
-						" (from " + pred->To_String() + ")", this);
+				pred_is_in_phi = (pred_expr->Get_Associated_Statement() != NULL)
+					&& pred_expr->Get_Associated_Statement()->Is_Phi_Statement();
 			}
-			else 
+			else if(pred->Is_Statement())
 			{
-				if(pred->Is_Expression())
+				pred_is_in_phi = ((AaStatement*)pred)->Is_Phi_Statement();
+			}
+
+			if(!(this_is_in_phi && pred_is_in_phi)) 
+				// No PHI-PHI dependencies!
+			{
+				if((to_index > 0) && (pred->Get_Index() > to_index))
 				{
-					AaExpression* expr = ((AaExpression*) pred);
-					if(!expr->Is_Interface_Object_Reference())
-						//
-						// interface object references may be
-						// included in the root object set.
-						// But these do not have any control transitions.
-						//
+					AaRoot::Error("incorrect ordering of forward dependency for " + this->To_String() + 
+							" (from " + pred->To_String() + ")", this);
+				}
+				else 
+				{
+					if(pred->Is_Expression())
 					{
-						__J(dependent_transition,__UCT(pred));
+						AaExpression* expr = ((AaExpression*) pred);
+						if(!expr->Is_Interface_Object_Reference())
+							//
+							// interface object references may be
+							// included in the root object set.
+							// But these do not have any control transitions.
+							//
+						{
+							__J(dependent_transition,__UCT(pred));
+						}
+						else
+						{
+							ofile << "// Forward dependency from interface-object-ref omitted ("
+								<< expr->To_String() << ")" << endl;
+						}
 					}
 					else
 					{
-						ofile << "// Forward dependency from interface-object-ref omitted ("
-							<< expr->To_String() << ")" << endl;
+						__J(dependent_transition,__UCT(pred));
 					}
 				}
-				else
-				{
-					__J(dependent_transition,__UCT(pred));
-				}
+			}
+			else
+			{
+				ofile << "// Forward dependency from PHI->PHI omitted" << endl;
 			}
 		}
 	}
@@ -319,6 +344,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 
 			int r_index;
+			bool w_root_is_double_buffered = false;
 			if(r_root->Is_Expression())
 			{
 				AaStatement* rs = ((AaExpression*)r_root)->Get_Associated_Statement();
@@ -334,8 +360,16 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 			if(w_root->Is_Expression())
 			{
 				AaStatement* ws = ((AaExpression*)w_root)->Get_Associated_Statement();
+
 				if(ws != NULL)
+				{
 					w_index = ws->Get_Index();
+					if(ws->Is("AaAssignmentStatement"))
+					{
+						w_root_is_double_buffered =
+							(((AaAssignmentStatement*)ws)->Get_Target()->Get_Buffering() > 1);
+					}
+				}
 				else
 					w_index = w_root->Get_Index();
 			}
@@ -368,20 +402,47 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						//
 						// THIS DELAY IS REQUIRED TO PREVENT COMBINATIONAL LOOPS
 						//
-						//bool add_double_buffering = (w_sct != r_sct);
-						bool add_double_buffering = true;
-						if(!add_double_buffering)
+						//
+						bool no_additional_dependencies = ((w_sct == r_sct) && (w_root->Get_Buffering() == 1));
+						bool add_double_buffering = !no_additional_dependencies;
+
+						bool added_forward_dependency = false;	
+						if(!no_additional_dependencies)
 						{
+							/*
 							string delay_trans_name = 
 								__SCT(r_root) + "_delay_to_" + __UST(w_root) + "_for_" + 
 								this->Get_VC_Name();
 							ofile << "$T [" << delay_trans_name << "] $delay" << endl;
 							__J(delay_trans_name, __SCT(r_root));
 							__J(__UST(w_root), delay_trans_name);
+							*/
+							
+							__J(__UST(w_root), __SCT(r_root));
+							added_forward_dependency = true;
+
 						}
 						else
 						{
-							__J(__UST(w_root), __SCT(r_root));
+							if(w_sct != r_sct)
+							{
+								ofile << "// w-root already double buffered " << endl;
+								__J(__UST(w_root), __SCT(r_root));
+								added_forward_dependency = true;
+							}
+							else
+							{
+								ofile << "// no additional dependencies for simple assignment with single buffering" << endl;
+							}
+						}
+								
+						if(pipeline_flag and added_forward_dependency)
+						{
+							// The completion of "b = (d+e)" reenables the
+							// evaluation of "a = (b+c)"
+							ofile << "// WAR dependency: release  Read: " << this->To_String() 
+										<< " with Write: " << w_root->To_String() << endl;
+							__MJ(__SST(r_root), __UCT(w_root), true);
 						}
 
 						// also, a dependency from sct to ust is added from r-root
@@ -392,6 +453,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 							int rb = w_root->Get_Buffering();
 							if(rb < 2)
 							{
+								ofile << "// added double buffering for w-root" << endl;
 								w_root->Set_Buffering(2);
 							}
 						}
@@ -404,11 +466,18 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				else
 				{
 					//
-					// Double buffering is required to prevet combinational
+					// Double buffering is required to prevent combinational
 					// cycle here.  This prevents an UST -> SCT path
 					// in the control logic.
 					//
 					__J(__UST(w_root), __SCT(r_phi));
+					if(pipeline_flag)
+					{		
+						// The completion of "b = (d+e)" reenables the
+						// evaluation of "a = (b+c)"
+						__MJ(__SST(r_phi), __UCT(w_root), true);
+						ofile << "// WAR dependency: release  Read: " << this->To_String() << " with Write: " << w_root->To_String() << endl;
+					}
 
 					int rb = w_root->Get_Buffering();
 					if(rb < 2)
@@ -417,20 +486,10 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 					}
 				}
 
-				// The completion of "b = (d+e)" reenables the
-				// evaluation of "a = (b+c)"
 				if(pipeline_flag)
 				{
-
-					ofile << "// WAR dependency: release  Read: " 
-						<< this->To_String() 
-						<< " with Write: " << w_root->To_String() << endl;
 					if(r_phi == NULL)
 					{
-						if(r_index <= w_index)
-						{
-							__MJ(__SST(r_root), __UCT(w_root), true);
-						}
 						if(r_root != w_root)
 						{
 							AaModule* rsm = this->Get_Module();
@@ -440,16 +499,11 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 							}
 						}
 					}
-					else
-					{
-						__MJ(__SST(r_phi), __UCT(w_root), true);
-					}
-
 				}
 			}
 			else
 			{
-				ofile << "// self dependency in WAR or PHI-PHI dependency in WAR ignored." << endl;
+				ofile << "//  WAR  PHI-PHI dependency ignored..." << endl;
 			}
 		}
 	}
@@ -736,9 +790,9 @@ void AaSimpleObjectReference::Write_VC_Pipelined_Module_Enable_Joins(set<AaRoot*
 
 
 void AaSimpleObjectReference::Write_VC_Joins_To_Root_Source_Updates(string trig_trans, 
-							set<AaRoot*>& visited_elements, ostream& ofile)
+		set<AaRoot*>& visited_elements, ostream& ofile)
 {
-	
+
 	set<AaRoot*> root_set;
 	this->Collect_Root_Sources(root_set);
 	for(set<AaRoot*>::iterator iter = root_set.begin(), fiter = root_set.end();
@@ -1000,7 +1054,7 @@ string AaArrayObjectReference::Get_VC_Base_Address_Update_Unmarked_Reenable_Tran
 				if(pm)
 				{
 					base_addr_calc_reenable =
-						 (this->_object->Get_VC_Name() + "_update_enable_unmarked");
+						(this->_object->Get_VC_Name() + "_update_enable_unmarked");
 				}
 			}
 		}

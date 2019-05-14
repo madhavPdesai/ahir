@@ -39,8 +39,9 @@ use ieee.numeric_std.all;
 --  with asynchronous read.
 --
 entity fifo_mem_synch_write_asynch_read is
-   generic ( name: string; address_width: natural;  data_width : natural;
-			mem_size: natural);
+   generic ( name: string; address_width: natural;  
+			data_width : natural;
+				mem_size: natural);
    port (
 	 write_enable: in std_logic;
 	 write_data: in std_logic_vector(data_width-1 downto 0);
@@ -56,14 +57,23 @@ architecture PlainRegisters of fifo_mem_synch_write_asynch_read is
   signal mem_array : MemArray(mem_size-1 downto 0);
 begin  -- PlainRegisters
 
-	process(clk)
+	process(clk, write_address, read_address, mem_array)
+		variable wr_addr_var, rd_addr_var : integer;
+		variable wr_ok: boolean;
 	begin
+
+		wr_addr_var := To_Integer(unsigned(write_address));
+		wr_ok := (wr_addr_var < mem_size);
+
 		if(clk'event and clk = '1') then
-			if(write_enable = '1') then
-        			mem_array(To_Integer(unsigned(write_address))) <= write_data;
+
+			if (wr_ok and (write_enable = '1')) then
+        			mem_array(wr_addr_var) <= write_data;
 			end if;
+
 		end if;
+	
+		read_data <= mem_array(To_Integer(unsigned(read_address)));
 	end process;
 
-	read_data <= mem_array(To_Integer(unsigned(read_address)));
 end PlainRegisters;

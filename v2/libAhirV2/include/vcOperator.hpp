@@ -207,6 +207,7 @@ public:
 
 class vcInport: public vcIOport
 {
+  bool _barrier_flag;
 public:
   vcInport(string id, vcPipe* pipe, vcWire* w);
   
@@ -226,6 +227,10 @@ public:
 	if(d != NULL)
 		outwire_buffering.push_back(this->Get_Output_Buffering(d, num_reqs));
   }
+  void Set_Barrier_Flag(bool v) {_barrier_flag =v;}
+  bool Get_Barrier_Flag() {return(_barrier_flag);}
+
+ 
 
   virtual string Get_Logger_Description() {return (" PipeRead from " + _pipe->Get_Id()); }
   friend class vcDataPath;

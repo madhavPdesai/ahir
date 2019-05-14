@@ -18,12 +18,14 @@ $module [add2] $in (x y: $uint<32>) $out (z: $uint<32>) $is
 
 $module [p2p_check_daemon] $in() $out () $is
 {
+	always_call := ($bitcast ($uint<1>) 1)
 	$branchblock[lOoP] {
 		$dopipeline $depth 9 $buffering 2 $fullrate
 		$merge $entry $loopback 
 	 		$phi CMD := 0 $on $entry ($call v_pass_through (cmd_raw)) 
 									$on $loopback
-			$phi RES := 0 $on $entry ($call add2 (tval tval)) 
+			$phi RES := 0 $on $entry $guard (always_call)
+							($call add2 (tval tval)) 
 									$on $loopback
 			$phi first_time := ($bitcast ($uint<1>) 1) $on $entry 0 
 									$on $loopback

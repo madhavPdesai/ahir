@@ -91,6 +91,8 @@ void vcModule::Print(ostream& ofile)
 		ofile << vcLexerKeywords[__OPERATOR] << " ";
 	if(this->_volatile_flag)
 		ofile << vcLexerKeywords[__VOLATILE] << " ";
+	if(this->_use_once_flag)
+		ofile << vcLexerKeywords[__USEONCE] << " ";
 
 	ofile << vcLexerKeywords[__MODULE] << " " <<  this->Get_Label() << " {" << endl;
 	if(this->_input_arguments.size() > 0)
@@ -527,6 +529,12 @@ string vcModule::Print_VHDL_System_Instance_Port_Map(string comma,ostream& ofile
 
 string vcModule::Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile)
 {
+	string ret_string = this->Print_VHDL_Argument_Ports(semi_colon,"", ofile);
+	return(ret_string);
+}
+
+string vcModule::Print_VHDL_Argument_Ports(string semi_colon, string prefix, ostream& ofile)
+{
 
 	for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
 	{
@@ -653,7 +661,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		return;
 	}
 	else  if(this->Get_Operator_Flag())
-	// operator form?
+		// operator form?
 	{
 		this->Print_VHDL_Operator_Architecture(ofile);
 		return;

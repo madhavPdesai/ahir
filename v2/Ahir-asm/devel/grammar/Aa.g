@@ -133,7 +133,7 @@ aA_Mutex_Declaration
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE)? (NOOPT)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
+// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE )? (NOOPT)? (USEONCE)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 aA_Module returns [AaModule* new_module]
 {
@@ -154,6 +154,7 @@ aA_Module returns [AaModule* new_module]
     bool noopt_flag = false;
     int lno;
     bool deterministic_flag = false;
+    bool use_once_flag = false;
 }
     : ((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true; } 
@@ -164,6 +165,7 @@ aA_Module returns [AaModule* new_module]
 	) | (INLINE {inline_flag = true;}) | (MACRO {macro_flag = true;}) )? 
 	((OPERATOR {operator_flag = true;}) | (VOLATILE {volatile_flag = true;}) | (OPAQUE {opaque_flag = true;}))?
 	(NOOPT {noopt_flag = true;})?
+	(USEONCE {use_once_flag = true;})?
 	mt: MODULE 
         lbl = aA_Label 
         {
@@ -175,6 +177,7 @@ aA_Module returns [AaModule* new_module]
             new_module->Set_Pipeline_Flag(pipeline_flag);
 	    new_module->Set_Noopt_Flag(noopt_flag);
 	    new_module->Set_Opaque_Flag(opaque_flag);
+	    new_module->Set_Use_Once_Flag(use_once_flag);
 
 	    if(!foreign_flag)
 	    {
@@ -897,7 +900,7 @@ aA_Join_Fork_Statement[AaForkBlockStatement* scope] returns [AaJoinForkStatement
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Phi_Statement: PHI SIMPLE_IDENTIFIER  :=  ( aA_Object_Reference  ON  (SIMPLE_IDENTIFIER | ENTRY | LOOPBACK))+
+// aA_Phi_Statement: PHI SIMPLE_IDENTIFIER  :=  ( aA_Object_Reference  ON  (SIMPLE_IDENTIFIER | ENTRY | LOOPBACK))+ ($barrier)?
 //-----------------------------------------------------------------------------------------------
 aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_set, AaMergeStatement* pm, bool do_while_flag] returns [AaPhiStatement* new_ps]
 {
@@ -909,6 +912,7 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
     set<string,StringCompare> tset;
     vector<string> labels;
     bool not_flag = false;
+    bool barrier_flag = false;
 }
     : pl: PHI tgt:SIMPLE_IDENTIFIER 
         {
@@ -952,6 +956,8 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
 			(aeid: ENTRY {labels.push_back(aeid->getText());}) |
 			(abid: LOOPBACK {labels.push_back(abid->getText());}) )
 	    )*
+
+
             {
 		int I;
 		for(I=0; I < labels.size(); I++)
@@ -980,6 +986,11 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
 		labels.clear();
             }
         )+ 
+	    
+	(BARRIER {barrier_flag = true;})?
+	{
+		new_ps->Set_Barrier_Flag(barrier_flag);
+	}
 ;
 
 
@@ -2624,6 +2635,7 @@ VOLATILE   : "$volatile";
 OPERATOR   : "$operator";
 NOOPT      : "$noopt";
 OPAQUE     : "$opaque";
+USEONCE     : "$useonce";
 
 // keep flag..
 KEEP     : "$keep";

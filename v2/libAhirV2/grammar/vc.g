@@ -159,6 +159,7 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
     int buffering = 1;
     bool full_rate_flag = false;
     bool deterministic_flag = false;
+    bool use_once_flag = false;
 }
     : ((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true;} 
@@ -167,7 +168,8 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 		(FULLRATE {full_rate_flag = true;})? 
 		(DETERMINISTIC {deterministic_flag = true;})? 
 	))?
-	( (OPERATOR {operator_flag = true;} ) | (VOLATILE {volatile_flag = true;}) )?
+	((OPERATOR {operator_flag = true;} ) | (VOLATILE {volatile_flag = true;}))?
+	(USEONCE {use_once_flag = true;})?
         MODULE lbl = vc_Label 
         { 
             m = new vcModule(sys,lbl); 
@@ -182,6 +184,7 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 	    }
 	    m->Set_Operator_Flag(operator_flag);
 	    m->Set_Volatile_Flag(volatile_flag);
+	    m->Set_Use_Once_Flag(use_once_flag);
         } 
         LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
         (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
@@ -319,6 +322,21 @@ vc_Controlpath[vcSystem* sys, vcModule* m]
 //-----------------------------------------------------------------------------------------------
 vc_CPElement[vcCPElement* p] returns [vcCPElement* cpe]
 : (cpe = vc_CPPlace[p]) | (cpe = vc_CPTransition[p]);
+
+//-----------------------------------------------------------------------------------------------
+// vc_CPAlias: ALIAS SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER 
+//-----------------------------------------------------------------------------------------------
+vc_CPAlias[vcCPElement* p]
+{
+	string alias_id, reference_id;
+}
+: ALIAS alias_id = vc_Label reference_id = vc_Label
+	{
+		p->Add_Alias (alias_id, reference_id);
+	}
+
+;
+
 
 
 //-----------------------------------------------------------------------------------------------
@@ -620,12 +638,14 @@ vc_CPPipelinedForkBlock[vcCPBlock* cp, vcModule* m]
     	string internal_id;
 }
 : PIPELINEDFORKBLOCK lbl = vc_Label { fb = new vcCPPipelinedForkBlock(cp,lbl); fb->Set_Max_Iterations_In_Flight(m->Get_Pipeline_Depth());} LBRACE 
- ((vc_CPRegion[fb]) | 
- ( vc_CPFork[fb] ) |
- ( vc_CPJoin[fb] ) | 
- ( vc_CPMarkedJoin[fb] ) | 
- ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
-        (vc_AttributeSpec[fb])  )* RBRACE
+ (
+	(vc_CPRegion[fb]) | 
+ 	( vc_CPFork[fb] ) |
+ 	( vc_CPJoin[fb] ) | 
+ 	( vc_CPMarkedJoin[fb] ) | 
+ 	( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
+ 	(vc_AttributeSpec[fb])  
+ )* RBRACE
 { cp->Add_CPElement(fb); fb->Set_Pipeline_Parent(fb);}
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})* RPAREN ) 
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Output(internal_id);})* RPAREN ) 
@@ -651,6 +671,7 @@ vc_CPPipelinedLoopBody[vcCPBlock* cp]
             ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
             ( vc_CPPhiSequencer[fb]) |
             ( vc_CPTransitionMerge[fb]) |
+ 	    ( vc_CPAlias[fb] ) | 
             (vc_AttributeSpec[fb]) )* RBRACE
 { cp->Add_CPElement(fb); fb->Set_Pipeline_Parent(fb);}
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})* RPAREN ) 
@@ -1176,7 +1197,7 @@ vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp] returns[vcDatapathElement* 
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_IOPort_Instantiation[dp]: IOPORT  (IN | OUT) vc_LABEL LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN
+// vc_IOPort_Instantiation[dp]: IOPORT  (IN | OUT) vc_LABEL LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN (BARRIER?)
 //-------------------------------------------------------------------------------------------------------------------------
 vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
@@ -1184,9 +1205,10 @@ vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
  vcWire* w;
  vcPipe* p = NULL;
  bool in_flag = false;
+ bool barrier_flag = false;
 }
 : ipid: IOPORT (( IN {in_flag = true;})  | OUT)  id = vc_Label LPAREN in_id = vc_Identifier RPAREN 
-    lpid: LPAREN out_id = vc_Identifier RPAREN
+    lpid: LPAREN out_id = vc_Identifier RPAREN (BARRIER {barrier_flag = true;})?
        {
           if(in_flag)
           {
@@ -1215,6 +1237,7 @@ vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
              vcInport* np = new vcInport(id,p,w);
              dp->Add_Inport(np);
 	     dpe=(vcDatapathElement*) np;
+	     np->Set_Barrier_Flag(barrier_flag);
           }
           else
           {
@@ -1783,6 +1806,7 @@ FOREIGN       : "$foreign";
 PIPELINE      : "$pipeline";
 OPERATOR      : "$operator";
 VOLATILE      : "$volatile";
+USEONCE       : "$useonce";
 SERIESBLOCK   : ";;";
 PARALLELBLOCK : "||";
 FORKBLOCK     : "::";
@@ -1950,6 +1974,9 @@ BYPASS	      : "$bypass";
 
 WAR : "$war";
 DETERMINISTIC: "$deterministic";
+
+ALIAS: "$A";
+BARRIER: "$barrier";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

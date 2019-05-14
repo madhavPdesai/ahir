@@ -646,7 +646,8 @@ void vcTransition::Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype)
 
 void vcTransition::Print(ostream& ofile)
 {
-	ofile << vcLexerKeywords[__TRANSITION] << " " << this->Get_Label() << endl;
+	ofile << vcLexerKeywords[__TRANSITION] << " " << this->Get_Label() << " "  <<
+			(this->Get_Is_Delay_Element() ? "" : vcLexerKeywords[__DELAY])  << endl;
 }
 
 #define MAX(x,y) (x > y ? x : y)
@@ -1042,12 +1043,14 @@ void vcCPBlock::Add_CPElement(vcCPElement* cpe)
 vcCPElement* vcCPBlock::Find_CPElement(string cname)
 {
 	vcCPElement* ret_cpe = NULL;
-	if(cname == vcLexerKeywords[__ENTRY])
+	string aname = this->Get_Alias_Reference_String(cname); 
+
+	if(aname == vcLexerKeywords[__ENTRY])
 		ret_cpe = (vcCPElement*) this->_entry;
-	else if(cname == vcLexerKeywords[__EXIT])
+	else if(aname == vcLexerKeywords[__EXIT])
 		ret_cpe = (vcCPElement*) this->_exit;
-	else if(this->_element_map.find(cname) != this->_element_map.end())
-		ret_cpe = ((*(this->_element_map.find(cname))).second);
+	else if(this->_element_map.find(aname) != this->_element_map.end())
+		ret_cpe = ((*(this->_element_map.find(aname))).second);
 	return(ret_cpe);
 }
 

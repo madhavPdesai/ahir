@@ -4296,6 +4296,7 @@ AaPhiStatement::AaPhiStatement(AaBranchBlockStatement* scope, AaMergeStatement* 
 	this->_target = NULL;
 	this->_parent_merge = pm;
 	this->_in_do_while = false;
+	this->_barrier_flag = false;
 }
 AaPhiStatement::~AaPhiStatement() 
 {
@@ -4328,6 +4329,10 @@ void AaPhiStatement::Print(ostream& ofile)
 			ofile << "  " << (*iter).second[J] << " ";
 		}
 	}
+
+	if(this->Get_Barrier_Flag())
+		ofile << " $barrier";
+
 	ofile << endl;
 	if(this->_target->Get_Type())
 	{
@@ -6038,13 +6043,17 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 		// do not re-sample unless the result of the previous
 		// sample has been updated at the output.
 		//
-		// This is REQUIRED to take care of a WAR dependency
-		// across the PHI's.
+		// This is REQUIRED to partially take care of a WAR dependency
+		// across the PHI's. Note that this does not work "completely".
+		// The semantics of the PHI's has a WAR race condition.  To
+		// deal with this, use $barrier on the PHI which is a victim
+		// of this race.
 		//
 		__MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true);
 	}
 
 	// write the PHI statements.
+	vector<AaPhiStatement*> barriers;
 	for(unsigned int idx = 0; idx < phi_stmts.size(); idx++)
 	{
 		AaStatement* curr_phi = phi_stmts[idx];
@@ -6054,6 +6063,32 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 				pipe_map,
 				NULL,
 				ofile);
+
+
+
+		// sampling ordering to control race
+		// issues
+		if(barriers.size() > 0) {
+
+			string curr_ust = (((AaPhiStatement*)curr_phi)->Is_Single_Source() ?
+						__UST(((AaPhiStatement*)curr_phi)->Get_Source_Expression(0)) : __UST(curr_phi) + "_ps");
+
+
+			int J;
+			for(J=0; J < barriers.size(); J++)
+			{
+
+				AaPhiStatement* last_phi = barriers[J];
+ 				string barrier_sct = (last_phi->Is_Single_Source() ?
+                                                	__SCT(last_phi->Get_Source_Expression(0)) : __SCT(last_phi) + "_ps");
+
+				ofile << "// Race prevention dependency in ordered.. PHI's." << endl;
+				__J(curr_ust,barrier_sct)
+			}
+		}
+
+		if(((AaPhiStatement*) curr_phi)->Get_Barrier_Flag())
+			barriers.push_back((AaPhiStatement*) curr_phi);		
 	}
 
 

@@ -64,6 +64,7 @@ AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
   _pipelined_bodies_have_been_equalized = false;
 
   _noopt_flag = false;
+  _use_once_flag = false;
 
   _number_of_times_called = 0;
   this->Set_Delay(2);
@@ -142,11 +143,13 @@ void AaModule::Print(ostream& ofile)
 	ofile << "$operator ";
   else if(this->Get_Volatile_Flag())
 	ofile << "$volatile ";
+  if(this->Get_Opaque_Flag())
+	ofile << "$opaque ";
 
   if(this->Get_Noopt_Flag())
 	ofile << "$noopt ";
-  if(this->Get_Opaque_Flag())
-	ofile << "$opaque ";
+  if(this->Get_Use_Once_Flag())
+	ofile << "$useonce ";
  
 
   ofile << "$module [" << this->Get_Label() << "]" << endl;
@@ -717,6 +720,8 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
 	ofile << " $operator ";
   else if(this->Get_Volatile_Flag())
 	ofile << " $volatile ";
+  else if(this->Get_Use_Once_Flag())
+	ofile << " $useonce ";
 
   ofile << "$module [" << this->Get_Label() << "] {" << endl;
   if(_input_args.size() > 0)

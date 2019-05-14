@@ -43,49 +43,84 @@ use ahir.BaseComponents.all;
 -- to infer a synchronous set/reset ... unbelievable.
 --##decl_synopsys_attribute_lib##
 
-entity QueueBase is
-  generic(name : string; queue_depth: integer := 1; data_width: integer := 32;
-		save_one_slot: boolean := false);
+entity QueueBaseWithEmptyFull is
+  generic(name : string; 
+		queue_depth: integer := 1; 
+		data_width: integer := 32);
   port(clk: in std_logic;
        reset: in std_logic;
+       empty, full: out std_logic;
        data_in: in std_logic_vector(data_width-1 downto 0);
        push_req: in std_logic;
        push_ack: out std_logic;
        data_out: out std_logic_vector(data_width-1 downto 0);
        pop_ack : out std_logic;
        pop_req: in std_logic);
-end entity QueueBase;
+end entity QueueBaseWithEmptyFull;
 
-architecture behave of QueueBase is
+architecture behave of QueueBaseWithEmptyFull is
 
   type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
 
+  signal base_push_req: std_logic;
+  signal base_push_ack: std_logic;
+
+  signal base_pop_req: std_logic;
+  signal base_pop_ack: std_logic;
+
+  signal base_empty: boolean;
+  signal base_full: boolean;
+
+  signal base_data_out: std_logic_vector(data_width-1 downto 0);
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
 
 begin  -- SimModel
 
- --
- -- 0-depth queue is just a set of wires.
- --
- triv: if queue_depth = 0 generate
+ pDZero:  if(queue_depth = 0) generate
+
+	empty <= '1';
+	full  <= '1';
+
+	data_out <= data_in;
+
 	push_ack <= pop_req;
 	pop_ack  <= push_req;
-	data_out <= data_in;
- end generate triv;
+
+ end generate pDZero;
+
+
+ oSideQGt0: if (queue_depth > 0)  generate
+
+     base_push_req <= push_req;
+     push_ack <= base_push_ack;
+     base_pop_req <= pop_req;
+     pop_ack <= base_pop_ack;
+
+     data_out <= base_data_out;
+
+     empty <= '1' when base_empty else '0';
+     full  <= '1' when base_full else '0';
+
+ end generate oSideQGt0;
 
  qD1: if (queue_depth = 1) generate
+
+
    RB: block
       signal full_flag: boolean;
       signal data_reg: std_logic_vector(data_width-1 downto 0);
-
    begin
 
-      push_ack <= '1' when (not full_flag) else '0';
-      pop_ack  <= '1' when full_flag else '0';
-      data_out <= data_reg;
+      base_empty <= not full_flag;
+      base_full  <= full_flag;
 
-      process(clk, reset, push_req, pop_req, full_flag, data_in, data_reg)
+      base_push_ack <= '0' when full_flag else '1';
+      base_pop_ack  <= '1' when full_flag else '0';
+	
+      base_data_out <= data_reg;
+
+      process(clk, reset, base_push_req, base_pop_req, full_flag, data_in, data_reg)
 	variable next_full_flag_var: boolean;
         variable next_data_reg_var: std_logic_vector(data_width-1 downto 0);
       begin
@@ -93,11 +128,11 @@ begin  -- SimModel
         next_data_reg_var := data_reg;
 
         if (full_flag) then
-           if (pop_req = '1') then
+           if (base_pop_req = '1') then
               next_full_flag_var := false;
            end if;
         else 
-           if (push_req = '1') then
+           if (base_push_req = '1') then
                next_full_flag_var := true;
                next_data_reg_var :=  data_in;
 	   end if;
@@ -120,27 +155,27 @@ begin  -- SimModel
  qDGt1: if queue_depth > 1 generate 
   NTB: block 
    signal queue_array : QueueArray(queue_depth-1 downto 0);
-   signal read_pointer, write_pointer: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
-   signal next_read_pointer, next_write_pointer, write_pointer_plus_1: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
+   signal read_pointer, write_pointer, write_pointer_plus_1: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
+   signal next_read_pointer, next_write_pointer: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
 
   constant URW0: unsigned ((Ceil_Log2(queue_depth))-1 downto 0):= (others => '0');
 
-  signal full_flag, empty_flag: boolean;
-  signal queue_size : unsigned ((Ceil_Log2(queue_depth+1))-1 downto 0);
   signal incr_read_pointer, incr_write_pointer: boolean;
-  signal incr_queue_size, decr_queue_size: boolean;
-
   signal write_flag : boolean;
-  signal eq_flag: boolean;
+  signal eq_flag : boolean;
 
   begin
- 
-    assert (not full_flag) report "Queue " & name & " is full." severity note;
+    base_push_ack <= '0' when base_full else '1';
+    base_pop_ack  <= '0' when base_empty else '1';
 
-    write_pointer_plus_1 <= (others => '0') when (write_pointer = queue_depth-1) else (write_pointer+1);
+    -- empty/full logic.
+    eq_flag <= (next_read_pointer = next_write_pointer);
+    fe_logic: QueueEmptyFullLogic 
+	port map (clk => clk, reset => reset, 
+			read => incr_read_pointer, write => incr_write_pointer,
+				eq_flag => eq_flag,
+				full => base_full, empty => base_empty);
 
-    push_ack <= '1' when (not full_flag) else '0';
-    pop_ack  <= '1' when (not empty_flag) else '0';
 
     -- next read pointer, write pointer.
     process(incr_read_pointer, read_pointer) 
@@ -158,6 +193,7 @@ begin  -- SimModel
     rdpReg: SynchResetRegisterUnsigned generic map (name => name & ":rpreg", data_width => read_pointer'length)
 		port map (clk => clk, reset => reset, din => next_read_pointer, dout => read_pointer);
 
+    write_pointer_plus_1 <= (others => '0') when (write_pointer = queue_depth-1) else (write_pointer + 1);
     process(incr_write_pointer, write_pointer, write_pointer_plus_1) 
     begin
 	if(incr_write_pointer) then
@@ -166,15 +202,6 @@ begin  -- SimModel
 		next_write_pointer <= write_pointer;
 	end if;
     end process;
-
-    -- empty/full logic.
-    eq_flag <= (next_read_pointer = next_write_pointer);
-    fe_logic: QueueEmptyFullLogic 
-	port map (clk => clk, reset => reset, 
-			read => incr_read_pointer, write => incr_write_pointer,
-				eq_flag => eq_flag,
-				full => full_flag, empty => empty_flag);
-
     wrpReg: SynchResetRegisterUnsigned generic map (name => name & ":wrpreg", data_width => write_pointer'length)
 		port map (clk => clk, reset => reset, din => next_write_pointer, dout => write_pointer);
 
@@ -188,7 +215,7 @@ begin  -- SimModel
     		data_out_var := queue_array(I);
 	    end if;
 	end loop;
-	data_out <= data_out_var;
+	base_data_out <= data_out_var;
     end process;
 
     -- write to queue-array.
@@ -206,17 +233,17 @@ begin  -- SimModel
     end generate Wgen;
   
     -- single process..  Synopsys mangles the logic... split it into two.
-    process(read_pointer, write_pointer, empty_flag, full_flag, push_req, pop_req)
+    process(read_pointer, write_pointer, base_empty, base_full, base_push_req, base_pop_req)
       variable push,pop : boolean;
     begin
       push  := false;
       pop   := false;
       
-      if((not full_flag) and push_req = '1') then
+      if((not base_full) and base_push_req = '1') then
           push := true;
       end if;
   
-      if((not empty_flag) and pop_req = '1') then
+      if((not base_empty) and base_pop_req = '1') then
           pop := true;
       end if;
   

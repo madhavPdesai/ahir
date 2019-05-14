@@ -89,6 +89,8 @@ begin  -- Behave
       signal unload_req,unload_ack : boolean;
       signal buf_data_in, buf_data_out : std_logic_vector(iwidth-1 downto 0);
       signal valid : std_logic;
+      signal has_data: std_logic;
+
     begin  -- block BufBlock
 
        ub : UnloadBuffer generic map (
@@ -103,6 +105,7 @@ begin  -- Behave
            unload_req => unload_req,
            unload_ack => unload_ack,
            read_data  => buf_data_out,
+           has_data   => has_data,
            clk        => clk,
            reset      => reset);
 

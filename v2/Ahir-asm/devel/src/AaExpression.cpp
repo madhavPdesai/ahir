@@ -2148,7 +2148,6 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& of
 				(source != NULL ? 
 				 source->Get_VC_Driver_Name() : this->Get_VC_Driver_Name());
 
-
 			// io write.
 			Write_VC_IO_Output_Port((AaPipeObject*) this->_object,
 					this->Get_VC_Datapath_Instance_Name(),
@@ -2226,6 +2225,12 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances(AaExpression* target, 
 			string dpe_name = this->Get_VC_Datapath_Instance_Name();
 			string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
+			bool barrier_flag = 
+				(this->Get_Associated_Statement() != NULL) && 
+				this->Get_Associated_Statement()->Is_Phi_Statement() &&
+					((AaPhiStatement*)this->Get_Associated_Statement())->Get_Barrier_Flag();
+
+
 			//
 			// io read.
 			//
@@ -2234,7 +2239,9 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances(AaExpression* target, 
 					tgt_name,
 					this->Get_VC_Guard_String(),
 					full_rate, 
+					barrier_flag,
 					ofile);
+
 			this->Write_VC_Output_Buffering(dpe_name, tgt_name, ofile);
 		}
 	}
@@ -3322,8 +3329,14 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 			source_wire = this->Get_VC_Name() + "_pipe_read_data";
 			obj_type = ((AaObject*)(this->_object))->Get_Type();
 			string pipe_inst = this->Get_VC_Name() + "_pipe_access";
+
+			bool barrier_flag = 
+				this->Get_Associated_Statement() && 
+					this->Get_Associated_Statement()->Is_Phi_Statement() && 
+					 ((AaPhiStatement*) this->Get_Associated_Statement())->Get_Barrier_Flag();
+
 			Write_VC_IO_Input_Port((AaPipeObject*)(this->_object), pipe_inst,source_wire,
-					this->Get_VC_Guard_String(), full_rate, ofile);
+					this->Get_VC_Guard_String(), full_rate, barrier_flag, ofile);
 			// pipelining: address calculation path is double buffered.
 			if(this->Get_Pipeline_Parent() != NULL)
 			{
@@ -6156,11 +6169,12 @@ void AaFunctionCallExpression::Write_VC_Datapath_Instances(AaExpression* target,
 	}
 
 	string dpe_name = this->Get_VC_Datapath_Instance_Name();
+	string guard_string = this->Get_VC_Guard_String();
 	Write_VC_Call_Operator(dpe_name,
 			_module_identifier,
 			inargs,
 			outargs,
-			"",	// guard-string
+			guard_string,	// guard-string
 			this->Is_Trivial(), // volatile.
 			full_rate,		      
 			ofile);
