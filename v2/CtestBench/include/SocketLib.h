@@ -48,7 +48,7 @@
 
 
 // should be enough..
-#define MAX_BUF_SIZE 4096
+#define MAX_BUF_SIZE (16*4096)
 
 // by default, we will stick to 9999
 #define DEFAULT_SERVER_PORT  9999
