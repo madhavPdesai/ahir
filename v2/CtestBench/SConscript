@@ -22,7 +22,9 @@ VariantDir('objSocketLibDebug','src',duplicate=0)
 # for 32-bit
 #env.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -m32 -DMODELSIM -DNDEBUG')
 # for 64-bit
-#env.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -DMODELSIM -DNDEBUG')
+env.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -DMODELSIM -DNDEBUG')
+env.SharedLibrary('lib/libFli', ['objModelsimFLI/libFLI.c'], CCFLAGS='-g -DMODELSIM -DNDEBUG')
+#
 env.SharedLibrary('lib/libVhpi', ['objVhpi/Vhpi.c','objVhpi/SocketLib.c'], CCFLAGS='-g -DNDEBUG')
 env.SharedLibrary('lib/libSocketLibPipeHandler', ['objSocketLib/SocketLib.c','objSocketLib/Pipes.c', 'objSocketLib/SockPipes.c', 'objSocketLib/pipeHandler.c'], CCFLAGS='-g -DNDEBUG')
 #env.SharedLibrary('lib/libSocketLibPipeHandlerGnuPth', ['objSocketLibGnuPth/SocketLib.c','objSocketLibGnuPth/Pipes.c', 'objSocketLibGnuPth/SockPipes.c', 'objSocketLibGnuPth/pipeHandler.c'], CCFLAGS='-g -DNDEBUG -DUSE_GNUPTH')
