@@ -124,7 +124,7 @@ int is_lifo_mode(PipeRec* p);
 
 #define __EMPTY(p) (p->is_signal ? 0 : (p->number_of_entries == 0))
 #define __FULL(p) (p->is_signal ? 0 : (p->number_of_entries ==  p->pipe_depth))
-#define __AVAILABLE(p) (p->is_signal ? 1 : (p->pipe_depth  - p->number_of_entries))
+#define __AVAILABLE(p) (p->is_signal ? p->pipe_depth : (p->pipe_depth  - p->number_of_entries))
 #define INCR(x,p) x = ((x == (p->pipe_depth-1)) ? 0 : x+1)
 #define DECR(x,p) x = ((x == 0) ? (p->pipe_depth - 1) : x-1)
 #define POP(p,x,n) {\

@@ -1,6 +1,6 @@
 import os
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
-ANTLR_JAR_PATH=os.environ['ANTLR_PATH'] + '/lib/'
+ANTLR_JAR_PATH=os.environ['ANTLR_PATH'] + '/jar/'
 # use a path to get to the antlr jar "later"
 # also: how does one force the action if the source has changed?
 ant = Builder(action = 'java -cp ' + ANTLR_JAR_PATH + '/antlr.jar antlr.Tool  -o Ahir-asm/devel/src/ $SOURCE')

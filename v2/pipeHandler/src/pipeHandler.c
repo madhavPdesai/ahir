@@ -338,7 +338,11 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
 
 	MUTEX_LOCK(p->pm);
 	if(p->is_signal)
-		ret_val = 1;
+	{
+		ret_val = p->pipe_depth;
+		if(ret_val >= number_of_words_requested)
+			ret_val = number_of_words_requested;
+	}
 	else
 	{
 		if(p->number_of_entries >= number_of_words_requested)

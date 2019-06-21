@@ -20,10 +20,13 @@ VariantDir('objSocketLibDebug','src',duplicate=0)
 #VariantDir('objSocketLibDebugGnuPth','src',duplicate=0)
 # if modelsim is present, then you should uncomment one of the following lines.
 # for 32-bit
-#env.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -m32 -DMODELSIM -DNDEBUG')
+# env.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -m32 -DMODELSIM -DNDEBUG')
 # for 64-bit
-env.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -DMODELSIM -DNDEBUG')
-env.SharedLibrary('lib/libFli', ['objModelsimFLI/libFLI.c'], CCFLAGS='-g -DMODELSIM -DNDEBUG')
+# env.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -DMODELSIM -DNDEBUG')
+#
+# Only if you have modelsim installed.
+#
+#env.SharedLibrary('lib/libFli', ['objModelsimFLI/libFLI.c'], CCFLAGS='-g -DMODELSIM -DNDEBUG')
 #
 env.SharedLibrary('lib/libVhpi', ['objVhpi/Vhpi.c','objVhpi/SocketLib.c'], CCFLAGS='-g -DNDEBUG')
 env.SharedLibrary('lib/libSocketLibPipeHandler', ['objSocketLib/SocketLib.c','objSocketLib/Pipes.c', 'objSocketLib/SockPipes.c', 'objSocketLib/pipeHandler.c'], CCFLAGS='-g -DNDEBUG')
