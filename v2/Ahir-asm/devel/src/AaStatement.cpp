@@ -1606,6 +1606,8 @@ void AaAssignmentStatement::Print(ostream& ofile)
 			for(set<AaStatement*>::iterator siter = _synch_statements.begin(), fiter = _synch_statements.end();
 					siter != fiter; siter++)
 			{
+				if(_synch_update_flag_map[(*siter)])
+					ofile << " $update "; 
 				ofile << (*siter)->Get_Mark();
 				ofile << " ";
 			}
@@ -2501,6 +2503,9 @@ void AaCallStatement::Print(ostream& ofile)
 		for(set<AaStatement*>::iterator siter = _synch_statements.begin(), fiter = _synch_statements.end();
 				siter != fiter; siter++)
 		{
+			if(_synch_update_flag_map[(*siter)])
+				 ofile << " $update "; 
+
 			ofile << (*siter)->Get_Mark();
 			ofile << " ";
 		}
