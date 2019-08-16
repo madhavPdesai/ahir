@@ -1489,10 +1489,41 @@ bool AaAssignmentStatement::Is_Orphaned()
 	return(ret_val);
 }
 
+bool AaAssignmentStatement::Can_Be_Combinationalized()
+{
+	AaExpression* tgt = this->_target;
+	AaExpression* src = this->_source;
+	bool ret_val = (!tgt->Is_Interface_Object_Reference() && tgt->Can_Be_Combinationalized() && src->Can_Be_Combinationalized());
+
+	if(ret_val && (tgt->Get_Source_References().size() == 1))
+	{
+		AaRoot* robj = *(tgt->Get_Source_References().begin());
+		if(robj->Is_Phi_Statement())
+			ret_val = true;
+		else
+		{
+			if(robj->Is_Expression())
+			{
+				ret_val = (((AaExpression*)robj)->Get_Associated_Statement() != this);
+			}
+			else
+			{
+				ret_val = (robj->Get_Index() < tgt->Get_Index());
+			}
+		}
+	}
+	return(ret_val);
+}
+
 
 void AaAssignmentStatement::Print(ostream& ofile)
 {
 	assert(this->Get_Target()->Get_Type() && this->Get_Source()->Get_Type());
+
+	if(AaProgram::_combinationalize_statements && this->Can_Be_Combinationalized())
+	{
+		this->Set_Is_Volatile(true);
+	}
 
 	int twidth = this->Get_Target()->Get_Type()->Size();
 	int swidth = this->Get_Source()->Get_Type()->Size();

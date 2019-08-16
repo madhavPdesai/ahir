@@ -92,7 +92,7 @@ void AaExpression::Check_Volatile_Inconsistency(AaStatement* stmt)
 		if (!stmt->Is_Call_Statement() && !this->Is_Trivial())
 		{
 			AaRoot::Error("Expression "  + this->To_String() 
-				+ " is not trivial but appears in an assignment statement.", stmt);
+				+ " is not trivial but appears in a volatile assignment statement.", stmt);
 		}
 	}
 }
@@ -515,6 +515,20 @@ void AaObjectReference::Print(ostream& ofile)
 {
 	ofile << this->Get_Object_Ref_String();
 }
+
+bool AaObjectReference::Can_Be_Combinationalized()
+{
+	bool ret_val = false;
+	if(this->_object != NULL)
+	{
+		if(!this->_object->Is_Storage_Object() && !this->_object->Is_Pipe_Object())
+		{
+			ret_val = true;
+		}
+	}
+	return(ret_val);
+}
+
 
 AaType* AaObjectReference::Get_Object_Type()
 {
@@ -1072,6 +1086,13 @@ bool AaSimpleObjectReference::Is_Trivial()
 	return(!this->Get_Is_Target() 
 			&& (this->Is_Implicit_Variable_Reference() || this->Is_Signal_Read()));
 }
+
+bool AaSimpleObjectReference::Can_Be_Combinationalized()
+{
+	bool ret_val = (this->Is_Implicit_Variable_Reference() || this->Is_Signal_Read());
+	return(ret_val);
+}
+
 
 bool AaSimpleObjectReference::Is_Write_To_Pipe(AaPipeObject* obj)
 {
@@ -5423,8 +5444,9 @@ bool AaBinaryExpression::Is_Trivial()
 
 	bool second_is_constant = (this->_second != NULL) && this->_second->Is_Constant();
 	// 64-bit mul/shifts are trivial (ha ha)
-	if((this->_operation == __MUL) || 
-		(Is_Shift_Operation(this->_operation) && !second_is_constant))
+	if(!this->Get_Type()->Is_Float_Type() && 
+			((this->_operation == __MUL) || 
+				(Is_Shift_Operation(this->_operation) && !second_is_constant)))
 	{
 		// lets say we can do up to 64-bit mul/shift operations in one cycle.
 		// even though they have quadratic complexity.
@@ -6217,6 +6239,7 @@ void AaFunctionCallExpression::Write_VC_Datapath_Instances(AaExpression* target,
 		<< tgt_name << " " << buffering << endl;
 }
 
+
 void AaFunctionCallExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
 	if(!this->Is_Constant())
@@ -6317,6 +6340,14 @@ void AaFunctionCallExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 bool AaFunctionCallExpression::Is_Trivial() // return false if called module is volatile.
 {
 	return(_called_module->Get_Volatile_Flag());
+}
+
+bool AaFunctionCallExpression::Can_Be_Combinationalized()
+{
+	bool ret_val = false;
+	if((this->_called_module != NULL)  && this->_called_module->Get_Is_Volatile())
+		ret_val = true;
+	return(ret_val);
 }
 
 /////////////////////////////////////////////////  Utilities //////////////////////////////////////////////

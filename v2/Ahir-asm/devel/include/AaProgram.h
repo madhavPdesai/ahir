@@ -160,6 +160,7 @@ class AaProgram
   static bool _use_gnu_pth;
 
   static bool _balance_loop_pipeline_bodies;
+  static bool _combinationalize_statements;
   static string _tool_name;
   static bool  _do_not_print_orphans;
 

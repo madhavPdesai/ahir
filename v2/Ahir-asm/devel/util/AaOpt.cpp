@@ -65,11 +65,13 @@ int main(int argc, char* argv[])
 
   if(argc < 2)
     {
-      cerr << "Usage: AaOpt [-I <extmem-obj-name>] [-r <module-name>]* <filename> (<filename>) ... " << endl;
+      cerr << "Usage: AaOpt [-I <extmem-obj-name>] [-r <module-name>]* [-B] [-C] <filename> (<filename>) ... " << endl;
       cerr << "    -I <extmem-obj-name> : specify the name of the memory object target for external references." << endl
 	   << "    -r <module-name>     : specify roots of the module hierarchy." << endl
 	   << "    -B                   : select option to balance do-while loop pipelines." << endl
+	   << "    -C                   : select option to combinationalize as many statements as possible." << endl
 	   << "    -v                   : verbose... lots of junk printed." << endl
+	   << "     note: if -B and -C are both specified, only -B takes effect, -C is ignored." << endl
            << "     <filename> (<filename>) ... " << endl;
       exit(1);
     }
@@ -78,6 +80,7 @@ int main(int argc, char* argv[])
   string mod_name;
   string opt_string;
   bool opt_flag = false;
+  bool c_flag = false;
 
 
   // inline in outfile
@@ -90,7 +93,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "I:r:Bv",
+		      "I:r:BCv",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -107,6 +110,9 @@ int main(int argc, char* argv[])
         case 'B':
 	  AaProgram::_balance_loop_pipeline_bodies = true;
 	  break;
+	case 'C':
+	  c_flag = true;
+	  break;
 	case 'v':
 	  AaProgram::_verbose_flag = true;
 	  break;
@@ -114,6 +120,19 @@ int main(int argc, char* argv[])
 	  cerr << "Error: unknown option " << opt << endl;
 	}
     }
+
+  if(c_flag)
+  {
+	if(AaProgram::_balance_loop_pipeline_bodies)
+	{
+		cerr << "Error: -B and -C cannot be used simultaneously.\n" << endl;
+		return(1);
+	}
+	else
+	{
+		AaProgram::_combinationalize_statements = true;
+	}
+  }
 
   if(AaProgram::_keep_extmem_inside)
     {

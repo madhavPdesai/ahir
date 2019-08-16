@@ -676,6 +676,7 @@ class AaAssignmentStatement: public AaStatement
    virtual void Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_set, set<AaRoot*>& visited_elements);
 
   virtual bool Is_Orphaned();
+  virtual bool Can_Be_Combinationalized();
 };
 
 
