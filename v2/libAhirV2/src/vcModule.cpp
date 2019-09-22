@@ -1610,6 +1610,11 @@ void vcModule::Register_Pipe_Read(string pipe_id, int idx)
 	if(p != NULL)
 	{
 		p->Register_Pipe_Read(this,idx);
+		if(this->Get_Volatile_Flag())
+		{
+			vcSystem::Error(" volatile module " + this->Get_Id() + " reads from pipe " + pipe_id);
+		}
+
 	}
 	else
 		this->Get_Parent()->Register_Pipe_Read(pipe_id, this, idx);    
@@ -1623,6 +1628,10 @@ void vcModule::Register_Pipe_Write(string pipe_id,int idx)
 	if(p != NULL)
 	{
 		p->Register_Pipe_Write(this,idx);
+		if(this->Get_Volatile_Flag())
+		{
+			vcSystem::Error(" volatile module " + this->Get_Id() + " writes to pipe " + pipe_id);
+		}
 	}
 	else
 		this->Get_Parent()->Register_Pipe_Write(pipe_id, this, idx);

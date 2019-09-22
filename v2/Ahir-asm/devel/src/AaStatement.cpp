@@ -2282,7 +2282,7 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 	for(unsigned int i = 0; i < inargs.size(); i++)
 	{
 		inargs[i]->Set_Associated_Statement(this);
-		inargs[i]->Set_Is_Intermediate(false);
+		inargs[i]->Set_Is_Intermediate(true);
 		this->_input_args.push_back(inargs[i]);
 	}
 
@@ -2319,13 +2319,20 @@ void AaCallStatement::Replace_Input_Argument(AaExpression* old_arg, AaSimpleObje
 
 		if(arg == old_arg)
 		{
-			assert(arg->Is_Implicit_Variable_Reference());
-			arg->Set_Associated_Statement(NULL);
+			// remove links to old-arg
 			arg->Remove_Target_Reference(this);
 			this->Remove_Source_Reference(arg);
-			this->_source_objects.erase(arg->Get_Object());
+
+			if(arg->Is_Implicit_Variable_Reference())
+			{
+				this->_source_objects.erase(arg->Get_Object());
+			}
+				
+			if(arg->Get_Associated_Statement() == this)
+				arg->Set_Associated_Statement(NULL);
 
 			_input_args[i] = new_arg;
+
 			new_arg->Add_Target_Reference(this);
 			this->Add_Source_Reference(new_arg);
 			new_arg->Map_Source_References(this->_source_objects);

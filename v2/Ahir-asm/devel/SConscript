@@ -15,6 +15,7 @@ env.Program('bin/AaOpt', 'util/AaOpt.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=[
 env.Program('bin/Aa2VC', 'util/Aa2VC.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa',  'Value', 'antlr'], LIBPATH=Split('/usr/local/lib ./lib/ ../../Value/lib/ ' + ANTLR_LIB_PATH))
 env.Program('bin/Aa2C', 'util/Aa2C.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa',  'Value', 'antlr'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/ ' + ANTLR_LIB_PATH))
 env.Program('bin/AaLinkExtMem', 'util/AaLinkExtMem.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa',  'Value', 'antlr'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/ ' +  ANTLR_LIB_PATH))
+env.Program('bin/AaInclude', 'util/AaInclude.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBPATH=Split('/usr/local/lib'))
 
 
 

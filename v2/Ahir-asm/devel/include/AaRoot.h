@@ -131,7 +131,7 @@ class AaRoot
 
 
   // VC related stuff.
-  virtual string Get_VC_Name() {assert(0);}
+  virtual string Get_VC_Name();
   virtual string Get_VC_Sample_Start_Transition_Name() {
     return(this->Get_VC_Name() + "_sample_start_");
   }
@@ -173,7 +173,7 @@ class AaRoot
   virtual void Print(ofstream& ofile);
   virtual void Print(string& ostring);
 
-  virtual string Get_Name() {assert(0);}
+  virtual string Get_Name();
 
   virtual AaRoot* Find_Child() {return(NULL);}
   virtual bool Is_Scope() {return(false); }

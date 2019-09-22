@@ -1448,11 +1448,12 @@ package body float_pkg is
     arg : UNRESOLVED_float)             -- fp vector
     return STD_ULOGIC_VECTOR is
     variable result : STD_ULOGIC_VECTOR (arg'length-1 downto 0);
+    alias aarg: UNRESOLVED_float(1 to arg'length) is arg;
   begin  -- function to_std_ulogic_vector
     if arg'length < 1 then
       return NSLV;
     end if;
-    result := STD_ULOGIC_VECTOR (arg);
+    result := STD_ULOGIC_VECTOR (aarg);
     return result;
   end function to_sulv;
 
@@ -6002,11 +6003,12 @@ package body float_pkg is
     arg : UNRESOLVED_float)             -- fp vector
     return STD_ULOGIC_VECTOR is
     variable result : STD_ULOGIC_VECTOR (arg'length-1 downto 0);
+    alias aarg: UNRESOLVED_float(1 to arg'length) is arg;
   begin  -- function to_std_ulogic_vector
     if arg'length < 1 then
       return NSLV;
     end if;
-    result := STD_ULOGIC_VECTOR (arg);
+    result := STD_ULOGIC_VECTOR (aarg);
     return result;
   end function to_sulv;
 
@@ -10556,11 +10558,12 @@ package body float_pkg is
     arg : UNRESOLVED_float)             -- fp vector
     return STD_ULOGIC_VECTOR is
     variable result : STD_ULOGIC_VECTOR (arg'length-1 downto 0);
+    alias aarg: UNRESOLVED_float(1 to arg'length) is arg;
   begin  -- function to_std_ulogic_vector
     if arg'length < 1 then
       return NSLV;
     end if;
-    result := STD_ULOGIC_VECTOR (arg);
+    result := STD_ULOGIC_VECTOR (aarg);
     return result;
   end function to_sulv;
 
