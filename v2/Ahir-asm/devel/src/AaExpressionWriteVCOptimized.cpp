@@ -84,8 +84,8 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 	// special case.. signal read
 	if(this->Is_Signal_Read() && !this_is_in_phi)
 	{
-		ofile << "// special case... expr is signal read" << endl;
-		__J(dependent_transition, __UCT(this));
+		ofile << "// special case... expr is signal read, which does not involve control.." << endl;
+		//__J(dependent_transition, __UCT(this));
 		return;
 	}
 
@@ -744,47 +744,50 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 		else if(this->_object->Is("AaPipeObject"))
 			// needed to hook up pipe dependencies.
 		{
-			__DeclTransSplitProtocolPattern;
-
-			//
-			// a pipe read.. only the update transitions are in 
-			// play here.
-			//
-			if(barrier != NULL)
+			if(!this->Is_Signal_Read())
 			{
-				ofile << "// barrier " << endl;
-				__J(__SST(this), __UCT(barrier));
-			}
+				__DeclTransSplitProtocolPattern;
 
-			// the guard dependency..
-			this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
-
-			string sample_regn = this->Get_VC_Name() + "_Sample";
-			string update_regn = this->Get_VC_Name() + "_Update";
-			ofile << ";;[" << sample_regn << "] { // pipe read sample" << endl;
-			ofile << "$T [rr] $T [ra] " << endl;
-			ofile << "}" << endl;
-
-			ofile << ";;[" << update_regn << "] { // pipe read update" << endl;
-			ofile << "$T [cr] $T [ca] " << endl;
-			ofile << "}" << endl;
-
-			// for simplifying the guard interface, we treat this
-			// as a special case (since sr->sa an empty operation for an
-			// input pipe).
-			__ConnectChainedSplitProtocolPattern;
-
-			// record the pipe!  Introduce pipe related dependencies 
-			// later. 
-			pipe_map[(AaPipeObject*) (this->_object)].push_back(this);
-
-			if(pipeline_flag && !this->_object->Is_Signal())
-			{
 				//
-				// Close the ring.
-				// 
-				__MJ (__SST(this), __UCT(this),true); // bypass
-				//__SelfReleaseSplitProtocolPattern
+				// a pipe read.. only the update transitions are in 
+				// play here.
+				//
+				if(barrier != NULL)
+				{
+					ofile << "// barrier " << endl;
+					__J(__SST(this), __UCT(barrier));
+				}
+
+				// the guard dependency..
+				this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
+
+				string sample_regn = this->Get_VC_Name() + "_Sample";
+				string update_regn = this->Get_VC_Name() + "_Update";
+				ofile << ";;[" << sample_regn << "] { // pipe read sample" << endl;
+				ofile << "$T [rr] $T [ra] " << endl;
+				ofile << "}" << endl;
+
+				ofile << ";;[" << update_regn << "] { // pipe read update" << endl;
+				ofile << "$T [cr] $T [ca] " << endl;
+				ofile << "}" << endl;
+
+				// for simplifying the guard interface, we treat this
+				// as a special case (since sr->sa an empty operation for an
+				// input pipe).
+				__ConnectChainedSplitProtocolPattern;
+
+				// record the pipe!  Introduce pipe related dependencies 
+				// later. 
+				pipe_map[(AaPipeObject*) (this->_object)].push_back(this);
+
+				if(pipeline_flag && !this->_object->Is_Signal())
+				{
+					//
+					// Close the ring.
+					// 
+					__MJ (__SST(this), __UCT(this),true); // bypass
+					//__SelfReleaseSplitProtocolPattern
+				}
 			}
 		}
 

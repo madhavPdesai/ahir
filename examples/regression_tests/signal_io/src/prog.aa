@@ -14,8 +14,10 @@ $module [signal_io_daemon] $in() $out () $is
 
 		A := in_data
 		$volatile VTMP := A
-		TMP := A
-		out_data := (TMP | VTMP)
+		TMP := (~A)
+		TMP :=  A
+		$volatile Q   := TMP
+		out_data := ($reduce | Q TMP VTMP)
 
 		$while 1
 	}
