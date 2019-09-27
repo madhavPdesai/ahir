@@ -119,8 +119,11 @@ uint64_t truncate_uint64(uint64_t val, uint32_t bit_width)
 
 void allocate_sized_u8_array(sized_u8_array* a, uint32_t sz)
 {
-	a->byte_array = calloc(1, sz*sizeof(uint8_t));
-	a->undefined_byte_array = calloc(1, sz*sizeof(uint8_t));
+	a->byte_array = (uint8_t*) malloc(sz*sizeof(uint8_t));
+	memset((void*) a->byte_array, 0, (sz*sizeof(uint8_t)));
+
+	a->undefined_byte_array = (uint8_t*) malloc(sz*sizeof(uint8_t));
+	memset((void*) a->undefined_byte_array, 0, (sz*sizeof(uint8_t)));
 
 	allocated_byte_count += 2*sz;
 
@@ -137,8 +140,8 @@ void allocate_sized_u8_array(sized_u8_array* a, uint32_t sz)
 
 void free_sized_u8_array(sized_u8_array* a)
 {
-	cfree (a->byte_array);
-	cfree (a->undefined_byte_array);
+	free (a->byte_array);
+	free (a->undefined_byte_array);
 }
 
 

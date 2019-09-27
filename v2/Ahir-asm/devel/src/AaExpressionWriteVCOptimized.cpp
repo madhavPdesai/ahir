@@ -91,63 +91,84 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 
 	set<AaRoot*> root_sources;
 	this->Collect_Root_Sources(root_sources);
-	for(set<AaRoot*>::iterator iter = root_sources.begin(), fiter = root_sources.end();
-			iter != fiter; iter++)
+
+	//
+	// If this expression depends only on signals and constants, the root source set 
+	// will be empty..   while this expression may still have control structures present
+	// in the virtual circuit.
+	//
+	//
+	if(root_sources.size() == 0)
 	{
-		AaRoot* pred = *iter;
-
-		if(visited_elements.find(pred) != visited_elements.end())
+		AaRoot::Error("Looks like you have an expression which depends only on signals... break it up.", this);
+		cerr <<    " For example, if you have" << endl
+			<< "     a := (b + (c + d))" << endl
+			<< " where b,c,d are signals/constants, then write this as" << endl
+			<< "    $volatile p := b" << endl
+			<< "    $volatile q := c" << endl
+			<< "    $volatile r:= d" << endl
+			<< "    a := (p + (q+r))" << endl;
+	}
+	else
+	{
+		for(set<AaRoot*>::iterator iter = root_sources.begin(), fiter = root_sources.end();
+				iter != fiter; iter++)
 		{
-			bool pred_is_in_phi = false;
-			if(pred->Is_Expression())
-			{
-				AaExpression* pred_expr = (AaExpression*) pred;
+			AaRoot* pred = *iter;
 
-				pred_is_in_phi = (pred_expr->Get_Associated_Statement() != NULL)
-					&& pred_expr->Get_Associated_Statement()->Is_Phi_Statement();
-			}
-			else if(pred->Is_Statement())
+			if(visited_elements.find(pred) != visited_elements.end())
 			{
-				pred_is_in_phi = ((AaStatement*)pred)->Is_Phi_Statement();
-			}
-
-			if(!(this_is_in_phi && pred_is_in_phi)) 
-				// No PHI-PHI dependencies!
-			{
-				if((to_index > 0) && (pred->Get_Index() > to_index))
+				bool pred_is_in_phi = false;
+				if(pred->Is_Expression())
 				{
-					AaRoot::Error("incorrect ordering of forward dependency for " + this->To_String() + 
-							" (from " + pred->To_String() + ")", this);
+					AaExpression* pred_expr = (AaExpression*) pred;
+
+					pred_is_in_phi = (pred_expr->Get_Associated_Statement() != NULL)
+						&& pred_expr->Get_Associated_Statement()->Is_Phi_Statement();
 				}
-				else 
+				else if(pred->Is_Statement())
 				{
-					if(pred->Is_Expression())
+					pred_is_in_phi = ((AaStatement*)pred)->Is_Phi_Statement();
+				}
+
+				if(!(this_is_in_phi && pred_is_in_phi)) 
+					// No PHI-PHI dependencies!
+				{
+					if((to_index > 0) && (pred->Get_Index() > to_index))
 					{
-						AaExpression* expr = ((AaExpression*) pred);
-						if(!expr->Is_Interface_Object_Reference())
-							//
-							// interface object references may be
-							// included in the root object set.
-							// But these do not have any control transitions.
-							//
+						AaRoot::Error("incorrect ordering of forward dependency for " + this->To_String() + 
+								" (from " + pred->To_String() + ")", this);
+					}
+					else 
+					{
+						if(pred->Is_Expression())
 						{
-							__J(dependent_transition,__UCT(pred));
+							AaExpression* expr = ((AaExpression*) pred);
+							if(!expr->Is_Interface_Object_Reference())
+								//
+								// interface object references may be
+								// included in the root object set.
+								// But these do not have any control transitions.
+								//
+							{
+								__J(dependent_transition,__UCT(pred));
+							}
+							else
+							{
+								ofile << "// Forward dependency from interface-object-ref omitted ("
+									<< expr->To_String() << ")" << endl;
+							}
 						}
 						else
 						{
-							ofile << "// Forward dependency from interface-object-ref omitted ("
-								<< expr->To_String() << ")" << endl;
+							__J(dependent_transition,__UCT(pred));
 						}
 					}
-					else
-					{
-						__J(dependent_transition,__UCT(pred));
-					}
 				}
-			}
-			else
-			{
-				ofile << "// Forward dependency from PHI->PHI omitted" << endl;
+				else
+				{
+					ofile << "// Forward dependency from PHI->PHI omitted" << endl;
+				}
 			}
 		}
 	}

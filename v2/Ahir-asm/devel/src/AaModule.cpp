@@ -124,55 +124,65 @@ AaExpression* AaModule::Lookup_Print_Remap(AaInterfaceObject* obj)
 
 void AaModule::Print(ostream& ofile)
 {
-  this->Check_That_All_Out_Args_Are_Driven();
+	if(this->Get_Foreign_Flag())
+	{
+		ofile << "$foreign ";
+	}
+	else
+	{
+		this->Check_That_All_Out_Args_Are_Driven();
 
-  if(this->Get_Inline_Flag())
-    ofile << "$inline ";
-  if(this->Get_Macro_Flag())
-    ofile << "$macro ";
-  if(this->Get_Pipeline_Flag())
-  {
-    ofile << "$pipeline $depth " << this->Get_Pipeline_Depth() << " ";
-    ofile << "$buffering " << this->Get_Pipeline_Buffering() << " ";
-    if(this->Get_Pipeline_Full_Rate_Flag())
-	ofile << "$fullrate ";
-    if(this->Get_Pipeline_Deterministic_Flag())
-	ofile << "$deterministic ";
-  }
-  if(this->Get_Operator_Flag())
-	ofile << "$operator ";
-  else if(this->Get_Volatile_Flag())
-	ofile << "$volatile ";
-  if(this->Get_Opaque_Flag())
-	ofile << "$opaque ";
+		if(this->Get_Inline_Flag())
+			ofile << "$inline ";
+		if(this->Get_Macro_Flag())
+			ofile << "$macro ";
+		if(this->Get_Pipeline_Flag())
+		{
+			ofile << "$pipeline $depth " << this->Get_Pipeline_Depth() << " ";
+			ofile << "$buffering " << this->Get_Pipeline_Buffering() << " ";
+			if(this->Get_Pipeline_Full_Rate_Flag())
+				ofile << "$fullrate ";
+			if(this->Get_Pipeline_Deterministic_Flag())
+				ofile << "$deterministic ";
+		}
+		if(this->Get_Operator_Flag())
+			ofile << "$operator ";
+		else if(this->Get_Volatile_Flag())
+			ofile << "$volatile ";
+		if(this->Get_Opaque_Flag())
+			ofile << "$opaque ";
 
-  if(this->Get_Noopt_Flag())
-	ofile << "$noopt ";
-  if(this->Get_Use_Once_Flag())
-	ofile << "$useonce ";
- 
+		if(this->Get_Noopt_Flag())
+			ofile << "$noopt ";
+		if(this->Get_Use_Once_Flag())
+			ofile << "$useonce ";
+	}
 
-  ofile << "$module [" << this->Get_Label() << "]" << endl;
-  ofile << "\t $in (";
-  for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
-    {
-      this->_input_args[i]->Print(ofile);
-      ofile << " ";
-    }
-  ofile << ")" << endl;
 
-  ofile << "\t $out (";
-  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
-    {
-      this->_output_args[i]->Print(ofile);
-      ofile << " ";
-    }
-  ofile << ")";
-  ofile << endl;
-  ofile << "$is" << endl;
-  ofile << "{" << endl;
-  this->Print_Body(ofile);
-  ofile << "}" << endl;
+	ofile << "$module [" << this->Get_Label() << "]" << endl;
+	ofile << "\t $in (";
+	for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+	{
+		this->_input_args[i]->Print(ofile);
+		ofile << " ";
+	}
+	ofile << ")" << endl;
+
+	ofile << "\t $out (";
+	for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+	{
+		this->_output_args[i]->Print(ofile);
+		ofile << " ";
+	}
+	ofile << ")";
+	ofile << endl;
+	if (!this->Get_Foreign_Flag())
+	{
+		ofile << "$is" << endl;
+		ofile << "{" << endl;
+		this->Print_Body(ofile);
+		ofile << "}" << endl;
+	}
 }
 
 void AaModule::Print_Body(ostream& ofile)
@@ -186,88 +196,93 @@ void AaModule::Print_Body(ostream& ofile)
 		}
 		this->Set_Has_Been_Equalized(true);
 	}
-	
-  	// print objects
-  	this->Print_Objects(ofile);
 
-  	// print statement sequence
-  	this->Print_Statement_Sequence(ofile);
+	// print objects
+	this->Print_Objects(ofile);
 
-  	this->Print_Attributes(ofile);
+	// print statement sequence
+	this->Print_Statement_Sequence(ofile);
+
+	this->Print_Attributes(ofile);
 }
 
 void AaModule::Print_Attributes(ostream& ofile)
 {
-  bool delay_found = false;
-  for(map<string,string>::iterator iter = _attribute_map.begin(), fiter =_attribute_map.end();
-      iter != fiter;
-      iter++)
-    {
-      ofile << "$attribute " << (*iter).first << " " << (*iter).second << endl;
-      if((*iter).first == "delay")
-		delay_found = true;
-    }
-    
-    // print if calculated and not already attributed.
-    if(!delay_found && this->_pipeline_flag && AaProgram::_balance_loop_pipeline_bodies)
-	ofile << "$attribute delay " << this->Get_Delay() << endl;
+	bool delay_found = false;
+	for(map<string,string>::iterator iter = _attribute_map.begin(), fiter =_attribute_map.end();
+			iter != fiter;
+			iter++)
+	{
+		ofile << "$attribute " << (*iter).first << " " << (*iter).second << endl;
+		if((*iter).first == "delay")
+			delay_found = true;
+	}
+
+	// print if calculated and not already attributed.
+	if(!delay_found && this->_pipeline_flag && AaProgram::_balance_loop_pipeline_bodies)
+		ofile << "$attribute delay " << this->Get_Delay() << endl;
 }
 
 AaRoot* AaModule::Find_Child(string tag)
 {
-  AaRoot* child = this->Find_Child_Here(tag);
-  if(child == NULL)
-    {
-      child = AaProgram::Find_Object(tag);
-      if(child == NULL)
-	child = AaProgram::Find_Module(tag);
-    }
-  return(child);
+	AaRoot* child = this->Find_Child_Here(tag);
+	if(child == NULL)
+	{
+		child = AaProgram::Find_Object(tag);
+		if(child == NULL)
+			child = AaProgram::Find_Module(tag);
+	}
+	return(child);
 }
 
 void AaModule::Map_Targets()
 {
-  this->AaBlockStatement::Map_Targets();
+	this->AaBlockStatement::Map_Targets();
 }
 
 void AaModule::Map_Source_References()
 {
-  this->AaBlockStatement::Map_Source_References();
+	this->AaBlockStatement::Map_Source_References();
 }
 
 bool AaModule::Can_Have_Native_C_Interface()
 {
- //
-  // if all argument types are legal, then
-  // declare the outer wrap function.
-  //
-  bool all_types_native = true;
-  for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
-    {
-      if(!(this->_input_args[i]->Get_Type()->Is_A_Native_C_Type()))
+	//
+	// if all argument types are legal, then
+	// declare the outer wrap function.
+	//
+	bool all_types_native = true;
+	for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
 	{
-	  all_types_native = false;
-	  break;
+		if(!(this->_input_args[i]->Get_Type()->Is_A_Native_C_Type()))
+		{
+			all_types_native = false;
+			break;
+		}
 	}
-    }
-  if(all_types_native)
-    {
-      for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+	if(all_types_native)
 	{
-	  if(!(this->_output_args[i]->Get_Type()->Is_A_Native_C_Type()))
-	    {
-	      all_types_native = false;
-	      break;
-	    }
+		for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+		{
+			if(!(this->_output_args[i]->Get_Type()->Is_A_Native_C_Type()))
+			{
+				all_types_native = false;
+				break;
+			}
+		}
 	}
-    }
-  return(all_types_native);
+	return(all_types_native);
 }
 
 // name of the function..
 string AaModule::Get_C_Name()
 {
-    return(AaProgram::_c_vhdl_module_prefix + this->Get_Label());
+    string ret_val;
+    if (this->Get_Foreign_Flag())
+	ret_val = this->Get_Label();
+    else
+	ret_val =  AaProgram::_c_vhdl_module_prefix + this->Get_Label();
+    return(ret_val);
 }
 
 

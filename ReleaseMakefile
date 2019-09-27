@@ -20,6 +20,8 @@ Release:
 	#license
 	cp -f ./LICENSE  $(RELEASE)
 	cp -f ./CONTRIBUTORS $(RELEASE)
+	# record the version
+	git log -1 > $(RELEASE)/VERSION
 	#  copy the tools
 	cp -f $(AA)/bin/Aa2C $(RELEASE)/bin/
 	cp -f $(AA)/bin/Aa2VC $(RELEASE)/bin/
