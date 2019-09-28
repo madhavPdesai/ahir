@@ -201,6 +201,17 @@ void vcOperator::Print_VHDL_Logger(vcModule* parent_module, ostream& ofile)
 	}
 }
 
+void vcSplitOperator::Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+{
+	if(this->Get_Output_Buffering(this->Get_Output_Wire(0)) < 2)
+		this->vcDatapathElement::Append_Zero_Delay_Successors_To_Req(t, zero_delay_successors);	
+	else
+	{
+		if (t == _reqs[0])
+			zero_delay_successors.insert(_acks[0]);
+	}
+}
+
 void vcSplitOperator::Print_VHDL_Logger(vcModule* parent_module, ostream& ofile)
 {
 	string module_name = parent_module->Get_Id();
@@ -372,6 +383,17 @@ vcPhi::vcPhi(string id, vector<vcWire*>& inwires, vcWire* outwire):vcDatapathEle
 
 	this->Set_Input_Wires(inwires);
 	this->Set_Output_Wires(owires);
+}
+  
+void vcPhi::Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+{
+	for(int idx = 0, fidx = _reqs.size(); idx < fidx; idx++)
+	{
+		if(t == _reqs[idx])
+		{	
+			zero_delay_successors.insert(_acks[0]);
+		}
+	}
 }
 
 void vcPhi::Print(ostream& ofile)
@@ -549,6 +571,14 @@ bool vcCall::Is_Part_Of_Pipeline()
 			this->_parent_module->Get_Pipeline_Flag()) ||
 		this->vcDatapathElement::Is_Part_Of_Pipeline();
 	return(ret_val);
+}
+
+void vcCall::Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+{
+	if(this->_called_module->Get_Operator_Flag())
+	{
+		this->vcDatapathElement::Append_Zero_Delay_Successors_To_Req(t, zero_delay_successors);	
+	}
 }
 
 string vcCall::Get_Logger_Description()
@@ -1525,6 +1555,7 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 	ofile << " -- }" << endl << ");" << endl;
 	ofile << "end block; -- } " << endl;
 }
+  
 
 void vcInterlockBuffer::Print(ostream& ofile)
 {
@@ -1942,6 +1973,18 @@ vcBranch::vcBranch(string id, vector<vcWire*>& wires, bool bypass_flag): vcDatap
 {
 	this->Set_Input_Wires(wires);
 	_bypass_flag = bypass_flag;
+}
+
+void vcBranch::Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+{
+	if(this->_bypass_flag)
+	{
+		if(t == _reqs[0])
+		{
+			zero_delay_successors.insert(_acks[0]);
+			zero_delay_successors.insert(_acks[1]);
+		}
+	}
 }
 
 void vcBranch::Print(ostream& ofile)

@@ -532,6 +532,15 @@ void vcDatapathElement::Print_VHDL_Logger(vcModule* m, ostream& ofile)
 	}
 }
 
+void vcDatapathElement::Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+{
+	if((t == _reqs[0]) || (t == _reqs[1]))
+	{
+		zero_delay_successors.insert(_acks[0]);
+	}
+}	
+
+  
 vcDataPath::vcDataPath(vcModule* m, string id):vcRoot(id)
 {
 	this->_parent = m;

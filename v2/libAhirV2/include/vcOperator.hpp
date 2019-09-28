@@ -99,6 +99,7 @@ public:
 
   virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile) {assert(0);}
   virtual void Print_VHDL_Instantiation_Preamble(bool flow_through_flag, ostream& ofile);
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);
   virtual string Get_Logger_Description() {return ("");}
   friend class vcDataPath;
 };
@@ -148,6 +149,7 @@ public:
   virtual bool Is_Deterministic_Pipeline_Operator();
   virtual void Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostream& ofile);
 
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);
   friend class vcDataPath;
 };
 
@@ -203,6 +205,11 @@ public:
   virtual string Get_Logger_Description() {return (" PipeWrite to " + _pipe->Get_Id()); }
   friend class vcDataPath;
 
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+  {
+	if(t == _reqs[0])
+		zero_delay_successors.insert(_acks[0]);
+  }
 };
 
 class vcInport: public vcIOport
@@ -231,6 +238,11 @@ public:
   bool Get_Barrier_Flag() {return(_barrier_flag);}
 
  
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+  {
+	if(t == _reqs[0])
+		zero_delay_successors.insert(_acks[0]);
+  }
 
   virtual string Get_Logger_Description() {return (" PipeRead from " + _pipe->Get_Id()); }
   friend class vcDataPath;
@@ -259,6 +271,12 @@ public:
   virtual bool Is_Local_To_Datapath()
   {
     return(false);
+  }
+
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+  {
+	if(t == _reqs[0])
+		zero_delay_successors.insert(_acks[0]);
   }
 
   friend class vcDataPath;
@@ -324,6 +342,9 @@ public:
 
   virtual void Print_VHDL(ostream& ofile);
   virtual void Print_VHDL_Logger(vcModule* parent_module, ostream& ofile);
+
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);
+
   friend class vcDataPath;
 };
 
@@ -468,6 +489,7 @@ public:
   virtual string Kind() {return("vcBranch");}
   bool Get_Bypass_Flag() {return(_bypass_flag);}
 
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);
   friend class vcDataPath;
 };
 
@@ -500,6 +522,7 @@ class vcInterlockBuffer: public vcSplitOperator
 
   // combinational operator..
   virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);
+
 };
 // dout := din[_high_index downto _low_index]
 class vcSlice: public vcInterlockBuffer

@@ -378,6 +378,12 @@ int main(int argc, char* argv[])
 
 
       test_system.Elaborate();
+      if(vcSystem::_error_flag)
+      {
+	cerr << "There were errors during elaboration ... will not print VHDL" << endl;
+	return(1);
+      }
+
       if(!write_files)
 	{
 	  cout << "-- VHDL produced by vc2vhdl from virtual circuit (vc) description " << endl;

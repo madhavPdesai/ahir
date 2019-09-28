@@ -652,6 +652,8 @@ protected:
   virtual void Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostream& ofile) {assert(0);}
 
   virtual void Print_Dot_Entry(ostream& ofile);
+		
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);	
   friend class vcDataPath;
 
 	

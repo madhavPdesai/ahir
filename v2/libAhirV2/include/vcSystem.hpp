@@ -62,9 +62,9 @@ class vcSystem: public vcRoot
 
   map<string, pair<string,int> >  _function_library_module_map;
 
-  static bool _error_flag;
 
  public:
+  static bool _error_flag;
   static bool _suppress_io_pipes;
   static bool _verbose_flag;
   static bool _opt_flag;
