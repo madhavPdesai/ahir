@@ -35,6 +35,7 @@
 #include <assert.h>
 #include <bits/wordsize.h>
 #include <Pipes.h>
+#include <pipeHandler.h>
 
 #ifndef USE_GNUPTH
 #include <pthread.h>

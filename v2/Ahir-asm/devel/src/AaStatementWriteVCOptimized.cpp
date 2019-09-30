@@ -285,7 +285,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						ofile);
 				if(pipeline_flag)
 				{
-					this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), false,
+					this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), true,
 							visited_elements, ofile);
 				}
 			}
@@ -296,7 +296,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					ofile);
 			if(pipeline_flag)
 			{
-				this->_source->Write_VC_Update_Reenables(this, __SCT(this), false,
+				this->_source->Write_VC_Update_Reenables(this, __SCT(this), true,
 						visited_elements, ofile);
 				__SelfReleaseSplitProtocolPattern
 			}
@@ -312,7 +312,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					ofile);
 			if(pipeline_flag)
 			{
-				this->_source->Write_VC_Update_Reenables(this, __SCT(this->_target), false,
+				this->_source->Write_VC_Update_Reenables(this, __SCT(this->_target), true,
 						visited_elements, ofile);
 			}
 		}
@@ -455,7 +455,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 										this->Get_Index(), visited_elements, ofile);
 					if(pipeline_flag)
 					{
-						this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), false,
+						this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), true,
 								visited_elements, ofile);
 					}
 				}
@@ -482,7 +482,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				{
 					// expression evaluation will be reenabled by activation of the
 					// call.
-					expr->Write_VC_Update_Reenables(this, __SCT(this), false,
+					expr->Write_VC_Update_Reenables(this, __SCT(this), true,
 							visited_elements, ofile);
 				}
 			}
@@ -1804,10 +1804,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						!sge->Is_Implicit_Variable_Reference() && 
 						!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 				{
-					sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+					sge->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 				}
 
-				source_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+				source_expr->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 			}
 		}
 		else
@@ -1998,10 +1998,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized_Single_Source(bool pipeline
 				!sge->Is_Implicit_Variable_Reference() && 
 				!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 		{
-			sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+			sge->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 		}
 
-		source_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+		source_expr->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 	}
 
 	__F ("aggregated_phi_sample_req", __SST(source_expr));

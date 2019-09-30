@@ -654,9 +654,10 @@ protected:
   virtual void Print_Dot_Entry(ostream& ofile);
 		
   virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);	
+
+  virtual bool Is_Split_Operator() {return(false);}
   friend class vcDataPath;
 
-	
 };
 
 

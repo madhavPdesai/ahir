@@ -772,7 +772,14 @@ void vcControlPath::Construct_Reduced_Group_Graph()
 	vcSystem::Info("Detect and try to fix combinational loops by increasing interlock-buffering (two passes)");
 	int err = this->Fix_Combinational_Loops(1); // first-pass
 	if (err)
-		this->Fix_Combinational_Loops(2); // first-pass
+	{
+		err = this->Fix_Combinational_Loops(2); // second-pass
+
+		if(err)
+		{
+			err = this->Fix_Combinational_Loops(3);
+		}
+	}
 
 	this->Reduce_CPElement_Group_Graph();
 	if(this->Check_Group_Graph_Structure())
@@ -788,12 +795,24 @@ void vcControlPath::Construct_Reduced_Group_Graph()
 // when pass-index == 1, it tries to fix combinational loops by double buffering
 // interlock buffers.
 //
-// when pass_index == 2, it reports an error if there is a loop
+// when pass-index == 2, it tries to fix combinational loops by double buffering
+// Split operators.
+//
+// when pass_index == 3, it reports an error if there is a loop
 //
 // returns 0 if no loops found, 1 otherwise
 // 
 int vcControlPath::Fix_Combinational_Loops(int pass_index)
 {
+	vcSystem::Info("Started Fix_Combinational_Loops (pass " + IntToStr(pass_index) + ")");
+        if(pass_index == 1)
+		vcSystem::Info("Started will double buffer interlock-buffers if needed");
+	if(pass_index == 2)
+		vcSystem::Info("Started will double buffer split-protocol operartors if needed");
+	if(pass_index == 3)
+		vcSystem::Info("Final pass to check if double buffering has worked"); 
+	
+
 	int err = 0;
 
 	// first build a graph.
@@ -925,13 +944,13 @@ int vcControlPath::Fix_Combinational_Loops(int pass_index)
 		if(vsize > 1) 
 		{
 			err = 1;
-			if(pass_index == 2)
+			if(pass_index == 3)
 			{
 				vcSystem::Error("Fix_Combinational (pass 2): found a combinational cycle (strongly-connected-component) in module " + this->_parent_module->Get_Label());
 			}
 			else
 			{
-				vcSystem::Warning("Fix_Combinational (pass 1): found a combinational cycle (strongly-connected-component) in module " + this->_parent_module->Get_Label());
+				vcSystem::Warning("Fix_Combinational (pass " + IntToStr(pass_index) + "): found a combinational cycle (strongly-connected-component) in module " + this->_parent_module->Get_Label());
 			}
 			cerr << "Combination cycle control elements  " << endl;
 			for(int J = 0, fJ = (*mmiter).second.size();  J < fJ; J++)
@@ -962,9 +981,19 @@ int vcControlPath::Fix_Combinational_Loops(int pass_index)
 				cerr << "  Setting buffering on ILB " << dpe->Get_Id() << " to 2" << endl;
 				ilb->Set_Output_Buffering(ilb->Get_Dout(),2);
 			}
+
+			if(dpe->Is_Split_Operator() && (dpe->Get_Number_Of_Output_Wires() == 1) && (pass_index == 2))
+			{
+				cerr << "  Setting buffering on Split-operator " << dpe->Get_Id() << " to 2" << endl;
+				dpe->Set_Output_Buffering(dpe->Get_Output_Wire(0),2);
+			}
 		}
 	}
 
+	if(!err)
+	{
+		vcSystem::Info(" Fix_Combi pass OK");	
+	}
 	return(err);
 }
 

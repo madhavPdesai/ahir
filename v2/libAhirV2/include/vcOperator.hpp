@@ -88,6 +88,7 @@ public:
   vcSplitOperator(string id):vcDatapathElement(id) {}
   virtual string Kind() {return("vcSplitOperator");}
 
+  virtual bool Is_Split_Operator() {return(true);}
   virtual void Check_Consistency() {assert(0);}
   virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
 
