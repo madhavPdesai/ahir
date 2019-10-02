@@ -1918,10 +1918,10 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
 		// for pipe accesses, chained protocol.
 		ofile << "// " << this->To_String() << endl;
 		ofile << ";;[" << this->Get_VC_Name() << "_Sample] { // sample-data. " << endl;
-		ofile << "$T [req] $T [req] " << endl;
+		ofile << "$T [req] $T [ack] " << endl;
 		ofile << "}" << endl;
 		ofile << ";;[" << this->Get_VC_Name() << "_Update] { // data to pipe. " << endl;
-		ofile << "$T [req] $T [req] " << endl;
+		ofile << "$T [req] $T [ack] " << endl;
 		ofile << "}" << endl;
 	}
 }

@@ -132,7 +132,8 @@ void AaStatementSequence::Write_VC_Links_Optimized(string hier_id, ostream& ofil
 // AaNullStatement
 void AaNullStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
-	this->Write_VC_Control_Path(ofile);
+	ofile << "// " << this->To_String() << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
 }
 
 // AaAssignmentStatement

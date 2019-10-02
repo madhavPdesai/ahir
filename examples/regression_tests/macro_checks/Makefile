@@ -26,8 +26,7 @@ AA2VHDL: aa2vc vc2vhdl vhdlsim
 
 # Aa to vC
 aalink: $(SRC)/prog.aa 
-	AaInclude -I $(SRC)  -o prog.incl.aa $(SRC)/prog.aa
-	AaLinkExtMem prog.incl.aa | vcFormat > prog.linked.aa
+	AaLinkExtMem $(SRC)/prog.aa | vcFormat > prog.linked.aa
 	AaOpt -B prog.linked.aa | vcFormat > prog.linked.opt.aa
 
 aa2vc: prog.linked.opt.aa

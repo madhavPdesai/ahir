@@ -32,8 +32,6 @@ $module [main_daemon_1] $in() $out () $is
 {
 	$branchblock[lOoP] {
 		$merge $entry loopback $endmerge
-// include comment_1.aa
-#comment_1.aa
 		
 			$call get_data_in_1 () (X0) 
 			$call subroutine (X0) (Y0)

@@ -1088,6 +1088,9 @@ void AaNullStatement::Write_VC_Control_Path(ostream& ofile)
 {
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	ofile << ";;[" << this->Get_VC_Name() << "] {" << endl; 
+	__T ("dummy");
+	ofile << "}" << endl;
 }
 
 //---------------------------------------------------------------------
@@ -2063,10 +2066,10 @@ void AaAssignmentStatement::Write_VC_Links(string hier_id,ostream& ofile)
 			{
 				if(!this->Get_Is_Volatile())
 				{
-					reqs.push_back(hier_id + "/Sample/req");
-					reqs.push_back(hier_id + "/Update/req");
-					acks.push_back(hier_id + "/Sample/ack");
-					acks.push_back(hier_id + "/Update/ack");
+					reqs.push_back(hier_id + "/Interlock/Sample/req");
+					reqs.push_back(hier_id + "/Interlock/Update/req");
+					acks.push_back(hier_id + "/Interlock/Sample/ack");
+					acks.push_back(hier_id + "/Interlock/Update/ack");
 					Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
 							reqs, acks, ofile);
 					reqs.clear();
