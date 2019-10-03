@@ -408,7 +408,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				//
 			{
 				if(r_phi == NULL)
-				{
+				{ // WAR across two non-PHI statements.
 
 					if(r_index <= w_index)
 					{
@@ -423,16 +423,33 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						//
 						// THIS DELAY IS REQUIRED TO PREVENT COMBINATIONAL LOOPS
 						//
+						// 
+						//  no_additional_dependencies is set if the WAR is across the same
+						//  statement, and there is unit buffering, and w_root is an 
+						//  assignment statement.  In this case, there is no need to 
+						//  put in a new dependency.
+						//
+						//    For example   a := (a + 1)
+						//
+						//  The r_root and w_root are the same, and the buffering is 1, hence
+						//  fused.
+						//
+						//  WARNING, if the buffering is modified at a later stage, this assumption
+						//  will not hold..  TODO: put NOTOUCH on this
+						//
 						//
 						bool no_additional_dependencies = ((w_sct == r_sct) && (w_root->Get_Buffering() == 1));
+						
+						// If we add dependencies, we must have double buffering..
 						bool add_double_buffering = !no_additional_dependencies;
 
+
 						bool added_forward_dependency = false;	
-						bool bypass_flag = this->Is_Part_Of_Fullrate_Pipeline();
+						bool dependency_without_delay = this->Is_Part_Of_Fullrate_Pipeline() || add_double_buffering;
 
 						if(!no_additional_dependencies)
 						{
-							if(bypass_flag)
+							if(dependency_without_delay)
 							{
 								__J(__UST(w_root), __SCT(r_root));
 							}
@@ -447,32 +464,10 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 							}
 
 							added_forward_dependency = true;
-
 						}
 						else
 						{
-							if(w_sct != r_sct)
-							{
-								ofile << "// w-root already double buffered " << endl;
-								if(bypass_flag)
-								{
-									__J(__UST(w_root), __SCT(r_root));
-								}
-								else
-								{
-									string delay_trans_name = 
-										__SCT(r_root) + "_delay_to_" + __UST(w_root) + "_for_" + 
-										this->Get_VC_Name();
-									ofile << "$T [" << delay_trans_name << "] $delay" << endl;
-									__J(delay_trans_name, __SCT(r_root));
-									__J(__UST(w_root), delay_trans_name);
-								}
-								added_forward_dependency = true;
-							}
-							else
-							{
-								ofile << "// no additional dependencies for simple assignment with single buffering" << endl;
-							}
+							ofile << "// no additional dependencies for simple assignment with single buffering" << endl;
 						}
 
 						if(pipeline_flag and added_forward_dependency)
@@ -490,13 +485,11 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						if(add_double_buffering)
 						{
 							int rb = w_root->Get_Buffering();
-							/*
 							if(rb < 2)
 							{
 								ofile << "// added double buffering for w-root" << endl;
 								w_root->Set_Buffering(2);
 							}
-							*/
 						}
 					}
 					else
@@ -504,7 +497,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						AaRoot::Error("ordering error in WAR for " + this->To_String() + " writer:" + w_root->To_String() + " reader:" + r_root->To_String(), this);
 					}
 				}
-				else
+				else  // WAR across PHI and another statement...
 				{
 					bool bypass_flag = this->Is_Part_Of_Fullrate_Pipeline();
 					//
@@ -535,12 +528,10 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 					}
 
 					int rb = w_root->Get_Buffering();
-					/*
-						if(rb < 2)
-						{
-							w_root->Set_Buffering(2);
-						}
-					*/
+					if(rb < 2)
+					{
+						w_root->Set_Buffering(2);
+					}
 				}
 
 				if(pipeline_flag)
