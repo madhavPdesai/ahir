@@ -707,7 +707,7 @@ void AaModule::Write_VC_Model(ostream& ofile)
 void AaModule::Write_VC_Model_Optimized(ostream& ofile)
 {
   string no_opt_string = "nooptimize";
-  if(!this->Get_Noopt_Flag() && (this->_attribute_map.find("nooptimize") == this->_attribute_map.end()))
+  if(this->_attribute_map.find("nooptimize") == this->_attribute_map.end())
     this->Write_VC_Model(true,ofile);
   else
     this->Write_VC_Model(false,ofile);    
