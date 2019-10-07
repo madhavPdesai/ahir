@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 	PTHREAD_CREATE(Sender);
 
 #ifdef SW
-	start_daemons(NULL);
+	start_daemons(NULL,0);
 #endif
 	int idx;
 	uint8_t err = 0;

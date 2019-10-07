@@ -100,14 +100,9 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 	//
 	if(root_sources.size() == 0)
 	{
-		AaRoot::Error("Looks like you have an expression which depends only on signals... break it up.", this);
-		cerr <<    " For example, if you have" << endl
-			<< "     a := (b + (c + d))" << endl
-			<< " where b,c,d are signals/constants, then write this as" << endl
-			<< "    $volatile p := b" << endl
-			<< "    $volatile q := c" << endl
-			<< "    $volatile r:= d" << endl
-			<< "    a := (p + (q+r))" << endl;
+		AaRoot::Warning("Looks like you have an expression which depends only on signals/constants..", 
+						this);
+		ofile << "// non-constant expression which depends only on signals/constants?" << endl; 
 	}
 	else
 	{

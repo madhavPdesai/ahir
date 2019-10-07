@@ -805,8 +805,14 @@ void AaConstantLiteralReference::Evaluate()
 {
 	if(!_already_evaluated)
 	{
-		assert(this->_type);
-		_expression_value = Make_Aa_Value(this->Get_Scope(), this->Get_Type(), _literals);
+		if(this->_type == NULL)
+		{
+			AaRoot::Error("could not determine type of constant expression", this);
+		}
+		else
+		{
+			_expression_value = Make_Aa_Value(this->Get_Scope(), this->Get_Type(), _literals);
+		}
 		_already_evaluated = true;
 	}
 }
