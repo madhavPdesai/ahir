@@ -60,9 +60,5 @@ $is
     $while 1
   }
 }
-$foreign $module [Print] 
-$in (a: $uint<16>)
-$out ()
-$foreign $module [Read] 
-$in ()
-$out (result: $uint<16>)
+$foreign $module [Print] $in (a: $uint<16>) $out ()
+$foreign $module [Read] $in () $out (result: $uint<16>)
