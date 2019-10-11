@@ -28,6 +28,7 @@ $is
     tval := ($bitcast ($uint<20>) inpipe)
     midpipe := tval
     $report (stage_1 sent midpipe tval) 
+    $rreport (stage_1 sent_midpipe tval)
     $place [loopback]
   }
 }

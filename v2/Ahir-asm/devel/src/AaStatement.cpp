@@ -1849,6 +1849,14 @@ void AaAssignmentStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 		}
 
 		// target side stuff.
+		if(this->_target->Is("AaArrayObjectReference"))
+		{
+			AaArrayObjectReference* aor = (AaArrayObjectReference*) (this->_target);
+			aor->PrintC(headerfile);			
+		}
+
+	
+
 		Print_C_Assignment(this->_target->C_Reference_String(),
 				this->_source->C_Reference_String(),
 				this->_target->Get_Type(),
