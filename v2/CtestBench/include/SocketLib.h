@@ -82,6 +82,10 @@ void     append_double(char* str, double f);
 #define get_int32_t(p,q)  ((int32_t)get_uint32_t(p,q))
 #define get_int16_t(p,q)  ((int16_t)get_uint16(p,q))
 #define get_int8_t(p,q)   ((int8_t)get_uint8_t(p,q))
+#define append_int64_t(p,q)  append_uint64_t(p,q)
+#define append_int32_t(p,q)  append_uint32_t(p,q)
+#define append_int16_t(p,q)  append_uint16(p,q)
+#define append_int8_t(p,q)   append_uint8_t(p,q)
 
 // append the int in decimal form into the
 // string.
