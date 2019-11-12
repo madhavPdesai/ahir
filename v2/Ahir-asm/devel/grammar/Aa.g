@@ -547,6 +547,7 @@ aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
     AaExpression* source = NULL;
     int buf_val;
     int lno;
+    bool cut_through_flag = false;
 }
     : 
 
@@ -564,7 +565,12 @@ aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
 	    }
         }
 	(BUFFERING buf_val = aA_Integer_Parameter_Expression [lno]
-		{ ((AaAssignmentStatement*)new_stmt)->Set_Buffering(buf_val);}
+	  (CUT_THROUGH  {cut_through_flag = true;})?
+		{ 
+			((AaAssignmentStatement*)new_stmt)->Set_Buffering(buf_val);
+			((AaAssignmentStatement*)new_stmt)->Set_Cut_Through(cut_through_flag);
+		}
+         
 	)?
     ;
 
@@ -2642,6 +2648,7 @@ KEEP     : "$keep";
 
 
 DETERMINISTIC: "$deterministic";
+CUT_THROUGH: "$cut_through";
 // data format
 UINTEGER          : DIGIT (DIGIT)*;
 FLOATCONST : "_f" ('-')? DIGIT '.' (DIGIT)+ 'e' ('+' | '-') (DIGIT)+;

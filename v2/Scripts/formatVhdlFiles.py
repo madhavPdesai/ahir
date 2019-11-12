@@ -23,7 +23,6 @@ import shutil
 import getopt
 import sys
 import glob
-import commands
 import threading 
 import subprocess
 import pdb
@@ -38,16 +37,16 @@ def execSysCmd(sys_cmd):
     
 # logging.
 def logCommand(sys_cmd):
-    print "Info: executing " + sys_cmd
+    print ("Info: executing " + sys_cmd)
 
 def logInfo(mesg):
-    print "Info: " + mesg
+    print ("Info: " + mesg)
 
 def logError(mesg):
-    print "Error: " + mesg
+    print ("Error: " + mesg)
 
 def logWarning(mesg):
-    print "Warning: " + mesg
+    print ("Warning: " + mesg)
 
 # utility to make a directory or if exists, remove its contents.
 def makeOrCleanDir(dest_dir):
@@ -67,9 +66,9 @@ def makeOrCleanDir(dest_dir):
 #   files are deleted.
 #
 def printUsage():
-    print ''' 
+    print (''' 
       formatVhdlFiles <root-directory>
-          '''
+          ''')
 def main():
 
     if len(sys.argv) < 2:
@@ -87,12 +86,12 @@ def main():
            rootfname, extn = os.path.splitext(fname)
            if(extn == ".unformatted_vhdl"):
               logInfo("found unformatted vhdl file " + full_name)
-	      format_cmd = "vhdlFormat < " + full_name  + " > " + root + "/" + rootfname + ".vhdl"
-	      format_status = execSysCmd(format_cmd)
+              format_cmd = "vhdlFormat < " + full_name  + " > " + root + "/" + rootfname + ".vhdl"
+              format_status = execSysCmd(format_cmd)
               if(format_status):
                   logError("vhdlFormat failed for " + full_name)
                   return 1
-	      rm_cmd = "rm -f " + full_name
+              rm_cmd = "rm -f " + full_name
               rm_status = execSysCmd(rm_cmd)
               if(rm_status):
                   logError("rm -f failed for " + full_name)

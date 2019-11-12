@@ -26,7 +26,7 @@ begin
 	case fsm_state is
 		when EMPTYSTATE =>
 			empty_var := true;
-			if(write) then
+			if(write and (not read)) then
 				next_fsm_state := INBETWEENSTATE;
 			end if;
 		when INBETWEENSTATE =>
@@ -39,7 +39,7 @@ begin
 			end if;
 		when FULLSTATE => 
 			full_var := true;
-			if(read) then
+			if(read and (not write)) then
 				next_fsm_state := INBETWEENSTATE;
 			end if;
 	end case;

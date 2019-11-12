@@ -126,7 +126,7 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 					pred_is_in_phi = ((AaStatement*)pred)->Is_Phi_Statement();
 				}
 
-				if(!(this_is_in_phi && pred_is_in_phi)) 
+				if(!(this_is_in_phi && pred_is_in_phi && !pred->Is_Expression())) 
 					// No PHI-PHI dependencies!
 				{
 					if((to_index > 0) && (pred->Get_Index() > to_index))

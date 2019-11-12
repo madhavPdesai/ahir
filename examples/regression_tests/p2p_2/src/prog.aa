@@ -45,11 +45,11 @@ $module [p2p_ping_daemon] $in() $out () $is
 $module [p2p_pong_daemon] $in() $out () $is
 {
 	$branchblock[lOoP] {
-		$dopipeline $depth 4 $buffering 2 $fullrate
-		  $merge $entry $loopback $endmerge
+		  $merge $entry loopback $endmerge
 	 	  CMD := mid_pipe_0
 		  $volatile snd := (CMD [] 0)
 		  $guard (snd) mid_pipe_1 := CMD
-		$while 1
+
+		  $place [loopback]
 	}
 }

@@ -146,7 +146,9 @@ void Write_VC_Interlock_Buffer( string inst_name,
 			string guard_string,
 			bool flow_through,
 			bool full_rate,
+			bool cut_through,
 			ostream& ofile);
+
 void Write_VC_Binary_Operator(AaOperation op, 
 			      string inst_name, 
 			      string src1, 

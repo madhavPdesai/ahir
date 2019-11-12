@@ -978,8 +978,14 @@ int vcControlPath::Fix_Combinational_Loops(int pass_index)
 			if((dpe->Kind() == "vcInterlockBuffer") && (pass_index == 1))
 			{
 				vcInterlockBuffer* ilb = (vcInterlockBuffer*) dpe;
-				cerr << "  Setting buffering on ILB " << dpe->Get_Id() << " to 2" << endl;
-				ilb->Set_Output_Buffering(ilb->Get_Dout(),2);
+				if(ilb->Get_Output_Buffering(ilb->Get_Dout()) < 2)
+				{
+					cerr << "  Setting buffering on ILB " << dpe->Get_Id() << " to 2" << endl;
+					ilb->Set_Output_Buffering(ilb->Get_Dout(),2);
+				}
+
+				cerr << "  Setting cut_through = false on ILB " << dpe->Get_Id() << endl;
+				ilb->Set_Cut_Through(false);
 			}
 
 			if(dpe->Is_Split_Operator() && (dpe->Get_Number_Of_Output_Wires() == 1) && (pass_index == 2))

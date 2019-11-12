@@ -511,6 +511,8 @@ public:
 // new operator to support full-rate pipelining..
 class vcInterlockBuffer: public vcSplitOperator
 {
+  bool _cut_through;
+
   public:
   vcInterlockBuffer(string id, vcWire* x, vcWire* z);
 
@@ -521,8 +523,12 @@ class vcInterlockBuffer: public vcSplitOperator
   virtual vcWire* Get_Din() {return(this->Get_Input_Wire(0));}
   virtual vcWire* Get_Dout() {return(this->Get_Output_Wire(0));}
 
+  virtual void Set_Cut_Through(bool v) {_cut_through = v;}
+  bool Get_Cut_Through() {return(_cut_through);}
+
   // combinational operator..
   virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);
 
 };
 // dout := din[_high_index downto _low_index]
