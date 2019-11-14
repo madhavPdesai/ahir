@@ -1107,14 +1107,19 @@ vc_InterlockBuffer_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   string din;
   string dout;
   vector<bool> war_flags;
+  bool cut_through = false;
 }: HASH  as_id: ASSIGN_OP id = vc_Label LPAREN x = vc_Wire_Connection[war_flags,dp]
 			 {NOT_FOUND__("wire",x,din,as_id) }
                           RPAREN
                           LPAREN dout = vc_Identifier { y = dp->Find_Wire(dout); 
                                NOT_FOUND__("wire",y,dout,as_id) }
                           RPAREN
+			  (CUT_THROUGH {cut_through = true;})?
    {  
       new_reg = new vcInterlockBuffer(id, x, y); 
+
+      new_reg->Set_Cut_Through(cut_through);
+
       dp->Add_Interlock_Buffer(new_reg);
       dpe = (vcDatapathElement*) new_reg;
       dpe->Set_Input_WAR_Flags(war_flags);
@@ -1977,6 +1982,7 @@ DETERMINISTIC: "$deterministic";
 
 ALIAS: "$A";
 BARRIER: "$barrier";
+CUT_THROUGH: "$cut_through";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

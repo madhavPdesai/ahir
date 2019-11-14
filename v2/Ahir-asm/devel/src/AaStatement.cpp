@@ -646,6 +646,8 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 			int buf_val = curr_slack;
 			//if(this->Is_Part_Of_Fullrate_Pipeline()) buf_val = ((buf_val < 2) ? 2 : buf_val);
 			new_stmt->Set_Buffering(buf_val);
+			new_stmt->Set_Cut_Through(true);
+
 			AaProgram::Increment_Buffering_Bit_Count(buf_val * new_target->Get_Type()->Size());
 
 			new_stmt->Map_Targets();
@@ -789,6 +791,7 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 				int buf_val = curr_slack;
 				//if(this->Is_Part_Of_Fullrate_Pipeline()) buf_val = ((buf_val < 2) ? 2 : buf_val);
 				new_stmt->Set_Buffering(buf_val);
+				new_stmt->Set_Cut_Through(true);
 
 				AaProgram::Increment_Buffering_Bit_Count(buf_val * new_target->Get_Type()->Size());
 
@@ -1372,7 +1375,9 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 	AaStatement(parent_tpr) 
 {
 	assert(tgt); assert(src);
+
 	_is_volatile = false;
+	_cut_through = false;
 
 	tgt->Set_Associated_Statement(this);
 	tgt->Set_Is_Intermediate(false);
@@ -1627,9 +1632,10 @@ void AaAssignmentStatement::Print(ostream& ofile)
 		this->Get_Source()->Print(ofile);
 
 		int bufval = this->Get_Buffering();
-		if(bufval > 1)
-			ofile << " $buffering " << bufval;
+		ofile << " $buffering " << bufval;
 
+		if(this->Get_Cut_Through())
+			ofile << " $cut_through ";
 
 		if(this->_mark != "")
 			ofile << " $mark " << _mark << " ";
@@ -2000,6 +2006,8 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				string src_name = this->_source->Get_VC_Driver_Name();
 				string tgt_name = this->_target->Get_VC_Receiver_Name();
 
+				bool cut_through = this->Get_Cut_Through();
+
 				// target and source are both implicit.
 				// instantiate a register..
 				Write_VC_Interlock_Buffer(dpe_name,
@@ -2008,6 +2016,7 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 						this->Get_VC_Guard_String(),
 						this->Get_Is_Volatile(), // flow-through-flag
 						full_rate,
+						cut_through,
 						ofile);
 
 
@@ -4864,7 +4873,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				string dpe_name = src_expr->Get_VC_Driver_Name() + "_" + 
 					Int64ToStr(src_expr->Get_Index()) +  "_buf";
 				Write_VC_Interlock_Buffer(dpe_name, src_expr->Get_VC_Driver_Name(),
-						src_driver_name, "", false, full_rate,  ofile);
+						src_driver_name, "", false, full_rate, false, ofile);
 				if(dws != NULL)
 				{
 					int src_buffering = src_expr->Get_Buffering();
@@ -4903,6 +4912,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				"",
 				true, // flow-through-flag
 				true,
+				false, // cut-through
 				ofile);
 	}
 	else

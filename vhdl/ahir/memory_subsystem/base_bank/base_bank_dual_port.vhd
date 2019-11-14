@@ -30,6 +30,10 @@
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 -- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
 ------------------------------------------------------------------------------------------------
+library ahir;
+use ahir.Utilities.all;
+use ahir.GlobalConstants.all;
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -63,6 +67,10 @@ end entity base_bank_dual_port;
 architecture XilinxBramInfer of base_bank_dual_port is
 	signal wea, web: std_logic;
 begin  -- XilinxBramInfer
+
+  debugGen: if global_debug_flag generate
+  assert false report "MemSliceInfo base_bank_dual_port " & name & " " & " addr_width = " & Convert_To_String(g_addr_width) & " data-width = " & Convert_To_String(g_data_width) severity note;
+  end generate debugGen;
 
 	wea <= not writebar_0;
 	web <= not writebar_1;

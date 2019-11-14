@@ -242,6 +242,7 @@ void Write_VC_Interlock_Buffer( string inst_name,
                         string guard_string,
 			bool flow_through, 
 			bool full_rate, 
+			bool cut_through,
 			ostream& ofile)
 {
   string sflow_through = (flow_through ? " $flowthrough" : "");
@@ -249,7 +250,8 @@ void Write_VC_Interlock_Buffer( string inst_name,
 
   ofile << "# := [" << inst_name << "] " 
 	<< "(" << src_name << ") "
-	<< "(" << target_name << ") " << guard_string << " " << sflow_through <<  " " << sfull_rate << endl;
+	<< "(" << target_name << ") " << (cut_through ? " $cut_through " : " ")  
+	<< guard_string << " " << sflow_through <<  " " << sfull_rate << endl;
 }
 
 void Write_VC_Binary_Operator(AaOperation op, 

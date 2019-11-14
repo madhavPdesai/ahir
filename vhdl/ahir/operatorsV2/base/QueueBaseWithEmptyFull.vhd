@@ -46,6 +46,7 @@ use ahir.BaseComponents.all;
 entity QueueBaseWithEmptyFull is
   generic(name : string; 
 		queue_depth: integer := 1; 
+		reverse_bypass_flag: boolean := false;
 		data_width: integer := 32);
   port(clk: in std_logic;
        reset: in std_logic;
@@ -105,8 +106,56 @@ begin  -- SimModel
  end generate oSideQGt0;
 
  qD1: if (queue_depth = 1) generate
+   rbypGen: if reverse_bypass_flag generate
+   RB: block
+      signal full_flag: boolean;
+      signal data_reg: std_logic_vector(data_width-1 downto 0);
+   begin
 
+      base_empty <= not full_flag;
+      base_full  <= full_flag;
 
+      base_push_ack <= '1' when (not full_flag) or (base_pop_req = '1')  else '0';
+      base_pop_ack  <= '1' when full_flag else '0';
+	
+      base_data_out <= data_reg;
+
+      process(clk, reset, base_push_req, base_pop_req, full_flag, data_in, data_reg)
+	variable next_full_flag_var: boolean;
+        variable next_data_reg_var: std_logic_vector(data_width-1 downto 0);
+      begin
+	next_full_flag_var := full_flag;
+        next_data_reg_var := data_reg;
+
+        if (full_flag) then
+           if (base_pop_req = '1') then
+		if(base_push_req = '1') then
+               		next_data_reg_var :=  data_in;
+		else
+              		next_full_flag_var := false;
+		end if;
+           end if;
+        else 
+           if (base_push_req = '1') then
+               next_full_flag_var := true;
+               next_data_reg_var :=  data_in;
+	   end if;
+         end if;
+  
+       if (clk'event and clk='1') then
+         if(reset  = '1') then
+            full_flag <= false;
+            data_reg <= (others => '0');
+         else
+             full_flag <= next_full_flag_var;
+	     data_reg  <= next_data_reg_var;
+         end if;
+      end if;
+     end process;
+   end block;
+   end generate rbypGen;
+
+   not_rbypGen: if not reverse_bypass_flag generate
    RB: block
       signal full_flag: boolean;
       signal data_reg: std_logic_vector(data_width-1 downto 0);
@@ -149,6 +198,7 @@ begin  -- SimModel
       end if;
      end process;
    end block;
+   end generate not_rbypGen;
  end generate qD1;
 
 
@@ -165,8 +215,6 @@ begin  -- SimModel
   signal eq_flag : boolean;
 
   begin
-    base_push_ack <= '0' when base_full else '1';
-    base_pop_ack  <= '0' when base_empty else '1';
 
     -- empty/full logic.
     eq_flag <= (next_read_pointer = next_write_pointer);
@@ -232,8 +280,13 @@ begin  -- SimModel
        end process;
     end generate Wgen;
   
+   not_rbypGen: if not reverse_bypass_flag generate
+
+    base_push_ack <= '0' when base_full else '1';
+    base_pop_ack  <= '0' when base_empty else '1';
+
     -- single process..  Synopsys mangles the logic... split it into two.
-    process(read_pointer, write_pointer, base_empty, base_full, base_push_req, base_pop_req)
+    process(base_empty, base_full, base_push_req, base_pop_req)
       variable push,pop : boolean;
     begin
       push  := false;
@@ -252,6 +305,34 @@ begin  -- SimModel
   
       write_flag <= push;
     end process;
+   end generate not_rbypGen;
+
+   rbypGen: if reverse_bypass_flag generate
+
+    base_push_ack <= '1' when (not base_full) or (base_pop_req = '1')  else '0';
+    base_pop_ack  <= '0' when base_empty else '1';
+
+    -- single process..  Synopsys mangles the logic... split it into two.
+    process(base_empty, base_full, base_push_req, base_pop_req)
+      variable push,pop : boolean;
+    begin
+      push  := false;
+      pop   := false;
+      
+      if(((base_pop_req = '1') or (not base_full)) and base_push_req = '1') then
+          push := true;
+      end if;
+  
+      if((not base_empty) and base_pop_req = '1') then
+          pop := true;
+      end if;
+  
+      incr_read_pointer <= pop;
+      incr_write_pointer <= push;
+  
+      write_flag <= push;
+    end process;
+   end generate rbypGen;
 
    end block NTB;
   end generate qDGt1;

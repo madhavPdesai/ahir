@@ -1435,6 +1435,9 @@ void vcSelect::Print_VHDL(ostream& ofile)
 vcInterlockBuffer::vcInterlockBuffer(string id, vcWire* din, vcWire* dout):vcSplitOperator(id)
 {
 	assert(din && dout);
+
+	_cut_through = false;
+
 	vector<vcWire*> iwires; iwires.push_back(din);
 	this->Set_Input_Wires(iwires);
 
@@ -1442,6 +1445,34 @@ vcInterlockBuffer::vcInterlockBuffer(string id, vcWire* din, vcWire* dout):vcSpl
 	this->Set_Output_Wires(owires);
 }
 
+void vcInterlockBuffer::Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+{
+	if(this->Get_Cut_Through())
+	{
+		if (t == _reqs[0])
+		{
+			zero_delay_successors.insert(_acks[0]);
+			zero_delay_successors.insert(_acks[1]);
+		}
+		if (t == _reqs[1])
+		{
+			zero_delay_successors.insert(_acks[0]);
+		}
+	}
+	else  if(this->Get_Output_Buffering(this->Get_Dout()) > 1)
+	{
+		if (t == _reqs[0])
+			zero_delay_successors.insert(_acks[0]);
+		
+	}
+	else
+	{
+		if (t == _reqs[0])
+			zero_delay_successors.insert(_acks[0]);
+		if (t == _reqs[1])
+			zero_delay_successors.insert(_acks[0]);
+	}
+}
 void vcInterlockBuffer::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	ofile << "-- interlock " << this->Get_VHDL_Id() << endl;
@@ -1533,16 +1564,17 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 	int in_data_width = this->Get_Din()->Get_Size();
 	int out_data_width = this->Get_Dout()->Get_Size();
 	bool flow_through = this->Get_Flow_Through();
+	bool cut_through  = this->Get_Cut_Through();
 
 	ofile << this->Get_VHDL_Id() << " : InterlockBuffer ";
 	ofile << "generic map ( -- { " << endl;
 	ofile << " name => " << name << "," << endl;
 	ofile << " buffer_size => " << buf_size << "," << endl;
 	ofile << " flow_through => " <<  (flow_through ? " true " : " false ") << "," << endl;
-	ofile << " full_rate => " <<  (full_rate ? " true " : " false ") << "," << endl;
+	ofile << " cut_through => " <<  (cut_through ? " true " : " false ") << "," << endl;
 	ofile << " in_data_width => " << in_data_width << "," << endl;
 	ofile << " out_data_width => " << out_data_width <<  "," << endl;
-	ofile << " bypass_flag => true " <<  endl;
+	ofile << " bypass_flag => " << (cut_through ? " true " : " false ")  <<  endl;
 	ofile << " -- }" << endl << ")";
 	ofile << "port map ( -- { " << endl;
 	ofile << " write_req => wreq(0), "   << endl;
@@ -1569,6 +1601,8 @@ void vcInterlockBuffer::Print(ostream& ofile)
 		<< this->Get_Dout()->Get_Id()
 		<< vcLexerKeywords[__RPAREN] 
 		<< " ";
+	if(this->Get_Cut_Through())
+		ofile << " " << vcLexerKeywords[__CUT_THROUGH] << " ";
 	this->Print_Guard(ofile);
 	this->Print_Flow_Through(ofile);
 	ofile << endl;

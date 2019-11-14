@@ -45,11 +45,11 @@ use ahir.BaseComponents.all;
 
 entity InterlockBuffer is
   generic (name: string; buffer_size: integer := 2; 
-  	in_data_width : integer := 32;
-  	out_data_width : integer := 32;
-  	flow_through: boolean := false;
-	cut_through : boolean := false;
-  	bypass_flag : boolean := false);
+  in_data_width : integer := 32;
+  out_data_width : integer := 32;
+  flow_through: boolean := false;
+  bypass_flag : boolean := false;
+  full_rate : boolean);
   port (write_req: in boolean;
         write_ack: out boolean;
         write_data: in std_logic_vector(in_data_width-1 downto 0);
@@ -65,14 +65,12 @@ architecture default_arch of InterlockBuffer is
   constant data_width: integer := Minimum(in_data_width,out_data_width);
 
   signal buf_write_req, buf_write_ack: std_logic;
-  signal buf_write_data, buf_read_data:  std_logic_vector(data_width-1 downto 0);
+  signal buf_write_data, buf_write_data_reg, buf_read_data:  std_logic_vector(data_width-1 downto 0);
 
-  type LoadFsmState is (l_idle, l_busy);
+  type LoadFsmState is (l_empty, l_full, l_wait);
   signal l_fsm_state : LoadFsmState;
 
   signal has_data: std_logic;
-
-  constant use_unload_register : boolean := not cut_through;
   
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
@@ -123,49 +121,66 @@ begin  -- default_arch
       end generate outSmaller;
   
       -- write FSM to pipe.
-      process(clk,reset, l_fsm_state, buf_write_ack, write_req)
+      process(clk,reset, l_fsm_state, buf_write_ack, write_req, write_data)
         variable nstate : LoadFsmState;
+        variable load_var: boolean;
       begin
         nstate := l_fsm_state;
-        buf_write_req <= '0';
+	load_var := false;
         write_ack <= false;
-        if(l_fsm_state = l_idle) then
-	  if(write_req) then
-            buf_write_req <= '1';
-            if(buf_write_ack = '1') then
-              write_ack <= true;
-            else
-              nstate := l_busy;
-            end if;
-	  end if;
-        else
-	  buf_write_req <= '1';
-	  if(buf_write_ack = '1') then
-            nstate := l_idle;
-            write_ack <= true;
-	  end if;
-        end if;
+	buf_write_req <= '0';
+
+	case l_fsm_state is
+		when l_empty =>
+	  		if(write_req) then
+             			write_ack <= true;
+	     			load_var := true;
+             			nstate := l_full;
+	  		end if;	
+		when l_full => 
+	  		buf_write_req <= '1';
+	  		if(buf_write_ack = '1') then
+            			if(write_req) then
+            				write_ack <= true;
+	        			load_var := true;
+	    			else
+            				nstate := l_empty;
+				end if;
+			elsif (write_req) then
+				nstate := l_wait;
+			end if;
+		when l_wait =>
+	  		buf_write_req <= '1';
+	  		if(buf_write_ack = '1') then
+				write_ack <= true;
+	        		load_var := true;
+				nstate := l_full;
+			end if;
+	end case;
   
         if(clk'event and clk = '1') then
 	  if(reset = '1') then
-            l_fsm_state <= l_idle;
+            l_fsm_state <= l_empty;
 	  else
             l_fsm_state <= nstate;
+	  end if;
+
+	  if(load_var) then
+		buf_write_data_reg <= buf_write_data;
 	  end if;
         end if;
       end process;
   
       -- the unload buffer.
-      buf : UnloadBuffer generic map (
+      buf : UnloadBufferRevised generic map (
         name =>  name & " buffer ",
         data_width => data_width,
-        buffer_size => buffer_size, 
-	use_unload_register => use_unload_register,
-        bypass_flag => bypass_flag)
+        buffer_size => buffer_size-1, 
+        bypass_flag => true)
         port map (
           write_req   => buf_write_req,
           write_ack   => buf_write_ack,
-          write_data  => buf_write_data,
+          write_data  => buf_write_data_reg,
           unload_req  => read_req,
           unload_ack  => read_ack,
           read_data   => buf_read_data,

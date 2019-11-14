@@ -49,21 +49,31 @@ use ahir.GlobalConstants.all;
 -- three forms
 --     depth <= 1
 --         fast cut through with buffering provided by a single register
---     depth = 2
---         1 + 1 split with bypass in the first part.
---     depth > 2
---         (n-1) + 1 split with no bypass provided in the
---         second part.
+--     depth >= 2
+--         queue + wastes a buffer.  this needs to be sorted out.
 --
---  Using shallow buffers (<=2) will result in fast in->out 
+--  Using shallow buffers (<= 1) will result in fast in->out 
 --  performance but combinational through paths.  Using deeper
 --  buffers will result in at least one unit of delay from in->out
 --
+-- Added Nov 2019.  Added use_unload_register generic.
+--
+--   This avoids wastage of an extra register in the unload-buffer.
+--   but must be used with a cut-through that has a combinational
+--   unload_ack to write_ack path.
+-- 
 entity UnloadBuffer is
   generic (name: string; buffer_size: integer ; data_width : integer ; 
+			-- bypass = true means there are some combi paths.
+			--   from write_req to unload_ack
+			--   from unload_req to write_ack
+			--   from write_data to read_data.
 			bypass_flag : boolean := false; 
+			-- self-explanatory.
 			nonblocking_read_flag : boolean := false;
-			full_rate: boolean);
+			-- if false use new revised version of the unload buffer (revised)
+			-- which does not need an unload-register.
+			use_unload_register: boolean := true);
   port ( write_req: in std_logic;
         write_ack: out std_logic;
         write_data: in std_logic_vector(data_width-1 downto 0);
@@ -80,7 +90,6 @@ architecture default_arch of UnloadBuffer is
   signal pop_req, pop_ack, push_req, push_ack: std_logic_vector(0 downto 0);
   signal pipe_data_out, data_to_unload_register:  std_logic_vector(data_width-1 downto 0);
 
-  signal number_of_elements_in_pipe: unsigned ((Ceil_Log2(buffer_size+2))-1 downto 0); 
   signal pipe_has_data: boolean;
 
   signal unload_register_ready: boolean;
@@ -115,9 +124,28 @@ architecture default_arch of UnloadBuffer is
 
   constant shallow_flag : boolean :=    (buffer_size < global_pipe_shallowness_threshold);
 
+  constant revised_case: boolean := ((buffer_size > 0) and shallow_flag and (not use_unload_register) and (not nonblocking_read_flag));
+  -- constant revised_case: boolean := false;
+
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
 begin  -- default_arch
+
+  RevisedCase: if revised_case generate
+	ulb_revised: UnloadBufferRevised
+			generic map (name => name & "-revised",
+					buffer_size => buffer_size, data_width => data_width,
+						bypass_flag => bypass_flag)
+			port map (
+				write_req => write_req,
+				write_ack => write_ack,
+				unload_req => unload_req,
+				unload_ack => unload_ack,
+				write_data => write_data,
+				read_data => read_data, 
+				has_data => has_data,
+				clk => clk, reset => reset);
+  end generate RevisedCase;
 
   DeepCase: if not shallow_flag generate
 	ulb_deep: UnloadBufferDeep
@@ -135,8 +163,10 @@ begin  -- default_arch
 				clk => clk, reset => reset);
   end generate DeepCase;
 
-  ShallowCase: if shallow_flag generate
-    bufGt0: if actual_buffer_size > 0 generate
+  NotRevisedCase: if not revised_case generate
+
+    ShallowCase: if shallow_flag  generate
+      bufGt0: if actual_buffer_size > 0 generate
 
   	has_data <= '1' when pipe_has_data else '0';
 
@@ -172,11 +202,11 @@ begin  -- default_arch
         	clk        => clk,
         	reset      => reset);
 
-   end generate bufGt0;
+     end generate bufGt0;
 	
 
-   -- unload-register will provide bypassed buffering.
-   bufEq0: if (actual_buffer_size = 0) generate
+     -- unload-register will provide bypassed buffering.
+     bufEq0: if (actual_buffer_size = 0) generate
 
 	empty <= '1';
 	full  <= '0';
@@ -186,9 +216,9 @@ begin  -- default_arch
 	data_to_unload_register <= write_data;
 	pop_ack_to_unload_register <= write_req;
 	write_ack  <= pop_req_from_unload_register;
-   end generate bufEq0;
+     end generate bufEq0;
 
-   ulReg: UnloadRegister 
+     ulReg: UnloadRegister 
 			generic map (name => name & "-unload-register",
 					data_width => data_width,
 						bypass_flag => bypass_flag_to_ureg,
@@ -203,6 +233,7 @@ begin  -- default_arch
 					clk => clk,  reset => reset
 				);
 							
- end generate ShallowCase;
+   end generate ShallowCase;
+ end generate NotRevisedCase;
 
 end default_arch;

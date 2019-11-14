@@ -32,6 +32,7 @@
 #include <signal.h>
 #include <getopt.h>
 #include <vector>
+#include <map>
 #include <fstream>
 #include <iostream>
 
@@ -57,10 +58,11 @@ void Handle_Segfault(int signal)
 }
 
       
-int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,ofstream& ofile)
+int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<string,string>& defines_map, ofstream& ofile)
 {
   int err = 0;
   char last_inchar = 0;
+
 
   //
   // look for #<file-name> and include those files also..
@@ -73,17 +75,45 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,ofstrea
      if(infile.eof()) 
 	break;
 
-     if((last_inchar == '\n') && (inchar == '#'))
+     if(inchar == '#')
+//
+// #define   X Y
+// #include filename
+// ##X
+// #undefine
      {
-	string incl_filename;
+	string keyword;
 	while(1) {
 		inchar = infile.get();
 		if(infile.eof() || isspace(inchar))
 			break;
-		incl_filename.push_back(inchar);
+		keyword.push_back(inchar);
         }
-	if(incl_filename != "")
+	
+	if(keyword == "define")
 	{
+		string s1, s2;
+
+		infile >> s1;
+		infile >> s2;
+
+		cout << "Info: #define " << s1 << " " << s2 << endl;
+		defines_map[s1] = s2;
+	}
+	else if(keyword == "undefine")
+	{
+		string key;
+		infile >> key;
+		cerr << "Info: #undefine " << key << endl;
+		defines_map.erase(key);
+	}
+	else if(keyword == "include")
+	{
+		string incl_filename;
+		infile >> incl_filename;
+
+		cerr << "Info: #include " << incl_filename << endl;
+
 		int ok_flag = 0;
 		for(int I = 0, fI = include_directories.size(); I < fI; I++)
 		{
@@ -93,7 +123,7 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,ofstrea
 			if(incl_file.is_open())
 			{
 				cerr << "Info: included file " << full_file_name << endl;
-				err = IncludeAndPrint(incl_file, include_directories,ofile) || err;
+				err = IncludeAndPrint(incl_file, include_directories, defines_map, ofile) || err;
 				incl_file.close();
 				ok_flag = true;
 				break;
@@ -102,6 +132,20 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,ofstrea
 		if(!ok_flag)
 		{
 			cerr << "Error:AaInclude could not include file " << incl_filename << endl;
+			err = 1;
+		}
+	}
+	else if(keyword[0] == '#')
+	{
+		string key = keyword.substr(1);
+		if(defines_map.find(key) != defines_map.end())
+		{
+			ofile << defines_map[key];
+			cerr << "Info: ##" << key << endl;
+		}	
+		else
+		{
+			cerr << "Error: could not find define to paste " << keyword << endl;
 			err = 1;
 		}
 	}
@@ -162,6 +206,7 @@ int main(int argc, char* argv[])
   }
   ofstream ofile;
   ofile.open(ofile_name.c_str());
+  map<string, string> defines_map;
   for(int i = optind; i < argc; i++)
     {
   	ifstream infile;
@@ -169,7 +214,7 @@ int main(int argc, char* argv[])
 	infile.open(filename.c_str());
 	if(infile.is_open())
 	{
-		err = IncludeAndPrint(infile,include_directories,ofile) | err;
+		err = IncludeAndPrint(infile,include_directories,defines_map,ofile) | err;
 	}
 	else
 	{

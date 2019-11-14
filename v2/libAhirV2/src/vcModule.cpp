@@ -867,7 +867,6 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		ofile << "in_buffer: UnloadBuffer -- { " << endl;
 		ofile << " generic map(name => \"" << this->Get_VHDL_Id() << "_input_buffer\", -- {" << endl
 			<< " buffer_size => " << input_buffering << "," <<  endl 
-			<< " full_rate => false," <<  endl // no need, double buffering.
 			<< " bypass_flag => " << (bypass_flag ? "true," : "false,") << endl  // lets not be over-aggressive!
 			<< " data_width => tag_length + " << this->Get_In_Arg_Width() << ") -- } " << endl;
 		ofile << " port map(write_req => in_buffer_write_req, -- { " << endl

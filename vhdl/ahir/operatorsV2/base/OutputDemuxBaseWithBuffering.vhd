@@ -97,7 +97,8 @@ begin  -- Behave
          name => name & " buffer " & Convert_To_String(I),
          buffer_size => detailed_buffering_per_output(I),
          data_width  => iwidth, 
-	 full_rate => full_rate)
+	 bypass_flag => false,
+	 use_unload_register => true)
          port map (
            write_req  => write_req,
            write_ack  => write_ack,

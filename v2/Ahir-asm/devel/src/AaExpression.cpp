@@ -3309,6 +3309,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 				this->Get_VC_Guard_String(),
 				false, // flow-through
 				full_rate, 
+				false, // cut-through
 				ofile);
 
 		//
@@ -4398,6 +4399,7 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
 				this->Get_VC_Guard_String(),
 				false,
 				full_rate,
+				false, // cut-through
 				ofile);
 
 		this->Write_VC_Output_Buffering(dpe_name, tgt_name, ofile);
@@ -4658,6 +4660,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 					this->Get_VC_Guard_String(),
 					false,
 					full_rate, 
+					false, // cut-through
 					ofile);
 
 		}

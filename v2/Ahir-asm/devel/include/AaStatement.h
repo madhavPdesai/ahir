@@ -586,6 +586,7 @@ class AaAssignmentStatement: public AaStatement
 
   int _buffering;
   bool _is_volatile;
+  bool _cut_through;
  public:
   AaExpression* Get_Target() {return(this->_target);}
   AaExpression* Get_Source() {return(this->_source);}
@@ -598,6 +599,10 @@ class AaAssignmentStatement: public AaStatement
 
   virtual void Set_Is_Volatile(bool v);
   virtual bool Get_Is_Volatile(); //       { return(_is_volatile); }
+
+  virtual void Set_Cut_Through(bool v) {_cut_through = v;}
+  virtual bool Get_Cut_Through() {return(_cut_through);}
+
   virtual void Collect_Root_Sources(set<AaRoot*>& root_src_exprs);
 
   virtual void Set_Pipeline_Parent(AaStatement* dws);
