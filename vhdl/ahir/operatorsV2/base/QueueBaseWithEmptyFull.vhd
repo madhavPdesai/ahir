@@ -38,6 +38,8 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
+use ahir.mem_component_pack.all;
+use ahir.GlobalConstants.all;
 
 -- Synopsys DC ($^^$@!)  needs you to declare an attribute
 -- to infer a synchronous set/reset ... unbelievable.
@@ -212,6 +214,7 @@ begin  -- SimModel
 
   signal incr_read_pointer, incr_write_pointer: boolean;
   signal write_flag : boolean;
+  signal write_enable : std_logic;
   signal eq_flag : boolean;
 
   begin
@@ -252,7 +255,7 @@ begin  -- SimModel
     end process;
     wrpReg: SynchResetRegisterUnsigned generic map (name => name & ":wrpreg", data_width => write_pointer'length)
 		port map (clk => clk, reset => reset, din => next_write_pointer, dout => write_pointer);
-
+  notDistribRam: if not global_use_vivado_distributed_ram_queue generate
     -- bottom pointer gives the data in FIFO mode..
     process (read_pointer, queue_array)
 	variable data_out_var : std_logic_vector(data_width-1 downto 0);
@@ -279,6 +282,25 @@ begin  -- SimModel
 		end if;
        end process;
     end generate Wgen;
+  end generate notDistribRam;
+
+  write_enable <= '1' when write_flag else '0';
+  DistribRam: if global_use_vivado_distributed_ram_queue generate
+      distrib_ram_inst:
+		fifo_mem_synch_write_asynch_read 
+			generic map (name => name & ":distribRam", 
+					address_width => read_pointer'length,
+					data_width => data_width,
+					mem_size => queue_depth)
+			port map (
+					write_enable => write_enable,
+					write_data => data_in,
+					write_address => std_logic_vector(write_pointer),
+					read_data => base_data_out,
+					read_address => std_logic_vector(read_pointer),
+					clk => clk
+				);
+  end generate DistribRam;
   
    not_rbypGen: if not reverse_bypass_flag generate
 
