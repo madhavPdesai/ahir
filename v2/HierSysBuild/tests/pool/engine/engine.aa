@@ -1,12 +1,15 @@
 $pipe engine_in_pipe  : $uint<8>
 $pipe engine_out_pipe : $uint<8>
-
+$pipe engine_internal_pipe: $uint<8>
 $module [engine_daemon] $in () $out () $is
 {
 	$branchblock[loop] {
 		$merge $entry loopback $endmerge
 			cmd := engine_in_pipe 
-			engine_out_pipe := cmd
+			$rreport (engine in_command cmd)
+			engine_internal_pipe := cmd
+			cmd2 := engine_internal_pipe
+			engine_out_pipe := cmd2
 		$place [loopback]
 	}
 }

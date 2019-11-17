@@ -888,5 +888,6 @@ void Print_C_Report_String_Expr_Pair(string seq_id, string tag, string qs, strin
 	{
 		ofile << "fprintf(" << log_file_name << ", \":= %le\\n\"," << expr  << ");";
 	}
+	ofile << "fflush (" << log_file_name << ");";
 	ofile << "}"; 
 }

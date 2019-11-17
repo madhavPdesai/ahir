@@ -144,6 +144,18 @@ int is_lifo_mode(PipeRec* p);
 		    	}\
                    }
 
+#define POP_SIGNAL_TO_BUFFER(p,x,n,m) {\
+			if(p->is_signal) {\
+				int i;\
+				for(i=0; i < m; i++) {\
+					*(((uint##n##_t *)x) + i) = p->buffer.ptr##n[i];\
+				}\
+			}\
+			else {\
+				assert(0);\
+			}\
+                   }
+
 #define PUSH(p,x,n) {\
                 if(p->is_signal) {\
 			p->buffer.ptr##n[0] = *((uint##n##_t *) x);\
@@ -157,6 +169,19 @@ int is_lifo_mode(PipeRec* p);
 			}\
 			INCR(p->write_pointer,p); \
 		 } }
+
+#define PUSH_SIGNAL_FROM_BUFFER(p,x,n,m) {\
+			if(p->is_signal) {\
+				int i;\
+				for(i=0; i < m; i++) {\
+					p->buffer.ptr##n[i] = *(((uint##n##_t *)x) + i);\
+				}\
+			}\
+			else\
+			{\
+				assert(0);\
+			}\
+		}
 
 // init must be called before using pipehandler
 void init_pipe_handler();

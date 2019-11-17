@@ -362,32 +362,59 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
 	}
 	else if(ret_val > 0)
 	{
-		uint32_t idx;
-		uint8_t* ptr = (uint8_t*) burst_payload;
-		for (idx = 0; idx < ret_val; idx++)
+		if(p->is_signal && (p->pipe_depth > 1))
 		{
-			___POP(p,ptr,width);	
-			ptr = ptr + (width/8);
+			assert(p->pipe_depth == number_of_words_requested);
+			if(width == 8)
+			{
+				POP_SIGNAL_TO_BUFFER(p,burst_payload,8,number_of_words_requested);
+			}
+			else if(width == 16)
+			{
+				POP_SIGNAL_TO_BUFFER(p,burst_payload,16,number_of_words_requested);
+			}
+			else if(width == 32)
+			{
+				POP_SIGNAL_TO_BUFFER(p,burst_payload,32,number_of_words_requested);
+			}
+			else if(width == 64)
+			{
+				POP_SIGNAL_TO_BUFFER(p,burst_payload,64,number_of_words_requested);
+			}
+			else
+			{
+				assert(0);
+			}
+		}
+		else
+		{
+			uint32_t idx;
+			uint8_t* ptr = (uint8_t*) burst_payload;
+			for (idx = 0; idx < ret_val; idx++)
+			{
+				___POP(p,ptr,width);	
+				ptr = ptr + (width/8);
+			}
 		}
 	}
 	MUTEX_UNLOCK(p->pm);
 
-  if(ret_val > 0)
-  {
-	  if(log_file != NULL)
-	  {
-		  __LOCKLOG__
-			  fprintf(log_file,"\nRead: %s %d word(s) of width %d: ", pipe_name, ret_val,width);
-		  print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);  
-		  __UNLOCKLOG__
-	  }
-  }
-  else
-  {
-	// yield.  so the writer may get a look in.
-	PTHREAD_YIELD();
-  }
-  return(ret_val);
+	if(ret_val > 0)
+	{
+		if(log_file != NULL)
+		{
+			__LOCKLOG__
+				fprintf(log_file,"\nRead: %s %d word(s) of width %d: ", pipe_name, ret_val,width);
+			print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);  
+			__UNLOCKLOG__
+		}
+	}
+	else
+	{
+		// yield.  so the writer may get a look in.
+		PTHREAD_YIELD();
+	}
+	return(ret_val);
 }
 
 void set_watermark (char* pipe_name,  int wmark)
@@ -438,12 +465,39 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 
 	if(ret_val > 0)
 	{
-		uint32_t idx;
-		uint8_t* ptr = (uint8_t*) burst_payload;
-		for (idx = 0; idx < ret_val; idx++)
+		if(p->is_signal && (p->pipe_depth > 1))
 		{
-			___PUSH(p,ptr,width);	
-			ptr = ptr + (width/8);
+			assert(p->pipe_depth == number_of_words_requested);
+			if(width == 8)
+			{
+				PUSH_SIGNAL_FROM_BUFFER(p,burst_payload,8,number_of_words_requested);
+			}
+			else if(width == 16)
+			{
+				PUSH_SIGNAL_FROM_BUFFER(p,burst_payload,16,number_of_words_requested);
+			}
+			else if(width == 32)
+			{
+				PUSH_SIGNAL_FROM_BUFFER(p,burst_payload,32,number_of_words_requested);
+			}
+			else if(width == 64)
+			{
+				PUSH_SIGNAL_FROM_BUFFER(p,burst_payload,64,number_of_words_requested);
+			}
+			else
+			{
+				assert(0);
+			}
+		}
+		else
+		{
+			uint32_t idx;
+			uint8_t* ptr = (uint8_t*) burst_payload;
+			for (idx = 0; idx < ret_val; idx++)
+			{
+				___PUSH(p,ptr,width);	
+				ptr = ptr + (width/8);
+			}
 		}
 	}
 	MUTEX_UNLOCK(p->pm);
@@ -466,7 +520,7 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 	{
 		// yield.  so the reader may get a look in.
 		PTHREAD_YIELD();
-  	}
+	}
 
 
 

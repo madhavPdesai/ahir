@@ -1378,6 +1378,7 @@ void vcSystem::Print_Hsys_File(string file_name)
 
 	vector<vcPipe*> in_pipes;
 	vector<vcPipe*> out_pipes;
+	vector<vcPipe*> internal_pipes;
   	for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
       		pipe_iter != _pipe_map.end();
       		pipe_iter++)
@@ -1389,6 +1390,8 @@ void vcSystem::Print_Hsys_File(string file_name)
 			in_pipes.push_back(p);
 		if((num_reads == 0) && (num_writes > 0))
 			out_pipes.push_back(p);
+		if((num_reads > 0) && (num_writes > 0))
+			internal_pipes.push_back(p);
 	}
 
 	ofile << "$system " << vcSystem::_top_entity_name << " $library " << vcSystem::_vhdl_work_library << endl;
@@ -1414,6 +1417,15 @@ void vcSystem::Print_Hsys_File(string file_name)
 		ofile << p->Get_Id() <<  " " << p->Get_Width()  << " $depth " << p->Get_Depth() << endl;
 	}      
 	ofile << "{ " << endl;
+	for(int K = 0, fK = internal_pipes.size(); K < fK; K++)
+	{
+		vcPipe* p = internal_pipes[K];
+		bool is_noblock = p->Get_No_Block_Mode();
+		bool is_signal =  p->Get_Signal()  &&  (~is_noblock);
+		ofile << (is_noblock ? "    $noblock" : "    ") << "  ";
+		ofile << (is_signal ?  "    $signal" : "    $pipe") << "  ";
+		ofile << p->Get_Id() <<  " " << p->Get_Width()  << " $depth " << p->Get_Depth() << endl;
+	}
 	ofile << "} " << endl;
 	ofile.close();
 }

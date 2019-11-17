@@ -1,11 +1,19 @@
 ! Uniguification file for system sys library SYS_LIB
 ! Prefix renames.. 
 prefix_rename  SYS_LIB engine   sys_e1
+! internal pipe renames.. for instance sys/e1
+register_pipe_rename SYS_LIB engine sys_e1  engine_internal_pipe sys_e1_engine_internal_pipe
+rpipe_rename  SYS_LIB engine sys_e1  engine_internal_pipe sys_e1_engine_internal_pipe
+wpipe_rename  SYS_LIB engine sys_e1  engine_internal_pipe sys_e1_engine_internal_pipe
 ! in pipe renames.. for instance sys/e1
 rpipe_rename  SYS_LIB engine sys_e1  engine_in_pipe E1_IN
 ! out pipe renames.. for instance sys/e1
 wpipe_rename  SYS_LIB engine sys_e1  engine_out_pipe E1_OUT
 prefix_rename  SYS_LIB engine   sys_e2
+! internal pipe renames.. for instance sys/e2
+register_pipe_rename SYS_LIB engine sys_e2  engine_internal_pipe sys_e2_engine_internal_pipe
+rpipe_rename  SYS_LIB engine sys_e2  engine_internal_pipe sys_e2_engine_internal_pipe
+wpipe_rename  SYS_LIB engine sys_e2  engine_internal_pipe sys_e2_engine_internal_pipe
 ! in pipe renames.. for instance sys/e2
 rpipe_rename  SYS_LIB engine sys_e2  engine_in_pipe E2_IN
 ! out pipe renames.. for instance sys/e2
