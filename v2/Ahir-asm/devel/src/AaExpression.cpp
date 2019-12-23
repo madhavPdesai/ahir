@@ -45,6 +45,8 @@ using namespace std;
 #include <Aa2C.h>
 #include <AaDelays.h>
 
+#define __endl__  "\\\n" 
+
 /***************************************** EXPRESSION  ****************************/
 //---------------------------------------------------------------------
 // AaExpression
@@ -4637,7 +4639,15 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 		bool ilb_flag = false;
 		if(this->Is_Trivial())
 		{
-			ilb_flag = true;
+			//
+			// its just an interlock buffer if the target type is unsigned.
+			// else its a sign extension.
+			//
+			if(this->Get_Type()->Is_Uinteger_Type() ||
+				(this->Get_Type()->Size() == this->_rest->Get_Type()->Size()))
+			{
+				ilb_flag = true;
+			}
 		}
 
 
@@ -5756,15 +5766,42 @@ void AaTernaryExpression::PrintC_Declaration(ofstream& ofile)
 
 void AaTernaryExpression::PrintC(ofstream& ofile)
 {
+	assert(this->_test->Get_Type()->Is_Integer_Type());
+
 	this->_test->PrintC(ofile);
 	if(!this->_test->Is_Constant())
 	{
 		Print_C_Assert_If_Bitvector_Undefined(this->_test->C_Reference_String(), ofile);
 	}
 
-	this->_if_true->PrintC(ofile);
-	this->_if_false->PrintC(ofile);
+	AaType* tgt_type = this->Get_Type();
+	string tgt = this->C_Reference_String();
 
+	AaType* if_expr_type = this->_if_true->Get_Type();
+	string if_expr = this->_if_true->C_Reference_String();
+
+	AaType* else_expr_type = this->_if_false->Get_Type();
+	string else_expr = this->_if_false->C_Reference_String();
+
+	ofile << "if(" << C_Value_Expression(this->_test->C_Reference_String(), this->_test->Get_Type()) << ")";
+	ofile << "{";
+	this->_if_true->PrintC(ofile);
+	if(tgt_type->Is_Integer_Type())
+		ofile << "bit_vector_cast_to_bit_vector(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << tgt 
+			<< "), &(" << if_expr << "));" << __endl__;
+	else
+		ofile << tgt << " = " << if_expr << ";" << __endl__;
+	ofile << "}";
+	ofile << "else {";
+	this->_if_false->PrintC(ofile);
+	if(tgt_type->Is_Integer_Type())
+		ofile << "bit_vector_cast_to_bit_vector(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << tgt << "), &(" 
+			<< else_expr << "));" << __endl__;
+	else
+		ofile << tgt << " = " << else_expr<< ";" << __endl__;
+	ofile << "}";
+
+	/*
 	Print_C_Ternary_Operation(this->_test->C_Reference_String(),
 			this->_test->Get_Type(),
 			this->_if_true->C_Reference_String(), 
@@ -5774,6 +5811,7 @@ void AaTernaryExpression::PrintC(ofstream& ofile)
 			this->C_Reference_String(), 
 			this->Get_Type(),
 			ofile);
+	*/
 }
 
 void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)

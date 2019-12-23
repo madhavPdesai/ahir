@@ -414,6 +414,11 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		AaRoot* barrier,
 		ostream& ofile)
 {
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 	if(this->Get_Is_Volatile())
 	{
 		//
@@ -588,6 +593,11 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 void AaCallStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
 
@@ -927,7 +937,7 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<AaPipeObject*,vector<AaRoot*>
 		AaRoot* first_expr = (*iter).second[0];
 		vector<AaRoot*> write_expr_vector;
 		vector<AaRoot*> read_expr_vector;
-		vector<AaRoot*> signal_access_vector;
+		vector<AaRoot*> signal_write_vector;
 		for(int idx = 0, fidx = (*iter).second.size(); idx < fidx; idx++)
 		{
 
@@ -940,12 +950,18 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<AaPipeObject*,vector<AaRoot*>
 							!expr->Is_Opaque_Call_Statement()))
 				// opaque calls are ignored... up to 1-level.
 			{
-				if(is_signal)
-					signal_access_vector.push_back(expr);
-				else if(expr->Is_Write_To_Pipe(obj))
-					write_expr_vector.push_back(expr);
-				else
-					read_expr_vector.push_back(expr);
+				if(expr->Is_Write_To_Pipe(obj))
+				{
+					if(is_signal)
+						signal_write_vector.push_back(expr);
+					else
+						write_expr_vector.push_back(expr);
+				}
+				else	
+				{
+					if(!is_signal)
+						read_expr_vector.push_back(expr);
+				}
 			}
 		}
 
@@ -990,16 +1006,16 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<AaPipeObject*,vector<AaRoot*>
 			}
 
 		}
-		ofile << "// signal dependencies for " << pipe_name << endl;
-		if(signal_access_vector.size() > 1)
+		ofile << "// signal write dependencies for " << pipe_name << endl;
+		if(signal_write_vector.size() > 1)
 		{
-			int SS = signal_access_vector.size();
-			AaRoot* first_expr = signal_access_vector[0];
-			AaRoot* last_expr = signal_access_vector[SS-1];
+			int SS = signal_write_vector.size();
+			AaRoot* first_expr = signal_write_vector[0];
+			AaRoot* last_expr = signal_write_vector[SS-1];
 
 			for(int I = 1; I < SS; I++)
 			{
-				__J(__SST(signal_access_vector[I]), __UCT(signal_access_vector[I-1]));
+				__J(__SST(signal_write_vector[I]), __UCT(signal_write_vector[I-1]));
 			}
 			if(pipeline_flag)
 			{

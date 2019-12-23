@@ -60,9 +60,9 @@ _stage_1_ ()
 // merge  file ShiftRegister.aa, line 27
     _stage_1_merge_stmt_15_c_preamble_macro_;
     _stage_1_merge_stmt_15_c_postamble_macro_;
-//              tval := ($bitcast ($uint<20>) inpipe )// bits of buffering = 20 
+//              tval := ($bitcast ($uint<20>) inpipe ) $buffering 1// bits of buffering = 20. 
     _stage_1_assign_stmt_19_c_macro_;
-//              midpipe := tval// bits of buffering = 20 
+//              midpipe := tval $buffering 1// bits of buffering = 20. 
     _stage_1_assign_stmt_22_c_macro_;
 // $report (stage_1 sent                 midpipe tval )
     _stage_1_stmt_24_c_macro_;
@@ -94,9 +94,9 @@ _stage_2_ ()
 // merge  file ShiftRegister.aa, line 41
     _stage_2_merge_stmt_30_c_preamble_macro_;
     _stage_2_merge_stmt_30_c_postamble_macro_;
-//              tval := ($bitcast ($uint<16>) midpipe )// bits of buffering = 16 
+//              tval := ($bitcast ($uint<16>) midpipe ) $buffering 1// bits of buffering = 16. 
     _stage_2_assign_stmt_34_c_macro_;
-//              outpipe := tval// bits of buffering = 16 
+//              outpipe := tval $buffering 1// bits of buffering = 16. 
     _stage_2_assign_stmt_37_c_macro_;
 // $report (stage_2 sent                 output tval )
     _stage_2_stmt_39_c_macro_;

@@ -2855,6 +2855,12 @@ void AaCallStatement::PrintC_Implicit_Declarations(ofstream& ofile)
 
 void AaCallStatement::Write_VC_Control_Path(ostream& ofile)
 {
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
+
 	if(this->Get_Is_Volatile())
 	{
 		//
@@ -2900,6 +2906,11 @@ void AaCallStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 
 	for(int idx = 0; idx < _input_args.size(); idx++)
 	{
@@ -2912,6 +2923,11 @@ void AaCallStatement::Write_VC_Wire_Declarations(ostream& ofile)
 
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 
 
 	for(int idx = 0; idx < _input_args.size(); idx++)
@@ -2939,6 +2955,11 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 
 	int delay = (this->Get_Is_Volatile() ? 0 : ((AaModule*)_called_module)->Get_Delay());
 	bool full_rate = this->Is_Part_Of_Fullrate_Pipeline();
@@ -3015,6 +3036,11 @@ void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
 
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 
 	hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Name());
 
@@ -6577,7 +6603,7 @@ bool AaCallStatement::Is_Write_To_Pipe(AaPipeObject* obj)
 bool AaCallStatement::Writes_To_Memory_Space(AaMemorySpace* ms)
 {
 	bool ret_val = false;
-	if(this->_called_module)
+	if(this->_called_module && !this->_called_module->Get_Foreign_Flag())
 	{
 		ret_val = this->_called_module->Writes_To_Memory_Space(ms);
 	}
