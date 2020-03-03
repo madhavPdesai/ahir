@@ -288,7 +288,7 @@ aA_Out_Args[AaModule* parent]
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Atomic_Statement : aA_Assignment_Statement | aA_Call_Statement | aA_Null_Statement | aA_Block_Statement
+// aA_Atomic_Statement : aA_Assignment_Statement | aA_Call_Statement | aA_Null_Statement | aA_Block_Statement | aA_Barrier_Statement
 //-----------------------------------------------------------------------------------------------
 aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist] 
 {
@@ -391,11 +391,11 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 	   }
 	) | 
 	(
-		((stmt = aA_Null_Statement[scope]) | (stmt = aA_Block_Statement[scope]))
+		((stmt = aA_Null_Statement[scope]) | (stmt = aA_Block_Statement[scope]) | (stmt = aA_Barrier_Statement[scope]))
 		{
 			slist.push_back(stmt);
 		}
-	)
+	) 
       )
     ;
 
@@ -410,6 +410,16 @@ aA_Null_Statement[AaScope* scope] returns[AaStatement* new_stmt]
         }
     ;
 
+//-----------------------------------------------------------------------------------------------
+// aA_Barrier_Statement : BARRIER
+//-----------------------------------------------------------------------------------------------
+aA_Barrier_Statement[AaScope* scope] returns[AaStatement* new_stmt]
+    : BARRIER 
+        {
+            // NuLL statements have no labels.
+            new_stmt = new AaBarrierStatement(scope);
+        }
+    ;
 
 //-----------------------------------------------------------------------------------------------
 // aA_Lock_Statement : $lock simple-identifier

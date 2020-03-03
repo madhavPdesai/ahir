@@ -1097,6 +1097,19 @@ void AaNullStatement::Write_VC_Control_Path(ostream& ofile)
 }
 
 //---------------------------------------------------------------------
+// AaBarrierStatement: public AaNullStatement
+//---------------------------------------------------------------------
+AaBarrierStatement::AaBarrierStatement(AaScope* parent_tpr):AaNullStatement(parent_tpr) {};
+AaBarrierStatement::~AaBarrierStatement() {};
+void AaBarrierStatement::Write_VC_Control_Path(ostream& ofile)
+{
+	ofile << "// " << this->To_String() << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
+	ofile << ";;[" << this->Get_VC_Name() << "] {" << endl; 
+	__T ("dummy");
+	ofile << "}" << endl;
+}
+//---------------------------------------------------------------------
 // AaLockStatement: public AaNullStatement
 //---------------------------------------------------------------------
 AaLockStatement::AaLockStatement(AaScope* prnt, string mutex_id):AaNullStatement(prnt)

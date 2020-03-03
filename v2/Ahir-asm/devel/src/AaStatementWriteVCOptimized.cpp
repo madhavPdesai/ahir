@@ -652,15 +652,19 @@ void AaBlockStatement::Identify_Maximal_Sequences( AaStatementSequence* sseq,
 		{
 			stmt  = sseq->Get_Statement(end_idx);
 
+			if(stmt->Is("AaBarrierStatement"))
+			{
+				// barrier.. 
+				end_idx++;
+				break;
+			}
 			// some statements are just ignored.
-			if(stmt->Is_Null_Like_Statement())
+			else if(stmt->Is_Null_Like_Statement())
 			{
 				end_idx++;
 				continue;
 			}
-
-
-			if( stmt->Is_Block_Statement()  || stmt->Is_Control_Flow_Statement())
+			else if(stmt->Is_Block_Statement()  || stmt->Is_Control_Flow_Statement())
 			{
 				if(linear_segment.size() == 0)
 				{

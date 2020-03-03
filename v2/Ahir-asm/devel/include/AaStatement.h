@@ -503,10 +503,33 @@ class AaNullStatement: public AaStatement
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
-  void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+  virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
   {
 	// do nothing..
   }
+};
+
+// barrier statement
+class AaBarrierStatement: public AaNullStatement
+{
+ public:
+  AaBarrierStatement(AaScope* parent_tpr);
+  ~AaBarrierStatement();
+
+  virtual void Print(ostream& ofile) { ofile << this->Tab() << "$barrier" << endl; }
+  virtual string Kind() {return("AaBarrierStatement");}
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile)
+  {
+    srcfile << "/* barrier */ ";
+    srcfile <<  ";" << endl;
+  }
+  virtual string Get_C_Name()
+  {
+    return("_barrier_line_" +   IntToStr(this->Get_Line_Number()));
+  }
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual bool Is_Control_Flow_Statement() {return(true);}
 };
 
 

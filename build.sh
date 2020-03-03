@@ -1,6 +1,7 @@
 #!/bin/bash
 export AHIR_RELEASE=$(pwd)/release
 export BOOST_VERSION=boost_1_58_0
+export LD_LIBRARY_PATH=/opt/glibc-2.14/lib:$LD_LIBRARY_PATH
 echo "setting boost version" to $BOOST_VERSION
 echo "Making vhdl release."
 cd vhdl/release
