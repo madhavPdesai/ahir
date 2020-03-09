@@ -33,6 +33,7 @@
 #include <getopt.h>
 #include <vector>
 #include <map>
+#include <stack>
 #include <fstream>
 #include <iostream>
 
@@ -63,6 +64,7 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
   int err = 0;
   char last_inchar = 0;
 
+  stack<int>  ifdef_stack;
 
   //
   // look for #<file-name> and include those files also..
@@ -81,6 +83,7 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 // #include filename
 // ##X
 // #undefine
+// #ifdef #endif
      {
 	string keyword;
 	while(1) {
@@ -107,32 +110,66 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 		cerr << "Info: #undefine " << key << endl;
 		defines_map.erase(key);
 	}
+        else if (keyword == "if") 
+	{
+		string key;
+		infile >> key;
+
+		int pval = 0;
+		if(defines_map.find(key)  != defines_map.end())
+		{
+			if(defines_map[key] != "0")
+			{
+				pval = 1;
+			}
+		}
+		ifdef_stack.push(pval);
+		
+	}
+	else if (keyword == "endif")
+	{
+		if(ifdef_stack.size() > 0)
+		{
+			ifdef_stack.pop();
+		}
+		else
+		{
+			cerr << "Error: unmatched #endif" << endl;
+			err = 1;
+		}
+	}
 	else if(keyword == "include")
 	{
 		string incl_filename;
 		infile >> incl_filename;
 
-		cerr << "Info: #include " << incl_filename << endl;
 
 		int ok_flag = 0;
-		for(int I = 0, fI = include_directories.size(); I < fI; I++)
+
+		int print_on = (ifdef_stack.size() == 0) || (ifdef_stack.top() != 0);
+
+		if(print_on)
 		{
-			string full_file_name = include_directories[I] + "/" + incl_filename;
-			ifstream incl_file;
-			incl_file.open(full_file_name.c_str());
-			if(incl_file.is_open())
+			cerr << "Info: #include " << incl_filename << endl;
+			for(int I = 0, fI = include_directories.size(); I < fI; I++)
 			{
-				cerr << "Info: included file " << full_file_name << endl;
-				err = IncludeAndPrint(incl_file, include_directories, defines_map, ofile) || err;
-				incl_file.close();
-				ok_flag = true;
-				break;
+				string full_file_name = include_directories[I] + "/" + incl_filename;
+				ifstream incl_file;
+				incl_file.open(full_file_name.c_str());
+				if(incl_file.is_open())
+				{
+					cerr << "Info: included file " << full_file_name << endl;
+					err = IncludeAndPrint(incl_file, include_directories, defines_map, ofile) || err;
+					incl_file.close();
+					ok_flag = true;
+					break;
+				}
 			}
-		}
-		if(!ok_flag)
-		{
-			cerr << "Error:AaInclude could not include file " << incl_filename << endl;
-			err = 1;
+			if(!ok_flag)
+			{
+				cerr << "Error:AaInclude could not include file " << incl_filename << endl;
+				err = 1;
+			}
 		}
 	}
 	else if(keyword[0] == '#')
@@ -140,7 +177,7 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 		string key = keyword.substr(1);
 		if(defines_map.find(key) != defines_map.end())
 		{
-			ofile << defines_map[key];
+			ofile << defines_map[key] << " ";
 			cerr << "Info: ##" << key << endl;
 		}	
 		else
@@ -152,8 +189,12 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
      }
      else
      {
-	ofile << inchar;
-        last_inchar = inchar;
+
+	     int print_on = (ifdef_stack.size() == 0) || (ifdef_stack.top() != 0);
+	     if(print_on)
+		     ofile << inchar;
+
+	     last_inchar = inchar;
      } 
   }
   return(err);
@@ -161,69 +202,69 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 
 int main(int argc, char* argv[])
 {
-  int err = 0;
-  signal(SIGSEGV, Handle_Segfault);
+	int err = 0;
+	signal(SIGSEGV, Handle_Segfault);
 
-  if(argc < 2)
-    {
-      cerr << "Usage: AaInclude [-I <include-directory>]*  <filename> (<filename>) ... " << endl;
-      cerr << "    -I <include-directory> : add include directory to search path." << endl;
-      cerr << "    -o <output-file-name>  : output file\n" << endl;
-      cerr << "     <filename> (<filename>) ... " << endl;
-      return(1);
-    }
-
-  string idir;
-  vector<string> include_directories;
-
-  string ofile_name;
-  while ((opt = 
-	  getopt_long(argc, 
-		      argv, 
-		      "I:o:",
-		      long_options, &option_index)) != -1)
-    {
-      switch (opt)
+	if(argc < 2)
 	{
-	case 'I':
-	  idir = optarg;
-	  include_directories.push_back(idir);
-	  break;
-        case 'o':
-          ofile_name = optarg;
-	  break;
-	default:
-	  cerr << "Error: unknown option " << opt << endl;
-	  err = 1;
-	  break;
+		cerr << "Usage: AaPreprocess [-I <include-directory>]*  <filename> (<filename>) ... " << endl;
+		cerr << "    -I <include-directory> : add include directory to search path." << endl;
+		cerr << "    -o <output-file-name>  : output file\n" << endl;
+		cerr << "     <filename> (<filename>) ... " << endl;
+		return(1);
 	}
-    }
 
-  if(ofile_name == "") 
-  {
- 	cerr << "Error: output file not specified" << endl;
-	err = 1;
-  }
-  ofstream ofile;
-  ofile.open(ofile_name.c_str());
-  map<string, string> defines_map;
-  for(int i = optind; i < argc; i++)
-    {
-  	ifstream infile;
-	string filename = argv[i];      
-	infile.open(filename.c_str());
-	if(infile.is_open())
+	string idir;
+	vector<string> include_directories;
+
+	string ofile_name;
+	while ((opt = 
+				getopt_long(argc, 
+					argv, 
+					"I:o:",
+					long_options, &option_index)) != -1)
 	{
-		err = IncludeAndPrint(infile,include_directories,defines_map,ofile) | err;
+		switch (opt)
+		{
+			case 'I':
+				idir = optarg;
+				include_directories.push_back(idir);
+				break;
+			case 'o':
+				ofile_name = optarg;
+				break;
+			default:
+				cerr << "Error: unknown option " << opt << endl;
+				err = 1;
+				break;
+		}
 	}
-	else
+
+	if(ofile_name == "") 
 	{
-		cerr << "Error: could not open file " << filename << endl;
+		cerr << "Error: output file not specified" << endl;
 		err = 1;
 	}
-	infile.close();
-    }
-   ofile.close();
+	ofstream ofile;
+	ofile.open(ofile_name.c_str());
+	map<string, string> defines_map;
+	for(int i = optind; i < argc; i++)
+	{
+		ifstream infile;
+		string filename = argv[i];      
+		infile.open(filename.c_str());
+		if(infile.is_open())
+		{
+			err = IncludeAndPrint(infile,include_directories,defines_map,ofile) | err;
+		}
+		else
+		{
+			cerr << "Error: could not open file " << filename << endl;
+			err = 1;
+		}
+		infile.close();
+	}
+	ofile.close();
 
-  return(err);
+	return(err);
 }
