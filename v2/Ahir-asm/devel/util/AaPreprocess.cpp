@@ -59,12 +59,11 @@ void Handle_Segfault(int signal)
 }
 
       
-int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<string,string>& defines_map, ofstream& ofile)
+int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<string,string>& defines_map, stack<int>& ifdef_stack, ofstream& ofile)
 {
   int err = 0;
   char last_inchar = 0;
 
-  stack<int>  ifdef_stack;
 
   //
   // look for #<file-name> and include those files also..
@@ -159,7 +158,7 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 				if(incl_file.is_open())
 				{
 					cerr << "Info: included file " << full_file_name << endl;
-					err = IncludeAndPrint(incl_file, include_directories, defines_map, ofile) || err;
+					err = IncludeAndPrint(incl_file, include_directories, defines_map, ifdef_stack, ofile) || err;
 					incl_file.close();
 					ok_flag = true;
 					break;
@@ -248,6 +247,9 @@ int main(int argc, char* argv[])
 	ofstream ofile;
 	ofile.open(ofile_name.c_str());
 	map<string, string> defines_map;
+
+	stack<int> ifdef_stack;
+
 	for(int i = optind; i < argc; i++)
 	{
 		ifstream infile;
@@ -255,7 +257,7 @@ int main(int argc, char* argv[])
 		infile.open(filename.c_str());
 		if(infile.is_open())
 		{
-			err = IncludeAndPrint(infile,include_directories,defines_map,ofile) | err;
+			err = IncludeAndPrint(infile,include_directories,defines_map, ifdef_stack, ofile) | err;
 		}
 		else
 		{
