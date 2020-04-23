@@ -144,6 +144,29 @@ int is_lifo_mode(PipeRec* p);
 		    	}\
                    }
 
+#define POPANDRESTORE(p,x,n) {\
+			int old_rp = p->read_pointer;\
+			int old_wp  = p ->write_pointer;\
+			int old_ne = p->number_of_entries;\
+			if(p->is_signal) {\
+				*((uint##n##_t *)x) = p->buffer.ptr##n[0];\
+			}\
+			else if(p->number_of_entries > 0) {\
+				*((uint##n##_t *)x) = p->buffer.ptr##n[p->read_pointer];\
+				if(!is_lifo_mode(p))\
+				 	INCR(p->read_pointer,p);\
+				else\
+				{\
+					p->write_pointer = p->read_pointer;\
+				  	DECR(p->read_pointer,p);\
+				}\
+				p->number_of_entries -= 1;\
+		    	}\
+			p->read_pointer = old_rp;\
+			p->write_pointer = old_rp;\
+			p->number_of_entries = old_ne;\
+                   }
+
 #define POP_SIGNAL_TO_BUFFER(p,x,n,m) {\
 			if(p->is_signal) {\
 				int i;\
@@ -229,4 +252,10 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 uint32_t get_file_print_lock(FILE* fp);
 // flush fp and release the lock.
 void release_file_print_lock(FILE* fp);
+
+// generate a string for the value of the pipe.
+//  useful for debugging.  The string is allocated
+//  inside the function (memory leak alert).
+char* pipe_value_to_string(const char* id);
+
 #endif
