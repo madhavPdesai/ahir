@@ -78,8 +78,6 @@ architecture behave of SynchFifoWithDPRAM is
   signal incr_read_pointer, incr_write_pointer : unsigned(addr_width_of_dpram-1 downto 0);
 
   signal write_to_dpram, read_from_dpram, latch_read_data: std_logic;
-  signal tied_to_low, tied_to_high : std_logic;
-  signal data_out_0_unused, data_tied_to_low: std_logic_vector(data_width-1 downto 0);
   
   type ReadFsmState is (Idle, Valid, WaitPop);
   signal read_state: ReadFsmState;
@@ -92,9 +90,6 @@ architecture behave of SynchFifoWithDPRAM is
 
 begin  -- SimModel
 
-  tied_to_low <= '0';
-  tied_to_high <= '1';
-  data_tied_to_low <= (others => '0');
 
   assert(queue_depth > 1) report "Synch FIFO depth must be greater than 1" severity failure;
   assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
@@ -208,22 +203,22 @@ begin  -- SimModel
 	end if;
   end process;
 
-  dpramInst: base_bank_dual_port
-		generic map (name => name & "-dpram", 
+  rf_1w_1r_inst: register_file_1w_1r_port
+		generic map (name => name & "-register_file_1w_1r", 
 				g_addr_width => addr_width_of_dpram,
 				g_data_width => data_width)
 		port map (
+				-- port 0 for write
 				datain_0 =>  data_in,
-				dataout_0 => data_out_0_unused,
 				addrin_0 =>  std_logic_vector(write_pointer),
 				enable_0 => write_to_dpram,
-				writebar_0  => tied_to_low,
-				datain_1 => data_tied_to_low,
+				-- port 1 for read.
 				dataout_1 => read_data,
 				addrin_1 =>  std_logic_vector(read_pointer),
 				enable_1 => read_from_dpram,
-				writebar_1  => tied_to_high,
+				-- clock pos edge..
 				clk => clk, 
+				-- reset active high.
 				reset => reset
 			 );
    -- registering
