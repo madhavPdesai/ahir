@@ -1266,6 +1266,7 @@ uint8_t uint64_compare(uint8_t signed_flag, uint64_t a, uint64_t b, uint64_t wid
 }
 
 // returns 0 if equal, 1 if r > s, 2 if r < s.
+//   compare of 2's complement numbers is easy.
 uint8_t bit_vector_compare(uint8_t signed_flag, bit_vector* r, bit_vector* s)
 {
 	uint8_t undef_flag = 0;
@@ -1319,7 +1320,7 @@ uint8_t bit_vector_compare(uint8_t signed_flag, bit_vector* r, bit_vector* s)
 
 	if(re)
 		return(IS_EQUAL);
-	else if((signed_flag && sr) ? rl : rg) 
+	else if(rg)
 		return(IS_GREATER);
 	else
 		return(IS_LESS);

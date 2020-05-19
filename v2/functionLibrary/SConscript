@@ -4,9 +4,9 @@ import os
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
 env.Append(CPPPATH = './src/:./include:')
 
-env.SharedLibrary('lib/libfpu', ['src/fpu.c'], CCFLAGS='-g ')
-env.SharedLibrary('lib/libtimer', ['src/timer.c'], CCFLAGS='-g ')
-env.SharedLibrary('lib/libllvm_intrinsics', ['src/llvm_intrinsics.c'], CCFLAGS='-g ')
+env.StaticLibrary('lib/libfpu', ['src/fpu.c'], CCFLAGS='-g ')
+env.StaticLibrary('lib/libtimer', ['src/timer.c'], CCFLAGS='-g ')
+env.StaticLibrary('lib/libllvm_intrinsics', ['src/llvm_intrinsics.c'], CCFLAGS='-g ')
 
 
 

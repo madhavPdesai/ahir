@@ -640,6 +640,9 @@ void AaBlockStatement::Identify_Maximal_Sequences( AaStatementSequence* sseq,
 	//   a sequence with a pipe-access is a single statement.
 	//   a sequence with simple statements can have many statements.
 	//
+	// Note: added: a barrier statement introduces a cut in the
+	//      linear segment, but the barrier statement itself is
+	//      ignored.
 	//
 	int start_idx = 0;
 	while(start_idx < sseq->Get_Statement_Count())
