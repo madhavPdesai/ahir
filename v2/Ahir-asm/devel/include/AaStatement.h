@@ -331,6 +331,7 @@ class AaStatement: public AaScope
    virtual bool Is_Part_Of_Pipelined_Module();
   
    virtual bool Is_Orphaned() {return(false);}
+  virtual bool Can_Be_Combinationalized() {return(false);}
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -819,6 +820,7 @@ class AaCallStatement: public AaStatement
 
   void Write_VC_WAR_Dependencies(bool pipeline_flag, set<AaRoot*>& visited_elements,
 				 ostream& ofile);
+  virtual bool Can_Be_Combinationalized();
 };
 
 
@@ -1133,6 +1135,7 @@ class AaJoinForkStatement: public AaParallelBlockStatement
 class AaPlaceStatement: public AaStatement
 {
   string _label;
+  int _multiplicity;
  public:
   AaPlaceStatement(AaBranchBlockStatement* parent_tpr, string lbl);
   ~AaPlaceStatement();

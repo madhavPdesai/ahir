@@ -120,3 +120,88 @@ gcc -pthread -c  -gdwarf-2 -g3   -I./controller/aa2c  -I./engine/aa2c  -I./aa2c 
 ar -rcs ./lib/libSYS_LIB.a  ./objsw/SYS_LIB_sys.o ./objsw/SYS_LIB_sys_e1_aa_c_model.o ./objsw/SYS_LIB_sys_e2_aa_c_model.o ./objsw/SYS_LIB_sys_c_aa_c_model.o ./objsw/sys_sys.o
 hierSys2Vhdl -s ghdl -o vhdl pipes.aa ./controller/vhdl/controller.hsys ./engine/vhdl/engine.hsys ./toplevel.hsys 
 formatVhdlFiles.py vhdl
+make -C ./controller DEBUG=-D  SIMULATOR=-s\ ghdl
+make -C ./engine DEBUG=-D  SIMULATOR=-s\ ghdl
+hierSys2C -n SYS_LIB -o aa2c  -u pipes.aa ./controller/vhdl/controller.hsys ./engine/vhdl/engine.hsys ./toplevel.hsys 
+hierSysUniquify pipes.aa ./controller/vhdl/controller.hsys ./engine/vhdl/engine.hsys ./toplevel.hsys 
+mv ./controller/aa2c/SYS_LIB_controller_aa_c_model.c ./controller/aa2c/uniquify_tmp
+sed "s/SYS_LIB_controller_/SYS_LIB_sys_c_/g" ./controller/aa2c/uniquify_tmp/SYS_LIB_controller_aa_c_model.c > ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.c
+sed -i  "s/read_bit_vector_from_pipe(\"FROM_E1\"/read_bit_vector_from_pipe(\"E1_OUT\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.c
+sed -i  "s/read_bit_vector_from_pipe(\"FROM_E2\"/read_bit_vector_from_pipe(\"E2_OUT\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.c
+sed -i  "s/read_bit_vector_from_pipe(\"ctrl_in_pipe\"/read_bit_vector_from_pipe(\"DATA_IN\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.c
+sed -i  "s/write_bit_vector_to_pipe(\"TO_E1\"/write_bit_vector_to_pipe(\"E1_IN\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.c
+sed -i  "s/write_bit_vector_to_pipe(\"TO_E2\"/write_bit_vector_to_pipe(\"E2_IN\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.c
+sed -i  "s/write_bit_vector_to_pipe(\"ctrl_out_pipe\"/write_bit_vector_to_pipe(\"DATA_OUT\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.c
+rm -rf ./controller/aa2c/uniquify_tmp/*
+mv ./controller/aa2c/SYS_LIB_controller_aa_c_model.h ./controller/aa2c/uniquify_tmp
+sed "s/SYS_LIB_controller_/SYS_LIB_sys_c_/g" ./controller/aa2c/uniquify_tmp/SYS_LIB_controller_aa_c_model.h > ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.h
+sed -i  "s/read_bit_vector_from_pipe(\"FROM_E1\"/read_bit_vector_from_pipe(\"E1_OUT\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.h
+sed -i  "s/read_bit_vector_from_pipe(\"FROM_E2\"/read_bit_vector_from_pipe(\"E2_OUT\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.h
+sed -i  "s/read_bit_vector_from_pipe(\"ctrl_in_pipe\"/read_bit_vector_from_pipe(\"DATA_IN\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.h
+sed -i  "s/write_bit_vector_to_pipe(\"TO_E1\"/write_bit_vector_to_pipe(\"E1_IN\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.h
+sed -i  "s/write_bit_vector_to_pipe(\"TO_E2\"/write_bit_vector_to_pipe(\"E2_IN\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.h
+sed -i  "s/write_bit_vector_to_pipe(\"ctrl_out_pipe\"/write_bit_vector_to_pipe(\"DATA_OUT\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.h
+rm -rf ./controller/aa2c/uniquify_tmp/*
+mv ./controller/aa2c/SYS_LIB_controller_aa_c_model_internal.h ./controller/aa2c/uniquify_tmp
+sed "s/SYS_LIB_controller_/SYS_LIB_sys_c_/g" ./controller/aa2c/uniquify_tmp/SYS_LIB_controller_aa_c_model_internal.h > ./controller/aa2c/SYS_LIB_sys_c_aa_c_model_internal.h
+sed -i  "s/read_bit_vector_from_pipe(\"FROM_E1\"/read_bit_vector_from_pipe(\"E1_OUT\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model_internal.h
+sed -i  "s/read_bit_vector_from_pipe(\"FROM_E2\"/read_bit_vector_from_pipe(\"E2_OUT\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model_internal.h
+sed -i  "s/read_bit_vector_from_pipe(\"ctrl_in_pipe\"/read_bit_vector_from_pipe(\"DATA_IN\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model_internal.h
+sed -i  "s/write_bit_vector_to_pipe(\"TO_E1\"/write_bit_vector_to_pipe(\"E1_IN\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model_internal.h
+sed -i  "s/write_bit_vector_to_pipe(\"TO_E2\"/write_bit_vector_to_pipe(\"E2_IN\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model_internal.h
+sed -i  "s/write_bit_vector_to_pipe(\"ctrl_out_pipe\"/write_bit_vector_to_pipe(\"DATA_OUT\"/g" ./controller/aa2c/SYS_LIB_sys_c_aa_c_model_internal.h
+mv ./engine/aa2c/SYS_LIB_engine_aa_c_model_internal.h ./engine/aa2c/uniquify_tmp
+sed "s/SYS_LIB_engine_/SYS_LIB_sys_e1_/g" ./engine/aa2c/uniquify_tmp/SYS_LIB_engine_aa_c_model_internal.h > ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model_internal.h
+sed "s/SYS_LIB_engine_/SYS_LIB_sys_e2_/g" ./engine/aa2c/uniquify_tmp/SYS_LIB_engine_aa_c_model_internal.h > ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model_internal.h
+sed -i  "s/register_pipe(\"engine_internal_pipe\"/register_pipe(\"sys_e1_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model_internal.h
+sed -i  "s/register_signal(\"engine_internal_pipe\"/register_signal(\"sys_e1_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model_internal.h
+sed -i  "s/register_pipe(\"engine_internal_pipe\"/register_pipe(\"sys_e2_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model_internal.h
+sed -i  "s/register_signal(\"engine_internal_pipe\"/register_signal(\"sys_e2_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model_internal.h
+sed -i  "s/read_bit_vector_from_pipe(\"engine_internal_pipe\"/read_bit_vector_from_pipe(\"sys_e1_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model_internal.h
+sed -i  "s/read_bit_vector_from_pipe(\"engine_in_pipe\"/read_bit_vector_from_pipe(\"E1_IN\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model_internal.h
+sed -i  "s/read_bit_vector_from_pipe(\"engine_internal_pipe\"/read_bit_vector_from_pipe(\"sys_e2_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model_internal.h
+sed -i  "s/read_bit_vector_from_pipe(\"engine_in_pipe\"/read_bit_vector_from_pipe(\"E2_IN\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model_internal.h
+sed -i  "s/write_bit_vector_to_pipe(\"engine_internal_pipe\"/write_bit_vector_to_pipe(\"sys_e1_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model_internal.h
+sed -i  "s/write_bit_vector_to_pipe(\"engine_out_pipe\"/write_bit_vector_to_pipe(\"E1_OUT\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model_internal.h
+sed -i  "s/write_bit_vector_to_pipe(\"engine_internal_pipe\"/write_bit_vector_to_pipe(\"sys_e2_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model_internal.h
+sed -i  "s/write_bit_vector_to_pipe(\"engine_out_pipe\"/write_bit_vector_to_pipe(\"E2_OUT\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model_internal.h
+rm -rf ./engine/aa2c/uniquify_tmp/*
+mv ./engine/aa2c/SYS_LIB_engine_aa_c_model.c ./engine/aa2c/uniquify_tmp
+sed "s/SYS_LIB_engine_/SYS_LIB_sys_e1_/g" ./engine/aa2c/uniquify_tmp/SYS_LIB_engine_aa_c_model.c > ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.c
+sed "s/SYS_LIB_engine_/SYS_LIB_sys_e2_/g" ./engine/aa2c/uniquify_tmp/SYS_LIB_engine_aa_c_model.c > ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.c
+sed -i  "s/register_pipe(\"engine_internal_pipe\"/register_pipe(\"sys_e1_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.c
+sed -i  "s/register_signal(\"engine_internal_pipe\"/register_signal(\"sys_e1_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.c
+sed -i  "s/register_pipe(\"engine_internal_pipe\"/register_pipe(\"sys_e2_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.c
+sed -i  "s/register_signal(\"engine_internal_pipe\"/register_signal(\"sys_e2_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.c
+sed -i  "s/read_bit_vector_from_pipe(\"engine_internal_pipe\"/read_bit_vector_from_pipe(\"sys_e1_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.c
+sed -i  "s/read_bit_vector_from_pipe(\"engine_in_pipe\"/read_bit_vector_from_pipe(\"E1_IN\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.c
+sed -i  "s/read_bit_vector_from_pipe(\"engine_internal_pipe\"/read_bit_vector_from_pipe(\"sys_e2_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.c
+sed -i  "s/read_bit_vector_from_pipe(\"engine_in_pipe\"/read_bit_vector_from_pipe(\"E2_IN\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.c
+sed -i  "s/write_bit_vector_to_pipe(\"engine_internal_pipe\"/write_bit_vector_to_pipe(\"sys_e1_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.c
+sed -i  "s/write_bit_vector_to_pipe(\"engine_out_pipe\"/write_bit_vector_to_pipe(\"E1_OUT\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.c
+sed -i  "s/write_bit_vector_to_pipe(\"engine_internal_pipe\"/write_bit_vector_to_pipe(\"sys_e2_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.c
+sed -i  "s/write_bit_vector_to_pipe(\"engine_out_pipe\"/write_bit_vector_to_pipe(\"E2_OUT\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.c
+rm -rf ./engine/aa2c/uniquify_tmp/*
+mv ./engine/aa2c/SYS_LIB_engine_aa_c_model.h ./engine/aa2c/uniquify_tmp
+sed "s/SYS_LIB_engine_/SYS_LIB_sys_e1_/g" ./engine/aa2c/uniquify_tmp/SYS_LIB_engine_aa_c_model.h > ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.h
+sed "s/SYS_LIB_engine_/SYS_LIB_sys_e2_/g" ./engine/aa2c/uniquify_tmp/SYS_LIB_engine_aa_c_model.h > ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.h
+sed -i  "s/register_pipe(\"engine_internal_pipe\"/register_pipe(\"sys_e1_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.h
+sed -i  "s/register_signal(\"engine_internal_pipe\"/register_signal(\"sys_e1_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.h
+sed -i  "s/register_pipe(\"engine_internal_pipe\"/register_pipe(\"sys_e2_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.h
+sed -i  "s/register_signal(\"engine_internal_pipe\"/register_signal(\"sys_e2_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.h
+sed -i  "s/read_bit_vector_from_pipe(\"engine_internal_pipe\"/read_bit_vector_from_pipe(\"sys_e1_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.h
+sed -i  "s/read_bit_vector_from_pipe(\"engine_in_pipe\"/read_bit_vector_from_pipe(\"E1_IN\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.h
+sed -i  "s/read_bit_vector_from_pipe(\"engine_internal_pipe\"/read_bit_vector_from_pipe(\"sys_e2_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.h
+sed -i  "s/read_bit_vector_from_pipe(\"engine_in_pipe\"/read_bit_vector_from_pipe(\"E2_IN\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.h
+sed -i  "s/write_bit_vector_to_pipe(\"engine_internal_pipe\"/write_bit_vector_to_pipe(\"sys_e1_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.h
+sed -i  "s/write_bit_vector_to_pipe(\"engine_out_pipe\"/write_bit_vector_to_pipe(\"E1_OUT\"/g" ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.h
+sed -i  "s/write_bit_vector_to_pipe(\"engine_internal_pipe\"/write_bit_vector_to_pipe(\"sys_e2_engine_internal_pipe\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.h
+sed -i  "s/write_bit_vector_to_pipe(\"engine_out_pipe\"/write_bit_vector_to_pipe(\"E2_OUT\"/g" ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.h
+gcc -pthread -c  -gdwarf-2 -g3   -I./controller/aa2c  -I./engine/aa2c  -I./aa2c  -I/home/madhav/AHIR/gitHub/ahir/release/functionLibrary/include -I/home/madhav/AHIR/gitHub/ahir/release/include   ./controller/aa2c/SYS_LIB_sys_c_aa_c_model.c -o ./objsw/SYS_LIB_sys_c_aa_c_model.o
+gcc -pthread -c  -gdwarf-2 -g3   -I./controller/aa2c  -I./engine/aa2c  -I./aa2c  -I/home/madhav/AHIR/gitHub/ahir/release/functionLibrary/include -I/home/madhav/AHIR/gitHub/ahir/release/include   ./engine/aa2c/SYS_LIB_sys_e2_aa_c_model.c -o ./objsw/SYS_LIB_sys_e2_aa_c_model.o
+gcc -pthread -c  -gdwarf-2 -g3   -I./controller/aa2c  -I./engine/aa2c  -I./aa2c  -I/home/madhav/AHIR/gitHub/ahir/release/functionLibrary/include -I/home/madhav/AHIR/gitHub/ahir/release/include   ./engine/aa2c/SYS_LIB_sys_e1_aa_c_model.c -o ./objsw/SYS_LIB_sys_e1_aa_c_model.o
+gcc -pthread -c  -gdwarf-2 -g3   -I./controller/aa2c  -I./engine/aa2c  -I./aa2c  -I/home/madhav/AHIR/gitHub/ahir/release/functionLibrary/include -I/home/madhav/AHIR/gitHub/ahir/release/include   ./aa2c/sys_sys.c -o ./objsw/sys_sys.o
+gcc -pthread -c  -gdwarf-2 -g3   -I./controller/aa2c  -I./engine/aa2c  -I./aa2c  -I/home/madhav/AHIR/gitHub/ahir/release/functionLibrary/include -I/home/madhav/AHIR/gitHub/ahir/release/include   ./aa2c/SYS_LIB_sys.c -o ./objsw/SYS_LIB_sys.o
+ar -rcs ./lib/libSYS_LIB.a  ./objsw/SYS_LIB_sys.o ./objsw/SYS_LIB_sys_e1_aa_c_model.o ./objsw/SYS_LIB_sys_e2_aa_c_model.o ./objsw/SYS_LIB_sys_c_aa_c_model.o ./objsw/sys_sys.o
+hierSys2Vhdl -s ghdl -o vhdl pipes.aa ./controller/vhdl/controller.hsys ./engine/vhdl/engine.hsys ./toplevel.hsys 
+formatVhdlFiles.py vhdl

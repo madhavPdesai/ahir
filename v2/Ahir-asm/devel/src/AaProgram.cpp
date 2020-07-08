@@ -64,6 +64,7 @@ AaVoidType* AaProgram::_void_type = NULL;
 std::map<string,AaType*,StringCompare>   AaProgram::_type_map;
 std::map<string,AaObject*,StringCompare> AaProgram::_objects;
 std::map<string,AaModule*,StringCompare> AaProgram::_modules;
+std::set<string> AaProgram::_volatile_modules;
 std::map<int,set<AaRoot*> > AaProgram::_storage_eq_class_map;
 std::vector<AaModule*> AaProgram::_ordered_module_vector;
 std::map<int,set<AaModule*> > AaProgram::_storage_index_module_coverage_map;
@@ -1160,6 +1161,19 @@ void AaProgram::Equalize_Paths_Of_Pipelined_Modules()
 	}
 }
 
+void AaProgram::Mark_Volatizable_Modules_As_Volatile()
+{
+	for(int idx = 0, fidx = AaProgram::_ordered_module_vector.size(); idx < fidx; idx++)
+	{
+		AaModule* m = ((AaModule*)(AaProgram::_ordered_module_vector[idx]));
+		if(m->Is_Volatizable())
+		{
+			AaRoot::Info (" volatizing module " + m->Get_Label());
+			m->Set_Volatile_Flag(true);
+		}
+	}
+}
+
 void AaProgram::Write_C_Model()
 {
 	string sys_prefix = AaProgram::_c_vhdl_module_prefix;
@@ -1611,3 +1625,14 @@ bool AaProgram::Is_Integer_Parameter(string pid)
 	}
 	return(ret_val);
 }
+
+bool AaProgram::Is_Marked_As_Volatile_Module(string mname)
+{
+	return(AaProgram::_volatile_modules.find(mname) != AaProgram::_volatile_modules.end());
+}
+
+void AaProgram::Mark_As_Volatile_Module(string mname)
+{
+	AaProgram::_volatile_modules.insert(mname);
+}
+

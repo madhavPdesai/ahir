@@ -1514,8 +1514,14 @@ bool AaAssignmentStatement::Can_Be_Combinationalized()
 {
 	AaExpression* tgt = this->_target;
 	AaExpression* src = this->_source;
+
+	// target should not be an interface object, and should not be a complex function that needs
+	// to be registered.
 	bool ret_val = (!tgt->Is_Interface_Object_Reference() && tgt->Can_Be_Combinationalized() && src->Can_Be_Combinationalized());
 
+	//
+	// fanout should be 1.
+	//
 	if(ret_val && (tgt->Get_Source_References().size() == 1))
 	{
 		AaRoot* robj = *(tgt->Get_Source_References().begin());
@@ -1525,10 +1531,12 @@ bool AaAssignmentStatement::Can_Be_Combinationalized()
 		{
 			if(robj->Is_Expression())
 			{
+				// should not create a combinational loop.
 				ret_val = (((AaExpression*)robj)->Get_Associated_Statement() != this);
 			}
 			else
 			{
+				// should not be a WAR dependency.
 				ret_val = (robj->Get_Index() < tgt->Get_Index());
 			}
 		}
@@ -2344,6 +2352,13 @@ bool AaCallStatement::Get_Is_Volatile()
 	return(_is_volatile);
 }
 
+bool AaCallStatement::Can_Be_Combinationalized()
+{
+	AaModule* cm = (AaModule*) _called_module;
+	return((cm != NULL) && (cm->Get_Volatile_Flag()));
+}
+
+
 void AaCallStatement::Replace_Input_Argument(AaExpression* old_arg, AaSimpleObjectReference* new_arg)
 {
 	for(unsigned int i = 0; i < _input_args.size(); i++)
@@ -2534,7 +2549,7 @@ void AaCallStatement::Print(ostream& ofile)
 		guard_string = "$guard (" + cg_var + ") ";
 	}
 
-	if(this->Get_Is_Volatile())
+	if(this->Get_Is_Volatile() || (AaProgram::_combinationalize_statements && cm->Get_Volatile_Flag()))
 		ofile << " $volatile ";
 
 	// not inlined or macro
@@ -5906,6 +5921,7 @@ void AaIfStatement::Get_Target_Places(set<AaPlaceStatement*>& target_places)
 AaPlaceStatement::AaPlaceStatement(AaBranchBlockStatement* parent_tpr,string lbl):AaStatement(parent_tpr) 
 {
 	this->_label = lbl;
+	this->_multiplicity = 1;
 	parent_tpr->Map_Child(lbl,this);
 };
 AaPlaceStatement::~AaPlaceStatement() {};

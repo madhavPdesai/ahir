@@ -2460,11 +2460,13 @@ void AaArrayObjectReference::Set_Type(AaType* t)
 void AaArrayObjectReference::Add_Target_Reference(AaRoot* referrer)
 {
 	this->AaRoot::Add_Target_Reference(referrer);
+	/*
 	if(referrer->Is("AaInterfaceObject"))
 	{
 		AaType* rtype = ((AaInterfaceObject*)referrer)->Get_Type();
 		this->Set_Type(rtype);
 	}
+	*/
 }
 void AaArrayObjectReference::Add_Source_Reference(AaRoot* referrer)
 {
@@ -2795,11 +2797,11 @@ string AaArrayObjectReference::C_Reference_String()
 	if(this->_object->Get_Type()->Is_Pointer_Type())
 	{
 		AaType* t  = this->_object->Get_Type();
-		ret_string += "(*(";
+		ret_string += "&((*(";
 		ret_string += this->Get_Object()->C_Reference_String();
-		ret_string += " + " ;
+		ret_string += " + bit_vector_to_uint64(0,&" ;
 		ret_string += _indices[0]->C_Reference_String();
-		ret_string += "))";
+		ret_string += ")))";
 		AaType* rt = ((AaPointerType*)t)->Get_Ref_Type();
 		ret_string += this->C_Index_String(rt,1,&_indices);
 		ret_string += ")";
@@ -4114,7 +4116,6 @@ void AaAddressOfExpression::PrintC_Declaration(ofstream& ofile)
 void AaAddressOfExpression::PrintC(ofstream& ofile)
 {
 	this->_reference_to_object->PrintC(ofile);
-	this->PrintC_Declaration(ofile);
 	ofile << this->C_Reference_String() << " = ";
 	ofile << "&(" << this->_reference_to_object->C_Reference_String() << ");";
 }

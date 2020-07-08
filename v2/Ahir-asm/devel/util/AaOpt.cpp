@@ -70,8 +70,10 @@ int main(int argc, char* argv[])
 	   << "    -r <module-name>     : specify roots of the module hierarchy." << endl
 	   << "    -B                   : select option to balance do-while loop pipelines." << endl
 	   << "    -C                   : select option to combinationalize as many statements as possible." << endl
+	   << "    [-V <module-name>]*  : module-name to be treated as volatile.. if possible." << endl
 	   << "    -v                   : verbose... lots of junk printed." << endl
 	   << "     note: if -B and -C are both specified, only -B takes effect, -C is ignored." << endl
+	   << "     note: -V has effect only if -C takes effect." << endl
            << "     <filename> (<filename>) ... " << endl;
       exit(1);
     }
@@ -93,7 +95,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "I:r:BCv",
+		      "I:r:BCvV:",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -112,6 +114,9 @@ int main(int argc, char* argv[])
 	  break;
 	case 'C':
 	  c_flag = true;
+	  break;
+	case 'V':
+	  AaProgram::Mark_As_Volatile_Module(optarg);
 	  break;
 	case 'v':
 	  AaProgram::_verbose_flag = true;
@@ -170,7 +175,13 @@ int main(int argc, char* argv[])
   if(!AaRoot::Get_Error_Flag() && AaProgram::_balance_loop_pipeline_bodies)
   {
 	AaProgram::Equalize_Paths_Of_Pipelined_Modules();
-   }
+  }
+
+  // Volatize..
+  if (AaProgram::_combinationalize_statements)
+  {
+	AaProgram::Mark_Volatizable_Modules_As_Volatile();
+  }
 
   if(AaRoot::Get_Error_Flag())
     cerr << "Error: there were errors during balancing of pipeline-bodies, check the log" << endl;

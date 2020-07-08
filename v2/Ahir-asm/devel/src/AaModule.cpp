@@ -71,6 +71,41 @@ AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
 
 }
 
+  
+bool AaModule::Is_Volatizable()
+{
+	if(_memory_spaces.size() > 0)
+		return(false);
+	if(_write_pipes.size() > 0)
+		return(false);
+	if(_read_pipes.size() > 0)
+		return(false);
+	if(_called_modules.size() > 0)
+		return(false);
+
+	if(_global_objects_that_are_read.size() > 0)
+		return(false);
+	if(_global_objects_that_are_written.size() > 0)
+		return(false);
+	if(_objects_that_are_read.size() > 0)
+		return(false);
+	if(_objects_that_are_written.size() > 0)
+		return(false);
+
+	// top-level modules cannot be volatile.
+	if(_calling_modules.size() == 0)
+		return(false);
+
+	if(_macro_flag)
+		return(false);
+	if(_inline_flag)
+		return(false);
+
+	string mname = this->Get_Label();
+	bool is_marked = AaProgram::Is_Marked_As_Volatile_Module(mname);
+	return(is_marked);
+}
+
 void AaModule::Add_Argument(AaInterfaceObject* obj)
 {
 

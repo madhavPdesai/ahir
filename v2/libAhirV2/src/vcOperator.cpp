@@ -387,6 +387,10 @@ vcPhi::vcPhi(string id, vector<vcWire*>& inwires, vcWire* outwire):vcDatapathEle
   
 void vcPhi::Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
 {
+	// not full rate pipelined? no paths.
+	if(!this->Get_Full_Rate())
+		return;
+
 	for(int idx = 0, fidx = _reqs.size(); idx < fidx; idx++)
 	{
 		if(t == _reqs[idx])
