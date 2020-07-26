@@ -541,7 +541,7 @@ void send_packet_and_wait_for_response(char* buffer, int send_len, char* server_
 #endif
 
 #ifdef DEBUG
-      char payload[4096];
+      char payload[MAX_BUF_SIZE];
       int pl = extract_payload(buffer,payload,send_len);
       fprintf(stderr, "Info: sent message %s to server (payload of %d bytes)\n", buffer, pl);
       if(pl > 0)

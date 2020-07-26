@@ -1,0 +1,10 @@
+A fetch unit receives pairs of numbers which are added by 
+a pool of processors.
+
+First run 
+	make SW
+and check the ./testbench_sw works.
+
+Then run 
+	make
+and check that the VHDL sim works.

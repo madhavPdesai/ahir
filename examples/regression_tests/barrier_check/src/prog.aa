@@ -1,0 +1,29 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2 $p2p
+$storage A: $uint<32> 
+
+$module [p2p_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+
+		$merge $entry loopback $endmerge
+
+	 	CMD := in_data
+		$barrier 
+
+		A := 0
+		$dopipeline $depth 9 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi I := ($slice CMD 2 0) $on $entry nI $on $loopback
+			$phi first_time := ($bitcast ($uint<1>) 1) $on $entry 0 $on $loopback
+		$endmerge
+		$volatile nI := (I - 1)
+		$volatile continue_flag := (I > 0)
+		A := (($mux first_time 0 A) + CMD)
+		
+		$while continue_flag
+		out_data := A
+
+		$place [loopback]
+	}
+}

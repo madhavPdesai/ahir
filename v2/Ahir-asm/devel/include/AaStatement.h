@@ -331,6 +331,7 @@ class AaStatement: public AaScope
    virtual bool Is_Part_Of_Pipelined_Module();
   
    virtual bool Is_Orphaned() {return(false);}
+  virtual bool Can_Be_Combinationalized() {return(false);}
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -503,10 +504,33 @@ class AaNullStatement: public AaStatement
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
-  void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+  virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
   {
 	// do nothing..
   }
+};
+
+// barrier statement
+class AaBarrierStatement: public AaNullStatement
+{
+ public:
+  AaBarrierStatement(AaScope* parent_tpr);
+  ~AaBarrierStatement();
+
+  virtual void Print(ostream& ofile) { ofile << this->Tab() << "$barrier" << endl; }
+  virtual string Kind() {return("AaBarrierStatement");}
+  virtual void PrintC(ofstream& srcfile, ofstream& headerfile)
+  {
+    srcfile << "/* barrier */ ";
+    srcfile <<  ";" << endl;
+  }
+  virtual string Get_C_Name()
+  {
+    return("_barrier_line_" +   IntToStr(this->Get_Line_Number()));
+  }
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual bool Is_Control_Flow_Statement() {return(true);}
 };
 
 
@@ -586,6 +610,7 @@ class AaAssignmentStatement: public AaStatement
 
   int _buffering;
   bool _is_volatile;
+  bool _cut_through;
  public:
   AaExpression* Get_Target() {return(this->_target);}
   AaExpression* Get_Source() {return(this->_source);}
@@ -598,6 +623,10 @@ class AaAssignmentStatement: public AaStatement
 
   virtual void Set_Is_Volatile(bool v);
   virtual bool Get_Is_Volatile(); //       { return(_is_volatile); }
+
+  virtual void Set_Cut_Through(bool v) {_cut_through = v;}
+  virtual bool Get_Cut_Through() {return(_cut_through);}
+
   virtual void Collect_Root_Sources(set<AaRoot*>& root_src_exprs);
 
   virtual void Set_Pipeline_Parent(AaStatement* dws);
@@ -676,6 +705,7 @@ class AaAssignmentStatement: public AaStatement
    virtual void Get_Non_Trivial_Source_References(set<AaRoot*>& tgt_set, set<AaRoot*>& visited_elements);
 
   virtual bool Is_Orphaned();
+  virtual bool Can_Be_Combinationalized();
 };
 
 
@@ -790,6 +820,7 @@ class AaCallStatement: public AaStatement
 
   void Write_VC_WAR_Dependencies(bool pipeline_flag, set<AaRoot*>& visited_elements,
 				 ostream& ofile);
+  virtual bool Can_Be_Combinationalized();
 };
 
 
@@ -1104,6 +1135,7 @@ class AaJoinForkStatement: public AaParallelBlockStatement
 class AaPlaceStatement: public AaStatement
 {
   string _label;
+  int _multiplicity;
  public:
   AaPlaceStatement(AaBranchBlockStatement* parent_tpr, string lbl);
   ~AaPlaceStatement();

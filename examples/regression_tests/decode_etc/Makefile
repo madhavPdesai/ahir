@@ -33,7 +33,7 @@ aa2c: $(SRC)/prog.aa
 	Aa2C $(TOPMODULES) $(SRC)/prog.aa 
 	gcc -c aa_c_model.c  -I$(SRC) -I./ -I$(AHIR_INCLUDE)
 	gcc -c -DSW  $(SRC)/testbench.c -I$(AHIR_INCLUDE) -I$(SRC) -I./ -o testbench_sw.o
-	gcc -o testbench_sw testbench_sw.o aa_c_model.o  -L$(AHIR_LIB) -lPipeHandler -lpthread -lBitVectors
+	gcc -o testbench_sw testbench_sw.o aa_c_model.o  -L$(AHIR_LIB) -lPipeHandler -lpthread -lBitVectors -lSockPipes
 	
 
 # Aa to vC

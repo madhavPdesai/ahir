@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
       {"set_as_top",  required_argument, 0, 't'},
       {"set_as_free_running_top",  required_argument, 0, 'T'},
       {"top_entity_name",  required_argument, 0, 'e'},
-      {"loop_pipeline_buffering_limit",  required_argument, 0, 'I'},
+      {"treat_errors_as_warnings",  no_argument, 0, 'I'},
       {"bypass_stride",  required_argument, 0, 'S'},
       {"write_files",  no_argument, 0, 'w'},
       {"vcfile",    required_argument, 0, 'f'},
@@ -180,6 +180,7 @@ int main(int argc, char* argv[])
   string work_library = "work";
   int it_limit;
   int bypass_stride;
+  int errors_as_warnings = 0;
 
   vcSystem::_opt_flag = false;
   vcSystem::_suppress_io_pipes = false;
@@ -188,7 +189,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:T:f:OCs:he:waqDL:vI:S:W:HU",
+		      "t:T:f:OCs:he:waqDL:vIS:W:HU",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -208,6 +209,10 @@ int main(int argc, char* argv[])
 	case 'H':
 		vcSystem::_generate_hsys_file = true;
 		cerr << "Info: hierarchical system file (.hsys) printing turned on." << endl;
+		break;
+	case 'I':
+		errors_as_warnings = true;
+		cerr << "Info: -I will treat errors as warnings." << endl;
 		break;
 	case 't':
 	  mod_name = string(optarg);	
@@ -259,22 +264,6 @@ int main(int argc, char* argv[])
 	case 'W':
 	  vcSystem::_vhdl_work_library = string(optarg);
 	  cerr << "Info: -W option selected: generated VHDL will be in library " << vcSystem::_vhdl_work_library << endl;
-	  break;
-	case 'I':
-          it_limit = atoi(optarg);
-	  if(it_limit < 0)
-	  {
-		cerr << "Error: loop_pipeline_buffering_limit limit must be > 0 (it is specified as " 
-			<< it_limit 
-			<< ")." << endl;
-		it_limit = 2;
-	  }
-	  else
-	  {
-		if(it_limit > 4)
-			it_limit = 4;
-	  	cerr << "Info: -I option is deprecated.. has no effect."  << endl;
-	  }
 	  break;
 	case 'S':
           bypass_stride = atoi(optarg);
@@ -356,7 +345,8 @@ int main(int argc, char* argv[])
       if(vcSystem::Get_Error_Flag())
 	{
 	  cerr << "Error: there were errors during parsing, check the log" << endl;
-	  return(1);
+	  if(!errors_as_warnings)
+	  	return(1);
 	}
     }
 
@@ -378,6 +368,13 @@ int main(int argc, char* argv[])
 
 
       test_system.Elaborate();
+      if(vcSystem::_error_flag)
+      {
+	cerr << "There were errors during elaboration ... will not print VHDL" << endl;
+	// if(!errors_as_warnings)
+	//     return(1);
+      }
+
       if(!write_files)
 	{
 	  cout << "-- VHDL produced by vc2vhdl from virtual circuit (vc) description " << endl;

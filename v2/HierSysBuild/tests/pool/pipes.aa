@@ -1,0 +1,11 @@
+$pipe DATA_IN : $uint<8>
+$pipe DATA_OUT : $uint<8>
+
+$pipe TO_E1 : $uint<8>
+$pipe TO_E2 : $uint<8>
+
+$pipe FROM_E1 : $uint<8>
+$pipe FROM_E2 : $uint<8>
+
+$pipe E1_IN E1_OUT : $uint<8>
+$pipe E2_IN E2_OUT : $uint<8>

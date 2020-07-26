@@ -107,6 +107,7 @@ class AaModule: public AaSeriesBlockStatement
   bool _reads_from_shared_pipe;
   bool _noopt_flag;
   bool _opaque_flag;
+  bool _use_once_flag;
   bool _print_guard_complement;
 
  public:
@@ -143,6 +144,9 @@ class AaModule: public AaSeriesBlockStatement
   virtual void Set_Opaque_Flag(bool v) {_opaque_flag = v;}
   virtual bool Get_Opaque_Flag() {return(_opaque_flag);}
 
+  virtual void Set_Use_Once_Flag(bool v) {_use_once_flag = v;}
+  virtual bool Get_Use_Once_Flag() {return(_use_once_flag);}
+
   virtual bool Is_Part_Of_Fullrate_Pipeline()
   {
 	return(_pipeline_flag && _pipeline_full_rate_flag);
@@ -150,6 +154,7 @@ class AaModule: public AaSeriesBlockStatement
 
   virtual bool Get_Is_Volatile() {return(this->Get_Volatile_Flag());}
 
+  bool Is_Volatizable();
   void Update_Memory_Space_Info();
 
   void Add_Written_Global_Object(AaStorageObject* sobj) {_global_objects_that_are_written.insert(sobj);}
@@ -193,7 +198,13 @@ class AaModule: public AaSeriesBlockStatement
 
   void Increment_Number_Of_Times_Called()
   {
+
     _number_of_times_called++;
+    if(_use_once_flag && (_number_of_times_called > 1))
+    {
+	AaRoot::Error("Use-once module " + this->Get_Label() + " called more than once\n", this);
+    }
+
   }
   int Get_Number_Of_Times_Called()
   {

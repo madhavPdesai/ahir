@@ -124,7 +124,7 @@ int is_lifo_mode(PipeRec* p);
 
 #define __EMPTY(p) (p->is_signal ? 0 : (p->number_of_entries == 0))
 #define __FULL(p) (p->is_signal ? 0 : (p->number_of_entries ==  p->pipe_depth))
-#define __AVAILABLE(p) (p->is_signal ? 1 : (p->pipe_depth  - p->number_of_entries))
+#define __AVAILABLE(p) (p->is_signal ? p->pipe_depth : (p->pipe_depth  - p->number_of_entries))
 #define INCR(x,p) x = ((x == (p->pipe_depth-1)) ? 0 : x+1)
 #define DECR(x,p) x = ((x == 0) ? (p->pipe_depth - 1) : x-1)
 #define POP(p,x,n) {\
@@ -144,6 +144,41 @@ int is_lifo_mode(PipeRec* p);
 		    	}\
                    }
 
+#define POPANDRESTORE(p,x,n) {\
+			int old_rp = p->read_pointer;\
+			int old_wp  = p ->write_pointer;\
+			int old_ne = p->number_of_entries;\
+			if(p->is_signal) {\
+				*((uint##n##_t *)x) = p->buffer.ptr##n[0];\
+			}\
+			else if(p->number_of_entries > 0) {\
+				*((uint##n##_t *)x) = p->buffer.ptr##n[p->read_pointer];\
+				if(!is_lifo_mode(p))\
+				 	INCR(p->read_pointer,p);\
+				else\
+				{\
+					p->write_pointer = p->read_pointer;\
+				  	DECR(p->read_pointer,p);\
+				}\
+				p->number_of_entries -= 1;\
+		    	}\
+			p->read_pointer = old_rp;\
+			p->write_pointer = old_rp;\
+			p->number_of_entries = old_ne;\
+                   }
+
+#define POP_SIGNAL_TO_BUFFER(p,x,n,m) {\
+			if(p->is_signal) {\
+				int i;\
+				for(i=0; i < m; i++) {\
+					*(((uint##n##_t *)x) + i) = p->buffer.ptr##n[i];\
+				}\
+			}\
+			else {\
+				assert(0);\
+			}\
+                   }
+
 #define PUSH(p,x,n) {\
                 if(p->is_signal) {\
 			p->buffer.ptr##n[0] = *((uint##n##_t *) x);\
@@ -157,6 +192,19 @@ int is_lifo_mode(PipeRec* p);
 			}\
 			INCR(p->write_pointer,p); \
 		 } }
+
+#define PUSH_SIGNAL_FROM_BUFFER(p,x,n,m) {\
+			if(p->is_signal) {\
+				int i;\
+				for(i=0; i < m; i++) {\
+					p->buffer.ptr##n[i] = *(((uint##n##_t *)x) + i);\
+				}\
+			}\
+			else\
+			{\
+				assert(0);\
+			}\
+		}
 
 // init must be called before using pipehandler
 void init_pipe_handler();
@@ -204,4 +252,10 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 uint32_t get_file_print_lock(FILE* fp);
 // flush fp and release the lock.
 void release_file_print_lock(FILE* fp);
+
+// generate a string for the value of the pipe.
+//  useful for debugging.  The string is allocated
+//  inside the function (memory leak alert).
+char* pipe_value_to_string(const char* id);
+
 #endif

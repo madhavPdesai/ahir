@@ -159,6 +159,7 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
     int buffering = 1;
     bool full_rate_flag = false;
     bool deterministic_flag = false;
+    bool use_once_flag = false;
 }
     : ((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true;} 
@@ -167,7 +168,8 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 		(FULLRATE {full_rate_flag = true;})? 
 		(DETERMINISTIC {deterministic_flag = true;})? 
 	))?
-	( (OPERATOR {operator_flag = true;} ) | (VOLATILE {volatile_flag = true;}) )?
+	((OPERATOR {operator_flag = true;} ) | (VOLATILE {volatile_flag = true;}))?
+	(USEONCE {use_once_flag = true;})?
         MODULE lbl = vc_Label 
         { 
             m = new vcModule(sys,lbl); 
@@ -182,6 +184,7 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 	    }
 	    m->Set_Operator_Flag(operator_flag);
 	    m->Set_Volatile_Flag(volatile_flag);
+	    m->Set_Use_Once_Flag(use_once_flag);
         } 
         LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
         (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
@@ -1104,14 +1107,19 @@ vc_InterlockBuffer_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   string din;
   string dout;
   vector<bool> war_flags;
+  bool cut_through = false;
 }: HASH  as_id: ASSIGN_OP id = vc_Label LPAREN x = vc_Wire_Connection[war_flags,dp]
 			 {NOT_FOUND__("wire",x,din,as_id) }
                           RPAREN
                           LPAREN dout = vc_Identifier { y = dp->Find_Wire(dout); 
                                NOT_FOUND__("wire",y,dout,as_id) }
                           RPAREN
+			  (CUT_THROUGH {cut_through = true;})?
    {  
       new_reg = new vcInterlockBuffer(id, x, y); 
+
+      new_reg->Set_Cut_Through(cut_through);
+
       dp->Add_Interlock_Buffer(new_reg);
       dpe = (vcDatapathElement*) new_reg;
       dpe->Set_Input_WAR_Flags(war_flags);
@@ -1194,7 +1202,7 @@ vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp] returns[vcDatapathElement* 
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_IOPort_Instantiation[dp]: IOPORT  (IN | OUT) vc_LABEL LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN
+// vc_IOPort_Instantiation[dp]: IOPORT  (IN | OUT) vc_LABEL LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN (BARRIER?)
 //-------------------------------------------------------------------------------------------------------------------------
 vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
@@ -1202,9 +1210,10 @@ vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
  vcWire* w;
  vcPipe* p = NULL;
  bool in_flag = false;
+ bool barrier_flag = false;
 }
 : ipid: IOPORT (( IN {in_flag = true;})  | OUT)  id = vc_Label LPAREN in_id = vc_Identifier RPAREN 
-    lpid: LPAREN out_id = vc_Identifier RPAREN
+    lpid: LPAREN out_id = vc_Identifier RPAREN (BARRIER {barrier_flag = true;})?
        {
           if(in_flag)
           {
@@ -1233,6 +1242,7 @@ vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
              vcInport* np = new vcInport(id,p,w);
              dp->Add_Inport(np);
 	     dpe=(vcDatapathElement*) np;
+	     np->Set_Barrier_Flag(barrier_flag);
           }
           else
           {
@@ -1801,6 +1811,7 @@ FOREIGN       : "$foreign";
 PIPELINE      : "$pipeline";
 OPERATOR      : "$operator";
 VOLATILE      : "$volatile";
+USEONCE       : "$useonce";
 SERIESBLOCK   : ";;";
 PARALLELBLOCK : "||";
 FORKBLOCK     : "::";
@@ -1970,6 +1981,8 @@ WAR : "$war";
 DETERMINISTIC: "$deterministic";
 
 ALIAS: "$A";
+BARRIER: "$barrier";
+CUT_THROUGH: "$cut_through";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

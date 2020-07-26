@@ -53,7 +53,7 @@ entity Stall_To_Pulse_Translate_Entity is
 end entity;
 
 architecture Behave of Stall_To_Pulse_Translate_Entity is
-  type S2PState is (Idle,WaitForValid, WaitForRr);
+  type S2PState is (Idle, WaitForValid, HoldValue);
   signal s2p_state : S2PState;
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
@@ -69,48 +69,30 @@ begin  -- Behave
 
     case s2p_state is
         when Idle =>
-	  stall_out_var := '0';
+	  stall_out_var :=  valid_in; -- if valid is observed, start stalling.
           if(rR) then
               nstate := WaitForValid;
-	      if(valid_in = '1') then
-                -- valid and rR, stall for one cycle.
-		--   can advance the pipeline only after
-		--   we see another rR.
-	      	stall_out_var := '1';
-	      end if;
-	  elsif (valid_in = '1') then
-		-- have valid-in but no rR.. Stall
-		-- and wait for rR..
-		stall_out_var := '1';
-		nstate := WaitForRr;
           end if;
-        when WaitForValid =>
-	  -- rR has been observed, we are waiting for valid-in.
-          stall_out_var := '0'; -- keep it coming...
+        when WaitForValid => -- rR has been observed, we are waiting for valid-in.
+          stall_out_var := valid_in;  -- stall if valid is observed.
           if(valid_in = '1') then
-	    -- valid-in?  OK aR..
             aR <= true;
-	    if(rR)  then
-               nstate := WaitForValid;
-            else
-	       stall_out_var := '1'; -- avoid tripping over.
-               nstate := WaitForRr;
+	    if(not rR) then
+	      nstate := HoldValue;  -- hold value until rR.
+	    else
+	      stall_out_var := '0'; -- rR seen, no need to hold, move the pipeline forward.
 	    end if;
           end if; 
-        when WaitForRr =>
-	      -- we have valid-in but we are waiting
-	      -- for Rr.
-	      stall_out_var := '1';
-	      if (rR) then
-		 nstate := WaitForValid;
-		 stall_out_var := '0';
-	      elsif (valid_in = '0') then
-		 stall_out_var := '0';
-		 nstate := Idle;
-	      end if;
-      end case;
+        when HoldValue =>  -- hold the value until the next rR;
+          stall_out_var := '1';  -- keep stalling until rR...
+	  if (rR) then
+	     nstate := WaitForValid;
+             stall_out_var := '0'; -- quit stalling, no need to hold value..
+	  end if;
+    end case;
 
     stall_out <= stall_out_var;
+
     if(clk'event and clk = '1') then
 	if reset = '1' then
 		s2p_state <= Idle;

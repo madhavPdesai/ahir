@@ -51,6 +51,7 @@ enum vcLexerKeytags
     __PIPELINE        ,
     __OPERATOR        ,
     __VOLATILE        ,
+    __USEONCE        ,
     __SERIESBLOCK   	,
     __PARALLELBLOCK 	,
     __FORKBLOCK     	,
@@ -186,7 +187,9 @@ enum vcLexerKeytags
     __BYPASS,
     __WAR,
     __DETERMINISTIC,
-    __ALIAS
+    __ALIAS,
+    __BARRIER,
+    __CUT_THROUGH
   };
 
 static string vcLexerKeywords[] = 
@@ -205,6 +208,7 @@ static string vcLexerKeywords[] =
       "$pipeline"		,
       "$operator"		,
       "$volatile"		,
+      "$useonce"		,
       ";;"		, // series block
       "||"		, // parallel block
       "::"		, // fork-join block
@@ -344,7 +348,9 @@ static string vcLexerKeywords[] =
       "$bypass",
       "$war",
       "$deterministic",
-      "$A"
+      "$A",
+      "$barrier",
+      "$cut_through"
   };
 
 string To_VHDL(string x);

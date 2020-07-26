@@ -119,8 +119,11 @@ uint64_t truncate_uint64(uint64_t val, uint32_t bit_width)
 
 void allocate_sized_u8_array(sized_u8_array* a, uint32_t sz)
 {
-	a->byte_array = calloc(1, sz*sizeof(uint8_t));
-	a->undefined_byte_array = calloc(1, sz*sizeof(uint8_t));
+	a->byte_array = (uint8_t*) malloc(sz*sizeof(uint8_t));
+	memset((void*) a->byte_array, 0, (sz*sizeof(uint8_t)));
+
+	a->undefined_byte_array = (uint8_t*) malloc(sz*sizeof(uint8_t));
+	memset((void*) a->undefined_byte_array, 0, (sz*sizeof(uint8_t)));
 
 	allocated_byte_count += 2*sz;
 
@@ -136,12 +139,6 @@ void allocate_sized_u8_array(sized_u8_array* a, uint32_t sz)
 }
 
 void free_sized_u8_array(sized_u8_array* a)
-{
-    
-        // DEPRECATION: cfree has been removed. 
-        // See https://savannah.gnu.org/forum/forum.php?forum_id=8921
-	//cfree (a->byte_array);
-	//cfree (a->undefined_byte_array);
 	free (a->byte_array);
 	free (a->undefined_byte_array);
 }
@@ -990,6 +987,52 @@ void bit_vector_div(bit_vector* r, bit_vector* s, bit_vector* t)
 	pack_uint64_into_bit_vector(0,result,t);
 }
 
+void bit_vector_smul(bit_vector* r, bit_vector* s, bit_vector* t)
+{
+	assert(__array_size(r) == __array_size(s));
+	assert(__array_size(t) == __array_size(s));
+
+	uint64_t uop1, uop2;
+	uop1 = bit_vector_to_uint64(1,r);
+	uop2 = bit_vector_to_uint64(1,s);
+
+	int64_t op1 = *((int64_t*) &uop1);
+	int64_t op2 = *((int64_t*) &uop2);
+	
+	int64_t iresult = op1*op2;
+	uint64_t result = *((uint64_t*)&iresult); 
+	bit_vector_assign_uint64(1,t,result);
+}
+
+//
+// support this only for widths up to 64..
+//
+void bit_vector_sdiv(bit_vector* r, bit_vector* s, bit_vector* t)
+{
+	assert(__array_size(r) == __array_size(s));
+	assert(__array_size(t) == __array_size(s));
+
+	uint64_t uop1,uop2;
+	uop1 = bit_vector_to_uint64(1,r);
+	uop2 = bit_vector_to_uint64(1,s);
+
+	int64_t op1 = *((int64_t*) &uop1);
+	int64_t op2 = *((int64_t*) &uop2);
+
+
+	int64_t iresult = 0;
+	if(op2 != 0)
+	{
+		iresult = op1/op2;
+	}
+	else
+	{
+		fprintf(stderr,"Error: divide by 0... % " PRId64 "/%" PRId64 "for bit-width %d.\n", op1,op2,r->width);
+	}
+	uint64_t result = *((uint64_t*)&iresult);
+	pack_uint64_into_bit_vector(1,result,t);
+}
+
 void bit_vector_set_bit(bit_vector* f, uint32_t bp, uint8_t bv)
 {
 	if (bp < f->width)
@@ -1222,6 +1265,7 @@ uint8_t uint64_compare(uint8_t signed_flag, uint64_t a, uint64_t b, uint64_t wid
 }
 
 // returns 0 if equal, 1 if r > s, 2 if r < s.
+//   compare of 2's complement numbers is easy.
 uint8_t bit_vector_compare(uint8_t signed_flag, bit_vector* r, bit_vector* s)
 {
 	uint8_t undef_flag = 0;
@@ -1258,13 +1302,14 @@ uint8_t bit_vector_compare(uint8_t signed_flag, bit_vector* r, bit_vector* s)
 	{
 		uint8_t rb = bit_vector_get_bit(r,i); 
 		uint8_t sb = bit_vector_get_bit(s,i); 
+
 		if(re && (rb && !sb))
 		{
 			re = 0;
 			rg = 1;
 			break;
 		}
-		else if(re && (!rb && sb))
+		else if(re && (sb && !rb))
 		{
 			re = 0;
 			rl = 1;
@@ -1274,7 +1319,7 @@ uint8_t bit_vector_compare(uint8_t signed_flag, bit_vector* r, bit_vector* s)
 
 	if(re)
 		return(IS_EQUAL);
-	else if(rg) 
+	else if(rg)
 		return(IS_GREATER);
 	else
 		return(IS_LESS);

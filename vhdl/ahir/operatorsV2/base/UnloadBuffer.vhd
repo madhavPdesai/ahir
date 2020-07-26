@@ -49,27 +49,38 @@ use ahir.GlobalConstants.all;
 -- three forms
 --     depth <= 1
 --         fast cut through with buffering provided by a single register
---     depth = 2
---         1 + 1 split with bypass in the first part.
---     depth > 2
---         (n-1) + 1 split with no bypass provided in the
---         second part.
+--     depth >= 2
+--         queue + wastes a buffer.  this needs to be sorted out.
 --
---  Using shallow buffers (<=2) will result in fast in->out 
+--  Using shallow buffers (<= 1) will result in fast in->out 
 --  performance but combinational through paths.  Using deeper
 --  buffers will result in at least one unit of delay from in->out
 --
+-- Added Nov 2019.  Added use_unload_register generic.
+--
+--   This avoids wastage of an extra register in the unload-buffer.
+--   but must be used with a cut-through that has a combinational
+--   unload_ack to write_ack path.
+-- 
 entity UnloadBuffer is
   generic (name: string; buffer_size: integer ; data_width : integer ; 
+			-- bypass = true means there are some combi paths.
+			--   from write_req to unload_ack
+			--   from unload_req to write_ack
+			--   from write_data to read_data.
 			bypass_flag : boolean := false; 
+			-- self-explanatory.
 			nonblocking_read_flag : boolean := false;
-			full_rate: boolean);
+			-- if false use new revised version of the unload buffer (revised)
+			-- which does not need an unload-register.
+			use_unload_register: boolean := true);
   port ( write_req: in std_logic;
         write_ack: out std_logic;
         write_data: in std_logic_vector(data_width-1 downto 0);
         unload_req: in boolean;
         unload_ack: out boolean;
         read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
         clk : in std_logic;
         reset: in std_logic);
 end UnloadBuffer;
@@ -79,7 +90,6 @@ architecture default_arch of UnloadBuffer is
   signal pop_req, pop_ack, push_req, push_ack: std_logic_vector(0 downto 0);
   signal pipe_data_out, data_to_unload_register:  std_logic_vector(data_width-1 downto 0);
 
-  signal number_of_elements_in_pipe: unsigned ((Ceil_Log2(buffer_size+2))-1 downto 0); 
   signal pipe_has_data: boolean;
 
   signal unload_register_ready: boolean;
@@ -90,20 +100,52 @@ architecture default_arch of UnloadBuffer is
   signal write_to_pipe: boolean;
   signal unload_from_pipe : boolean;
 
+  signal empty, full: std_logic;
   --
   -- try to save a slot if buffer size is 1... this
   -- tries to prevent a 100% wastage of resources
   -- and allows us to use 2-depth buffers to cut long
   -- combinational paths.
   --
-  constant save_slot_flag : boolean := ((not bypass_flag) and (buffer_size = 1));
+  function DecrDepth (buffer_size: integer; bypass: boolean)
+	return integer is
+      variable actual_buffer_size: integer;
+  begin
+      actual_buffer_size := buffer_size;
+      if((not bypass) and (buffer_size = 1)) then
+	actual_buffer_size := buffer_size - 1;
+      end if;
+      return actual_buffer_size;
+  end function DecrDepth;
+
+  constant actual_buffer_size  : integer  := DecrDepth (buffer_size, bypass_flag);
+
   constant bypass_flag_to_ureg : boolean := (bypass_flag or (buffer_size = 0));
 
   constant shallow_flag : boolean :=    (buffer_size < global_pipe_shallowness_threshold);
 
+  constant revised_case: boolean := ((buffer_size > 0) and shallow_flag and (not use_unload_register) and (not nonblocking_read_flag));
+  -- constant revised_case: boolean := false;
+
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
 begin  -- default_arch
+
+  RevisedCase: if revised_case generate
+	ulb_revised: UnloadBufferRevised
+			generic map (name => name & "-revised",
+					buffer_size => buffer_size, data_width => data_width,
+						bypass_flag => bypass_flag)
+			port map (
+				write_req => write_req,
+				write_ack => write_ack,
+				unload_req => unload_req,
+				unload_ack => unload_ack,
+				write_data => write_data,
+				read_data => read_data, 
+				has_data => has_data,
+				clk => clk, reset => reset);
+  end generate RevisedCase;
 
   DeepCase: if not shallow_flag generate
 	ulb_deep: UnloadBufferDeep
@@ -117,31 +159,18 @@ begin  -- default_arch
 				unload_ack => unload_ack,
 				write_data => write_data,
 				read_data => read_data, 
+				has_data => has_data,
 				clk => clk, reset => reset);
   end generate DeepCase;
 
-  ShallowCase: if shallow_flag generate
-    bufGt0: if buffer_size > 0 generate
+  NotRevisedCase: if not revised_case generate
 
-		-- count number of elements in pipe.
-	process(clk, reset)
-  	begin
-		if(clk'event and clk = '1') then
-			if(reset = '1') then
-				number_of_elements_in_pipe <= (others => '0');
-			else
-				if((pop_req(0) = '1') and (pop_ack(0) = '1')) then
-					if(not ((push_req(0) = '1') and (push_ack(0) = '1'))) then
-				          number_of_elements_in_pipe <= (number_of_elements_in_pipe -1);
-					end if;
-				elsif((push_req(0) = '1') and (push_ack(0) = '1')) then
-					number_of_elements_in_pipe <= (number_of_elements_in_pipe + 1);
-				end if;
-			end if;
-		end if;
-  	end process;
-	
-  	pipe_has_data <= (number_of_elements_in_pipe > 0);
+    ShallowCase: if shallow_flag  generate
+      bufGt0: if actual_buffer_size > 0 generate
+
+  	has_data <= '1' when pipe_has_data else '0';
+
+  	pipe_has_data <= (empty = '0');
 	write_to_pipe <= (pipe_has_data or (not unload_register_ready));
 	unload_from_pipe <= pipe_has_data;
 
@@ -157,37 +186,39 @@ begin  -- default_arch
 	data_to_unload_register <= pipe_data_out when unload_from_pipe else write_data;
 
   	-- the input pipe.
-  	bufPipe : PipeBase generic map (
+  	bufPipe : QueueBaseWithEmptyFull generic map (
         	name =>  name & "-blocking_read-bufPipe",
-        	num_reads  => 1,
-        	num_writes => 1,
         	data_width => data_width,
-        	lifo_mode  => false,
-		shift_register_mode => false,
-        	depth      => buffer_size,
-		save_slot  => save_slot_flag,
-		full_rate  => full_rate)
+        	queue_depth      => actual_buffer_size)
       	port map (
-        	read_req   => pop_req,
-        	read_ack   => pop_ack,
-        	read_data  => pipe_data_out,
-        	write_req  => push_req,
-        	write_ack  => push_ack,
-        	write_data => write_data,
+        	pop_req   => pop_req(0),
+        	pop_ack   => pop_ack(0),
+        	data_out  => pipe_data_out,
+        	push_req  => push_req(0),
+        	push_ack  => push_ack(0),
+        	data_in => write_data,
+		empty => empty,
+		full => full,
         	clk        => clk,
         	reset      => reset);
 
-   end generate bufGt0;
+     end generate bufGt0;
 	
 
-   -- unload-register will provide bypassed buffering.
-   bufEq0: if (buffer_size = 0) generate
+     -- unload-register will provide bypassed buffering.
+     bufEq0: if (actual_buffer_size = 0) generate
+
+	empty <= '1';
+	full  <= '0';
+
+	has_data <= '0';
+
 	data_to_unload_register <= write_data;
 	pop_ack_to_unload_register <= write_req;
 	write_ack  <= pop_req_from_unload_register;
-   end generate bufEq0;
+     end generate bufEq0;
 
-   ulReg: UnloadRegister 
+     ulReg: UnloadRegister 
 			generic map (name => name & "-unload-register",
 					data_width => data_width,
 						bypass_flag => bypass_flag_to_ureg,
@@ -202,6 +233,7 @@ begin  -- default_arch
 					clk => clk,  reset => reset
 				);
 							
- end generate ShallowCase;
+   end generate ShallowCase;
+ end generate NotRevisedCase;
 
 end default_arch;

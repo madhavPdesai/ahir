@@ -88,6 +88,7 @@ class vcModule: public vcRoot
   bool _pipeline_flag; 
   bool _operator_flag; 
   bool _volatile_flag; 
+  bool _use_once_flag; 
   bool _pipeline_full_rate_flag;
   bool _pipeline_deterministic_flag;
   bool _is_function_library_module;
@@ -133,6 +134,9 @@ class vcModule: public vcRoot
 
   void Set_Volatile_Flag(bool v) {_volatile_flag = v;}
   bool Get_Volatile_Flag() {return(_volatile_flag);}
+
+  void Set_Use_Once_Flag(bool v) {_use_once_flag = v;}
+  bool Get_Use_Once_Flag() {return(_use_once_flag);}
 
   void Set_Delay(int d) {_delay = d;}
   int  Get_Delay();
@@ -271,6 +275,7 @@ class vcModule: public vcRoot
 
   void Print_VHDL_Ports(ostream& ofile);
   string Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile);
+  string Print_VHDL_Argument_Ports(string semi_colon, string prefix, ostream& ofile);
   string Print_VHDL_Control_Ports(string semi_colon, ostream& ofile);
 
   void Print_VHDL_Component(ostream& ofile);

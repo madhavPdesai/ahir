@@ -45,6 +45,8 @@ using namespace std;
 #include <Aa2C.h>
 #include <AaDelays.h>
 
+#define __endl__  "\\\n" 
+
 /***************************************** EXPRESSION  ****************************/
 //---------------------------------------------------------------------
 // AaExpression
@@ -92,7 +94,7 @@ void AaExpression::Check_Volatile_Inconsistency(AaStatement* stmt)
 		if (!stmt->Is_Call_Statement() && !this->Is_Trivial())
 		{
 			AaRoot::Error("Expression "  + this->To_String() 
-				+ " is not trivial but appears in an assignment statement.", stmt);
+				+ " is not trivial but appears in a volatile assignment statement.", stmt);
 		}
 	}
 }
@@ -516,6 +518,20 @@ void AaObjectReference::Print(ostream& ofile)
 	ofile << this->Get_Object_Ref_String();
 }
 
+bool AaObjectReference::Can_Be_Combinationalized()
+{
+	bool ret_val = false;
+	if(this->_object != NULL)
+	{
+		if(!this->_object->Is_Storage_Object() && !this->_object->Is_Pipe_Object())
+		{
+			ret_val = true;
+		}
+	}
+	return(ret_val);
+}
+
+
 AaType* AaObjectReference::Get_Object_Type()
 {
 	AaType* ret_type = NULL;
@@ -791,8 +807,14 @@ void AaConstantLiteralReference::Evaluate()
 {
 	if(!_already_evaluated)
 	{
-		assert(this->_type);
-		_expression_value = Make_Aa_Value(this->Get_Scope(), this->Get_Type(), _literals);
+		if(this->_type == NULL)
+		{
+			AaRoot::Error("could not determine type of constant expression", this);
+		}
+		else
+		{
+			_expression_value = Make_Aa_Value(this->Get_Scope(), this->Get_Type(), _literals);
+		}
 		_already_evaluated = true;
 	}
 }
@@ -1072,6 +1094,13 @@ bool AaSimpleObjectReference::Is_Trivial()
 	return(!this->Get_Is_Target() 
 			&& (this->Is_Implicit_Variable_Reference() || this->Is_Signal_Read()));
 }
+
+bool AaSimpleObjectReference::Can_Be_Combinationalized()
+{
+	bool ret_val = (this->Is_Implicit_Variable_Reference() || this->Is_Signal_Read());
+	return(ret_val);
+}
+
 
 bool AaSimpleObjectReference::Is_Write_To_Pipe(AaPipeObject* obj)
 {
@@ -1897,10 +1926,10 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
 		// for pipe accesses, chained protocol.
 		ofile << "// " << this->To_String() << endl;
 		ofile << ";;[" << this->Get_VC_Name() << "_Sample] { // sample-data. " << endl;
-		ofile << "$T [req] $T [req] " << endl;
+		ofile << "$T [req] $T [ack] " << endl;
 		ofile << "}" << endl;
 		ofile << ";;[" << this->Get_VC_Name() << "_Update] { // data to pipe. " << endl;
-		ofile << "$T [req] $T [req] " << endl;
+		ofile << "$T [req] $T [ack] " << endl;
 		ofile << "}" << endl;
 	}
 }
@@ -2148,7 +2177,6 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& of
 				(source != NULL ? 
 				 source->Get_VC_Driver_Name() : this->Get_VC_Driver_Name());
 
-
 			// io write.
 			Write_VC_IO_Output_Port((AaPipeObject*) this->_object,
 					this->Get_VC_Datapath_Instance_Name(),
@@ -2226,6 +2254,12 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances(AaExpression* target, 
 			string dpe_name = this->Get_VC_Datapath_Instance_Name();
 			string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
+			bool barrier_flag = 
+				(this->Get_Associated_Statement() != NULL) && 
+				this->Get_Associated_Statement()->Is_Phi_Statement() &&
+					((AaPhiStatement*)this->Get_Associated_Statement())->Get_Barrier_Flag();
+
+
 			//
 			// io read.
 			//
@@ -2234,7 +2268,9 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances(AaExpression* target, 
 					tgt_name,
 					this->Get_VC_Guard_String(),
 					full_rate, 
+					barrier_flag,
 					ofile);
+
 			this->Write_VC_Output_Buffering(dpe_name, tgt_name, ofile);
 		}
 	}
@@ -2424,11 +2460,13 @@ void AaArrayObjectReference::Set_Type(AaType* t)
 void AaArrayObjectReference::Add_Target_Reference(AaRoot* referrer)
 {
 	this->AaRoot::Add_Target_Reference(referrer);
+	/*
 	if(referrer->Is("AaInterfaceObject"))
 	{
 		AaType* rtype = ((AaInterfaceObject*)referrer)->Get_Type();
 		this->Set_Type(rtype);
 	}
+	*/
 }
 void AaArrayObjectReference::Add_Source_Reference(AaRoot* referrer)
 {
@@ -2759,11 +2797,11 @@ string AaArrayObjectReference::C_Reference_String()
 	if(this->_object->Get_Type()->Is_Pointer_Type())
 	{
 		AaType* t  = this->_object->Get_Type();
-		ret_string += "(*(";
+		ret_string += "&((*(";
 		ret_string += this->Get_Object()->C_Reference_String();
-		ret_string += " + " ;
+		ret_string += " + bit_vector_to_uint64(0,&" ;
 		ret_string += _indices[0]->C_Reference_String();
-		ret_string += "))";
+		ret_string += ")))";
 		AaType* rt = ((AaPointerType*)t)->Get_Ref_Type();
 		ret_string += this->C_Index_String(rt,1,&_indices);
 		ret_string += ")";
@@ -3275,6 +3313,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 				this->Get_VC_Guard_String(),
 				false, // flow-through
 				full_rate, 
+				false, // cut-through
 				ofile);
 
 		//
@@ -3322,8 +3361,14 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 			source_wire = this->Get_VC_Name() + "_pipe_read_data";
 			obj_type = ((AaObject*)(this->_object))->Get_Type();
 			string pipe_inst = this->Get_VC_Name() + "_pipe_access";
+
+			bool barrier_flag = 
+				this->Get_Associated_Statement() && 
+					this->Get_Associated_Statement()->Is_Phi_Statement() && 
+					 ((AaPhiStatement*) this->Get_Associated_Statement())->Get_Barrier_Flag();
+
 			Write_VC_IO_Input_Port((AaPipeObject*)(this->_object), pipe_inst,source_wire,
-					this->Get_VC_Guard_String(), full_rate, ofile);
+					this->Get_VC_Guard_String(), full_rate, barrier_flag, ofile);
 			// pipelining: address calculation path is double buffered.
 			if(this->Get_Pipeline_Parent() != NULL)
 			{
@@ -4071,7 +4116,6 @@ void AaAddressOfExpression::PrintC_Declaration(ofstream& ofile)
 void AaAddressOfExpression::PrintC(ofstream& ofile)
 {
 	this->_reference_to_object->PrintC(ofile);
-	this->PrintC_Declaration(ofile);
 	ofile << this->C_Reference_String() << " = ";
 	ofile << "&(" << this->_reference_to_object->C_Reference_String() << ");";
 }
@@ -4358,6 +4402,7 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
 				this->Get_VC_Guard_String(),
 				false,
 				full_rate,
+				false, // cut-through
 				ofile);
 
 		this->Write_VC_Output_Buffering(dpe_name, tgt_name, ofile);
@@ -4595,7 +4640,15 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 		bool ilb_flag = false;
 		if(this->Is_Trivial())
 		{
-			ilb_flag = true;
+			//
+			// its just an interlock buffer if the target type is unsigned.
+			// else its a sign extension.
+			//
+			if(this->Get_Type()->Is_Uinteger_Type() ||
+				(this->Get_Type()->Size() == this->_rest->Get_Type()->Size()))
+			{
+				ilb_flag = true;
+			}
 		}
 
 
@@ -4618,6 +4671,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 					this->Get_VC_Guard_String(),
 					false,
 					full_rate, 
+					false, // cut-through
 					ofile);
 
 		}
@@ -5410,8 +5464,9 @@ bool AaBinaryExpression::Is_Trivial()
 
 	bool second_is_constant = (this->_second != NULL) && this->_second->Is_Constant();
 	// 64-bit mul/shifts are trivial (ha ha)
-	if((this->_operation == __MUL) || 
-		(Is_Shift_Operation(this->_operation) && !second_is_constant))
+	if(!this->Get_Type()->Is_Float_Type() && 
+			((this->_operation == __MUL) || 
+				(Is_Shift_Operation(this->_operation) && !second_is_constant)))
 	{
 		// lets say we can do up to 64-bit mul/shift operations in one cycle.
 		// even though they have quadratic complexity.
@@ -5712,15 +5767,42 @@ void AaTernaryExpression::PrintC_Declaration(ofstream& ofile)
 
 void AaTernaryExpression::PrintC(ofstream& ofile)
 {
+	assert(this->_test->Get_Type()->Is_Integer_Type());
+
 	this->_test->PrintC(ofile);
 	if(!this->_test->Is_Constant())
 	{
 		Print_C_Assert_If_Bitvector_Undefined(this->_test->C_Reference_String(), ofile);
 	}
 
-	this->_if_true->PrintC(ofile);
-	this->_if_false->PrintC(ofile);
+	AaType* tgt_type = this->Get_Type();
+	string tgt = this->C_Reference_String();
 
+	AaType* if_expr_type = this->_if_true->Get_Type();
+	string if_expr = this->_if_true->C_Reference_String();
+
+	AaType* else_expr_type = this->_if_false->Get_Type();
+	string else_expr = this->_if_false->C_Reference_String();
+
+	ofile << "if(" << C_Value_Expression(this->_test->C_Reference_String(), this->_test->Get_Type()) << ")";
+	ofile << "{";
+	this->_if_true->PrintC(ofile);
+	if(tgt_type->Is_Integer_Type())
+		ofile << "bit_vector_cast_to_bit_vector(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << tgt 
+			<< "), &(" << if_expr << "));" << __endl__;
+	else
+		ofile << tgt << " = " << if_expr << ";" << __endl__;
+	ofile << "}";
+	ofile << "else {";
+	this->_if_false->PrintC(ofile);
+	if(tgt_type->Is_Integer_Type())
+		ofile << "bit_vector_cast_to_bit_vector(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << tgt << "), &(" 
+			<< else_expr << "));" << __endl__;
+	else
+		ofile << tgt << " = " << else_expr<< ";" << __endl__;
+	ofile << "}";
+
+	/*
 	Print_C_Ternary_Operation(this->_test->C_Reference_String(),
 			this->_test->Get_Type(),
 			this->_if_true->C_Reference_String(), 
@@ -5730,6 +5812,7 @@ void AaTernaryExpression::PrintC(ofstream& ofile)
 			this->C_Reference_String(), 
 			this->Get_Type(),
 			ofile);
+	*/
 }
 
 void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)
@@ -6204,6 +6287,7 @@ void AaFunctionCallExpression::Write_VC_Datapath_Instances(AaExpression* target,
 		<< tgt_name << " " << buffering << endl;
 }
 
+
 void AaFunctionCallExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
 	if(!this->Is_Constant())
@@ -6304,6 +6388,14 @@ void AaFunctionCallExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 bool AaFunctionCallExpression::Is_Trivial() // return false if called module is volatile.
 {
 	return(_called_module->Get_Volatile_Flag());
+}
+
+bool AaFunctionCallExpression::Can_Be_Combinationalized()
+{
+	bool ret_val = false;
+	if((this->_called_module != NULL)  && this->_called_module->Get_Is_Volatile())
+		ret_val = true;
+	return(ret_val);
 }
 
 /////////////////////////////////////////////////  Utilities //////////////////////////////////////////////

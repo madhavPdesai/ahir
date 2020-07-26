@@ -11,10 +11,11 @@ env.Append(CPPPATH = './src/:./include:./grammar/:../../Value/include:../../Ctes
 env.Append(CPPPATH = ':../BGLWrap/include:' + ANTLR_PATH)
 
 env.Library('lib/libAa', Glob('src/*.cpp'), CCFLAGS='-g ')
-env.Program('bin/AaOpt', 'util/AaOpt.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr' , 'Value'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/ ' + ANTLR_LIB_PATH))
-env.Program('bin/Aa2VC', 'util/Aa2VC.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr' , 'Value'], LIBPATH=Split('/usr/local/lib ./lib/ ../../Value/lib/ ' + ANTLR_LIB_PATH))
-env.Program('bin/Aa2C', 'util/Aa2C.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr' , 'Value'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/ ' + ANTLR_LIB_PATH))
-env.Program('bin/AaLinkExtMem', 'util/AaLinkExtMem.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr' , 'Value'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/ ' +  ANTLR_LIB_PATH))
+env.Program('bin/AaOpt', 'util/AaOpt.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa',  'Value', 'antlr'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/ ' + ANTLR_LIB_PATH))
+env.Program('bin/Aa2VC', 'util/Aa2VC.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa',  'Value', 'antlr'], LIBPATH=Split('/usr/local/lib ./lib/ ../../Value/lib/ ' + ANTLR_LIB_PATH))
+env.Program('bin/Aa2C', 'util/Aa2C.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa',  'Value', 'antlr'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/ ' + ANTLR_LIB_PATH))
+env.Program('bin/AaLinkExtMem', 'util/AaLinkExtMem.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa',  'Value', 'antlr'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/ ' +  ANTLR_LIB_PATH))
+env.Program('bin/AaPreprocess', 'util/AaPreprocess.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBPATH=Split('/usr/local/lib'))
 
 
 

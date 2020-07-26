@@ -30,6 +30,10 @@
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 -- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
 ------------------------------------------------------------------------------------------------
+library ahir;
+use ahir.Utilities.all;
+use ahir.GlobalConstants.all;
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -52,7 +56,12 @@ architecture XilinxBramInfer of base_bank is
   signal addr_reg : std_logic_vector(g_addr_width-1 downto 0);
   signal rd_enable_reg : std_logic;
   signal read_data, read_data_reg: std_logic_vector(g_data_width-1 downto 0);
+
 begin  -- XilinxBramInfer
+ 
+  debugGen: if global_debug_flag generate
+  assert false report "MemSliceInfo base_bank " & name & " " & " addr_width = " & Convert_To_String(g_addr_width) & " data-width = " & Convert_To_String(g_data_width) severity note;
+  end generate debugGen;
 
   -- read/write process
   process(clk,addrin,enable,writebar)

@@ -114,6 +114,8 @@ class AaProgram
   static std::set<AaType*> _extmem_access_types;
   static std::set<int> _extmem_access_widths;
 
+  static std::set<string> _volatile_modules;
+
 
 
   // external memory object.
@@ -160,6 +162,7 @@ class AaProgram
   static bool _use_gnu_pth;
 
   static bool _balance_loop_pipeline_bodies;
+  static bool _combinationalize_statements;
   static string _tool_name;
   static bool  _do_not_print_orphans;
 
@@ -252,6 +255,7 @@ class AaProgram
 
   // calculate longest path in all pipelined modules.
   static void Equalize_Paths_Of_Pipelined_Modules();
+  static void Mark_Volatizable_Modules_As_Volatile();
 
   static AaVoidType* Make_Void_Type();
   static AaUintType* Make_Uinteger_Type(unsigned int w);
@@ -330,6 +334,8 @@ class AaProgram
   static void Add_Integer_Parameter(string pid, int pval);
   static int  Get_Integer_Parameter_Value(string pid);
   static bool  Is_Integer_Parameter(string pid);
+  static bool Is_Marked_As_Volatile_Module(string mname);
+  static void Mark_As_Volatile_Module(string mname);
 
 };
 

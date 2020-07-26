@@ -1,0 +1,15 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2
+
+$module [p2p_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 9 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi X := _b0 $on $entry (($bitcast ($uint<1>) 1) && in_data) $on $loopback
+		$endmerge
+		$volatile $split (X 1 32) (v Xd)
+		$guard (v) out_data :=  Xd
+		$while 1
+	}
+}

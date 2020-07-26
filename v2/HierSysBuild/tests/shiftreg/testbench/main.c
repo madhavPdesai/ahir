@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <Pipes.h>
 #include <SR4_sr4.h>
 
 int main (int argc, char* argv[])

@@ -517,18 +517,27 @@ void FlatLeafGraph::Print_Uniquification_File (string top_name, string top_lib_n
 						<< g->Hierarchical_Name() << endl;
 		for(int P=0, fP = int_pipes.size(); P < fP; P++)
 		{
-			ofile << "rpipe_rename  " << gs->Get_Library() << " "  << 
+
+			ofile << "register_pipe_rename "
+						<< gs->Get_Library() << " "  << 
 								gs->Get_Id() << " " <<
 								g_c_name << "  " 
 								<< int_pipes[P]->Get_Id() << " "
 								<<  g_c_name << "_"
-								<< int_pipes[P] << endl;
+								<< int_pipes[P]->Get_Id() << endl;
+			ofile << "rpipe_rename  " 
+						<< gs->Get_Library() << " "  << 
+								gs->Get_Id() << " " <<
+								g_c_name << "  " 
+								<< int_pipes[P]->Get_Id() << " "
+								<<  g_c_name << "_"
+								<< int_pipes[P]->Get_Id() << endl;
 			ofile << "wpipe_rename  " << gs->Get_Library() << " "  << 
 								gs->Get_Id() << " " <<
 								g_c_name << "  " 
 								<< int_pipes[P]->Get_Id() << " "
 								<<  g_c_name << "_"
-								<< int_pipes[P] << endl;
+								<< int_pipes[P]->Get_Id() << endl;
 		}
 
 		vector<hierPipe*> in_pipes;

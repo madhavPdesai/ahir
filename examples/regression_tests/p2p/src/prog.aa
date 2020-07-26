@@ -1,5 +1,5 @@
 $pipe out_data : $uint<32> $depth 2
-$pipe in_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2 $p2p
 $pipe mid_pipe_0 : $uint<32> $depth 0 $p2p 
 $pipe mid_pipe_1 : $uint<32> $depth 1 $p2p 
 $pipe mid_pipe_2 : $uint<32> $depth 2 $p2p $bypass

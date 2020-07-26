@@ -385,6 +385,47 @@ keyword.
 More details of the syntax are provided in 
 Section \ref{sec:Syntax}.
 
+\subsection{Reporting and trace statements}
+
+It is possible to convert an {\bf Aa} description
+to C and then execute this C description.  During
+the execution, we can generate log messages using the
+following statement:
+\begin{verbatim}
+$rreport (Descriptor  Comment  var1 var2 .. varn)
+\end{verbatim}
+This generates a message during execution with
+the following format.
+\begin{verbatim}
+Descriptor    Comment
+         var1 <var1-value>
+         var2 <var1-value>
+         ....
+         varn <varn-value>
+\end{verbatim}
+
+Another useful statement is the assert statement.
+\begin{verbatim}
+$assert (expr)
+   $rreport (Descriptor  Comment  var1 var2 .. varn)
+\end{verbatim}
+This prints a report if expr is false, and then
+exits the execution.
+
+Finally, we have
+\begin{verbatim}
+$trace simple-identifier [ ( integer-level) ]
+\end{verbatim}
+This produces a message
+\begin{verbatim}
+TRACE simple-identifier
+\end{verbatim}
+it the trace-level (set in the execution of the AA2C
+model) is set to integer-level or lower.
+
+Note that these statements are not converted to hardware.
+
+
 \subsection{A synthetic statement: the \$split statement}
 
 Often, we need to split a large vector into several pieces.

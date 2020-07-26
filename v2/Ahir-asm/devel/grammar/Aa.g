@@ -133,7 +133,7 @@ aA_Mutex_Declaration
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE)? (NOOPT)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
+// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE )? (NOOPT)? (USEONCE)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 aA_Module returns [AaModule* new_module]
 {
@@ -154,6 +154,7 @@ aA_Module returns [AaModule* new_module]
     bool noopt_flag = false;
     int lno;
     bool deterministic_flag = false;
+    bool use_once_flag = false;
 }
     : ((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true; } 
@@ -164,6 +165,7 @@ aA_Module returns [AaModule* new_module]
 	) | (INLINE {inline_flag = true;}) | (MACRO {macro_flag = true;}) )? 
 	((OPERATOR {operator_flag = true;}) | (VOLATILE {volatile_flag = true;}) | (OPAQUE {opaque_flag = true;}))?
 	(NOOPT {noopt_flag = true;})?
+	(USEONCE {use_once_flag = true;})?
 	mt: MODULE 
         lbl = aA_Label 
         {
@@ -175,6 +177,7 @@ aA_Module returns [AaModule* new_module]
             new_module->Set_Pipeline_Flag(pipeline_flag);
 	    new_module->Set_Noopt_Flag(noopt_flag);
 	    new_module->Set_Opaque_Flag(opaque_flag);
+	    new_module->Set_Use_Once_Flag(use_once_flag);
 
 	    if(!foreign_flag)
 	    {
@@ -183,7 +186,9 @@ aA_Module returns [AaModule* new_module]
 	    }
 	    else
 	    {
-                        AaRoot::Warning("foreign module cannot be marked as operator/volatile ",new_module);
+		AaRoot::Warning("foreign module cannot be marked as operator/volatile ",new_module);
+            	new_module->Set_Volatile_Flag(false);
+            	new_module->Set_Operator_Flag(false);
 	    }
 
 	    if(pipeline_flag)
@@ -285,7 +290,7 @@ aA_Out_Args[AaModule* parent]
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Atomic_Statement : aA_Assignment_Statement | aA_Call_Statement | aA_Null_Statement | aA_Block_Statement
+// aA_Atomic_Statement : aA_Assignment_Statement | aA_Call_Statement | aA_Null_Statement | aA_Block_Statement | aA_Barrier_Statement
 //-----------------------------------------------------------------------------------------------
 aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist] 
 {
@@ -388,11 +393,11 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 	   }
 	) | 
 	(
-		((stmt = aA_Null_Statement[scope]) | (stmt = aA_Block_Statement[scope]))
+		((stmt = aA_Null_Statement[scope]) | (stmt = aA_Block_Statement[scope]) | (stmt = aA_Barrier_Statement[scope]))
 		{
 			slist.push_back(stmt);
 		}
-	)
+	) 
       )
     ;
 
@@ -407,6 +412,16 @@ aA_Null_Statement[AaScope* scope] returns[AaStatement* new_stmt]
         }
     ;
 
+//-----------------------------------------------------------------------------------------------
+// aA_Barrier_Statement : BARRIER
+//-----------------------------------------------------------------------------------------------
+aA_Barrier_Statement[AaScope* scope] returns[AaStatement* new_stmt]
+    : BARRIER 
+        {
+            // NuLL statements have no labels.
+            new_stmt = new AaBarrierStatement(scope);
+        }
+    ;
 
 //-----------------------------------------------------------------------------------------------
 // aA_Lock_Statement : $lock simple-identifier
@@ -544,6 +559,7 @@ aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
     AaExpression* source = NULL;
     int buf_val;
     int lno;
+    bool cut_through_flag = false;
 }
     : 
 
@@ -561,7 +577,12 @@ aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
 	    }
         }
 	(BUFFERING buf_val = aA_Integer_Parameter_Expression [lno]
-		{ ((AaAssignmentStatement*)new_stmt)->Set_Buffering(buf_val);}
+	  (CUT_THROUGH  {cut_through_flag = true;})?
+		{ 
+			((AaAssignmentStatement*)new_stmt)->Set_Buffering(buf_val);
+			((AaAssignmentStatement*)new_stmt)->Set_Cut_Through(cut_through_flag);
+		}
+         
 	)?
     ;
 
@@ -2632,12 +2653,14 @@ VOLATILE   : "$volatile";
 OPERATOR   : "$operator";
 NOOPT      : "$noopt";
 OPAQUE     : "$opaque";
+USEONCE     : "$useonce";
 
 // keep flag..
 KEEP     : "$keep";
 
 
 DETERMINISTIC: "$deterministic";
+CUT_THROUGH: "$cut_through";
 // data format
 UINTEGER          : DIGIT (DIGIT)*;
 FLOATCONST : "_f" ('-')? DIGIT '.' (DIGIT)+ 'e' ('+' | '-') (DIGIT)+;

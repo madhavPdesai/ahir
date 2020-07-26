@@ -45,11 +45,11 @@ use ahir.BaseComponents.all;
 
 entity InterlockBuffer is
   generic (name: string; buffer_size: integer := 2; 
-  in_data_width : integer := 32;
-  out_data_width : integer := 32;
-  flow_through: boolean := false;
-  bypass_flag : boolean := false;
-  full_rate : boolean);
+  	in_data_width : integer := 32;
+  	out_data_width : integer := 32;
+  	flow_through: boolean := false;
+	cut_through : boolean := false;
+  	bypass_flag : boolean := false);
   port (write_req: in boolean;
         write_ack: out boolean;
         write_data: in std_logic_vector(in_data_width-1 downto 0);
@@ -69,6 +69,10 @@ architecture default_arch of InterlockBuffer is
 
   type LoadFsmState is (l_idle, l_busy);
   signal l_fsm_state : LoadFsmState;
+
+  signal has_data: std_logic;
+
+  constant use_unload_register : boolean := not cut_through;
   
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
@@ -156,8 +160,8 @@ begin  -- default_arch
         name =>  name & " buffer ",
         data_width => data_width,
         buffer_size => buffer_size, 
-        bypass_flag => false,
-        full_rate => full_rate)
+	use_unload_register => use_unload_register,
+        bypass_flag => bypass_flag)
         port map (
           write_req   => buf_write_req,
           write_ack   => buf_write_ack,
@@ -165,6 +169,7 @@ begin  -- default_arch
           unload_req  => read_req,
           unload_ack  => read_ack,
           read_data   => buf_read_data,
+ 	  has_data => has_data,
           clk         => clk,
           reset       => reset);
 

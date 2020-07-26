@@ -71,7 +71,7 @@ begin
 		generic map(name => name & "-ilb",
 				buffer_size => buffering,
 				in_data_width => data_width,
-				out_data_width => data_width, full_rate => full_rate)
+				out_data_width => data_width)
 		port map(write_req => sample_req,
 			 write_ack => sample_ack,
 			 write_data => ilb_data_in,

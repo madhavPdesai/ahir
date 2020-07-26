@@ -1879,6 +1879,16 @@ vcTransitionMerge::vcTransitionMerge(vcCPElement* prnt, string id): vcCPElement(
 
 }
 
+  
+void vcTransitionMerge::Append_Zero_Delay_Successors(vcTransition* t, set<vcCPElement*>& zero_delay_successors)
+{
+	for(int I = 0, fI = _in_transitions.size(); I  < fI; I++)
+	{
+		if(t == _in_transitions[I])
+			zero_delay_successors.insert(_out_transition);
+	}
+}
+
 void vcTransitionMerge::Print(ostream& ofile)
 {
 	ofile << vcLexerKeywords[__TRANSITIONMERGE] << " " << this->Get_Label() <<  " ";
@@ -2053,6 +2063,15 @@ void vcCPSimpleLoopBlock::Print_VHDL(ostream& ofile)
 
 	this->Print_VHDL_Terminator(NULL,ofile);
 	ofile << "-- }" << endl << "end Block; -- " << id << endl;
+}
+
+void vcLoopTerminator::Append_Zero_Delay_Successors(vcTransition* t, set<vcCPElement*>& zero_delay_successors)
+{
+	if((t == _loop_taken) || (t == _loop_exit) || (t == _loop_body))
+	{
+		zero_delay_successors.insert(_loop_back);
+		zero_delay_successors.insert(_exit_from_loop);
+	}
 }
 
 
@@ -3407,6 +3426,53 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id,
 
 	_phi_sequencers.push_back(new_phi_seq);
 }
+
+
+  
+void vcPhiSequencer::Append_Zero_Delay_Successors(vcTransition* t, set<vcCPElement*>& zero_delay_successors)
+{
+	for(int I = 0, fI = _triggers.size(); I  < fI; I++)
+	{
+		if(t == _triggers[I])
+		{
+			zero_delay_successors.insert(_src_sample_reqs[I]);
+			zero_delay_successors.insert(_src_update_reqs[I]);
+		}
+
+		if(t == _src_sample_acks[I])
+		{
+			zero_delay_successors.insert(_phi_sample_ack);
+		}
+
+		if(t == _src_update_acks[I])
+		{
+			zero_delay_successors.insert(_phi_mux_reqs[I]);
+		}
+	
+		if(t == _phi_mux_ack)
+		{
+			zero_delay_successors.insert(_phi_update_ack);
+		}
+
+	}
+
+	if(t == _phi_sample_req)
+	{
+		for(int I = 0, fI = _triggers.size(); I  < fI; I++)
+		{
+			zero_delay_successors.insert(_src_sample_reqs[I]);
+		}
+	}
+
+	if(t == _phi_update_req)
+	{
+		for(int I = 0, fI = _triggers.size(); I  < fI; I++)
+		{
+			zero_delay_successors.insert(_src_update_reqs[I]);
+		}
+	}
+}
+
 
 
 void vcCPPipelinedLoopBody::Add_Transition_Merge(string& tm_id, vector<string>& in_transitions, string& out_transition)

@@ -82,6 +82,8 @@ public:
   virtual void Add_Alias(string alias_string, string ref_string) {assert(0);}
   virtual string Get_Alias_Reference_String(string alias_string) {assert(0);}
 
+  virtual bool Is_Input_Transition ()  {return(false);}
+  virtual bool Is_Output_Transition () {return(false);}
 
   void Add_Successor(vcCPElement* cpe);
   void Add_Predecessor(vcCPElement* cpe);
@@ -277,8 +279,11 @@ public:
   // CP function related.
   virtual bool Is_In_Transition(vcTransition* p) {return(false);}
   virtual bool Is_Out_Transition(vcTransition* p) {return(false);}
+  virtual bool Get_Is_Dead() {return(false);}
+  virtual bool Get_Is_Delay_Element() {return(false);}
 
   virtual vcModule* Get_Root_Parent_Module();
+
 };
 
 
@@ -361,15 +366,17 @@ public:
   void Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype);
 
   virtual bool Is_Transition() {return(true);}
+  virtual bool Is_Input_Transition ()  {return(_is_input);}
+  virtual bool Is_Output_Transition () {return(_is_output);}
   bool Get_Is_Input() { return(_is_input);}
   bool Get_Is_Output() { return(_is_output);}
 
   void Set_Is_Dead(bool v) {this->_is_dead = v;}
-  bool Get_Is_Dead() {return(this->_is_dead);}
+  virtual bool Get_Is_Dead() {return(this->_is_dead);}
 
 
   void Set_Is_Delay_Element(bool v) {this->_is_delay_element = v;}
-  bool Get_Is_Delay_Element() {return(this->_is_delay_element);}
+  virtual bool Get_Is_Delay_Element() {return(this->_is_delay_element);}
 
   void Set_Is_Tied_High(bool v) {this->_is_tied_high = v;}
   bool Get_Is_Tied_High() {return(this->_is_tied_high);}
@@ -387,7 +394,7 @@ public:
 
   vector<pair<vcDatapathElement*,vcTransitionType> >&  Get_DP_Link() {return(this->_dp_link);}
 
-  friend class ControlPath;
+  friend class vcControlPath;
 
   string Get_DP_To_CP_Symbol();
   string Get_CP_To_DP_Symbol();
@@ -643,6 +650,7 @@ public:
 	return(_out_transition == p);
   }
 
+  void Append_Zero_Delay_Successors(vcTransition* t, set<vcCPElement*>& zero_delay_successors);
 };
 
 class vcPhiSequencer: public vcCPElement
@@ -742,6 +750,8 @@ public:
 		  return(true);
 	  return(false);
   }
+
+  void Append_Zero_Delay_Successors(vcTransition* t, set<vcCPElement*>& zero_delay_successors);
 };
 
 
@@ -764,7 +774,9 @@ class vcLoopTerminator: public vcCPElement
 		_exit_from_loop = NULL;
 	}
 
+  	void Append_Zero_Delay_Successors(vcTransition* t, set<vcCPElement*>& zero_delay_successors);
 	friend class vcCPSimpleLoopBlock;
+	friend class vcControlPath;
 };
 
 class vcCPPipelinedLoopBody;
@@ -789,6 +801,7 @@ class vcCPSimpleLoopBlock: public vcCPBranchBlock
 	void Set_Pipeline_Full_Rate_Flag(bool d) {_pipeline_full_rate_flag = d;}
 	int  Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
 
+	vcLoopTerminator* Get_Terminator() {return(_terminator);}
 	virtual int Get_Max_Iterations_In_Flight() {return(_pipeline_depth);}
 
 	virtual void Print(ostream& ofile);
@@ -943,6 +956,34 @@ public:
 
   void Print_VHDL_Phi_Sequencers(vcControlPath* cp, ostream& ofile);
   void Print_VHDL_Transition_Merges(vcControlPath* cp, ostream& ofile);
+
+  int Get_Number_Of_Phi_Sequencers()
+  {
+	return(_phi_sequencers.size());
+  }
+  vcPhiSequencer* Get_Phi_Sequencer(int idx) 
+  {
+	vcPhiSequencer* rv = NULL;
+	if(idx < _phi_sequencers.size())
+	{
+		rv = _phi_sequencers[idx];
+	}
+	return(rv);
+  }
+
+  int Get_Number_Of_Transition_Merges()
+  {
+	return(_transition_merges.size());
+  }
+  vcTransitionMerge* Get_Transition_Merge(int idx) 
+  {
+	vcTransitionMerge* rv = NULL;
+	if(idx < _transition_merges.size())
+	{
+		rv = _transition_merges[idx];
+	}
+	return(rv);
+  }
 
   void Print_Phi_Sequencer_Dot_Entries(vcControlPath* cp, ostream& ofile);
   void Print_Transition_Merge_Dot_Entries(vcControlPath* cp, ostream& ofile);
@@ -1176,6 +1217,8 @@ public:
 
   string Generate_Marked_Join_Bypass_String();
 
+  vcCPElement* Get_Top_Element();
+
   friend class vcCPElement;
   friend class vcControlPath;
 };
@@ -1241,6 +1284,8 @@ public:
   virtual bool Is_Control_Path() { return (true); }
 
   void Construct_Reduced_Group_Graph();
+  int Fix_Combinational_Loops(int pass_index);
+
   void Identify_Nucleii(set<vcCPElementGroup*>& nucleii);
   void Reduce_From_Nucleus(vcCPElementGroup* nucleus, set<vcCPElementGroup*>& absorbed_elements,
 						set<vcCPElementGroup*>& unabsorbed_elements);
@@ -1319,6 +1364,10 @@ public:
   void Print_VHDL_Export_Cleanup_Optimized(ostream& ofile);
 
   void Eliminate_Dead_Groups();
+
+  void Find_Zero_Delay_Successors_Via_DPE(vcTransition* t, set<vcCPElement*>& zero_delay_successors);
+  void Find_Zero_Delay_Successors_Via_CP_Function(vcTransition* t, set<vcCPElement*>& zero_delay_successors);
+  void Include_DPE_Elements_Bound_With_Ack_Transition(vcTransition* t, set<vcDatapathElement*>& dpe_set);
 
   // ensure correct connectivity.
   bool Check_Group_Graph_Structure();

@@ -35,6 +35,7 @@
 #include <assert.h>
 #include <bits/wordsize.h>
 #include <Pipes.h>
+#include <pipeHandler.h>
 
 #ifndef USE_GNUPTH
 #include <pthread.h>
@@ -57,7 +58,7 @@ MUTEX_DECL(log_mutex);
 #define READ_BURST__(id, width, buf_len, buf) { uint32_t words_read = 0;\
 	while(1)\
 	{\
-		words_read += read_from_pipe(id, width, buf_len - words_read, (void*) (buf + words_read));\
+		words_read += read_from_pipe((char*) id, width, buf_len - words_read, (void*) (buf + words_read));\
 		if(words_read == buf_len)\
 		break;\
 		else\
@@ -67,7 +68,7 @@ MUTEX_DECL(log_mutex);
 #define WRITE_BURST__(id, width, buf_len,buf) { uint32_t words_written = 0;\
 	while(1)\
 	{\
-		words_written += write_to_pipe(id, width, buf_len - words_written, (void*) (buf + words_written));\
+		words_written += write_to_pipe((char*) id, width, buf_len - words_written, (void*) (buf + words_written));\
 		if(words_written == buf_len)\
 		break;\
 		else\

@@ -1,0 +1,20 @@
+$pipe ctrl_in_pipe : $uint<8>
+$pipe ctrl_out_pipe : $uint<8>
+
+$module [controller_daemon] $in () $out () $is
+{
+	$branchblock[loop] {
+		$merge $entry loopback $endmerge
+			cmd := ctrl_in_pipe 
+			TO_E1 := cmd
+			TO_E2 := cmd
+
+			r1 := FROM_E1
+			r2 := FROM_E2
+
+			r := (r1 + r2)
+			ctrl_out_pipe := r
+		$place [loopback]
+	}
+}
+

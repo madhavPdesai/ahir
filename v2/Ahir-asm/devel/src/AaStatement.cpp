@@ -646,6 +646,8 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 			int buf_val = curr_slack;
 			//if(this->Is_Part_Of_Fullrate_Pipeline()) buf_val = ((buf_val < 2) ? 2 : buf_val);
 			new_stmt->Set_Buffering(buf_val);
+			new_stmt->Set_Cut_Through(true);
+
 			AaProgram::Increment_Buffering_Bit_Count(buf_val * new_target->Get_Type()->Size());
 
 			new_stmt->Map_Targets();
@@ -789,6 +791,7 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 				int buf_val = curr_slack;
 				//if(this->Is_Part_Of_Fullrate_Pipeline()) buf_val = ((buf_val < 2) ? 2 : buf_val);
 				new_stmt->Set_Buffering(buf_val);
+				new_stmt->Set_Cut_Through(true);
 
 				AaProgram::Increment_Buffering_Bit_Count(buf_val * new_target->Get_Type()->Size());
 
@@ -1088,8 +1091,24 @@ void AaNullStatement::Write_VC_Control_Path(ostream& ofile)
 {
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	ofile << ";;[" << this->Get_VC_Name() << "] {" << endl; 
+	__T ("dummy");
+	ofile << "}" << endl;
 }
 
+//---------------------------------------------------------------------
+// AaBarrierStatement: public AaNullStatement
+//---------------------------------------------------------------------
+AaBarrierStatement::AaBarrierStatement(AaScope* parent_tpr):AaNullStatement(parent_tpr) {};
+AaBarrierStatement::~AaBarrierStatement() {};
+void AaBarrierStatement::Write_VC_Control_Path(ostream& ofile)
+{
+	ofile << "// " << this->To_String() << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
+	ofile << ";;[" << this->Get_VC_Name() << "] {" << endl; 
+	__T ("dummy");
+	ofile << "}" << endl;
+}
 //---------------------------------------------------------------------
 // AaLockStatement: public AaNullStatement
 //---------------------------------------------------------------------
@@ -1369,7 +1388,9 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 	AaStatement(parent_tpr) 
 {
 	assert(tgt); assert(src);
+
 	_is_volatile = false;
+	_cut_through = false;
 
 	tgt->Set_Associated_Statement(this);
 	tgt->Set_Is_Intermediate(false);
@@ -1489,10 +1510,49 @@ bool AaAssignmentStatement::Is_Orphaned()
 	return(ret_val);
 }
 
+bool AaAssignmentStatement::Can_Be_Combinationalized()
+{
+	AaExpression* tgt = this->_target;
+	AaExpression* src = this->_source;
+
+	// target should not be an interface object, and should not be a complex function that needs
+	// to be registered.
+	bool ret_val = (!tgt->Is_Interface_Object_Reference() && tgt->Can_Be_Combinationalized() && src->Can_Be_Combinationalized());
+
+	//
+	// fanout should be 1.
+	//
+	if(ret_val && (tgt->Get_Source_References().size() == 1))
+	{
+		AaRoot* robj = *(tgt->Get_Source_References().begin());
+		if(robj->Is_Phi_Statement())
+			ret_val = true;
+		else
+		{
+			if(robj->Is_Expression())
+			{
+				// should not create a combinational loop.
+				ret_val = (((AaExpression*)robj)->Get_Associated_Statement() != this);
+			}
+			else
+			{
+				// should not be a WAR dependency.
+				ret_val = (robj->Get_Index() < tgt->Get_Index());
+			}
+		}
+	}
+	return(ret_val);
+}
+
 
 void AaAssignmentStatement::Print(ostream& ofile)
 {
 	assert(this->Get_Target()->Get_Type() && this->Get_Source()->Get_Type());
+
+	if(AaProgram::_combinationalize_statements && this->Can_Be_Combinationalized())
+	{
+		this->Set_Is_Volatile(true);
+	}
 
 	int twidth = this->Get_Target()->Get_Type()->Size();
 	int swidth = this->Get_Source()->Get_Type()->Size();
@@ -1593,9 +1653,10 @@ void AaAssignmentStatement::Print(ostream& ofile)
 		this->Get_Source()->Print(ofile);
 
 		int bufval = this->Get_Buffering();
-		if(bufval > 1)
-			ofile << " $buffering " << bufval;
+		ofile << " $buffering " << bufval;
 
+		if(this->Get_Cut_Through())
+			ofile << " $cut_through ";
 
 		if(this->_mark != "")
 			ofile << " $mark " << _mark << " ";
@@ -1606,6 +1667,8 @@ void AaAssignmentStatement::Print(ostream& ofile)
 			for(set<AaStatement*>::iterator siter = _synch_statements.begin(), fiter = _synch_statements.end();
 					siter != fiter; siter++)
 			{
+				if(_synch_update_flag_map[(*siter)])
+					ofile << " $update "; 
 				ofile << (*siter)->Get_Mark();
 				ofile << " ";
 			}
@@ -1813,6 +1876,14 @@ void AaAssignmentStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 		}
 
 		// target side stuff.
+		if(this->_target->Is("AaArrayObjectReference"))
+		{
+			AaArrayObjectReference* aor = (AaArrayObjectReference*) (this->_target);
+			aor->PrintC(headerfile);			
+		}
+
+	
+
 		Print_C_Assignment(this->_target->C_Reference_String(),
 				this->_source->C_Reference_String(),
 				this->_target->Get_Type(),
@@ -1956,6 +2027,8 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				string src_name = this->_source->Get_VC_Driver_Name();
 				string tgt_name = this->_target->Get_VC_Receiver_Name();
 
+				bool cut_through = this->Get_Cut_Through();
+
 				// target and source are both implicit.
 				// instantiate a register..
 				Write_VC_Interlock_Buffer(dpe_name,
@@ -1964,6 +2037,7 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 						this->Get_VC_Guard_String(),
 						this->Get_Is_Volatile(), // flow-through-flag
 						full_rate,
+						cut_through,
 						ofile);
 
 
@@ -2030,10 +2104,10 @@ void AaAssignmentStatement::Write_VC_Links(string hier_id,ostream& ofile)
 			{
 				if(!this->Get_Is_Volatile())
 				{
-					reqs.push_back(hier_id + "/Sample/req");
-					reqs.push_back(hier_id + "/Update/req");
-					acks.push_back(hier_id + "/Sample/ack");
-					acks.push_back(hier_id + "/Update/ack");
+					reqs.push_back(hier_id + "/Interlock/Sample/req");
+					reqs.push_back(hier_id + "/Interlock/Update/req");
+					acks.push_back(hier_id + "/Interlock/Sample/ack");
+					acks.push_back(hier_id + "/Interlock/Update/ack");
 					Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
 							reqs, acks, ofile);
 					reqs.clear();
@@ -2249,7 +2323,7 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 	for(unsigned int i = 0; i < inargs.size(); i++)
 	{
 		inargs[i]->Set_Associated_Statement(this);
-		inargs[i]->Set_Is_Intermediate(false);
+		inargs[i]->Set_Is_Intermediate(true);
 		this->_input_args.push_back(inargs[i]);
 	}
 
@@ -2278,6 +2352,13 @@ bool AaCallStatement::Get_Is_Volatile()
 	return(_is_volatile);
 }
 
+bool AaCallStatement::Can_Be_Combinationalized()
+{
+	AaModule* cm = (AaModule*) _called_module;
+	return((cm != NULL) && (cm->Get_Volatile_Flag()));
+}
+
+
 void AaCallStatement::Replace_Input_Argument(AaExpression* old_arg, AaSimpleObjectReference* new_arg)
 {
 	for(unsigned int i = 0; i < _input_args.size(); i++)
@@ -2286,13 +2367,20 @@ void AaCallStatement::Replace_Input_Argument(AaExpression* old_arg, AaSimpleObje
 
 		if(arg == old_arg)
 		{
-			assert(arg->Is_Implicit_Variable_Reference());
-			arg->Set_Associated_Statement(NULL);
+			// remove links to old-arg
 			arg->Remove_Target_Reference(this);
 			this->Remove_Source_Reference(arg);
-			this->_source_objects.erase(arg->Get_Object());
+
+			if(arg->Is_Implicit_Variable_Reference())
+			{
+				this->_source_objects.erase(arg->Get_Object());
+			}
+				
+			if(arg->Get_Associated_Statement() == this)
+				arg->Set_Associated_Statement(NULL);
 
 			_input_args[i] = new_arg;
+
 			new_arg->Add_Target_Reference(this);
 			this->Add_Source_Reference(new_arg);
 			new_arg->Map_Source_References(this->_source_objects);
@@ -2461,7 +2549,7 @@ void AaCallStatement::Print(ostream& ofile)
 		guard_string = "$guard (" + cg_var + ") ";
 	}
 
-	if(this->Get_Is_Volatile())
+	if(this->Get_Is_Volatile() || (AaProgram::_combinationalize_statements && cm->Get_Volatile_Flag()))
 		ofile << " $volatile ";
 
 	// not inlined or macro
@@ -2501,6 +2589,9 @@ void AaCallStatement::Print(ostream& ofile)
 		for(set<AaStatement*>::iterator siter = _synch_statements.begin(), fiter = _synch_statements.end();
 				siter != fiter; siter++)
 		{
+			if(_synch_update_flag_map[(*siter)])
+				 ofile << " $update "; 
+
 			ofile << (*siter)->Get_Mark();
 			ofile << " ";
 		}
@@ -2792,6 +2883,12 @@ void AaCallStatement::PrintC_Implicit_Declarations(ofstream& ofile)
 
 void AaCallStatement::Write_VC_Control_Path(ostream& ofile)
 {
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
+
 	if(this->Get_Is_Volatile())
 	{
 		//
@@ -2837,6 +2934,11 @@ void AaCallStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 
 	for(int idx = 0; idx < _input_args.size(); idx++)
 	{
@@ -2849,6 +2951,11 @@ void AaCallStatement::Write_VC_Wire_Declarations(ostream& ofile)
 
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 
 
 	for(int idx = 0; idx < _input_args.size(); idx++)
@@ -2876,6 +2983,11 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 
 	int delay = (this->Get_Is_Volatile() ? 0 : ((AaModule*)_called_module)->Get_Delay());
 	bool full_rate = this->Is_Part_Of_Fullrate_Pipeline();
@@ -2952,6 +3064,11 @@ void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
 
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 
 	hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Name());
 
@@ -4810,7 +4927,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				string dpe_name = src_expr->Get_VC_Driver_Name() + "_" + 
 					Int64ToStr(src_expr->Get_Index()) +  "_buf";
 				Write_VC_Interlock_Buffer(dpe_name, src_expr->Get_VC_Driver_Name(),
-						src_driver_name, "", false, full_rate,  ofile);
+						src_driver_name, "", false, full_rate, false, ofile);
 				if(dws != NULL)
 				{
 					int src_buffering = src_expr->Get_Buffering();
@@ -4849,6 +4966,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				"",
 				true, // flow-through-flag
 				true,
+				false, // cut-through
 				ofile);
 	}
 	else
@@ -5803,6 +5921,7 @@ void AaIfStatement::Get_Target_Places(set<AaPlaceStatement*>& target_places)
 AaPlaceStatement::AaPlaceStatement(AaBranchBlockStatement* parent_tpr,string lbl):AaStatement(parent_tpr) 
 {
 	this->_label = lbl;
+	this->_multiplicity = 1;
 	parent_tpr->Map_Child(lbl,this);
 };
 AaPlaceStatement::~AaPlaceStatement() {};
@@ -6513,7 +6632,7 @@ bool AaCallStatement::Is_Write_To_Pipe(AaPipeObject* obj)
 bool AaCallStatement::Writes_To_Memory_Space(AaMemorySpace* ms)
 {
 	bool ret_val = false;
-	if(this->_called_module)
+	if(this->_called_module && !this->_called_module->Get_Foreign_Flag())
 	{
 		ret_val = this->_called_module->Writes_To_Memory_Space(ms);
 	}

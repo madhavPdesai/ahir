@@ -380,18 +380,24 @@ int check_if_tests_passed(uint64_t def_size)
 	uint64_t A = rand();
 	uint64_t B = rand();
 
-	bit_vector a,b,c,d,e;
+	bit_vector a,b,c,d,e, sa,sb,sc;
 
 	init_bit_vector(&a,def_size);
+	init_bit_vector(&sa,def_size);
 	init_bit_vector(&b,def_size);
+	init_bit_vector(&sb,def_size);
 	init_bit_vector(&c,def_size);
+	init_bit_vector(&sc,def_size);
 
 
 	bit_vector_assign_uint64(0,&a,A);
 	bit_vector_assign_uint64(0,&b,B);
 
+	bit_vector_assign_uint64(1,&sa,A);
+	bit_vector_assign_uint64(1,&sb,B);
 
 	bit_vector_assign_uint64(0,&c,0);
+	bit_vector_assign_uint64(0,&sc,0);
 
 
 	//
@@ -434,6 +440,9 @@ int check_if_tests_passed(uint64_t def_size)
 			bit_vector_div(&(a),&(b),&(c));
 			check_error(&c, Atrunc, Btrunc, "(A/B)", (Atrunc/Btrunc), &ret_val, def_size);
 		}
+
+		bit_vector_smul(&(sa), &(sb), &(sc));
+		check_error(&sc, Atrunc, Btrunc, "(A*B)", (Atrunc*Btrunc), &ret_val, def_size);
 	}
 
 

@@ -91,6 +91,8 @@ void vcModule::Print(ostream& ofile)
 		ofile << vcLexerKeywords[__OPERATOR] << " ";
 	if(this->_volatile_flag)
 		ofile << vcLexerKeywords[__VOLATILE] << " ";
+	if(this->_use_once_flag)
+		ofile << vcLexerKeywords[__USEONCE] << " ";
 
 	ofile << vcLexerKeywords[__MODULE] << " " <<  this->Get_Label() << " {" << endl;
 	if(this->_input_arguments.size() > 0)
@@ -527,6 +529,12 @@ string vcModule::Print_VHDL_System_Instance_Port_Map(string comma,ostream& ofile
 
 string vcModule::Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile)
 {
+	string ret_string = this->Print_VHDL_Argument_Ports(semi_colon,"", ofile);
+	return(ret_string);
+}
+
+string vcModule::Print_VHDL_Argument_Ports(string semi_colon, string prefix, ostream& ofile)
+{
 
 	for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
 	{
@@ -653,7 +661,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		return;
 	}
 	else  if(this->Get_Operator_Flag())
-	// operator form?
+		// operator form?
 	{
 		this->Print_VHDL_Operator_Architecture(ofile);
 		return;
@@ -859,7 +867,6 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		ofile << "in_buffer: UnloadBuffer -- { " << endl;
 		ofile << " generic map(name => \"" << this->Get_VHDL_Id() << "_input_buffer\", -- {" << endl
 			<< " buffer_size => " << input_buffering << "," <<  endl 
-			<< " full_rate => false," <<  endl // no need, double buffering.
 			<< " bypass_flag => " << (bypass_flag ? "true," : "false,") << endl  // lets not be over-aggressive!
 			<< " data_width => tag_length + " << this->Get_In_Arg_Width() << ") -- } " << endl;
 		ofile << " port map(write_req => in_buffer_write_req, -- { " << endl
@@ -1602,6 +1609,11 @@ void vcModule::Register_Pipe_Read(string pipe_id, int idx)
 	if(p != NULL)
 	{
 		p->Register_Pipe_Read(this,idx);
+		if(this->Get_Volatile_Flag())
+		{
+			vcSystem::Error(" volatile module " + this->Get_Id() + " reads from pipe " + pipe_id);
+		}
+
 	}
 	else
 		this->Get_Parent()->Register_Pipe_Read(pipe_id, this, idx);    
@@ -1615,6 +1627,10 @@ void vcModule::Register_Pipe_Write(string pipe_id,int idx)
 	if(p != NULL)
 	{
 		p->Register_Pipe_Write(this,idx);
+		if(this->Get_Volatile_Flag())
+		{
+			vcSystem::Error(" volatile module " + this->Get_Id() + " writes to pipe " + pipe_id);
+		}
 	}
 	else
 		this->Get_Parent()->Register_Pipe_Write(pipe_id, this, idx);

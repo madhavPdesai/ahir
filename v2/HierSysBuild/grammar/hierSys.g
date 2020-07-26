@@ -165,17 +165,19 @@ hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map,
 	int pipe_width = 0;
 	bool shiftreg_flag = false;
 	bool bypass_flag = false;
+	bool depth_specified = false;
+	bool width_specified = false;
 }:
 		(NOBLOCK {noblock_flag = true;})? 
 		((P2P {p2p_flag = true;})| (SHIFTREG {shiftreg_flag = true;})) ?
 		(BYPASS {bypass_flag = true;})?
 
 		(PIPE | (SIGNAL {signal_flag = true;}))
-		sidi: SIMPLE_IDENTIFIER  (uidi: UINTEGER {pipe_width = atoi(uidi->getText().c_str());})?
-				(DEPTH didi: UINTEGER {depth = atoi(didi->getText().c_str());})?
+		sidi: SIMPLE_IDENTIFIER  (uidi: UINTEGER {width_specified = true; pipe_width = atoi(uidi->getText().c_str());})?
+				(DEPTH didi: UINTEGER {depth_specified = true; depth = atoi(didi->getText().c_str());})?
 			{
 				string pipe_name = sidi->getText();
-				if((pipe_width == 0) || (depth == 0))
+				if(!width_specified || !depth_specified)
 				{
 					bool err = getPipeInfoFromGlobals(pipe_name, global_pipe_map,
 										pipe_width, 

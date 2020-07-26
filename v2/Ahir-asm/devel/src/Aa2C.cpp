@@ -684,7 +684,8 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 		case __MUL:
 			if(src1_is_int)
 			{
-				ofile << "bit_vector_mul( &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << __endl__;	
+				string op_name = (src1_is_signed ? "bit_vector_smul" : "bit_vector_mul");
+				ofile << op_name << "( &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << __endl__;	
 			}
 			else
 			{
@@ -694,7 +695,8 @@ void Print_C_Binary_Operation(string src1, AaType* src1_type, string src2,  AaTy
 		case __DIV:
 			if(src1_is_int)
 			{
-				ofile << "bit_vector_div( &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << __endl__;	
+				string op_name = (src1_is_signed ? "bit_vector_sdiv" : "bit_vector_div");
+				ofile << op_name << "( &(" << src1 << "), &(" << src2 << "), &(" << tgt << "));" << __endl__;	
 			}
 			else
 			{
@@ -888,5 +890,6 @@ void Print_C_Report_String_Expr_Pair(string seq_id, string tag, string qs, strin
 	{
 		ofile << "fprintf(" << log_file_name << ", \":= %le\\n\"," << expr  << ");";
 	}
+	ofile << "fflush (" << log_file_name << ");";
 	ofile << "}"; 
 }

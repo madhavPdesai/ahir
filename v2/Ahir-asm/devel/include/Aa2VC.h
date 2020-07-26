@@ -146,7 +146,9 @@ void Write_VC_Interlock_Buffer( string inst_name,
 			string guard_string,
 			bool flow_through,
 			bool full_rate,
+			bool cut_through,
 			ostream& ofile);
+
 void Write_VC_Binary_Operator(AaOperation op, 
 			      string inst_name, 
 			      string src1, 
@@ -207,7 +209,7 @@ void Write_VC_Store_Operator(string ms_name, string inst_name, string data_name,
 			     string guard_string,
 			     ostream& ofile);
 void Write_VC_IO_Input_Port(AaPipeObject* obj, string inst_name, string data_name,
-			     string guard_string, bool full_rate,
+			     string guard_string, bool full_rate, bool barrier_flag,
 				ostream& ofile);
 void Write_VC_IO_Output_Port(AaPipeObject* obj, string inst_name, string data_name,
 			     string guard_string, bool full_rate,

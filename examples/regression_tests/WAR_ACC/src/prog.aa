@@ -1,0 +1,21 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2
+
+$module [p2p_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 9 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi COUNT := ($bitcast ($uint<8>) 0) $on $entry nCOUNT $on $loopback
+			$phi CMD   := 0 $on $entry in_data $on $loopback
+		$endmerge
+		$volatile nCOUNT := (COUNT + 1)
+		$volatile result_send := (COUNT == 16)
+		$volatile continue_flag := (COUNT < 16)
+
+		RESULT := ($mux (COUNT == 0) 0 (RESULT + CMD))
+		$guard (result_send) out_data :=  RESULT
+
+		$while continue_flag
+	}
+}

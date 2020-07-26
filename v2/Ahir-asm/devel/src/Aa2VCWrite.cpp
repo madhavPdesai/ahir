@@ -242,6 +242,7 @@ void Write_VC_Interlock_Buffer( string inst_name,
                         string guard_string,
 			bool flow_through, 
 			bool full_rate, 
+			bool cut_through,
 			ostream& ofile)
 {
   string sflow_through = (flow_through ? " $flowthrough" : "");
@@ -249,7 +250,8 @@ void Write_VC_Interlock_Buffer( string inst_name,
 
   ofile << "# := [" << inst_name << "] " 
 	<< "(" << src_name << ") "
-	<< "(" << target_name << ") " << guard_string << " " << sflow_through <<  " " << sfull_rate << endl;
+	<< "(" << target_name << ") " << (cut_through ? " $cut_through " : " ")  
+	<< guard_string << " " << sflow_through <<  " " << sfull_rate << endl;
 }
 
 void Write_VC_Binary_Operator(AaOperation op, 
@@ -508,12 +510,12 @@ void Write_VC_Store_Operator(string ms_name, string inst_name, string data_name,
 	<< " (" << addr_name  << " " << data_name << ") " << guard_string <<  endl;
 }
 void Write_VC_IO_Input_Port(AaPipeObject* obj, string inst_name, string data_name,
-			    string guard_string, bool full_rate,
+			    string guard_string, bool full_rate, bool barrier_flag,
 			    ostream& ofile)
 {
   string frate = (full_rate ? " $fullrate " : "");
   ofile << "$ioport $in [" << inst_name  << "] (" << obj->Get_VC_Name() << ") ("
-	<< data_name << ") " << guard_string << frate <<  endl;
+	<< data_name << ") " <<  (barrier_flag ? "$barrier " : "") << guard_string << frate <<  endl;
 }
 void Write_VC_IO_Output_Port(AaPipeObject* obj, string inst_name, string data_name,
 			    string guard_string, bool full_rate,

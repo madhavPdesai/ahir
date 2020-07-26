@@ -54,6 +54,7 @@ entity UnloadBufferDeep is
         unload_req: in boolean;
         unload_ack: out boolean;
         read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data : out std_logic;
         clk : in std_logic;
         reset: in std_logic);
 end UnloadBufferDeep;
@@ -97,6 +98,7 @@ begin  -- default_arch
 	end if;
   end process;
 	
+  has_data <= '1' when pipe_has_data else '0';
   pipe_has_data <= (number_of_elements_in_pipe > 0);
   write_to_pipe <= (pipe_has_data or (not unload_register_ready));
   unload_from_pipe <= pipe_has_data;

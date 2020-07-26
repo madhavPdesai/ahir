@@ -474,11 +474,11 @@ void AaPipeObject::Set_Depth(int d)
 {
 	if(d == 0)
 	{
-		AaRoot::Warning("pipe depth set to 0", this);
+		AaRoot::Warning("pipe depth of " + this->Get_Name() + " set to 0", this);
 	}
 	else if(d < 0)
 	{
-		AaRoot::Error("pipe depth is < 0", this);
+		AaRoot::Error("pipe depth of " + this->Get_Name() + " < 0", this);
 	}
 
 	if(d >= 0)

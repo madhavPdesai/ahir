@@ -20,11 +20,14 @@ Release:
 	#license
 	cp -f ./LICENSE  $(RELEASE)
 	cp -f ./CONTRIBUTORS $(RELEASE)
+	# record the version
+	git log -1 > $(RELEASE)/VERSION
 	#  copy the tools
 	cp -f $(AA)/bin/Aa2C $(RELEASE)/bin/
 	cp -f $(AA)/bin/Aa2VC $(RELEASE)/bin/
 	cp -f $(AA)/bin/AaLinkExtMem $(RELEASE)/bin/
 	cp -f $(AA)/bin/AaOpt $(RELEASE)/bin/AaOpt
+	cp -f $(AA)/bin/AaPreprocess $(RELEASE)/bin/AaPreprocess
 	cp -f $(VC)/bin/vc2vhdl $(RELEASE)/bin/
 	cp -f $(VC)/bin/vcAnalyze $(RELEASE)/bin/vcAnalyze
 	cp -f $(VC)/bin/vcFormat $(RELEASE)/bin/

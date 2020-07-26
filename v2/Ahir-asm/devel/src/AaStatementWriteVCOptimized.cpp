@@ -132,7 +132,8 @@ void AaStatementSequence::Write_VC_Links_Optimized(string hier_id, ostream& ofil
 // AaNullStatement
 void AaNullStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
-	this->Write_VC_Control_Path(ofile);
+	ofile << "// " << this->To_String() << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
 }
 
 // AaAssignmentStatement
@@ -285,7 +286,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						ofile);
 				if(pipeline_flag)
 				{
-					this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), false,
+					this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), true,
 							visited_elements, ofile);
 				}
 			}
@@ -296,7 +297,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					ofile);
 			if(pipeline_flag)
 			{
-				this->_source->Write_VC_Update_Reenables(this, __SCT(this), false,
+				this->_source->Write_VC_Update_Reenables(this, __SCT(this), true,
 						visited_elements, ofile);
 				__SelfReleaseSplitProtocolPattern
 			}
@@ -312,7 +313,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					ofile);
 			if(pipeline_flag)
 			{
-				this->_source->Write_VC_Update_Reenables(this, __SCT(this->_target), false,
+				this->_source->Write_VC_Update_Reenables(this, __SCT(this->_target), true,
 						visited_elements, ofile);
 			}
 		}
@@ -413,6 +414,11 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		AaRoot* barrier,
 		ostream& ofile)
 {
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 	if(this->Get_Is_Volatile())
 	{
 		//
@@ -455,7 +461,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 										this->Get_Index(), visited_elements, ofile);
 					if(pipeline_flag)
 					{
-						this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), false,
+						this->_guard_expression->Write_VC_Update_Reenables(this, __SCT(this), true,
 								visited_elements, ofile);
 					}
 				}
@@ -482,7 +488,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				{
 					// expression evaluation will be reenabled by activation of the
 					// call.
-					expr->Write_VC_Update_Reenables(this, __SCT(this), false,
+					expr->Write_VC_Update_Reenables(this, __SCT(this), true,
 							visited_elements, ofile);
 				}
 			}
@@ -587,6 +593,11 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 void AaCallStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
 
@@ -629,6 +640,9 @@ void AaBlockStatement::Identify_Maximal_Sequences( AaStatementSequence* sseq,
 	//   a sequence with a pipe-access is a single statement.
 	//   a sequence with simple statements can have many statements.
 	//
+	// Note: added: a barrier statement introduces a cut in the
+	//      linear segment, but the barrier statement itself is
+	//      ignored.
 	//
 	int start_idx = 0;
 	while(start_idx < sseq->Get_Statement_Count())
@@ -641,15 +655,19 @@ void AaBlockStatement::Identify_Maximal_Sequences( AaStatementSequence* sseq,
 		{
 			stmt  = sseq->Get_Statement(end_idx);
 
+			if(stmt->Is("AaBarrierStatement"))
+			{
+				// barrier.. 
+				end_idx++;
+				break;
+			}
 			// some statements are just ignored.
-			if(stmt->Is_Null_Like_Statement())
+			else if(stmt->Is_Null_Like_Statement())
 			{
 				end_idx++;
 				continue;
 			}
-
-
-			if( stmt->Is_Block_Statement()  || stmt->Is_Control_Flow_Statement())
+			else if(stmt->Is_Block_Statement()  || stmt->Is_Control_Flow_Statement())
 			{
 				if(linear_segment.size() == 0)
 				{
@@ -926,7 +944,7 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<AaPipeObject*,vector<AaRoot*>
 		AaRoot* first_expr = (*iter).second[0];
 		vector<AaRoot*> write_expr_vector;
 		vector<AaRoot*> read_expr_vector;
-		vector<AaRoot*> signal_access_vector;
+		vector<AaRoot*> signal_write_vector;
 		for(int idx = 0, fidx = (*iter).second.size(); idx < fidx; idx++)
 		{
 
@@ -939,12 +957,18 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<AaPipeObject*,vector<AaRoot*>
 							!expr->Is_Opaque_Call_Statement()))
 				// opaque calls are ignored... up to 1-level.
 			{
-				if(is_signal)
-					signal_access_vector.push_back(expr);
-				else if(expr->Is_Write_To_Pipe(obj))
-					write_expr_vector.push_back(expr);
-				else
-					read_expr_vector.push_back(expr);
+				if(expr->Is_Write_To_Pipe(obj))
+				{
+					if(is_signal)
+						signal_write_vector.push_back(expr);
+					else
+						write_expr_vector.push_back(expr);
+				}
+				else	
+				{
+					if(!is_signal)
+						read_expr_vector.push_back(expr);
+				}
 			}
 		}
 
@@ -989,16 +1013,16 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<AaPipeObject*,vector<AaRoot*>
 			}
 
 		}
-		ofile << "// signal dependencies for " << pipe_name << endl;
-		if(signal_access_vector.size() > 1)
+		ofile << "// signal write dependencies for " << pipe_name << endl;
+		if(signal_write_vector.size() > 1)
 		{
-			int SS = signal_access_vector.size();
-			AaRoot* first_expr = signal_access_vector[0];
-			AaRoot* last_expr = signal_access_vector[SS-1];
+			int SS = signal_write_vector.size();
+			AaRoot* first_expr = signal_write_vector[0];
+			AaRoot* last_expr = signal_write_vector[SS-1];
 
 			for(int I = 1; I < SS; I++)
 			{
-				__J(__SST(signal_access_vector[I]), __UCT(signal_access_vector[I-1]));
+				__J(__SST(signal_write_vector[I]), __UCT(signal_write_vector[I-1]));
 			}
 			if(pipeline_flag)
 			{
@@ -1804,10 +1828,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						!sge->Is_Implicit_Variable_Reference() && 
 						!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 				{
-					sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+					sge->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 				}
 
-				source_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+				source_expr->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 			}
 		}
 		else
@@ -1998,16 +2022,17 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized_Single_Source(bool pipeline
 				!sge->Is_Implicit_Variable_Reference() && 
 				!sge->Is_Signal_Read() && !sge->Is_Flow_Through())
 		{
-			sge->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+			sge->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 		}
 
-		source_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+		source_expr->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 	}
 
 	__F ("aggregated_phi_sample_req", __SST(source_expr));
 	__J ("aggregated_phi_sample_ack", __SCT(source_expr));
 	__F ("aggregated_phi_update_req", __UST(source_expr));
 	__J (__UCT(this), __UCT(source_expr));
+        __J ("aggregated_phi_update_ack", __UCT(this));
 
 	visited_elements.insert(this);
 	ofile << "// done: PHI Statement " << this->Get_VC_Name() << endl;

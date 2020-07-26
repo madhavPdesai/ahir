@@ -171,6 +171,9 @@ void bit_vector_minus(bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_mul(bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_div(bit_vector* r, bit_vector* s, bit_vector* t);
 
+void bit_vector_smul(bit_vector* r, bit_vector* s, bit_vector* t);
+void bit_vector_sdiv(bit_vector* r, bit_vector* s, bit_vector* t);
+
 
 // ---------------------- bit manipulation --------------------------------------
 //  most of these are quite inefficiently implemented as of now.

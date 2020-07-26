@@ -1241,6 +1241,12 @@ namespace {
 					std::cerr << "Info: ignoring call to special function __loop_pipelining_on__." << std::endl;
 					return;
 				}
+				if(fname.equals("__aa_barrier__"))
+				{
+					std::cerr << "Info: saw special function __aa_barrier__." << std::endl;
+					std::cout << "$barrier " << std::endl;
+					return;
+				}
 			}
 
 			if(called_function == NULL)

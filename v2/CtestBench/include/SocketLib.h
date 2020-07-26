@@ -48,7 +48,7 @@
 
 
 // should be enough..
-#define MAX_BUF_SIZE 4096
+#define MAX_BUF_SIZE (16*4096)
 
 // by default, we will stick to 9999
 #define DEFAULT_SERVER_PORT  9999
@@ -80,8 +80,12 @@ void     append_double(char* str, double f);
 
 #define get_int64_t(p,q)  ((int64_t)get_uint64_t(p,q))
 #define get_int32_t(p,q)  ((int32_t)get_uint32_t(p,q))
-#define get_int16_t(p,q)  ((int16_t)get_uint16(p,q))
+#define get_int16_t(p,q)  ((int16_t)get_uint16_t(p,q))
 #define get_int8_t(p,q)   ((int8_t)get_uint8_t(p,q))
+#define append_int64_t(p,q)  append_uint64_t(p,q)
+#define append_int32_t(p,q)  append_uint32_t(p,q)
+#define append_int16_t(p,q)  append_uint16_t(p,q)
+#define append_int8_t(p,q)   append_uint8_t(p,q)
 
 // append the int in decimal form into the
 // string.
