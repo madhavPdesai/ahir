@@ -4237,18 +4237,32 @@ void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
 						siter != phi_dependency_map[mlabel].end();
 						siter++)
 				{
-					ofile << ";;[" << (*siter)->Get_VC_Name() << "] {" << endl;
+					AaPhiStatement* pp = *siter;
+					if(!pp->Get_Target()->Is_Constant())
+					{
 
-					ofile << "||[" << (*siter)->Get_VC_Name() << "_sources] {" << endl;
-					// the sources to the phi must be computed.
-					(*siter)->Write_VC_Source_Control_Paths(mlabel, ofile);
+						ofile << ";;[" << (*siter)->Get_VC_Name() 
+							<< "] {" << endl;
+
+						ofile << "||[" << (*siter)->Get_VC_Name()
+							 << "_sources] {" << endl;
+						// the sources to the phi must be computed.
+						(*siter)->Write_VC_Source_Control_Paths(mlabel, 
+							ofile);
 
 
-					ofile << "}" << endl;
+						ofile << "}" << endl;
 
-					// issue a req to the phi.
-					ofile << "$T [" << (*siter)->Get_VC_Name() << "_req] " << endl;
-					ofile << "}" << endl;
+						// issue a req to the phi.
+						ofile << "$T [" << (*siter)->Get_VC_Name() 
+							<< "_req] " << endl;
+						ofile << "}" << endl;
+					}
+					else
+					{
+						ofile << "// skipped constant phi " 
+								<< pp->Get_VC_Name() << endl;
+					}
 				}
 			}
 			else
@@ -4294,7 +4308,15 @@ void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
 		{
 			AaStatement* stmt = _statement_sequence->Get_Statement(idx);
 			assert(stmt->Is("AaPhiStatement"));
-			ofile << "$T [" << stmt->Get_VC_Name() << "_ack] " << endl; 
+			AaPhiStatement* pp = (AaPhiStatement*) stmt;
+			if(!pp->Get_Target()->Is_Constant())
+			{
+				ofile << "$T [" << stmt->Get_VC_Name() << "_ack] " << endl; 
+			}
+			else
+			{
+				ofile << "// skipped constant phi " << pp->Get_VC_Name() << endl;
+			}
 		}
 	}
 	else
@@ -4352,6 +4374,14 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 
 			vector<string> reqs;
 			AaPhiStatement* phi_stmt = (AaPhiStatement*) stmt;
+			
+			// skip phi if it is a constant..
+			if(phi_stmt->Get_Target()->Is_Constant())
+			{
+				ofile << "// In merge, skipped links for constant phi "
+					<< phi_stmt->Get_VC_Name() << endl;
+				continue;
+			}
 
 			// phi reqs..
 			for(int pidx = 0; pidx < phi_stmt->_source_pairs.size(); pidx++)
@@ -4897,7 +4927,8 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 	if(this->_target->Is_Constant())
 	{
-		ofile << "// constant phi." << endl;
+		ofile << "// constant phi data-path element skipped " <<
+			this->Get_VC_Name()  << endl;
 		return;
 	}
 

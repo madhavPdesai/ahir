@@ -1917,6 +1917,10 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 			AaProgram::Add_Object(obj);
 		else
 			scope->Add_Object(obj);
+
+		cerr << "Info: parsed and added pipe " << oname << " width = " << otype->Get_Width() 
+			<< " depth = " << pipe_depth
+				<<  endl;
             }
 	}
 	 

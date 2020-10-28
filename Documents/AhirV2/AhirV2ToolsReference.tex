@@ -30,10 +30,9 @@ the design of  hardware.
 
 The flow of transformations is illustrated in Figure \ref{fig:AhirFlow}.
 \begin{figure}
-\begin{centering}
-\centerline{\psfig{figure=AHIRv2Flow.eps,width=3.0in,height=3.0in}}
+\centering
+\includegraphics[width=8cm]{AHIRv2Flow.pdf}
 \caption{AhirV2 flow}
-\end{centering}
  \label{fig:AhirFlow}
 \end{figure}
 
@@ -392,6 +391,82 @@ void foo ( Ctype_1 in_1, Ctype_2 in_2, Ctype_3* out_1, Ctype_4* out_2);
 where Ctype is either a float or double or (int/uint)(64/32/16/8)\_t type.
 You can then link your external code with the generated {\bf C} code
 in the usual way.
+
+\subsection{{\bf AaPreprocess}: Preprocessor for {\bf Aa} description}
+
+The {\bf AaPreprocess} utility takes an input \Aa file and applies pre-processing
+directives in the file  to produce an output \Aa file.   The invocation of the
+{\bf AaPreprocess} utility is as follows:
+\begin{verbatim}
+AaPreprocess [-I <search-directory>]* -o <output-aa-file> <list-of-input-aa-files>
+\end{verbatim}
+
+The utility then applies the pre-processing directives in the input \Aa files
+to produce an output \Aa file.
+
+The pre-process directives that are supported are
+\begin{description}
+\item[\#include]  Specify a file to be included.  This is typically specified
+as 
+\begin{verbatim}
+#include foo.aa
+\end{verbatim}
+The directories specified by the -I option are searched and the first
+matching file with name ``foo.aa'' is substituted in place at the point
+of the include.
+\item[\#define]  Specifies a key-word definition.  For example
+\begin{verbatim}
+#define P  const_56
+\end{verbatim}
+This defines the  string "P" to be an alias of the string "const\_56".
+A \#define can override another \#define.  The last definition is used.
+\item[\#undefine]  This removes the specified define from the list
+of preprocessor defines.
+\begin{verbatim}
+#undefine P
+\end{verbatim}
+Any further references to ``P'' in the source will be
+flagged as errors by the pre-preocessor.
+\item[\#\#]  This the paste directive.   For example, if we have
+defined
+\begin{verbatim}
+#define P  const_56
+\end{verbatim}
+and we have a line in the input file of the form
+\begin{verbatim}
+a := ( ##P + 1)
+\end{verbatim}
+then, this will be expanded to
+\begin{verbatim}
+a := (const_56 + 1)
+\end{verbatim}
+\item [\#if - \#endif] 
+Code can be conditionally included using this construct.
+\begin{verbatim}
+#define TFLAG 1
+#define SFLAG 0
+#if TFLAG
+a := b
+#endif 
+#if SFLAG
+b := a
+#endif
+\end{verbatim}
+will be expanded to
+\begin{verbatim}
+a := b
+\end{verbatim}
+\end{description}
+
+To summarize: the preprocessor can be used to 
+\begin{itemize}
+\item include a file into the code.
+\item paste strings into the code.
+\item conditionally include code.
+\end{itemize}
+This adds flexibility to the programmer and
+can reduce the amount of repetitive code.
+
 
 \subsubsection{Restrictions in using {\bf Aa2C}}
 

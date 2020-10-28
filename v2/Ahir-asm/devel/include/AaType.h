@@ -46,6 +46,7 @@ class AaType: public AaRoot
  public:
   virtual AaScope* Get_Scope() {return(this->_scope);}
 
+  virtual unsigned int Get_Width() {assert(0);}
   AaType(AaScope* parent);
   ~AaType();
   virtual string Kind() {return("AaType");}
