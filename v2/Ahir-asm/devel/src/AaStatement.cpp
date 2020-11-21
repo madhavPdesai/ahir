@@ -4979,23 +4979,52 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	string dpe_name = this->Get_VC_Name();
 	string tgt_name = _target->Get_VC_Receiver_Name(); 
 
-	Write_VC_Phi_Operator(dpe_name,
-			sources,
-			tgt_name,
-			_target->Get_Type(),
-			this->Get_In_Do_While(), // pipelined case.
-			full_rate,
-			ofile);
-
-	// in the extreme pipelining case, output buffering
-	// will be kept to 2...  NOTE: not relevant in new scheme
-	// since source expressions will be buffered.
-	if(dws != NULL)
+	if(this->Is_Single_Source() && (dws != NULL))
+	//
+	// This corresponds to the pipelined loop case..
+	//
 	{
-		// PHI statement is always double buffered
-		// to cut long combinational paths.
-		ofile << "// $buffering  $out " << dpe_name << " "
-			<< tgt_name << " 2" << endl;
+		AaExpression* ssrc_expr = (* _source_label_vector.begin()).first;	
+		string ssrc_driver_name = ssrc_expr->Get_VC_Driver_Name();
+
+		bool ssrc_is_constant = ssrc_expr->Is_Constant();
+		bool ssrc_has_no_dpe  = (ssrc_expr->Is_Implicit_Variable_Reference() ||  ssrc_expr->Is_Signal_Read());
+		bool ssrc_is_volatile_fn_call = ssrc_expr->Is_Volatile_Function_Call();
+		if(!ssrc_is_constant && (ssrc_has_no_dpe || ssrc_is_volatile_fn_call))
+			ssrc_driver_name += "_" + 
+					Int64ToStr(ssrc_expr->Get_Index()) + "_buffered";
+	
+		Write_VC_Interlock_Buffer("ssrc_" + dpe_name,
+				ssrc_driver_name,
+				tgt_name,
+				"",
+				true, // flow-through-flag
+				true,
+				false, // cut-through
+				ofile);
+	}
+	else
+	{
+
+
+		Write_VC_Phi_Operator(dpe_name,
+				sources,
+				tgt_name,
+				_target->Get_Type(),
+				this->Get_In_Do_While(), // pipelined case.
+				full_rate,
+				ofile);
+
+		// in the extreme pipelining case, output buffering
+		// will be kept to 2...  NOTE: not relevant in new scheme
+		// since source expressions will be buffered.
+		if(dws != NULL)
+		{
+			// PHI statement is always double buffered
+			// to cut long combinational paths.
+			ofile << "// $buffering  $out " << dpe_name << " "
+				<< tgt_name << " 2" << endl;
+		}
 	}
 }
 
@@ -6194,7 +6223,8 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 		// issues
 		if(barriers.size() > 0) {
 
-			string curr_ust = (__UST(curr_phi) + "_ps");
+			string curr_ust = (((AaPhiStatement*)curr_phi)->Is_Single_Source() ?
+						__UST(((AaPhiStatement*)curr_phi)->Get_Source_Expression(0)) : __UST(curr_phi) + "_ps");
 
 
 			int J;
@@ -6202,7 +6232,8 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 			{
 
 				AaPhiStatement* last_phi = barriers[J];
- 				string barrier_sct = (__SCT(last_phi) + "_ps");
+ 				string barrier_sct = (last_phi->Is_Single_Source() ?
+                                                	__SCT(last_phi->Get_Source_Expression(0)) : __SCT(last_phi) + "_ps");
 
 				ofile << "// Race prevention dependency in ordered.. PHI's." << endl;
 				__J(curr_ust,barrier_sct)
