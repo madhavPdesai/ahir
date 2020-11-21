@@ -1636,7 +1636,7 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 			{
 				// the expression/statement which sets the value of this implicit variable
 				// is not found in the visited elements.  
-				return(__UST(this));
+				return("$null");
 			}
 		}
 

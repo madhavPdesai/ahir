@@ -689,9 +689,9 @@ namespace Aa {
 					if(!common_case_loopback || (to_bb != chain_dag->_header))
 					{
 						std::cout << curr_block_name << "_" << to_aa(to_bb->getNameStr()) << "_taken := ";
-						if(header_flag)
+						if(header_flag || !this->Get_Guard_Flag())
 							std::cout << "($bitcast($uint<1>) _b1)" << std::endl;
-						else
+						else 
 							std::cout << guard_name << std::endl;
 					}
 				}
@@ -704,7 +704,7 @@ namespace Aa {
 					if(!common_case_loopback || (dest0 != chain_dag->_header))
 					{
 						std::cout << curr_block_name << "_" << to_aa(dest0->getNameStr()) << "_taken := ";
-						if(header_flag)
+						if(header_flag || !this->Get_Guard_Flag())
 							std::cout << cond_name << std::endl;
 						else
 							std::cout << "(" << guard_name << " & " << cond_name << ")" << std::endl;
@@ -713,7 +713,7 @@ namespace Aa {
 					if(!common_case_loopback || (dest1 != chain_dag->_header))
 					{
 						std::cout << curr_block_name << "_" << to_aa(dest1->getNameStr()) << "_taken := ";
-						if(header_flag)
+						if(header_flag || !this->Get_Guard_Flag())
 							std::cout << "( ~" << cond_name << ")" << std::endl;
 						else
 							std::cout << "(" << guard_name << " & (~" << cond_name << "))" << std::endl;

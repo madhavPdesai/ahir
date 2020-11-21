@@ -294,6 +294,9 @@ class AaFloatType : public AaScalarType
   void Print(ostream& ofile);
   virtual string Kind() {return("AaFloatType");}
 
+  virtual unsigned int Get_Width() {
+	return(this->Get_Characteristic() + this->Get_Mantissa() + 1);
+  }
   
   virtual string C_Base_Name() 
   {

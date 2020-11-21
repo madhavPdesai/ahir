@@ -28,12 +28,15 @@
 // ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 // TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+#include <unistd.h>
 #include <pthread.h>
 #include <pthreadUtils.h>
 #include <Pipes.h>
 #include <pipeHandler.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#define DEPTH     1
 
 int TSIZE = 10000;
 void Sender()
@@ -42,11 +45,6 @@ void Sender()
 	for(word = 0; word < TSIZE; word++)
 	{
 		write_uint32("S_to_R",word);
-		uint32_t rword = read_uint32("R_to_S");
-		if(rword != word)
-		{
-			fprintf(stderr,"Error: Sender received incorrect response: %d (expected %d).\n", rword, word);
-		}
 	}
 	fprintf(stderr,"Info: Sender done.\n");
 }
@@ -54,12 +52,17 @@ void Sender()
 void Receiver()
 {
 	uint32_t word;
-	while(1)
+	uint32_t I;
+	for(I = 0; I < TSIZE; I++)
 	{
 
 		word = read_uint32("S_to_R");
-		write_uint32("R_to_S", word);
+		if(word != I)
+		{
+			fprintf(stderr,"Error: Receiver received incorrect word: %d (expected %d).\n", word, I);
+		}
 	}
+	fprintf(stderr,"Info: Receiver done.\n");
 }
 
 DEFINE_THREAD(Sender);
@@ -75,15 +78,17 @@ int main(int argc, char* argv[])
 	fprintf(stderr,"Info: Test-size = %d.\n", TSIZE);
 
         init_pipe_handler();
-	register_pipe("S_to_R",32,32, 0);
-	register_pipe("R_to_S",32,32, 0);
+	register_pipe("S_to_R",DEPTH,32, 0);
+	register_pipe("R_to_S",DEPTH,32, 0);
 
-	PTHREAD_DECL(Sender);
-	PTHREAD_CREATE(Sender);
 	PTHREAD_DECL(Receiver);
 	PTHREAD_CREATE(Receiver);
 
+
+	PTHREAD_DECL(Sender);
+	PTHREAD_CREATE(Sender);
+
 	PTHREAD_JOIN(Sender);
-	PTHREAD_CANCEL(Receiver);
+	PTHREAD_JOIN(Receiver);
 	close_pipe_handler();
 }

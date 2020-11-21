@@ -1411,7 +1411,13 @@ class AaTypeCastExpression: public AaExpression
 	virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements);
 	virtual bool Is_Trivial();
 	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
-	virtual bool Can_Be_Combinationalized() {return(this->_rest->Can_Be_Combinationalized());}
+	virtual bool Can_Be_Combinationalized() 
+	{
+		return(this->_rest->Can_Be_Combinationalized() && 
+			(this->Get_Bit_Cast() ||
+				!(this->Get_To_Type()->Is_Float_Type() ||
+					!this->Get_Type()->Is_Float_Type())));
+	}
 };
 
 class AaSliceExpression: public AaTypeCastExpression

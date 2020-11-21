@@ -21,7 +21,7 @@ A \vC system consists of modules and memory spaces.
 Each module may itself contain memory spaces.  Further,
 each module has a {\em control-path} and a {\em data-path}.
 The control-path is a Petri-net constructed using
-a set of rules (as describe in \cite{ref:SameerPhD}).1
+a set of rules (as described in \cite{ref:SameerPhD}).
 The data-path is essentially a directed graph of {\em operator } nodes
 communicating with each other and the outside world using {\em wires}.
 
@@ -169,8 +169,16 @@ the connections between this sequence (branches, merges).
 \end{verbatim}
 In this example, the keywords \$entry and \$exit correspond
 to implicit entry and exit transitions associated with the branch block.
-The $<-|$ specifies that a token leaving the right will enter
-the left (place) and $|->$ signifies that a token entering the left
+The 
+\begin{verbatim}
+<-|
+\end{verbatim}
+ specifies that a token leaving the right will enter
+the left (place) and 
+\begin{verbatim}
+|->
+\end{verbatim}
+signifies that a token entering the left
 (place) will enter one of the elements in the list on the right.
 \item A {\em fork region} is a sequence of control path
 elements with additional statements which describe 
@@ -187,11 +195,20 @@ forking and joining.
        $exit <-& (job_3)
 }
 \end{verbatim}
+
 In this example, the keywords \$entry and \$exit correspond
 to implicit transitions associated with the branch block.
-The <-\& specifies that after a token leaves from every
+The
+\begin{verbatim}
+ <-&
+\end{verbatim}
+ specifies that after a token leaves from every
 element in the right list, a token will enter
-the left (transition) and \&-> signifies that a token leaving the left
+the left (transition) and the
+\begin{verbatim}
+&->
+\end{verbatim}
+signifies that a token leaving the left
 (transition) will be replicated so that a
 token enters each of the elements in the list on the right.
 \item A pipelined-fork block defines a fork block which can support
@@ -208,9 +225,9 @@ jT o<- (s1 1 s2 1)
 (s1 can be $entry)
 \end{verbatim}
 Which says that jT is a join of s1 and s2, with a pre-condition
-that s1 is assumed to have fired twice and s2 is assumed to have fired
-twice before time began.  As a result it is possible for jT to fire
-twice before s1 and s2 fire in normal operation. 
+that s1 is assumed to have fired and s2 is assumed to have fired
+before time began.  As a result it is possible for jT to fire
+before s1 and s2 fire in normal operation. 
 \end{itemize}
 
 The control-path itself is a series region. It syntax is
@@ -220,6 +237,46 @@ $CP {
    ... sequence of control-path elements --
 }
 \end{verbatim}
+
+\subsection{Special constructs in the control path}
+
+Some special constructs are used in the control path.
+\begin{itemize}
+\item Transition merge:  This is specified as
+\begin{verbatim}
+$transition_merge [merge_name] (p q r) (s)
+\end{verbatim}
+Where p, q, r are transition, and s fires whenever any 
+of p,q,r fire.
+\item  Phi-sequencer:   This is specified
+as
+\begin{verbatim}
+$phisequencer [phiseq_name] :  
+    trigger_1
+       src_1_sample_req src_1_sample_ack
+       src_1_update_req src_1_update_ack
+    trigger_2
+       src_2_sample_req src_2_sample_ack
+       src_2_update_req src_2_update_ack:
+    phi_sample_start phi_sample_completed
+       phi_update_start phi_update_completed :
+    trigger_1_sample_req  trigger_2_sample_req:
+       phi_mux_ack
+\end{verbatim}
+and it describes the control connections between the Phi operator and
+its sources.
+\item Loop terminator: This is specified as
+\begin{verbatim}
+$terminate (loop_exit loop_taken loop_body_done) 
+              (loop_back loop_terminate)
+\end{verbatim}
+The loop terminator looks at the result of the do-while condition
+check via the input transitions loop\_exit and loop\_taken, 
+and uses the loop\_body\_done transition to determine the
+number of transitions in flight and hence to trigger the
+next do-while iteration (firing of loop\_back) or to
+decide that the loop has terminated.
+\end{itemize}
 
 \section{Types} \label{sec:Types}
 

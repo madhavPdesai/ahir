@@ -143,7 +143,7 @@ void vcEquivalence::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 		int L = (H- w->Get_Size())+1;
 		ofile << Z
 			<< " <= ov(" << H << " downto " << L << ");" << endl;
-		H = H-L;
+		H = H - w->Get_Size();
     	}
 	ofile << "--}" << endl;
 	ofile << "end process;" << endl;
