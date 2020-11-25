@@ -61,6 +61,7 @@
   send_len=strlen(buffer)+(len*w/8);					\
 			 bcopy(buf,buffer + strlen(buffer),(len*w/8)); \
 			 send_packet_and_wait_for_response(buffer,send_len,"localhost",9999);
+#define SOCKWARNBUFLENANDRETURN__(w, id, buf_len) {if(buf_len <= 0) {fprintf(stderr,"Warning: 0-length %s to pipe %s\n", (w ? "write" : "read"), id); return;} }
 
 
 // register pipes will have no effect...  Assumption, at this
@@ -129,6 +130,8 @@ void sock_write_uint64(const char *id, uint64_t data)
 // from pipe id, receive buf_len uint64_t's..
 void sock_read_uint64_n(const char *id, uint64_t* buf, int buf_len)
 {
+  SOCKWARNBUFLENANDRETURN__(0, id, buf_len);
+
   char buffer[MAX_BUF_SIZE+1024];
 
   if(buf_len*sizeof(uint64_t) > MAX_BUF_SIZE)
@@ -158,6 +161,7 @@ void sock_read_uint64_n(const char *id, uint64_t* buf, int buf_len)
 // to pipe id, send buf_len uint64_t's...
 void sock_write_uint64_n(const char *id, uint64_t* buf, int buf_len)
 {
+  SOCKWARNBUFLENANDRETURN__(1, id, buf_len);
 
   if(buf_len*sizeof(uint64_t) > MAX_BUF_SIZE)
   {
@@ -207,6 +211,8 @@ void sock_write_uint32(const char *id, uint32_t data)
 // from pipe id, receive buf_len uint32_t's..
 void sock_read_uint32_n(const char *id, uint32_t* buf, int buf_len)
 {
+  SOCKWARNBUFLENANDRETURN__(0, id, buf_len);
+
   char buffer[MAX_BUF_SIZE+1024];
 
   if(buf_len*sizeof(uint32_t) > MAX_BUF_SIZE)
@@ -234,6 +240,8 @@ void sock_read_uint32_n(const char *id, uint32_t* buf, int buf_len)
 // to pipe id, send buf_len uint32_t's...
 void sock_write_uint32_n(const char *id, uint32_t* buf, int buf_len)
 {
+
+  SOCKWARNBUFLENANDRETURN__(1, id, buf_len);
 
   if(buf_len*sizeof(uint32_t) > MAX_BUF_SIZE)
   {
@@ -281,6 +289,7 @@ void sock_write_uint16(const char *id, uint16_t data)
 // from pipe id, receive buf_len uint16_t's..
 void sock_read_uint16_n(const char *id, uint16_t* buf, int buf_len)
 {
+  SOCKWARNBUFLENANDRETURN__(0, id, buf_len);
   char buffer[MAX_BUF_SIZE+1024];
 
   if(buf_len*sizeof(uint16_t) > MAX_BUF_SIZE)
@@ -310,6 +319,7 @@ void sock_read_uint16_n(const char *id, uint16_t* buf, int buf_len)
 void sock_write_uint16_n(const char *id, uint16_t* buf, int buf_len)
 {
 
+  SOCKWARNBUFLENANDRETURN__(1, id, buf_len);
   if(buf_len*sizeof(uint16_t) > MAX_BUF_SIZE)
   {
 	fprintf(stderr, 
@@ -356,6 +366,7 @@ void sock_write_uint8(const char *id, uint8_t data)
 // from pipe id, receive buf_len uint8_t's..
 void sock_read_uint8_n(const char *id, uint8_t* buf, int buf_len)
 {
+  SOCKWARNBUFLENANDRETURN__(0, id, buf_len);
   if(buf_len*sizeof(uint8_t) > MAX_BUF_SIZE)
   {
 	fprintf(stderr, 
@@ -384,6 +395,7 @@ void sock_read_uint8_n(const char *id, uint8_t* buf, int buf_len)
 // to pipe id, send buf_len uint8_t's...
 void sock_write_uint8_n(const char *id, uint8_t* buf, int buf_len)
 {
+  SOCKWARNBUFLENANDRETURN__(1, id, buf_len);
 
   if(buf_len*sizeof(uint8_t) > MAX_BUF_SIZE)
   {

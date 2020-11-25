@@ -33,6 +33,8 @@
 
 #include <stdint.h>
 
+#define MAX_PAYLOAD_LENGTH 	(16*4096)
+
 // author: Madhav P. Desai
 // jacket functions to enable VHPI direct interface
 // to VHDL only simulators supporting VHPI.  
@@ -79,7 +81,7 @@ struct _JobLink
   char increment_word_count;
   int active_word_count;
   
-  char* payload;
+  char payload[MAX_PAYLOAD_LENGTH];
 
 
   int socket_id;

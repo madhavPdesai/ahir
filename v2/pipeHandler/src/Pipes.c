@@ -45,6 +45,8 @@
 #include <GnuPthUtils.h>
 #endif 
 
+#define WARNBUFLEN___(w, id,b) {fprintf(stderr,"Warning:  0-length %s to pipe %s\n", (w ? "write" : "read"), id);}
+
 MUTEX_DECL(log_mutex);
 #define __LOCKLOG__  MUTEX_LOCK(log_mutex);
 #define __UNLOCKLOG__  MUTEX_UNLOCK(log_mutex);
@@ -106,13 +108,23 @@ void write_uint64(const char *id, uint64_t data)
 // from pipe id, receive buf_len uint64_t's..
 void read_uint64_n(const char *id, uint64_t* buf, int buf_len)
 {
-	READ_BURST__(id,64,buf_len,buf);
+	if(buf_len > 0)
+	{	
+		READ_BURST__(id,64,buf_len,buf);
+	}
+	else
+		WARNBUFLEN___(0, id, buf_len);
 }
 
 // to pipe id, send buf_len uint64_t's...
 void write_uint64_n(const char *id, uint64_t* buf, int buf_len)
 {
-	WRITE_BURST__(id,64,buf_len,buf);
+	if(buf_len > 0)
+	{	
+		WRITE_BURST__(id,64,buf_len,buf);
+	}
+	else
+		WARNBUFLEN___(1, id, buf_len);
 }
 
 uint32_t read_uint32(const char *id)
@@ -155,13 +167,23 @@ void write_uint32(const char *id, uint32_t data)
 // from pipe id, receive buf_len uint32_t's..
 void read_uint32_n(const char *id, uint32_t* buf, int buf_len)
 {
-	READ_BURST__(id,32,buf_len,buf);
+	if(buf_len > 0)
+	{
+		READ_BURST__(id,32,buf_len,buf);
+	}
+	else
+		WARNBUFLEN___(0, id, buf_len);
 }
 
 // to pipe id, send buf_len uint32_t's...
 void write_uint32_n(const char *id, uint32_t* buf, int buf_len)
 {
-	WRITE_BURST__(id, 32, buf_len, buf);
+	if(buf_len > 0)
+	{
+		WRITE_BURST__(id, 32, buf_len, buf);
+	}
+	else
+		WARNBUFLEN___(1, id, buf_len);
 }
 
 uint16_t read_uint16(const char *id)
@@ -171,11 +193,11 @@ uint16_t read_uint16(const char *id)
 	READ_BURST__(id, 16, 1, buf);
 #ifdef DEBUG
 	__LOCKLOG__
-	fprintf(stderr,"Info:read_uint16: read %s.\n", id);
+		fprintf(stderr,"Info:read_uint16: read %s.\n", id);
 	fflush(stderr);
 	__UNLOCKLOG__
 #endif
-	return(ret_val);
+		return(ret_val);
 }
 void write_uint16(const char *id, uint16_t data)
 {
@@ -183,7 +205,7 @@ void write_uint16(const char *id, uint16_t data)
 	WRITE_BURST__(id, 16, 1, buf);
 #ifdef DEBUG
 	__LOCKLOG__
-	fprintf(stderr,"Info:write_uint16: write %s (%u)\n", id,data);
+		fprintf(stderr,"Info:write_uint16: write %s (%u)\n", id,data);
 	fflush(stderr);
 	__UNLOCKLOG__
 #endif
@@ -192,13 +214,23 @@ void write_uint16(const char *id, uint16_t data)
 // from pipe id, receive buf_len uint16_t's..
 void read_uint16_n(const char *id, uint16_t* buf, int buf_len)
 {
-	READ_BURST__(id,16,buf_len,buf);
+	if(buf_len > 0)
+	{
+		READ_BURST__(id,16,buf_len,buf);
+	}
+	else
+		WARNBUFLEN___(0, id, buf_len);
 }
 
 // to pipe id, send buf_len uint16_t's...
 void write_uint16_n(const char *id, uint16_t* buf, int buf_len)
 {
-	WRITE_BURST__(id, 16, buf_len, buf);
+	if(buf_len > 0)
+	{
+		WRITE_BURST__(id, 16, buf_len, buf);
+	}
+	else
+		WARNBUFLEN___(1, id, buf_len);
 }
 
 uint8_t read_uint8(const char *id)
@@ -207,32 +239,32 @@ uint8_t read_uint8(const char *id)
 	uint8_t* buf = &ret_val;
 #ifdef DEBUG
 	__LOCKLOG__
-	fprintf(stderr,"Info:read_uint8: started read %s.\n", id, ret_val);
+		fprintf(stderr,"Info:read_uint8: started read %s.\n", id, ret_val);
 	fflush(stderr);
 	__UNLOCKLOG__
 #endif
-	READ_BURST__(id, 8, 1, buf);
+		READ_BURST__(id, 8, 1, buf);
 #ifdef DEBUG
 	__LOCKLOG__
-	fprintf(stderr,"Info:read_uint8: finished read %s, returned %x.\n", id, ret_val);
+		fprintf(stderr,"Info:read_uint8: finished read %s, returned %x.\n", id, ret_val);
 	fflush(stderr);
 	__UNLOCKLOG__
 #endif
-	return(ret_val);
+		return(ret_val);
 }
 void write_uint8(const char *id, uint8_t data)
 {
 	uint8_t* buf = &data;
 #ifdef DEBUG
 	__LOCKLOG__
-	fprintf(stderr,"Info:write_uint8: started write %s (%u)\n", id,data);
+		fprintf(stderr,"Info:write_uint8: started write %s (%u)\n", id,data);
 	fflush(stderr);
 	__UNLOCKLOG__
 #endif
-	WRITE_BURST__(id, 8, 1, buf);
+		WRITE_BURST__(id, 8, 1, buf);
 #ifdef DEBUG
 	__LOCKLOG__
-	fprintf(stderr,"Info:write_uint8: finished write %s (%u)\n", id,data);
+		fprintf(stderr,"Info:write_uint8: finished write %s (%u)\n", id,data);
 	fflush(stderr);
 	__UNLOCKLOG__
 #endif
@@ -241,13 +273,23 @@ void write_uint8(const char *id, uint8_t data)
 // from pipe id, receive buf_len uint8_t's..
 void read_uint8_n(const char *id, uint8_t* buf, int buf_len)
 {
-	READ_BURST__(id,8,buf_len,buf);
+	if(buf_len > 0)
+	{
+		READ_BURST__(id,8,buf_len,buf);
+	}
+	else
+		WARNBUFLEN___(0, id, buf_len);
 }
 
 // to pipe id, send buf_len uint8_t's...
 void write_uint8_n(const char *id, uint8_t* buf, int buf_len)
 {
-	WRITE_BURST__(id, 8, buf_len, buf);
+	if(buf_len > 0)
+	{
+		WRITE_BURST__(id, 8, buf_len, buf);
+	}
+	else
+		WARNBUFLEN___(1, id, buf_len);
 }
 
 uint32_t* read_uintptr(const char *id)
@@ -294,12 +336,22 @@ void write_float32(const char *id, float data)
 
 void read_float32_n(const char *id, float* buf, int buf_len)
 {
-  read_uint32_n(id,(uint32_t*) buf,buf_len);
+	if(buf_len > 0)
+	{
+		read_uint32_n(id,(uint32_t*) buf,buf_len);
+	}
+	else
+		WARNBUFLEN___(0, id, buf_len);
 }
 
 void write_float32_n(const char *id, float* buf, int buf_len)
 {
-  write_uint32_n(id, (uint32_t*) buf, buf_len);
+	if(buf_len > 0)
+	{
+		write_uint32_n(id, (uint32_t*) buf, buf_len);
+	}
+	else
+		WARNBUFLEN___(1, id, buf_len);
 }
 
 double read_float64(const char *id)
@@ -316,12 +368,22 @@ void write_float64(const char *id, double data)
 }
 void read_float64_n(const char *id, double* buf, int buf_len)
 {
-  read_uint64_n(id,(uint64_t*) buf,buf_len);
+	if(buf_len > 0)
+	{
+		read_uint64_n(id,(uint64_t*) buf,buf_len);
+	}
+	else
+		WARNBUFLEN___(0, id, buf_len);
 }
 
 void write_float64_n(const char *id, double* buf, int buf_len)
 {
-  write_uint64_n(id, (uint64_t*) buf, buf_len);
+	if(buf_len > 0)
+	{
+		write_uint64_n(id, (uint64_t*) buf, buf_len);
+	}
+	else
+		WARNBUFLEN___(1, id, buf_len);
 }
 
 
