@@ -679,6 +679,8 @@ bool AaProgram::Propagate_Types()
   for(int i = 0; i < type_eq_class_map.size(); i++)
     unknown_type_set.insert(i);
 
+  vector<int> erase_vector;
+
 
   // keep iterating as long as there is an unknown
   // type
@@ -750,7 +752,8 @@ bool AaProgram::Propagate_Types()
 
 	      // type of map entry at i has been discovered
 	      // erase it from the set.
-	      unknown_type_set.erase(i);
+	      // unknown_type_set.erase(i);
+	      erase_vector.push_back(i);
 	    }
 	} // iterated over all unknown equivalence classes 
 
@@ -774,6 +777,12 @@ bool AaProgram::Propagate_Types()
 	  break; // stop trying, you have reached a fixed point.
 	}
       // if found at least one, continue..
+      int Ei;
+	for(Ei = 0; Ei < erase_vector.size(); Ei++)
+	{
+		unknown_type_set.erase(erase_vector[Ei]);
+	}
+	erase_vector.clear();
     }
   return(err_flag);
 }
