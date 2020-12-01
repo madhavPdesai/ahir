@@ -998,6 +998,7 @@ Expressions in \Aa fall into the following classes
 \item Bitmap (bit permutation) expressions.
 \item Binary expressions.
 \item Ternary expressions.
+\item Zero, One expressions.
 \end{itemize}
 
 \subsection{Constant literal references} 
@@ -1366,6 +1367,31 @@ For example
 ($mux a (b+1) (c+d))
 \end{verbatim}
 
+\subsection{Zero, One expressions}
+
+For convenience, the following expressions represent
+a zero and one value with the specified uint type:
+\begin{verbatim}
+$zero<width>
+$one<width>
+\end{verbatim}
+
+The following expression 
+\begin{verbatim}
+$zero<16>
+\end{verbatim}
+expands to
+\begin{verbatim}
+($bitcast ($uint<16>) 0)
+\end{verbatim}
+and the  following expression
+\begin{verbatim}
+$one<16>
+\end{verbatim}
+expands to
+\begin{verbatim}
+($bitcast ($uint<16>) 1)
+\end{verbatim}
 
 \section{Synthetic instructions}
 

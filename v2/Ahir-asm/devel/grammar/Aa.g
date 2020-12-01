@@ -1287,7 +1287,8 @@ aA_Expression[AaScope* scope] returns [AaExpression* expr]
 	    (expr = aA_ExclusiveMux_Expression[scope]) |
 	    (expr = aA_Reduce_Expression[scope]) |
 	    (expr = aA_VectorConcatenate_Expression[scope]) |
-	    (expr = aA_FunctionCall_Expression[scope])
+	    (expr = aA_FunctionCall_Expression[scope]) |
+	    (expr = aA_One_Or_Zero_Expression[scope]) 
         )
 ;
 
@@ -1397,7 +1398,7 @@ aA_Cast_Expression[AaScope* scope] returns [AaExpression* expr]
     expr = NULL;
     bool bit_cast = false;
 }:
-        lpid: LPAREN 
+       lpid: LPAREN 
             (
                 (CAST | (BITCAST {bit_cast = true;}))
 
@@ -1411,6 +1412,35 @@ aA_Cast_Expression[AaScope* scope] returns [AaExpression* expr]
             }
 	    (aA_Expression_Buffering_Spec[expr])?
 	RPAREN
+
+;
+
+// $zero<n> or $one<n> where n is a positive integer.
+aA_One_Or_Zero_Expression[AaScope* scope] returns [AaExpression* expr]
+{
+	AaExpression* rest = NULL;
+	string full_name;
+	vector<string> literals;
+	bool zero_flag = 0;
+}:
+	(CONSTZERO {zero_flag = 1;} | CONSTONE ) lid:LESS uid:UINTEGER gid:GREATER
+	{
+		full_name = (zero_flag ? "_b0" : "_b1");
+		literals.push_back(full_name);
+
+		rest = new AaConstantLiteralReference(scope, full_name, literals);
+		uint32_t w = atoi(uid->getText().c_str());
+		if(w == 0)
+		{
+			AaRoot::Error("invalid width of $zero/$one at line " + IntToStr(lid->getLine()), NULL);
+		}
+		else
+		{
+	    		AaType* t = AaProgram::Make_Uinteger_Type(w);
+	    		expr = new AaTypeCastExpression(scope,t,rest);
+            		((AaTypeCastExpression*)expr)->Set_Bit_Cast(true);
+		}
+	}
 ;
 
 
@@ -2665,6 +2695,9 @@ KEEP     : "$keep";
 
 DETERMINISTIC: "$deterministic";
 CUT_THROUGH: "$cut_through";
+
+CONSTZERO: "$zero";
+CONSTONE: "$one";
 // data format
 UINTEGER          : DIGIT (DIGIT)*;
 FLOATCONST : "_f" ('-')? DIGIT '.' (DIGIT)+ 'e' ('+' | '-') (DIGIT)+;

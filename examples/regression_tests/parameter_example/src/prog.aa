@@ -18,7 +18,7 @@ $module [phi_check_daemon] $in() $out () $is
 		$merge $entry $loopback 
 			$phi COUNT := ($bitcast ($uint<32>) PZERO) $on $entry NCOUNT $on $loopback
 		$endmerge
-		$volatile NCOUNT := (COUNT + INCREMENT)
+		$volatile NCOUNT := ((COUNT + INCREMENT) + ($zero<32> + $one<32>))
 		out_data := COUNT
 		$while 1
 	}
