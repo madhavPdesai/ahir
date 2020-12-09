@@ -716,7 +716,9 @@ void vcCall::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 		first_one = false;
 		ofile << this->_called_module->Get_Output_Argument(idx) << " => " << ow_name;
 	}
-	if(vcSystem::_enable_logging)
+
+	// add instrumentation..
+	if(vcSystem::_enable_logging && !this->_called_module->Get_Is_Function_Library_Module())
 	{
 		if(!first_one)
 			ofile << ", ";

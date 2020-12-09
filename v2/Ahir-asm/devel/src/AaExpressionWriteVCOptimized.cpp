@@ -2522,7 +2522,8 @@ void AaFunctionCallExpression::Write_VC_Control_Path_Optimized(bool pipeline_fla
 			ofile << "}" << endl;
 
 			__ConnectSplitProtocolPattern;
-			__SelfReleaseSplitProtocolPattern;
+			if(pipeline_flag)
+				__SelfReleaseSplitProtocolPattern;
 		}
 
 		this->Write_VC_Phi_Start_Dependency(ofile);
