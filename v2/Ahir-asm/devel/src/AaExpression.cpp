@@ -6334,7 +6334,12 @@ void AaFunctionCallExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<Aa
 	for(int I = 0, fI = _arguments.size(); I < fI; I++)
 	{
 		_arguments[I]->Update_Adjacency_Map(adjacency_map, visited_elements);
-		__InsMap(adjacency_map,_arguments[I],this,_called_module->Get_Delay());
+		
+		int delay = 0;
+		if(!this->_called_module->Get_Volatile_Flag())
+			delay = this->_called_module->Get_Delay();
+
+		__InsMap(adjacency_map,_arguments[I],this,delay);
 	}
 	this->Update_Guard_Adjacency(adjacency_map,visited_elements);
 	visited_elements.insert(this);
