@@ -4,6 +4,8 @@ $parameter PWIDTH {2 ** LOG_PWIDTH }
 $parameter LPDEPTH {~{~{PDEPTH + 2}}}
 $parameter PZERO 0
 $parameter INCREMENT 1
+$parameter ThreeTwo  32
+
 
 $constant ZERO8: $uint<8> := {PDEPTH - PDEPTH}
 $constant FFF : $uint<10> := { 5 ** 5 }
@@ -19,7 +21,8 @@ $module [phi_check_daemon] $in() $out () $is
 			$phi COUNT := ($bitcast ($uint<32>) PZERO) $on $entry NCOUNT $on $loopback
 		$endmerge
 		$volatile NCOUNT := ((COUNT + INCREMENT) + ($zero<32> + $one<32>))
-		out_data := COUNT
+		out_data := (COUNT + $zero<{{ThreeTwo/2} + {ThreeTwo/2}}>)
+
 		$while 1
 	}
 

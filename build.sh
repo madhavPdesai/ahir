@@ -16,3 +16,8 @@ scons
 cd -
 echo "Copying files to release area."
 make -f ReleaseMakefile
+echo "Setting version"
+echo "----------------------------------------------------------------------------" >> $AHIR_RELEASE/VERSION
+echo $(date) >> $AHIR_RELEASE/VERSION
+git log -n 1 >> $AHIR_RELEASE/VERSION
+echo "----------------------------------------------------------------------------" >> $AHIR_RELEASE/VERSION

@@ -1422,21 +1422,22 @@ aA_One_Or_Zero_Expression[AaScope* scope] returns [AaExpression* expr]
 	string full_name;
 	vector<string> literals;
 	bool zero_flag = 0;
+	int lno;
+	uint32_t width=0;
 }:
-	(CONSTZERO {zero_flag = 1;} | CONSTONE ) lid:LESS uid:UINTEGER gid:GREATER
+	(CONSTZERO {zero_flag = 1;} | CONSTONE ) lid:LESS width = aA_Integer_Parameter_Expression[lno]  gid:GREATER
 	{
 		full_name = (zero_flag ? "_b0" : "_b1");
 		literals.push_back(full_name);
 
 		rest = new AaConstantLiteralReference(scope, full_name, literals);
-		uint32_t w = atoi(uid->getText().c_str());
-		if(w == 0)
+		if(width == 0)
 		{
 			AaRoot::Error("invalid width of $zero/$one at line " + IntToStr(lid->getLine()), NULL);
 		}
 		else
 		{
-	    		AaType* t = AaProgram::Make_Uinteger_Type(w);
+	    		AaType* t = AaProgram::Make_Uinteger_Type(width);
 	    		expr = new AaTypeCastExpression(scope,t,rest);
             		((AaTypeCastExpression*)expr)->Set_Bit_Cast(true);
 		}
