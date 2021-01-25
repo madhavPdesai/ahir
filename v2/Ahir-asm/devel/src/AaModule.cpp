@@ -1137,10 +1137,12 @@ void AaModule::Check_Statements()
 						AaRoot::Error("volatile module " + this->Get_Label() + "  has non-volatile call statement.", s);
 						err_flag = true;
 					}
-					else if(this->Get_Operator_Flag() && !(as->Get_Called_Module()->Get_Volatile_Flag() 
-										|| as->Get_Called_Module()->Get_Operator_Flag()))
+					else if(this->Get_Operator_Flag() && 
+						!(as->Get_Called_Module()->Get_Volatile_Flag()  ||
+							as->Get_Called_Module()->Get_Foreign_Flag() || 
+							as->Get_Called_Module()->Get_Operator_Flag()))
 					{
-						AaRoot::Error("operator module  " + this->Get_Label() + " can call only volatile/operator modules.", s);
+						AaRoot::Error("operator module  " + this->Get_Label() + " can call only volatile/operator/foreign modules.", s);
 						err_flag = true;
 					}
 				}
@@ -1157,104 +1159,107 @@ void AaModule::Check_Statements()
 
 void AaModule::Check_That_All_Out_Args_Are_Driven()
 {
-	for(int I = 0, fI = this->Get_Number_Of_Output_Arguments(); I < fI; I++)
+	if(!this->Get_Foreign_Flag())
 	{
-		AaInterfaceObject* oobj = this->Get_Output_Argument(I);
-		if(oobj->Get_Unique_Driver_Statement() == NULL)
+		for(int I = 0, fI = this->Get_Number_Of_Output_Arguments(); I < fI; I++)
 		{
-			AaRoot::Error("output interface " + oobj->Get_Name() + " of module " + this->Get_Label()
-						+ " not driven.", NULL);
+			AaInterfaceObject* oobj = this->Get_Output_Argument(I);
+			if(oobj->Get_Unique_Driver_Statement() == NULL)
+			{
+				AaRoot::Error("output interface " + oobj->Get_Name() + " of module " + 
+							this->Get_Label() + " not driven.", NULL);
+			}
 		}
 	}
 }
 
 void AaModule::Write_VC_Control_Path_Optimized_Base(ostream& ofile)
 {
-  this->Check_Statements(); // check for errors.
+	this->Check_Statements(); // check for errors.
 
-  if(!this->Is_Pipelined())
-    {
-      this->AaSeriesBlockStatement::Write_VC_Control_Path_Optimized_Base(ofile);
-    }
-  else
-    {
-      ofile << "// pipelined module" << endl;
-      string region_name = this->_statement_sequence->Get_VC_Name();
-
-      string exported_outputs;
-      string exported_inputs;
-      string trans_decls;
-      string place_decls;
-      string binding_string;
-
-      set<AaRoot*> visited_elements;
-
-      // TODO: collect group of inputs and outputs that are actually used
-      // 	 those that are unused will not need really need input buffers! 
-      for(int idx = 0,  fidx = this->Get_Number_Of_Input_Arguments(); 
-	  idx < fidx;
-	  idx++)
+	if(!this->Is_Pipelined())
 	{
-	  AaInterfaceObject* inobj = this->Get_Input_Argument(idx);
-
-	  //
-	  // add inobj to visited elements.
-	  // (only for pipelined modules)
-	 //
-	  visited_elements.insert(inobj);
-
-	  string tname = inobj->Get_VC_Name() + "_update_enable";
-	  exported_outputs += " " + tname + "_out";
-	  place_decls += "$P [" + tname + "] \n";
-	  trans_decls += "$T [" + tname + "] ";
-	  trans_decls += "\n";
-	  trans_decls += "$T [" + tname + "_out] \n";
-	  trans_decls += tname + " &-> (" + tname + "_out)\n";
-	  trans_decls += "$null &-> (" + tname + ")\n";
-	  binding_string += "$bind " + tname + " <= " + region_name + " : " + tname + "_out\n"; 
-	  if(this->Get_Operator_Flag())
-	  {
-	  	string tname_u = inobj->Get_VC_Name() + "_update_enable_unmarked";
-	  	exported_outputs += " " + tname_u + "_out";
-	  	place_decls += "$P [" + tname_u + "] \n";
-	  	trans_decls += "$T [" + tname_u + "] ";
-	  	trans_decls += "\n";
-	  	trans_decls += "$T [" + tname_u  + "_out] \n";
-	  	trans_decls += tname_u + " &-> (" + tname_u + "_out)\n";
-	  	trans_decls += "$null &-> (" + tname_u + ")\n";
-	  	binding_string += "$bind " + tname_u + " <= " + region_name + " : " + tname_u + "_out\n"; 
-	  }
+		this->AaSeriesBlockStatement::Write_VC_Control_Path_Optimized_Base(ofile);
 	}
-
-      for(int idx = 0,  fidx = this->Get_Number_Of_Output_Arguments(); 
-	  idx < fidx;
-	  idx++)
+	else
 	{
-	  AaInterfaceObject* outobj = this->Get_Output_Argument(idx);
-	  bool is_constant = (outobj->Get_Expr_Value() != NULL);
-	  if(!is_constant)
-	  {
-	  	string tname = outobj->Get_VC_Name() + "_update_enable";
-	  	exported_inputs += " " + tname + "_in";
-	  	place_decls += "$P [" + tname + "] \n";
-	  	trans_decls += "$T [" + tname + "] \n";
-	  	trans_decls += "$T [" + tname + "_in] \n";
-	  	trans_decls += "$null &-> (" + tname + ")\n";
-	  	trans_decls +=  "$null <-& (" + tname + "_in) \n";
-	  	trans_decls += "$null &-> (" + tname + ")\n";
-		// note simplification!
-	  	trans_decls += tname + " <-& (" + tname + "_in) \n"; // 0-delay, else wasted cycle.
-	  	binding_string += "$bind " + tname + " => " + region_name + " : " + tname + "_in\n"; 
-	  }
-	}
+		ofile << "// pipelined module" << endl;
+		string region_name = this->_statement_sequence->Get_VC_Name();
 
-      ofile << ":|:[" << region_name << "] {" << endl;
-      map<AaMemorySpace*, vector<AaRoot*> > load_store_ordering_map;
-      map<AaPipeObject*, vector<AaRoot*> >  pipe_map;
-      AaRoot* tb = NULL;
+		string exported_outputs;
+		string exported_inputs;
+		string trans_decls;
+		string place_decls;
+		string binding_string;
 
-      // declare the linking (export) transitions.
-      ofile << trans_decls << endl;
+		set<AaRoot*> visited_elements;
+
+		// TODO: collect group of inputs and outputs that are actually used
+		// 	 those that are unused will not need really need input buffers! 
+		for(int idx = 0,  fidx = this->Get_Number_Of_Input_Arguments(); 
+				idx < fidx;
+				idx++)
+		{
+			AaInterfaceObject* inobj = this->Get_Input_Argument(idx);
+
+			//
+			// add inobj to visited elements.
+			// (only for pipelined modules)
+			//
+			visited_elements.insert(inobj);
+
+			string tname = inobj->Get_VC_Name() + "_update_enable";
+			exported_outputs += " " + tname + "_out";
+			place_decls += "$P [" + tname + "] \n";
+			trans_decls += "$T [" + tname + "] ";
+			trans_decls += "\n";
+			trans_decls += "$T [" + tname + "_out] \n";
+			trans_decls += tname + " &-> (" + tname + "_out)\n";
+			trans_decls += "$null &-> (" + tname + ")\n";
+			binding_string += "$bind " + tname + " <= " + region_name + " : " + tname + "_out\n"; 
+			if(this->Get_Operator_Flag())
+			{
+				string tname_u = inobj->Get_VC_Name() + "_update_enable_unmarked";
+				exported_outputs += " " + tname_u + "_out";
+				place_decls += "$P [" + tname_u + "] \n";
+				trans_decls += "$T [" + tname_u + "] ";
+				trans_decls += "\n";
+				trans_decls += "$T [" + tname_u  + "_out] \n";
+				trans_decls += tname_u + " &-> (" + tname_u + "_out)\n";
+				trans_decls += "$null &-> (" + tname_u + ")\n";
+				binding_string += "$bind " + tname_u + " <= " + region_name + " : " + tname_u + "_out\n"; 
+			}
+		}
+
+		for(int idx = 0,  fidx = this->Get_Number_Of_Output_Arguments(); 
+				idx < fidx;
+				idx++)
+		{
+			AaInterfaceObject* outobj = this->Get_Output_Argument(idx);
+			bool is_constant = (outobj->Get_Expr_Value() != NULL);
+			if(!is_constant)
+			{
+				string tname = outobj->Get_VC_Name() + "_update_enable";
+				exported_inputs += " " + tname + "_in";
+				place_decls += "$P [" + tname + "] \n";
+				trans_decls += "$T [" + tname + "] \n";
+				trans_decls += "$T [" + tname + "_in] \n";
+				trans_decls += "$null &-> (" + tname + ")\n";
+				trans_decls +=  "$null <-& (" + tname + "_in) \n";
+				trans_decls += "$null &-> (" + tname + ")\n";
+				// note simplification!
+				trans_decls += tname + " <-& (" + tname + "_in) \n"; // 0-delay, else wasted cycle.
+				binding_string += "$bind " + tname + " => " + region_name + " : " + tname + "_in\n"; 
+			}
+		}
+
+		ofile << ":|:[" << region_name << "] {" << endl;
+		map<AaMemorySpace*, vector<AaRoot*> > load_store_ordering_map;
+		map<AaPipeObject*, vector<AaRoot*> >  pipe_map;
+		AaRoot* tb = NULL;
+
+		// declare the linking (export) transitions.
+		ofile << trans_decls << endl;
 
       // the main fork-pipeline.
       this->AaBlockStatement::Write_VC_Control_Path_Optimized(true,

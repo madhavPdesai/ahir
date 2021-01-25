@@ -2263,14 +2263,14 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
     {
         string full_name;
         vector<string> literals;
-        int line_number;
+        int line_number=0;
 	int param_value;
         int dlno;
         bool scalar_flag = true;
     }
     : 
           (           
-           (aA_Integer_Literal_Reference[full_name,literals,dlno]) 
+           (aA_Integer_Literal_Reference[full_name,literals,dlno] {line_number = dlno;} ) 
            |
             (lid:LESS  {full_name += lid->getText(); line_number = lid->getLine();}
             (aA_Integer_Literal_Reference[full_name,literals,dlno])+

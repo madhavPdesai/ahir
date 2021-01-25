@@ -2951,11 +2951,13 @@ void AaCallStatement::Write_VC_Wire_Declarations(ostream& ofile)
 
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	/*
 	if(this->_called_module->Get_Foreign_Flag())
 	{
 		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
 		return;
 	}
+	*/
 
 
 	for(int idx = 0; idx < _input_args.size(); idx++)
