@@ -1727,8 +1727,8 @@ void AaAssignmentStatement::Map_Targets()
 			assert(tobj != NULL);
 			if(tobj->Is_Interface_Object())
 			{
-				AaRoot::Error("operator module has volatile update of interface object " + tobj->Get_Name(), this); 
-				return;
+				AaRoot::Warning("operator module has volatile update of interface object " + tobj->Get_Name(), this); 
+				//return;
 			}
 		}
 	}

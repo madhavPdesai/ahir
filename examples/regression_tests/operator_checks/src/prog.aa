@@ -19,7 +19,7 @@ $pipeline $depth 3 $fullrate $operator $module
 	Z0 := X
         Z1 := Z0
         Z2 := Z1
-	Z  := Z2
+	$volatile Z  := Z2
 }
 
 

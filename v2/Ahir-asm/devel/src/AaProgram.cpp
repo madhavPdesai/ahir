@@ -1374,10 +1374,13 @@ void AaProgram::Write_VHDL_C_Stubs()
 			miter++)
 	{
 		AaModule* m = (*miter).second;
-		if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+		if(!m->Get_Foreign_Flag())
 		{
-			(*miter).second->Write_VHDL_C_Stub_Header(header_file);
-			(*miter).second->Write_VHDL_C_Stub_Source(source_file);
+			if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+			{
+				(*miter).second->Write_VHDL_C_Stub_Header(header_file);
+				(*miter).second->Write_VHDL_C_Stub_Source(source_file);
+			}
 		}
 	}
 
