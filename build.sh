@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -x
+set -a
 export AHIR_RELEASE=$(pwd)/release
 export BOOST_VERSION=boost_1_58_0
 export LD_LIBRARY_PATH=/opt/glibc-2.14/lib:$LD_LIBRARY_PATH

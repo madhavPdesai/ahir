@@ -139,7 +139,6 @@ void allocate_sized_u8_array(sized_u8_array* a, uint32_t sz)
 }
 
 void free_sized_u8_array(sized_u8_array* a)
-{
 	free (a->byte_array);
 	free (a->undefined_byte_array);
 }
