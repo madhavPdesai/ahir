@@ -33,6 +33,7 @@
 #include <AaParser.hpp>
 #include <AaLexer.hpp>
 #include <Aa2C.h>
+#include "ahir_version.h"
 
 using namespace std;
 using namespace antlr;
@@ -71,7 +72,9 @@ void printUsage()
 int main(int argc, char* argv[])
 {
 
+  
   signal(SIGSEGV, Handle_Segfault);
+  printAhirVersion(argv[0]);
 
   if(argc < 2)
     {

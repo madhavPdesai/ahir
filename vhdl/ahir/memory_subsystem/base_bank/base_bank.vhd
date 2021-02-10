@@ -61,6 +61,8 @@ begin  -- XilinxBramInfer
  
   debugGen: if global_debug_flag generate
   assert false report "MemSliceInfo base_bank " & name & " " & " addr_width = " & Convert_To_String(g_addr_width) & " data-width = " & Convert_To_String(g_data_width) severity note;
+  assert false report "MSLICE SP " &  Convert_To_String(g_addr_width) & " " & Convert_To_String(g_data_width) severity note;
+
   end generate debugGen;
 
   -- read/write process

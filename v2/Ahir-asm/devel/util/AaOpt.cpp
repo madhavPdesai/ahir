@@ -32,6 +32,7 @@
 #include <AaParserClasses.h>
 #include <AaParser.hpp>
 #include <AaLexer.hpp>
+#include "ahir_version.h"
 
 using namespace std;
 using namespace antlr;
@@ -59,6 +60,9 @@ void Handle_Segfault(int signal)
 
 int main(int argc, char* argv[])
 {
+
+  printAhirVersion(argv[0]);
+
   AaProgram::_verbose_flag = false;
 
   signal(SIGSEGV, Handle_Segfault);

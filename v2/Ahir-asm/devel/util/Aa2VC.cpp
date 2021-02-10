@@ -34,6 +34,7 @@
 #include <AaLexer.hpp>
 #include <Aa2C.h>
 #include <getopt.h>
+#include "ahir_version.h"
 
 using namespace std;
 using namespace antlr;
@@ -84,6 +85,8 @@ void Usage_Aa2VC()
 
 int main(int argc, char* argv[])
 {
+
+  printAhirVersion(argv[0]);
 
   bool write_vhdl_c_stubs = false;
   signal(SIGSEGV, Handle_Segfault);

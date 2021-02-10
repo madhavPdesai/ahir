@@ -2732,7 +2732,8 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 		if(this->_input_args[i]->Get_Type()->Is_Integer_Type())
 		{
 			ofile << this->_input_args[i]->Get_Type()->Native_C_Name() << " __" 
-				<< this->_input_args[i]->C_Reference_String() << ";\\" << endl;	
+				<< this->_input_args[i]->C_Reference_String() << "__" << this->Get_Index() 
+					<< ";\\" << endl;	
 		}
 	}
 
@@ -2743,7 +2744,8 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 		if(this->_output_args[i]->Get_Type()->Is_Integer_Type())
 		{
 			ofile << this->_output_args[i]->Get_Type()->Native_C_Name() << " __" 
-				<< this->_output_args[i]->C_Reference_String() << ";\\" << endl;	
+				<< this->_output_args[i]->C_Reference_String() << "__"
+				<< this->Get_Index() << ";\\" << endl;	
 		}
 	}
 
@@ -2771,7 +2773,7 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 		{
 			ofile << "__";
 		}
-		ofile << this->_output_args[i]->C_Reference_String();
+		ofile << this->_output_args[i]->C_Reference_String() << "__" << this->Get_Index();
 		first_one = false;
 	}
 	ofile <<  ");\\" << endl;
@@ -2781,7 +2783,7 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 	{
 		if(this->_output_args[i]->Get_Type()->Is_Integer_Type())
 		{
-			Print_C_Uint64_To_BitVector_Assignment("__" + this->_output_args[i]->C_Reference_String(),
+			Print_C_Uint64_To_BitVector_Assignment("__" + this->_output_args[i]->C_Reference_String() + "__" + Int64ToStr(this->Get_Index()),
 					this->_output_args[i]->C_Reference_String(),
 					this->_output_args[i]->Get_Type(), ofile);
 		}

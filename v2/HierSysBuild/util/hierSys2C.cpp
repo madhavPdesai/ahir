@@ -384,7 +384,7 @@ int main(int argc, char* argv[])
 				use_gnu_pth  = true;
 				cerr << "Info: will link to Gnu Pth." << endl;
 				break;
-			default: cerr << "Error: unknown option " << opt << endl; ret_val = 1; break;
+			default: cerr << "Error: unknown option " << opt << " ignored " <<  endl;  break;
 		}
 	}
 

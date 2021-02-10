@@ -115,7 +115,7 @@ begin  -- default_arch
           token_latch <= next_token_latch_var;
         end if;
   
-        if(debug_flag and decr) then
+        if((reset /= '1') and debug_flag and decr) then
              
         	  if (token_latch = 0) then
           		  assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
@@ -124,7 +124,7 @@ begin  -- default_arch
 		 	  severity note;
         end if;
   
-        if (debug_flag and incr) then
+        if ((reset /= '1') and debug_flag and incr) then
   
        		  if(token_latch = capacity) then
          		  assert false report "in place-with-bypass: " & name & " number of tokens "
@@ -169,7 +169,7 @@ begin  -- default_arch
           non_zero    <= next_non_zero_var;
         end if;
   
-        if(debug_flag and decr) then
+        if((reset /= '1') and debug_flag and decr) then
              
         	  if (not non_zero) then
           		  assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
@@ -177,7 +177,7 @@ begin  -- default_arch
            	  assert false report "in place " & name & ": token count decremented from 1 to 0 " severity note;
         end if;
   
-        if (debug_flag and incr) then
+        if ((reset /= '1') and debug_flag and incr) then
   
        		  if(non_zero) then
          		  assert false report "in place-with-bypass: " & name & " number of tokens "
