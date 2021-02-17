@@ -73,7 +73,9 @@ architecture struct of base_bank_dual_port is
 
   -- n_cols contains the required number of columns of available memory cuts
   -- to build the given memory 
-  constant n_cols: IntegerArray(1 to 3) := find_n_cols(dpmem_cut_address_widths, dpmem_cut_data_widths, dpmem_cut_row_heights, g_addr_width, g_data_width);
+  constant n_cols: IntegerArray(1 to dpmem_cut_address_widths'length) := 
+		find_n_cols(dpmem_cut_address_widths, dpmem_cut_data_widths, 
+					dpmem_cut_row_heights, g_addr_width, g_data_width);
 
   --total_data_width is the size of the resized data 
   constant total_data_width: integer := find_data_width(dpmem_cut_data_widths, n_cols);

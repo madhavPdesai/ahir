@@ -42,36 +42,42 @@ use ahir.mem_ASIC_components.all;
 -- address_width and data_width generics passed.
 entity spmem_selector is
 	generic(address_width: integer:=8; data_width: integer:=8);
-	port (A : in std_logic_vector(address_width-1 downto 0 );
-	CE : in std_logic;
-	WEB: in std_logic;
-	OEB: in std_logic;
-	CSB: in std_logic;
-	I  : in std_logic_vector(data_width-1 downto 0);
-	O  : out std_logic_vector(data_width-1 downto 0));
+	port (ADDR : in std_logic_vector(address_width-1 downto 0 );
+		CLK : in std_logic;
+	        RESET: in std_logic;
+		WRITE_BAR: in std_logic;
+		ENABLE_BAR: in std_logic;
+		DATAIN  : in std_logic_vector(data_width-1 downto 0);
+		DATAOUT  : out std_logic_vector(data_width-1 downto 0));
 end entity spmem_selector;
 
 architecture behave of spmem_selector is
 
-  signal CEB: std_logic;
+  signal CEB, OEB: std_logic;
 
 begin
+  
+  OEB <= '0';
 
   c1: if (address_width = 4 and data_width = 4) generate 
-	u1: SPRAM_16x4 port map(A, CE, WEB, OEB, CSB, I, O);
+	u1: SPRAM_16x4 
+		port map(ADDR, CLK, WRITE_BAR, OEB, ENABLE_BAR, DATAIN, DATAOUT);
 	end generate;
 
   c2: if (address_width = 5 and data_width = 16) generate 
-	u1: SPRAM_32_16 port map(A, CE, WEB, OEB, CSB, I, O);
+	u1: SPRAM_32_16 
+		port map(ADDR, CLK, WRITE_BAR, OEB, ENABLE_BAR, DATAIN, DATAOUT);
 	end generate;
 
   c3: if (address_width = 8 and data_width = 8) generate
-	CEB <= not(CE); 
-	u1: obc11_256x8 port map(A, CEB, WEB, OEB, CSB, I, O);
+	CEB <= not(CLK); 
+	u1: obc11_256x8 
+		port map(ADDR, CEB, WRITE_BAR, OEB, ENABLE_BAR, DATAIN, DATAOUT);
 	end generate;
 
   c4: if (address_width = 9 and data_width = 24) generate 
-	u1: SPRAM_512x24 port map(A, CE, WEB, OEB, CSB, I, O);
+	u1: SPRAM_512x24 
+		port map(ADDR, CLK, WRITE_BAR, OEB, ENABLE_BAR, DATAIN, DATAOUT);
 	end generate;
 
 end behave;

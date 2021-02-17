@@ -48,20 +48,6 @@ use aHiR_ieee_proposed.float_pkg.all;
 
 package MemCutsPackage is
 
-	-- available single-port memory cuts.
-	--    16x4, 32x16, 256x8, 512x24
-	constant spmem_cut_row_heights    :IntegerArray(1 to 4):=(16, 32, 256, 512);
-	constant spmem_cut_address_widths :IntegerArray(1 to 4):=(4, 5, 8, 9); -- log of row-widths.
-
-	constant spmem_cut_data_widths    :IntegerArray(1 to 4):=(4, 16, 8, 24);
-	
-	-- available dual-port memory cuts.
-	--    16x4, 16x8, 32x8
-	constant dpmem_cut_row_heights    :IntegerArray(1 to 3):=(16, 16, 32);
-	constant dpmem_cut_address_widths :IntegerArray(1 to 3):=(4, 4, 5); -- log of row-widths.
-
-	constant dpmem_cut_data_widths    :IntegerArray(1 to 3):=(4, 8, 8);
-
 	-- For a requirement of a memory with MxN (M-rows, N-columns) aspect
 	-- ratio, we will first determine uniform columns to implement the
 	-- memory.  For each available memory cut, we will find the number
