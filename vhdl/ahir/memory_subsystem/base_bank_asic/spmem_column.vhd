@@ -43,13 +43,14 @@ use ahir.memory_subsystem_package.all;
 use ahir.MemcutDescriptionPackage.all;
 use ahir.MemCutsPackage.all;
 use ahir.mem_ASIC_components.all;
+use ahir.mem_component_pack.all;
 
 library aHiR_ieee_proposed;
 use aHiR_ieee_proposed.math_utility_pkg.all;
 use aHiR_ieee_proposed.float_pkg.all;
 
 entity spmem_column is
-   generic ( name: string:="SPRAM_16x4"; 
+   generic ( name: string:="spmem_column"; 
 	g_addr_width: natural := 2;
 	g_base_bank_addr_width: natural:=4; 
 	g_base_bank_data_width : natural := 4);

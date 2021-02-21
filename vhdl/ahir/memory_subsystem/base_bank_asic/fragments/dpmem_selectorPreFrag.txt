@@ -65,17 +65,3 @@ begin
 	TIE_LOW <= '0';
 	TIE_LOW_3 <= (others => '0');
 	TIE_LOW_4 <= (others => '0');
-  dpram_5X4_gen: if (address_width = 5) and (data_width = 4) generate
-       inst: dpram_5X4
-   port map (A1 => ADDR_0, A2 => ADDR_1, CE1 => CLK, CE2 => CLK, WEB1 => WRITE_0_BAR, WEB2 => WRITE_1_BAR, OEB1 => TIE_LOW, OEB2 => TIE_LOW, CSB1 => ENABLE_0_BAR, CSB2 => ENABLE_1_BAR, I1 => DATAIN_0, I2 => DATAIN_1, O1 => DATAOUT_0, O2 => DATAOUT_1);
-  end generate dpram_5X4_gen;
-  obc11_dpram_4X8_gen: if (address_width = 4) and (data_width = 8) generate
-       inst: obc11_dpram_4X8
-   port map (A1 => ADDR_0, A2 => ADDR_1, CE1 => CLK, CE2 => CLK, WEB1 => WRITE_0_BAR, WEB2 => WRITE_1_BAR, OEB1 => TIE_LOW, OEB2 => TIE_LOW, CSB1 => ENABLE_0_BAR, CSB2 => ENABLE_1_BAR, I1 => DATAIN_0, I2 => DATAIN_1, O1 => DATAOUT_0, O2 => DATAOUT_1);
-  end generate obc11_dpram_4X8_gen;
-  dpram_5X8_gen: if (address_width = 5) and (data_width = 8) generate
-       inst: dpram_5X8
-   port map (A1 => ADDR_0, A2 => ADDR_1, CE1 => CLK, CE2 => CLK, WEB1 => WRITE_0_BAR, WEB2 => WRITE_1_BAR, OEB1 => TIE_LOW, OEB2 => TIE_LOW, CSB1 => ENABLE_0_BAR, CSB2 => ENABLE_1_BAR, I1 => DATAIN_0, I2 => DATAIN_1, O1 => DATAOUT_0, O2 => DATAOUT_1);
-  end generate dpram_5X8_gen;
-end StructGen;
-

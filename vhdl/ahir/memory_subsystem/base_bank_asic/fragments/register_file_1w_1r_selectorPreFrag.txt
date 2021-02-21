@@ -31,35 +31,33 @@
 -- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
 --------------------------------------------------------------------------------------------------
 
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ahir;	
-use ahir.Types.all;	
-use ahir.Subprograms.all;	
-use ahir.mem_function_pack.all;
-use ahir.memory_subsystem_package.all;
---use ahir.Utilities.all;
+library ahir;
+use ahir.mem_ASIC_components.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.math_utility_pkg.all;
-use aHiR_ieee_proposed.float_pkg.all;
+-- Entity to instantiate different available memory cuts based on the 
+-- address_width and data_width generics passed.
+entity register_file_1w_1r_selector is
+	generic(address_width: integer:=8; data_width: integer:=8);
+	port (ADDR_0 : in std_logic_vector(address_width-1 downto 0 );
+		ADDR_1 : in std_logic_vector(address_width-1 downto 0 );
+		ENABLE_0_BAR : in std_logic;
+		ENABLE_1_BAR : in std_logic;
+		DATAIN_0  : in std_logic_vector(data_width-1 downto 0);
+		DATAOUT_1  : out std_logic_vector(data_width-1 downto 0);
+		CLK, RESET: in std_logic);
+end entity register_file_1w_1r_selector;
 
-package MemcutDescriptionPackage is
-
-	-- available single-port memory cuts.
-	--    16x4, 32x16, 256x8, 512x24
-	constant spmem_cut_row_heights    :IntegerArray(1 to 4):=(16, 32, 256, 512);
-	constant spmem_cut_address_widths :IntegerArray(1 to 4):=(4, 5, 8, 9); -- log of row-widths.
-
-	constant spmem_cut_data_widths    :IntegerArray(1 to 4):=(4, 16, 8, 24);
-	
-	-- available dual-port memory cuts.
-	--    16x4, 16x8, 32x8
-	constant dpmem_cut_row_heights    :IntegerArray(1 to 3):=(16, 16, 32);
-	constant dpmem_cut_address_widths :IntegerArray(1 to 3):=(4, 4, 5); -- log of row-widths.
-
-	constant dpmem_cut_data_widths    :IntegerArray(1 to 3):=(4, 8, 8);
-end package;
-
+architecture StructGen of register_file_1w_1r_selector is
+	signal TIE_HIGH, TIE_LOW: std_logic;
+        signal TIE_LOW_3: std_logic_vector(2 downto 0);
+        signal TIE_LOW_4: std_logic_vector(3 downto 0);
+begin
+	TIE_HIGH <= '1';
+	TIE_LOW <= '0';
+	TIE_LOW_3 <= (others => '0');
+	TIE_LOW_4 <= (others => '0');

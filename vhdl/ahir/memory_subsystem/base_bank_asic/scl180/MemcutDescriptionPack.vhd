@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------------------------
 --
--- Copyright (C) 2010-: Madhav P. Desai
+-- Copyright (C) 2010-: Madhav P. Desai, Ch. V. Kalyani
 -- All Rights Reserved.
 --  
 -- Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,52 +29,31 @@
 -- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 -- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
-------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ahir;
-use ahir.utilities.all;
+library ahir;	
+use ahir.Types.all;	
+use ahir.Subprograms.all;	
+use ahir.mem_function_pack.all;
+use ahir.memory_subsystem_package.all;
+--use ahir.Utilities.all;
 
--- memory implemented with registers..
-entity base_bank_with_registers is
-   generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
-   port (datain : in std_logic_vector(g_data_width-1 downto 0);
-         dataout: out std_logic_vector(g_data_width-1 downto 0);
-         addrin: in std_logic_vector(g_addr_width-1 downto 0);
-         enable: in std_logic;
-         writebar : in std_logic;
-         clk: in std_logic;
-         reset : in std_logic);
-end entity base_bank_with_registers;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;
+use aHiR_ieee_proposed.float_pkg.all;
 
-
-architecture PlainRegisters of base_bank_with_registers is
-  type MemArray is array (natural range <>) of std_logic_vector(g_data_width-1 downto 0);
-  signal mem_array : MemArray((2**g_addr_width)-1 downto 0) := (others => (others => '0'));
-  signal read_data : std_logic_vector(g_data_width-1 downto 0);
-
-begin  -- PlainRegisters
-
-  assert false report "SP MEMFF " & Convert_To_String ( g_data_width*(2**g_addr_width)) 
-		severity note;
-
-  -- read/write process
-  process(clk,addrin,enable,writebar)
-  begin
-    -- synch read-write memory
-    if(clk'event and clk ='1') then
-	if (reset = '1') then 
-  		read_data <= (others => '0');
-	elsif(enable = '1') then
-		if(writebar = '0') then
-        		mem_array(To_Integer(unsigned(addrin))) <= datain;
-		else
-  			read_data <= mem_array(To_Integer(unsigned(addrin)));
-		end if;
-	end if;
-    end if;
-  end process;
-  dataout <= read_data;
-end PlainRegisters;
+package MemcutDescriptionPackage is
+   constant spmem_cut_row_heights : IntegerArray(1 to 4) := (512, 256, 32, 16);
+    constant spmem_cut_address_widths : IntegerArray(1 to 4) := (9, 8, 5, 4);
+    constant spmem_cut_data_widths : IntegerArray(1 to 4) := (24, 8, 16, 4);
+   constant dpmem_cut_row_heights : IntegerArray(1 to 3) := (32, 16, 32);
+    constant dpmem_cut_address_widths : IntegerArray(1 to 3) := (5, 4, 5);
+    constant dpmem_cut_data_widths : IntegerArray(1 to 3) := (8, 8, 4);
+   constant register_file_1w_1r_cut_row_heights : IntegerArray(1 to 2) := (4, 2);
+    constant register_file_1w_1r_cut_address_widths : IntegerArray(1 to 2) := (2, 1);
+    constant register_file_1w_1r_cut_data_widths : IntegerArray(1 to 2) := (2, 1);
+end package;

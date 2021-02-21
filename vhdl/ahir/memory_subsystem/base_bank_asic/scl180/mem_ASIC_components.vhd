@@ -30,54 +30,58 @@
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 -- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
 --------------------------------------------------------------------------------------------------
-
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
 
-library ahir;
-use ahir.mem_ASIC_components.all;
+package mem_ASIC_components is
 
--- Entity to instantiate different available memory cuts based on the 
--- address_width and data_width generics passed.
-entity spmem_selector is
-	generic(address_width: integer:=8; data_width: integer:=8);
-	port (ADDR : in std_logic_vector(address_width-1 downto 0 );
-		CLK : in std_logic;
-	        RESET: in std_logic;
-		WRITE_BAR: in std_logic;
-		ENABLE_BAR: in std_logic;
-		DATAIN  : in std_logic_vector(data_width-1 downto 0);
-		DATAOUT  : out std_logic_vector(data_width-1 downto 0));
-end entity spmem_selector;
-
-architecture StructGen of spmem_selector is
-
-  signal TIE_HIGH, TIE_LOW: std_logic;
-  signal TIE_LOW_3: std_logic_vector(2 downto 0);
-  signal TIE_LOW_4: std_logic_vector(3 downto 0);
-
-begin
-  
-  TIE_HIGH <= '1';
-  TIE_LOW  <= '0';
-  TIE_LOW_3 <= (others => '0');
-  TIE_LOW_4 <= (others => '0');
-  spram_4X4_gen: if (address_width = 4) and (data_width = 4) generate
-       inst: spram_4X4
-   port map (A => ADDR, CE => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, I => DATAIN, O => DATAOUT);
-  end generate spram_4X4_gen;
-  spram_5X16_gen: if (address_width = 5) and (data_width = 16) generate
-       inst: spram_5X16
-   port map (A => ADDR, CE => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, I => DATAIN, O => DATAOUT);
-  end generate spram_5X16_gen;
-  obc11_8X8_gen: if (address_width = 8) and (data_width = 8) generate
-       inst: obc11_8X8
-   port map (A => ADDR, CE => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, I => DATAIN, O => DATAOUT);
-  end generate obc11_8X8_gen;
-  spram_9X24_gen: if (address_width = 9) and (data_width = 24) generate
-       inst: spram_9X24
-   port map (A => ADDR, CE => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, I => DATAIN, O => DATAOUT);
-  end generate spram_9X24_gen;
-end StructGen;
+  component dpram_5X4 is
+   port(       A1,A2  : in std_logic_vector(4 downto 0);
+      I1,I2  : in std_logic_vector(3 downto 0);
+      CE1,CE2,CSB1,CSB2,WEB1,WEB2: in std_logic;
+      O1,O2 : out std_logic_vector(3 downto 0));
+  end component;
+  component obc11_dpram_4X8 is
+   port(       A1,A2  : in std_logic_vector(3 downto 0);
+      I1,I2  : in std_logic_vector(7 downto 0);
+      CE1,CE2,CSB1,CSB2,WEB1,WEB2: in std_logic;
+      O1,O2 : out std_logic_vector(7 downto 0));
+  end component;
+  component dpram_5X8 is
+   port(       A1,A2  : in std_logic_vector(4 downto 0);
+      I1,I2  : in std_logic_vector(7 downto 0);
+      CE1,CE2,CSB1,CSB2,WEB1,WEB2: in std_logic;
+      O1,O2 : out std_logic_vector(7 downto 0));
+  end component;
+  component spram_4X4 is
+   port(       A : in std_logic_vector(3 downto 0);
+      I  : in std_logic_vector(3 downto 0);
+      CE, CSB, WEB: in std_logic;
+      O  : out std_logic_vector(3 downto 0));
+  end component;
+  component spram_5X16 is
+   port(       A : in std_logic_vector(4 downto 0);
+      I  : in std_logic_vector(15 downto 0);
+      CE, CSB, WEB: in std_logic;
+      O  : out std_logic_vector(15 downto 0));
+  end component;
+  component obc11_8X8 is
+   port(       A : in std_logic_vector(7 downto 0);
+      I  : in std_logic_vector(7 downto 0);
+      CE, CSB, WEB: in std_logic;
+      O  : out std_logic_vector(7 downto 0));
+  end component;
+  component spram_9X24 is
+   port(       A : in std_logic_vector(8 downto 0);
+      I  : in std_logic_vector(23 downto 0);
+      CE, CSB, WEB: in std_logic;
+      O  : out std_logic_vector(23 downto 0));
+  end component;
+  component fake_1r1w_1X1 is
+   port(   FAKEIN:in std_logic; FAKEOUT: out std_logic );
+  end component;
+  component fake_1r1w_2X2 is
+   port(   FAKEIN:in std_logic; FAKEOUT: out std_logic );
+  end component;
+end package;
 

@@ -1,2 +1,20 @@
-Write a program to generate memory selectors from
-the cut description file.
+utilities for generating different products from
+memory cut description file
+
+common.c
+common.h
+        low level functions.
+
+generate_mem_cut_files.c
+	this generates memory cut instantiation wrappers,
+	component declarations etc.
+
+generate_mem_cut_fpga_wrappers.c
+	this generates reverse wrappers for FPGA modeling
+	of memory cuts.
+
+compile.sh
+	compile script.
+
+
+NOTE: works only for scl180 and umc65.

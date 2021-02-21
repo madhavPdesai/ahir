@@ -29,58 +29,31 @@
 -- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 -- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+--------------------------------------------------------------------------------------------------
 
-------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity SPRAM_GENERIC is
-	generic (address_width: integer := 4; data_width: integer := 4);
-	port(A : in std_logic_vector(address_width-1 downto 0 );
-	CE : in std_logic;
-	WEB: in std_logic;
-	OEB: in std_logic;
-	CSB: in std_logic;
-	I  : in std_logic_vector(data_width-1 downto 0);
-	O  : out std_logic_vector(data_width-1 downto 0));
-end entity;
+library ahir;	
+use ahir.Types.all;	
+use ahir.Subprograms.all;	
+use ahir.mem_function_pack.all;
+use ahir.memory_subsystem_package.all;
+--use ahir.Utilities.all;
 
-architecture XilinxBramInfer of SPRAM_GENERIC is
-  type MemArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
-  signal address_reg : std_logic_vector(address_width-1 downto 0);
-  signal rd_enable_reg : std_logic;
-  signal dataout : std_logic_vector(data_width-1 downto 0);
-begin  -- XilinxBramInfer
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;
+use aHiR_ieee_proposed.float_pkg.all;
 
-  -- read/write process
-  process(CE, A, CSB, WEB)
-  begin
-
-    -- synch read-write memory
-    if(CE'event and CE ='1') then
-
-     	-- register the address
-	-- and use it in a separate assignment
-	-- for the delayed read.
-      address_reg <= A;
-
-      rd_enable_reg <= not(CSB) and WEB;
-
-      if(CSB = '0' and WEB = '0') then
-        mem_array(To_Integer(unsigned(A))) <= I;
-      end if;
-    end if;
-  end process;
-      	
-	-- use the registered read enable with the registered address to 
-	-- describe the read
-  dataout <= mem_array(To_Integer(unsigned(address_reg))) when (rd_enable_reg = '1');
-
-  O <= dataout when (OEB = '0') else (others => 'Z');
-end XilinxBramInfer;
-
-
-
-
+package MemcutDescriptionPackage is
+   constant spmem_cut_row_heights : IntegerArray(1 to 16) := (16384, 4096, 4096, 512, 512, 512, 128, 128, 64, 64, 64, 64, 64, 32, 16, 8);
+    constant spmem_cut_address_widths : IntegerArray(1 to 16) := (14, 12, 12, 9, 9, 9, 7, 7, 6, 6, 6, 6, 6, 5, 4, 3);
+    constant spmem_cut_data_widths : IntegerArray(1 to 16) := (8, 64, 8, 64, 16, 4, 64, 32, 128, 64, 16, 8, 2, 32, 32, 64);
+   constant dpmem_cut_row_heights : IntegerArray(1 to 8) := (256, 256, 256, 64, 64, 64, 64, 32);
+    constant dpmem_cut_address_widths : IntegerArray(1 to 8) := (8, 8, 8, 6, 6, 6, 6, 5);
+    constant dpmem_cut_data_widths : IntegerArray(1 to 8) := (32, 16, 4, 16, 8, 4, 2, 128);
+   constant register_file_1w_1r_cut_row_heights : IntegerArray(1 to 9) := (64, 64, 64, 64, 16, 16, 16, 16, 16);
+    constant register_file_1w_1r_cut_address_widths : IntegerArray(1 to 9) := (6, 6, 6, 6, 4, 4, 4, 4, 4);
+    constant register_file_1w_1r_cut_data_widths : IntegerArray(1 to 9) := (16, 8, 4, 2, 32, 16, 4, 2, 1);
+end package;

@@ -37,44 +37,51 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.utilities.all;
 
--- memory implemented with registers..
-entity base_bank_with_registers is
+--
+-- 1 read/1-write port synchronous memory.. implemented with registers..
+--
+entity register_file_1w_1r_port_with_registers  is
    generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
-   port (datain : in std_logic_vector(g_data_width-1 downto 0);
-         dataout: out std_logic_vector(g_data_width-1 downto 0);
-         addrin: in std_logic_vector(g_addr_width-1 downto 0);
-         enable: in std_logic;
-         writebar : in std_logic;
+   port (
+	 datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         dataout_0: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
          clk: in std_logic;
          reset : in std_logic);
-end entity base_bank_with_registers;
+end entity register_file_1w_1r_port_with_registers ;
 
 
-architecture PlainRegisters of base_bank_with_registers is
+architecture PlainRegisters of register_file_1w_1r_port_with_registers  is
   type MemArray is array (natural range <>) of std_logic_vector(g_data_width-1 downto 0);
   signal mem_array : MemArray((2**g_addr_width)-1 downto 0) := (others => (others => '0'));
-  signal read_data : std_logic_vector(g_data_width-1 downto 0);
-
 begin  -- PlainRegisters
 
-  assert false report "SP MEMFF " & Convert_To_String ( g_data_width*(2**g_addr_width)) 
+  assert false report "1W1R MEMFF " & Convert_To_String ( g_data_width*(2**g_addr_width)) 
 		severity note;
 
   -- read/write process
-  process(clk,addrin,enable,writebar)
+  process(clk, addrin_0,enable_0,addrin_1,enable_1)
   begin
+
     -- synch read-write memory
     if(clk'event and clk ='1') then
-	if (reset = '1') then 
-  		read_data <= (others => '0');
-	elsif(enable = '1') then
-		if(writebar = '0') then
-        		mem_array(To_Integer(unsigned(addrin))) <= datain;
-		else
-  			read_data <= mem_array(To_Integer(unsigned(addrin)));
-		end if;
-	end if;
+
+     if(reset = '1') then
+	dataout_1 <= (others => '0');
+     else
+      	if(enable_0 = '1') then 
+        	mem_array(To_Integer(unsigned(addrin_0))) <= datain_0;
+      	end if;
+      	if(enable_1 = '1') then
+        	dataout_1 <= mem_array(To_Integer(unsigned(addrin_1)));
+      	end if;
+     end if;
     end if;
+
   end process;
-  dataout <= read_data;
+
 end PlainRegisters;
