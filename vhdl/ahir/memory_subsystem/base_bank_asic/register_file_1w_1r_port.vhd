@@ -134,7 +134,7 @@ architecture improved_struct of register_file_1w_1r_port is
 	constant best_cut_ncols         : integer := best_cut_info(5);
 	constant use_side_strip: boolean :=
 			(best_cut_info(1) > 0) and
-					(best_cut_data_width < g_data_width);
+					((best_cut_data_width*best_cut_ncols) < g_data_width);
 begin
 	noCutFound: if (best_cut_info(1) <= 0) generate
 		regbb_inst: register_file_1w_1r_port_with_registers
