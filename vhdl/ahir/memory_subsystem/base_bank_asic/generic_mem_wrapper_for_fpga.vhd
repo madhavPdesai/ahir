@@ -50,6 +50,7 @@ architecture XilinxBramInfer of spram_generic_reverse_wrapper is
   signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
   signal address_reg : std_logic_vector(address_width-1 downto 0);
   signal rd_enable_reg : std_logic;
+  signal read_data, read_data_reg: std_logic_vector(data_width-1 downto 0);
 begin  -- XilinxBramInfer
 
   -- read/write process
@@ -71,10 +72,22 @@ begin  -- XilinxBramInfer
       end if;
     end if;
   end process;
+
+  -- read data.
+  read_data <= mem_array(To_Integer(unsigned(address_reg)));
+  process(clk) 
+  begin
+	if(clk'event and clk = '1') then
+		if(rd_enable_reg = '1') then
+			read_data_reg <= read_data;
+		end if;
+	end if;
+  end process;
+
       	
 	-- use the registered read enable with the registered address to 
 	-- describe the read
-  DATAOUT <= mem_array(To_Integer(unsigned(address_reg))) when (rd_enable_reg = '1');
+  DATAOUT <= read_data when (rd_enable_reg = '1') else read_data_reg;
 
 end XilinxBramInfer;
 
@@ -113,6 +126,9 @@ architecture XilinxBramInfer of dpram_generic_reverse_wrapper is
   signal addr_reg_1 : std_logic_vector(address_width-1 downto 0);
   signal rd_enable_reg_1 : std_logic;
 
+  signal read_data_0, read_data_0_reg: std_logic_vector(data_width-1 downto 0);
+  signal read_data_1, read_data_1_reg: std_logic_vector(data_width-1 downto 0);
+
 begin  -- XilinxBramInfer
 
   -- read/write process
@@ -145,8 +161,22 @@ begin  -- XilinxBramInfer
       	
   -- use the registered read enable with the registered address to 
   -- describe the read
-  DATAOUT_0 <= mem_array(To_Integer(unsigned(addr_reg_0)));
-  DATAOUT_1 <= mem_array(To_Integer(unsigned(addr_reg_1)));
+  read_data_0 <= mem_array(To_Integer(unsigned(addr_reg_0)));
+  read_data_1 <= mem_array(To_Integer(unsigned(addr_reg_1)));
+  process(clk) 
+  begin
+	if(clk'event and clk = '1') then
+		if(rd_enable_reg_0 = '1') then
+			read_data_0_reg <= read_data_0;
+		end if;
+		if(rd_enable_reg_1 = '1') then
+			read_data_1_reg <= read_data_1;
+		end if;
+	end if;
+  end process;
+  
+  DATAOUT_0 <= read_data_0 when (rd_enable_reg_0 = '1') else read_data_0_reg;
+  DATAOUT_1 <= read_data_1 when (rd_enable_reg_1 = '1') else read_data_1_reg;
 
 end XilinxBramInfer;
 
@@ -172,6 +202,8 @@ architecture XilinxBramInfer of register_file_1w_1r_generic_reverse_wrapper is
   signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
   signal addr_reg_0 : std_logic_vector(address_width-1 downto 0);
   signal addr_reg_1 : std_logic_vector(address_width-1 downto 0);
+  signal read_data_1, read_data_1_reg: std_logic_vector(data_width-1 downto 0);
+  signal read_enable_1_reg: std_logic;
 
 begin  -- XilinxBramInfer
 
@@ -193,11 +225,21 @@ begin  -- XilinxBramInfer
         mem_array(To_Integer(unsigned(ADDR_0))) <= DATAIN_0;
       end if;
 
+      read_enable_1_reg <= not ENABLE_1_BAR;
     end if;
   end process;
       	
   -- port 1 reads.
-  DATAOUT_1 <= mem_array(To_Integer(unsigned(addr_reg_1)));
+  read_data_1 <= mem_array(To_Integer(unsigned(addr_reg_1)));
+  process(clk) 
+  begin
+	if(clk'event and clk = '1') then
+		if(read_enable_1_reg = '1') then
+			read_data_1_reg <= read_data_1;
+		end if;
+	end if;
+  end process;
 
+  DATAOUT_1 <= read_data_1 when (read_enable_1_reg = '1') else read_data_1_reg;
 end XilinxBramInfer;
 
