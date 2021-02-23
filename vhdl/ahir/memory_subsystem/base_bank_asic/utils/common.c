@@ -106,8 +106,6 @@ void generate_umc65_port_string (const char* mem_type,  int addr_width, int data
       WEBN                          :   IN   std_logic;
       DVSE                          :   IN   std_logic;
       DVS                           :   IN   std_logic_vector (3 downto 0);
-      RRE                           :   IN   std_logic;
-      RA                            :   IN   std_logic_vector (3 downto 0);
       CKA                            :   IN   std_logic;
       CKB                            :   IN   std_logic;
       CSAN                            :   IN   std_logic;
@@ -137,8 +135,6 @@ void generate_umc65_port_string (const char* mem_type,  int addr_width, int data
       				    "     WEBN                          :   IN   std_logic;\n"
       				    "     DVSE                          :   IN   std_logic;\n"
       				    "     DVS                           :   IN   std_logic_vector (3 downto 0);\n"
-      				    "     RRE                           :   IN   std_logic;\n"
-      				    "     RA                            :   IN   std_logic_vector (3 downto 0);\n"
       				    "     CKA                            :   IN   std_logic;\n"
       				    "     CKB                            :   IN   std_logic;\n"
       				    "     CSAN                            :   IN   std_logic;\n"
@@ -219,7 +215,7 @@ void generate_umc65_port_map_string (const char* mem_type,char* result_string)
 {
 	if(strcmp(mem_type,"DP") == 0)
 	{
-		sprintf(result_string,"A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1, RRE => TIE_LOW, RA => TIE_LOW_4");
+		sprintf(result_string,"A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1");
 	}
 	else if(strcmp(mem_type,"SP") == 0)
 	{

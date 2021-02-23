@@ -11,9 +11,9 @@
 umc65
 !Folders starting with name SZ....(two port register)
 !  (without row redundancy)
-1R1W 4 1   SZKA65	1CM2
-1R1W 4 2   SZKA65	1CM2
-1R1W 4 4   SZKA65	1CM2
+!1R1W 4 1   SZKA65	1CM2
+!1R1W 4 2   SZKA65	1CM2
+!1R1W 4 4   SZKA65	1CM2
 1R1W 4 16  SZKA65	1CM2
 1R1W 4 32  SZKA65	1CM2
 1R1W 6 2   SZKA65	1CM2
