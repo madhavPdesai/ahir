@@ -35,6 +35,48 @@ use ieee.std_logic_1164.all;
 
 package mem_ASIC_components is
 
+  component SZKA65_16X1X1CM2 is
+   port(       DO : out std_logic_vector(0 downto 0);
+      A : in std_logic_vector(3 downto 0);
+      B : in std_logic_vector(3 downto 0);
+      DI : in std_logic_vector(0 downto 0);
+      WEB  :   IN   std_logic;
+      DVSE :   IN   std_logic;
+      DVS  :   IN   std_logic_vector (2 downto 0);
+      CKA   :   IN   std_logic;
+      CKB   :   IN   std_logic;
+      CSAN  :   IN   std_logic;
+      CSBN  :   IN   std_logic
+);
+  end component;
+  component SZKA65_16X2X1CM2 is
+   port(       DO : out std_logic_vector(1 downto 0);
+      A : in std_logic_vector(3 downto 0);
+      B : in std_logic_vector(3 downto 0);
+      DI : in std_logic_vector(1 downto 0);
+      WEB  :   IN   std_logic;
+      DVSE :   IN   std_logic;
+      DVS  :   IN   std_logic_vector (2 downto 0);
+      CKA   :   IN   std_logic;
+      CKB   :   IN   std_logic;
+      CSAN  :   IN   std_logic;
+      CSBN  :   IN   std_logic
+);
+  end component;
+  component SZKA65_16X4X1CM2 is
+   port(       DO : out std_logic_vector(3 downto 0);
+      A : in std_logic_vector(3 downto 0);
+      B : in std_logic_vector(3 downto 0);
+      DI : in std_logic_vector(3 downto 0);
+      WEB  :   IN   std_logic;
+      DVSE :   IN   std_logic;
+      DVS  :   IN   std_logic_vector (2 downto 0);
+      CKA   :   IN   std_logic;
+      CKB   :   IN   std_logic;
+      CSAN  :   IN   std_logic;
+      CSBN  :   IN   std_logic
+);
+  end component;
   component SZKA65_16X16X1CM2 is
    port(       DO : out std_logic_vector(15 downto 0);
       A : in std_logic_vector(3 downto 0);
@@ -420,7 +462,7 @@ package mem_ASIC_components is
       CSB  :   IN   std_logic
 );
   end component;
-  component SHKA65_16384X8X1CM4 is
+  component SHKA65_16384X8X1CM16 is
    port(       DO : out std_logic_vector(7 downto 0);
       A : in std_logic_vector(13 downto 0);
       DI : in std_logic_vector(7 downto 0);

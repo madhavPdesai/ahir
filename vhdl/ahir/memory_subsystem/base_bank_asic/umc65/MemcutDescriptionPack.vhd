@@ -53,7 +53,7 @@ package MemcutDescriptionPackage is
    constant dpmem_cut_row_heights : IntegerArray(1 to 8) := (256, 256, 256, 64, 64, 64, 64, 32);
     constant dpmem_cut_address_widths : IntegerArray(1 to 8) := (8, 8, 8, 6, 6, 6, 6, 5);
     constant dpmem_cut_data_widths : IntegerArray(1 to 8) := (32, 16, 4, 16, 8, 4, 2, 128);
-   constant register_file_1w_1r_cut_row_heights : IntegerArray(1 to 6) := (64, 64, 64, 64, 16, 16);
-    constant register_file_1w_1r_cut_address_widths : IntegerArray(1 to 6) := (6, 6, 6, 6, 4, 4);
-    constant register_file_1w_1r_cut_data_widths : IntegerArray(1 to 6) := (16, 8, 4, 2, 32, 16);
+   constant register_file_1w_1r_cut_row_heights : IntegerArray(1 to 9) := (64, 64, 64, 64, 16, 16, 16, 16, 16);
+    constant register_file_1w_1r_cut_address_widths : IntegerArray(1 to 9) := (6, 6, 6, 6, 4, 4, 4, 4, 4);
+    constant register_file_1w_1r_cut_data_widths : IntegerArray(1 to 9) := (16, 8, 4, 2, 32, 16, 4, 2, 1);
 end package;

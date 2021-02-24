@@ -123,9 +123,9 @@ begin
        inst: SHKA65_4096X64X1CM4
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
   end generate SHKA65_4096X64X1CM4_gen;
-  SHKA65_16384X8X1CM4_gen: if (address_width = 14) and (data_width = 8) generate
-       inst: SHKA65_16384X8X1CM4
+  SHKA65_16384X8X1CM16_gen: if (address_width = 14) and (data_width = 8) generate
+       inst: SHKA65_16384X8X1CM16
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
-  end generate SHKA65_16384X8X1CM4_gen;
+  end generate SHKA65_16384X8X1CM16_gen;
 end StructGen;
 
