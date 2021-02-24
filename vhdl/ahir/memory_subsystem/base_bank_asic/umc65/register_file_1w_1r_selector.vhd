@@ -61,18 +61,6 @@ begin
 	TIE_LOW <= '0';
 	TIE_LOW_3 <= (others => '0');
 	TIE_LOW_4 <= (others => '0');
-  SZKA65_16X1X1CM2_gen: if (address_width = 4) and (data_width = 1) generate
-       inst: SZKA65_16X1X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
-  end generate SZKA65_16X1X1CM2_gen;
-  SZKA65_16X2X1CM2_gen: if (address_width = 4) and (data_width = 2) generate
-       inst: SZKA65_16X2X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
-  end generate SZKA65_16X2X1CM2_gen;
-  SZKA65_16X4X1CM2_gen: if (address_width = 4) and (data_width = 4) generate
-       inst: SZKA65_16X4X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
-  end generate SZKA65_16X4X1CM2_gen;
   SZKA65_16X16X1CM2_gen: if (address_width = 4) and (data_width = 16) generate
        inst: SZKA65_16X16X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
@@ -81,10 +69,6 @@ begin
        inst: SZKA65_16X32X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
   end generate SZKA65_16X32X1CM2_gen;
-  SZKA65_64X2X1CM2_gen: if (address_width = 6) and (data_width = 2) generate
-       inst: SZKA65_64X2X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
-  end generate SZKA65_64X2X1CM2_gen;
   SZKA65_64X4X1CM2_gen: if (address_width = 6) and (data_width = 4) generate
        inst: SZKA65_64X4X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
