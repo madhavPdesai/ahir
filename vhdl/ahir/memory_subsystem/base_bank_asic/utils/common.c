@@ -425,7 +425,7 @@ void printWrapperEntity(int tech_flag, char* mem_type,
 		{
 			fprintf(f,"  %s_wrap_inst: dpram_generic_reverse_wrapper \n", entity_name);
 		}
-		else if(strcmp(mem_type,"SP") == 0)
+		else if((strcmp(mem_type,"SP") == 0) || (strcmp(mem_type,"1RW") == 0))
 		{
 			fprintf(f,"  %s_wrap_inst: spram_generic_reverse_wrapper \n", entity_name);
 		}
