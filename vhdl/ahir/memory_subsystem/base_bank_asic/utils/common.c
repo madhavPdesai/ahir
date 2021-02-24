@@ -141,7 +141,7 @@ void generate_umc65_port_string (const char* mem_type,  int addr_width, int data
       				    "     CSBN                            :   IN   std_logic\n");
 		strcat (result_string, tmp_string);
 	}
-	else if(strcmp(mem_type,"SP") == 0)
+	else if((strcmp(mem_type,"SP") == 0) || (strcmp(mem_type,"1RW") == 0))
 	{
 /*
       DO                            :   OUT  std_logic_vector (31 downto 0);
@@ -150,6 +150,8 @@ void generate_umc65_port_string (const char* mem_type,  int addr_width, int data
       WEB                           :   IN   std_logic;
       DVSE                          :   IN   std_logic;
       DVS                           :   IN   std_logic_vector (2 downto 0);
+	OR
+      DVS                           :   IN   std_logic_vector (3 downto 0);
       CK                            :   IN   std_logic;
       CSB                           :   IN   std_logic
 */
@@ -163,12 +165,24 @@ void generate_umc65_port_string (const char* mem_type,  int addr_width, int data
 		sprintf(tmp_string, "      DI : in std_logic_vector(%d downto 0);\n", data_width-1);
 		strcat (result_string, tmp_string);
 
-		sprintf(tmp_string, 
-				    "      WEB  :   IN   std_logic;\n"
-      				    "      DVSE :   IN   std_logic;\n"
-      				    "      DVS  :   IN   std_logic_vector (2 downto 0);\n"
-      				    "      CK   :   IN   std_logic;\n"
-      				    "      CSB  :   IN   std_logic\n");
+		if(strcmp("SP", mem_type) == 0)
+		{
+			sprintf(tmp_string, 
+					"      WEB  :   IN   std_logic;\n"
+					"      DVSE :   IN   std_logic;\n"
+					"      DVS  :   IN   std_logic_vector (2 downto 0);\n"
+					"      CK   :   IN   std_logic;\n"
+					"      CSB  :   IN   std_logic\n");
+		}
+		else
+		{
+			sprintf(tmp_string, 
+					"      WEB  :   IN   std_logic;\n"
+					"      DVSE :   IN   std_logic;\n"
+					"      DVS  :   IN   std_logic_vector (3 downto 0);\n"
+					"      CK   :   IN   std_logic;\n"
+					"      CSB  :   IN   std_logic\n");
+		}
 		strcat (result_string, tmp_string);
 	}
 	else if(strcmp(mem_type,"RF") == 0)
@@ -221,6 +235,10 @@ void generate_umc65_port_map_string (const char* mem_type,char* result_string)
 	{
 		sprintf(result_string,"A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3");
 	}
+	else if(strcmp(mem_type,"1RW") == 0)
+	{
+		sprintf(result_string,"A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_4");
+	}
 	else if(strcmp(mem_type,"RF") == 0)
 	{
 		// Note: port B is write port in register file SZKA*
@@ -234,7 +252,7 @@ void generate_umc65_reverse_port_map_string (const char* mem_type,char* result_s
 	{
 		sprintf(result_string,"ADDR_0 => A, ADDR_1 => B, CLK => CKA,  WRITE_0_BAR => WEAN, WRITE_1_BAR => WEBN,   ENABLE_0_BAR => CSAN , ENABLE_1_BAR => CSBN, DATAIN_0 => DIA, DATAIN_1 => DIB, DATAOUT_0 => DOA, DATAOUT_1 => DOB");
 	}
-	else if(strcmp(mem_type,"SP") == 0)
+	else if((strcmp(mem_type,"SP") == 0) || (strcmp(mem_type,"1RW") == 0))
 	{
 		sprintf(result_string,"ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO");
 	}

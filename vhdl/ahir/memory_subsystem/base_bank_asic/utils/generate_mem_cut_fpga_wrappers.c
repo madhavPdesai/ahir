@@ -63,10 +63,10 @@ int main(int argc, char* argv[])
 						addr_width, data_width,
 						entity_postfix);
 		}
-		else if (strcmp (descr,"SP") == 0)
+		else if ((strcmp (descr,"SP") == 0) || (strcmp(descr,"1RW") == 0))
 		{
 			sscanf(rest_of_line,"%d %d %s %s", &addr_width, &data_width, entity_prefix, entity_postfix);
-			printWrapperEntity(tech, "SP",
+			printWrapperEntity(tech, descr,
 						fpga_wrapper_file, 
 						entity_prefix, 
 						addr_width, data_width,

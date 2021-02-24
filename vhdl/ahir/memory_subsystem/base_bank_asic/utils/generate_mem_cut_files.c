@@ -69,10 +69,10 @@ int main(int argc, char* argv[])
 							entity_postfix);
 			appendToList(addr_width, data_width, &dp_list);
 		}
-		else if (strcmp (descr,"SP") == 0)
+		else if ((strcmp (descr,"SP") == 0) || (strcmp (descr,"1RW") == 0))
 		{
 			sscanf(rest_of_line,"%d %d %s %s", &addr_width, &data_width, entity_prefix, entity_postfix);
-			printInstanceAndComponents(tech, "SP",
+			printInstanceAndComponents(tech, descr,
 							sp_arch_file, 
 							comp_decls_file, 
 							entity_prefix, 
