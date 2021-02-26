@@ -47,13 +47,24 @@ SP 7 64   SHKA65	1CM4
 SP 9 4    SHKA65	1CM4
 SP 9 16   SHKA65	1CM4
 SP 9 64   SHKA65	1CM4
-SP 12 8   SHKA65	1CM4
+!
+! This one is in the DCACHE, and is critical
+! Keep it a wider aspect ratio, 2X faster.
+!
+SP 12 8   SHKA65	1CM16
+!
+!  This one is dog slow, but it is not
+!  in the caches.
+!
 SP 12 64  SHKA65	1CM4
+!
+!  This one is slow, but its not in the Caches.
+!
 SP 14 8   SHKA65	1CM16
-!  single port register files.
+!  single port memories without row redundancy
 !   Note: these are SYK's.
-1RW 3 64   SYKA65	1CM2
-1RW 4 32   SYKA65	1CM2
+SP 3 64   SYKA65	1CM2
+SP 4 32   SYKA65	1CM2
 !
 !  These are duplicates available in SHK
 !  as well.   We will use the SHK versions.
