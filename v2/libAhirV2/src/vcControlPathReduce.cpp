@@ -1063,21 +1063,6 @@ void vcControlPath::Index_Groups()
 	{
 		vcCPElementGroup* g = *iter;
 		g->Set_Group_Index(idx);
-
-		// clean ups.
-		if(g->_predecessors.size() <= 1)
-		{
-			g->_is_merge = false;
-			if(g->_marked_predecessors.size() == 0)
-				g->_is_join = false;
-		}
-		if(g->_successors.size() <= 1)
-		{
-			g->_is_branch = false;
- 			if (g->_marked_successors.size() == 0)
-				g->_is_fork = false;
-		}
-		
 		idx++;
 	}
 }
@@ -1112,8 +1097,6 @@ void vcControlPath::Reduce_CPElement_Group_Graph()
 		this->Reduce_From_Nucleus(nucleus, absorbed_elements, nucleii);
 	}
 
-	// index the groups.. again..
-	this->Index_Groups();
 
 	this->Last_Gasp_Reduce();
 
@@ -1155,10 +1138,11 @@ void vcControlPath::Last_Gasp_Reduce()
 		{
 			// Do not create merge/join OR branch/fork
 			// aliasing.
-			if(!(pg->_is_join && g->_has_place) &&
-				!(pg->_is_merge && g->_has_transition) &&
-				!(g->_is_branch && pg->_has_transition) &&
-				!(g->_is_fork && pg->_has_place))
+			if((g->_pipeline_parent != NULL) ||
+				(!(pg->_is_join && g->_is_merge) &&
+				 !(pg->_is_merge && g->_is_join) &&
+				 !(g->_is_branch && pg->_is_fork) &&
+				 !(g->_is_fork && pg->_is_branch)))
 			{
 				this->Merge_Groups(g,pg);	
 			}
