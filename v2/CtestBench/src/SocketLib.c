@@ -61,7 +61,8 @@ void  append_string(char* strbuf, char* str)
 uint64_t get_uint64_t(char* str, char** save_str)
 {
 #ifdef DEBUG
-  fprintf(stderr, "Info: in get_uint64_t, received string %s\n",str);
+  if(str != NULL)
+  	fprintf(stderr, "Info: in get_uint64_t, received string %s\n",str);
 #endif
 
   char* pstr = strtok_r(str," ", save_str);

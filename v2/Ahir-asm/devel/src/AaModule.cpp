@@ -980,7 +980,7 @@ void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
   this->Write_VHDL_C_Stub_Prefix(ofile);
   ofile << endl << "{" << endl;
   
-  ofile << "char buffer[1024];\
+  ofile << "char buffer[4096];\
   char* ss;\
   sprintf(buffer, \"call " << this->Get_Label() << " \");" << endl;
 
@@ -1041,13 +1041,14 @@ void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
 	 if(!ret_type->Is_Pointer_Type())
 	   {
 	     ofile << "*" << this->Get_Output_Argument(idx)->Get_Name() << " = " ;
-	     ofile << "get_" << ret_type->Native_C_Name() << "(buffer,&ss);" << endl;
+	     ofile << "get_" << ret_type->Native_C_Name() << "(" << ((idx == 0) ? "buffer" : "NULL") <<
+				",&ss);" << endl;
 	   }
 	 else
 	   {
 	     ofile << "*" << this->Get_Output_Argument(idx)->Get_Name() << " = (" 
 		   << ret_type->Native_C_Name() << ") " ;
-	     ofile << "get_uint32_t(buffer,&ss);" << endl;
+	     ofile << "get_uint32_t(" << ((idx == 0) ? "buffer" : "NULL") << ",&ss);" << endl;
 	   }
        }
 

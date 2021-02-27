@@ -1061,7 +1061,23 @@ void vcControlPath::Index_Groups()
 			iter != fiter;
 			iter++)
 	{
-		(*iter)->Set_Group_Index(idx);
+		vcCPElementGroup* g = *iter;
+		g->Set_Group_Index(idx);
+
+		// clean ups.
+		if(g->_predecessors.size() <= 1)
+		{
+			g->_is_merge = false;
+			if(g->_marked_predecessors.size() == 0)
+				g->_is_join = false;
+		}
+		if(g->_successors.size() <= 1)
+		{
+			g->_is_branch = false;
+ 			if (g->_marked_successors.size() == 0)
+				g->_is_fork = false;
+		}
+		
 		idx++;
 	}
 }
@@ -1096,8 +1112,10 @@ void vcControlPath::Reduce_CPElement_Group_Graph()
 		this->Reduce_From_Nucleus(nucleus, absorbed_elements, nucleii);
 	}
 
-	this->Last_Gasp_Reduce();
+	// index the groups.. again..
+	this->Index_Groups();
 
+	this->Last_Gasp_Reduce();
 
 	// index the groups.. again..
 	this->Index_Groups();
@@ -1135,7 +1153,15 @@ void vcControlPath::Last_Gasp_Reduce()
 		if((g->_pipeline_parent == pg->_pipeline_parent) &&
 				(g->_associated_cp_function == pg->_associated_cp_function))
 		{
-			this->Merge_Groups(g,pg);	
+			// Do not create merge/join OR branch/fork
+			// aliasing.
+			if(!(pg->_is_join && g->_has_place) &&
+				!(pg->_is_merge && g->_has_transition) &&
+				!(g->_is_branch && pg->_has_transition) &&
+				!(g->_is_fork && pg->_has_place))
+			{
+				this->Merge_Groups(g,pg);	
+			}
 		}
 	}
 }
@@ -1326,6 +1352,13 @@ void vcControlPath::Identify_Strongly_Connected_Components()
 void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole)
 {
 
+	// no join/merge fork/branch confusion.
+	assert(
+		(!part->_is_join || !whole->_is_merge) && 
+		(!part->_is_fork || !whole->_is_branch) &&
+		(!whole->_is_join || !part->_is_merge) && 
+		(!whole->_is_fork || !part->_is_branch)
+	     );
 
 
 	assert(part->_predecessors.size() == 1);
