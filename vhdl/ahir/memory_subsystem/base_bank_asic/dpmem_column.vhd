@@ -140,8 +140,8 @@ begin
 					data_width => g_base_bank_data_width )
 		port map(ADDR_0 => resized_addrin_0 (g_base_bank_addr_width-1 downto 0),
 			 ADDR_1 => resized_addrin_1 (g_base_bank_addr_width-1 downto 0),
-			 ENABLE_0_BAR => decoded_CSB_0_d(j),
-			 ENABLE_1_BAR => decoded_CSB_1_d(j),
+			 ENABLE_0_BAR => decoded_CSB_0(j),
+			 ENABLE_1_BAR => decoded_CSB_1(j),
 			 WRITE_0_BAR  => writebar_0,
 			 WRITE_1_BAR  => writebar_1,
 			 DATAIN_0 => datain_0,
