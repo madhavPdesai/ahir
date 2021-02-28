@@ -113,11 +113,11 @@ begin
   end generate SHKA65_16384X8X1CM16_gen;
   SYKA65_8X64X1CM2_gen: if (address_width = 3) and (data_width = 64) generate
        inst: SYKA65_8X64X1CM2
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_4);
   end generate SYKA65_8X64X1CM2_gen;
   SYKA65_16X32X1CM2_gen: if (address_width = 4) and (data_width = 32) generate
        inst: SYKA65_16X32X1CM2
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_4);
   end generate SYKA65_16X32X1CM2_gen;
 end StructGen;
 
