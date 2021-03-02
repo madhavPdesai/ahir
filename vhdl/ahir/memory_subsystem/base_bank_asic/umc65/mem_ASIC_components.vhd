@@ -334,7 +334,7 @@ package mem_ASIC_components is
       CSB  :   IN   std_logic
 );
   end component;
-  component SHKA65_4096X64X1CM4 is
+  component SHKA65_4096X64X1CM8 is
    port(       DO : out std_logic_vector(63 downto 0);
       A : in std_logic_vector(11 downto 0);
       DI : in std_logic_vector(63 downto 0);
