@@ -5154,6 +5154,10 @@ void AaSwitchStatement::Map_Source_References()
 }
 void AaSwitchStatement::Map_Targets()
 {
+	for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
+	{
+		this->_choice_pairs[i].second->Map_Targets();
+	}
 	if(this->_default_sequence)
 		this->_default_sequence->Map_Targets();
 }
