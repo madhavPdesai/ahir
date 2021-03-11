@@ -5218,20 +5218,16 @@ void AaSwitchStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	{
 		srcfile << " case ";
 		srcfile << this->_choice_pairs[i].first->Get_Expression_Value()->To_C_String();
-		srcfile << " : " << endl;
+		srcfile << " : {" << endl;
 		this->_choice_pairs[i].second->PrintC(srcfile, headerfile);
-		srcfile << "break;" << endl;
+		srcfile << "break;}" << endl;
 	}
-	srcfile << " default : " << endl;
+	srcfile << " default : {" << endl;
 	if(this->_default_sequence)
 	{
 		this->_default_sequence->PrintC(srcfile, headerfile);
-		srcfile << "break;" << endl;
 	}
-	else
-	{
-		srcfile << "break;" << endl;
-	}
+	srcfile << "break;}" << endl;
 	srcfile << "}" << endl;
 }
 
