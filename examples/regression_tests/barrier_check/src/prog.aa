@@ -14,7 +14,7 @@ $module [p2p_check_daemon] $in() $out () $is
 		A := 0
 		$dopipeline $depth 9 $buffering 2 $fullrate
 		$merge $entry $loopback 
-			$phi I := ($slice CMD 2 0) $on $entry nI $on $loopback
+			$phi I := ($slice CMD 2 0) $on $entry nI $on $loopback $barrier
 			$phi first_time := ($bitcast ($uint<1>) 1) $on $entry 0 $on $loopback
 		$endmerge
 		$volatile nI := (I - 1)

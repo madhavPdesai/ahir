@@ -991,7 +991,7 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		int pipe_width   = (*iter).second->Get_Width();
 
 		ofile << "signal " << pipe_name << "_pipe_write_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		ofile << "signal " << pipe_name << "_pipe_write_req  : std_logic_vector(0  downto 0);" << endl;
+		ofile << "signal " << pipe_name << "_pipe_write_req  : std_logic_vector(0  downto 0) := (others => '0');" << endl;
 		ofile << "signal " << pipe_name << "_pipe_write_ack  : std_logic_vector(0  downto 0);" << endl;
 
 		if(this->Is_Signal(pipe_name))
@@ -1007,12 +1007,12 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		int pipe_width   = (*iter).second->Get_Width();
 
 		ofile << "signal " << pipe_name << "_pipe_read_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		ofile << "signal " << pipe_name << "_pipe_read_req  : std_logic_vector(0  downto 0);" << endl;
+		ofile << "signal " << pipe_name << "_pipe_read_req  : std_logic_vector(0  downto 0) := (others => '0');" << endl;
 		ofile << "signal " <<  pipe_name << "_pipe_read_ack  : std_logic_vector(0  downto 0);" << endl;
 
 		if(this->Is_Signal(pipe_name))
 		{
-			ofile << "signal " << pipe_name << ": std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+			ofile << "signal " << pipe_name << ": std_logic_vector(" << pipe_width-1 << " downto 0) := (others => '0');" << endl;
 		}
 	}
 	ofile << "signal clk : std_logic := '0'; " << endl; 
@@ -1034,6 +1034,10 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 	ofile << "begin --{" << endl;
 	ofile << sim_link_prefix << "Initialize;" << endl;
 	ofile << "wait until clk = '1';" << endl;
+	ofile << "wait until clk = '1';" << endl;
+	ofile << "wait until clk = '1';" << endl;
+	ofile << "wait until clk = '1';" << endl;
+	ofile << "wait for 5 ns;" << endl;
 	ofile << "reset <= '0';" << endl;
 	ofile << "while true loop --{" << endl;
 	ofile << "wait until clk = '0';" << endl;
