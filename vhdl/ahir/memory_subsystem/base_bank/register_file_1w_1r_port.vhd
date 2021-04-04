@@ -75,6 +75,8 @@ begin  -- XilinxBramInfer
 	tied_high <= '1';
 	tied_low  <= '0';
 
+	unused_din_1 <= (others => '0');
+
 	-- default model.. use a dual port mem.
 	-- for ASIC, need a different one.
         dpramInst: base_bank_dual_port

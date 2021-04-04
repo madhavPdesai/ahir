@@ -6197,50 +6197,21 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 		__J("condition_evaluated", "aggregated_phi_update_ack");
 
 		//
+		// do not re-sample unless the result of the previous
+		// sample has been updated at the output.
 		//
-		// The semantics of the PHI's has a WAR race condition.  
-		// For example, if 
-		//	  $phi a := foo(b)
-		//        $phi b := bar(a)
-		// then, there is an a->b WAR, RAW and b-> WAR, RAW.  That
-		// is we expect the following to happen.
-		//     a,b are read into atmp, btmp
-		//     a,b are updated using btmp, atmp.
+		// This takes care of a RAW dependency between one phi cycle
+		// and the next.
 		//
-		// The only way to solve this problem in the case of PHI's is
-		// the following:
-		//    a. all operators triggered in the phi will necessarily
-		//       sample their inputs on the sample_req pulse.
-		//               sample_req provokes, atmp <- a, btmp <- b.
-		//    b. For the very first entry into the phi block, the 
-		//       sample_req arrives not later than the first update_req.
-		//		this is imposed by the implementation.
-		//    c. sample-reqs and update-reqs will alternate..  That is,
-		//       It is not possible for there to be two update-reqs
-		//       between successive sample-reqs. 
-		// This works because:
-		//    For the first trigger, the sample and update reqs are applied
-		//    simultaneously to all the operators.
-		//    
-		//    For subsequent triggers, the update req cannot happen until
-		//    the previous sample req has occurred.
-		//
-		// NOTE: this scheme will work correctly if and only if the property
-		//       (a) above is satisfied by the operators.  If this is not
-		//	 true, the race condition can be solved only by the following.
-		//	 d. A circular dependency is not allowed
-		//       e. Barriers are used.
-		//            e.g.
-		//                 $phi c := bar(a) $barrier
-		//		   $phi a := foo(b) 
-		//      This imposes a sample_complete (bar) -> update_start (foo)
-		//      dependency to deal with the WAR.
-		//
-		//  The following constraints ensure that the update-req and
-		//  sample-req are kept aligned.
 		__MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true);
-		__MJ("aggregated_phi_update_req", "aggregated_phi_sample_ack", false);
 
+		//
+		// Note that within the SAME cycle, there is a WAR dependency
+		// across statements that is not enforced by the default PHI
+		// control scheme.  If you need to enforce this, you will 
+		// have to use a $barrier on the PHI which is a victim
+		// of this race.
+		//
 	}
 
 	// write the PHI statements.
