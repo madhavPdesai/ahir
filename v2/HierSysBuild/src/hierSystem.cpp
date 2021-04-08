@@ -760,7 +760,7 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs
 
 		if(!map_all_libs_to_work && (bt->Get_Parent() && (bt->Get_Parent()->Get_Library() != "work")))
 		{
-			ofile << "-->>>>" << endl;
+			ofile << "-->>>>>" << endl;
 			ofile << "for " << s->Get_Id() << " :  " << bt->Get_Id() << " -- { " << endl;
 			ofile << "   use entity " << bt->Get_Parent()->Get_Library() << "." 
 				<< bt->Get_Id() << "; -- } " << endl;
