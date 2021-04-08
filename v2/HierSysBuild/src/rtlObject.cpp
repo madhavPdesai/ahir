@@ -187,7 +187,7 @@ void rtlSignal::Print(ostream& ofile)
 // Print declaration.
 void rtlInPort::Print(ostream& ofile)
 {
-	ofile << " $in " << (this->Is_Pipe() ? "$pipe " : "")  << this->Get_Id();
+	ofile << " $in " << (this->Is_Pipe() ? "$pipe " : "$signal")  << this->Get_Id();
 	ofile << " : ";
 	_type->Print(ofile);
 	ofile << endl;
@@ -196,7 +196,7 @@ void rtlInPort::Print(ostream& ofile)
 // Print declaration.
 void rtlOutPort::Print(ostream& ofile)
 {
-	ofile << " $out " << (this->Is_Pipe() ? "$pipe " : "")  << this->Get_Id();
+	ofile << " $out " << (this->Is_Pipe() ? "$pipe " : "$signal")  << this->Get_Id();
 	ofile << " : ";
 	_type->Print(ofile);
 	ofile << endl;

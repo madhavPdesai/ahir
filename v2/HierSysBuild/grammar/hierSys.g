@@ -405,8 +405,8 @@ rtl_ObjectDeclaration[rtlThread* t]
             (VARIABLE {variable_flag  = true;}) |
 		(CONSTANT {constant_flag  = true;}) |
 		(SIGNAL   {signal_flag    = true;})  |
-		(IN (PIPE {pipe_flag = true;})?  {in_flag = true;}) |
-		(OUT (PIPE {pipe_flag = true;})? {out_flag = true;})
+		(IN  ((PIPE {pipe_flag = true;}) | (SIGNAL {signal_flag = true;}))  {in_flag = true;}) |
+		(OUT ((PIPE {pipe_flag = true;}) | (SIGNAL {signal_flag = true;}))  {out_flag = true;})
 	)
 	( sid: SIMPLE_IDENTIFIER {names.push_back(sid->getText());} )+
         COLON
@@ -418,21 +418,21 @@ rtl_ObjectDeclaration[rtlThread* t]
 	{
 		string obj_name = names[I];
 		obj = NULL;
-		if(variable_flag) 
-		{
-			obj = new rtlVariable(obj_name, type); 
-		}
-		else if(signal_flag)
-		{
-			obj = new rtlSignal(obj_name, type); 
-		}
-		else if(in_flag)
+		if(in_flag)
 		{
 			obj = new rtlInPort(pipe_flag, obj_name, type); 
 		}
 		else if(out_flag)
 		{
 			obj = new rtlOutPort(pipe_flag, obj_name, type); 
+		}
+		else if(signal_flag)
+		{
+			obj = new rtlSignal(obj_name, type); 
+		}
+		else if(variable_flag) 
+		{
+			obj = new rtlVariable(obj_name, type); 
 		}
 		else if(constant_flag)
 		{

@@ -1,37 +1,25 @@
-
-$system shift_register 
+$system SR3  $library TOPLEVEL
 	$in 
 		$pipe in_data 32 $depth 2
         $out 
 		$pipe out_data 32 $depth 2
-
-		$signal out_sig_1 32 $depth 1
-		$signal out_sig_2 32 $depth 1
-
 {
-        $pipe tmp 32 $depth 2
-	$signal sig_in_1 32 $depth 1
-	$signal sig_in_2 32 $depth 1
-	
-	$thread SETCONST
-		$out $signal out_sig: $unsigned<32> := ($unsigned<32>) 0
-		$constant Z32: $unsigned<32> := ($unsigned<32>) 0
-		$variable tvar: $unsigned<1>
-		$default 
-			$now out_sig := Z32
-		<init_0>
-			{
-					$goto init_0
-			}
-			
-		$now $tick
+        $pipe T0 32 $depth 2
+	$pipe T1 32 $depth 2
+
+	$instance S1_INST  SLIB:STAGE
+			in_data => in_data
+			out_data => T0
+
+	$instance S3_INST  SLIB:STAGE
+			in_data => T1
+			out_data => out_data
 
 
+	// intermediate stage instantiates repeater
 	$thread   REPEATER
-		$in  $pipe     rdata : $unsigned<32>
-		$in  $signal   sig_in: $unsigned<32>
+		$in  $pipe    rdata : $unsigned<32>
 		$out $pipe    wdata : $unsigned<32>
-		$out $signal  sig_out: $unsigned<32>
 
 		$signal data_reg : $unsigned<32>
 		$constant One_1: $unsigned<1> := ($unsigned<1>) _b1
@@ -43,7 +31,6 @@ $system shift_register
 			$now rdata$req := Z1
 			$now wdata$req := Z1
 			$now wdata     := Z32
-			$now sig_out   := sig_in
 
 		<init>  {
 				data_reg := ($unsigned<32>) 0 
@@ -85,22 +72,10 @@ $system shift_register
 	$now
 	$tick
 
-	
-        $string tc_0: SETCONST
-		out_sig => sig_in_1
 
-        $string tc_1: SETCONST
-		out_sig => sig_in_2
+	$string S2_INST:REPEATER
+		rdata => T0
+		wdata => T1
 
-	$string stage_0:REPEATER
-		sig_in => sig_in_1
-		rdata => in_data
-		wdata => tmp
-		sig_out => out_sig_1
-
-	$string stage_1:REPEATER
-		sig_in => sig_in_2
-		rdata => tmp
-		wdata => out_data
-		sig_out => out_sig_2
 }
+
