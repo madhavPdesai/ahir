@@ -48,9 +48,6 @@ end entity spram_generic_reverse_wrapper;
 architecture XilinxBramInfer of spram_generic_reverse_wrapper is
   type MemArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
   signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
-  signal address_reg : std_logic_vector(address_width-1 downto 0);
-  signal rd_enable_reg : std_logic;
-  signal read_data, read_data_reg: std_logic_vector(data_width-1 downto 0);
 begin  -- XilinxBramInfer
 
   -- read/write process
@@ -59,14 +56,6 @@ begin  -- XilinxBramInfer
 
     -- synch read-write memory
     if(CLK'event and CLK ='1') then
-
-     	-- register the address
-	-- and use it in a separate assignment
-	-- for the delayed read.
-      address_reg <= ADDR;
-
-      rd_enable_reg <= not(ENABLE_BAR) and WRITE_BAR;
-
       if(ENABLE_BAR = '0' and WRITE_BAR = '0') then
         mem_array(To_Integer(unsigned(ADDR))) <= DATAIN;
       end if;
@@ -74,20 +63,14 @@ begin  -- XilinxBramInfer
   end process;
 
   -- read data.
-  read_data <= mem_array(To_Integer(unsigned(address_reg)));
   process(clk) 
   begin
 	if(clk'event and clk = '1') then
-		if(rd_enable_reg = '1') then
-			read_data_reg <= read_data;
+		if(ENABLE_BAR = '0') then
+		 	DATAOUT  <= mem_array(To_Integer(unsigned(ADDR)));
 		end if;
 	end if;
   end process;
-
-      	
-	-- use the registered read enable with the registered address to 
-	-- describe the read
-  DATAOUT <= read_data when (rd_enable_reg = '1') else read_data_reg;
 
 end XilinxBramInfer;
 
@@ -121,13 +104,6 @@ architecture XilinxBramInfer of dpram_generic_reverse_wrapper is
   type MemArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
 
   signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
-  signal addr_reg_0 : std_logic_vector(address_width-1 downto 0);
-  signal rd_enable_reg_0 : std_logic;
-  signal addr_reg_1 : std_logic_vector(address_width-1 downto 0);
-  signal rd_enable_reg_1 : std_logic;
-
-  signal read_data_0, read_data_0_reg: std_logic_vector(data_width-1 downto 0);
-  signal read_data_1, read_data_1_reg: std_logic_vector(data_width-1 downto 0);
 
 begin  -- XilinxBramInfer
 
@@ -137,16 +113,6 @@ begin  -- XilinxBramInfer
 
     -- synch read-write memory
     if(CLK'event and CLK ='1') then
-
-      -- register the address
-      -- and use it in a separate assignment
-      -- for the delayed read.
-      addr_reg_0 <= ADDR_0;
-      addr_reg_1 <= ADDR_1;
-
-	-- generate a registered read enable
-	rd_enable_reg_0 <= not(ENABLE_0_BAR) and WRITE_0_BAR;
-	rd_enable_reg_1 <= not(ENABLE_1_BAR) and WRITE_1_BAR;
 
       -- both ports write.. second one wins if writes
       -- are to the same address.
@@ -159,25 +125,18 @@ begin  -- XilinxBramInfer
     end if;
   end process;
       	
-  -- use the registered read enable with the registered address to 
-  -- describe the read
-  read_data_0 <= mem_array(To_Integer(unsigned(addr_reg_0)));
-  read_data_1 <= mem_array(To_Integer(unsigned(addr_reg_1)));
   process(clk) 
   begin
 	if(clk'event and clk = '1') then
-		if(rd_enable_reg_0 = '1') then
-			read_data_0_reg <= read_data_0;
+		if(ENABLE_0_BAR = '0') then
+  			DATAOUT_0 <= mem_array(To_Integer(unsigned(ADDR_0)));
 		end if;
-		if(rd_enable_reg_1 = '1') then
-			read_data_1_reg <= read_data_1;
+		if(ENABLE_1_BAR = '0') then
+  			DATAOUT_1 <= mem_array(To_Integer(unsigned(ADDR_1)));
 		end if;
 	end if;
   end process;
   
-  DATAOUT_0 <= read_data_0 when (rd_enable_reg_0 = '1') else read_data_0_reg;
-  DATAOUT_1 <= read_data_1 when (rd_enable_reg_1 = '1') else read_data_1_reg;
-
 end XilinxBramInfer;
 
 library ieee;
@@ -198,12 +157,7 @@ end entity;
 architecture XilinxBramInfer of register_file_1w_1r_generic_reverse_wrapper is
 
   type MemArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-
   signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
-  signal addr_reg_0 : std_logic_vector(address_width-1 downto 0);
-  signal addr_reg_1 : std_logic_vector(address_width-1 downto 0);
-  signal read_data_1, read_data_1_reg: std_logic_vector(data_width-1 downto 0);
-  signal read_enable_1_reg: std_logic;
 
 begin  -- XilinxBramInfer
 
@@ -214,32 +168,21 @@ begin  -- XilinxBramInfer
     -- synch read-write memory
     if(CLK'event and CLK ='1') then
 
-      -- register the address
-      -- and use it in a separate assignment
-      -- for the delayed read.
-      addr_reg_0 <= ADDR_0;
-      addr_reg_1 <= ADDR_1;
-
       -- port 0 writes.
       if(ENABLE_0_BAR = '0') then
         mem_array(To_Integer(unsigned(ADDR_0))) <= DATAIN_0;
       end if;
-
-      read_enable_1_reg <= not ENABLE_1_BAR;
     end if;
   end process;
       	
-  -- port 1 reads.
-  read_data_1 <= mem_array(To_Integer(unsigned(addr_reg_1)));
   process(clk) 
   begin
 	if(clk'event and clk = '1') then
-		if(read_enable_1_reg = '1') then
-			read_data_1_reg <= read_data_1;
+		if(ENABLE_1_BAR = '0') then
+  			DATAOUT_1 <= mem_array(To_Integer(unsigned(ADDR_1)));
 		end if;
 	end if;
   end process;
 
-  DATAOUT_1 <= read_data_1 when (read_enable_1_reg = '1') else read_data_1_reg;
 end XilinxBramInfer;
 
