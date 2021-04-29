@@ -63,6 +63,7 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 {
   int err = 0;
   char last_inchar = 0;
+  char terminating_char;
 
 
   //
@@ -87,8 +88,11 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 	string keyword;
 	while(1) {
 		inchar = infile.get();
-		if(infile.eof() || isspace(inchar))
+		if(infile.eof() || isspace(inchar) || (inchar == '\\'))
+		{
+			terminating_char = inchar;
 			break;
+		}
 		keyword.push_back(inchar);
         }
 	
@@ -176,7 +180,9 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 		string key = keyword.substr(1);
 		if(defines_map.find(key) != defines_map.end())
 		{
-			ofile << defines_map[key] << " ";
+			ofile << defines_map[key];
+			if(isspace(terminating_char)) 
+				ofile  << terminating_char;
 			cerr << "Info: ##" << key << endl;
 		}	
 		else
