@@ -58,6 +58,16 @@ void Handle_Segfault(int signal)
   exit(-1);
 }
 
+void __print_string__(ofstream& ofile, string val)
+{
+	ofile << val;
+}
+
+void __print_char__(ofstream& ofile, char val)
+{
+	ofile << val;
+}
+
       
 int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<string,string>& defines_map, stack<int>& ifdef_stack, ofstream& ofile)
 {
@@ -177,27 +187,33 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 	}
 	else if(keyword[0] == '#')
 	{
-		string key = keyword.substr(1);
-		if(defines_map.find(key) != defines_map.end())
-		{
-			ofile << defines_map[key];
-			if(isspace(terminating_char)) 
-				ofile  << terminating_char;
-			cerr << "Info: ##" << key << endl;
-		}	
-		else
-		{
-			cerr << "Error: could not find define to paste " << keyword << endl;
-			err = 1;
+	     	int print_on = (ifdef_stack.size() == 0) || (ifdef_stack.top() != 0);
+		if(print_on) {
+			string key = keyword.substr(1);
+			if(defines_map.find(key) != defines_map.end())
+			{
+				// ofile << defines_map[key];
+				__print_string__(ofile, defines_map[key]);
+
+				if(isspace(terminating_char)) 
+					__print_char__(ofile, terminating_char);
+				// ofile  << terminating_char;
+				cerr << "Info: ##" << key << endl;
+			}	
+			else
+			{
+				cerr << "Error: could not find define to paste " << keyword << endl;
+				err = 1;
+			}
 		}
 	}
      }
      else
      {
-
 	     int print_on = (ifdef_stack.size() == 0) || (ifdef_stack.top() != 0);
 	     if(print_on)
-		     ofile << inchar;
+		     __print_char__(ofile, inchar);
+	     //ofile << inchar;
 
 	     last_inchar = inchar;
      } 
