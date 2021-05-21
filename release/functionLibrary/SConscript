@@ -1,0 +1,13 @@
+import os
+
+#modelsimpath = ['/cad/modelsim/modeltech/gcc-4.0.2-rhe21/bin']
+env = Environment(ENV = {'PATH' : os.environ['PATH']})
+env.Append(CPPPATH = './src/:./include:')
+
+env.StaticLibrary('lib/libfpu', ['src/fpu.c'], CCFLAGS='-g ')
+env.StaticLibrary('lib/libtimer', ['src/timer.c'], CCFLAGS='-g ')
+env.StaticLibrary('lib/libllvm_intrinsics', ['src/llvm_intrinsics.c'], CCFLAGS='-g ')
+
+
+
+

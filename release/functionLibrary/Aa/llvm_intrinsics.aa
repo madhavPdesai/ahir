@@ -1,0 +1,266 @@
+// memcpy ..
+$macro $module [llvm_memcpy_u64] 
+$in (dest: $pointer<$uint<64> >  src: $pointer<$uint<64> > len: $uint<32>)
+$out ()
+$is 
+{
+	$branchblock [loop] {
+		$dopipeline $depth 8 $buffering 1
+			$merge  $entry $loopback
+				$phi Nlen := (len-1) $on $entry (Nlen-1) $on $loopback 
+			$endmerge
+                        pdest :=  dest[Nlen]
+                        psrc  :=  src[Nlen]
+                        ->(pdest) := ->(psrc)
+		$while (Nlen  > 0)
+	}
+}
+
+$macro $module [llvm_memcpy_u32] 
+$in (dest: $pointer<$uint<32> >  src: $pointer<$uint<32> > len: $uint<32>)
+$out ()
+$is 
+{
+	$branchblock [loop] {
+		$dopipeline $depth 8 $buffering 1
+			$merge  $entry $loopback
+				$phi Nlen := (len-1) $on $entry (Nlen-1) $on $loopback 
+			$endmerge
+                        pdest :=  dest[Nlen]
+                        psrc  :=  src[Nlen]
+                        ->(pdest) := ->(psrc)
+		$while (Nlen  > 0)
+	}
+}
+
+$macro $module [llvm_memcpy_u16] 
+$in (dest: $pointer<$uint<16> >  src: $pointer<$uint<16> > len: $uint<32>)
+$out ()
+$is 
+{
+	$branchblock [loop] {
+		$dopipeline $depth 8 $buffering 1
+			$merge  $entry $loopback
+				$phi Nlen := (len-1) $on $entry (Nlen-1) $on $loopback 
+			$endmerge
+                        pdest :=  dest[Nlen]
+                        psrc  :=  src[Nlen]
+                        ->(pdest) := ->(psrc)
+		$while (Nlen  > 0)
+	}
+}
+
+$macro $module [llvm_memcpy_u8] 
+$in (dest: $pointer<$uint<8> >  src: $pointer<$uint<8> > len: $uint<32>)
+$out ()
+$is 
+{
+	$branchblock [loop] {
+		$dopipeline $depth 8 $buffering 1
+			$merge  $entry $loopback
+				$phi Nlen := (len-1) $on $entry (Nlen-1) $on $loopback 
+			$endmerge
+                        pdest :=  dest[Nlen]
+                        psrc  :=  src[Nlen]
+                        ->(pdest) := ->(psrc)
+		$while (Nlen  > 0)
+	}
+}
+
+
+// memmove..  the src and destination may overlap.
+$macro $module [llvm_memmove_u8] 
+$in (dest: $pointer<$uint<8> >  src: $pointer<$uint<8> > len: $uint<32>)
+$out ()
+$is 
+{
+	$branchblock [loop] {
+               	idest := ($bitcast ($uint<64>) dest)
+                isrc  := ($bitcast ($uint<64>) src)
+ 
+                $if (idest > isrc) $then  
+		    $dopipeline $depth 8 $buffering 1
+			$merge  $entry $loopback
+				$phi Nlen := (len-1) $on $entry (Nlen-1) $on $loopback 
+			$endmerge
+                        pdest :=  dest[Nlen]
+                        psrc  :=  src[Nlen]
+                        ->(pdest) := ->(psrc)
+		    $while (Nlen  > 0)
+                $else
+                    llen := (len - 1)
+		    $dopipeline $depth 8 $buffering 1
+			$merge  $entry $loopback
+				$phi NNlen := ($bitcast ($uint<32>) 0) $on $entry (NNlen+1) $on $loopback 
+			$endmerge
+                        ppdest :=  dest[NNlen]
+                        ppsrc  :=  src[NNlen]
+                        ->(ppdest) := ->(ppsrc)
+		    $while (NNlen  < llen)
+                $endif
+	}
+}
+
+
+$macro $module [llvm_memmove_u16] 
+$in (dest: $pointer<$uint<16> >  src: $pointer<$uint<16> > len: $uint<32>)
+$out ()
+$is 
+{
+	$branchblock [loop] {
+               	idest := ($bitcast ($uint<64>) dest)
+                isrc  := ($bitcast ($uint<64>) src)
+ 
+                $if (idest > isrc) $then  
+		    $dopipeline $depth 8 $buffering 1
+			$merge  $entry $loopback
+				$phi Nlen := (len-1) $on $entry (Nlen-1) $on $loopback 
+			$endmerge
+                        pdest :=  dest[Nlen]
+                        psrc  :=  src[Nlen]
+                        ->(pdest) := ->(psrc)
+		    $while (Nlen  > 0)
+                $else
+                    llen := (len - 1 )
+		    $dopipeline $depth 8 $buffering 1
+			$merge  $entry $loopback
+				$phi NNlen := ($bitcast ($uint<32>) 0) $on $entry (NNlen+1) $on $loopback 
+			$endmerge
+                        ppdest :=  dest[NNlen]
+                        ppsrc  :=  src[NNlen]
+                        ->(ppdest) := ->(ppsrc)
+		    $while (NNlen  < llen)
+                $endif
+	}
+}
+
+$macro $module [llvm_memmove_u32] 
+$in (dest: $pointer<$uint<32> >  src: $pointer<$uint<32> > len: $uint<32>)
+$out ()
+$is 
+{
+	$branchblock [loop] {
+               	idest := ($bitcast ($uint<64>) dest)
+                isrc  := ($bitcast ($uint<64>) src)
+ 
+                $if (idest > isrc) $then  
+		    $dopipeline $depth 8 $buffering 1
+			$merge  $entry $loopback
+				$phi Nlen := (len-1) $on $entry (Nlen-1) $on $loopback 
+			$endmerge
+                        pdest :=  dest[Nlen]
+                        psrc  :=  src[Nlen]
+                        ->(pdest) := ->(psrc)
+		    $while (Nlen  > 0)
+                $else
+                    llen := (len - 1 ) 
+		    $dopipeline $depth 8 $buffering 1
+			$merge  $entry $loopback
+				$phi NNlen := ($bitcast ($uint<32>) 0) $on $entry (NNlen+1) $on $loopback 
+			$endmerge
+                        ppdest :=  dest[NNlen]
+                        ppsrc  :=  src[NNlen]
+                        ->(ppdest) := ->(ppsrc)
+		    $while (NNlen  < llen)
+                $endif
+	}
+}
+
+$macro $module [llvm_memmove_u64] 
+$in (dest: $pointer<$uint<64> >  src: $pointer<$uint<64> > len: $uint<32>)
+$out ()
+$is 
+{
+	$branchblock [loop] {
+               	idest := ($bitcast ($uint<64>) dest)
+                isrc  := ($bitcast ($uint<64>) src)
+ 
+                $if (idest > isrc) $then  
+		    $dopipeline $depth 8 $buffering 1
+			$merge  $entry $loopback
+				$phi Nlen := (len-1) $on $entry (Nlen-1) $on $loopback 
+			$endmerge
+                        pdest :=  dest[Nlen]
+                        psrc  :=  src[Nlen]
+                        ->(pdest) := ->(psrc)
+		    $while (Nlen  > 0)
+                $else
+                    llen := (len - 1 ) 
+		    $dopipeline $depth 8 $buffering 1
+			$merge  $entry $loopback
+				$phi NNlen := ($bitcast ($uint<32>) 0) $on $entry (NNlen+1) $on $loopback 
+			$endmerge
+                        ppdest :=  dest[NNlen]
+                        ppsrc  :=  src[NNlen]
+                        ->(ppdest) := ->(ppsrc)
+		    $while (NNlen  < llen)
+                $endif
+	}
+}
+
+
+// memset.
+$macro $module [llvm_memset_u8] 
+$in (dest: $pointer<$uint<8> > val :$uint<8> len: $uint<32> )
+$out ()
+$is 
+{
+	$branchblock [loop] {
+	    $dopipeline $depth 8 $buffering 1
+		$merge  $entry $loopback
+			$phi Nlen := (len-1) $on $entry (Nlen-1) $on $loopback 
+		$endmerge
+                pdest :=  dest[Nlen] 
+                ->(pdest) := val
+	   $while (Nlen  > 0)
+	}
+}
+
+$macro $module [llvm_memset_u16] 
+$in (dest: $pointer<$uint<16> > val :$uint<16> len: $uint<32> )
+$out ()
+$is 
+{
+	$branchblock [loop] {
+	    $dopipeline $depth 8 $buffering 1
+		$merge  $entry $loopback
+			$phi Nlen := (len-1) $on $entry (Nlen-1) $on $loopback 
+		$endmerge
+                pdest :=  dest[Nlen] 
+                ->(pdest) := val
+	   $while (Nlen  > 0)
+	}
+}
+
+$macro $module [llvm_memset_u32] 
+$in (dest: $pointer<$uint<32> > val :$uint<32> len: $uint<32> )
+$out ()
+$is 
+{
+	$branchblock [loop] {
+	    $dopipeline $depth 8 $buffering 1
+		$merge  $entry $loopback
+			$phi Nlen := (len-1) $on $entry (Nlen-1) $on $loopback 
+		$endmerge
+                pdest :=  dest[Nlen] 
+                ->(pdest) := val
+	   $while (Nlen  > 0)
+	}
+}
+
+$macro $module [llvm_memset_u64] 
+$in (dest: $pointer<$uint<64> > val :$uint<64> len: $uint<32> )
+$out ()
+$is 
+{
+	$branchblock [loop] {
+	    $dopipeline $depth 8 $buffering 1
+		$merge  $entry $loopback
+			$phi Nlen := (len-1) $on $entry (Nlen-1) $on $loopback 
+		$endmerge
+                pdest :=  dest[Nlen] 
+                ->(pdest) := val
+	   $while (Nlen  > 0)
+	}
+}
+

@@ -1,0 +1,840 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>Grammar Ahir-asm/devel/grammar/Aa.g</TITLE>
+</HEAD>
+<BODY>
+<table summary="" border="1" cellpadding="5">
+<tr>
+<td>
+<font size="+2">Grammar AaLexer</font><br>
+<a href="http://www.ANTLR.org">ANTLR</a>-generated HTML file from Ahir-asm/devel/grammar/Aa.g
+<p>
+Terence Parr, <a href="http://www.magelang.com">MageLang Institute</a>
+<br>ANTLR Version 2.7.7 (2006-11-01); 1989-2005
+</td>
+</tr>
+</table>
+<PRE>
+
+Definition of lexer AaLexer, which is a subclass of CharScanner.
+
+/** Lexer nextToken rule:
+ *  The lexer nextToken rule is synthesized from all of the user-defined
+ *  lexer rules.  It logically consists of one big alternative block with
+ *  each user-defined rule being an alternative.
+ */
+<a href="AaLexer.html#mFOREIGN">mFOREIGN</a> 
+|	<a href="AaLexer.html#mINLINE">mINLINE</a> 
+|	<a href="AaLexer.html#mMACRO">mMACRO</a> 
+|	<a href="AaLexer.html#mPIPELINE">mPIPELINE</a> 
+|	<a href="AaLexer.html#mMODULE">mMODULE</a> 
+|	<a href="AaLexer.html#mDECLARE">mDECLARE</a> 
+|	<a href="AaLexer.html#mDEFAULT">mDEFAULT</a> 
+|	<a href="AaLexer.html#mSTORAGE">mSTORAGE</a> 
+|	<a href="AaLexer.html#mREGISTER">mREGISTER</a> 
+|	<a href="AaLexer.html#mPIPE">mPIPE</a> 
+|	<a href="AaLexer.html#mLIFO">mLIFO</a> 
+|	<a href="AaLexer.html#mNOBLOCK">mNOBLOCK</a> 
+|	<a href="AaLexer.html#mPORT">mPORT</a> 
+|	<a href="AaLexer.html#mSIGNAL">mSIGNAL</a> 
+|	<a href="AaLexer.html#mCONSTANT">mCONSTANT</a> 
+|	<a href="AaLexer.html#mSERIESBLOCK">mSERIESBLOCK</a> 
+|	<a href="AaLexer.html#mPARALLELBLOCK">mPARALLELBLOCK</a> 
+|	<a href="AaLexer.html#mFORKBLOCK">mFORKBLOCK</a> 
+|	<a href="AaLexer.html#mBRANCHBLOCK">mBRANCHBLOCK</a> 
+|	<a href="AaLexer.html#mPLACE">mPLACE</a> 
+|	<a href="AaLexer.html#mSWITCH">mSWITCH</a> 
+|	<a href="AaLexer.html#mENDSWITCH">mENDSWITCH</a> 
+|	<a href="AaLexer.html#mIF">mIF</a> 
+|	<a href="AaLexer.html#mENDIF">mENDIF</a> 
+|	<a href="AaLexer.html#mOF">mOF</a> 
+|	<a href="AaLexer.html#mON">mON</a> 
+|	<a href="AaLexer.html#mTHEN">mTHEN</a> 
+|	<a href="AaLexer.html#mELSE">mELSE</a> 
+|	<a href="AaLexer.html#mFORK">mFORK</a> 
+|	<a href="AaLexer.html#mJOIN">mJOIN</a> 
+|	<a href="AaLexer.html#mMERGE">mMERGE</a> 
+|	<a href="AaLexer.html#mENDMERGE">mENDMERGE</a> 
+|	<a href="AaLexer.html#mENDJOIN">mENDJOIN</a> 
+|	<a href="AaLexer.html#mWHEN">mWHEN</a> 
+|	<a href="AaLexer.html#mENTRY">mENTRY</a> 
+|	<a href="AaLexer.html#mLOOPBACK">mLOOPBACK</a> 
+|	<a href="AaLexer.html#mEXIT">mEXIT</a> 
+|	<a href="AaLexer.html#mFIN">mFIN</a> 
+|	<a href="AaLexer.html#mIN">mIN</a> 
+|	<a href="AaLexer.html#mOUT">mOUT</a> 
+|	<a href="AaLexer.html#mIS">mIS</a> 
+|	<a href="AaLexer.html#mASSIGN">mASSIGN</a> 
+|	<a href="AaLexer.html#mCALL">mCALL</a> 
+|	<a href="AaLexer.html#mPHI">mPHI</a> 
+|	<a href="AaLexer.html#mDEPTH">mDEPTH</a> 
+|	<a href="AaLexer.html#mBUFFERING">mBUFFERING</a> 
+|	<a href="AaLexer.html#mFULLRATE">mFULLRATE</a> 
+|	<a href="AaLexer.html#mBYPASS">mBYPASS</a> 
+|	<a href="AaLexer.html#mATTRIBUTE">mATTRIBUTE</a> 
+|	<a href="AaLexer.html#mGUARD">mGUARD</a> 
+|	<a href="AaLexer.html#mDO">mDO</a> 
+|	<a href="AaLexer.html#mWHILE">mWHILE</a> 
+|	<a href="AaLexer.html#mSLICE">mSLICE</a> 
+|	<a href="AaLexer.html#mBITMAP">mBITMAP</a> 
+|	<a href="AaLexer.html#mMUTEX">mMUTEX</a> 
+|	<a href="AaLexer.html#mLOCK">mLOCK</a> 
+|	<a href="AaLexer.html#mUNLOCK">mUNLOCK</a> 
+|	<a href="AaLexer.html#mPARAMETER">mPARAMETER</a> 
+|	<a href="AaLexer.html#mSLEEP">mSLEEP</a> 
+|	<a href="AaLexer.html#mCOLON">mCOLON</a> 
+|	<a href="AaLexer.html#mSEMICOLON">mSEMICOLON</a> 
+|	<a href="AaLexer.html#mCOMMA">mCOMMA</a> 
+|	<a href="AaLexer.html#mQUOTE">mQUOTE</a> 
+|	<a href="AaLexer.html#mUP">mUP</a> 
+|	<a href="AaLexer.html#mASSIGNEQUAL">mASSIGNEQUAL</a> 
+|	<a href="AaLexer.html#mEQUAL">mEQUAL</a> 
+|	<a href="AaLexer.html#mNOTEQUAL">mNOTEQUAL</a> 
+|	<a href="AaLexer.html#mLESS">mLESS</a> 
+|	<a href="AaLexer.html#mLESSEQUAL">mLESSEQUAL</a> 
+|	<a href="AaLexer.html#mQUESTION">mQUESTION</a> 
+|	<a href="AaLexer.html#mGREATER">mGREATER</a> 
+|	<a href="AaLexer.html#mGREATEREQUAL">mGREATEREQUAL</a> 
+|	<a href="AaLexer.html#mIMPLIES">mIMPLIES</a> 
+|	<a href="AaLexer.html#mSHL">mSHL</a> 
+|	<a href="AaLexer.html#mSHR">mSHR</a> 
+|	<a href="AaLexer.html#mROL">mROL</a> 
+|	<a href="AaLexer.html#mROR">mROR</a> 
+|	<a href="AaLexer.html#mLBRACE">mLBRACE</a> 
+|	<a href="AaLexer.html#mRBRACE">mRBRACE</a> 
+|	<a href="AaLexer.html#mLBRACKET">mLBRACKET</a> 
+|	<a href="AaLexer.html#mRBRACKET">mRBRACKET</a> 
+|	<a href="AaLexer.html#mLPAREN">mLPAREN</a> 
+|	<a href="AaLexer.html#mRPAREN">mRPAREN</a> 
+|	<a href="AaLexer.html#mPERCENT">mPERCENT</a> 
+|	<a href="AaLexer.html#mCONCAT">mCONCAT</a> 
+|	<a href="AaLexer.html#mBITSEL">mBITSEL</a> 
+|	<a href="AaLexer.html#mUNORDERED">mUNORDERED</a> 
+|	<a href="AaLexer.html#mPOWER">mPOWER</a> 
+|	<a href="AaLexer.html#mPLUS">mPLUS</a> 
+|	<a href="AaLexer.html#mMINUS">mMINUS</a> 
+|	<a href="AaLexer.html#mMUL">mMUL</a> 
+|	<a href="AaLexer.html#mDIV">mDIV</a> 
+|	<a href="AaLexer.html#mNOT">mNOT</a> 
+|	<a href="AaLexer.html#mOR">mOR</a> 
+|	<a href="AaLexer.html#mAND">mAND</a> 
+|	<a href="AaLexer.html#mXOR">mXOR</a> 
+|	<a href="AaLexer.html#mNOR">mNOR</a> 
+|	<a href="AaLexer.html#mNAND">mNAND</a> 
+|	<a href="AaLexer.html#mXNOR">mXNOR</a> 
+|	<a href="AaLexer.html#mMUX">mMUX</a> 
+|	<a href="AaLexer.html#mVECTORCONCAT">mVECTORCONCAT</a> 
+|	<a href="AaLexer.html#mPRIORITYMUX">mPRIORITYMUX</a> 
+|	<a href="AaLexer.html#mEXCMUX">mEXCMUX</a> 
+|	<a href="AaLexer.html#mREDUCE">mREDUCE</a> 
+|	<a href="AaLexer.html#mSPLIT">mSPLIT</a> 
+|	<a href="AaLexer.html#mBITREDUCE">mBITREDUCE</a> 
+|	<a href="AaLexer.html#mDECODE">mDECODE</a> 
+|	<a href="AaLexer.html#mENCODE">mENCODE</a> 
+|	<a href="AaLexer.html#mPRIORITYENCODE">mPRIORITYENCODE</a> 
+|	<a href="AaLexer.html#mASSERT">mASSERT</a> 
+|	<a href="AaLexer.html#mREPORT">mREPORT</a> 
+|	<a href="AaLexer.html#mRREPORT">mRREPORT</a> 
+|	<a href="AaLexer.html#mTRACE">mTRACE</a> 
+|	<a href="AaLexer.html#mUINT">mUINT</a> 
+|	<a href="AaLexer.html#mINT">mINT</a> 
+|	<a href="AaLexer.html#mFLOAT">mFLOAT</a> 
+|	<a href="AaLexer.html#mPOINTER">mPOINTER</a> 
+|	<a href="AaLexer.html#mNuLL">mNuLL</a> 
+|	<a href="AaLexer.html#mBARRIER">mBARRIER</a> 
+|	<a href="AaLexer.html#mARRAY">mARRAY</a> 
+|	<a href="AaLexer.html#mRECORD">mRECORD</a> 
+|	<a href="AaLexer.html#mCAST">mCAST</a> 
+|	<a href="AaLexer.html#mBITCAST">mBITCAST</a> 
+|	<a href="AaLexer.html#mDEREFERENCE_OP">mDEREFERENCE_OP</a> 
+|	<a href="AaLexer.html#mADDRESS_OF_OP">mADDRESS_OF_OP</a> 
+|	<a href="AaLexer.html#mVOID">mVOID</a> 
+|	<a href="AaLexer.html#mMARK">mMARK</a> 
+|	<a href="AaLexer.html#mSYNCH">mSYNCH</a> 
+|	<a href="AaLexer.html#mDELAY">mDELAY</a> 
+|	<a href="AaLexer.html#mUPDATE">mUPDATE</a> 
+|	<a href="AaLexer.html#mP2P">mP2P</a> 
+|	<a href="AaLexer.html#mSHIFTREG">mSHIFTREG</a> 
+|	<a href="AaLexer.html#mVOLATILE">mVOLATILE</a> 
+|	<a href="AaLexer.html#mOPERATOR">mOPERATOR</a> 
+|	<a href="AaLexer.html#mNOOPT">mNOOPT</a> 
+|	<a href="AaLexer.html#mOPAQUE">mOPAQUE</a> 
+|	<a href="AaLexer.html#mUSEONCE">mUSEONCE</a> 
+|	<a href="AaLexer.html#mKEEP">mKEEP</a> 
+|	<a href="AaLexer.html#mDETERMINISTIC">mDETERMINISTIC</a> 
+|	<a href="AaLexer.html#mCUT_THROUGH">mCUT_THROUGH</a> 
+|	<a href="AaLexer.html#mCONSTZERO">mCONSTZERO</a> 
+|	<a href="AaLexer.html#mCONSTONE">mCONSTONE</a> 
+|	<a href="AaLexer.html#mUINTEGER">mUINTEGER</a> 
+|	<a href="AaLexer.html#mFLOATCONST">mFLOATCONST</a> 
+|	<a href="AaLexer.html#mBINARY">mBINARY</a> 
+|	<a href="AaLexer.html#mHEXADECIMAL">mHEXADECIMAL</a> 
+|	<a href="AaLexer.html#mHEXCSTYLEINTEGER">mHEXCSTYLEINTEGER</a> 
+|	<a href="AaLexer.html#mWHITESPACE">mWHITESPACE</a> 
+|	<a href="AaLexer.html#mSINGLELINECOMMENT">mSINGLELINECOMMENT</a> 
+|	<a href="AaLexer.html#mSCOPE_IDENTIFIER">mSCOPE_IDENTIFIER</a> 
+|	<a href="AaLexer.html#mSIMPLE_IDENTIFIER">mSIMPLE_IDENTIFIER</a> 
+<a name="mFOREIGN">mFOREIGN</a>
+	:	&quot;$foreign&quot; 
+	;
+
+<a name="mINLINE">mINLINE</a>
+	:	&quot;$inline&quot; 
+	;
+
+<a name="mMACRO">mMACRO</a>
+	:	&quot;$macro&quot; 
+	;
+
+<a name="mPIPELINE">mPIPELINE</a>
+	:	&quot;$pipeline&quot; 
+	;
+
+<a name="mMODULE">mMODULE</a>
+	:	&quot;$module&quot; 
+	;
+
+<a name="mDECLARE">mDECLARE</a>
+	:	&quot;$declare&quot; 
+	;
+
+<a name="mDEFAULT">mDEFAULT</a>
+	:	&quot;$default&quot; 
+	;
+
+<a name="mSTORAGE">mSTORAGE</a>
+	:	&quot;$storage&quot; 
+	;
+
+<a name="mREGISTER">mREGISTER</a>
+	:	&quot;$register&quot; 
+	;
+
+<a name="mPIPE">mPIPE</a>
+	:	&quot;$pipe&quot; 
+	;
+
+<a name="mLIFO">mLIFO</a>
+	:	&quot;$lifo&quot; 
+	;
+
+<a name="mNOBLOCK">mNOBLOCK</a>
+	:	&quot;$noblock&quot; 
+	;
+
+<a name="mPORT">mPORT</a>
+	:	&quot;$port&quot; 
+	;
+
+<a name="mSIGNAL">mSIGNAL</a>
+	:	&quot;$signal&quot; 
+	;
+
+<a name="mCONSTANT">mCONSTANT</a>
+	:	&quot;$constant&quot; 
+	;
+
+<a name="mSERIESBLOCK">mSERIESBLOCK</a>
+	:	&quot;$seriesblock&quot; 
+	;
+
+<a name="mPARALLELBLOCK">mPARALLELBLOCK</a>
+	:	&quot;$parallelblock&quot; 
+	;
+
+<a name="mFORKBLOCK">mFORKBLOCK</a>
+	:	&quot;$forkblock&quot; 
+	;
+
+<a name="mBRANCHBLOCK">mBRANCHBLOCK</a>
+	:	&quot;$branchblock&quot; 
+	;
+
+<a name="mPLACE">mPLACE</a>
+	:	&quot;$place&quot; 
+	;
+
+<a name="mSWITCH">mSWITCH</a>
+	:	&quot;$switch&quot; 
+	;
+
+<a name="mENDSWITCH">mENDSWITCH</a>
+	:	&quot;$endswitch&quot; 
+	;
+
+<a name="mIF">mIF</a>
+	:	&quot;$if&quot; 
+	;
+
+<a name="mENDIF">mENDIF</a>
+	:	&quot;$endif&quot; 
+	;
+
+<a name="mOF">mOF</a>
+	:	&quot;$of&quot; 
+	;
+
+<a name="mON">mON</a>
+	:	&quot;$on&quot; 
+	;
+
+<a name="mTHEN">mTHEN</a>
+	:	&quot;$then&quot; 
+	;
+
+<a name="mELSE">mELSE</a>
+	:	&quot;$else&quot; 
+	;
+
+<a name="mFORK">mFORK</a>
+	:	&quot;$fork&quot; 
+	;
+
+<a name="mJOIN">mJOIN</a>
+	:	&quot;$join&quot; 
+	;
+
+<a name="mMERGE">mMERGE</a>
+	:	&quot;$merge&quot; 
+	;
+
+<a name="mENDMERGE">mENDMERGE</a>
+	:	&quot;$endmerge&quot; 
+	;
+
+<a name="mENDJOIN">mENDJOIN</a>
+	:	&quot;$endjoin&quot; 
+	;
+
+<a name="mWHEN">mWHEN</a>
+	:	&quot;$when&quot; 
+	;
+
+<a name="mENTRY">mENTRY</a>
+	:	&quot;$entry&quot; 
+	;
+
+<a name="mLOOPBACK">mLOOPBACK</a>
+	:	&quot;$loopback&quot; 
+	;
+
+<a name="mEXIT">mEXIT</a>
+	:	&quot;$exit&quot; 
+	;
+
+<a name="mFIN">mFIN</a>
+	:	&quot;$fin&quot; 
+	;
+
+<a name="mIN">mIN</a>
+	:	&quot;$in&quot; 
+	;
+
+<a name="mOUT">mOUT</a>
+	:	&quot;$out&quot; 
+	;
+
+<a name="mIS">mIS</a>
+	:	&quot;$is&quot; 
+	;
+
+<a name="mASSIGN">mASSIGN</a>
+	:	&quot;$assign&quot; 
+	;
+
+<a name="mCALL">mCALL</a>
+	:	&quot;$call&quot; 
+	;
+
+<a name="mPHI">mPHI</a>
+	:	&quot;$phi&quot; 
+	;
+
+<a name="mDEPTH">mDEPTH</a>
+	:	&quot;$depth&quot; 
+	;
+
+<a name="mBUFFERING">mBUFFERING</a>
+	:	&quot;$buffering&quot; 
+	;
+
+<a name="mFULLRATE">mFULLRATE</a>
+	:	&quot;$fullrate&quot; 
+	;
+
+<a name="mBYPASS">mBYPASS</a>
+	:	&quot;$bypass&quot; 
+	;
+
+<a name="mATTRIBUTE">mATTRIBUTE</a>
+	:	&quot;$attribute&quot; 
+	;
+
+<a name="mGUARD">mGUARD</a>
+	:	&quot;$guard&quot; 
+	;
+
+<a name="mDO">mDO</a>
+	:	&quot;$dopipeline&quot; 
+	;
+
+<a name="mWHILE">mWHILE</a>
+	:	&quot;$while&quot; 
+	;
+
+<a name="mSLICE">mSLICE</a>
+	:	&quot;$slice&quot; 
+	;
+
+<a name="mBITMAP">mBITMAP</a>
+	:	&quot;$bitmap&quot; 
+	;
+
+<a name="mMUTEX">mMUTEX</a>
+	:	&quot;$mutex&quot; 
+	;
+
+<a name="mLOCK">mLOCK</a>
+	:	&quot;$lock&quot; 
+	;
+
+<a name="mUNLOCK">mUNLOCK</a>
+	:	&quot;$unlock&quot; 
+	;
+
+<a name="mPARAMETER">mPARAMETER</a>
+	:	&quot;$parameter&quot; 
+	;
+
+<a name="mSLEEP">mSLEEP</a>
+	:	&quot;$sleep&quot; 
+	;
+
+<a name="mCOLON">mCOLON</a>
+	:	&#039;:&#039; 
+	;
+
+<a name="mSEMICOLON">mSEMICOLON</a>
+	:	&#039;;&#039; 
+	;
+
+<a name="mCOMMA">mCOMMA</a>
+	:	&#039;,&#039; 
+	;
+
+<a name="mQUOTE">mQUOTE</a>
+	:	&#039;&quot;&#039; 
+	;
+
+<a name="mUP">mUP</a>
+	:	&quot;../&quot; 
+	;
+
+<a name="mASSIGNEQUAL">mASSIGNEQUAL</a>
+	:	&quot;:=&quot; 
+	;
+
+<a name="mEQUAL">mEQUAL</a>
+	:	&quot;==&quot; 
+	;
+
+<a name="mNOTEQUAL">mNOTEQUAL</a>
+	:	&quot;!=&quot; 
+	;
+
+<a name="mLESS">mLESS</a>
+	:	&#039;&lt;&#039; 
+	;
+
+<a name="mLESSEQUAL">mLESSEQUAL</a>
+	:	&quot;&lt;=&quot; 
+	;
+
+<a name="mQUESTION">mQUESTION</a>
+	:	&#039;?&#039; 
+	;
+
+<a name="mGREATER">mGREATER</a>
+	:	&quot;&gt;&quot; 
+	;
+
+<a name="mGREATEREQUAL">mGREATEREQUAL</a>
+	:	&quot;&gt;=&quot; 
+	;
+
+<a name="mIMPLIES">mIMPLIES</a>
+	:	&quot;=&gt;&quot; 
+	;
+
+<a name="mSHL">mSHL</a>
+	:	&quot;&lt;&lt;&quot; 
+	;
+
+<a name="mSHR">mSHR</a>
+	:	&quot;&gt;&gt;&quot; 
+	;
+
+<a name="mROL">mROL</a>
+	:	&quot;&lt;o&lt;&quot; 
+	;
+
+<a name="mROR">mROR</a>
+	:	&quot;&gt;o&gt;&quot; 
+	;
+
+<a name="mLBRACE">mLBRACE</a>
+	:	&#039;{&#039; 
+	;
+
+<a name="mRBRACE">mRBRACE</a>
+	:	&#039;}&#039; 
+	;
+
+<a name="mLBRACKET">mLBRACKET</a>
+	:	&#039;[&#039; 
+	;
+
+<a name="mRBRACKET">mRBRACKET</a>
+	:	&#039;]&#039; 
+	;
+
+<a name="mLPAREN">mLPAREN</a>
+	:	&#039;(&#039; 
+	;
+
+<a name="mRPAREN">mRPAREN</a>
+	:	&#039;)&#039; 
+	;
+
+<a name="mPERCENT">mPERCENT</a>
+	:	&#039;%&#039; 
+	;
+
+<a name="mCONCAT">mCONCAT</a>
+	:	&quot;&amp;&amp;&quot; 
+	;
+
+<a name="mBITSEL">mBITSEL</a>
+	:	&quot;[]&quot; 
+	;
+
+<a name="mUNORDERED">mUNORDERED</a>
+	:	&quot;&gt;&lt;&quot; 
+	;
+
+<a name="mPOWER">mPOWER</a>
+	:	&quot;**&quot; 
+	;
+
+<a name="mPLUS">mPLUS</a>
+	:	&#039;+&#039; 
+	;
+
+<a name="mMINUS">mMINUS</a>
+	:	&#039;-&#039; 
+	;
+
+<a name="mMUL">mMUL</a>
+	:	&#039;*&#039; 
+	;
+
+<a name="mDIV">mDIV</a>
+	:	&#039;/&#039; 
+	;
+
+<a name="mNOT">mNOT</a>
+	:	&#039;~&#039; 
+	;
+
+<a name="mOR">mOR</a>
+	:	&#039;|&#039; 
+	;
+
+<a name="mAND">mAND</a>
+	:	&#039;&amp;&#039; 
+	;
+
+<a name="mXOR">mXOR</a>
+	:	&#039;^&#039; 
+	;
+
+<a name="mNOR">mNOR</a>
+	:	&quot;~|&quot; 
+	;
+
+<a name="mNAND">mNAND</a>
+	:	&quot;~&amp;&quot; 
+	;
+
+<a name="mXNOR">mXNOR</a>
+	:	&quot;~^&quot; 
+	;
+
+<a name="mMUX">mMUX</a>
+	:	&quot;$mux&quot; 
+	;
+
+<a name="mVECTORCONCAT">mVECTORCONCAT</a>
+	:	&quot;$concat&quot; 
+	;
+
+<a name="mPRIORITYMUX">mPRIORITYMUX</a>
+	:	&quot;$prioritymux&quot; 
+	;
+
+<a name="mEXCMUX">mEXCMUX</a>
+	:	&quot;$excmux&quot; 
+	;
+
+<a name="mREDUCE">mREDUCE</a>
+	:	&quot;$reduce&quot; 
+	;
+
+<a name="mSPLIT">mSPLIT</a>
+	:	&quot;$split&quot; 
+	;
+
+<a name="mBITREDUCE">mBITREDUCE</a>
+	:	&quot;$bitreduce&quot; 
+	;
+
+<a name="mDECODE">mDECODE</a>
+	:	&quot;$decode&quot; 
+	;
+
+<a name="mENCODE">mENCODE</a>
+	:	&quot;$encode&quot; 
+	;
+
+<a name="mPRIORITYENCODE">mPRIORITYENCODE</a>
+	:	&quot;$p_encode&quot; 
+	;
+
+<a name="mASSERT">mASSERT</a>
+	:	&quot;$assert&quot; 
+	;
+
+<a name="mREPORT">mREPORT</a>
+	:	&quot;$report&quot; 
+	;
+
+<a name="mRREPORT">mRREPORT</a>
+	:	&quot;$rreport&quot; 
+	;
+
+<a name="mTRACE">mTRACE</a>
+	:	&quot;$trace&quot; 
+	;
+
+<a name="mUINT">mUINT</a>
+	:	&quot;$uint&quot; 
+	;
+
+<a name="mINT">mINT</a>
+	:	&quot;$int&quot; 
+	;
+
+<a name="mFLOAT">mFLOAT</a>
+	:	&quot;$float&quot; 
+	;
+
+<a name="mPOINTER">mPOINTER</a>
+	:	&quot;$pointer&quot; 
+	;
+
+<a name="mNuLL">mNuLL</a>
+	:	&quot;$null&quot; 
+	;
+
+<a name="mBARRIER">mBARRIER</a>
+	:	&quot;$barrier&quot; 
+	;
+
+<a name="mARRAY">mARRAY</a>
+	:	&quot;$array&quot; 
+	;
+
+<a name="mRECORD">mRECORD</a>
+	:	&quot;$record&quot; 
+	;
+
+<a name="mCAST">mCAST</a>
+	:	&quot;$cast&quot; 
+	;
+
+<a name="mBITCAST">mBITCAST</a>
+	:	&quot;$bitcast&quot; 
+	;
+
+<a name="mDEREFERENCE_OP">mDEREFERENCE_OP</a>
+	:	&quot;-&gt;&quot; 
+	;
+
+<a name="mADDRESS_OF_OP">mADDRESS_OF_OP</a>
+	:	&quot;@&quot; 
+	;
+
+<a name="mVOID">mVOID</a>
+	:	&quot;$void&quot; 
+	;
+
+<a name="mMARK">mMARK</a>
+	:	&quot;$mark&quot; 
+	;
+
+<a name="mSYNCH">mSYNCH</a>
+	:	&quot;$synch&quot; 
+	;
+
+<a name="mDELAY">mDELAY</a>
+	:	&quot;$delay&quot; 
+	;
+
+<a name="mUPDATE">mUPDATE</a>
+	:	&quot;$update&quot; 
+	;
+
+<a name="mP2P">mP2P</a>
+	:	&quot;$p2p&quot; 
+	;
+
+<a name="mSHIFTREG">mSHIFTREG</a>
+	:	&quot;$shiftreg&quot; 
+	;
+
+<a name="mVOLATILE">mVOLATILE</a>
+	:	&quot;$volatile&quot; 
+	;
+
+<a name="mOPERATOR">mOPERATOR</a>
+	:	&quot;$operator&quot; 
+	;
+
+<a name="mNOOPT">mNOOPT</a>
+	:	&quot;$noopt&quot; 
+	;
+
+<a name="mOPAQUE">mOPAQUE</a>
+	:	&quot;$opaque&quot; 
+	;
+
+<a name="mUSEONCE">mUSEONCE</a>
+	:	&quot;$useonce&quot; 
+	;
+
+<a name="mKEEP">mKEEP</a>
+	:	&quot;$keep&quot; 
+	;
+
+<a name="mDETERMINISTIC">mDETERMINISTIC</a>
+	:	&quot;$deterministic&quot; 
+	;
+
+<a name="mCUT_THROUGH">mCUT_THROUGH</a>
+	:	&quot;$cut_through&quot; 
+	;
+
+<a name="mCONSTZERO">mCONSTZERO</a>
+	:	&quot;$zero&quot; 
+	;
+
+<a name="mCONSTONE">mCONSTONE</a>
+	:	&quot;$one&quot; 
+	;
+
+<a name="mUINTEGER">mUINTEGER</a>
+	:	<a href="AaLexer.html#mDIGIT">mDIGIT</a> ( <a href="AaLexer.html#mDIGIT">mDIGIT</a> )* 
+	;
+
+protected <a name="mDIGIT">mDIGIT</a>
+	:			'0'..'9' 
+	;
+
+<a name="mFLOATCONST">mFLOATCONST</a>
+	:	&quot;_f&quot; 
+		(	&#039;-&#039; 
+		|	
+		) 
+		<a href="AaLexer.html#mDIGIT">mDIGIT</a> &#039;.&#039; ( <a href="AaLexer.html#mDIGIT">mDIGIT</a> )+ &#039;e&#039; 
+		(	&#039;+&#039; 
+		|	&#039;-&#039; 
+		) 
+		( <a href="AaLexer.html#mDIGIT">mDIGIT</a> )+ 
+	;
+
+<a name="mBINARY">mBINARY</a>
+	:	&quot;_b&quot; 
+		(	&#039;0&#039; 
+		|	&#039;1&#039; 
+		)+ 
+	;
+
+<a name="mHEXADECIMAL">mHEXADECIMAL</a>
+	:	&quot;_h&quot; 
+		(	<a href="AaLexer.html#mDIGIT">mDIGIT</a> 
+		|	(	&#039;a&#039; 
+			|	&#039;b&#039; 
+			|	&#039;c&#039; 
+			|	&#039;d&#039; 
+			|	&#039;e&#039; 
+			|	&#039;f&#039; 
+			|	&#039;A&#039; 
+			|	&#039;B&#039; 
+			|	&#039;C&#039; 
+			|	&#039;D&#039; 
+			|	&#039;E&#039; 
+			|	&#039;F&#039; 
+			) 
+		)+ 
+	;
+
+<a name="mHEXCSTYLEINTEGER">mHEXCSTYLEINTEGER</a>
+	:	&quot;0x&quot; 
+		(	<a href="AaLexer.html#mDIGIT">mDIGIT</a> 
+		|	(	&#039;a&#039; 
+			|	&#039;b&#039; 
+			|	&#039;c&#039; 
+			|	&#039;d&#039; 
+			|	&#039;e&#039; 
+			|	&#039;f&#039; 
+			|	&#039;A&#039; 
+			|	&#039;B&#039; 
+			|	&#039;C&#039; 
+			|	&#039;D&#039; 
+			|	&#039;E&#039; 
+			|	&#039;F&#039; 
+			) 
+		)+ 
+	;
+
+<a name="mWHITESPACE">mWHITESPACE</a>
+	:	(	&#039; &#039; 
+		|	&#039;\t&#039; 
+		|	&#039;\f&#039; 
+		|	&#039;\r&#039; 
+		|	&#039;\n&#039; 
+		) 
+		
+	;
+
+<a name="mSINGLELINECOMMENT">mSINGLELINECOMMENT</a>
+	:	( &quot;//&quot; ( ~&#039;\n&#039; )* &#039;\n&#039; ) 
+	;
+
+<a name="mSCOPE_IDENTIFIER">mSCOPE_IDENTIFIER</a>
+	:	&#039;.&#039; ( <a href="AaLexer.html#mSIMPLE_IDENTIFIER">mSIMPLE_IDENTIFIER</a> &#039;.&#039; )* 
+	;
+
+<a name="mSIMPLE_IDENTIFIER">mSIMPLE_IDENTIFIER</a>
+	:	<a href="AaLexer.html#mALPHA">mALPHA</a> 
+		(	<a href="AaLexer.html#mALPHA">mALPHA</a> 
+		|	<a href="AaLexer.html#mDIGIT">mDIGIT</a> 
+		|	&#039;_&#039; 
+		)* 
+	;
+
+protected <a name="mALPHA">mALPHA</a>
+	:			'a'..'z' 
+	|			'A'..'Z' 
+	;
