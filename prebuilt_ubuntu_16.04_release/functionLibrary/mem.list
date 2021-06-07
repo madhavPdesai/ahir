@@ -1,0 +1,6 @@
+#vhdl-lib:mod-name:mode-delay (VHDL not yet implemented).
+ahir:ram_1xRW_1024x256_32:2
+ahir:cam_64x32_40:2
+
+ahir:ram_1024x32:1
+ahir:dpram_1w_1r_1024x32:1

@@ -1,0 +1,13 @@
+Overview.pdf
+	-- a general introduction to AHIR V2 tools.
+
+AaLRM.pdf
+	-- Language Reference Manual for the Aa language.
+
+CtestBench.pdf
+	-- A brief guide to using a C testbench to verify
+	   generated AHIR VHDL.
+
+llvm2aa.pdf
+	-- a brief doc about the llvm2aa tool.
+

@@ -1,0 +1,15 @@
+To set environment, edit ahir_bashrc 
+as indicated in the file and source it.
+
+You must have llvm-2.8 and clang-2.8 
+installed in order to use the tools.
+
+Please read the LICENSE; any use of
+the tools in this distribution implies
+that you have accepted the terms 
+outlined in LICENSE.
+
+Before starting, you may want to read
+the documents in  docs/pdf/*, and then
+move on to the examples in examples/*.
+	

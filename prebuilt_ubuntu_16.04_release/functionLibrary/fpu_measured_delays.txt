@@ -1,0 +1,19 @@
+!
+! delays measured using release/example/regression_tests/floatCheck/
+! These do not include the arbitration delays.
+!
+fpmuld   12
+fpmuls   10
+fpaddd   14
+fpadds   12
+
+float2uint   2
+float2int    3
+
+float2double 4
+double2float 4
+
+int2float    2
+int2double   2
+
+

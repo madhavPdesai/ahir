@@ -1,0 +1,194 @@
+$operator $module [ram_1024x32] $in (enable read_write_bar: $uint<1>
+					addr: $uint<10>
+					din: $uint<32>)
+			$out (dout: $uint<32>)
+$is
+{
+	$storage mem_array: $array [1024] $of $uint<32>
+	$volatile do_read := (enable & read_write_bar)
+	$volatile do_write := (enable & (~read_write_bar))
+	$guard (do_read)
+		dout_raw := mem_array[addr]
+	$guard (do_write)
+		mem_array[addr] := din
+
+	dout := ($mux read_write_bar dout_raw 0)
+}
+
+$operator $module [dpram_1w_1r_1024x32] 
+		$in (read_enable write_enable: $uint<1>
+			read_addr write_addr:  $uint<10>
+					write_data: $uint<32>)
+			$out (read_data: $uint<32>)
+$is
+{
+	$storage mem_array: $array [1024] $of $uint<32>
+
+	$rreport (dpram_1w_1r_1024x32 request read_enable write_enable
+							read_addr write_addr write_data)
+	$guard (read_enable)
+		read_data_raw := mem_array[read_addr]
+	$guard (write_enable)
+		mem_array[write_addr] := write_data
+
+	read_data := ($mux read_enable read_data_raw 0)
+
+	$rreport (dpram_1w_1r_1024x32 response read_data)
+}
+
+
+// 
+// 1024x256x32 single port RAM.
+// 16kB to be used in direct mapped caches.
+//
+// 16kB cache organized into 1024 256-bit lines.
+//
+// We also keep a 32-bit tag to keep track
+// of line status (index, dirty/clean etc.)
+//
+//
+$operator $module [ram_1xRW_1024x256_32]
+		$in (addr: $uint<10>   		// line address
+			din: $uint<256> 	// line data
+			tagin: $uint<32> 	// line tag
+			byte_mask: $uint<32>	// byte-mask (for line-data write)
+			init_flag 		// init-flag (if set, all tags will be initialized
+						// to tagin
+			wr_tag 			// write-tag
+			wr_bar: 		// read/write-bar 
+				$uint<1>)
+		$out (dout: $uint<256> tagout : $uint<32>) 
+$is
+{
+	$storage MEMDATAARRAY: $array [1024][32] $of $uint<8>  // to model byte-access.
+	$storage MEMTAGARRAY:  $array [1024] $of $uint<32>     // one block.
+
+	// initialize tags..
+	$branchblock[InitTagBlock] {
+		$if init_flag $then
+			$merge $entry loopback 
+				$phi I := ($bitcast ($uint<10>) 0) $on $entry NI $on loopback
+			$endmerge
+
+			NI := (I+1)
+			MEMTAGARRAY[I]  := tagin 
+
+			$if (I < 1023) $then $place [loopback] $endif
+		$endif
+	}
+
+
+	$branchblock[Access] {
+		// tag is written in one step.
+		$if ((~wr_bar) & wr_tag) $then
+			MEMTAGARRAY[addr] := tagin
+		$else
+			RTG := MEMTAGARRAY[addr]
+		$endif
+
+
+		// byte read/writes.
+		$merge $entry loopback 
+			$phi J := ($bitcast ($uint<10>) 0) $on $entry NJ $on loopback
+			$phi RD := ($bitcast ($uint<256>) _b0) $on $entry NRD $on loopback
+		$endmerge
+		NJ := (J+1)
+
+		$if wr_bar $then
+			TRD := MEMDATAARRAY[addr][J]
+			NRD := ($concat ($slice (RD << 8) 255 8) TRD)
+		$else
+			$if (byte_mask [] ($bitcast ($uint<32>) J)) $then
+				MEMDATAARRAY[addr][J] := ($slice (din >> ($bitcast ($uint<256>) J)) 7 0)
+			$endif 
+		$endif
+
+		$if (J < 31) $then $place [loopback] $endif
+	} (NRD => NRD RTG => RTG)
+
+	dout := ($mux wr_bar NRD 0)
+	tagout := ($mux wr_bar RTG 0)
+}
+
+
+//
+// 64-entry CAM, 32-bit tag, 40-bit value.
+//  (specialize for other widths, number-of-entries etc.).
+//  (to be used in TLB inside the MMU)
+//
+$operator $module [cam_64x32_40] 
+	$in (in_tag: $uint<32> in_value: $uint<40>   in_index: $uint<6>
+		init_flag erase_flag insert_flag lookup_flag index_flag: $uint<1>)
+	$out (out_value: $uint<40>   number_of_entries : $uint<7> hit_flag: $uint<1>)
+$is
+{
+	$storage TAGARRAY: $array [64] $of $uint<33> 
+	$storage VALUEARRAY: $array [64] $of $uint<40> 
+	$storage NENTRIES : $uint<7>
+	$constant One_1 : $uint<1> := 1
+
+	
+	$branchblock[BehaveBlock] {
+			$merge $entry loopback 
+				$phi I := ($bitcast ($uint<6>) 0) $on $entry NI $on loopback
+			$endmerge
+			NI := (I+1)
+
+
+		     	tv := TAGARRAY[I]
+
+			$if (I < 63) $then
+				$if init_flag $then
+					TAGARRAY[I] := 0
+					NENTRIES := 0
+				$endif
+				$if erase_flag $then
+			     		$if (($slice tv 31 0) == in_tag) $then
+						TAGARRAY[I] := 0
+						NENTRIES := (NENTRIES - 1)
+			     		$endif
+				$endif
+				$if insert_flag $then
+			     		$if (~(tv [] 32)) $then
+						TAGARRAY[I] := ($concat One_1 in_tag)
+						VALUEARRAY[I] := in_value
+						NENTRIES := (NENTRIES + 1)
+						$place [InsertHit]
+					$endif
+				$endif
+				$if lookup_flag $then
+					$if ((tv [] 32) & (($slice tv 31 0) == in_tag)) $then
+						l_out_value := VALUEARRAY[I]
+						$place [LookupHit]
+					$endif
+				$endif
+				$if index_flag $then
+					$if ((I == in_index) & (tv [] 32)) $then
+						i_out_value := VALUEARRAY[I]
+						$place [IndexHit]
+					$else 
+						$if (I == in_index) $then
+							$place [IndexMiss]
+						$endif
+					$endif
+				$endif
+
+				$place [loopback]
+			$endif
+
+			$merge $entry InsertHit  LookupHit IndexHit IndexMiss
+				$phi hit_flag_raw := 1 $on InsertHit 1 $on LookupHit 1 $on IndexHit 
+								0 $on IndexMiss 0 $on $entry
+				$phi out_value_raw := 0 $on $entry 0 $on InsertHit
+							l_out_value $on LookupHit 
+							i_out_value $on IndexHit
+							0 $on IndexMiss
+							
+			$endmerge
+	} (hit_flag_raw => hit_flag_raw out_value_raw => out_value_raw)
+
+	hit_flag := hit_flag_raw
+	out_value := out_value_raw
+
+	number_of_entries := NENTRIES
+}

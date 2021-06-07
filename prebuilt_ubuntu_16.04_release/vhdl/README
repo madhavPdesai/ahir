@@ -1,0 +1,12 @@
+
+Packages to be used when linking a VHDL simulator
+to a foreign language testbench.
+
+When using Modelsim, use these two 
+	Utility_Package.vhdl
+	Modelsim_FLI_Foreign.vhdl
+
+When using GHDL or any VHPI compliant
+simulator, use
+	Utility_Package.vhdl
+	Vhpi_Package.vhdl
