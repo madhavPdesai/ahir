@@ -61,6 +61,13 @@ char __pipe_handler_debug_string_buffer__[4096];
 						default: break; }} 
 static FILE* log_file = NULL;
 static PipeRec* pipes = NULL;
+static strict_mode = 0;
+
+
+void set_pipe_handler_in_strict_mode()
+{
+	strict_mode  = 1;
+}
 
 MUTEX_DECL(__file_print_mutex__);
 uint32_t get_file_print_lock(FILE* fp)
@@ -329,7 +336,11 @@ uint32_t read_from_pipe_base(int pop_flag, const char* pipe_name, int width, int
 	PipeRec* p = find_pipe((char*) pipe_name);
 	if(p == NULL)
 	{
-		fprintf(stderr,"\nWarning: pipeHandler:read_from_pipe: job used unregistered pipe %s, will register it as a FIFO with depth 1.\n", pipe_name);
+		fprintf(stderr,"\nError: pipeHandler:read_from_pipe: job used unregistered pipe %s, will register it as a FIFO with depth 1.\n", pipe_name);
+
+		if(strict_mode)
+			assert(0);
+
 		register_pipe((char*) pipe_name,1,width,0);
 		p = find_pipe((char*) pipe_name);
 	}
@@ -500,7 +511,11 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 	PipeRec* p = find_pipe(pipe_name);
 	if(p == NULL)
 	{
-		fprintf(stderr,"\nWarning: pipeHandler:write_to_pipe: job used unregistered pipe %s, will register it as a FIFO with depth 1.\n", pipe_name);
+		fprintf(stderr,"\nError: pipeHandler:write_to_pipe: job used unregistered pipe %s, will register it as a FIFO with depth 1.\n", pipe_name);
+
+		if(strict_mode)
+			assert(0);
+
 		register_pipe(pipe_name,1,width,0);
 		p = find_pipe(pipe_name);
 	}

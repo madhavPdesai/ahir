@@ -208,10 +208,16 @@ int is_lifo_mode(PipeRec* p);
 
 // init must be called before using pipehandler
 void init_pipe_handler();
+
 // init with log-file
 void init_pipe_handler_with_log(char* log_file);
+
+// in strict mode, will assert on strange situations.
+void set_pipe_handler_in_strict_mode();
+
 // close after your app finishes using the pipehandler
 void close_pipe_handler();
+
 // returns 0 on success, 1 if something went wrong..
 //   pipe-modes: 
 //      PIPE_FIFO_MODE  0
