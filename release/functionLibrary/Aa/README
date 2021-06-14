@@ -1,0 +1,16 @@
+fpu.aa
+	fpu.  also present in VHDL form
+timer.aa
+	timer. also present in VHDL form.
+
+llvm_intrinsics.aa
+	llvm-intrinsics.  present only in Aa form.
+
+uarith32.aa
+	mul, shift, addsub in module form.
+
+uarith32_Operator.aa
+	mul, shift, addsub in operator module form.
+
+NOTE: use EITHER uarith32.aa or uarith32_Operator.aa,
+	but not both!!!

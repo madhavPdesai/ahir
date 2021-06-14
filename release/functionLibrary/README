@@ -1,0 +1,29 @@
+fixed function libraries that can be dropped in
+to the final VHDL.  Especially useful for 
+instantiating highly optimized operators such
+as floating-point operations etc.
+
+basically, a hack to improve the quality of the
+generated VHDL.
+
+
+Each library (e.g. fpu) is specified by three
+types of files.
+	The C sources are in include/fpu.h and src/fpu.c
+
+	The corresponding Aa source is in Aa/fpu.aa
+
+	The list of functions in the library fpu is in ./fpu.list
+
+The developer can link to the C sources to
+test his/her C program, and to the Aa sources
+to run the Aa2VC tool in the AHIR flow.  The
+vc2vhdl tool in the AHIR flow will use the list
+in ./fpu.list to substitute the correct VHDL instances 
+into the final code.  The VHDL instances are in
+the vhdl/ahir/functionLibrary subdirectory..
+
+An example of the use of this flow is shown
+in release/examples/correlator.
+
+

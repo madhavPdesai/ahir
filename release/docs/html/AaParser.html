@@ -1,0 +1,867 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>Grammar Ahir-asm/devel/grammar/Aa.g</TITLE>
+</HEAD>
+<BODY>
+<table summary="" border="1" cellpadding="5">
+<tr>
+<td>
+<font size="+2">Grammar AaParser</font><br>
+<a href="http://www.ANTLR.org">ANTLR</a>-generated HTML file from Ahir-asm/devel/grammar/Aa.g
+<p>
+Terence Parr, <a href="http://www.magelang.com">MageLang Institute</a>
+<br>ANTLR Version 2.7.7 (2006-11-01); 1989-2005
+</td>
+</tr>
+</table>
+<PRE>
+
+Definition of parser AaParser, which is a subclass of LLkParser.
+
+
+<a name="aA_Program">aA_Program</a>
+	:	(	( <a href="AaParser.html#aA_Module">aA_Module</a> ) 
+		|	( <a href="AaParser.html#aA_Object_Declaration_List">aA_Object_Declaration_List</a> ) 
+		|	( <a href="AaParser.html#aA_Named_Record_Type_Declaration">aA_Named_Record_Type_Declaration</a> ) 
+		|	( <a href="AaParser.html#aA_Mutex_Declaration">aA_Mutex_Declaration</a> ) 
+		|	( <a href="AaParser.html#aA_Integer_Parameter_Declaration">aA_Integer_Parameter_Declaration</a> ) 
+		)* 
+	;
+
+
+<a name="aA_Module">aA_Module</a>
+	:	(	( FOREIGN ) 
+		|	( PIPELINE 
+				(	DEPTH ( <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> ) 
+				|	
+				) 
+				(	BUFFERING ( <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> ) 
+				|	
+				) 
+				(	FULLRATE 
+				|	
+				) 
+				(	DETERMINISTIC 
+				|	
+				) ) 
+		|	( INLINE ) 
+		|	( MACRO ) 
+		|	
+		) 
+		(	( OPERATOR ) 
+		|	( VOLATILE ) 
+		|	( OPAQUE ) 
+		|	
+		) 
+		(	NOOPT 
+		|	
+		) 
+		(	USEONCE 
+		|	
+		) 
+		MODULE <a href="AaParser.html#aA_Label">aA_Label</a> <a href="AaParser.html#aA_In_Args">aA_In_Args</a> <a href="AaParser.html#aA_Out_Args">aA_Out_Args</a> 
+		(	IS LBRACE ( <a href="AaParser.html#aA_Object_Declaration_List">aA_Object_Declaration_List</a> )* <a href="AaParser.html#aA_Atomic_Statement_Sequence">aA_Atomic_Statement_Sequence</a> ( <a href="AaParser.html#aA_Module_Attribute">aA_Module_Attribute</a> )* RBRACE 
+		|	
+		) 
+	;
+
+
+<a name="aA_Object_Declaration_List">aA_Object_Declaration_List</a>
+	:	<a href="AaParser.html#aA_Storage_Object_Declaration_List">aA_Storage_Object_Declaration_List</a> 
+	|	<a href="AaParser.html#aA_Constant_Object_Declaration_List">aA_Constant_Object_Declaration_List</a> 
+	|	<a href="AaParser.html#aA_Pipe_Object_Declaration_List">aA_Pipe_Object_Declaration_List</a> 
+	;
+
+
+<a name="aA_Named_Record_Type_Declaration">aA_Named_Record_Type_Declaration</a>
+	:	RECORD <a href="AaParser.html#aA_Label">aA_Label</a> ( LESS 
+			(	( <a href="AaParser.html#aA_Type_Reference">aA_Type_Reference</a> ) 
+			|	( <a href="AaParser.html#aA_Named_Type_Reference">aA_Named_Type_Reference</a> ) 
+			) 
+			GREATER )* 
+	;
+
+
+<a name="aA_Mutex_Declaration">aA_Mutex_Declaration</a>
+	:	MUTEX SIMPLE_IDENTIFIER 
+	;
+
+
+<a name="aA_Integer_Parameter_Declaration">aA_Integer_Parameter_Declaration</a>
+	:	PARAMETER SIMPLE_IDENTIFIER <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> 
+	;
+
+
+<a name="aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a>
+	:	( UINTEGER ) 
+	|	( HEXCSTYLEINTEGER ) 
+	|	( SIMPLE_IDENTIFIER ) 
+	|	( <a href="AaParser.html#aA_Integer_Parameter_Expression_Nontrivial">aA_Integer_Parameter_Expression_Nontrivial</a> ) 
+	;
+
+
+<a name="aA_Label">aA_Label</a>
+	:	( LBRACKET ) ( SIMPLE_IDENTIFIER ) ( RBRACKET ) 
+	;
+
+
+<a name="aA_In_Args">aA_In_Args</a>
+	:	IN LPAREN ( <a href="AaParser.html#aA_Interface_Object_Declaration_List">aA_Interface_Object_Declaration_List</a> )* RPAREN 
+	;
+
+
+<a name="aA_Out_Args">aA_Out_Args</a>
+	:	OUT LPAREN ( <a href="AaParser.html#aA_Interface_Object_Declaration_List">aA_Interface_Object_Declaration_List</a> )* RPAREN 
+	;
+
+
+<a name="aA_Atomic_Statement_Sequence">aA_Atomic_Statement_Sequence</a>
+	:	( <a href="AaParser.html#aA_Atomic_Statement">aA_Atomic_Statement</a> )+ 
+	;
+
+
+<a name="aA_Module_Attribute">aA_Module_Attribute</a>
+	:	ATTRIBUTE SIMPLE_IDENTIFIER 
+		(	<a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> 
+		|	
+		) 
+		
+	;
+
+
+<a name="aA_Interface_Object_Declaration_List">aA_Interface_Object_Declaration_List</a>
+	:	( <a href="AaParser.html#aA_Object_Declaration_List_Base">aA_Object_Declaration_List_Base</a> ) 
+	;
+
+
+<a name="aA_Atomic_Statement">aA_Atomic_Statement</a>
+	:	(	( (	GUARD LPAREN 
+					(	NOT 
+					|	
+					) 
+					SIMPLE_IDENTIFIER RPAREN 
+				|	
+				) 
+				(	VOLATILE 
+				|	
+				) 
+				(	<a href="AaParser.html#aA_Assignment_Statement">aA_Assignment_Statement</a> 
+				|	<a href="AaParser.html#aA_Call_Statement">aA_Call_Statement</a> 
+				|	<a href="AaParser.html#aA_Split_Statement">aA_Split_Statement</a> 
+				|	<a href="AaParser.html#aA_Report_Statement">aA_Report_Statement</a> 
+				|	<a href="AaParser.html#aA_Trace_Statement">aA_Trace_Statement</a> 
+				|	<a href="AaParser.html#aA_Lock_Statement">aA_Lock_Statement</a> 
+				|	<a href="AaParser.html#aA_Unlock_Statement">aA_Unlock_Statement</a> 
+				|	<a href="AaParser.html#aA_Sleep_Statement">aA_Sleep_Statement</a> 
+				) 
+				(	MARK SIMPLE_IDENTIFIER 
+				|	
+				) 
+				(	SYNCH LPAREN ( (	UPDATE 
+						|	
+						) 
+						SIMPLE_IDENTIFIER )+ RPAREN 
+				|	
+				) 
+				(	DELAY LPAREN ( SIMPLE_IDENTIFIER <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> )+ RPAREN 
+				|	
+				) 
+				(	KEEP 
+				|	
+				) 
+				) 
+		|	( (	( <a href="AaParser.html#aA_Null_Statement">aA_Null_Statement</a> ) 
+				|	( <a href="AaParser.html#aA_Block_Statement">aA_Block_Statement</a> ) 
+				|	( <a href="AaParser.html#aA_Barrier_Statement">aA_Barrier_Statement</a> ) 
+				) 
+				) 
+		) 
+	;
+
+
+<a name="aA_Assignment_Statement">aA_Assignment_Statement</a>
+	:	(	<a href="AaParser.html#aA_Object_Reference">aA_Object_Reference</a> 
+		|	<a href="AaParser.html#aA_Pointer_Dereference_Expression">aA_Pointer_Dereference_Expression</a> 
+		) 
+		ASSIGNEQUAL 
+		(	<a href="AaParser.html#aA_Expression">aA_Expression</a> 
+		|	<a href="AaParser.html#aA_Pointer_Dereference_Expression">aA_Pointer_Dereference_Expression</a> 
+		|	<a href="AaParser.html#aA_Address_Of_Expression">aA_Address_Of_Expression</a> 
+		) 
+		
+		(	BUFFERING <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> 
+			(	CUT_THROUGH 
+			|	
+			) 
+			
+		|	
+		) 
+	;
+
+
+<a name="aA_Call_Statement">aA_Call_Statement</a>
+	:	CALL SIMPLE_IDENTIFIER <a href="AaParser.html#aA_Argv_In">aA_Argv_In</a> <a href="AaParser.html#aA_Argv_Out">aA_Argv_Out</a> 
+		(	BUFFERING <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> 
+		|	
+		) 
+	;
+
+
+<a name="aA_Split_Statement">aA_Split_Statement</a>
+	:	SPLIT LPAREN SIMPLE_IDENTIFIER ( <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> )+ RPAREN LPAREN ( <a href="AaParser.html#aA_Expression">aA_Expression</a> )+ RPAREN 
+		(	BUFFERING <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> 
+		|	
+		) 
+		
+	;
+
+
+<a name="aA_Report_Statement">aA_Report_Statement</a>
+	:	(	ASSERT <a href="AaParser.html#aA_Expression">aA_Expression</a> 
+		|	
+		) 
+		(	( REPORT LPAREN SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER ( SIMPLE_IDENTIFIER <a href="AaParser.html#aA_Expression">aA_Expression</a> )* RPAREN ) 
+		|	( RREPORT LPAREN SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER ( SIMPLE_IDENTIFIER )* RPAREN ) 
+		) 
+		
+	;
+
+
+<a name="aA_Trace_Statement">aA_Trace_Statement</a>
+	:	TRACE SIMPLE_IDENTIFIER 
+		(	LPAREN <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> RPAREN 
+		|	
+		) 
+		
+	;
+
+
+<a name="aA_Lock_Statement">aA_Lock_Statement</a>
+	:	LOCK SIMPLE_IDENTIFIER 
+	;
+
+
+<a name="aA_Unlock_Statement">aA_Unlock_Statement</a>
+	:	UNLOCK SIMPLE_IDENTIFIER 
+	;
+
+
+<a name="aA_Sleep_Statement">aA_Sleep_Statement</a>
+	:	SLEEP <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> 
+	;
+
+
+<a name="aA_Null_Statement">aA_Null_Statement</a>
+	:	NuLL 
+	;
+
+
+<a name="aA_Block_Statement">aA_Block_Statement</a>
+	:	(	<a href="AaParser.html#aA_Series_Block_Statement">aA_Series_Block_Statement</a> 
+		|	<a href="AaParser.html#aA_Parallel_Block_Statement">aA_Parallel_Block_Statement</a> 
+		|	<a href="AaParser.html#aA_Fork_Block_Statement">aA_Fork_Block_Statement</a> 
+		|	<a href="AaParser.html#aA_Branch_Block_Statement">aA_Branch_Block_Statement</a> 
+		) 
+		(	<a href="AaParser.html#aA_Block_Statement_Exports">aA_Block_Statement_Exports</a> 
+		|	
+		) 
+	;
+
+
+<a name="aA_Barrier_Statement">aA_Barrier_Statement</a>
+	:	BARRIER 
+	;
+
+
+<a name="aA_Expression">aA_Expression</a>
+	:	(	( <a href="AaParser.html#aA_Constant_Literal_Reference">aA_Constant_Literal_Reference</a> ) 
+		|	( <a href="AaParser.html#aA_Object_Reference">aA_Object_Reference</a> ) 
+		|	( <a href="AaParser.html#aA_Unary_Expression">aA_Unary_Expression</a> ) 
+		|	( <a href="AaParser.html#aA_Binary_Expression">aA_Binary_Expression</a> ) 
+		|	( <a href="AaParser.html#aA_Ternary_Expression">aA_Ternary_Expression</a> ) 
+		|	( <a href="AaParser.html#aA_PriorityMux_Expression">aA_PriorityMux_Expression</a> ) 
+		|	( <a href="AaParser.html#aA_ExclusiveMux_Expression">aA_ExclusiveMux_Expression</a> ) 
+		|	( <a href="AaParser.html#aA_Reduce_Expression">aA_Reduce_Expression</a> ) 
+		|	( <a href="AaParser.html#aA_VectorConcatenate_Expression">aA_VectorConcatenate_Expression</a> ) 
+		|	( <a href="AaParser.html#aA_FunctionCall_Expression">aA_FunctionCall_Expression</a> ) 
+		|	( <a href="AaParser.html#aA_One_Or_Zero_Expression">aA_One_Or_Zero_Expression</a> ) 
+		) 
+	;
+
+
+<a name="aA_Object_Reference">aA_Object_Reference</a>
+	:	(	<a href="AaParser.html#aA_Object_Reference_Prefix">aA_Object_Reference_Prefix</a> 
+		|	
+		) 
+		( <a href="AaParser.html#aA_Object_Reference_Base">aA_Object_Reference_Base</a> ) 
+	;
+
+
+<a name="aA_Pointer_Dereference_Expression">aA_Pointer_Dereference_Expression</a>
+	:	DEREFERENCE_OP LPAREN <a href="AaParser.html#aA_Object_Reference">aA_Object_Reference</a> RPAREN 
+	;
+
+
+<a name="aA_Address_Of_Expression">aA_Address_Of_Expression</a>
+	:	ADDRESS_OF_OP LPAREN <a href="AaParser.html#aA_Object_Reference">aA_Object_Reference</a> RPAREN 
+	;
+
+
+<a name="aA_Argv_In">aA_Argv_In</a>
+	:	LPAREN ( <a href="AaParser.html#aA_Expression">aA_Expression</a> )* RPAREN 
+	;
+
+
+<a name="aA_Argv_Out">aA_Argv_Out</a>
+	:	LPAREN ( SIMPLE_IDENTIFIER )* RPAREN 
+	;
+
+
+<a name="aA_Series_Block_Statement">aA_Series_Block_Statement</a>
+	:	SERIESBLOCK 
+		(	<a href="AaParser.html#aA_Label">aA_Label</a> 
+		|	
+		) 
+		LBRACE ( <a href="AaParser.html#aA_Object_Declaration_List">aA_Object_Declaration_List</a> )* <a href="AaParser.html#aA_Atomic_Statement_Sequence">aA_Atomic_Statement_Sequence</a> RBRACE 
+	;
+
+
+<a name="aA_Parallel_Block_Statement">aA_Parallel_Block_Statement</a>
+	:	PARALLELBLOCK 
+		(	<a href="AaParser.html#aA_Label">aA_Label</a> 
+		|	
+		) 
+		LBRACE ( <a href="AaParser.html#aA_Object_Declaration_List">aA_Object_Declaration_List</a> )* <a href="AaParser.html#aA_Atomic_Statement_Sequence">aA_Atomic_Statement_Sequence</a> RBRACE 
+	;
+
+
+<a name="aA_Fork_Block_Statement">aA_Fork_Block_Statement</a>
+	:	FORKBLOCK 
+		(	<a href="AaParser.html#aA_Label">aA_Label</a> 
+		|	
+		) 
+		LBRACE ( <a href="AaParser.html#aA_Object_Declaration_List">aA_Object_Declaration_List</a> )* <a href="AaParser.html#aA_Fork_Block_Statement_Sequence">aA_Fork_Block_Statement_Sequence</a> RBRACE 
+	;
+
+
+<a name="aA_Branch_Block_Statement">aA_Branch_Block_Statement</a>
+	:	BRANCHBLOCK 
+		(	<a href="AaParser.html#aA_Label">aA_Label</a> 
+		|	
+		) 
+		LBRACE ( <a href="AaParser.html#aA_Object_Declaration_List">aA_Object_Declaration_List</a> )* <a href="AaParser.html#aA_Branch_Block_Statement_Sequence">aA_Branch_Block_Statement_Sequence</a> RBRACE 
+	;
+
+
+<a name="aA_Block_Statement_Exports">aA_Block_Statement_Exports</a>
+	:	LPAREN ( SIMPLE_IDENTIFIER IMPLIES SIMPLE_IDENTIFIER )+ RPAREN 
+	;
+
+
+<a name="aA_Fork_Block_Statement_Sequence">aA_Fork_Block_Statement_Sequence</a>
+	:	(	( <a href="AaParser.html#aA_Join_Fork_Statement">aA_Join_Fork_Statement</a> ) 
+		|	( <a href="AaParser.html#aA_Atomic_Statement">aA_Atomic_Statement</a> ) 
+		)+ 
+		
+	;
+
+
+<a name="aA_Join_Fork_Statement">aA_Join_Fork_Statement</a>
+	:	JOIN ( SIMPLE_IDENTIFIER )* 
+		(	FORK <a href="AaParser.html#aA_Atomic_Statement_Sequence">aA_Atomic_Statement_Sequence</a> 
+		|	
+		) 
+		ENDJOIN 
+	;
+
+
+<a name="aA_Branch_Block_Statement_Sequence">aA_Branch_Block_Statement_Sequence</a>
+	:	(	( (	( <a href="AaParser.html#aA_Merge_Statement">aA_Merge_Statement</a> ) 
+				|	( (	<a href="AaParser.html#aA_Switch_Statement">aA_Switch_Statement</a> 
+						|	<a href="AaParser.html#aA_If_Statement">aA_If_Statement</a> 
+						) ) 
+				|	( <a href="AaParser.html#aA_Place_Statement">aA_Place_Statement</a> ) 
+				|	( <a href="AaParser.html#aA_Do_While_Statement">aA_Do_While_Statement</a> ) 
+				) 
+				) 
+		|	( <a href="AaParser.html#aA_Atomic_Statement">aA_Atomic_Statement</a> ) 
+		)+ 
+		
+	;
+
+
+<a name="aA_Merge_Statement">aA_Merge_Statement</a>
+	:	MERGE 
+		(	( SIMPLE_IDENTIFIER ) 
+		|	( ENTRY ) 
+		|	( LOOPBACK ) 
+		)+ 
+		(	( <a href="AaParser.html#aA_Phi_Statement">aA_Phi_Statement</a> )+ 
+		|	
+		) 
+		ENDMERGE 
+	;
+
+
+<a name="aA_Switch_Statement">aA_Switch_Statement</a>
+	:	SWITCH <a href="AaParser.html#aA_Expression">aA_Expression</a> ( WHEN 
+			(	( <a href="AaParser.html#aA_Constant_Literal_Reference">aA_Constant_Literal_Reference</a> ) 
+			|	( <a href="AaParser.html#aA_Object_Reference">aA_Object_Reference</a> ) 
+			) 
+			THEN <a href="AaParser.html#aA_Branch_Block_Statement_Sequence">aA_Branch_Block_Statement_Sequence</a> )* 
+		(	DEFAULT <a href="AaParser.html#aA_Branch_Block_Statement_Sequence">aA_Branch_Block_Statement_Sequence</a> 
+		|	
+		) 
+		ENDSWITCH 
+	;
+
+
+<a name="aA_If_Statement">aA_If_Statement</a>
+	:	IF ( <a href="AaParser.html#aA_Expression">aA_Expression</a> ) THEN <a href="AaParser.html#aA_Branch_Block_Statement_Sequence">aA_Branch_Block_Statement_Sequence</a> 
+		(	ELSE <a href="AaParser.html#aA_Branch_Block_Statement_Sequence">aA_Branch_Block_Statement_Sequence</a> 
+		|	
+		) 
+		ENDIF 
+	;
+
+
+<a name="aA_Place_Statement">aA_Place_Statement</a>
+	:	PLACE <a href="AaParser.html#aA_Label">aA_Label</a> 
+	;
+
+
+<a name="aA_Do_While_Statement">aA_Do_While_Statement</a>
+	:	DO 
+		(	DEPTH ( <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> ) 
+		|	
+		) 
+		(	BUFFERING ( <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> ) 
+		|	
+		) 
+		(	FULLRATE 
+		|	
+		) 
+		<a href="AaParser.html#aA_Merge_Statement">aA_Merge_Statement</a> <a href="AaParser.html#aA_Atomic_Statement_Sequence">aA_Atomic_Statement_Sequence</a> WHILE <a href="AaParser.html#aA_Expression">aA_Expression</a> 
+	;
+
+
+<a name="aA_Block_Statement_Sequence">aA_Block_Statement_Sequence</a>
+	:	( <a href="AaParser.html#aA_Block_Statement">aA_Block_Statement</a> )+ 
+	;
+
+
+<a name="aA_Phi_Statement">aA_Phi_Statement</a>
+	:	PHI SIMPLE_IDENTIFIER ASSIGNEQUAL ( (	GUARD LPAREN 
+				(	NOT 
+				|	
+				) 
+				<a href="AaParser.html#aA_Expression">aA_Expression</a> RPAREN 
+			|	
+			) 
+			<a href="AaParser.html#aA_Expression">aA_Expression</a> 
+			(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+			|	
+			) 
+			ON 
+			(	( SIMPLE_IDENTIFIER ) 
+			|	( ENTRY ) 
+			|	( LOOPBACK ) 
+			) 
+			( COMMA 
+				(	( SIMPLE_IDENTIFIER ) 
+				|	( ENTRY ) 
+				|	( LOOPBACK ) 
+				) )* )+ 
+		(	BARRIER 
+		|	
+		) 
+		
+	;
+
+
+<a name="aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a>
+	:	BUFFERING <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> 
+	;
+
+
+<a name="aA_Constant_Literal_Reference">aA_Constant_Literal_Reference</a>
+	:	(	( <a href="AaParser.html#aA_Integer_Literal_Reference">aA_Integer_Literal_Reference</a> ) 
+		|	( LESS ( <a href="AaParser.html#aA_Integer_Literal_Reference">aA_Integer_Literal_Reference</a> )+ GREATER ) 
+		|	( <a href="AaParser.html#aA_Float_Literal_Reference">aA_Float_Literal_Reference</a> ) 
+		|	( LESS ( <a href="AaParser.html#aA_Float_Literal_Reference">aA_Float_Literal_Reference</a> )+ GREATER ) 
+		) 
+		
+	;
+
+
+<a name="aA_Unary_Expression">aA_Unary_Expression</a>
+	:	( <a href="AaParser.html#aA_Not_Expression">aA_Not_Expression</a> ) 
+	|	( <a href="AaParser.html#aA_Cast_Expression">aA_Cast_Expression</a> ) 
+	|	( <a href="AaParser.html#aA_Slice_Expression">aA_Slice_Expression</a> ) 
+	|	( <a href="AaParser.html#aA_Bitmap_Expression">aA_Bitmap_Expression</a> ) 
+	|	( <a href="AaParser.html#aA_Decode_Expression">aA_Decode_Expression</a> ) 
+	|	( <a href="AaParser.html#aA_Priority_Encode_Expression">aA_Priority_Encode_Expression</a> ) 
+	|	( <a href="AaParser.html#aA_Encode_Expression">aA_Encode_Expression</a> ) 
+	|	( <a href="AaParser.html#aA_Bitreduce_Expression">aA_Bitreduce_Expression</a> ) 
+	;
+
+
+<a name="aA_Binary_Expression">aA_Binary_Expression</a>
+	:	LPAREN <a href="AaParser.html#aA_Expression">aA_Expression</a> <a href="AaParser.html#aA_Binary_Op">aA_Binary_Op</a> <a href="AaParser.html#aA_Expression">aA_Expression</a> 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_Ternary_Expression">aA_Ternary_Expression</a>
+	:	LPAREN MUX <a href="AaParser.html#aA_Expression">aA_Expression</a> ( <a href="AaParser.html#aA_Expression">aA_Expression</a> ) ( <a href="AaParser.html#aA_Expression">aA_Expression</a> ) 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_PriorityMux_Expression">aA_PriorityMux_Expression</a>
+	:	LPAREN PRIORITYMUX ( <a href="AaParser.html#aA_Expression">aA_Expression</a> <a href="AaParser.html#aA_Expression">aA_Expression</a> )+ ( DEFAULT <a href="AaParser.html#aA_Expression">aA_Expression</a> ) 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_ExclusiveMux_Expression">aA_ExclusiveMux_Expression</a>
+	:	LPAREN EXCMUX ( <a href="AaParser.html#aA_Expression">aA_Expression</a> <a href="AaParser.html#aA_Expression">aA_Expression</a> )+ 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_Reduce_Expression">aA_Reduce_Expression</a>
+	:	LPAREN REDUCE 
+		(	( OR ) 
+		|	( AND ) 
+		|	( XOR ) 
+		|	( PLUS ) 
+		|	( MUL ) 
+		) 
+		( <a href="AaParser.html#aA_Expression">aA_Expression</a> )+ 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_VectorConcatenate_Expression">aA_VectorConcatenate_Expression</a>
+	:	LPAREN VECTORCONCAT ( <a href="AaParser.html#aA_Expression">aA_Expression</a> )+ 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_FunctionCall_Expression">aA_FunctionCall_Expression</a>
+	:	LPAREN CALL SIMPLE_IDENTIFIER LPAREN ( <a href="AaParser.html#aA_Expression">aA_Expression</a> )* RPAREN 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_One_Or_Zero_Expression">aA_One_Or_Zero_Expression</a>
+	:	(	CONSTZERO 
+		|	CONSTONE 
+		) 
+		LESS <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> GREATER 
+	;
+
+
+<a name="aA_Not_Expression">aA_Not_Expression</a>
+	:	LPAREN ( ( NOT ) ( <a href="AaParser.html#aA_Expression">aA_Expression</a> ) 
+			(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+			|	
+			) ) RPAREN 
+	;
+
+
+<a name="aA_Cast_Expression">aA_Cast_Expression</a>
+	:	LPAREN ( (	CAST 
+			|	( BITCAST ) 
+			) 
+			LPAREN 
+			(	( <a href="AaParser.html#aA_Type_Reference">aA_Type_Reference</a> ) 
+			|	( <a href="AaParser.html#aA_Named_Type_Reference">aA_Named_Type_Reference</a> ) 
+			) 
+			RPAREN ( <a href="AaParser.html#aA_Expression">aA_Expression</a> ) ) 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_Slice_Expression">aA_Slice_Expression</a>
+	:	LPAREN SLICE <a href="AaParser.html#aA_Expression">aA_Expression</a> <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_Bitmap_Expression">aA_Bitmap_Expression</a>
+	:	LPAREN BITMAP <a href="AaParser.html#aA_Expression">aA_Expression</a> ( UINTEGER UINTEGER )+ 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_Decode_Expression">aA_Decode_Expression</a>
+	:	LPAREN DECODE ( <a href="AaParser.html#aA_Expression">aA_Expression</a> ) 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_Priority_Encode_Expression">aA_Priority_Encode_Expression</a>
+	:	LPAREN PRIORITYENCODE ( <a href="AaParser.html#aA_Expression">aA_Expression</a> ) 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_Encode_Expression">aA_Encode_Expression</a>
+	:	LPAREN ENCODE ( <a href="AaParser.html#aA_Expression">aA_Expression</a> ) 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_Bitreduce_Expression">aA_Bitreduce_Expression</a>
+	:	LPAREN BITREDUCE 
+		(	( OR ) 
+		|	( AND ) 
+		|	( XOR ) 
+		) 
+		( <a href="AaParser.html#aA_Expression">aA_Expression</a> ) 
+		(	<a href="AaParser.html#aA_Expression_Buffering_Spec">aA_Expression_Buffering_Spec</a> 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="aA_Type_Reference">aA_Type_Reference</a>
+	:	( <a href="AaParser.html#aA_Scalar_Type_Reference">aA_Scalar_Type_Reference</a> ) 
+	|	( <a href="AaParser.html#aA_Array_Type_Reference">aA_Array_Type_Reference</a> ) 
+	|	( <a href="AaParser.html#aA_Record_Type_Reference">aA_Record_Type_Reference</a> ) 
+	|	( <a href="AaParser.html#aA_Pointer_Type_Reference">aA_Pointer_Type_Reference</a> ) 
+	|	( <a href="AaParser.html#aA_Void_Type_Reference">aA_Void_Type_Reference</a> ) 
+	;
+
+
+<a name="aA_Named_Type_Reference">aA_Named_Type_Reference</a>
+	:	SIMPLE_IDENTIFIER 
+	;
+
+
+<a name="aA_Binary_Op">aA_Binary_Op</a>
+	:	( OR ) 
+	|	( AND ) 
+	|	( NOR ) 
+	|	( NAND ) 
+	|	( XOR ) 
+	|	( XNOR ) 
+	|	( SHL ) 
+	|	( SHR ) 
+	|	( ROL ) 
+	|	( ROR ) 
+	|	( PLUS ) 
+	|	( MINUS ) 
+	|	( DIV ) 
+	|	( MUL ) 
+	|	( EQUAL ) 
+	|	( NOTEQUAL ) 
+	|	( LESS ) 
+	|	( LESSEQUAL ) 
+	|	( GREATER ) 
+	|	( GREATEREQUAL ) 
+	|	( BITSEL ) 
+	|	( CONCAT ) 
+	|	( UNORDERED ) 
+	|	( POWER ) 
+	;
+
+
+<a name="aA_Storage_Object_Declaration_List">aA_Storage_Object_Declaration_List</a>
+	:	(	REGISTER 
+		|	
+		) 
+		( STORAGE <a href="AaParser.html#aA_Object_Declaration_List_Base">aA_Object_Declaration_List_Base</a> ) 
+	;
+
+
+<a name="aA_Constant_Object_Declaration_List">aA_Constant_Object_Declaration_List</a>
+	:	( CONSTANT <a href="AaParser.html#aA_Object_Declaration_List_Base">aA_Object_Declaration_List_Base</a> ) 
+	;
+
+
+<a name="aA_Pipe_Object_Declaration_List">aA_Pipe_Object_Declaration_List</a>
+	:	(	( LIFO ) 
+		|	( NOBLOCK ) 
+		|	
+		) 
+		(	SHIFTREG 
+		|	
+		) 
+		( PIPE <a href="AaParser.html#aA_Object_Declaration_List_Base">aA_Object_Declaration_List_Base</a> ) 
+		(	DEPTH ( <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> ) 
+		|	
+		) 
+		(	IN 
+		|	OUT 
+		|	
+		) 
+		(	SIGNAL 
+		|	
+		) 
+		(	SYNCH 
+		|	
+		) 
+		(	P2P 
+		|	
+		) 
+		(	FULLRATE 
+		|	
+		) 
+		(	BYPASS 
+		|	
+		) 
+		
+	;
+
+
+<a name="aA_Object_Declaration_List_Base">aA_Object_Declaration_List_Base</a>
+	:	( SIMPLE_IDENTIFIER )+ COLON 
+		(	( <a href="AaParser.html#aA_Type_Reference">aA_Type_Reference</a> ) 
+		|	( <a href="AaParser.html#aA_Named_Type_Reference">aA_Named_Type_Reference</a> ) 
+		) 
+		(	ASSIGNEQUAL <a href="AaParser.html#aA_Constant_Literal_Reference">aA_Constant_Literal_Reference</a> 
+		|	
+		) 
+	;
+
+
+<a name="aA_Scalar_Type_Reference">aA_Scalar_Type_Reference</a>
+	:	( <a href="AaParser.html#aA_Uint_Type_Reference">aA_Uint_Type_Reference</a> ) 
+	|	( <a href="AaParser.html#aA_Int_Type_Reference">aA_Int_Type_Reference</a> ) 
+	|	( <a href="AaParser.html#aA_Float_Type_Reference">aA_Float_Type_Reference</a> ) 
+	;
+
+
+<a name="aA_Uint_Type_Reference">aA_Uint_Type_Reference</a>
+	:	UINT LESS <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> GREATER 
+	;
+
+
+<a name="aA_Int_Type_Reference">aA_Int_Type_Reference</a>
+	:	INT LESS <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> GREATER 
+	;
+
+
+<a name="aA_Float_Type_Reference">aA_Float_Type_Reference</a>
+	:	FLOAT LESS <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> COMMA <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> GREATER 
+	;
+
+
+<a name="aA_Array_Type_Reference">aA_Array_Type_Reference</a>
+	:	ARRAY ( LBRACKET <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> RBRACKET )+ OF 
+		(	( <a href="AaParser.html#aA_Type_Reference">aA_Type_Reference</a> ) 
+		|	( <a href="AaParser.html#aA_Named_Type_Reference">aA_Named_Type_Reference</a> ) 
+		) 
+		
+	;
+
+
+<a name="aA_Record_Type_Reference">aA_Record_Type_Reference</a>
+	:	RECORD ( LESS 
+			(	( <a href="AaParser.html#aA_Type_Reference">aA_Type_Reference</a> ) 
+			|	( <a href="AaParser.html#aA_Named_Type_Reference">aA_Named_Type_Reference</a> ) 
+			) 
+			GREATER )+ 
+	;
+
+
+<a name="aA_Pointer_Type_Reference">aA_Pointer_Type_Reference</a>
+	:	POINTER LESS 
+		(	( <a href="AaParser.html#aA_Type_Reference">aA_Type_Reference</a> ) 
+		|	( SIMPLE_IDENTIFIER ) 
+		) 
+		GREATER 
+	;
+
+
+<a name="aA_Void_Type_Reference">aA_Void_Type_Reference</a>
+	:	VOID 
+	;
+
+
+<a name="aA_Object_Reference_Prefix">aA_Object_Reference_Prefix</a>
+	:	(	( PERCENT SIMPLE_IDENTIFIER )* 
+		|	( UP )+ 
+		) 
+		COLON 
+	;
+
+
+<a name="aA_Object_Reference_Base">aA_Object_Reference_Base</a>
+	:	( SIMPLE_IDENTIFIER ) ( LBRACKET <a href="AaParser.html#aA_Expression">aA_Expression</a> RBRACKET )* 
+	;
+
+
+<a name="aA_Integer_Literal_Reference">aA_Integer_Literal_Reference</a>
+	:	( (	MINUS 
+			|	
+			) 
+			UINTEGER ) 
+	|	( <a href="AaParser.html#aA_Integer_Parameter_Expression_Nontrivial">aA_Integer_Parameter_Expression_Nontrivial</a> ) 
+	|	( BINARY ) 
+	|	( HEXADECIMAL ) 
+	;
+
+
+<a name="aA_Float_Literal_Reference">aA_Float_Literal_Reference</a>
+	:	FLOATCONST 
+	;
+
+
+<a name="aA_Integer_Parameter_Expression_Nontrivial">aA_Integer_Parameter_Expression_Nontrivial</a>
+	:	LBRACE 
+		(	( NOT <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> ) 
+		|	( MINUS <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> ) 
+		|	( <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> <a href="AaParser.html#aA_Binary_Op">aA_Binary_Op</a> <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> ) 
+		|	( MUX <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> ) 
+		) 
+		RBRACE 
+	;
+
+</PRE>
+</BODY>
+</HTML>

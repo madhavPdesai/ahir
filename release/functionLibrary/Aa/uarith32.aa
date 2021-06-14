@@ -1,0 +1,46 @@
+$pipeline $depth 7 $fullrate 
+	$module  [umul32] $in (L R: $uint<32>)
+				$out (ret_val_x_x: $uint<64>)
+$is
+{
+ 	ret_val_x_x := (($bitcast ($uint<64>) L)*($bitcast ($uint<64>) R))
+	$attribute delay 6
+}
+
+
+
+$pipeline $depth 7 $fullrate 
+	$module  [ushift32] $in (L R: $uint<32> shift_right_flag signed_flag : $uint<1>)
+				$out (ret_val_x_x: $uint<32>)
+$is
+{
+ 	ret_val_x_x := ($prioritymux
+				(shift_right_flag  & signed_flag)
+					($bitcast ($uint<32>) (($bitcast ($int<32>) L) >> 
+										($bitcast ($int<32>) R)))
+				shift_right_flag (L >> R)
+				$default (L << R))
+	$attribute delay 4
+}
+
+
+$pipeline $depth 7 $fullrate
+	$module [uaddsub32]
+		$in (L R: $uint<32> carry_in subtract_flag : $uint<1>)
+		$out (ret_val_x_x: $uint<32> carry_out: $uint<1>)
+$is
+{
+	r33 := ($mux
+			subtract_flag
+				((($bitcast ($uint<33>) L) - ($bitcast ($uint<33>) R))
+					- ($bitcast ($uint<33>) carry_in))
+			((($bitcast ($uint<33>) L) + ($bitcast ($uint<33>) R))
+					+ ($bitcast ($uint<33>) carry_in))
+			
+		)
+	ret_val_x_x := ($slice r33 31 0)
+	carry_out   := (r33 [] 32)
+
+	$attribute delay 4
+}
+

@@ -1,0 +1,9 @@
+#vhdl-lib:mod-name:mod-delay
+ahir:fpu32:18
+ahir:fpadd32:14
+ahir:fpsub32:14
+ahir:fpmul32:12
+ahir:fpu64:20
+ahir:fpadd64:16
+ahir:fpsub64:14
+ahir:fpmul64:14
