@@ -1,3 +1,0 @@
-#vhdl-lib:module:delay
-ahir:countDownTimer:8
-ahir:getClockTime:8

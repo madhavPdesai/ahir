@@ -1,4 +1,0 @@
-#mod-name:mod-delay
-ahir:umul32:6
-ahir:ushift32:4
-ahir:uaddsub32:4

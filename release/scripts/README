@@ -1,9 +1,0 @@
-To do a ghdl-simulation, use ghdl.do (your vhdl files should
-be included as indicated).
-
-To synthesize using Xilinx ISE
-	- first source the xilinx setup script.
-	- edit the prj file to include your vhdl files.
-	- run xst -ifn xilinx_synth.scr
-		(may need to edit the options and the
-		 top entity).
