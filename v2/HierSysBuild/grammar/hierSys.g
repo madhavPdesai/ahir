@@ -60,13 +60,14 @@ sys_Description [vector<hierSystem*>& sys_vec, map<string,hierPipe*>&  global_pi
 :
       (aA_Integer_Parameter_Declaration[global_parameter_map])*
       (hier_system_Pipe_Declaration[global_pipe_map,global_parameter_map] )*
-      (sys = hier_System [sys_vec, global_pipe_map] {sys_vec.push_back(sys); })*
+      (sys = hier_System [sys_vec, global_pipe_map, global_parameter_map] {sys_vec.push_back(sys); })*
 ;
 
 //---------------------------------------------------------------------------------------------------------------
 // hier_System :  "hier_system" SIMPLE_IDENTIFIER in-pipe-decls out-pipe-decls internal-pipe decls subsystem decls
 //---------------------------------------------------------------------------------------------------------------
-hier_System[vector<hierSystem*>& sys_vector, map<string,hierPipe*>&  global_pipe_map]
+hier_System[vector<hierSystem*>& sys_vector, map<string,hierPipe*>&  global_pipe_map,
+		map<string,int>& global_parameter_map]
 		returns [hierSystem* sys]
 
 { 
@@ -126,7 +127,7 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,hierPipe*>&  global_pipe
 			}
 		) |
 		(   
-			subthread = rtl_Thread[sys]
+			subthread = rtl_Thread[sys, global_parameter_map]
 			{
 				if(subthread != NULL)
 					sys->Add_Thread(subthread);
@@ -305,46 +306,46 @@ hier_system_Pipe_Declaration[map<string, hierPipe* >& pipe_map, map<string, int>
     ;
 
 // thread.
-rtl_Thread[hierSystem* sys] returns [rtlThread* t]
+rtl_Thread[hierSystem* sys, map<string,int>& global_parameter_map] returns [rtlThread* t]
 {
 	t = NULL;
 	vector<pair<string,int> > def_params;
 }:
         THREAD tname:SIMPLE_IDENTIFIER {t = new rtlThread(sys, tname->getText());}
-        (rtl_ObjectDeclaration[t])*
-	rtl_DefaultStatementBlock[t]
-        (rtl_LabeledBlockStatement[t])+
+        (rtl_ObjectDeclaration[t, global_parameter_map])*
+	rtl_DefaultStatementBlock[t, global_parameter_map]
+        (rtl_LabeledBlockStatement[t, global_parameter_map])+
 
-	rtl_ImmediateStatementBlock[t]
-	rtl_TickStatementBlock[t]
+	rtl_ImmediateStatementBlock[t, global_parameter_map]
+	rtl_TickStatementBlock[t, global_parameter_map]
 
     ;
 
 
 
-rtl_DefaultStatementBlock[rtlThread* t] 
+rtl_DefaultStatementBlock[rtlThread* t, map<string,int>& global_parameter_map] 
 {
 	rtlStatement* stmt = NULL;
 }:
 	DEFAULT
-		(((stmt = rtl_SplitStatement[t,false,false]) | (stmt = rtl_AssignStatement[t,false,false]) | (stmt = rtl_LogStatement[t]))  { t->Add_Default_Statement(stmt); } )*
+		(((stmt = rtl_SplitStatement[t,false,false,global_parameter_map]) | (stmt = rtl_AssignStatement[t,false,false, global_parameter_map]) | (stmt = rtl_LogStatement[t, global_parameter_map]))  { t->Add_Default_Statement(stmt); } )*
 ;
 
 
-rtl_ImmediateStatementBlock[rtlThread* t] 
+rtl_ImmediateStatementBlock[rtlThread* t, map<string,int>& global_parameter_map] 
 {
 	rtlStatement* stmt = NULL;
 }:
 	NOW
-		(((stmt = rtl_SplitStatement[t,false, true]) | (stmt = rtl_AssignStatement[t,false,true]) | (stmt = rtl_LogStatement[t]) | (stmt = rtl_IfStatement[t,false,true]))  { t->Add_Immediate_Statement(stmt); } )*
+		(((stmt = rtl_SplitStatement[t,false, true,global_parameter_map]) | (stmt = rtl_AssignStatement[t,false,true, global_parameter_map]) | (stmt = rtl_LogStatement[t, global_parameter_map]) | (stmt = rtl_IfStatement[t,false,true, global_parameter_map]))  { t->Add_Immediate_Statement(stmt); } )*
 ;
 
-rtl_TickStatementBlock[rtlThread* t] 
+rtl_TickStatementBlock[rtlThread* t, map<string,int>& global_parameter_map] 
 {
 	rtlStatement* stmt = NULL;
 }:
 	TICK
-		(((stmt = rtl_SplitStatement[t,true,false]) | (stmt = rtl_AssignStatement[t, true, false]) | (stmt = rtl_LogStatement[t]) | (stmt = rtl_IfStatement[t,true,false]))  { t->Add_Tick_Statement(stmt); } )*
+		(((stmt = rtl_SplitStatement[t,true,false,global_parameter_map]) | (stmt = rtl_AssignStatement[t, true, false, global_parameter_map]) | (stmt = rtl_LogStatement[t, global_parameter_map]) | (stmt = rtl_IfStatement[t,true,false, global_parameter_map]))  { t->Add_Tick_Statement(stmt); } )*
 ;
 
 rtl_String[hierSystem* sys] returns [rtlString* ti]
@@ -386,7 +387,7 @@ rtl_String[hierSystem* sys] returns [rtlString* ti]
 
 
 // rtl-object declaration
-rtl_ObjectDeclaration[rtlThread* t]
+rtl_ObjectDeclaration[rtlThread* t, map<string,int>& global_parameter_map]
 {
 	bool variable_flag = false;
 	bool constant_flag = false;
@@ -410,8 +411,8 @@ rtl_ObjectDeclaration[rtlThread* t]
 	)
 	( sid: SIMPLE_IDENTIFIER {names.push_back(sid->getText());} )+
         COLON
-        (type = rtl_Type_Declaration[t])
-        (ASSIGNEQUAL init_expr=rtl_Expression[t,type] {init_expr->Evaluate(t); init_value = init_expr->Get_Value();})?
+        (type = rtl_Type_Declaration[t, global_parameter_map])
+        (ASSIGNEQUAL init_expr=rtl_Expression[t,type, global_parameter_map] {init_expr->Evaluate(t); init_value = init_expr->Get_Value();})?
 
 {
 	for(int I = 0, fI = names.size(); I < fI; I++)
@@ -452,20 +453,21 @@ rtl_ObjectDeclaration[rtlThread* t]
 
 
 // rtl-statement
-rtl_SimpleStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlStatement* stmt]
+rtl_SimpleStatement[rtlThread* t, bool tick_flag, bool imm_flag, map<string,int>& global_parameter_map] returns [rtlStatement* stmt]
 :
-( (stmt=rtl_AssignStatement[t, tick_flag, imm_flag]) |
-  (stmt=rtl_SplitStatement[t, tick_flag, imm_flag]) |
+( (stmt=rtl_AssignStatement[t, tick_flag, imm_flag, global_parameter_map]) |
+  (stmt=rtl_SplitStatement[t, tick_flag, imm_flag,global_parameter_map]) |
   (stmt=rtl_NullStatement[t]) |
-  (stmt=rtl_LogStatement[t]) |
+  (stmt=rtl_LogStatement[t, global_parameter_map]) |
   (stmt=rtl_GotoStatement[t])  |
-  (stmt=rtl_IfStatement[t,tick_flag,imm_flag]) )
+  (stmt=rtl_IfStatement[t,tick_flag,imm_flag, global_parameter_map]) )
 
 ;
 
 
 // assignment statement
-rtl_AssignStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlStatement* stmt]
+rtl_AssignStatement[rtlThread* t, bool tick_flag, bool imm_flag, map<string,int>& global_parameter_map] 
+			returns [rtlStatement* stmt]
 {
 	rtlExpression* tgt = NULL;
 	rtlExpression* src = NULL;
@@ -473,9 +475,9 @@ rtl_AssignStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlSta
 }:
 
 (NOW {volatile_flag = true;})?
-(tgt = rtl_Expression[t,NULL])
+(tgt = rtl_Expression[t,NULL, global_parameter_map])
 	aid: ASSIGNEQUAL
-(src = rtl_Expression[t,NULL])
+(src = rtl_Expression[t,NULL, global_parameter_map])
 {
 	tgt->Set_Is_Target(true);
 	stmt = new rtlAssignStatement(t, volatile_flag, tick_flag, imm_flag,  tgt, src);
@@ -483,7 +485,8 @@ rtl_AssignStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlSta
 }
 ;
 
-rtl_SplitStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlStatement* stmt]
+rtl_SplitStatement[rtlThread* t, bool tick_flag, bool imm_flag, map<string,int>& global_parameter_map]
+			returns [rtlStatement* stmt]
 {
 	rtlExpression* src = NULL;
 	rtlExpression* tgt = NULL;
@@ -493,8 +496,8 @@ rtl_SplitStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlStat
 :
 SPLIT 
 (NOW {volatile_flag = true;})?
-LPAREN (src = rtl_Expression[t,NULL]) RPAREN
-LPAREN (tgt = rtl_Object_Reference[t] {targets.push_back(tgt);} )+ RPAREN
+LPAREN (src = rtl_Expression[t,NULL, global_parameter_map]) RPAREN
+LPAREN (tgt = rtl_Object_Reference[t, global_parameter_map] {targets.push_back(tgt);} )+ RPAREN
 	{
 		stmt = new rtlSplitStatement(t, volatile_flag, tick_flag, imm_flag, targets, src);
 	}
@@ -523,7 +526,7 @@ GOTO sid: SIMPLE_IDENTIFIER
 }
 ;
 
-rtl_LogStatement[rtlThread* t] returns [rtlStatement* stmt]
+rtl_LogStatement[rtlThread* t, map<string,int>& global_parameter_map] returns [rtlStatement* stmt]
 {
 	string lbl;
 }:
@@ -535,37 +538,39 @@ LOG sid:SIMPLE_IDENTIFIER
 };
 
 
-rtl_BlockStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlBlockStatement* stmt]
+rtl_BlockStatement[rtlThread* t, bool tick_flag, bool imm_flag, map<string,int>& global_parameter_map] 
+		returns [rtlBlockStatement* stmt]
 {
 	rtlStatement* astmt = NULL;
 	vector<rtlStatement*> stmts;
 }:
 LBRACE
-( astmt = rtl_SimpleStatement[t, tick_flag, imm_flag] {stmts.push_back(astmt); astmt = NULL;})+
+( astmt = rtl_SimpleStatement[t, tick_flag, imm_flag, global_parameter_map] {stmts.push_back(astmt); astmt = NULL;})+
 RBRACE
 {
 	stmt = new rtlBlockStatement(t, stmts);
 	}
 ;
 
-rtl_IfStatement[rtlThread* t, bool tick_flag, bool imm_flag] returns [rtlStatement* stmt]
+rtl_IfStatement[rtlThread* t, bool tick_flag, bool imm_flag, map<string,int>& global_parameter_map] 
+			returns [rtlStatement* stmt]
 {
 	rtlExpression* test_expr = NULL;
 	rtlBlockStatement* if_block = NULL;
 	rtlBlockStatement* else_block = NULL;
 }
 :
-	IF (test_expr = rtl_Expression[t,NULL])  
-        if_block  = rtl_BlockStatement[t,tick_flag, imm_flag]
+	IF (test_expr = rtl_Expression[t,NULL, global_parameter_map])  
+        if_block  = rtl_BlockStatement[t,tick_flag, imm_flag, global_parameter_map]
 	(ELSE 
-            else_block = rtl_BlockStatement[t,tick_flag, imm_flag]
+            else_block = rtl_BlockStatement[t,tick_flag, imm_flag, global_parameter_map]
         )?
 	{ 
 		stmt = (rtlStatement*) new rtlIfStatement(t, test_expr, if_block, else_block);
 	}
 ;
 
-rtl_LabeledBlockStatement[rtlThread* t]
+rtl_LabeledBlockStatement[rtlThread* t, map<string,int>& global_parameter_map]
 {
 	rtlStatement* astmt = NULL;
 	rtlLabeledBlockStatement* bstmt = NULL;
@@ -574,7 +579,8 @@ rtl_LabeledBlockStatement[rtlThread* t]
 }:
 	lbl  = rtl_Label
 	LBRACE
-		( astmt = rtl_SimpleStatement[t,false, false] {stmts.push_back(astmt); astmt = NULL;})+
+		( astmt = rtl_SimpleStatement[t,false, false, global_parameter_map] 
+						{stmts.push_back(astmt); astmt = NULL;})+
 	RBRACE
 	{
 		bstmt = new rtlLabeledBlockStatement(t, lbl, stmts);
@@ -582,17 +588,18 @@ rtl_LabeledBlockStatement[rtlThread* t]
 	}
 ;
 
-rtl_Expression[rtlThread* t, rtlType* type] returns [rtlExpression* expr]
+rtl_Expression[rtlThread* t, rtlType* type, map<string,int>& global_parameter_map] 
+			returns [rtlExpression* expr]
 {
 	expr = NULL;
 }
 :
-	( (expr = rtl_Constant_Literal_Expression[t,type]) |
-		(expr = rtl_Object_Reference[t]) | 
-		   (expr = rtl_Slice_Expression[t]) | 
-			(expr = rtl_Unary_Expression[t]) |
-				(expr = rtl_Binary_Expression[t]) |
-					(expr = rtl_Ternary_Expression[t]) )
+	( (expr = rtl_Constant_Literal_Expression[t,type, global_parameter_map]) |
+		(expr = rtl_Object_Reference[t, global_parameter_map]) | 
+		   (expr = rtl_Slice_Expression[t, global_parameter_map]) | 
+			(expr = rtl_Unary_Expression[t, global_parameter_map]) |
+				(expr = rtl_Binary_Expression[t, global_parameter_map]) |
+					(expr = rtl_Ternary_Expression[t, global_parameter_map]) )
 ;
 
 
@@ -600,16 +607,22 @@ rtl_Expression[rtlThread* t, rtlType* type] returns [rtlExpression* expr]
 // ($signed<5>) _b11010
 // ($array[2][2] $of $integer) 0 1 2 3
 //
-rtl_Constant_Literal_Expression[rtlThread* thrd,rtlType* itype] returns [rtlExpression* expr]
+rtl_Constant_Literal_Expression[rtlThread* thrd,rtlType* itype,map<string,int>& global_parameter_map] 
+		returns [rtlExpression* expr]
 {
 	vector<string> init_values;
 	rtlType* t = NULL;
+	int iid;
+	string tmp;
 }:
-	lpid:LPAREN t = rtl_Type_Declaration[thrd] {assert((itype == NULL) || (t == itype));}  RPAREN
-	( (iid: UINTEGER {init_values.push_back(iid->getText());}) |
+	lpid:LPAREN t = rtl_Type_Declaration[thrd, global_parameter_map] {assert((itype == NULL) || (t == itype));}  RPAREN
+	( (iid =  aA_Integer_Parameter_Expression[global_parameter_map] 
+			{tmp=UintToStr((unsigned int) iid);
+				init_values.push_back(tmp);}) |
 		(bid: BINARY {init_values.push_back(bid->getText());}) |
 			(hid : HEXADECIMAL {init_values.push_back(hid->getText());}))
-	(COMMA ( (iidn: UINTEGER {init_values.push_back(iidn->getText());}) |
+	(COMMA ( (iid = aA_Integer_Parameter_Expression[global_parameter_map] 
+				{init_values.push_back(UintToStr((unsigned int) iid));}) |
 		(bidn: BINARY {init_values.push_back(bidn->getText());}) |
 			(hidn : HEXADECIMAL {init_values.push_back(hidn->getText());})))*
 	{
@@ -620,7 +633,7 @@ rtl_Constant_Literal_Expression[rtlThread* thrd,rtlType* itype] returns [rtlExpr
 ;
 
 
-rtl_Object_Reference[rtlThread* t] returns [rtlExpression* expr]
+rtl_Object_Reference[rtlThread* t, map<string,int>& global_parameter_map] returns [rtlExpression* expr]
 {
 	string obj_name;
 	vector<rtlExpression*> indices;	
@@ -633,7 +646,7 @@ rtl_Object_Reference[rtlThread* t] returns [rtlExpression* expr]
 
 	(( REQ {req_flag = true;}) | (ACK {ack_flag = true;}))?
 
-	(LBRACKET ( iexpr = rtl_Expression[t,NULL] {array_flag = true; indices.push_back(iexpr); iexpr = NULL;} )+ RBRACKET)?
+	(LBRACKET ( iexpr = rtl_Expression[t,NULL, global_parameter_map] {array_flag = true; indices.push_back(iexpr); iexpr = NULL;} )+ RBRACKET)?
 	{
 		rtlObject* obj = t->Find_Object(obj_name);
 		if(obj == NULL)
@@ -649,16 +662,16 @@ rtl_Object_Reference[rtlThread* t] returns [rtlExpression* expr]
 	}
 ;
 
-rtl_Slice_Expression[rtlThread* t] returns [rtlExpression* expr]
+rtl_Slice_Expression[rtlThread* t, map<string,int>& global_parameter_map] returns [rtlExpression* expr]
 {
 	rtlExpression* base_expr;
 	int high_index;
 	int low_index;
 }:
 	lpid: LPAREN 
-		SLICE base_expr = rtl_Expression[t,NULL]
-			hid: UINTEGER {high_index = atoi(hid->getText().c_str());}
-			lid: UINTEGER {low_index = atoi(lid->getText().c_str());}
+		SLICE base_expr = rtl_Expression[t,NULL, global_parameter_map]
+			high_index = aA_Integer_Parameter_Expression[global_parameter_map]
+			low_index  = aA_Integer_Parameter_Expression[global_parameter_map]
 	RPAREN
 	{
 		expr = new rtlSliceExpression(base_expr, high_index, low_index);
@@ -666,14 +679,14 @@ rtl_Slice_Expression[rtlThread* t] returns [rtlExpression* expr]
 	}
 ;
 
-rtl_Unary_Expression[rtlThread* t] returns [rtlExpression* expr]
+rtl_Unary_Expression[rtlThread* t, map<string,int>& global_parameter_map] returns [rtlExpression* expr]
 {
 	rtlOperation  op;
 	rtlExpression* rest;
 }:
 	lpid: LPAREN
 		op = rtl_Unary_Operation 
-		rest  = rtl_Expression[t,NULL]
+		rest  = rtl_Expression[t,NULL, global_parameter_map]
 	RPAREN
 	{
 		expr = new rtlUnaryExpression(op, rest);
@@ -681,16 +694,16 @@ rtl_Unary_Expression[rtlThread* t] returns [rtlExpression* expr]
 	}
 ;
 
-rtl_Binary_Expression[rtlThread* t] returns [rtlExpression* expr]
+rtl_Binary_Expression[rtlThread* t, map<string,int>& global_parameter_map] returns [rtlExpression* expr]
 {
 	rtlExpression* first = NULL;
 	rtlExpression* second = NULL;
 	rtlOperation op;
 }:
 	lpid: LPAREN
-		first = rtl_Expression[t,NULL]
+		first = rtl_Expression[t,NULL, global_parameter_map]
 		op = rtl_Binary_Operation
-		second = rtl_Expression[t,NULL]
+		second = rtl_Expression[t,NULL, global_parameter_map]
 	RPAREN	
 	{
 		expr = new rtlBinaryExpression(op, first, second);
@@ -698,7 +711,7 @@ rtl_Binary_Expression[rtlThread* t] returns [rtlExpression* expr]
 	}
 ;
 
-rtl_Ternary_Expression[rtlThread* t] returns [rtlExpression* expr]
+rtl_Ternary_Expression[rtlThread* t, map<string,int>& global_parameter_map] returns [rtlExpression* expr]
 {
 	rtlExpression* test_expr = NULL;
 	rtlExpression* if_true = NULL;
@@ -706,9 +719,9 @@ rtl_Ternary_Expression[rtlThread* t] returns [rtlExpression* expr]
 }:
 	lpid: LPAREN
 		MUX
-		test_expr = rtl_Expression[t,NULL]
-		if_true = rtl_Expression[t,NULL]
-		if_false = rtl_Expression[t,NULL]
+		test_expr = rtl_Expression[t,NULL, global_parameter_map]
+		if_true = rtl_Expression[t,NULL, global_parameter_map]
+		if_false = rtl_Expression[t,NULL, global_parameter_map]
 	RPAREN
 	{
 		expr = new rtlTernaryExpression(test_expr, if_true, if_false);
@@ -760,61 +773,65 @@ rtl_Label returns [string label]
 ;
 
 
-rtl_Type_Declaration[rtlThread* thrd] returns [rtlType* t]
+rtl_Type_Declaration[rtlThread* thrd, map<string,int>& global_parameter_map] returns [rtlType* t]
 {
 	t  = NULL;
 }:
-	((t = rtl_IntegerType_Declaration[thrd]) |
-		(t = rtl_UnsignedType_Declaration[thrd]) |
-			(t = rtl_SignedType_Declaration[thrd]) |
-				(t = rtl_ArrayType_Declaration[thrd]))
+	((t = rtl_IntegerType_Declaration[thrd, global_parameter_map]) |
+		(t = rtl_UnsignedType_Declaration[thrd, global_parameter_map]) |
+			(t = rtl_SignedType_Declaration[thrd, global_parameter_map]) |
+				(t = rtl_ArrayType_Declaration[thrd, global_parameter_map]))
 ;
 
-rtl_IntegerType_Declaration[rtlThread* thrd] returns [rtlType* t]
+rtl_IntegerType_Declaration[rtlThread* thrd, map<string,int>& global_parameter_map] returns [rtlType* t]
 {
 	int L = INT_MIN;
 	bool neg_L = false;
 	int H = INT_MAX;
 	bool neg_H = false;
 }:
-	INTEGER (MINUS {neg_L = true;})? lid:UINTEGER  (MINUS {neg_H = true;})? hid: UINTEGER
+	INTEGER (MINUS {neg_L = true;})? L=aA_Integer_Parameter_Expression[global_parameter_map]
+			  (MINUS {neg_H = true;})? H=aA_Integer_Parameter_Expression[global_parameter_map]
 	{
-		L = (neg_L ? - atoi(lid->getText().c_str()) : atoi (lid->getText().c_str()));
-		H = (neg_H ? - atoi(hid->getText().c_str()) : atoi (hid->getText().c_str()));
+		L = (neg_L ? - L : L);
+		H = (neg_H ? - H : H);
+
 		t = Find_Or_Make_Integer_Type(L,H);
 	}
 ;
 
 		
-rtl_UnsignedType_Declaration[rtlThread* thrd] returns [rtlType* t]
+rtl_UnsignedType_Declaration[rtlThread* thrd, map<string,int>& global_parameter_map] returns [rtlType* t]
 {
 	int width;
 }:
-	UNSIGNED LESS wid:UINTEGER GREATER 
+	UNSIGNED LESS width=aA_Integer_Parameter_Expression[global_parameter_map] GREATER 
 	{
-		t = Find_Or_Make_Unsigned_Type(atoi(wid->getText().c_str()));
+		t = Find_Or_Make_Unsigned_Type(width);
 	}
 ;
 
-rtl_SignedType_Declaration[rtlThread* thrd] returns [rtlType* t]
+rtl_SignedType_Declaration[rtlThread* thrd, map<string,int>& global_parameter_map] returns [rtlType* t]
 {
 	int width;
 }:
-	SIGNED LESS wid:UINTEGER GREATER 
+	SIGNED LESS width=aA_Integer_Parameter_Expression[global_parameter_map] GREATER 
 	{
-		t = Find_Or_Make_Signed_Type(atoi(wid->getText().c_str()));
+		t = Find_Or_Make_Signed_Type(width);
 	}
 ;
 
-rtl_ArrayType_Declaration[rtlThread* thrd] returns [rtlType* t]
+rtl_ArrayType_Declaration[rtlThread* thrd, map<string,int>& global_parameter_map] returns [rtlType* t]
 {
 	vector<int> dims;
 	rtlType* ele_type = NULL;
+	int did;
 }:
 	ARRAY 
-	( LBRACKET did:UINTEGER RBRACKET {dims.push_back(atoi(did->getText().c_str()));} )+
+	( LBRACKET did = aA_Integer_Parameter_Expression[global_parameter_map] RBRACKET 
+			{dims.push_back(did);} )+
 	OF
-	ele_type = rtl_Type_Declaration[thrd]
+	ele_type = rtl_Type_Declaration[thrd, global_parameter_map]
 	{
 		t = Find_Or_Make_Array_Type(dims, ele_type);
 	}
@@ -839,6 +856,7 @@ PARAMETER sid:SIMPLE_IDENTIFIER param_value = aA_Integer_Parameter_Expression [g
 			sid->getLine() << endl;
 	}
 	global_parameter_map[param_name] = param_value;
+	cerr << "Info: added parameter " << param_name << " with value " << param_value << endl;
    }
 ;
 
@@ -863,7 +881,9 @@ aA_Integer_Parameter_Expression[map<string, int>& global_parameter_map]  returns
 						<< ")" << endl;	
 				}
 				else
+				{
 					expr_value = (*iter).second;	
+				}
 			    })
 	|
   (expr_value = aA_Integer_Parameter_Expression_Nontrivial [global_parameter_map])

@@ -636,7 +636,7 @@ void hierSystem::Print_Vhdl_Rtl_Type_Package(ostream& ofile)
 	ofile << "end package;" << endl;
 }
 
-void hierSystem::Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work)
+void hierSystem::Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work, bool print_fence)
 {
 	ofile << "library ahir;" << endl;
 	ofile << "use ahir.BaseComponents.all;" << endl;
@@ -648,14 +648,16 @@ void hierSystem::Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work)
 	ofile << "use ieee.std_logic_1164.all;" << endl;
 	ofile << "use ieee.numeric_std.all;" << endl;
 	string this_lib;
-	ofile << "-->>>>>"  << endl;
+	if (print_fence)
+		ofile << "-->>>>>"  << endl;
 	if(map_all_libs_to_work)
 		this_lib = "work";
 	else 
 		this_lib = this->_library;
 	ofile << "library " << this_lib << ";" << endl;
 	ofile << "use " << this_lib << "." << this->Get_Id() << "_Type_Package.all;" << endl;
-	ofile << "--<<<<<"  << endl;
+	if (print_fence)
+		ofile << "--<<<<<"  << endl;
 }
 
 
@@ -679,7 +681,7 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs
 		return;
 	}
 
-	this->Print_Vhdl_Inclusions(ofile, map_all_libs_to_work);
+	this->Print_Vhdl_Inclusions(ofile, map_all_libs_to_work, true);
 	// library refs..
 	ofile << "-->>>>>" << endl;
 	for(map<string,hierSystemInstance*>::iterator iter = _child_map.begin(), fiter = _child_map.end();	

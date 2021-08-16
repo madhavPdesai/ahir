@@ -116,9 +116,11 @@ namespace _base_value_
     // init_value is either a decimal string (e.g. "-135", "2490")
     // or a binary string (with _b as the first two characters)
     // e.g. "_b1010"
+    Unsigned(int sign_extend, int width, string initial_value);
     Unsigned(int width, string initial_value);
     Unsigned(const Unsigned&);
    
+    void Initialize_From_String(int sign_extend, int n, string init_value);
 
     virtual string Kind() {return("Unsigned");}
 
@@ -138,6 +140,8 @@ namespace _base_value_
     virtual bool To_Boolean();
 
     virtual UWord AtoI(string ival);
+    virtual UWord AtoU(string ival);
+
     virtual void Initialize_From_Binary_String(string& init_value);
 
     virtual string To_String();

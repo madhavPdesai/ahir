@@ -677,7 +677,7 @@ public:
 	// print Vhdl
 	void Print_Vhdl_Port_Declarations(ostream& ofile);
 	void Print_Vhdl_Component_Declaration(ostream& ofile);
-	void Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work);
+	void Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work, bool print_fence);
 	void Print_Vhdl_Rtl_Threads(ostream& ofile, int map_all_libs_to_work);
 	void Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_to_work);
 	void Print_Vhdl_Test_Bench(string sim_link_lib, string sim_link_prefix, ostream& ofile, int map_all_libs_to_work); // in progress.
@@ -870,4 +870,5 @@ void addPipeToGlobalMaps(string oname,
 
 
 string IntToStr(int u);
+string UintToStr(unsigned int u);
 #endif

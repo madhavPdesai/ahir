@@ -191,6 +191,17 @@ void Unsigned::Bit_Cast_Into(Unsigned& other)
 
 Unsigned::Unsigned(int n, string init_value)
 {
+	this->Initialize_From_String(0,n,init_value);
+}
+
+
+Unsigned::Unsigned(int sign_extend, int n, string init_value)
+{
+	this->Initialize_From_String(0,n,init_value);
+}
+
+void Unsigned::Initialize_From_String(int sign_extend, int n, string init_value)
+{
 	assert(n > 0);
 
 	string format;
@@ -220,12 +231,12 @@ Unsigned::Unsigned(int n, string init_value)
 			cerr << "Warning: decimal format can be used for integers which are up to 32 bits wide" << endl;
 			cerr << "          the initial value " << init_value << " will be truncated to 32 bits.. " << endl;
 #endif
-			_bit_field[0] = this->AtoI(init_value.c_str());
 		}
+
+		if(sign_extend)
+			_bit_field[0] = this->AtoI(init_value.c_str());
 		else
-		{
-			_bit_field[0] = this->AtoI(init_value.c_str());
-		}
+			_bit_field[0] = this->AtoU(init_value.c_str());
 	}
 	else if (format == "hexadecimal")
 	{
@@ -259,6 +270,11 @@ Unsigned::Unsigned(const Unsigned& v):Value()
 UWord Unsigned::AtoI(string ival)
 {
 	return((UWord)(atoi(ival.c_str())));
+}
+
+UWord Unsigned::AtoU(string ival)
+{
+	return((UWord)((unsigned int) (atoi(ival.c_str()))));
 }
 
 //
@@ -701,7 +717,7 @@ Signed::Signed(int n): Unsigned(n)
 }
 
 
-Signed::Signed(int n, string init_value):Unsigned(n,init_value)
+Signed::Signed(int n, string init_value):Unsigned(1, n,init_value)
 {
 }
 
