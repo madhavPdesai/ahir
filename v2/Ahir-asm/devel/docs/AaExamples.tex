@@ -1,0 +1,253 @@
+\documentclass[12pt]{article}
+
+\title{Some examples of the use of Aa relative to C}
+\author{Madhav Desai \\ Department of Electrical Engineering \\ Indian Institute of Technology \\
+	Mumbai 400076 India}
+
+\newcommand{\Aa}{{\bf Aa}~}
+\newcommand{\vC}{{\bf vC}~}
+
+\begin{document}
+\maketitle
+
+We describe some examples of functional descriptions in {\bf C} and their equivalents in \Aa.
+
+
+\section{Finding the maximum of $32$ numbers}
+
+Consider a system which reads in 32 numbers from an input FIFO and stores them into an array.
+Then the system finds the smallest item in the array, as well as the index
+of the smallest item.  These two values are written out to an output FIFO.
+
+In C the program could be written as follows.
+\begin{verbatim}
+void minItem() {
+    uint32_t items[32];
+    uint32_t I;
+
+    // read loop
+    for(I = 0;  I < 32; I++)
+       items[I] = read_uint32("input_pipe");
+
+    // min item loop
+    uint32_t smallest = 0xffffffff;
+    uint32_t smallest_index = 33;
+    for(I = 0;  I < 32; I++)
+    {
+       if(items[I] <= smallest)
+       {
+           smallest = items[I];
+           smallest_index = I;
+       }
+    }
+   
+    // write out.
+    write_uint32("out_pipe", smallest);
+    write_uint32("out_pipe", smallest_index);
+}
+\end{verbatim}
+
+The almost exact equivalent of this C program in \Aa could
+be written as follows.
+
+\begin{verbatim}
+$pipe input_pipe output_pipe: $uint<32>
+$module [minItem] $in () $out () $is
+{
+   $storage items: $array[32] $of $uint<32>
+
+   // read loop
+   $branchblock[readLoop] {
+       $merge $entry loopback
+          $phi I := $zero<8> $on $entry nI $on loopback
+       $endmerge
+
+       $volatile nI := (I + 1)
+       items[I] := input_pipe
+
+       $if (I < 31) $then
+           $place[loopback]
+       $endif 
+   
+       // min item loop
+       $merge $entry min_item_loopback
+          $phi J := $zero<8> $on $entry 
+                                    nJ $on min_loopback
+          $phi min_val := (~$zero<32>) $on $entry 
+                                    n_min_val $on min_loopback
+          $phi min_index := ($bitcast ($uint<32>) 33) $on $entry 
+                                    n_min_index $on min_loopback
+       $endmerge
+       $volatile nJ := (J + 1)
+       X := items[J]
+       $if (X <= min_val) $then
+           n_min_val := X
+           n_min_index := J
+       $endif   
+
+       $if (J < 31) $then
+           $place[loopback]
+       $endif 
+   }  (n_min_val => MINVAL n_min_index => MININDEX)
+  
+   out_pipe := MINVAL
+   out_pipe := MININDEX
+}
+\end{verbatim}
+
+\section{Using double loops: matrix multiplication}
+
+We read in a square matrix $A$ and calculate the 
+matrix $A^2$.  The C program for this could be as follows.
+\begin{verbatim}
+void matrixSquarer() {
+   uint32_t I, J, K;
+   uint32_t A[32][32];
+   uint32_t ASQ[32][32];
+
+   // read matrix
+   for (I = 0; I < 32; I++) {
+      for (J = 0; J < 32; J++) {
+        A[I][J] = read_uint32("input_pipe");
+      }
+   }
+   // matrix multiply
+   for (I = 0; I < 32; I++) {
+      for (J = 0; J < 32; J++) {
+         uint32_t tmp = 0;
+         for (K = 0; J < 32; J++) {
+            tmp += A[I][K]*A[K][J];
+         }
+         ASQ[I][J] = tmp;
+      }
+   }
+   // send out.
+   for (I = 0; I < 32; I++) {
+      for (J = 0; J < 32; J++) {
+        write_uint32("output_pipe", A[I][J]);
+      }
+   }
+}
+\end{verbatim}
+
+The equivalent \Aa program could be as follows.
+\begin{verbatim}
+$module [matrixSquarer] $in () $out () $is {
+   $storage A B: $array[32][32] $of $uint<32>
+
+   // read loop
+   $branchblock[readLoop] {
+
+       ////////////////////   read loop /////////////////////
+       $merge $entry outer_loopback
+          $phi I := $zero<8> $on $entry nI $on outer_loopback
+       $endmerge
+
+       $merge $entry inner_loopback
+          $phi J := $zero<8> $on $entry nJ $on inner_loopback
+       $endmerge
+
+       $volatile nI := (I + 1)
+       $volatile nJ := (J + 1)
+       A[I][J] := input_pipe
+
+       $if (J < 31) $then
+           $place[inner_loopback]
+       $endif 
+       $if (I < 31) $then
+           $place [outer_loopback]
+       $endif
+   
+       ////////////////////   matrix-multiply loop /////////////////////
+       $merge $entry mm_outer_loopback
+          $phi II := $zero<8> $on $entry nII $on mm_outer_loopback
+       $endmerge
+
+       $merge $entry mm_inner_loopback
+          $phi JJ := $zero<8> $on $entry nJJ $on mm_inner_loopback
+       $endmerge
+
+       $volatile nII := (II + 1)
+       $volatile nJJ := (JJ + 1)
+
+       $merge $entry mm_dotp_loopback
+          $phi K := $zero<8> $on $enry nK $on mm_dotp_loopback
+          $phi TMP := $zero<32> $on $entry nTMP $on mm_dotp_loopback
+       $endmerge
+ 
+       nTMP := (TMP + (A[II][K] * A[K][JJ])
+
+       $if (K < 31) $then
+           $place [mm_dotp_loopback]
+       $else
+           B[II][JJ] := nTMP
+       $endif
+
+       $if (JJ < 31) $then
+          $place [mm_inner_loopback]
+       $endif 
+
+       $if (II < 31) $then
+          $place [mm_outer_loopback]
+       $endif_
+
+       ////////////////////   send loop /////////////////////
+       $merge $entry w_outer_loopback
+          $phi III := $zero<8> $on $entry nIII $on w_outer_loopback
+       $endmerge
+
+       $merge $entry w_inner_loopback
+          $phi JJJ := $zero<8> $on $entry nJJJ $on w_inner_loopback
+       $endmerge
+
+       $volatile nIII := (III + 1)
+       $volatile nJJJ := (JJJ + 1)
+       output_pipe := B[III][JJJ]
+
+       $if (JJJ < 31) $then
+           $place[w_inner_loopback]
+       $endif 
+       $if (III < 31) $then
+           $place [w_outer_loopback]
+       $endif
+   
+   } 
+}
+\end{verbatim}
+
+
+\section{Using wide SSA variables to implement a shift regiser}
+
+In this system, we read in 32-bit values from an input pipe and pass them through
+an 8 stage shift register.   Outgoing values are written into
+an output pipe.  Instead of using storage variables, we use wide
+SSA variables to maintain the state of the shift register.
+
+\begin{verbatim}
+$pipe input_pipe output_pipe: $uint<32>
+$module [shiftReg8] $in () $out () $is
+{
+   $branchblock[loop] {
+        $merge $entry loopback
+           $phi SR := $zero<256> $on $entry nSR $on loopback
+           $phi V  := $zero<8>   $on $entry nV $on loopback
+        $endmerge
+        X := input_pipe
+
+        // shift in from the right.
+        nSR := ($concat ($slice SR 223 0) X)
+        nV  := ($concat ($slice V 7 1) $one<1>)
+
+        $if (V [] 7) $then
+            output_pipe := ($slice SR 255 224)
+        $endif
+   }
+}
+\end{verbatim}
+
+
+
+
+\end{document}
+
+
