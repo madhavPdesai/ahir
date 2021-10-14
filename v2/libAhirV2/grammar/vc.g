@@ -187,8 +187,8 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 	    m->Set_Use_Once_Flag(use_once_flag);
         } 
         LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
-        (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
         (vc_Pipe[NULL,m])*
+        (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
         (vc_Controlpath[sys,m] { assert(!foreign_flag);})? 
         (vc_Datapath[sys,m] {assert(!foreign_flag);})? 
         (vc_Link[m] {assert(!foreign_flag);})*
