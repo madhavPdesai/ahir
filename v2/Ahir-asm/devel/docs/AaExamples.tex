@@ -86,7 +86,7 @@ $module [minItem] $in () $out () $is
        $endif   
 
        $if (J < 31) $then
-           $place[loopback]
+           $place[min_loopback]
        $endif 
    }  (n_min_val => MINVAL n_min_index => MININDEX)
   
@@ -124,7 +124,7 @@ void matrixSquarer() {
    // send out.
    for (I = 0; I < 32; I++) {
       for (J = 0; J < 32; J++) {
-        write_uint32("output_pipe", A[I][J]);
+        write_uint32("output_pipe", ASQ[I][J]);
       }
    }
 }
