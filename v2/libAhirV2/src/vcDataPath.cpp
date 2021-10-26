@@ -118,7 +118,7 @@ void vcPipe::Print_VHDL_Pipe_Signals(ostream& ofile)
 		ofile << "signal " << pipe_id << "_pipe_write_ack: std_logic_vector(" << num_writes-1 << " downto 0);" << endl;
 	}
 
-	if(num_reads > 0)
+	if((num_reads > 0) || this->Get_Is_Clock_Enable())
 	{
 		if(this->Get_Signal())
 		{
@@ -126,6 +126,10 @@ void vcPipe::Print_VHDL_Pipe_Signals(ostream& ofile)
 			{
 				ofile << "-- signal decl. for read from internal signal pipe " << pipe_id << endl;
 				ofile << "signal " << pipe_id << ": std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+			}
+			else if (this->Get_Is_Clock_Enable())
+			{
+				vcSystem::Error("clock enable signal " + pipe_id + " is not driven!\n");
 			}
 		}
 		else

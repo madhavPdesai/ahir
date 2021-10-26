@@ -91,6 +91,16 @@ vcSystem::vcSystem(string id):vcRoot(id)
 }
 void vcSystem::Print(ostream& ofile)
 {
+  // print gated clocks.
+  for(map<string,string>::iterator giter = _gated_clock_map.begin();
+		giter != _gated_clock_map.end();
+		giter++)
+  {
+		ofile << vcLexerKeywords[__GATED_CLOCK] << " " 
+			<< (*giter).first << " " << (*giter).second << endl;
+  }
+
+  // pipes.
   this->Print_Pipes(ofile);
 
   // memory spaces
@@ -125,6 +135,23 @@ void vcSystem::Print_Pipes(ostream& ofile)
 
     }
 }
+
+
+  
+void vcSystem::Add_Gated_Clock(string gc_name, string enable_name)
+{
+	if(this->_gated_clock_map.find(gc_name) == this->_gated_clock_map.end())
+	{
+		this->_gated_clock_map[gc_name] = enable_name;
+		this->Info("added gated clock " + gc_name +  " with enable " + enable_name);	
+	}
+	else
+	{
+		this->Warning("redeclaration of gated clock " + gc_name +  " with enable " + enable_name + 
+					"ignored");	
+	}
+}
+
 
 void vcSystem::Register_Pipe_Read(string pipe_id, vcModule* m, int idx)
 {
@@ -347,8 +374,32 @@ void vcSystem::Detach_Unreachable_Modules()
 
 }
 
+void vcSystem::Mark_Clock_Enables()
+{
+	for(map<string,string>::iterator giter = _gated_clock_map.begin();
+		giter != _gated_clock_map.end();
+		giter++)
+	{
+		string ce_name = (*giter).second;
+		vcPipe* p = this->Find_Pipe(ce_name);
+		if(p != NULL)
+		{
+			if(p->Get_Signal())
+				p->Set_Is_Clock_Enable(true);	
+			else
+				vcSystem::Error("pipe " + ce_name + " marked as clock enable, must be a signal.");
+		}
+		else
+		{
+			vcSystem::Error("could not find pipe " + ce_name + " (marked as clock enable).");
+		}
+	}
+}
+
 void vcSystem::Elaborate()
 {
+
+  this->Mark_Clock_Enables();
 
   this->Detach_Unreachable_Modules();
 
@@ -886,22 +937,25 @@ string vcSystem::Print_VHDL_System_Instance_Pipe_Port_Map(string comma, ostream&
 		if(num_writes > 0 && num_reads == 0)
 		{
 			// output
-			ofile << comma << endl;
-			comma = ",";
 			if(!p->Get_Signal())
 			{
-			ofile << pipe_id << "_pipe_read_data "
-				<< " => "
-				<< pipe_id << "_pipe_read_data, " << endl;
-			ofile << pipe_id << "_pipe_read_req " 
-				<< " => " 
-				<< pipe_id << "_pipe_read_req, "  << endl;
-			ofile << pipe_id << "_pipe_read_ack "
-				<< " => "
-				<< pipe_id << "_pipe_read_ack ";
+				ofile << comma << endl;
+				comma = ",";
+				ofile << pipe_id << "_pipe_read_data "
+					<< " => "
+					<< pipe_id << "_pipe_read_data, " << endl;
+				ofile << pipe_id << "_pipe_read_req " 
+					<< " => " 
+					<< pipe_id << "_pipe_read_req, "  << endl;
+				ofile << pipe_id << "_pipe_read_ack "
+					<< " => "
+					<< pipe_id << "_pipe_read_ack ";
 			}
-			else
+			else if(!p->Get_Is_Clock_Enable())
 			{
+				// clock enable is not brought out!
+				ofile << comma << endl;
+				comma = ",";
 				ofile << pipe_id << " => " << pipe_id;
 			}
 		}
@@ -968,19 +1022,19 @@ void vcSystem::Print_VHDL_Pipe_Port_Signals(ostream& ofile)
 		vcPipe* p =(*pipe_iter).second;
 		p->Print_VHDL_Pipe_Port_Signals(ofile);
 
-    }
+	}
 }
 
 string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 {
-  for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
-      pipe_iter != _pipe_map.end();
-      pipe_iter++)
-    {
+	for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
+			pipe_iter != _pipe_map.end();
+			pipe_iter++)
+	{
 
-      vcPipe* p =(*pipe_iter).second;
-      string pipe_id = To_VHDL(p->Get_Id());
-      int pipe_width = p->Get_Width();
+		vcPipe* p =(*pipe_iter).second;
+		string pipe_id = To_VHDL(p->Get_Id());
+		int pipe_width = p->Get_Width();
       
       int num_reads = p->Get_Pipe_Read_Count();
       int num_writes = p->Get_Pipe_Write_Count();
@@ -1004,21 +1058,27 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 
 
       if(num_writes > 0 && num_reads == 0)
-	{
-	  // output
-	  ofile << semi_colon << endl;
-	  if(p->Get_Signal())
-	  {
-		  ofile << pipe_id << ": out std_logic_vector(" << pipe_width-1 << " downto 0)";
-          }
-	  else
-	  {
-		  ofile << pipe_id << "_pipe_read_data: out std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		  ofile << pipe_id << "_pipe_read_req : in std_logic_vector(0 downto 0);" << endl;
-		  ofile << pipe_id << "_pipe_read_ack : out std_logic_vector(0 downto 0)";
-          }
-	  semi_colon = ";";
-	}
+      {
+	      // output
+	      if(p->Get_Signal())  
+	      { 
+		      if(!p->Get_Is_Clock_Enable())
+		      {
+			      ofile << semi_colon << endl;
+			      ofile << pipe_id << ": out std_logic_vector(" << pipe_width-1 << " downto 0)";
+			      semi_colon = ";";
+		      }
+
+	      }
+	      else if(!p->Get_Signal())
+	      {
+		      ofile << semi_colon << endl;
+		      ofile << pipe_id << "_pipe_read_data: out std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		      ofile << pipe_id << "_pipe_read_req : in std_logic_vector(0 downto 0);" << endl;
+		      ofile << pipe_id << "_pipe_read_ack : out std_logic_vector(0 downto 0)";
+		      semi_colon = ";";
+	      }
+      }
     }
 
   return(semi_colon);
@@ -1027,49 +1087,49 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 
 void vcSystem::Print_VHDL_Pipe_Signals(ostream& ofile)
 {
-  for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
-      pipe_iter != _pipe_map.end();
-      pipe_iter++)
-    {
-      vcPipe* p = (*pipe_iter).second;
-      p->Print_VHDL_Pipe_Signals(ofile);
+	for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
+			pipe_iter != _pipe_map.end();
+			pipe_iter++)
+	{
+		vcPipe* p = (*pipe_iter).second;
+		p->Print_VHDL_Pipe_Signals(ofile);
 
-    }
+	}
 }
 
 bool vcSystem::Get_Pipe_Module_Section(string pipe_id, 
-				       vcModule* caller_module, 
-				       string read_or_write, 
-				       int& hindex, 
-				       int& lindex)
+		vcModule* caller_module, 
+		string read_or_write, 
+		int& hindex, 
+		int& lindex)
 {
-  bool ret_val = false;
+	bool ret_val = false;
 
-  vcPipe* p = this->Find_Pipe(pipe_id);
-  assert(p != NULL);
+	vcPipe* p = this->Find_Pipe(pipe_id);
+	assert(p != NULL);
 
-  return(p->Get_Pipe_Module_Section(caller_module,read_or_write,hindex,lindex));
+	return(p->Get_Pipe_Module_Section(caller_module,read_or_write,hindex,lindex));
 
 }
 
 string vcSystem::Get_VHDL_Pipe_Interface_Port_Name(string pipe_id, string pid)
 {
-  vcPipe* p = this->Find_Pipe(pipe_id);
-  assert(p != NULL);
+	vcPipe* p = this->Find_Pipe(pipe_id);
+	assert(p != NULL);
 
-  return(p->Get_VHDL_Pipe_Interface_Port_Name(pid));
+	return(p->Get_VHDL_Pipe_Interface_Port_Name(pid));
 
 }
 
 string vcSystem::Get_Pipe_Aggregate_Section(string pipe_id,
-					    string pid, 
-					    int hindex, 
-					    int lindex) 
+		string pid, 
+		int hindex, 
+		int lindex) 
 {
-  vcPipe* p = this->Find_Pipe(pipe_id);
-  assert(p != NULL);
+	vcPipe* p = this->Find_Pipe(pipe_id);
+	assert(p != NULL);
 
-  p->Get_Pipe_Aggregate_Section(pid,hindex,lindex);
+	p->Get_Pipe_Aggregate_Section(pid,hindex,lindex);
 
 }
 
@@ -1077,25 +1137,26 @@ string vcSystem::Get_Pipe_Aggregate_Section(string pipe_id,
 void vcSystem::Print_VHDL_Architecture(ostream& ofile)
 {
 
-  string arch_name = this->Get_VHDL_Id() + "_arch";
-  ofile << "architecture " << arch_name << "  of " << this->Get_VHDL_Id() << " is -- system-architecture {" << endl;
+	string arch_name = this->Get_VHDL_Id() + "_arch";
+	ofile << "architecture " << arch_name << "  of " << this->Get_VHDL_Id() << " is -- system-architecture {" << endl;
 
-  for(map<string,vcMemorySpace*>::iterator iter = _memory_space_map.begin();
-      iter != _memory_space_map.end();
-      iter++)
-    {
-      vcMemorySpace* ms  = (*iter).second;
-      ofile << " -- interface signals to connect to memory space " << ms->Get_VHDL_Id() << endl;
-      ms->Print_VHDL_Interface_Signal_Declarations(ofile);
-    }
+	for(map<string,vcMemorySpace*>::iterator iter = _memory_space_map.begin();
+			iter != _memory_space_map.end();
+			iter++)
+	{
+		vcMemorySpace* ms  = (*iter).second;
+		ofile << " -- interface signals to connect to memory space " << ms->Get_VHDL_Id() << endl;
+		ms->Print_VHDL_Interface_Signal_Declarations(ofile);
+	}
 
-  for(map<string,vcModule*>::iterator moditer = _modules.begin();
-      moditer != _modules.end();
-      moditer++)
-    {
- 
-      vcModule* m = (*moditer).second;
-      string mod_name = (*moditer).first;
+	set<vcModule*> modules_with_gated_clocks;
+	for(map<string,vcModule*>::iterator moditer = _modules.begin();
+			moditer != _modules.end();
+			moditer++)
+	{
+
+		vcModule* m = (*moditer).second;
+		string mod_name = (*moditer).first;
       string vhdl_lib;
       int D;
       bool is_function_library_module = this->Is_Function_Library_Module(D,mod_name, vhdl_lib);
@@ -1115,6 +1176,9 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
 	// volatile/operators are instantiated in module data-paths.
       if(is_volatile_or_operator)
 	continue;
+
+      if(m->Get_Use_Gated_Clock())
+		modules_with_gated_clocks.insert(m);
 
       if(!this->Is_A_Top_Module(m) || this->Is_An_Ever_Running_Top_Module(m))
 	{
@@ -1140,13 +1204,16 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
     }
 
   this->Print_VHDL_Pipe_Signals(ofile);
+  this->Print_VHDL_Gated_Clock_Signals(modules_with_gated_clocks, ofile);
 
   ofile << "-- } " << endl << "begin -- {" << endl;
+
   for(map<string,vcModule*>::iterator moditer = _modules.begin();
       moditer != _modules.end();
       moditer++)
     {
       vcModule* m = (*moditer).second;
+
 
       // skip volatile/operators.
       if(m->Get_Volatile_Flag() || m->Get_Operator_Flag())
@@ -1173,6 +1240,7 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
     }
 
   this->Print_VHDL_Pipe_Instances(ofile);
+  this->Print_VHDL_Gated_Clock_Generators(modules_with_gated_clocks, ofile);
 
   for(map<string,vcMemorySpace*>::iterator iter = _memory_space_map.begin();
       iter != _memory_space_map.end();
@@ -1183,6 +1251,66 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
     }
 
   ofile << "-- } " << endl << "end " << arch_name << ";" << endl;
+}
+
+  
+void vcSystem::Print_VHDL_Gated_Clock_Signals(set<vcModule*>& modules_with_gated_clocks, ostream& ofile)
+{
+	// iterate over declared gated clocks.	
+	ofile << "-- gated clock signal declarations." << endl;
+	for(map<string,string>::iterator giter = _gated_clock_map.begin();
+		giter != _gated_clock_map.end(); giter++)
+	{
+		ofile << "signal " << (*giter).first << ": std_logic;" << endl;
+	}
+
+	// iterate over modules that use gated clocks.
+	for(set<vcModule*>::iterator miter = modules_with_gated_clocks.begin();
+			miter != modules_with_gated_clocks.end();
+			miter++)
+	{
+		vcModule* m = *miter;
+		if(m->Uses_Auto_Gated_Clock())
+			ofile << "signal " << m->Get_Gated_Clock_Name() << ": std_logic;" << endl;
+	}
+}
+
+void vcSystem::Print_VHDL_Gated_Clock_Generators(set<vcModule*>& modules_with_gated_clocks,
+									ostream& ofile)
+{
+	ofile << "-- gated clock generators " << endl;
+	int I=0;
+	// iterate over declared gated clocks.	
+	for(map<string,string>::iterator giter = _gated_clock_map.begin();
+		giter != _gated_clock_map.end(); giter++)
+	{
+		ofile << "gcGen_" << I << ": signal_clock_gate " << endl
+		      << "                    port map (reset => reset, clock_in => clk, clock_enable => " << 
+			(*giter).second << "(0), clock_out => " << (*giter).first << ");" << endl;
+		I++;
+	}
+
+	for(set<vcModule*>::iterator miter = modules_with_gated_clocks.begin();
+			miter != modules_with_gated_clocks.end();
+			miter++)
+	{
+		vcModule* m = *miter;
+		if(m->Uses_Auto_Gated_Clock())
+		{
+			string prefix = m->Get_VHDL_Id() + "_";
+			string m_start_req = prefix + "start_req";
+			string m_start_ack = prefix + "start_ack";
+			string m_fin_req = prefix + "fin_req";
+			string m_fin_ack = prefix + "fin_ack";
+			ofile << "gcGen_" << I << ": module_clock_gate " << endl;
+			ofile << "   port map (reset => reset, start_req => " 
+			      << "      " << m_start_req << ", start_ack => " << m_start_ack << "," << endl
+			      << "       fin_req => " << m_fin_req << ", fin_ack => " << m_fin_ack << "," << endl
+			      << "       clock_in => clk, clock_out => " 
+			      << "      " << m->Get_Gated_Clock_Name() << ");" << endl;
+		}
+		I++;
+	}
 }
 
 

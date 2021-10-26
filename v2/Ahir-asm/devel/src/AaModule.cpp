@@ -159,6 +159,13 @@ AaExpression* AaModule::Lookup_Print_Remap(AaInterfaceObject* obj)
 
 void AaModule::Print(ostream& ofile)
 {
+	if(this->Get_Use_Gated_Clock()) 
+	{
+		ofile << "$use_gated_clock ";
+		if(!this->Uses_Auto_Gated_Clock())
+			ofile << this->Get_Gated_Clock_Name() << endl;
+	}
+
 	if(this->Get_Foreign_Flag())
 	{
 		ofile << "$foreign ";
@@ -752,6 +759,12 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
 {
   this->Check_That_All_Out_Args_Are_Driven();
 
+  // gated clock... pass it to VC
+  if(this->Get_Use_Gated_Clock())
+  {
+	ofile << "$use_gated_clock " << this->Get_Gated_Clock_Name() << endl;
+  }
+	
   //  this->Propagate_Constants();
   if(this->_foreign_flag)
     ofile << "$foreign ";

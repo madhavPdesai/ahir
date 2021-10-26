@@ -110,6 +110,8 @@ class AaProgram
   static std::map<int,AaMemorySpace*> _memory_space_map;
   static std::map<AaType*,AaForeignStorageObject*> _foreign_storage_map;
   static std::map<string, int> _integer_parameter_map;
+  // gated clock name -> enable map..
+  static std::map<string, string> _gated_clock_map;
 
   static std::set<AaType*> _extmem_access_types;
   static std::set<int> _extmem_access_widths;
@@ -223,6 +225,18 @@ class AaProgram
 	return(AaProgram::_mutex_set.find(m) != AaProgram::_mutex_set.end());
   }
 
+  static void Add_Gated_Clock(string gc_name, string enable_sig_name)
+  {
+	if(AaProgram::_gated_clock_map.find(gc_name) == AaProgram::_gated_clock_map.end())
+	{
+		AaProgram::_gated_clock_map[gc_name] = enable_sig_name;
+		AaRoot::Info("added gated clock " + gc_name + " with enable " + enable_sig_name);
+	}
+	else
+	{
+		AaRoot::Warning("Redeclaration of gated clock " + gc_name + " ignored.", NULL);
+	}
+  } 
   static void Increment_Buffering_Bit_Count(int n)
   {
       cerr << "Info: added " << n << " buffering bits during path balancing" << endl;
@@ -311,6 +325,7 @@ class AaProgram
 				       ostream& ofile);
   static void Write_VC_Pipe_Declarations(ostream& ofile);
   static void Write_VC_Constant_Declarations(ostream& ofile);
+  static void Write_VC_Gated_Clocks(ostream& ofile);
   static void Write_VC_Memory_Spaces(ostream& ofile);
   static void Write_VC_Memory_Spaces_Optimized(ostream& ofile);
   static void Write_VC_Modules(ostream& ofile);

@@ -1,0 +1,101 @@
+$pipe  data_1_clock_enable: $uint<1> $signal
+$gated_clock  data_1_clock data_1_clock_enable
+
+$pipe  data_2_clock_enable: $uint<1> $signal
+$gated_clock  data_2_clock data_2_clock_enable
+
+$pipe out_data_1 : $uint<32> $depth 2
+$pipe out_data_2 : $uint<32> $depth 16
+
+$pipe in_data_1 : $uint<32> $depth 2
+$pipe in_data_2 : $uint<32> $depth 2
+
+// auto generated clock...
+$use_gated_clock
+   $pipeline $depth 3 $buffering 2 $fullrate $module [subroutine] $in (X: $uint<32>) $out (Y: $uint<32>) $is
+{
+	Y := X
+}
+
+$use_gated_clock data_1_clock 
+$module [get_data_in_1] $in () $out (X: $uint<32>) $is
+{
+	X := in_data_1
+}
+
+$use_gated_clock data_2_clock 
+$module [get_data_in_2] $in () $out (X: $uint<32>) $is
+{
+	X := in_data_2
+}
+
+$module [send_data_out] $in (S: $uint<1> X: $uint<32>) $out () $is
+{
+	$guard (~S) out_data_1  := X
+	$guard (S)  out_data_2  := X
+}
+
+$module [main_daemon_1] $in() $out () $is
+{
+	data_1_clock_enable := 0
+	$branchblock[lOoP] {
+		$merge $entry loopback $endmerge
+		
+
+			data_1_clock_enable := 1
+			$barrier
+
+			$call get_data_in_1 () (X0) 
+			$call get_data_in_1 () (X1) 
+			$call get_data_in_1 () (X2) 
+			$call get_data_in_1 () (X3) 
+
+			$barrier
+			data_1_clock_enable := 0
+
+			$call subroutine (X0) (Y0)
+			$call subroutine (X1) (Y1)
+			$call subroutine (X2) (Y2)
+			$call subroutine (X3) (Y3)
+
+
+			$call send_data_out (0 Y0) () 
+			$call send_data_out (0 Y1) () 
+			$call send_data_out (0 Y2) () 
+			$call send_data_out (0 Y3) () 
+
+
+		$place [loopback]
+	}
+}
+
+$module [main_daemon_2] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$merge $entry loopback $endmerge
+		
+			data_2_clock_enable := 1
+
+			$call get_data_in_2 () (X0) 
+			$call get_data_in_2 () (X1)
+			$call get_data_in_2 () (X2) 
+			$call get_data_in_2 () (X3) 
+		
+			$barrier
+			data_2_clock_enable := 0
+
+			$call subroutine (X0) (Y0)
+			$call subroutine (X1) (Y1)
+			$call subroutine (X2) (Y2)
+			$call subroutine (X3) (Y3)
+
+			$call send_data_out (1 Y0) () 
+			$call send_data_out (1 Y1) () 
+			$call send_data_out (1 Y2) () 
+			$call send_data_out (1 Y3) () 
+
+
+		$place [loopback]
+	}
+}
+

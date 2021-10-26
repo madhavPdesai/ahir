@@ -24,6 +24,7 @@ cat ../ahir/memory_subsystem/base_bank_asic/*.vhd >> $LIBFILE
 cat ../ahir/memory_subsystem/base_bank_asic/for_fpga_impl_of_asic_rtl/$TECH/ReverseWrappers.vhdl >> $LIBFILE
 cat ../ahir/memory_subsystem/strictly_ordered/*.vhd >> $LIBFILE
 cat ../ahir/memory_subsystem/unordered/*.vhd >> $LIBFILE
+cat ../ahir/clock_gating/*.vhdl >> ahir.vhdl
 cat ../ahir/control-path/*.vhdl >> $LIBFILE
 cat ../ahir/operatorsV2/base/*.vhd >> $LIBFILE
 cat ../ahir/operatorsV2/ieee754/*.vhd >> $LIBFILE

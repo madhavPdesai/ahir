@@ -101,6 +101,8 @@ aA_Program
 }
     :
         (
+	    aA_Gated_Clock_Declaration
+	    | 
             (nf = aA_Module {AaProgram::Add_Module(nf);} )
             |
             (  
@@ -131,9 +133,25 @@ aA_Mutex_Declaration
 ;
 
 
+//-----------------------------------------------------------------------------------------------
+// Gated clock declaration  GATED_CLOCK <clock-name> <enable-sig-name>
+//-----------------------------------------------------------------------------------------------
+aA_Gated_Clock_Declaration
+{
+    string enable_sig_name;
+    string gated_clock_name;
+}
+:
+   GATED_CLOCK cid:SIMPLE_IDENTIFIER eid:SIMPLE_IDENTIFIER 
+	{ 
+		gated_clock_name = cid->getText();
+		enable_sig_name = eid->getText();
+		AaProgram::Add_Gated_Clock(gated_clock_name, enable_sig_name);
+	}
+;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE )? (NOOPT)? (USEONCE)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
+// aA_Module: (USE_GATED_CLOCK)? (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE )? (NOOPT)? (USEONCE)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 aA_Module returns [AaModule* new_module]
 {
@@ -155,8 +173,14 @@ aA_Module returns [AaModule* new_module]
     int lno;
     bool deterministic_flag = false;
     bool use_once_flag = false;
+    bool use_gated_clock = false;
+    bool auto_gated_flag = false;
+    string gated_clock_name;
 }
-    : ((FOREIGN {foreign_flag = true;}) | 
+
+    : (USE_GATED_CLOCK {use_gated_clock = true;} 
+		(gcid: SIMPLE_IDENTIFIER {gated_clock_name = gcid->getText();})?)?
+	((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true; } 
 		(DEPTH (depth = aA_Integer_Parameter_Expression [lno] ))?
 		(BUFFERING (buffering = aA_Integer_Parameter_Expression [lno] ))?
@@ -200,6 +224,7 @@ aA_Module returns [AaModule* new_module]
 	    }
 
             new_module->Set_Line_Number(mt->getLine());
+	    new_module->Set_Use_Gated_Clock(use_gated_clock, gated_clock_name);
         }
         aA_In_Args[new_module] aA_Out_Args[new_module] (IS
             LBRACE
@@ -2560,6 +2585,8 @@ LOCK          : "$lock";
 UNLOCK        : "$unlock";
 PARAMETER     : "$parameter";
 SLEEP	      : "$sleep";
+USE_GATED_CLOCK   : "$use_gated_clock";
+GATED_CLOCK   : "$gated_clock";
 
 
 // Special symbols

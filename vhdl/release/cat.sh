@@ -22,6 +22,7 @@ cat ../ahir/packagesV2/memory_subsystem_package.vhd >> ahir.vhdl
 cat ../ahir/packagesV2/merge_functions.vhd >> ahir.vhdl
 cat ../ahir/packagesV2/functionLibraryComponents.vhd >> ahir.vhdl
 cat ../ahir/packagesV2/ApIntComponents.vhd >> ahir.vhdl
+cat ../ahir/clock_gating/*.vhdl >> ahir.vhdl
 cat ../ahir/memory_subsystem/common/*.vhd >> ahir.vhdl
 cat ../ahir/memory_subsystem/base_bank/*.vhd >> ahir.vhdl
 cat ../ahir/memory_subsystem/strictly_ordered/*.vhd >> ahir.vhdl

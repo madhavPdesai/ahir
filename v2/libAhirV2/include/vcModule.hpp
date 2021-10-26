@@ -82,6 +82,7 @@ class vcModule: public vcRoot
   map<string,vcPipe*> _pipe_map;
 
   string _function_library_vhdl_lib;
+  string _gated_clock_name;
 
   bool _inline;
   bool _foreign_flag; 
@@ -92,6 +93,7 @@ class vcModule: public vcRoot
   bool _pipeline_full_rate_flag;
   bool _pipeline_deterministic_flag;
   bool _is_function_library_module;
+  bool _use_gated_clock;
 
   
 
@@ -144,33 +146,48 @@ class vcModule: public vcRoot
   void Set_Is_Function_Library_Module(bool d) {_is_function_library_module = d;}
   int  Get_Is_Function_Library_Module() {return(_is_function_library_module);}
 
+  void Set_Use_Gated_Clock(bool v, string gc_name) {_use_gated_clock = v;
+								_gated_clock_name = gc_name;}
+  bool Get_Use_Gated_Clock() {return(_use_gated_clock);}
+  string Get_Gated_Clock_Name() 
+  {
+	  string ret_name;
+	  if(_gated_clock_name == "") 
+		  ret_name = this->Get_VHDL_Id() + "_gated_clock";
+	  else
+		  ret_name = _gated_clock_name;
+	  return(ret_name);
+  }
+  bool Uses_Auto_Gated_Clock()
+  {return(_use_gated_clock && (_gated_clock_name == ""));}
+
   void Set_Function_Library_Vhdl_Lib(string d) {_function_library_vhdl_lib = d;}
   string  Get_Function_Library_Vhdl_Lib() {return(_function_library_vhdl_lib);}
 
   void Register_Call_Group(vcModule* m, int g_id, int g_size) 
   {
-    _call_group_map[m].push_back(g_id); 
-    _num_calls++;
-    _max_number_of_caller_tags_needed = MAX(_max_number_of_caller_tags_needed, g_size);
+	  _call_group_map[m].push_back(g_id); 
+	  _num_calls++;
+	  _max_number_of_caller_tags_needed = MAX(_max_number_of_caller_tags_needed, g_size);
   }
 
   void Deregister_Call_Groups(vcModule* m)
   {
-    if(_call_group_map.find(m) != _call_group_map.end())
-      {
-	_num_calls =_num_calls - _call_group_map[m].size();
-	_call_group_map.erase(m);
-      }
+	  if(_call_group_map.find(m) != _call_group_map.end())
+	  {
+		  _num_calls =_num_calls - _call_group_map[m].size();
+		  _call_group_map.erase(m);
+	  }
   }
 
   void Add_Called_Module(vcModule* m)
   {
-    _called_modules.insert(m);
+	  _called_modules.insert(m);
   }
 
   void Add_Accessed_Memory_Space(vcMemorySpace* ms)
   {
-    _accessed_memory_spaces.insert(ms);
+	  _accessed_memory_spaces.insert(ms);
   }
 
   int Get_Num_Calls() {return(this->_num_calls);}
@@ -178,10 +195,10 @@ class vcModule: public vcRoot
 
   int Get_Callee_Tag_Length() 
   {
-    if(this->_num_calls > 0)
-      return(CeilLog2(this->_num_calls));
-    else
-      return(CeilLog2(this->Get_Pipeline_Depth()));
+	  if(this->_num_calls > 0)
+		  return(CeilLog2(this->_num_calls));
+	  else
+		  return(CeilLog2(this->Get_Pipeline_Depth()));
   }
 
   int Get_In_Arg_Width();
@@ -189,11 +206,11 @@ class vcModule: public vcRoot
 
   int Get_Number_Of_Input_Arguments()
   {
-    return(_ordered_input_arguments.size());
+	  return(_ordered_input_arguments.size());
   }
   int Get_Number_Of_Output_Arguments()
   {
-    return(_ordered_output_arguments.size());
+	  return(_ordered_output_arguments.size());
   }
 
   vcMemorySpace* Find_Memory_Space(string ms_name);
@@ -202,24 +219,24 @@ class vcModule: public vcRoot
   vcWire* Get_Argument(string arg_name, string mode);
   string Get_Input_Argument(int idx)
   {
-    assert(idx >= 0 && idx < this->_ordered_input_arguments.size());
-    return(this->_ordered_input_arguments[idx]);
+	  assert(idx >= 0 && idx < this->_ordered_input_arguments.size());
+	  return(this->_ordered_input_arguments[idx]);
   }
   vcWire* Get_Input_Wire(int idx)
   {
-    assert(idx >= 0 && idx < this->_ordered_input_arguments.size());
-    return(this->_input_arguments[this->_ordered_input_arguments[idx]]);
+	  assert(idx >= 0 && idx < this->_ordered_input_arguments.size());
+	  return(this->_input_arguments[this->_ordered_input_arguments[idx]]);
   }
 
   string Get_Output_Argument(int idx)
   {
-    assert(idx >= 0 && idx < this->_ordered_output_arguments.size());
-    return(this->_ordered_output_arguments[idx]);
+	  assert(idx >= 0 && idx < this->_ordered_output_arguments.size());
+	  return(this->_ordered_output_arguments[idx]);
   }
   vcWire* Get_Output_Wire(int idx)
   {
-    assert(idx >= 0 && idx < this->_ordered_output_arguments.size());
-    return(this->_output_arguments[this->_ordered_output_arguments[idx]]);
+	  assert(idx >= 0 && idx < this->_ordered_output_arguments.size());
+	  return(this->_output_arguments[this->_ordered_output_arguments[idx]]);
   }
 
 

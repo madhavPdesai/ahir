@@ -49,6 +49,8 @@ vc_System[vcSystem* sys]
 }
 :
 (
+ vc_GatedClock[sys]
+ |
  (nf = vc_Module[sys]) // module added to sys during rule match.
  |
  (ms = vc_MemorySpace[sys,NULL] {sys->Add_Memory_Space(ms);})
@@ -62,6 +64,22 @@ vc_System[vcSystem* sys]
  (vc_SysBufferingSpec[sys])
  )*
 	;
+
+//-----------------------------------------------------------------------------------------------
+// vc_GatedClock :  (LIFO | NOBLOCK)? PIPE vc_Label UINTEGER
+//-----------------------------------------------------------------------------------------------
+vc_GatedClock [vcSystem* sys]
+{
+   string gc_name, enable_name;
+}:
+    GATED_CLOCK gcid: SIMPLE_IDENTIFIER eid: SIMPLE_IDENTIFIER
+    	{
+		gc_name = gcid->getText();
+		enable_name = eid->getText();
+		sys->Add_Gated_Clock(gc_name, enable_name);
+	}
+;
+
 
 //-----------------------------------------------------------------------------------------------
 // vc_Pipe :  (LIFO | NOBLOCK)? PIPE vc_Label UINTEGER
@@ -160,9 +178,13 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
     bool full_rate_flag = false;
     bool deterministic_flag = false;
     bool use_once_flag = false;
+    bool use_gated_clock = false;
+    string gated_clock_name;
 }
-    : ((FOREIGN {foreign_flag = true;}) | 
-	(PIPELINE {pipeline_flag = true;} 
+    : 
+	(USE_GATED_CLOCK {use_gated_clock = true;} (gcid:SIMPLE_IDENTIFIER {gated_clock_name = gcid->getText();})?)?
+        ((FOREIGN {foreign_flag = true;}) | 
+	  (PIPELINE {pipeline_flag = true;} 
 		(DEPTH did: UINTEGER {depth = atoi(did->getText().c_str());})? 
 		(BUFFERING bid: UINTEGER {buffering = atoi(bid->getText().c_str());})? 
 		(FULLRATE {full_rate_flag = true;})? 
@@ -185,6 +207,7 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 	    m->Set_Operator_Flag(operator_flag);
 	    m->Set_Volatile_Flag(volatile_flag);
 	    m->Set_Use_Once_Flag(use_once_flag);
+            m->Set_Use_Gated_Clock(use_gated_clock, gated_clock_name);
         } 
         LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
         (vc_Pipe[NULL,m])*
@@ -1983,6 +2006,9 @@ DETERMINISTIC: "$deterministic";
 ALIAS: "$A";
 BARRIER: "$barrier";
 CUT_THROUGH: "$cut_through";
+
+GATED_CLOCK:"$gated_clock";
+USE_GATED_CLOCK: "$use_gated_clock";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

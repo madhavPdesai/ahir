@@ -79,6 +79,7 @@ std::set<string> AaProgram::_top_level_daemons;
 std::set<AaModule*> AaProgram::_reachable_modules;
 std::set<string> AaProgram::_mutex_set;
 std::map<string, int> AaProgram::_integer_parameter_map;
+std::map<string, string> AaProgram::_gated_clock_map;
 
 // use as a filler whenever you need.
 AaRoot* AaProgram::_dummy_root = NULL;
@@ -318,6 +319,14 @@ void AaProgram::Print(ostream& ofile)
       (*miter).second->Print(ofile);
       ofile << endl;
     }
+
+  // print gated clocks
+  for(std::map<string,string>::iterator giter = AaProgram::_gated_clock_map.begin();
+      giter != AaProgram::_gated_clock_map.end();
+      giter++)
+  {
+	ofile << "$gated_clock " << (*giter).first << " " << (*giter).second << endl;
+  }
 
   for(int idx = 0, fidx = AaProgram::_ordered_module_vector.size(); idx < fidx; idx++)
   {
@@ -1389,6 +1398,18 @@ void AaProgram::Write_VHDL_C_Stubs()
 }
 
 
+void AaProgram::Write_VC_Gated_Clocks(ostream& ofile)
+{
+	AaRoot::Info("Writing gated clocks.. ");
+	ofile << "// Declared gated clocks." << endl;
+	for(map<string,string>::iterator giter = AaProgram::_gated_clock_map.begin();
+				giter != AaProgram::_gated_clock_map.end();
+				giter++)
+	{
+		ofile << "$gated_clock " << (*giter).first << " " << (*giter).second << endl;
+	}
+	
+}
 
 void AaProgram::Write_VC_Model(int default_space_pointer_width,
 		int default_space_word_size,
@@ -1398,6 +1419,7 @@ void AaProgram::Write_VC_Model(int default_space_pointer_width,
 	AaRoot::Info("Writing VC model.. ");
 	AaProgram::Write_VC_Pipe_Declarations(ofile);
 	AaProgram::Write_VC_Constant_Declarations(ofile);
+	AaProgram::Write_VC_Gated_Clocks(ofile);
 
 	AaProgram::Write_VC_Memory_Spaces(ofile);
 	AaProgram::Write_VC_Modules(ofile);
@@ -1412,6 +1434,7 @@ void AaProgram::Write_VC_Model_Optimized(int default_space_pointer_width,
 	AaRoot::Info("Writing optimized VC model.. ");
 	AaProgram::Write_VC_Pipe_Declarations(ofile);
 	AaProgram::Write_VC_Constant_Declarations(ofile);
+	AaProgram::Write_VC_Gated_Clocks(ofile);
 
 	AaProgram::Write_VC_Memory_Spaces_Optimized(ofile);
 	AaProgram::Write_VC_Modules_Optimized(ofile);

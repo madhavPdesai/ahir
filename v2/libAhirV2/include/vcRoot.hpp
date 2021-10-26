@@ -189,7 +189,9 @@ enum vcLexerKeytags
     __DETERMINISTIC,
     __ALIAS,
     __BARRIER,
-    __CUT_THROUGH
+    __CUT_THROUGH,
+    __GATED_CLOCK,
+    __USE_GATED_CLOCK
   };
 
 static string vcLexerKeywords[] = 
@@ -350,7 +352,9 @@ static string vcLexerKeywords[] =
       "$deterministic",
       "$A",
       "$barrier",
-      "$cut_through"
+      "$cut_through",
+      "$gated_clock",
+      "$use_gated_clock"
   };
 
 string To_VHDL(string x);

@@ -95,7 +95,9 @@ class AaModule: public AaSeriesBlockStatement
   set<AaStorageObject*> _objects_that_are_read;
   set<AaStorageObject*> _objects_that_are_written;
 
+  string _gated_clock_name;
 
+  bool _use_gated_clock;
   bool _foreign_flag;
   bool _inline_flag;
   bool _macro_flag;
@@ -131,6 +133,26 @@ class AaModule: public AaSeriesBlockStatement
 
   virtual void Set_Pipeline_Deterministic_Flag(bool v) {_pipeline_deterministic_flag = v;}
   virtual bool Get_Pipeline_Deterministic_Flag() {return(_pipeline_deterministic_flag);}
+
+  virtual void Set_Use_Gated_Clock(bool v, string gc_name) 
+  {
+	if(!this->Get_Operator_Flag() && !this->Get_Volatile_Flag() && !this->Get_Macro_Flag()
+			&& !this->Get_Inline_Flag())
+	{
+		_use_gated_clock = v;
+		_gated_clock_name = gc_name;
+	}
+	else
+	{
+		AaRoot::Warning ("gated clock is possible only on normal modules", this);
+	}
+  }
+
+  virtual bool Get_Use_Gated_Clock() {return(_use_gated_clock);}
+  virtual string Get_Gated_Clock_Name() {return(_gated_clock_name);}
+  virtual bool Uses_Auto_Gated_Clock()
+  {return(_use_gated_clock && (_gated_clock_name == ""));}
+
 
   virtual void Set_Operator_Flag(bool v) {_operator_flag = v;}
   virtual bool Get_Operator_Flag() {return(_operator_flag);}

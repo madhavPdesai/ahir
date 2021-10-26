@@ -2684,4 +2684,18 @@ package BaseComponents is
   );
   -- 
   end component dpram_1w_1r_1024x32_Operator;
+
+  component module_clock_gate is
+	port (reset, start_req, start_ack, fin_req, fin_ack, clock_in: in std_logic;
+		clock_out : out std_logic);
+  end component module_clock_gate;
+
+  component signal_clock_gate is
+	port (reset, clock_enable, clock_in: in std_logic; clock_out : out std_logic);
+  end component signal_clock_gate;
+
+  component clock_gater is
+	port (clock_in, clock_enable: in std_logic; clock_out : out std_logic);
+  end component clock_gater;
+
 end BaseComponents;

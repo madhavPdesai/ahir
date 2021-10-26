@@ -62,6 +62,9 @@ class vcSystem: public vcRoot
 
   map<string, pair<string,int> >  _function_library_module_map;
 
+  // gated clocks -> enable
+  map<string, string> _gated_clock_map;
+
 
  public:
   static bool _error_flag;
@@ -122,6 +125,8 @@ class vcSystem: public vcRoot
   int Get_Pipe_Depth(string pipe_id);
   void Print_Pipes(ostream& ofile);
 
+  void Add_Gated_Clock(string gc_name, string enable_name);
+
   void Add_Constant_Wire(string obj_name, vcValue* v);
   vcConstantWire* Find_Constant_Wire(string obj_name)
   {
@@ -152,6 +157,7 @@ class vcSystem: public vcRoot
 
   void Detach_Unreachable_Modules();
   void Elaborate(); // elaborate the system...
+  void Mark_Clock_Enables();
 
 
   static void Info(string err_msg); // {_error_flag = true;}
@@ -174,6 +180,9 @@ class vcSystem: public vcRoot
   void Print_VHDL_Entity(ostream& ofile);
   void Print_VHDL_Architecture(ostream& ofile);
   static void Print_VHDL_Inclusions(ostream& ofile);
+
+  void Print_VHDL_Gated_Clock_Signals(set<vcModule*>& modules_with_gated_clocks, ostream& ofile);
+  void Print_VHDL_Gated_Clock_Generators(set<vcModule*>& modules_with_gated_clocks, ostream& ofile);
 
   string Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile);
   void Print_VHDL_Pipe_Signals(ostream& ofile);

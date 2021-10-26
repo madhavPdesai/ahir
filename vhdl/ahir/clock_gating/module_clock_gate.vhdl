@@ -2,9 +2,12 @@ library std;
 library ieee;
 use ieee.std_logic_1164.all;
 
+library ahir;
+use ahir.BaseComponents.all;
 
 entity module_clock_gate is
-	port (reset, start_req, start_ack, fin_req, fin_ack, clock_in: in std_logic;
+	port (reset, start_req, 
+		start_ack, fin_req, fin_ack, clock_in: in std_logic;
 		clock_out : out std_logic);
 end entity module_clock_gate;
 
@@ -15,18 +18,13 @@ architecture behavioural of module_clock_gate is
 	signal job_counter: integer;
 begin
 
-	-------------------------------------------------------
-	-- latch followed by AND.
-	-------------------------------------------------------
-	process(clock_in)
-	begin
-		if(clock_in = '0') then
-			clock_enable <= clock_enable_raw;
-		end if;
-	end process;
-	clock_out <= clock_in and clock_enable;
-	-------------------------------------------------------
-
+       -------------------------------------------------------------------
+       -- clock enabler.
+       -------------------------------------------------------------------
+       cgInst: clock_gater
+			port map (clock_in => clock_in,
+					clock_enable => clock_enable_raw,
+					clock_out => clock_out);
 	-------------------------------------------------------
 	-- FSM.  If there is something going on inside, enable
 	-- the clock...
@@ -45,19 +43,33 @@ begin
 
 		case fsm_state is 
 			when RESET_STATE =>
+				--
+				-- enable in reset state to ensure that
+				-- reset gets applied correctly....
+				--
+				clock_enable_raw_var := '1';
 				if(reset = '0') then 
 					next_fsm_state_var := IDLE;
 				end if;
 			when IDLE => 
 				if(start_req = '1') then
 					clock_enable_raw_var := '1';
-					next_fsm_state_var := STARTED;
+
+					if(start_ack = '1') then
+						incr_counter_var := true;
+						next_fsm_state_var := 	WORKING;
+					else
+						next_fsm_state_var := STARTED;
+					end if;
 				end if;
 			when STARTED =>
+
 				clock_enable_raw_var := '1';
 				if(start_ack = '1') then
+					incr_counter_var := true;
 					next_fsm_state_var := WORKING;
 				end if;
+
 			when WORKING =>
 				clock_enable_raw_var := '1';
 				incr_counter_var := ((start_req = '1') and (start_ack = '1'));
@@ -82,6 +94,5 @@ begin
 			end if;
 		end if;
 	end process;
-
 	
 end behavioural;
