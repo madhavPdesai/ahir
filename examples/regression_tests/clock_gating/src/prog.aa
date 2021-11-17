@@ -11,19 +11,16 @@ $pipe in_data_1 : $uint<32> $depth 2
 $pipe in_data_2 : $uint<32> $depth 2
 
 // auto generated clock...
-$use_gated_clock
-   $pipeline $depth 3 $buffering 2 $fullrate $module [subroutine] $in (X: $uint<32>) $out (Y: $uint<32>) $is
+$pipeline $depth 3 $buffering 2 $fullrate $module [subroutine] $in (X: $uint<32>) $out (Y: $uint<32>) $is
 {
 	Y := X
 }
 
-$use_gated_clock data_1_clock 
 $module [get_data_in_1] $in () $out (X: $uint<32>) $is
 {
 	X := in_data_1
 }
 
-$use_gated_clock data_2_clock 
 $module [get_data_in_2] $in () $out (X: $uint<32>) $is
 {
 	X := in_data_2
@@ -99,3 +96,6 @@ $module [main_daemon_2] $in() $out () $is
 	}
 }
 
+$use_gated_clock  subroutine
+$use_gated_clock  get_data_in_1 data_1_clock 
+$use_gated_clock  get_data_in_2 data_2_clock

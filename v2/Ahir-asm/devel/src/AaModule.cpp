@@ -66,6 +66,7 @@ AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
   _noopt_flag = false;
   _use_once_flag = false;
 
+  _use_gated_clock = false;
   _number_of_times_called = 0;
   this->Set_Delay(2);
 
@@ -159,12 +160,6 @@ AaExpression* AaModule::Lookup_Print_Remap(AaInterfaceObject* obj)
 
 void AaModule::Print(ostream& ofile)
 {
-	if(this->Get_Use_Gated_Clock()) 
-	{
-		ofile << "$use_gated_clock ";
-		if(!this->Uses_Auto_Gated_Clock())
-			ofile << this->Get_Gated_Clock_Name() << endl;
-	}
 
 	if(this->Get_Foreign_Flag())
 	{

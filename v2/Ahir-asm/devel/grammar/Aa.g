@@ -120,6 +120,10 @@ aA_Program
 	    (
 		aA_Integer_Parameter_Declaration
 	    )
+	    |
+      	    (
+		aA_Use_Gated_Clock_Statement
+	    )
         )*
     ;
 
@@ -151,7 +155,24 @@ aA_Gated_Clock_Declaration
 ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Module: (USE_GATED_CLOCK)? (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE )? (NOOPT)? (USEONCE)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
+// Gated clock use statement  USE_GATED_CLOCK <module-name> <clock-name> 
+//-----------------------------------------------------------------------------------------------
+aA_Use_Gated_Clock_Statement
+{
+    string module_name;
+    string gated_clock_name = "";
+}
+:
+   USE_GATED_CLOCK mid:SIMPLE_IDENTIFIER 
+		(cid:SIMPLE_IDENTIFIER  {gated_clock_name = cid->getText();})?
+	{ 
+		module_name = mid->getText();
+		AaProgram::Add_Use_Gated_Clock_Statement(module_name, gated_clock_name);
+	}
+;
+
+//-----------------------------------------------------------------------------------------------
+// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE )? (NOOPT)? (USEONCE)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 aA_Module returns [AaModule* new_module]
 {
@@ -173,13 +194,9 @@ aA_Module returns [AaModule* new_module]
     int lno;
     bool deterministic_flag = false;
     bool use_once_flag = false;
-    bool use_gated_clock = false;
-    bool auto_gated_flag = false;
-    string gated_clock_name;
 }
 
-    : (USE_GATED_CLOCK {use_gated_clock = true;} 
-		(gcid: SIMPLE_IDENTIFIER {gated_clock_name = gcid->getText();})?)?
+    : 
 	((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true; } 
 		(DEPTH (depth = aA_Integer_Parameter_Expression [lno] ))?
@@ -224,7 +241,6 @@ aA_Module returns [AaModule* new_module]
 	    }
 
             new_module->Set_Line_Number(mt->getLine());
-	    new_module->Set_Use_Gated_Clock(use_gated_clock, gated_clock_name);
         }
         aA_In_Args[new_module] aA_Out_Args[new_module] (IS
             LBRACE
@@ -1477,6 +1493,7 @@ aA_Slice_Expression[AaScope* scope] returns [AaExpression* expr]
   	int lno;
 }:
 		lpid: LPAREN SLICE rest=aA_Expression[scope] 
+			{ lno = lpid->getLine(); }
 			hindex = aA_Integer_Parameter_Expression [lno]
 			lindex = aA_Integer_Parameter_Expression [lno]
 		{

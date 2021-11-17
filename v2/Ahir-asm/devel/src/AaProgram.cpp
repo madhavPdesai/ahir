@@ -354,6 +354,17 @@ void AaProgram::Print(ostream& ofile)
 	  }
 	  ofile << endl;
   }
+
+  // print use_gated_clock statements..
+  ofile << "// use of gated clocks in modules " << endl;
+  for(int gidx = 0, fgidx = AaProgram::_ordered_module_vector.size(); gidx < fgidx; gidx++)
+  {
+	  AaModule* m = ((AaModule*)(AaProgram::_ordered_module_vector[gidx]));
+	  if (m->Get_Use_Gated_Clock())
+	  {
+		ofile << "$use_gated_clock " << m->Get_Name() << " " << m->Get_Gated_Clock_Name() << endl;
+	  } 
+  }
 }
 
 

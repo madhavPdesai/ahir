@@ -57,6 +57,7 @@ vcModule::vcModule(vcSystem* sys, string module_name):vcRoot(module_name)
 	this->_is_function_library_module = false;
 	this->_delay = 2;
 	this->_deterministic_longest_path = -1;
+	this->_use_gated_clock = false;
 }
 
 int vcModule::Get_Delay()

@@ -225,6 +225,31 @@ class AaProgram
 	return(AaProgram::_mutex_set.find(m) != AaProgram::_mutex_set.end());
   }
 
+  static void Add_Use_Gated_Clock_Statement(string module_name, string gated_clock_name)
+  {
+	if((gated_clock_name == "") ||
+		(AaProgram::_gated_clock_map.find(gated_clock_name) != AaProgram::_gated_clock_map.end()))
+	{
+		AaModule* m = AaProgram::Find_Module(module_name);
+		if(m != NULL)
+		{
+			m->Set_Use_Gated_Clock(true, gated_clock_name);
+			AaRoot::Info("Info: set module " + module_name + " with gated clock " + 
+						gated_clock_name);
+		}
+		else
+		{
+			AaRoot::Error("In use_gated_clock statement, module " + module_name + " not found.",
+						NULL);
+		}
+	}
+	else
+	{
+			AaRoot::Error("In use_gated_clock statement, gated clock " + gated_clock_name + " not found.",
+						NULL);
+	}
+  }
+
   static void Add_Gated_Clock(string gc_name, string enable_sig_name)
   {
 	if(AaProgram::_gated_clock_map.find(gc_name) == AaProgram::_gated_clock_map.end())
