@@ -24,7 +24,6 @@ cat ../ahir/memory_subsystem/base_bank_asic/*.vhd >> $LIBFILE
 cat ../ahir/memory_subsystem/strictly_ordered/*.vhd >> $LIBFILE
 cat ../ahir/memory_subsystem/unordered/*.vhd >> $LIBFILE
 cat ../ahir/control-path/*.vhdl >> $LIBFILE
-cat ../ahir/clock_gating/*.vhdl >> ahir.vhdl
 cat ../ahir/operatorsV2/base/*.vhd >> $LIBFILE
 cat ../ahir/operatorsV2/ieee754/*.vhd >> $LIBFILE
 cat ../ahir/operatorsV2/experimental/*.vhd >> $LIBFILE
@@ -36,3 +35,9 @@ cat ../aHiR_ieee_proposed/trimmed/math_utility_pkg.vhd >> aHiR_ieee_proposed.vhd
 cat ../aHiR_ieee_proposed/trimmed/fixed_float_types_c.vhdl >> aHiR_ieee_proposed.vhdl
 cat ../aHiR_ieee_proposed/trimmed/fixed_pkg_c.vhd >> aHiR_ieee_proposed.vhdl
 cat ../aHiR_ieee_proposed/trimmed/float_pkg_c.vhd >> aHiR_ieee_proposed.vhdl
+#
+# A hack to allow the use of xilinx clock gating IP in the AHIR flow
+# whenever needed.
+#
+cat ../ahir/clock_gating/*_clock_gate.vhdl >> ahir.vhdl
+cat ../ahir/clock_gating/clock_gater.vhdl >> ahir.vhdl

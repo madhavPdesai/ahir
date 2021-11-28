@@ -37,7 +37,7 @@ package GlobalConstants is
     constant global_use_vivado_distributed_ram_queue : boolean := false;
 
     -- clock gating using Xilinx IP?
-    constant use_xilinx_bufce: boolean := false;
+    constant use_xilinx_bufce: boolean := true;
 
     --
     -- for guarded statements... increase this with care!

@@ -1,4 +1,5 @@
 rm -f ahir.vhdl
+rm -f ahirXilinx.vhdl
 rm -f *_ieee_proposed.vhdl
 rm -f GhdlLink.vhdl
 rm -f ModelsimLink.vhdl
@@ -22,7 +23,6 @@ cat ../ahir/packagesV2/memory_subsystem_package.vhd >> ahir.vhdl
 cat ../ahir/packagesV2/merge_functions.vhd >> ahir.vhdl
 cat ../ahir/packagesV2/functionLibraryComponents.vhd >> ahir.vhdl
 cat ../ahir/packagesV2/ApIntComponents.vhd >> ahir.vhdl
-cat ../ahir/clock_gating/*.vhdl >> ahir.vhdl
 cat ../ahir/memory_subsystem/common/*.vhd >> ahir.vhdl
 cat ../ahir/memory_subsystem/base_bank/*.vhd >> ahir.vhdl
 cat ../ahir/memory_subsystem/strictly_ordered/*.vhd >> ahir.vhdl
@@ -39,3 +39,11 @@ cat ../aHiR_ieee_proposed/trimmed/math_utility_pkg.vhd >> aHiR_ieee_proposed.vhd
 cat ../aHiR_ieee_proposed/trimmed/fixed_float_types_c.vhdl >> aHiR_ieee_proposed.vhdl
 cat ../aHiR_ieee_proposed/trimmed/fixed_pkg_c.vhd >> aHiR_ieee_proposed.vhdl
 cat ../aHiR_ieee_proposed/trimmed/float_pkg_c.vhd >> aHiR_ieee_proposed.vhdl
+#
+# A hack to allow the use of xilinx clock gating IP in the AHIR flow
+# whenever needed.
+#
+cat ../ahir/clock_gating/*_clock_gate.vhdl >> ahir.vhdl
+cp  ahir.vhdl ahirXilinx.vhdl
+cat ../ahir/clock_gating/clock_gater.vhdl >> ahir.vhdl
+cat ../ahir/clock_gating/clock_gater_xilinx.vhdl >> ahirXilinx.vhdl
