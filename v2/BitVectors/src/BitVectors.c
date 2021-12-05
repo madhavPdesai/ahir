@@ -1189,32 +1189,52 @@ void bit_vector_shift_left(bit_vector* r, bit_vector* s, bit_vector* t)
 		}
 	}
 }
+
+//
+// b3 b2 b1 b0  rotated left by 1 gives b2 b1 b0 b3
+//
 void bit_vector_rotate_left(bit_vector* r, bit_vector* s, bit_vector* t)
 {
+	
 	assert(r->width == t->width);
 	bit_vector_clear(t);
-	uint32_t rotate_amount = bit_vector_to_uint64(0,s);
 	uint32_t word_size = r->width;
+
+	// don't roll over
+	uint32_t rotate_amount = (bit_vector_to_uint64(0,s)) % word_size;
 
 	int I;
 	for(I=0; I < word_size; I++)
 	{
-		bit_vector_set_bit(t,((I+rotate_amount)%word_size), bit_vector_get_bit(r,I));
-		bit_vector_set_undefined_bit(t,((I+rotate_amount)%word_size), bit_vector_get_undefined_bit(r,I));
+		int J = (I >= rotate_amount) ? (I - rotate_amount) : (I + word_size)-rotate_amount;
+
+		// rotate amount = 1 
+		// for I=0, J=3  b3 goes here.
+		//     I=1, J=0
+		//     I=2, J=1
+		//     I=3, J=2
+		bit_vector_set_bit(t,I, bit_vector_get_bit(r,J));
+		bit_vector_set_undefined_bit(t,I, bit_vector_get_undefined_bit(r,J));
 	}
 }
+
+//
+// b3 b2 b1 b0  rotated right by 1 gives b0 b3 b2 b1
+//
 void bit_vector_rotate_right(bit_vector* r, bit_vector* s, bit_vector* t)
 {
 	assert(r->width == t->width);
 	bit_vector_clear(t);
-	uint32_t rotate_amount = bit_vector_to_uint64(0,s);
 	uint32_t word_size = r->width;
+	// don't roll over
+	uint32_t rotate_amount = (bit_vector_to_uint64(0,s)) % word_size;
 
 	int I;
-	for(I=rotate_amount; I < (word_size + rotate_amount); I++)
+	for(I=0; I < word_size; I++)
 	{
-		bit_vector_set_bit(t,((I-rotate_amount)%word_size), bit_vector_get_bit(r,(I%word_size)));
-		bit_vector_set_undefined_bit(t,((I-rotate_amount)%word_size), bit_vector_get_undefined_bit(r,(I%word_size)));
+		int J =  (I + rotate_amount) % word_size;
+		bit_vector_set_bit(t,I,bit_vector_get_bit(r,J));
+		bit_vector_set_undefined_bit(t,I,bit_vector_get_undefined_bit(r,J));
 	}
 }
 

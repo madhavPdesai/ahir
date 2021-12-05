@@ -64,8 +64,8 @@ end entity register_file_1w_1r_port_with_bypass;
 architecture Struct of register_file_1w_1r_port_with_bypass is
 
 	signal bypassed_write_to_read: std_logic_vector(g_data_width-1 downto 0);
-        signal mem_dataout_1: std_logic_vector(g_data_width-1 downto 0);
-	signal write_to_read_bypass, use_bypassed_value: std_logic;
+        signal mem_dataout_1, mem_dataout_1_reg, resolved_mem_dataout_1: std_logic_vector(g_data_width-1 downto 0);
+	signal write_to_read_bypass, use_bypassed_value, enable_1_reg: std_logic;
 
 begin  -- XilinxBramInfer
 
@@ -91,16 +91,26 @@ begin  -- XilinxBramInfer
 			if(reset = '1') then
 				use_bypassed_value <= '0';
 				bypassed_write_to_read <= (others => '0');
-			elsif(write_to_read_bypass = '1') then
-				bypassed_write_to_read <= datain_0;
-				use_bypassed_value <= '1';
-			elsif (enable_1 = '1') then  -- an unmatched memory read resets the bypass flag.
-				bypassed_write_to_read <= (others => '0');
-				use_bypassed_value <= '0';
+				enable_1_reg <= '0';
+			else 
+				enable_1_reg <= enable_1;
+				if(write_to_read_bypass = '1') then
+					bypassed_write_to_read <= datain_0;
+					use_bypassed_value <= '1';
+				elsif (enable_1 = '1') then  -- an unmatched memory read resets the bypass flag.
+					bypassed_write_to_read <= (others => '0');
+					use_bypassed_value <= '0';
+				end if;
+
+				if(enable_1_reg = '1') then
+					mem_dataout_1_reg <= mem_dataout_1;
+				end if;
 			end if;
 		end if;
 	end process;
 
-	dataout_1 <= bypassed_write_to_read when (use_bypassed_value = '1') else mem_dataout_1;
+	-- hold the data...
+	resolved_mem_dataout_1 <= mem_dataout_1 when (enable_1_reg = '1') else mem_dataout_1_reg;
+	dataout_1 <= bypassed_write_to_read when (use_bypassed_value = '1') else resolved_mem_dataout_1;
 
 end Struct;
