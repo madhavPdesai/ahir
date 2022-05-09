@@ -28,6 +28,7 @@ $is
     tval := ($bitcast ($uint<20>) inpipe)
     midpipe := tval
     $report (stage_1 sent midpipe tval) 
+    $rreport (stage_1 sent_midpipe tval)
     $place [loopback]
   }
 }
@@ -60,9 +61,5 @@ $is
     $while 1
   }
 }
-$foreign $module [Print] 
-$in (a: $uint<16>)
-$out ()
-$foreign $module [Read] 
-$in ()
-$out (result: $uint<16>)
+$foreign $module [Print] $in (a: $uint<16>) $out ()
+$foreign $module [Read] $in () $out (result: $uint<16>)

@@ -52,6 +52,8 @@ bool AaProgram::_keep_extmem_inside = false;
 bool AaProgram::_verbose_flag = false;
 bool AaProgram::_print_inlined_functions_in_caller = false;
 bool AaProgram::_use_gnu_pth = false;
+bool AaProgram::_do_not_print_orphans = false;
+
 AaStorageObject* AaProgram::_extmem_object = NULL;
 string AaProgram::_extmem_object_name;
 int AaProgram::_extmem_size;
@@ -62,6 +64,7 @@ AaVoidType* AaProgram::_void_type = NULL;
 std::map<string,AaType*,StringCompare>   AaProgram::_type_map;
 std::map<string,AaObject*,StringCompare> AaProgram::_objects;
 std::map<string,AaModule*,StringCompare> AaProgram::_modules;
+std::set<string> AaProgram::_volatile_modules;
 std::map<int,set<AaRoot*> > AaProgram::_storage_eq_class_map;
 std::vector<AaModule*> AaProgram::_ordered_module_vector;
 std::map<int,set<AaModule*> > AaProgram::_storage_index_module_coverage_map;
@@ -76,6 +79,7 @@ std::set<string> AaProgram::_top_level_daemons;
 std::set<AaModule*> AaProgram::_reachable_modules;
 std::set<string> AaProgram::_mutex_set;
 std::map<string, int> AaProgram::_integer_parameter_map;
+std::map<string, string> AaProgram::_gated_clock_map;
 
 // use as a filler whenever you need.
 AaRoot* AaProgram::_dummy_root = NULL;
@@ -97,6 +101,7 @@ string AaProgram::_aa2c_output_directory = ".";
 bool AaProgram::_optimize_flag = false;
 bool AaProgram::_unordered_memory_flag = false;
 bool AaProgram::_balance_loop_pipeline_bodies = false;
+bool AaProgram::_combinationalize_statements = false;
 bool AaProgram::_treat_all_modules_as_opaque = false;
 
 
@@ -315,6 +320,14 @@ void AaProgram::Print(ostream& ofile)
       ofile << endl;
     }
 
+  // print gated clocks
+  for(std::map<string,string>::iterator giter = AaProgram::_gated_clock_map.begin();
+      giter != AaProgram::_gated_clock_map.end();
+      giter++)
+  {
+	ofile << "$gated_clock " << (*giter).first << " " << (*giter).second << endl;
+  }
+
   for(int idx = 0, fidx = AaProgram::_ordered_module_vector.size(); idx < fidx; idx++)
   {
 	  AaModule* m = ((AaModule*)(AaProgram::_ordered_module_vector[idx]));
@@ -340,6 +353,17 @@ void AaProgram::Print(ostream& ofile)
 			  ofile << ((AaStorageObject*)(*siter))->Get_Hierarchical_Name() << " ";
 	  }
 	  ofile << endl;
+  }
+
+  // print use_gated_clock statements..
+  ofile << "// use of gated clocks in modules " << endl;
+  for(int gidx = 0, fgidx = AaProgram::_ordered_module_vector.size(); gidx < fgidx; gidx++)
+  {
+	  AaModule* m = ((AaModule*)(AaProgram::_ordered_module_vector[gidx]));
+	  if (m->Get_Use_Gated_Clock())
+	  {
+		ofile << "$use_gated_clock " << m->Get_Name() << " " << m->Get_Gated_Clock_Name() << endl;
+	  } 
   }
 }
 
@@ -439,6 +463,8 @@ AaObject* AaProgram::Find_Object(string obj_name)
 
 void AaProgram::Add_Module(AaModule* obj) 
 { 
+  AaRoot::Info("Added module " + obj->Get_Label());
+
   if(AaProgram::Find_Module(obj->Get_Label()) == NULL)
     {
       AaProgram::_modules[obj->Get_Label()] = obj;
@@ -618,6 +644,13 @@ void AaProgram::Init_Call_Graph()
       AaProgram::Add_Call_Pair((AaModule*) NULL, (*miter).second);
     }
 }
+void AaProgram::Map_Targets()
+{
+  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+      miter != AaProgram::_modules.end();
+      miter++)
+    (*miter).second->Map_Targets();
+}
 void AaProgram::Map_Source_References()
 {
   for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
@@ -665,6 +698,8 @@ bool AaProgram::Propagate_Types()
   set<int> unknown_type_set;
   for(int i = 0; i < type_eq_class_map.size(); i++)
     unknown_type_set.insert(i);
+
+  vector<int> erase_vector;
 
 
   // keep iterating as long as there is an unknown
@@ -737,7 +772,8 @@ bool AaProgram::Propagate_Types()
 
 	      // type of map entry at i has been discovered
 	      // erase it from the set.
-	      unknown_type_set.erase(i);
+	      // unknown_type_set.erase(i);
+	      erase_vector.push_back(i);
 	    }
 	} // iterated over all unknown equivalence classes 
 
@@ -761,6 +797,12 @@ bool AaProgram::Propagate_Types()
 	  break; // stop trying, you have reached a fixed point.
 	}
       // if found at least one, continue..
+      int Ei;
+	for(Ei = 0; Ei < erase_vector.size(); Ei++)
+	{
+		unknown_type_set.erase(erase_vector[Ei]);
+	}
+	erase_vector.clear();
     }
   return(err_flag);
 }
@@ -1110,7 +1152,9 @@ void AaProgram::Elaborate()
 {
 	AaRoot::Info("elaborating the program .... initializing the call-graph");
 	AaProgram::Init_Call_Graph();
-	AaRoot::Info("mapping object references..");
+	AaRoot::Info("mapping target object references..");
+	AaProgram::Map_Targets();
+	AaRoot::Info("mapping source object references..");
 	AaProgram::Map_Source_References();
 	AaRoot::Info("checking for cycles in the call-graph ... ");
 	AaProgram::Check_For_Cycles_In_Call_Graph();
@@ -1142,6 +1186,19 @@ void AaProgram::Equalize_Paths_Of_Pipelined_Modules()
 		else  if(m->Get_Operator_Flag())
 		{
 			m->Calculate_And_Update_Longest_Path();
+		}
+	}
+}
+
+void AaProgram::Mark_Volatizable_Modules_As_Volatile()
+{
+	for(int idx = 0, fidx = AaProgram::_ordered_module_vector.size(); idx < fidx; idx++)
+	{
+		AaModule* m = ((AaModule*)(AaProgram::_ordered_module_vector[idx]));
+		if(m->Is_Volatizable())
+		{
+			AaRoot::Info (" volatizing module " + m->Get_Label());
+			m->Set_Volatile_Flag(true);
 		}
 	}
 }
@@ -1337,10 +1394,13 @@ void AaProgram::Write_VHDL_C_Stubs()
 			miter++)
 	{
 		AaModule* m = (*miter).second;
-		if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+		if(!m->Get_Foreign_Flag())
 		{
-			(*miter).second->Write_VHDL_C_Stub_Header(header_file);
-			(*miter).second->Write_VHDL_C_Stub_Source(source_file);
+			if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+			{
+				(*miter).second->Write_VHDL_C_Stub_Header(header_file);
+				(*miter).second->Write_VHDL_C_Stub_Source(source_file);
+			}
 		}
 	}
 
@@ -1349,6 +1409,18 @@ void AaProgram::Write_VHDL_C_Stubs()
 }
 
 
+void AaProgram::Write_VC_Gated_Clocks(ostream& ofile)
+{
+	AaRoot::Info("Writing gated clocks.. ");
+	ofile << "// Declared gated clocks." << endl;
+	for(map<string,string>::iterator giter = AaProgram::_gated_clock_map.begin();
+				giter != AaProgram::_gated_clock_map.end();
+				giter++)
+	{
+		ofile << "$gated_clock " << (*giter).first << " " << (*giter).second << endl;
+	}
+	
+}
 
 void AaProgram::Write_VC_Model(int default_space_pointer_width,
 		int default_space_word_size,
@@ -1358,6 +1430,7 @@ void AaProgram::Write_VC_Model(int default_space_pointer_width,
 	AaRoot::Info("Writing VC model.. ");
 	AaProgram::Write_VC_Pipe_Declarations(ofile);
 	AaProgram::Write_VC_Constant_Declarations(ofile);
+	AaProgram::Write_VC_Gated_Clocks(ofile);
 
 	AaProgram::Write_VC_Memory_Spaces(ofile);
 	AaProgram::Write_VC_Modules(ofile);
@@ -1372,6 +1445,7 @@ void AaProgram::Write_VC_Model_Optimized(int default_space_pointer_width,
 	AaRoot::Info("Writing optimized VC model.. ");
 	AaProgram::Write_VC_Pipe_Declarations(ofile);
 	AaProgram::Write_VC_Constant_Declarations(ofile);
+	AaProgram::Write_VC_Gated_Clocks(ofile);
 
 	AaProgram::Write_VC_Memory_Spaces_Optimized(ofile);
 	AaProgram::Write_VC_Modules_Optimized(ofile);
@@ -1597,3 +1671,14 @@ bool AaProgram::Is_Integer_Parameter(string pid)
 	}
 	return(ret_val);
 }
+
+bool AaProgram::Is_Marked_As_Volatile_Module(string mname)
+{
+	return(AaProgram::_volatile_modules.find(mname) != AaProgram::_volatile_modules.end());
+}
+
+void AaProgram::Mark_As_Volatile_Module(string mname)
+{
+	AaProgram::_volatile_modules.insert(mname);
+}
+

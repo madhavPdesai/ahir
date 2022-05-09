@@ -57,6 +57,7 @@ vcModule::vcModule(vcSystem* sys, string module_name):vcRoot(module_name)
 	this->_is_function_library_module = false;
 	this->_delay = 2;
 	this->_deterministic_longest_path = -1;
+	this->_use_gated_clock = false;
 }
 
 int vcModule::Get_Delay()
@@ -81,6 +82,12 @@ void vcModule::Set_Data_Path(vcDataPath* dp)
 
 void vcModule::Print(ostream& ofile)
 {
+	if(this->_use_gated_clock)
+	{
+		ofile << vcLexerKeywords[__USE_GATED_CLOCK] << " ";
+		ofile << this->_gated_clock_name << endl;
+	}
+
 	if(this->_foreign_flag)
 		ofile << vcLexerKeywords[__FOREIGN] << " ";
 	if(this->_pipeline_flag)
@@ -91,6 +98,8 @@ void vcModule::Print(ostream& ofile)
 		ofile << vcLexerKeywords[__OPERATOR] << " ";
 	if(this->_volatile_flag)
 		ofile << vcLexerKeywords[__VOLATILE] << " ";
+	if(this->_use_once_flag)
+		ofile << vcLexerKeywords[__USEONCE] << " ";
 
 	ofile << vcLexerKeywords[__MODULE] << " " <<  this->Get_Label() << " {" << endl;
 	if(this->_input_arguments.size() > 0)
@@ -527,6 +536,12 @@ string vcModule::Print_VHDL_System_Instance_Port_Map(string comma,ostream& ofile
 
 string vcModule::Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile)
 {
+	string ret_string = this->Print_VHDL_Argument_Ports(semi_colon,"", ofile);
+	return(ret_string);
+}
+
+string vcModule::Print_VHDL_Argument_Ports(string semi_colon, string prefix, ostream& ofile)
+{
 
 	for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
 	{
@@ -653,7 +668,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		return;
 	}
 	else  if(this->Get_Operator_Flag())
-	// operator form?
+		// operator form?
 	{
 		this->Print_VHDL_Operator_Architecture(ofile);
 		return;
@@ -859,7 +874,6 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 		ofile << "in_buffer: UnloadBuffer -- { " << endl;
 		ofile << " generic map(name => \"" << this->Get_VHDL_Id() << "_input_buffer\", -- {" << endl
 			<< " buffer_size => " << input_buffering << "," <<  endl 
-			<< " full_rate => false," <<  endl // no need, double buffering.
 			<< " bypass_flag => " << (bypass_flag ? "true," : "false,") << endl  // lets not be over-aggressive!
 			<< " data_width => tag_length + " << this->Get_In_Arg_Width() << ") -- } " << endl;
 		ofile << " port map(write_req => in_buffer_write_req, -- { " << endl
@@ -1485,7 +1499,14 @@ string vcModule::Print_VHDL_Argument_Port_Map(string  comma, ostream& ofile)
 		<< "start_ack => " << prefix << "start_ack," << endl
 		<< "fin_req => " << prefix << "fin_req," << endl;
 	ofile << "fin_ack => " << prefix << "fin_ack," << endl; 
-	ofile << "clk => clk,\n reset => reset";
+
+	string clk_name;
+	if(this->Get_Use_Gated_Clock())
+		clk_name = this->Get_Gated_Clock_Name();
+	else
+		clk_name = "clk";
+
+	ofile << "clk => " << clk_name << ",\n reset => reset";
 	comma = ",";
 	return(comma);
 }
@@ -1602,6 +1623,11 @@ void vcModule::Register_Pipe_Read(string pipe_id, int idx)
 	if(p != NULL)
 	{
 		p->Register_Pipe_Read(this,idx);
+		if(this->Get_Volatile_Flag())
+		{
+			vcSystem::Error(" volatile module " + this->Get_Id() + " reads from pipe " + pipe_id);
+		}
+
 	}
 	else
 		this->Get_Parent()->Register_Pipe_Read(pipe_id, this, idx);    
@@ -1615,6 +1641,10 @@ void vcModule::Register_Pipe_Write(string pipe_id,int idx)
 	if(p != NULL)
 	{
 		p->Register_Pipe_Write(this,idx);
+		if(this->Get_Volatile_Flag())
+		{
+			vcSystem::Error(" volatile module " + this->Get_Id() + " writes to pipe " + pipe_id);
+		}
 	}
 	else
 		this->Get_Parent()->Register_Pipe_Write(pipe_id, this, idx);

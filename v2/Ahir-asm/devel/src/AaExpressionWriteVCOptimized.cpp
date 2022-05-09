@@ -75,53 +75,94 @@ void AaExpression::Write_Forward_Dependency_From_Roots(string dependent_transiti
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {
 
+	bool this_is_in_phi = (this->Get_Associated_Statement() != NULL)
+					&& this->Get_Associated_Statement()->Is_Phi_Statement();
+
 	ofile << "// start: Forward dependencies from " << this->To_String() 
 		<< " to transition " << dependent_transition << endl;
 
 	// special case.. signal read
-	if(this->Is_Signal_Read())
+	if(this->Is_Signal_Read() && !this_is_in_phi)
 	{
-		__J(dependent_transition, __UCT(this));
+		ofile << "// special case... expr is signal read, which does not involve control.." << endl;
+		//__J(dependent_transition, __UCT(this));
 		return;
 	}
 
 	set<AaRoot*> root_sources;
 	this->Collect_Root_Sources(root_sources);
-	for(set<AaRoot*>::iterator iter = root_sources.begin(), fiter = root_sources.end();
-			iter != fiter; iter++)
-	{
-		AaRoot* pred = *iter;
-		if(visited_elements.find(pred) != visited_elements.end())
-		{
 
-			if((to_index > 0) && (pred->Get_Index() > to_index))
+	//
+	// If this expression depends only on signals and constants, the root source set 
+	// will be empty..   while this expression may still have control structures present
+	// in the virtual circuit.
+	//
+	//
+	if(root_sources.size() == 0)
+	{
+		AaRoot::Warning("Looks like you have an expression which depends only on signals/constants..", 
+						this);
+		ofile << "// non-constant expression which depends only on signals/constants?" << endl; 
+	}
+	else
+	{
+		for(set<AaRoot*>::iterator iter = root_sources.begin(), fiter = root_sources.end();
+				iter != fiter; iter++)
+		{
+			AaRoot* pred = *iter;
+
+			if(visited_elements.find(pred) != visited_elements.end())
 			{
-				AaRoot::Error("incorrect ordering of forward dependency for " + this->To_String() + 
-						" (from " + pred->To_String() + ")", this);
-			}
-			else 
-			{
+				bool pred_is_in_phi = false;
 				if(pred->Is_Expression())
 				{
-					AaExpression* expr = ((AaExpression*) pred);
-					if(!expr->Is_Interface_Object_Reference())
-						//
-						// interface object references may be
-						// included in the root object set.
-						// But these do not have any control transitions.
-						//
+					AaExpression* pred_expr = (AaExpression*) pred;
+
+					pred_is_in_phi = (pred_expr->Get_Associated_Statement() != NULL)
+						&& pred_expr->Get_Associated_Statement()->Is_Phi_Statement();
+				}
+				else if(pred->Is_Statement())
+				{
+					pred_is_in_phi = ((AaStatement*)pred)->Is_Phi_Statement();
+				}
+
+				if(!(this_is_in_phi && pred_is_in_phi && !pred->Is_Expression())) 
+					// No PHI-PHI dependencies!
+				{
+					if((to_index > 0) && (pred->Get_Index() > to_index))
 					{
-						__J(dependent_transition,__UCT(pred));
+						AaRoot::Error("incorrect ordering of forward dependency for " + this->To_String() + 
+								" (from " + pred->To_String() + ")", this);
 					}
-					else
+					else 
 					{
-						ofile << "// Forward dependency from interface-object-ref omitted ("
-							<< expr->To_String() << ")" << endl;
+						if(pred->Is_Expression())
+						{
+							AaExpression* expr = ((AaExpression*) pred);
+							if(!expr->Is_Interface_Object_Reference())
+								//
+								// interface object references may be
+								// included in the root object set.
+								// But these do not have any control transitions.
+								//
+							{
+								__J(dependent_transition,__UCT(pred));
+							}
+							else
+							{
+								ofile << "// Forward dependency from interface-object-ref omitted ("
+									<< expr->To_String() << ")" << endl;
+							}
+						}
+						else
+						{
+							__J(dependent_transition,__UCT(pred));
+						}
 					}
 				}
 				else
 				{
-					__J(dependent_transition,__UCT(pred));
+					ofile << "// Forward dependency from PHI->PHI omitted" << endl;
 				}
 			}
 		}
@@ -169,7 +210,7 @@ void AaExpression::Write_VC_Update_Reenables(AaRoot* reenabling_agent,
 				// No Phi->Phi dependencies.
 				//
 			{
-				__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, true);
+				__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, bypass_if_true);
 			}
 			else
 			{
@@ -264,6 +305,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 			if(!read_expr->Is_Constant())
 			{
+
 				//
 				// the rhs source expression which is to be assigned to "this"
 				// must be started only after read_expr has finished sampling its
@@ -298,6 +340,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 			continue;
 		}
 
+
 		// root not to be ignored.
 		for(set<AaRoot*>::iterator r_iter = read_root_set.begin(),
 				fr_iter = read_root_set.end(); r_iter != fr_iter; r_iter++)
@@ -317,6 +360,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 
 			int r_index;
+			bool w_root_is_double_buffered = false;
 			if(r_root->Is_Expression())
 			{
 				AaStatement* rs = ((AaExpression*)r_root)->Get_Associated_Statement();
@@ -332,8 +376,16 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 			if(w_root->Is_Expression())
 			{
 				AaStatement* ws = ((AaExpression*)w_root)->Get_Associated_Statement();
+
 				if(ws != NULL)
+				{
 					w_index = ws->Get_Index();
+					if(ws->Is("AaAssignmentStatement"))
+					{
+						w_root_is_double_buffered =
+							(((AaAssignmentStatement*)ws)->Get_Target()->Get_Buffering() > 1);
+					}
+				}
 				else
 					w_index = w_root->Get_Index();
 			}
@@ -351,7 +403,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				//
 			{
 				if(r_phi == NULL)
-				{
+				{ // WAR across two non-PHI statements.
 
 					if(r_index <= w_index)
 					{
@@ -359,40 +411,79 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						string w_sct = __SCT(w_root);
 						string r_sct = __SCT(r_root);
 
+
 						// Aggressive timing and use of registers implies that
 						// this dependency must be delayed in order to prevent
-						// combinational cycles.	
-						string delay_trans_name = 
-							__SCT(r_root) + "_delay_to_" + __UST(w_root) + "_for_" + 
-							this->Get_VC_Name();
-						ofile << "$T [" << delay_trans_name << "] $delay" << endl;
-						__J(delay_trans_name, __SCT(r_root));
-						__J(__UST(w_root), delay_trans_name);
+						// combinational cycles.        
+						//
+						// THIS DELAY IS REQUIRED TO PREVENT COMBINATIONAL LOOPS
+						//
+						// 
+						//  no_additional_dependencies is set if the WAR is across the same
+						//  statement, and there is unit buffering, and w_root is an 
+						//  assignment statement.  In this case, there is no need to 
+						//  put in a new dependency.
+						//
+						//    For example   a := (a + 1)
+						//
+						//  The r_root and w_root are the same, and the buffering is 1, hence
+						//  fused.
+						//
+						//  WARNING, if the buffering is modified at a later stage, this assumption
+						//  will not hold..  TODO: put NOTOUCH on this
+						//
+						//
+						bool no_additional_dependencies = ((w_sct == r_sct) && (w_root->Get_Buffering() == 1));
+						
+						// If we add dependencies, we must have double buffering..
+						bool add_double_buffering = !no_additional_dependencies;
+
+
+						bool added_forward_dependency = false;	
+						bool dependency_without_delay = this->Is_Part_Of_Fullrate_Pipeline() || add_double_buffering;
+
+						if(!no_additional_dependencies)
+						{
+							if(dependency_without_delay)
+							{
+								__J(__UST(w_root), __SCT(r_root));
+							}
+							else
+							{
+								string delay_trans_name = 
+									__SCT(r_root) + "_delay_to_" + __UST(w_root) + "_for_" + 
+									this->Get_VC_Name();
+								ofile << "$T [" << delay_trans_name << "] $delay" << endl;
+								__J(delay_trans_name, __SCT(r_root));
+								__J(__UST(w_root), delay_trans_name);
+							}
+
+							added_forward_dependency = true;
+						}
+						else
+						{
+							ofile << "// no additional dependencies for simple assignment with single buffering" << endl;
+						}
+
+						if(pipeline_flag and added_forward_dependency)
+						{
+							// The completion of "b = (d+e)" reenables the
+							// evaluation of "a = (b+c)"
+							ofile << "// WAR dependency: release  Read: " << this->To_String() 
+								<< " with Write: " << w_root->To_String() << endl;
+							__MJ(__SST(r_root), __UCT(w_root), true);
+						}
 
 						// also, a dependency from sct to ust is added from r-root
 						// to w-root.  This can cause a dead-lock unless the
 						// operator is double-buffered.
-						if(w_sct == r_sct)
+						if(add_double_buffering)
 						{
-							AaStatement* w_root_stmt =
-								(w_root->Is_Expression() ? ((AaExpression*)w_root)->Get_Associated_Statement() 
-								 : (w_root->Is_Statement() ? (AaStatement*)w_root : NULL));
-							AaStatement* r_root_stmt =
-								(r_root->Is_Expression() ? ((AaExpression*)r_root)->Get_Associated_Statement() 
-								 : (r_root->Is_Statement() ? (AaStatement*) r_root : NULL));
-
-							if(r_root_stmt == w_root_stmt)
+							int rb = w_root->Get_Buffering();
+							if(rb < 2)
 							{
-								int rb = w_root->Get_Buffering();
-								if(rb < 2)
-								{
-									w_root->Set_Buffering(2);
-								}
-								rb = r_root->Get_Buffering();
-								if(rb < 2)
-								{
-									r_root->Set_Buffering(2);
-								}
+								ofile << "// added double buffering for w-root" << endl;
+								w_root->Set_Buffering(2);
 							}
 						}
 					}
@@ -401,17 +492,35 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 						AaRoot::Error("ordering error in WAR for " + this->To_String() + " writer:" + w_root->To_String() + " reader:" + r_root->To_String(), this);
 					}
 				}
-				else
+				else  // WAR across PHI and another statement...
 				{
-					// Aggressive timing and use of registers implies that
-					// this dependency must be delayed in order to prevent
-					// combinational cycles.	
-					string delay_trans_name = 
-						__SCT(r_phi) + "_delay_to_" + __UST(w_root) + "_for_" + 
-						this->Get_VC_Name();
-					ofile << "$T [" << delay_trans_name << "] $delay" << endl;
-					__J(delay_trans_name, __SCT(r_phi));
-					__J(__UST(w_root), delay_trans_name);
+					bool bypass_flag = this->Is_Part_Of_Fullrate_Pipeline();
+					//
+					// Double buffering is required to prevent combinational
+					// cycle here.  This prevents an UST -> SCT path
+					// in the control logic.
+					//
+					if(bypass_flag)
+					{
+						__J(__UST(w_root), __SCT(r_phi));
+					}
+					else
+					{
+						string delay_trans_name = 
+							__SCT(r_phi) + "_delay_to_" + __UST(w_root) + "_for_" + 
+							this->Get_VC_Name();
+						ofile << "$T [" << delay_trans_name << "] $delay" << endl;
+						__J(delay_trans_name, __SCT(r_phi));
+						__J(__UST(w_root), delay_trans_name);
+					}
+
+					if(pipeline_flag)
+					{		
+						// The completion of "b = (d+e)" reenables the
+						// evaluation of "a = (b+c)"
+						__MJ(__SST(r_phi), __UCT(w_root), true);
+						ofile << "// WAR dependency: release  Read: " << this->To_String() << " with Write: " << w_root->To_String() << endl;
+					}
 
 					int rb = w_root->Get_Buffering();
 					if(rb < 2)
@@ -420,42 +529,24 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 					}
 				}
 
-				// The completion of "b = (d+e)" reenables the
-				// evaluation of "a = (b+c)"
 				if(pipeline_flag)
 				{
-					
-					ofile << "// WAR dependency: release  Read: " 
-						<< this->To_String() 
-						<< " with Write: " << w_root->To_String() << endl;
 					if(r_phi == NULL)
 					{
-						if(r_index <= w_index)
-						{
-							__MJ(__SST(r_root), __UCT(w_root), true);
-						}
 						if(r_root != w_root)
 						{
 							AaModule* rsm = this->Get_Module();
-							if(rsm != NULL) 
+							if((rsm != NULL)  && rsm->Get_Pipeline_Deterministic_Flag())
 							{
-								if (rsm->Get_Pipeline_Deterministic_Flag())
-								{
-									AaRoot::Error ("non-accumulative WAR dependency in deterministic pipeline not permitted.", this);
-								}
+								AaRoot::Error ("non-accumulative WAR dependency in deterministic pipeline not permitted.", this);
 							}
 						}
 					}
-					else
-					{
-						__MJ(__SST(r_phi), __UCT(w_root), true);
-					}
-
 				}
 			}
 			else
 			{
-				ofile << "// self dependency in WAR or PHI-PHI dependency in WAR ignored." << endl;
+				ofile << "//  WAR  PHI-PHI dependency ignored..." << endl;
 			}
 		}
 	}
@@ -492,7 +583,7 @@ void AaExpression::Write_VC_Guard_Backward_Dependency(AaExpression* guard_expr,
 	if(this->Get_Is_Target() || !(this->Is_Trivial() && this->Get_Is_Intermediate()))
 	{
 		// when this completes, the guard can be re-evaluated.
-		guard_expr->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+		guard_expr->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 	}
 
 	// With new SplitGuardInterface, this dependency is
@@ -675,47 +766,50 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 		else if(this->_object->Is("AaPipeObject"))
 			// needed to hook up pipe dependencies.
 		{
-			__DeclTransSplitProtocolPattern;
-
-			//
-			// a pipe read.. only the update transitions are in 
-			// play here.
-			//
-			if(barrier != NULL)
+			if(!this->Is_Signal_Read())
 			{
-				ofile << "// barrier " << endl;
-				__J(__SST(this), __UCT(barrier));
-			}
+				__DeclTransSplitProtocolPattern;
 
-			// the guard dependency..
-			this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
-
-			string sample_regn = this->Get_VC_Name() + "_Sample";
-			string update_regn = this->Get_VC_Name() + "_Update";
-			ofile << ";;[" << sample_regn << "] { // pipe read sample" << endl;
-			ofile << "$T [rr] $T [ra] " << endl;
-			ofile << "}" << endl;
-
-			ofile << ";;[" << update_regn << "] { // pipe read update" << endl;
-			ofile << "$T [cr] $T [ca] " << endl;
-			ofile << "}" << endl;
-
-			// for simplifying the guard interface, we treat this
-			// as a special case (since sr->sa an empty operation for an
-			// input pipe).
-			__ConnectChainedSplitProtocolPattern;
-
-			// record the pipe!  Introduce pipe related dependencies 
-			// later. 
-			pipe_map[(AaPipeObject*) (this->_object)].push_back(this);
-
-			if(pipeline_flag && !this->_object->Is_Signal())
-			{
 				//
-				// Close the ring.
-				// 
-				__MJ (__SST(this), __UCT(this),true); // bypass
-				//__SelfReleaseSplitProtocolPattern
+				// a pipe read.. only the update transitions are in 
+				// play here.
+				//
+				if(barrier != NULL)
+				{
+					ofile << "// barrier " << endl;
+					__J(__SST(this), __UCT(barrier));
+				}
+
+				// the guard dependency..
+				this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
+
+				string sample_regn = this->Get_VC_Name() + "_Sample";
+				string update_regn = this->Get_VC_Name() + "_Update";
+				ofile << ";;[" << sample_regn << "] { // pipe read sample" << endl;
+				ofile << "$T [rr] $T [ra] " << endl;
+				ofile << "}" << endl;
+
+				ofile << ";;[" << update_regn << "] { // pipe read update" << endl;
+				ofile << "$T [cr] $T [ca] " << endl;
+				ofile << "}" << endl;
+
+				// for simplifying the guard interface, we treat this
+				// as a special case (since sr->sa an empty operation for an
+				// input pipe).
+				__ConnectChainedSplitProtocolPattern;
+
+				// record the pipe!  Introduce pipe related dependencies 
+				// later. 
+				pipe_map[(AaPipeObject*) (this->_object)].push_back(this);
+
+				if(pipeline_flag && !this->_object->Is_Signal())
+				{
+					//
+					// Close the ring.
+					// 
+					__MJ (__SST(this), __UCT(this),true); // bypass
+					//__SelfReleaseSplitProtocolPattern
+				}
 			}
 		}
 
@@ -742,9 +836,9 @@ void AaSimpleObjectReference::Write_VC_Pipelined_Module_Enable_Joins(set<AaRoot*
 
 
 void AaSimpleObjectReference::Write_VC_Joins_To_Root_Source_Updates(string trig_trans, 
-							set<AaRoot*>& visited_elements, ostream& ofile)
+		set<AaRoot*>& visited_elements, ostream& ofile)
 {
-	
+
 	set<AaRoot*> root_set;
 	this->Collect_Root_Sources(root_set);
 	for(set<AaRoot*>::iterator iter = root_set.begin(), fiter = root_set.end();
@@ -930,10 +1024,12 @@ void AaSimpleObjectReference::Write_VC_Guard_Backward_Dependency(AaExpression* e
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {
 
+	bool bypass_flag = this->Is_Part_Of_Fullrate_Pipeline();
+
 	// Added: special case for pipe read!
 	if(this->_object->Is("AaPipeObject") && !this->Get_Is_Target() && !this->Is_Signal_Read())
 	{
-		expr->Write_VC_Update_Reenables (this, __UST(this), true, visited_elements, ofile);
+		expr->Write_VC_Update_Reenables (this, __UST(this), bypass_flag, visited_elements, ofile);
 	}
 	else
 	{
@@ -1006,7 +1102,7 @@ string AaArrayObjectReference::Get_VC_Base_Address_Update_Unmarked_Reenable_Tran
 				if(pm)
 				{
 					base_addr_calc_reenable =
-						 (this->_object->Get_VC_Name() + "_update_enable_unmarked");
+						(this->_object->Get_VC_Name() + "_update_enable_unmarked");
 				}
 			}
 		}
@@ -1535,7 +1631,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
 		if(pipeline_flag)
 		{
 			//__MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
-			this->_reference_to_object->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements,ofile);
+			this->_reference_to_object->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements,ofile);
 		}
 
 	}
@@ -1602,7 +1698,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(b
 		__J(__SST(this),base_addr_calc);
 		if(pipeline_flag)
 		{
-			this->_reference_to_object->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements,ofile);
+			this->_reference_to_object->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements,ofile);
 			//__MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 		}
 	}
@@ -1859,7 +1955,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 
 			if(pipeline_flag)
 			{
-				this->_rest->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements,ofile);
+				this->_rest->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements,ofile);
 				// __MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true );  // bypass
 				__SelfReleaseSplitProtocolPattern
 			}
@@ -1966,7 +2062,7 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 
 			if(pipeline_flag)
 			{
-				this->_rest->Write_VC_Update_Reenables(this, __SCT(this), false,  visited_elements,ofile);
+				this->_rest->Write_VC_Update_Reenables(this, __SCT(this), true,  visited_elements,ofile);
 				__SelfReleaseSplitProtocolPattern
 			}
 		}
@@ -2154,13 +2250,13 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 			{
 				if(!this->_first->Is_Constant())
 				{
-					this->_first->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+					this->_first->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 					//__MJ(this->_first->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 				}
 
 				if(!this->_second->Is_Constant())
 				{	
-					this->_second->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+					this->_second->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 					// __MJ(this->_second->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 				}
 
@@ -2293,17 +2389,17 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 
 				if(!this->_test->Is_Constant())
 				{
-					this->_test->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+					this->_test->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 					//__MJ(this->_test->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 				}
 				if(this->_if_true && !this->_if_true->Is_Constant())
 				{
-					this->_if_true->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+					this->_if_true->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 					//__MJ(this->_if_true->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 				}
 				if(this->_if_false && !this->_if_false->Is_Constant())
 				{
-					this->_if_false->Write_VC_Update_Reenables(this, __SCT(this), false, visited_elements, ofile);
+					this->_if_false->Write_VC_Update_Reenables(this, __SCT(this), true, visited_elements, ofile);
 					//__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 				}
 
@@ -2404,7 +2500,7 @@ void AaFunctionCallExpression::Write_VC_Control_Path_Optimized(bool pipeline_fla
 
 					if(pipeline_flag)
 					{
-						expr->Write_VC_Update_Reenables(this, __SCT(this), false, 
+						expr->Write_VC_Update_Reenables(this, __SCT(this), true, 
 								visited_elements, ofile);
 					}
 				}
@@ -2426,7 +2522,8 @@ void AaFunctionCallExpression::Write_VC_Control_Path_Optimized(bool pipeline_fla
 			ofile << "}" << endl;
 
 			__ConnectSplitProtocolPattern;
-			__SelfReleaseSplitProtocolPattern;
+			if(pipeline_flag)
+				__SelfReleaseSplitProtocolPattern;
 		}
 
 		this->Write_VC_Phi_Start_Dependency(ofile);

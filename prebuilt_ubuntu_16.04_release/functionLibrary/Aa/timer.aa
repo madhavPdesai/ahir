@@ -1,0 +1,25 @@
+
+// a fake function, there just for the interfaces.
+$module [countDownTimer] 
+$in (time_count : $uint<32> )
+$out ( )
+$is 
+{
+	$branchblock[cBlock]  {
+		$merge $entry loopback
+			$phi C := time_count $on $entry NC $on loopback
+		$endmerge
+
+		NC := (C - 1)
+		$if(C > 1) $then
+			$place [loopback] 
+		$endif
+	}
+}
+
+// a fake function. there just for the interfaces.
+$module [getClockTime] $in () $out(clock_time: $uint<32>) $is
+{
+	clock_time := 0
+}
+

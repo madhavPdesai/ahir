@@ -42,10 +42,17 @@
 #endif
 #include <pipeHandler.h>
 
+char __pipe_handler_debug_string_buffer__[4096];
+
 #define ___POP(p,ptr,width) {switch(width) { case 8: POP(p,ptr,8); break;\
 						case 16: POP(p,ptr,16); break;\
 						case 32: POP(p,ptr,32); break;\
 						case 64: POP(p,ptr,64); break;\
+						default: break; }} 
+#define ___POPANDRESTORE(p,ptr,width) {switch(width) { case 8: POPANDRESTORE(p,ptr,8); break;\
+						case 16: POPANDRESTORE(p,ptr,16); break;\
+						case 32: POPANDRESTORE(p,ptr,32); break;\
+						case 64: POPANDRESTORE(p,ptr,64); break;\
 						default: break; }} 
 #define ___PUSH(p,ptr,width) {switch(width) { case 8: PUSH(p,ptr,8); break;\
 						case 16: PUSH(p,ptr,16); break;\
@@ -54,6 +61,13 @@
 						default: break; }} 
 static FILE* log_file = NULL;
 static PipeRec* pipes = NULL;
+static strict_mode = 0;
+
+
+void set_pipe_handler_in_strict_mode()
+{
+	strict_mode  = 1;
+}
 
 MUTEX_DECL(__file_print_mutex__);
 uint32_t get_file_print_lock(FILE* fp)
@@ -306,13 +320,11 @@ uint32_t register_signal(char* id, int pipe_width)
   return(0);
 }
 
-//
-// if pipe mode is NOBLOCK, then either send back the
-// full chunk of data or send back all zeros.
-//
-uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requested, void* burst_payload)
+
+
+uint32_t read_from_pipe_base(int pop_flag, const char* pipe_name, int width, int number_of_words_requested, void* burst_payload)
 {
-	if(log_file != NULL)
+	if(pop_flag && (log_file != NULL))
 	{
 		__LOCKLOG__
 			fprintf(log_file,"\nInfo: read-request %d word(s) of width %d from pipe %s.\n", number_of_words_requested,width, pipe_name);
@@ -321,12 +333,16 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
 
 
 	uint32_t ret_val = 0;
-	PipeRec* p = find_pipe(pipe_name);
+	PipeRec* p = find_pipe((char*) pipe_name);
 	if(p == NULL)
 	{
-		fprintf(stderr,"\nWarning: pipeHandler:read_from_pipe: job used unregistered pipe %s, will register it as a FIFO with depth 1.\n", pipe_name);
-		register_pipe(pipe_name,1,width,0);
-		p = find_pipe(pipe_name);
+		fprintf(stderr,"\nError: pipeHandler:read_from_pipe: job used unregistered pipe %s, will register it as a FIFO with depth 1.\n", pipe_name);
+
+		if(strict_mode)
+			assert(0);
+
+		register_pipe((char*) pipe_name,1,width,0);
+		p = find_pipe((char*) pipe_name);
 	}
 
 	if(p->pipe_width != width)
@@ -338,7 +354,11 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
 
 	MUTEX_LOCK(p->pm);
 	if(p->is_signal)
-		ret_val = 1;
+	{
+		ret_val = p->pipe_depth;
+		if(ret_val >= number_of_words_requested)
+			ret_val = number_of_words_requested;
+	}
 	else
 	{
 		if(p->number_of_entries >= number_of_words_requested)
@@ -358,32 +378,114 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
 	}
 	else if(ret_val > 0)
 	{
-		uint32_t idx;
-		uint8_t* ptr = (uint8_t*) burst_payload;
-		for (idx = 0; idx < ret_val; idx++)
+		if(p->is_signal && (p->pipe_depth > 1))
 		{
-			___POP(p,ptr,width);	
-			ptr = ptr + (width/8);
+			assert(p->pipe_depth == number_of_words_requested);
+			if(width == 8)
+			{
+				POP_SIGNAL_TO_BUFFER(p,burst_payload,8,number_of_words_requested);
+			}
+			else if(width == 16)
+			{
+				POP_SIGNAL_TO_BUFFER(p,burst_payload,16,number_of_words_requested);
+			}
+			else if(width == 32)
+			{
+				POP_SIGNAL_TO_BUFFER(p,burst_payload,32,number_of_words_requested);
+			}
+			else if(width == 64)
+			{
+				POP_SIGNAL_TO_BUFFER(p,burst_payload,64,number_of_words_requested);
+			}
+			else
+			{
+				assert(0);
+			}
+		}
+		else 
+		{
+			uint32_t idx;
+			uint8_t* ptr = (uint8_t*) burst_payload;
+			for (idx = 0; idx < ret_val; idx++)
+			{
+				if(pop_flag)
+				{
+					___POP(p,ptr,width);	
+				}
+				else
+				{
+					___POPANDRESTORE(p,ptr,width);	
+				}
+				ptr = ptr + (width/8);
+			}
 		}
 	}
 	MUTEX_UNLOCK(p->pm);
 
-  if(ret_val > 0)
-  {
-	  if(log_file != NULL)
-	  {
-		  __LOCKLOG__
-			  fprintf(log_file,"\nRead: %s %d word(s) of width %d: ", pipe_name, ret_val,width);
-		  print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);  
-		  __UNLOCKLOG__
-	  }
-  }
-  else
-  {
-	// yield.  so the writer may get a look in.
-	PTHREAD_YIELD();
-  }
-  return(ret_val);
+	if(ret_val > 0)
+	{
+		if(pop_flag && (log_file != NULL))
+		{
+			__LOCKLOG__
+				fprintf(log_file,"\nRead: %s %d word(s) of width %d: ", pipe_name, ret_val,width);
+			print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);  
+			__UNLOCKLOG__
+		}
+	}
+	else
+	{
+		// yield.  so the writer may get a look in.
+		PTHREAD_YIELD();
+	}
+	return(ret_val);
+}
+
+char* pipe_value_to_string(const char* pipe_name)
+{
+	char* str_buf = (char*) __pipe_handler_debug_string_buffer__;
+
+	uint8_t ret_buffer[1024];
+	PipeRec* p = find_pipe((char*) pipe_name);
+	if(p != NULL)
+	{
+		int n = ((p->pipe_width/8) +1)*sizeof(uint8_t);
+
+		read_from_pipe_base(0, pipe_name, p->pipe_width, 1, (void*) ret_buffer);
+
+		int I = 0;
+		int J;
+		for(J = 0; J < n; J++)
+		{
+			int K;
+			for(K=0; K < 8; K++)
+			{
+				if((ret_buffer[J] >> (7-K)) & 0x1)
+					str_buf[I] = '1';
+				else
+					str_buf[I] = '0';
+
+				I++;
+
+				if(I == p->pipe_width)
+					break;
+			}
+			if(I == p->pipe_width)
+				break;
+		}
+		str_buf[I] = 0;
+	}
+	return(str_buf);
+}
+
+//
+// if pipe mode is NOBLOCK, then either send back the
+// full chunk of data or send back all zeros.
+//
+uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requested, void* burst_payload)
+{
+	// first argument is pop flag
+	uint32_t ret_val = read_from_pipe_base(1, pipe_name, width, number_of_words_requested, burst_payload);
+	return(ret_val);
 }
 
 void set_watermark (char* pipe_name,  int wmark)
@@ -409,7 +511,11 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 	PipeRec* p = find_pipe(pipe_name);
 	if(p == NULL)
 	{
-		fprintf(stderr,"\nWarning: pipeHandler:write_to_pipe: job used unregistered pipe %s, will register it as a FIFO with depth 1.\n", pipe_name);
+		fprintf(stderr,"\nError: pipeHandler:write_to_pipe: job used unregistered pipe %s, will register it as a FIFO with depth 1.\n", pipe_name);
+
+		if(strict_mode)
+			assert(0);
+
 		register_pipe(pipe_name,1,width,0);
 		p = find_pipe(pipe_name);
 	}
@@ -434,12 +540,39 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 
 	if(ret_val > 0)
 	{
-		uint32_t idx;
-		uint8_t* ptr = (uint8_t*) burst_payload;
-		for (idx = 0; idx < ret_val; idx++)
+		if(p->is_signal && (p->pipe_depth > 1))
 		{
-			___PUSH(p,ptr,width);	
-			ptr = ptr + (width/8);
+			assert(p->pipe_depth == number_of_words_requested);
+			if(width == 8)
+			{
+				PUSH_SIGNAL_FROM_BUFFER(p,burst_payload,8,number_of_words_requested);
+			}
+			else if(width == 16)
+			{
+				PUSH_SIGNAL_FROM_BUFFER(p,burst_payload,16,number_of_words_requested);
+			}
+			else if(width == 32)
+			{
+				PUSH_SIGNAL_FROM_BUFFER(p,burst_payload,32,number_of_words_requested);
+			}
+			else if(width == 64)
+			{
+				PUSH_SIGNAL_FROM_BUFFER(p,burst_payload,64,number_of_words_requested);
+			}
+			else
+			{
+				assert(0);
+			}
+		}
+		else
+		{
+			uint32_t idx;
+			uint8_t* ptr = (uint8_t*) burst_payload;
+			for (idx = 0; idx < ret_val; idx++)
+			{
+				___PUSH(p,ptr,width);	
+				ptr = ptr + (width/8);
+			}
 		}
 	}
 	MUTEX_UNLOCK(p->pm);
@@ -462,7 +595,7 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 	{
 		// yield.  so the reader may get a look in.
 		PTHREAD_YIELD();
-  	}
+	}
 
 
 

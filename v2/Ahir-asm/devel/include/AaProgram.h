@@ -110,9 +110,13 @@ class AaProgram
   static std::map<int,AaMemorySpace*> _memory_space_map;
   static std::map<AaType*,AaForeignStorageObject*> _foreign_storage_map;
   static std::map<string, int> _integer_parameter_map;
+  // gated clock name -> enable map..
+  static std::map<string, string> _gated_clock_map;
 
   static std::set<AaType*> _extmem_access_types;
   static std::set<int> _extmem_access_widths;
+
+  static std::set<string> _volatile_modules;
 
 
 
@@ -160,7 +164,9 @@ class AaProgram
   static bool _use_gnu_pth;
 
   static bool _balance_loop_pipeline_bodies;
+  static bool _combinationalize_statements;
   static string _tool_name;
+  static bool  _do_not_print_orphans;
 
 
   static bool _keep_extmem_inside;
@@ -219,6 +225,43 @@ class AaProgram
 	return(AaProgram::_mutex_set.find(m) != AaProgram::_mutex_set.end());
   }
 
+  static void Add_Use_Gated_Clock_Statement(string module_name, string gated_clock_name)
+  {
+	if((gated_clock_name == "") ||
+		(AaProgram::_gated_clock_map.find(gated_clock_name) != AaProgram::_gated_clock_map.end()))
+	{
+		AaModule* m = AaProgram::Find_Module(module_name);
+		if(m != NULL)
+		{
+			m->Set_Use_Gated_Clock(true, gated_clock_name);
+			AaRoot::Info("Info: set module " + module_name + " with gated clock " + 
+						gated_clock_name);
+		}
+		else
+		{
+			AaRoot::Error("In use_gated_clock statement, module " + module_name + " not found.",
+						NULL);
+		}
+	}
+	else
+	{
+			AaRoot::Error("In use_gated_clock statement, gated clock " + gated_clock_name + " not found.",
+						NULL);
+	}
+  }
+
+  static void Add_Gated_Clock(string gc_name, string enable_sig_name)
+  {
+	if(AaProgram::_gated_clock_map.find(gc_name) == AaProgram::_gated_clock_map.end())
+	{
+		AaProgram::_gated_clock_map[gc_name] = enable_sig_name;
+		AaRoot::Info("added gated clock " + gc_name + " with enable " + enable_sig_name);
+	}
+	else
+	{
+		AaRoot::Warning("Redeclaration of gated clock " + gc_name + " ignored.", NULL);
+	}
+  } 
   static void Increment_Buffering_Bit_Count(int n)
   {
       cerr << "Info: added " << n << " buffering bits during path balancing" << endl;
@@ -251,6 +294,7 @@ class AaProgram
 
   // calculate longest path in all pipelined modules.
   static void Equalize_Paths_Of_Pipelined_Modules();
+  static void Mark_Volatizable_Modules_As_Volatile();
 
   static AaVoidType* Make_Void_Type();
   static AaUintType* Make_Uinteger_Type(unsigned int w);
@@ -263,6 +307,7 @@ class AaProgram
   static AaRecordType* Make_Named_Record_Type(string rname);
   static AaRecordType* Find_Named_Record_Type(string rname);
 
+  static void Map_Targets();
   static void Map_Source_References();
 
   // Check for cycles
@@ -305,6 +350,7 @@ class AaProgram
 				       ostream& ofile);
   static void Write_VC_Pipe_Declarations(ostream& ofile);
   static void Write_VC_Constant_Declarations(ostream& ofile);
+  static void Write_VC_Gated_Clocks(ostream& ofile);
   static void Write_VC_Memory_Spaces(ostream& ofile);
   static void Write_VC_Memory_Spaces_Optimized(ostream& ofile);
   static void Write_VC_Modules(ostream& ofile);
@@ -328,6 +374,8 @@ class AaProgram
   static void Add_Integer_Parameter(string pid, int pval);
   static int  Get_Integer_Parameter_Value(string pid);
   static bool  Is_Integer_Parameter(string pid);
+  static bool Is_Marked_As_Volatile_Module(string mname);
+  static void Mark_As_Volatile_Module(string mname);
 
 };
 

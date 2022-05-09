@@ -36,6 +36,7 @@
 #define __T(x) ofile << "$T[" << x << "] " << endl; 
 #define __Place(x) ofile << "$P[" << x << "] " << endl; 
 #define __J(x,y) ofile << x << " <-& (" << y << ")" << endl;
+#define __ALIAS(x,y) ofile << "$A [" <<  x << "] [" << y <<  "]" << endl;
 // TODO: need to pass an integer to this..
 #define __MJ(x,y,epf) ofile << x << " o<-& (" << y <<  " " << (epf ? 0 : 1) << ")" << endl;
 #define __F(x,y) ofile << x << " &-> (" << y << ")" << endl;
@@ -145,7 +146,9 @@ void Write_VC_Interlock_Buffer( string inst_name,
 			string guard_string,
 			bool flow_through,
 			bool full_rate,
+			bool cut_through,
 			ostream& ofile);
+
 void Write_VC_Binary_Operator(AaOperation op, 
 			      string inst_name, 
 			      string src1, 
@@ -206,7 +209,7 @@ void Write_VC_Store_Operator(string ms_name, string inst_name, string data_name,
 			     string guard_string,
 			     ostream& ofile);
 void Write_VC_IO_Input_Port(AaPipeObject* obj, string inst_name, string data_name,
-			     string guard_string, bool full_rate,
+			     string guard_string, bool full_rate, bool barrier_flag,
 				ostream& ofile);
 void Write_VC_IO_Output_Port(AaPipeObject* obj, string inst_name, string data_name,
 			     string guard_string, bool full_rate,

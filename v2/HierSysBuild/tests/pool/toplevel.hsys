@@ -1,0 +1,18 @@
+$system sys  $library SYS_LIB
+	$in 
+		$pipe DATA_IN 
+	$out 
+		$pipe DATA_OUT 
+{
+        
+	$instance c  SYS_LIB:controller   
+			ctrl_in_pipe => DATA_IN  ctrl_out_pipe => DATA_OUT
+			TO_E1 => E1_IN  TO_E2 => E2_IN
+			FROM_E1 => E1_OUT FROM_E2 => E2_OUT
+
+	$instance e1  SYS_LIB:engine   
+			engine_in_pipe => E1_IN  engine_out_pipe => E1_OUT
+	$instance e2  SYS_LIB:engine   
+			engine_in_pipe => E2_IN  engine_out_pipe => E2_OUT
+}
+

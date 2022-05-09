@@ -216,6 +216,8 @@ class AaExpression: public AaRoot
 	virtual void Add_Target(AaExpression* expr) {this->_targets.insert(expr);}
 	virtual void Remove_Target(AaExpression* expr) {this->_targets.erase(expr);}
 
+	virtual int Get_Number_Of_Targets() {return (this->_targets.size());}
+
 	virtual string Get_C_Name() {return(this->Get_VC_Name());}
 	virtual string Get_VC_Name();
 
@@ -422,6 +424,9 @@ class AaExpression: public AaRoot
 
 	virtual bool Is_Pipe_Read()  {return(false);}
 	virtual bool Is_Pipe_Write() {return(false);}
+
+	virtual bool Can_Be_Combinationalized() {return(false);}
+
 };
 
 
@@ -759,6 +764,9 @@ class AaObjectReference: public AaExpression
 
 	virtual bool Writes_To_Memory_Space(AaMemorySpace* ms);
 
+	virtual int Get_Delay();
+	virtual bool Can_Be_Combinationalized();
+
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -797,6 +805,8 @@ class AaConstantLiteralReference: public AaObjectReference
 	}
 	virtual void Collect_Root_Sources(set<AaRoot*>& root_set) {};
 	virtual string Get_VC_Name() {return("konst_" + Int64ToStr(this->Get_Index()));}
+	virtual bool Can_Be_Combinationalized() {return(true);}
+
 };
 
 // simple reference (no array indices)
@@ -934,6 +944,7 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual int Get_Existing_Buffering();
 
 	virtual bool Is_Write_To_Pipe(AaPipeObject* obj);
+	virtual bool Can_Be_Combinationalized();
 };
 
 
@@ -1089,6 +1100,7 @@ class AaArrayObjectReference: public AaObjectReference
 	virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements);
 	virtual string Get_VC_Base_Address_Update_Unmarked_Reenable_Transition(set<AaRoot*>& visited_elements);
 	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
+	virtual bool Can_Be_Combinationalized() {return(false);}
 };
 
 
@@ -1204,6 +1216,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
 	virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements);
 	virtual string Get_VC_Base_Address_Update_Unmarked_Reenable_Transition(set<AaRoot*>& visited_elements);
 	virtual bool Writes_To_Memory_Space(AaMemorySpace* ms);
+	virtual bool Can_Be_Combinationalized() {return(false);}
 };
 
 
@@ -1296,6 +1309,7 @@ class AaAddressOfExpression: public AaObjectReference
 	virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
 	virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
+	virtual bool Can_Be_Combinationalized() {return(false);}
 };
 
 
@@ -1397,6 +1411,13 @@ class AaTypeCastExpression: public AaExpression
 	virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements);
 	virtual bool Is_Trivial();
 	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
+	virtual bool Can_Be_Combinationalized() 
+	{
+		return(this->_rest->Can_Be_Combinationalized() && 
+			(this->Get_Bit_Cast() ||
+				!(this->Get_To_Type()->Is_Float_Type() ||
+					!this->Get_Type()->Is_Float_Type())));
+	}
 };
 
 class AaSliceExpression: public AaTypeCastExpression
@@ -1510,6 +1531,7 @@ class AaUnaryExpression: public AaExpression
 
 	virtual bool Is_Trivial() {return(true);}
 	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
+	virtual bool Can_Be_Combinationalized() {return(this->_rest->Can_Be_Combinationalized());}
 };
 
 class AaBitmapExpression: public AaUnaryExpression
@@ -1602,6 +1624,8 @@ class AaBinaryExpression: public AaExpression
 
 
 	virtual bool Is_Trivial();
+	virtual bool Can_Be_Combinationalized() {return(this->_first->Can_Be_Combinationalized() && this->_second->Can_Be_Combinationalized() &&
+											this->Is_Trivial());}
 	virtual void Evaluate();
 	virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
 	virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
@@ -1758,6 +1782,9 @@ class AaTernaryExpression: public AaExpression
 	}
 	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
 	virtual bool Is_Trivial() {return(this->Get_Is_Intermediate());}
+	virtual bool Can_Be_Combinationalized() {return(this->_test->Can_Be_Combinationalized() 
+								&& this->_if_true->Can_Be_Combinationalized()
+								&& this->_if_false->Can_Be_Combinationalized());}
 	//virtual bool Is_Trivial() {return(false);}
 };
 
@@ -1871,6 +1898,7 @@ class AaFunctionCallExpression: public AaExpression
 	virtual void Collect_Root_Sources(set<AaRoot*>& root_set);
 	virtual bool Is_Trivial(); // return false if called module is volatile.
 	virtual bool Is_Volatile_Function_Call() {return(this->Is_Trivial());}
+	virtual bool Can_Be_Combinationalized();
 };
 
 

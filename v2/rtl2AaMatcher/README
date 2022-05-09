@@ -1,0 +1,50 @@
+Author Madhav Desai
+
+-----------------------------------------------
+OVERVIEW
+-----------------------------------------------
+The RTL to Aa matcher interfaces pipe accesses 
+on the RTL side to the pipe accesses on the Aa
+side.
+
+On the RTL side,  a pipe P has three accessible
+signals
+	P
+	P$req
+	P$ack
+To write to a pipe from the RTL side, we would
+set
+	P = value
+	P$req=1
+
+and keep checking P$ack to see if
+the write has succeeded.
+
+On the Aa side a write to the pipe
+is simply
+	P := value
+
+The RtlMatcher bridges RTL accesses to
+a pipe with an Aa access to the pipe.
+
+
+-----------------------------------------------
+Mechanism
+-----------------------------------------------
+
+The RtlMatcher has three internal states IDLE,
+ACCESS and DONE.
+
+When the RTL side wants to read from a pipe,
+it sets the RtlMatcher state to ACCESS by
+using a probeMatcher with req=1.  The RtlMatcher
+will change its state to DONE when it has 
+a value from the pipe.  The RTL side then
+observes the DONE with a probeMatcher and
+grabs the value and sets the RtlMatcher to
+idle.
+
+Similarly on the write side, and for accessing
+signals.
+
+

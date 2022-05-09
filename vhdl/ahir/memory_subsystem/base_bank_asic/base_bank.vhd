@@ -37,6 +37,35 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library ahir;
+use ahir.mem_component_pack.all;
+entity base_bank_r_wrap  is
+   generic ( name: string:="mem"; g_addr_width: natural := 5; 
+	     g_data_width : natural := 20);
+   port (datain : in std_logic_vector(g_data_width-1 downto 0);
+         dataout: out std_logic_vector(g_data_width-1 downto 0);
+         addrin: in std_logic_vector(g_addr_width-1 downto 0);
+         enable: in std_logic;
+         writebar : in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+end entity;
+
+architecture WrapRec of base_bank_r_wrap is
+begin
+ ci: base_bank
+	generic map (name => name, g_addr_width => g_addr_width, g_data_width => g_data_width)
+	port map (
+			datain => datain, dataout => dataout, addrin => addrin,
+			enable => enable, writebar => writebar, clk => clk, reset => reset
+		 );
+end WrapRec;
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
 library ahir;	
 use ahir.Types.all;	
 use ahir.Subprograms.all;	
@@ -51,6 +80,8 @@ library ahir;
 use ahir.Types.all;
 use ahir.MemCutsPackage.all;
 use ahir.mem_ASIC_components.all;
+use ahir.MemcutDescriptionPackage.all;
+use ahir.mem_component_pack.all;
 
 entity base_bank is
    generic ( name: string:="mem"; g_addr_width: natural := 5; 
@@ -65,72 +96,125 @@ entity base_bank is
 end entity base_bank;
 
 
-architecture struct of base_bank is
+architecture improved_struct of base_bank is
 
-  -- n_cols contains the required number of columns of available memory cuts
-  -- to build the given memory 
-  constant n_cols: IntegerArray(1 to 4) := find_n_cols(spmem_cut_address_widths, spmem_cut_data_widths, spmem_cut_row_heights, g_addr_width, g_data_width);
+   component base_bank_r_wrap  is
+   generic ( name: string:="mem"; g_addr_width: natural := 5; 
+	     g_data_width : natural := 20);
+   port (datain : in std_logic_vector(g_data_width-1 downto 0);
+         dataout: out std_logic_vector(g_data_width-1 downto 0);
+         addrin: in std_logic_vector(g_addr_width-1 downto 0);
+         enable: in std_logic;
+         writebar : in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+   end component;
 
-  --total_data_width is the size of the resized data 
-  constant total_data_width: integer := find_data_width(spmem_cut_data_widths, n_cols);
-
-  --resized data and addresses
-  signal resized_datain: std_logic_vector(total_data_width-1 downto 0);
-  signal resized_dataout: std_logic_vector(total_data_width-1 downto 0);
-
-  signal latch_dataout : std_logic;
-  signal dataout_reg : std_logic_vector(g_data_width-1 downto 0);
+	constant best_cut_info: IntegerArray(1 to 5) :=
+			find_best_cut (spmem_cut_address_widths, 
+					spmem_cut_data_widths,
+					spmem_cut_row_heights,
+					g_addr_width, g_data_width);
+	constant best_cut_address_width : integer := best_cut_info(2);
+	constant best_cut_data_width    : integer := best_cut_info(3);
+	constant best_cut_nrows         : integer := best_cut_info(4);
+	constant best_cut_ncols         : integer := best_cut_info(5);
+	constant use_side_strip: boolean :=
+			(best_cut_info(1) > 0) and
+					((best_cut_data_width*best_cut_ncols) < g_data_width);
 begin
+	noCutFound: if (best_cut_info(1) <= 0) generate
+		regbb_inst: base_bank_with_registers
+				generic map (name => name & ":regs", g_addr_width => g_addr_width,
+						g_data_width => g_data_width)
+			        port map (
+					datain => datain, dataout => dataout, addrin => addrin,
+						enable => enable, writebar => writebar, clk => clk,
+							reset => reset);
+	end generate noCutFound;
 
-  process(clk, reset)
-  begin
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			latch_dataout <= '0';
-		else
-			latch_dataout <= enable and writebar;
-		end if;
-	end if;
-  end process;
+	cutFound: if (best_cut_info(1) > 0) generate
 
-  process (datain)
-  begin
-	resized_datain <= (others=>'0');
-	resized_datain(datain'length-1 downto 0) <= datain;
-  end process;
+           mb: block
+		-- declare array access signals.
+		constant array_addr_width : integer := g_addr_width;
+		constant array_data_width : integer := best_cut_data_width*best_cut_ncols;
 
-  mem_gen: for i in 1 to spmem_cut_address_widths'length generate -- loop to cover all the cuts
-	gen_cols: for j in 0 to n_cols(i)-1 generate -- generate if it's no.of columns 								     -- to be used >=1
-		inst: spmem_column generic map ( name => "row_gen",
-			g_addr_width => g_addr_width,
-			g_base_bank_addr_width => spmem_cut_address_widths(i), 
-			g_base_bank_data_width => spmem_cut_data_widths(i))
-			port map ( datain => resized_datain((j+1)*spmem_cut_data_widths(i)
-				+ col_index(spmem_cut_data_widths, n_cols, i-1)-1 downto j*spmem_cut_data_widths(i)
-				+ col_index(spmem_cut_data_widths, n_cols, i-1)), 
-				
-				dataout => resized_dataout((j+1)*spmem_cut_data_widths(i)
-				+ col_index(spmem_cut_data_widths, n_cols,i-1)-1 downto j*spmem_cut_data_widths(i) 
-				+ col_index(spmem_cut_data_widths, n_cols, i-1)),
-       				
-				addrin => addrin,
-       				enable => enable,
-         			writebar => writebar,
-       				clk => clk,
-         			reset => reset);
+		signal array_datain: std_logic_vector(array_data_width-1 downto 0);
+		signal array_dataout: std_logic_vector(array_data_width-1 downto 0);
 
-	end generate gen_cols;
-  end generate mem_gen;		
+		signal latch_dataout: std_logic;
+		signal dataout_sig, dataout_reg: std_logic_vector(g_data_width-1 downto 0);	
+           begin
+
+		array_datain <= datain (g_data_width-1 downto (g_data_width - array_data_width));
+		dataout_sig (g_data_width-1 downto (g_data_width - array_data_width)) <= array_dataout;
+
+		-- selector array..
+		arrayInst: spmem_selector_array 
+				generic map (name =>  name & ":marray",
+						g_addr_width => array_addr_width,
+						g_data_width => array_data_width,
+						g_base_addr_width => best_cut_address_width,
+						g_base_data_width => best_cut_data_width)
+				port map (
+					datain   =>  array_datain,
+					dataout  =>  array_dataout,
+					addrin   =>  addrin,
+					enable   =>  enable,
+				        writebar =>  writebar,
+					clk => clk,
+					reset => reset);
 
 
-  process (clk, latch_dataout, resized_dataout)
-  begin
-	if(clk'event and clk = '1') then
-		if(latch_dataout = '1') then
-			dataout_reg <= resized_dataout(dataout'length-1 downto 0);
-		end if;
-	end if;
-  end process;
-  dataout <= dataout_reg when (latch_dataout = '0') else resized_dataout(dataout'length-1 downto 0);
+		genSideStrip : if use_side_strip generate
+		  sb: block
+			signal sstrip_datain: std_logic_vector((g_data_width - array_data_width)-1 downto 0);
+			signal sstrip_dataout: std_logic_vector((g_data_width - array_data_width)-1 downto 0);
+		  begin
 
-end struct;
+			sstrip_datain <= datain((g_data_width-array_data_width)-1 downto 0);
+			dataout_sig ((g_data_width-array_data_width)-1 downto 0) <= sstrip_dataout;
+
+			side_strip_inst: component base_bank_r_wrap
+				generic map (name => name & ":sstrip", 
+						g_addr_width => g_addr_width,
+						g_data_width => (g_data_width - array_data_width))
+			        port map (
+					datain => sstrip_datain, 
+					dataout => sstrip_dataout, 
+					addrin => addrin,
+					enable => enable, 
+					writebar => writebar, 
+					clk => clk,
+					reset => reset);
+
+		   end block sb;
+		end generate genSideStrip;
+
+  	    	process(clk, reset)
+  	    	begin
+			if(clk'event and clk = '1') then
+				if(reset = '1') then
+					latch_dataout <= '0';
+				else
+					latch_dataout <= enable and writebar;
+				end if;
+			end if;
+  	    	end process;
+	
+      	    	process (clk, latch_dataout, dataout_sig)
+  	    	begin
+			if(clk'event and clk = '1') then
+				if(latch_dataout = '1') then
+					dataout_reg <= dataout_sig(dataout'length-1 downto 0);
+				end if;
+			end if;
+  	    	end process;
+	
+            	dataout <= dataout_reg when (latch_dataout = '0') else dataout_sig;
+            
+          end block mb;
+	end generate cutFound;
+
+end improved_struct;

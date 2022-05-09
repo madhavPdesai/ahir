@@ -29,5 +29,5 @@ $is
 
         TM := ($bitcast ($uint<32>) (r && b))
         M  := ($bitcast ($uint<20>) TM)
-        c := M
+        c := ($mux ($bitcast($uint<1>) 1) M M)
 }

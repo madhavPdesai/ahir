@@ -112,6 +112,33 @@ MUTEX_DECL(__global_variable_mutex__);
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // some utility functions.
 ///////////////////////////////////////////////////////////////////////////////////////////////
+JobLink* allocateJobLink()
+{
+	JobLink* rv = (JobLink*) malloc (sizeof(JobLink));
+	memset((void*) rv, 0, sizeof(JobLink));
+	return(rv);
+}
+
+char* allocateString(int size)
+{
+	char* rv = (char*) malloc (size * sizeof(char));
+	memset((void*) rv, 0, size);
+	return(rv);
+}
+
+Port* allocatePort()
+{
+	Port* rv = (Port*) malloc (sizeof(Port));
+	memset((void*) rv, 0, sizeof(Port));
+	return(rv);
+}
+
+PortLink* allocatePortLink()
+{
+	PortLink* rv = (PortLink*) malloc (sizeof(PortLink));
+	memset((void*) rv, 0, sizeof(PortLink));
+	return(rv);
+}
 
 // convert 32 character string pointed to by a to an 
 // unsigned.
@@ -192,9 +219,9 @@ void Delete_Port(Port* port)
   if(port != NULL)
     {
       if(port->port_value)
-	cfree(port->port_value);
+	free(port->port_value);
       
-      cfree(port);
+      free(port);
     }
 }
 
@@ -213,7 +240,7 @@ void Delete_JobLink(JobLink* top)
     {
       nextplink = plink->next;
       Delete_Port(plink->port);
-      cfree(plink);
+      free(plink);
       
       plink = nextplink;
     }
@@ -225,16 +252,12 @@ void Delete_JobLink(JobLink* top)
     {
       nextplink = plink->next;
       Delete_Port(plink->port);
-      cfree(plink);
+      free(plink);
       
       plink = nextplink;
     }
   top->outports.head = top->outports.tail = NULL;
-
-  if(top->payload != NULL)
-    free(top->payload);
-
-  cfree(top);
+  free(top);
 }
 
 int Payload_Length(JobLink* j)
@@ -261,7 +284,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
 
   JobLink* new_job = NULL;
 
-  new_job = (JobLink*) calloc(1,sizeof(JobLink));
+  new_job = allocateJobLink(); 
   new_job->socket_id = socket_id;
   new_job->index = free_job_index;
   free_job_index++;
@@ -334,20 +357,20 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
 #endif 
   
   // every job has a request and acknowledge port.
-  new_job->req_port = (Port*) calloc(1, sizeof(Port));
+  new_job->req_port = allocatePort();
   new_job->req_port->index = 0;
   new_job->req_port->width = 1;
-  new_job->req_port->port_value = (char*) calloc(1,2*sizeof(char));
+  new_job->req_port->port_value = allocateString(2);
 #ifdef DEBUG
   fprintf(log_file,"Info: job-name %s request set to 1 in cycle %d\n", new_job->name, vhpi_cycle_count);
   fflush(log_file);
 #endif 
   sprintf(new_job->req_port->port_value,"1");
   
-  new_job->ack_port = (Port*) calloc(1, sizeof(Port));
+  new_job->ack_port = allocatePort();
   new_job->ack_port->index = 0;
   new_job->ack_port->width = 1;
-  new_job->ack_port->port_value = (char*) calloc(1,2*sizeof(char));
+  new_job->ack_port->port_value = allocateString(2);
   sprintf(new_job->ack_port->port_value,"0");
 
 
@@ -377,7 +400,6 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
 	}      
 
       new_job->number_of_words_requested = atoi(number_of_data_objects_str);
-      new_job->payload = (char*) malloc(Payload_Length(new_job));
 
       if(new_job->is_pipe_write_access)
 	{
@@ -419,7 +441,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
 	  assert(ip_value != NULL);
 	  
 	  // each input is  a port.
-	  Port* p = (Port*) calloc(1, sizeof(Port));
+	  Port* p = allocatePort();
 	  p->index = idx;
 	  p->width = strlen(ip_value);
 	  p->port_value = strdup(ip_value);
@@ -428,7 +450,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
 	  fflush(log_file);
 #endif 
 	  
-	  PortLink* plink = (PortLink*) calloc(1,sizeof(PortLink));
+	  PortLink* plink = allocatePortLink();
 	  plink->port = p;
 
 	  APPEND(new_job->inports, plink);
@@ -448,16 +470,16 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
 	  int iw = atoi(ip_width);
 	  
 	  // new port for each output.
-	  Port* p = (Port*) calloc(1, sizeof(Port));
+	  Port* p = allocatePort();
 	  p->index = idx;
 	  p->width = iw;
-	  p->port_value = (char*) calloc(1, (iw+2)*sizeof(char));
+	  p->port_value = allocateString(iw + 2); 
 #ifdef DEBUG
 	  fprintf(log_file,"Info: job-name %s outport %d width set to %d in cycle %d\n", new_job->name,idx,p->width,vhpi_cycle_count);
 	  fflush(log_file);
 #endif 
 	  
-	  PortLink* plink = (PortLink*) calloc(1,sizeof(PortLink));
+	  PortLink* plink = allocatePortLink();
 	  plink->port = p;
 	  
 	  APPEND(new_job->outports, plink);
@@ -643,7 +665,7 @@ void  Vhpi_Send()
 	    }
 	  else if(top->is_module_access)
 	    {
-	      sprintf(send_buffer,"");
+	      send_buffer[0] = 0;
 	      PortLink* oplink;
 	      for(oplink = top->outports.head; oplink != NULL; oplink = oplink->next)
 		{

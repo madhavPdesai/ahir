@@ -45,6 +45,7 @@ AaStatement::AaStatement(AaScope* p): AaScope(p)
   _guard_complement = false;
   _pipeline_parent = NULL;
   _longest_path    = 2; // default value.
+  _keep_flag = false;
 }
 
 AaStatement::~AaStatement() {};
@@ -645,12 +646,15 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 			int buf_val = curr_slack;
 			//if(this->Is_Part_Of_Fullrate_Pipeline()) buf_val = ((buf_val < 2) ? 2 : buf_val);
 			new_stmt->Set_Buffering(buf_val);
+			new_stmt->Set_Cut_Through(true);
+
 			AaProgram::Increment_Buffering_Bit_Count(buf_val * new_target->Get_Type()->Size());
 
+			new_stmt->Map_Targets();
 			new_stmt->Map_Source_References();
 
 			AaSimpleObjectReference* new_guard_expr = new AaSimpleObjectReference(prnt_scope, new_stmt);
-			gstmt->Set_Guard_Expression(new_guard_expr);			
+			gstmt->Replace_Guard_Expression(new_guard_expr);			
 
 			// lost track of curr_expr, but it doesnt matter..
 			vector<AaStatement*> dv;
@@ -782,10 +786,12 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 						new_target,
 						new_src,
 						0);
+				new_stmt->Map_Targets();
 
 				int buf_val = curr_slack;
 				//if(this->Is_Part_Of_Fullrate_Pipeline()) buf_val = ((buf_val < 2) ? 2 : buf_val);
 				new_stmt->Set_Buffering(buf_val);
+				new_stmt->Set_Cut_Through(true);
 
 				AaProgram::Increment_Buffering_Bit_Count(buf_val * new_target->Get_Type()->Size());
 
@@ -815,6 +821,8 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 
 			assert(slack <= max_slack);
 
+			AaRoot* curr_expr_root = curr_expr->Get_Root_Object();
+
 			// Replace uses of curr_expr in nbr_expr by 
 			// a simple object reference to the appropriately
 			// delayed version.
@@ -825,35 +833,66 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 				if(nbr->Is_Expression())
 				{
 					AaExpression* nbr_expr = (AaExpression*) nbr;
-					nbr_expr->Replace_Uses_By(curr_expr, rs);
+					AaStatement* nbr_stmt = nbr_expr->Get_Associated_Statement();
+					if((nbr_stmt == NULL) || (nbr_stmt != curr_expr_root))
+					{
+						nbr_expr->Replace_Uses_By(curr_expr, rs);
+						if(nbr_stmt != NULL)
+							nbr_stmt->Map_Source_References();
+					}
+
 				}
 				else if(nbr->Is_Call_Statement())
 				{
-					AaScope* prnt_scope = this->Get_Scope();
-					if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
-						prnt_scope = this; 
-					AaSimpleObjectReference* new_arg = new AaSimpleObjectReference(prnt_scope, 
-							rs->Get_Target()->Get_Name());
-					new_arg->Set_Type(curr_expr->Get_Type());
-
 					AaCallStatement* cnbr = (AaCallStatement*) nbr;
-					cnbr->Replace_Input_Argument(curr_expr, new_arg);
+					if(cnbr != curr_expr_root)
+					{
+						AaScope* prnt_scope = this->Get_Scope();
+						if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
+							prnt_scope = this; 
+						AaSimpleObjectReference* new_arg = new AaSimpleObjectReference(prnt_scope, 
+													rs->Get_Target()->Get_Name());
+						new_arg->Set_Type(curr_expr->Get_Type());
+
+						cnbr->Replace_Input_Argument(curr_expr, new_arg);
+					}
 				}
 				else if(nbr->Is_Assignment_Statement())
 				{
-					AaScope* prnt_scope = this->Get_Scope();
-					if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
-						prnt_scope = this; 
-					AaSimpleObjectReference* new_arg = new AaSimpleObjectReference(prnt_scope, 
-							rs->Get_Target()->Get_Name());
-					new_arg->Set_Type(curr_expr->Get_Type());
-
 					AaAssignmentStatement* astmt = ((AaAssignmentStatement*) nbr);
-					astmt->Replace_Source_Expression(curr_expr, new_arg);
+					if(astmt != curr_expr_root)
+					{
+						AaScope* prnt_scope = this->Get_Scope();
+						if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
+							prnt_scope = this; 
+
+						AaSimpleObjectReference* new_arg = new AaSimpleObjectReference(prnt_scope, 
+								rs->Get_Target()->Get_Name());
+						new_arg->Set_Type(curr_expr->Get_Type());
+						astmt->Replace_Source_Expression(curr_expr, new_arg);
+
+					}
 				}
 			}
 		}
 	}
+}
+
+void AaStatement::Replace_Guard_Expression(AaSimpleObjectReference* new_arg)
+{
+	if(this->_guard_expression != NULL)
+	{
+		AaSimpleObjectReference* old_arg = this->_guard_expression;
+
+		old_arg->Set_Associated_Statement(NULL);
+		old_arg->Remove_Target_Reference(this);
+
+		this->Remove_Source_Reference(old_arg);
+		this->_source_objects.erase(old_arg->Get_Object());
+	}
+
+	this->_guard_expression = new_arg;
+	this->_guard_expression->Map_Source_References(this->_source_objects);
 }
 
 
@@ -889,7 +928,14 @@ bool AaStatementSequence::Can_Block(bool pipeline_flag)
 void AaStatementSequence::Print(ostream& ofile)
 {
 	for(unsigned int i=0; i < this->_statement_sequence.size();i++)
-		this->_statement_sequence[i]->Print(ofile);
+	{
+		if(!this->_statement_sequence[i]->Is_Orphaned() || !AaProgram::_do_not_print_orphans || this->_statement_sequence[i]->Get_Keep_Flag())
+			this->_statement_sequence[i]->Print(ofile);
+		else
+		{
+			AaRoot::Info("ignored orphan statement: " + this->_statement_sequence[i]->To_String());
+		}
+	}
 }
 
 
@@ -1045,8 +1091,24 @@ void AaNullStatement::Write_VC_Control_Path(ostream& ofile)
 {
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	ofile << ";;[" << this->Get_VC_Name() << "] {" << endl; 
+	__T ("dummy");
+	ofile << "}" << endl;
 }
 
+//---------------------------------------------------------------------
+// AaBarrierStatement: public AaNullStatement
+//---------------------------------------------------------------------
+AaBarrierStatement::AaBarrierStatement(AaScope* parent_tpr):AaNullStatement(parent_tpr) {};
+AaBarrierStatement::~AaBarrierStatement() {};
+void AaBarrierStatement::Write_VC_Control_Path(ostream& ofile)
+{
+	ofile << "// " << this->To_String() << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
+	ofile << ";;[" << this->Get_VC_Name() << "] {" << endl; 
+	__T ("dummy");
+	ofile << "}" << endl;
+}
 //---------------------------------------------------------------------
 // AaLockStatement: public AaNullStatement
 //---------------------------------------------------------------------
@@ -1326,7 +1388,9 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 	AaStatement(parent_tpr) 
 {
 	assert(tgt); assert(src);
+
 	_is_volatile = false;
+	_cut_through = false;
 
 	tgt->Set_Associated_Statement(this);
 	tgt->Set_Is_Intermediate(false);
@@ -1338,9 +1402,6 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 
 	this->_target = tgt;
 	this->_target->Set_Is_Target(true);
-
-	if(tgt->Is_Object_Reference())
-		this->Map_Target((AaObjectReference*)tgt);
 
 	tgt->Add_RHS_Source(src);
 	this->_source = src;
@@ -1359,19 +1420,7 @@ bool AaAssignmentStatement::Get_Is_Volatile()
 
 void AaAssignmentStatement::Set_Is_Volatile(bool v)
 {
-	AaScope* sc = this->Get_Root_Scope();
-	assert(sc && sc->Is("AaModule"));
-	AaModule* parent_module = (AaModule*) sc;
 
-	if(v && parent_module->Get_Operator_Flag())
-	{
-		AaRoot* tobj = _target->Get_Object();
-		if(tobj->Is_Interface_Object())
-		{
-			AaRoot::Error("operator module has volatile update of interface object " + tobj->Get_Name(), this); 
-			return;
-		}
-	}
 	_is_volatile = v;
 	if(this->_source)
 	{
@@ -1448,9 +1497,63 @@ string AaAssignmentStatement::Get_VC_Synch_Transition_Name(bool& has_delay)
 	return(ret_val);
 }
 
+  
+bool AaAssignmentStatement::Is_Orphaned()
+{
+	bool ret_val = 0;
+	if(this->_target->Is_Implicit_Variable_Reference() && !this->_target->Is_Interface_Object_Reference())
+	{
+		if((this->_target->Get_Number_Of_Things_Driven_By_This() == 0) &&
+			!this->Can_Block(false))
+			ret_val = 1;
+	}
+	return(ret_val);
+}
+
+bool AaAssignmentStatement::Can_Be_Combinationalized()
+{
+	AaExpression* tgt = this->_target;
+	AaExpression* src = this->_source;
+
+	// target should not be an interface object, and should not be a complex function that needs
+	// to be registered.
+	bool ret_val = (!tgt->Is_Interface_Object_Reference() && tgt->Can_Be_Combinationalized() && src->Can_Be_Combinationalized());
+
+	//
+	// fanout should be 1.
+	//
+	if(ret_val && (tgt->Get_Source_References().size() == 1))
+	{
+		AaRoot* robj = *(tgt->Get_Source_References().begin());
+		if(robj->Is_Phi_Statement())
+			ret_val = true;
+		else
+		{
+			if(robj->Is_Expression())
+			{
+				// should not create a combinational loop.
+				ret_val = (((AaExpression*)robj)->Get_Associated_Statement() != this);
+			}
+			else
+			{
+				// should not be a WAR dependency.
+				ret_val = (robj->Get_Index() < tgt->Get_Index());
+			}
+		}
+	}
+	return(ret_val);
+}
+
+
 void AaAssignmentStatement::Print(ostream& ofile)
 {
 	assert(this->Get_Target()->Get_Type() && this->Get_Source()->Get_Type());
+
+	if(AaProgram::_combinationalize_statements && this->Can_Be_Combinationalized())
+	{
+		this->Set_Is_Volatile(true);
+	}
+
 	int twidth = this->Get_Target()->Get_Type()->Size();
 	int swidth = this->Get_Source()->Get_Type()->Size();
 	int awidth = AaProgram::_foreign_address_width;
@@ -1550,8 +1653,10 @@ void AaAssignmentStatement::Print(ostream& ofile)
 		this->Get_Source()->Print(ofile);
 
 		int bufval = this->Get_Buffering();
-		if(bufval > 1)
-			ofile << " $buffering " << bufval;
+		ofile << " $buffering " << bufval;
+
+		if(this->Get_Cut_Through())
+			ofile << " $cut_through ";
 
 		if(this->_mark != "")
 			ofile << " $mark " << _mark << " ";
@@ -1562,6 +1667,8 @@ void AaAssignmentStatement::Print(ostream& ofile)
 			for(set<AaStatement*>::iterator siter = _synch_statements.begin(), fiter = _synch_statements.end();
 					siter != fiter; siter++)
 			{
+				if(_synch_update_flag_map[(*siter)])
+					ofile << " $update "; 
 				ofile << (*siter)->Get_Mark();
 				ofile << " ";
 			}
@@ -1582,18 +1689,23 @@ void AaAssignmentStatement::Print(ostream& ofile)
 			ofile << ")  ";
 		}
 
+		if(this->Get_Keep_Flag())
+			ofile << " $keep ";
+
 		AaModule* m = this->Get_Module();
 		if(!this->Get_Is_Volatile() && (m != NULL) && !m->Get_Is_Volatile() &&
 				(this->_target != NULL))
 		{
 			int bits_of_buffering = bufval * this->_target->Get_Type()->Size();
-			ofile << "// bits of buffering = " << bits_of_buffering << " ";
+			ofile << "// bits of buffering = " << bits_of_buffering << ". ";
+			if(this->Is_Orphaned())
+				ofile << " Orphaned statement with target " << _target->To_String() << " ?? ";
 		}
 	}
 
-
 	if(AaProgram::_verbose_flag)
 		ofile << endl << Debug_Info();
+
 
 	ofile << endl;
 }
@@ -1603,8 +1715,25 @@ void AaAssignmentStatement::Map_Targets()
 	// only one target which can serve as a handle
 	// to this statement
 	if(this->_target->Is_Object_Reference())
+	{
 		this->Map_Target((AaObjectReference*)this->Get_Target());
+	
+		AaScope* sc = this->Get_Root_Scope();
+		assert(sc && sc->Is("AaModule"));
+		AaModule* parent_module = (AaModule*) sc;
+		if(this->Get_Is_Volatile() && parent_module->Get_Operator_Flag())
+		{
+			AaRoot* tobj = _target->Get_Object();
+			assert(tobj != NULL);
+			if(tobj->Is_Interface_Object())
+			{
+				AaRoot::Warning("operator module has volatile update of interface object " + tobj->Get_Name(), this); 
+				//return;
+			}
+		}
+	}
 }
+
 
 void AaAssignmentStatement::Map_Source_References()
 {
@@ -1747,6 +1876,14 @@ void AaAssignmentStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 		}
 
 		// target side stuff.
+		if(this->_target->Is("AaArrayObjectReference"))
+		{
+			AaArrayObjectReference* aor = (AaArrayObjectReference*) (this->_target);
+			aor->PrintC(headerfile);			
+		}
+
+	
+
 		Print_C_Assignment(this->_target->C_Reference_String(),
 				this->_source->C_Reference_String(),
 				this->_target->Get_Type(),
@@ -1890,6 +2027,8 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				string src_name = this->_source->Get_VC_Driver_Name();
 				string tgt_name = this->_target->Get_VC_Receiver_Name();
 
+				bool cut_through = this->Get_Cut_Through();
+
 				// target and source are both implicit.
 				// instantiate a register..
 				Write_VC_Interlock_Buffer(dpe_name,
@@ -1898,6 +2037,7 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 						this->Get_VC_Guard_String(),
 						this->Get_Is_Volatile(), // flow-through-flag
 						full_rate,
+						cut_through,
 						ofile);
 
 
@@ -1964,10 +2104,10 @@ void AaAssignmentStatement::Write_VC_Links(string hier_id,ostream& ofile)
 			{
 				if(!this->Get_Is_Volatile())
 				{
-					reqs.push_back(hier_id + "/Sample/req");
-					reqs.push_back(hier_id + "/Update/req");
-					acks.push_back(hier_id + "/Sample/ack");
-					acks.push_back(hier_id + "/Update/ack");
+					reqs.push_back(hier_id + "/Interlock/Sample/req");
+					reqs.push_back(hier_id + "/Interlock/Update/req");
+					acks.push_back(hier_id + "/Interlock/Sample/ack");
+					acks.push_back(hier_id + "/Interlock/Update/ack");
 					Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
 							reqs, acks, ofile);
 					reqs.clear();
@@ -2139,6 +2279,8 @@ string AaAssignmentStatement::Get_VC_Update_Completed_Transition_Name()
 	}
 }
 
+
+
 void AaAssignmentStatement::Replace_Source_Expression(AaExpression* old_arg, AaSimpleObjectReference* new_arg)
 {
 	if(this->_source == old_arg)
@@ -2155,6 +2297,12 @@ void AaAssignmentStatement::Replace_Source_Expression(AaExpression* old_arg, AaS
 		this->Add_Source_Reference(new_arg);
 		new_arg->Map_Source_References(this->_source_objects);
 	}
+	else
+	{
+		this->_source->Replace_Uses_By(old_arg,new_arg);
+		new_arg->Map_Source_References(this->_source_objects);
+	}
+
 }
 //---------------------------------------------------------------------
 // AaCallStatement
@@ -2175,7 +2323,7 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 	for(unsigned int i = 0; i < inargs.size(); i++)
 	{
 		inargs[i]->Set_Associated_Statement(this);
-		inargs[i]->Set_Is_Intermediate(false);
+		inargs[i]->Set_Is_Intermediate(true);
 		this->_input_args.push_back(inargs[i]);
 	}
 
@@ -2186,15 +2334,30 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 		outargs[i]->Set_Is_Target(true);
 
 		this->_output_args.push_back(outargs[i]);
-		this->Map_Target(outargs[i]);
 	}
 }
+
+void AaCallStatement::Map_Targets()
+{
+	for(unsigned int i = 0; i < this->_output_args.size(); i++)
+	{
+		this->Map_Target(this->_output_args[i]);
+	}
+}
+
 AaCallStatement::~AaCallStatement() {};
 
 bool AaCallStatement::Get_Is_Volatile()
 {
 	return(_is_volatile);
 }
+
+bool AaCallStatement::Can_Be_Combinationalized()
+{
+	AaModule* cm = (AaModule*) _called_module;
+	return((cm != NULL) && (cm->Get_Volatile_Flag()));
+}
+
 
 void AaCallStatement::Replace_Input_Argument(AaExpression* old_arg, AaSimpleObjectReference* new_arg)
 {
@@ -2204,13 +2367,20 @@ void AaCallStatement::Replace_Input_Argument(AaExpression* old_arg, AaSimpleObje
 
 		if(arg == old_arg)
 		{
-			assert(arg->Is_Implicit_Variable_Reference());
-			arg->Set_Associated_Statement(NULL);
+			// remove links to old-arg
 			arg->Remove_Target_Reference(this);
 			this->Remove_Source_Reference(arg);
-			this->_source_objects.erase(arg->Get_Object());
+
+			if(arg->Is_Implicit_Variable_Reference())
+			{
+				this->_source_objects.erase(arg->Get_Object());
+			}
+				
+			if(arg->Get_Associated_Statement() == this)
+				arg->Set_Associated_Statement(NULL);
 
 			_input_args[i] = new_arg;
+
 			new_arg->Add_Target_Reference(this);
 			this->Add_Source_Reference(new_arg);
 			new_arg->Map_Source_References(this->_source_objects);
@@ -2379,7 +2549,7 @@ void AaCallStatement::Print(ostream& ofile)
 		guard_string = "$guard (" + cg_var + ") ";
 	}
 
-	if(this->Get_Is_Volatile())
+	if(this->Get_Is_Volatile() || (AaProgram::_combinationalize_statements && cm->Get_Volatile_Flag()))
 		ofile << " $volatile ";
 
 	// not inlined or macro
@@ -2419,6 +2589,9 @@ void AaCallStatement::Print(ostream& ofile)
 		for(set<AaStatement*>::iterator siter = _synch_statements.begin(), fiter = _synch_statements.end();
 				siter != fiter; siter++)
 		{
+			if(_synch_update_flag_map[(*siter)])
+				 ofile << " $update "; 
+
 			ofile << (*siter)->Get_Mark();
 			ofile << " ";
 		}
@@ -2559,7 +2732,8 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 		if(this->_input_args[i]->Get_Type()->Is_Integer_Type())
 		{
 			ofile << this->_input_args[i]->Get_Type()->Native_C_Name() << " __" 
-				<< this->_input_args[i]->C_Reference_String() << ";\\" << endl;	
+				<< this->_input_args[i]->C_Reference_String() << "__" << this->Get_Index() 
+					<< ";\\" << endl;	
 		}
 	}
 
@@ -2570,7 +2744,8 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 		if(this->_output_args[i]->Get_Type()->Is_Integer_Type())
 		{
 			ofile << this->_output_args[i]->Get_Type()->Native_C_Name() << " __" 
-				<< this->_output_args[i]->C_Reference_String() << ";\\" << endl;	
+				<< this->_output_args[i]->C_Reference_String() << "__"
+				<< this->Get_Index() << ";\\" << endl;	
 		}
 	}
 
@@ -2598,7 +2773,7 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 		{
 			ofile << "__";
 		}
-		ofile << this->_output_args[i]->C_Reference_String();
+		ofile << this->_output_args[i]->C_Reference_String() << "__" << this->Get_Index();
 		first_one = false;
 	}
 	ofile <<  ");\\" << endl;
@@ -2608,7 +2783,7 @@ void AaCallStatement::PrintC_Call_To_Foreign_Module(ofstream& ofile)
 	{
 		if(this->_output_args[i]->Get_Type()->Is_Integer_Type())
 		{
-			Print_C_Uint64_To_BitVector_Assignment("__" + this->_output_args[i]->C_Reference_String(),
+			Print_C_Uint64_To_BitVector_Assignment("__" + this->_output_args[i]->C_Reference_String() + "__" + Int64ToStr(this->Get_Index()),
 					this->_output_args[i]->C_Reference_String(),
 					this->_output_args[i]->Get_Type(), ofile);
 		}
@@ -2710,6 +2885,12 @@ void AaCallStatement::PrintC_Implicit_Declarations(ofstream& ofile)
 
 void AaCallStatement::Write_VC_Control_Path(ostream& ofile)
 {
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
+
 	if(this->Get_Is_Volatile())
 	{
 		//
@@ -2755,6 +2936,11 @@ void AaCallStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 
 	for(int idx = 0; idx < _input_args.size(); idx++)
 	{
@@ -2767,6 +2953,13 @@ void AaCallStatement::Write_VC_Wire_Declarations(ostream& ofile)
 
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	/*
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
+	*/
 
 
 	for(int idx = 0; idx < _input_args.size(); idx++)
@@ -2794,6 +2987,11 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 
 	int delay = (this->Get_Is_Volatile() ? 0 : ((AaModule*)_called_module)->Get_Delay());
 	bool full_rate = this->Is_Part_Of_Fullrate_Pipeline();
@@ -2870,6 +3068,11 @@ void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
 
 	ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+	if(this->_called_module->Get_Foreign_Flag())
+	{
+		AaRoot::Info("ignored foreign module call to " + this->_called_module->Get_Label());
+		return;
+	}
 
 	hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Name());
 
@@ -2953,23 +3156,8 @@ void AaBlockStatement::Add_Object(AaObject* obj)
 
 void AaBlockStatement::Add_Export(string formal, string actual)
 {
-	AaRoot* formal_ref = this->Find_Child(formal);
-	if(formal_ref == NULL)
-	{
-		AaRoot::Error("in export, did not find object " + formal + " in " + this->Get_Label(),this);
-	}
-	else
-	{
-		if(this->Get_Scope() != NULL)
-		{
-			this->Get_Scope()->Map_Child(actual, formal_ref);
-			this->_exports[formal] = actual;
-		}
-		else
-		{
-			AaRoot::Warning("export " + formal + " => " + actual + " ignored for block " + this->Get_Label(), this);
-		}
-	}
+	this->_exports[formal] = actual;
+
 }
 
 void AaBlockStatement::Coalesce_Storage()
@@ -3128,6 +3316,37 @@ void AaBlockStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	headerfile << ";" << endl;
 	srcfile << this->Get_Export_Apply_Macro() << ";" << endl;
 	srcfile << "}" << endl;
+}
+
+void AaBlockStatement::Map_Targets()
+{
+	if(this->_statement_sequence)
+		this->_statement_sequence->Map_Targets();	
+
+	// map exports
+	for (map<string,string>::iterator miter = this->_exports.begin(), fiter = this->_exports.end();
+			miter != fiter; miter++)
+	{
+		string formal = (*miter).first;
+		string actual = (*miter).second;
+
+		AaRoot* formal_ref = this->Find_Child(formal);
+		if(formal_ref == NULL)
+		{
+			AaRoot::Error("in export, did not find object " + formal + " in " + this->Get_Label(),this);
+		}
+		else
+		{
+			if(this->Get_Scope() != NULL)
+			{
+				this->Get_Scope()->Map_Child(actual, formal_ref);
+			}
+			else
+			{
+				AaRoot::Warning("export " + formal + " => " + actual + " ignored for block " + this->Get_Label(), this);
+			}
+		}
+	}
 }
 
 void AaBlockStatement::Map_Source_References()
@@ -3934,6 +4153,11 @@ void AaMergeStatement::Map_Source_References()
 	// also the phi statements!
 	this->AaBlockStatement::Map_Source_References();
 }
+  
+void AaMergeStatement::Map_Targets()
+{
+	this->AaBlockStatement::Map_Targets();
+}
 
 
 void AaMergeStatement::Set_In_Do_While(bool v)
@@ -4017,18 +4241,32 @@ void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
 						siter != phi_dependency_map[mlabel].end();
 						siter++)
 				{
-					ofile << ";;[" << (*siter)->Get_VC_Name() << "] {" << endl;
+					AaPhiStatement* pp = *siter;
+					if(!pp->Get_Target()->Is_Constant())
+					{
 
-					ofile << "||[" << (*siter)->Get_VC_Name() << "_sources] {" << endl;
-					// the sources to the phi must be computed.
-					(*siter)->Write_VC_Source_Control_Paths(mlabel, ofile);
+						ofile << ";;[" << (*siter)->Get_VC_Name() 
+							<< "] {" << endl;
+
+						ofile << "||[" << (*siter)->Get_VC_Name()
+							 << "_sources] {" << endl;
+						// the sources to the phi must be computed.
+						(*siter)->Write_VC_Source_Control_Paths(mlabel, 
+							ofile);
 
 
-					ofile << "}" << endl;
+						ofile << "}" << endl;
 
-					// issue a req to the phi.
-					ofile << "$T [" << (*siter)->Get_VC_Name() << "_req] " << endl;
-					ofile << "}" << endl;
+						// issue a req to the phi.
+						ofile << "$T [" << (*siter)->Get_VC_Name() 
+							<< "_req] " << endl;
+						ofile << "}" << endl;
+					}
+					else
+					{
+						ofile << "// skipped constant phi " 
+								<< pp->Get_VC_Name() << endl;
+					}
 				}
 			}
 			else
@@ -4074,7 +4312,15 @@ void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
 		{
 			AaStatement* stmt = _statement_sequence->Get_Statement(idx);
 			assert(stmt->Is("AaPhiStatement"));
-			ofile << "$T [" << stmt->Get_VC_Name() << "_ack] " << endl; 
+			AaPhiStatement* pp = (AaPhiStatement*) stmt;
+			if(!pp->Get_Target()->Is_Constant())
+			{
+				ofile << "$T [" << stmt->Get_VC_Name() << "_ack] " << endl; 
+			}
+			else
+			{
+				ofile << "// skipped constant phi " << pp->Get_VC_Name() << endl;
+			}
 		}
 	}
 	else
@@ -4132,6 +4378,14 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 
 			vector<string> reqs;
 			AaPhiStatement* phi_stmt = (AaPhiStatement*) stmt;
+			
+			// skip phi if it is a constant..
+			if(phi_stmt->Get_Target()->Is_Constant())
+			{
+				ofile << "// In merge, skipped links for constant phi "
+					<< phi_stmt->Get_VC_Name() << endl;
+				continue;
+			}
 
 			// phi reqs..
 			for(int pidx = 0; pidx < phi_stmt->_source_pairs.size(); pidx++)
@@ -4193,6 +4447,7 @@ AaPhiStatement::AaPhiStatement(AaBranchBlockStatement* scope, AaMergeStatement* 
 	this->_target = NULL;
 	this->_parent_merge = pm;
 	this->_in_do_while = false;
+	this->_barrier_flag = false;
 }
 AaPhiStatement::~AaPhiStatement() 
 {
@@ -4225,6 +4480,10 @@ void AaPhiStatement::Print(ostream& ofile)
 			ofile << "  " << (*iter).second[J] << " ";
 		}
 	}
+
+	if(this->Get_Barrier_Flag())
+		ofile << " $barrier";
+
 	ofile << endl;
 	if(this->_target->Get_Type())
 	{
@@ -4242,18 +4501,6 @@ void AaPhiStatement::Set_Target(AaObjectReference* tgt)
 
 	tgt->Set_Associated_Statement(this);
 	tgt->Set_Is_Intermediate(false);
-	this->Map_Target(tgt);
-
-	if(!tgt->Is_Implicit_Variable_Reference())
-	{
-		AaRoot::Error("target of a PHI statement must be an implicit (SSA) variable.", this);
-	}
-	else if(tgt->Is_Interface_Object_Reference())
-	{
-		// This warning should be an error if the module is
-		// a pipelined one.
-		AaRoot::Warning("target of a PHI statement is an interface object!", this);
-	}
 
 	if(this->_source_pairs.size() > 0)
 	{
@@ -4304,10 +4551,25 @@ void AaPhiStatement::Add_Source_Label_Vector(AaExpression* expr, vector<string>&
 	}
 }
 
+void AaPhiStatement::Map_Targets()
+{
+	this->Map_Target(this->_target);
+	if(!this->_target->Is_Implicit_Variable_Reference())
+	{
+		AaRoot::Error("target of a PHI statement must be an implicit (SSA) variable.", this);
+	}
+	else if(this->_target->Is_Interface_Object_Reference())
+	{
+		// This warning should be an error if the module is
+		// a pipelined one.
+		AaRoot::Warning("target of a PHI statement is an interface object!", this);
+	}
+
+}
+
 
 void AaPhiStatement::Map_Source_References()
 {
-
 	this->_target->Map_Source_References(this->_target_objects);
 
 	for(unsigned int i=0; i < this->_source_pairs.size(); i++)
@@ -4669,7 +4931,8 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 	if(this->_target->Is_Constant())
 	{
-		ofile << "// constant phi." << endl;
+		ofile << "// constant phi data-path element skipped " <<
+			this->Get_VC_Name()  << endl;
 		return;
 	}
 
@@ -4699,7 +4962,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				string dpe_name = src_expr->Get_VC_Driver_Name() + "_" + 
 					Int64ToStr(src_expr->Get_Index()) +  "_buf";
 				Write_VC_Interlock_Buffer(dpe_name, src_expr->Get_VC_Driver_Name(),
-						src_driver_name, "", false, full_rate,  ofile);
+						src_driver_name, "", false, full_rate, false, ofile);
 				if(dws != NULL)
 				{
 					int src_buffering = src_expr->Get_Buffering();
@@ -4720,7 +4983,10 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	string dpe_name = this->Get_VC_Name();
 	string tgt_name = _target->Get_VC_Receiver_Name(); 
 
-	if(this->Is_Single_Source())
+	if(this->Is_Single_Source() && (dws != NULL))
+	//
+	// This corresponds to the pipelined loop case..
+	//
 	{
 		AaExpression* ssrc_expr = (* _source_label_vector.begin()).first;	
 		string ssrc_driver_name = ssrc_expr->Get_VC_Driver_Name();
@@ -4738,6 +5004,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				"",
 				true, // flow-through-flag
 				true,
+				false, // cut-through
 				ofile);
 	}
 	else
@@ -4885,6 +5152,15 @@ void AaSwitchStatement::Map_Source_References()
 	if(this->_default_sequence)
 		this->_default_sequence->Map_Source_References();
 }
+void AaSwitchStatement::Map_Targets()
+{
+	for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
+	{
+		this->_choice_pairs[i].second->Map_Targets();
+	}
+	if(this->_default_sequence)
+		this->_default_sequence->Map_Targets();
+}
 
 void AaSwitchStatement::Print(ostream& ofile)
 {
@@ -4942,20 +5218,16 @@ void AaSwitchStatement::PrintC(ofstream& srcfile, ofstream& headerfile)
 	{
 		srcfile << " case ";
 		srcfile << this->_choice_pairs[i].first->Get_Expression_Value()->To_C_String();
-		srcfile << " : " << endl;
+		srcfile << " : {" << endl;
 		this->_choice_pairs[i].second->PrintC(srcfile, headerfile);
-		srcfile << "break;" << endl;
+		srcfile << "break;}" << endl;
 	}
-	srcfile << " default : " << endl;
+	srcfile << " default : {" << endl;
 	if(this->_default_sequence)
 	{
 		this->_default_sequence->PrintC(srcfile, headerfile);
-		srcfile << "break;" << endl;
 	}
-	else
-	{
-		srcfile << "break;" << endl;
-	}
+	srcfile << "break;}" << endl;
 	srcfile << "}" << endl;
 }
 
@@ -5687,6 +5959,7 @@ void AaIfStatement::Get_Target_Places(set<AaPlaceStatement*>& target_places)
 AaPlaceStatement::AaPlaceStatement(AaBranchBlockStatement* parent_tpr,string lbl):AaStatement(parent_tpr) 
 {
 	this->_label = lbl;
+	this->_multiplicity = 1;
 	parent_tpr->Map_Child(lbl,this);
 };
 AaPlaceStatement::~AaPlaceStatement() {};
@@ -5927,13 +6200,22 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 		// do not re-sample unless the result of the previous
 		// sample has been updated at the output.
 		//
-		// This is REQUIRED to take care of a WAR dependency
-		// across the PHI's.
+		// This takes care of a RAW dependency between one phi cycle
+		// and the next.
 		//
 		__MJ("aggregated_phi_sample_req", "aggregated_phi_update_ack", true);
+
+		//
+		// Note that within the SAME cycle, there is a WAR dependency
+		// across statements that is not enforced by the default PHI
+		// control scheme.  If you need to enforce this, you will 
+		// have to use a $barrier on the PHI which is a victim
+		// of this race.
+		//
 	}
 
 	// write the PHI statements.
+	vector<AaPhiStatement*> barriers;
 	for(unsigned int idx = 0; idx < phi_stmts.size(); idx++)
 	{
 		AaStatement* curr_phi = phi_stmts[idx];
@@ -5943,6 +6225,32 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 				pipe_map,
 				NULL,
 				ofile);
+
+
+
+		// sampling ordering to control race
+		// issues
+		if(barriers.size() > 0) {
+
+			string curr_ust = (((AaPhiStatement*)curr_phi)->Is_Single_Source() ?
+						__UST(((AaPhiStatement*)curr_phi)->Get_Source_Expression(0)) : __UST(curr_phi) + "_ps");
+
+
+			int J;
+			for(J=0; J < barriers.size(); J++)
+			{
+
+				AaPhiStatement* last_phi = barriers[J];
+ 				string barrier_sct = (last_phi->Is_Single_Source() ?
+                                                	__SCT(last_phi->Get_Source_Expression(0)) : __SCT(last_phi) + "_ps");
+
+				ofile << "// Race prevention dependency in ordered.. PHI's." << endl;
+				__J(curr_ust,barrier_sct)
+			}
+		}
+
+		if(((AaPhiStatement*) curr_phi)->Get_Barrier_Flag())
+			barriers.push_back((AaPhiStatement*) curr_phi);		
 	}
 
 
@@ -6367,7 +6675,7 @@ bool AaCallStatement::Is_Write_To_Pipe(AaPipeObject* obj)
 bool AaCallStatement::Writes_To_Memory_Space(AaMemorySpace* ms)
 {
 	bool ret_val = false;
-	if(this->_called_module)
+	if(this->_called_module && !this->_called_module->Get_Foreign_Flag())
 	{
 		ret_val = this->_called_module->Writes_To_Memory_Space(ms);
 	}

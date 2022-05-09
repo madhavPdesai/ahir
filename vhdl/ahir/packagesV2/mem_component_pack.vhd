@@ -198,6 +198,52 @@ component base_bank_dual_port is
          reset : in std_logic);
 end component base_bank_dual_port;
 
+-- single write, read port register file.
+component register_file_1w_1r_port is
+   generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
+   port (
+         -- write port 0
+         datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         -- read port 1 
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+
+         clk: in std_logic;
+         reset : in std_logic);
+end component register_file_1w_1r_port;
+
+-- with write to read bypass.
+component register_file_1w_1r_port_with_bypass is
+   generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
+   port (
+         -- write port 0
+         datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         -- read port 1 
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+
+         clk: in std_logic;
+         reset : in std_logic);
+end component register_file_1w_1r_port_with_bypass;
+
+component fifo_mem_synch_write_asynch_read is
+   generic ( name: string; address_width: natural;  data_width : natural;
+			mem_size: natural);
+   port (
+	 write_enable: in std_logic;
+	 write_data: in std_logic_vector(data_width-1 downto 0);
+	 write_address: in std_logic_vector(address_width-1 downto 0);
+	 read_data: out std_logic_vector(data_width-1 downto 0);
+	 read_address: in std_logic_vector(address_width-1 downto 0);
+         clk: in std_logic);
+end component fifo_mem_synch_write_asynch_read;
+
 component base_bank_dual_port_for_vivado is
    generic ( name: string;  g_addr_width: natural := 10; g_data_width : natural := 16);
 	port(
@@ -262,6 +308,19 @@ component base_bank_dual_port_with_registers is
          reset : in std_logic);
 end component base_bank_dual_port_with_registers;
 
+component register_file_1w_1r_port_with_registers  is
+   generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
+   port (
+	 datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         dataout_0: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+end component register_file_1w_1r_port_with_registers ;
 
 component merge_box_with_repeater 
   generic (name: string;
@@ -504,6 +563,182 @@ component PipelinedDemux is
        clk: in std_logic;
        reset: in std_logic);
 end component;
+
+component spram_generic_reverse_wrapper is
+	generic(address_width: integer:=8; data_width: integer:=8);
+	port (ADDR : in std_logic_vector(address_width-1 downto 0 );
+		CLK : in std_logic;
+		WRITE_BAR: in std_logic;
+		ENABLE_BAR: in std_logic;
+		DATAIN  : in std_logic_vector(data_width-1 downto 0);
+		DATAOUT  : out std_logic_vector(data_width-1 downto 0));
+end component spram_generic_reverse_wrapper;
+
+component dpram_generic_reverse_wrapper is
+	generic(address_width: integer:=8; data_width: integer:=8);
+	port (ADDR_0 : in std_logic_vector(address_width-1 downto 0 );
+		ADDR_1 : in std_logic_vector(address_width-1 downto 0 );
+		ENABLE_0_BAR : in std_logic;
+		ENABLE_1_BAR : in std_logic;
+		WRITE_0_BAR : in std_logic;
+		WRITE_1_BAR : in std_logic;
+		DATAIN_0  : in std_logic_vector(data_width-1 downto 0);
+		DATAIN_1  : in std_logic_vector(data_width-1 downto 0);
+		DATAOUT_0  : out std_logic_vector(data_width-1 downto 0);
+		DATAOUT_1  : out std_logic_vector(data_width-1 downto 0);
+		CLK : in std_logic);
+end component dpram_generic_reverse_wrapper;
+
+component register_file_1w_1r_generic_reverse_wrapper is
+	generic(address_width: integer:=8; data_width: integer:=8);
+	port (ADDR_0 : in std_logic_vector(address_width-1 downto 0 );
+		ADDR_1 : in std_logic_vector(address_width-1 downto 0 );
+		ENABLE_0_BAR : in std_logic;
+		ENABLE_1_BAR : in std_logic;
+		DATAIN_0  : in std_logic_vector(data_width-1 downto 0);
+		DATAOUT_1  : out std_logic_vector(data_width-1 downto 0);
+		CLK: in std_logic);
+end component;
+
+component spmem_column is
+   generic ( name: string:="spmem_column"; 
+	g_addr_width: natural := 2;
+	g_base_bank_addr_width: natural:=4; 
+	g_base_bank_data_width : natural := 4);
+   port (datain : in std_logic_vector(g_base_bank_data_width-1 downto 0);
+         dataout: out std_logic_vector(g_base_bank_data_width-1 downto 0);
+         addrin: in std_logic_vector(g_addr_width-1 downto 0);
+         enable: in std_logic;
+         writebar : in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+end component spmem_column;
+
+component spmem_selector_array is
+   generic ( name: string:="mem";
+		 g_addr_width: natural := 5; 
+	      	 g_data_width : natural := 20;
+		 g_base_addr_width: natural := 5; 
+	      	 g_base_data_width : natural := 20
+	   );
+   port (datain : in std_logic_vector(g_data_width-1 downto 0);
+         dataout: out std_logic_vector(g_data_width-1 downto 0);
+         addrin: in std_logic_vector(g_addr_width-1 downto 0);
+         enable: in std_logic;
+         writebar : in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+end component;
+
+component spmem_selector is
+	generic(address_width: integer:=8; data_width: integer:=8);
+	port (ADDR : in std_logic_vector(address_width-1 downto 0 );
+		CLK : in std_logic;
+	        RESET: in std_logic;
+		WRITE_BAR: in std_logic;
+		ENABLE_BAR: in std_logic;
+		DATAIN  : in std_logic_vector(data_width-1 downto 0);
+		DATAOUT  : out std_logic_vector(data_width-1 downto 0));
+end component spmem_selector;
+
+component dpmem_column is
+   generic (name: string:="dpmem_column"; 
+	g_addr_width: natural := 2;
+	g_base_bank_addr_width: natural:=4; 
+	g_base_bank_data_width : natural := 4);
+   port (datain_0 : in std_logic_vector(g_base_bank_data_width-1 downto 0);
+         dataout_0: out std_logic_vector(g_base_bank_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         writebar_0 : in std_logic;
+	 datain_1 : in std_logic_vector(g_base_bank_data_width-1 downto 0);
+         dataout_1: out std_logic_vector(g_base_bank_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+         writebar_1 : in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+end component dpmem_column;
+
+component dpmem_selector_array is
+   generic ( name: string:="mem";
+		 g_addr_width: natural := 5; 
+	      	 g_data_width : natural := 20;
+		 g_base_addr_width: natural := 5; 
+	      	 g_base_data_width : natural := 20
+	   );
+   port (datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         dataout_0: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         writebar_0 : in std_logic;
+	 datain_1 : in std_logic_vector(g_data_width-1 downto 0);
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+         writebar_1 : in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+end component;
+
+component dpmem_selector is
+	generic(address_width: integer:=8; data_width: integer:=8);
+	port (ADDR_0 : in std_logic_vector(address_width-1 downto 0 );
+		ADDR_1 : in std_logic_vector(address_width-1 downto 0 );
+		ENABLE_0_BAR : in std_logic;
+		ENABLE_1_BAR : in std_logic;
+		WRITE_0_BAR : in std_logic;
+		WRITE_1_BAR : in std_logic;
+		DATAIN_0  : in std_logic_vector(data_width-1 downto 0);
+		DATAIN_1  : in std_logic_vector(data_width-1 downto 0);
+		DATAOUT_0  : out std_logic_vector(data_width-1 downto 0);
+		DATAOUT_1  : out std_logic_vector(data_width-1 downto 0);
+		CLK, RESET: in std_logic);
+end component dpmem_selector;
+
+component register_file_1w_1r_column is
+   generic ( name: string:="register_file_1w_1r_column"; 
+	g_addr_width: natural := 2;
+	g_base_bank_addr_width: natural:=4; 
+	g_base_bank_data_width : natural := 4);
+   port (datain_0 : in std_logic_vector(g_base_bank_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         dataout_1: out std_logic_vector(g_base_bank_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+end component register_file_1w_1r_column;
+
+
+component register_file_1w_1r_selector_array is
+   generic ( name: string:="mem";
+		 g_addr_width: natural := 5; 
+	      	 g_data_width : natural := 20;
+		 g_base_addr_width: natural := 5; 
+	      	 g_base_data_width : natural := 20
+	   );
+   port (datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+end component;
+
+component register_file_1w_1r_selector is
+	generic(address_width: integer:=8; data_width: integer:=8);
+	port (ADDR_0 : in std_logic_vector(address_width-1 downto 0 );
+		ADDR_1 : in std_logic_vector(address_width-1 downto 0 );
+		ENABLE_0_BAR : in std_logic;
+		ENABLE_1_BAR : in std_logic;
+		DATAIN_0  : in std_logic_vector(data_width-1 downto 0);
+		DATAOUT_1  : out std_logic_vector(data_width-1 downto 0);
+		CLK, RESET: in std_logic);
+end component register_file_1w_1r_selector;
 
 end package mem_component_pack;
 

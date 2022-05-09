@@ -40,7 +40,6 @@ int main(int argc, char* argv[])
 	signal(SIGINT,  Exit);
   	signal(SIGTERM, Exit);
 	
-	write_uint32("in_signal",1);
 
 	PTHREAD_DECL(Sender);
 	PTHREAD_CREATE(Sender);

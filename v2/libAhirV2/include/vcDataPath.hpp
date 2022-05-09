@@ -76,6 +76,7 @@ class vcPipe: public vcRoot
   bool _shift_reg;
   bool _full_rate;
   bool _bypass;
+  bool _is_clock_enable;
 public:
 
   
@@ -95,6 +96,7 @@ public:
     _p2p = false;
     _shift_reg = false;
     _full_rate = false;
+    _is_clock_enable = false;
   }
 
   void Set_Port(bool v) { _port = v; }
@@ -109,6 +111,8 @@ public:
   void Set_Bypass(bool v) { _bypass = v; }
   bool Get_Bypass() {return(_bypass);}
 
+  void Set_Is_Clock_Enable(bool v) { _is_clock_enable = v; }
+  bool Get_Is_Clock_Enable() {return(_is_clock_enable);}
 
   void Set_Shift_Reg(bool v) { _shift_reg = v; }
   bool Get_Shift_Reg() {return(_shift_reg);}
@@ -652,9 +656,12 @@ protected:
   virtual void Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostream& ofile) {assert(0);}
 
   virtual void Print_Dot_Entry(ostream& ofile);
+		
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);	
+
+  virtual bool Is_Split_Operator() {return(false);}
   friend class vcDataPath;
 
-	
 };
 
 

@@ -34,6 +34,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library ahir;
+use ahir.utilities.all;
+
 -- memory implemented with registers..
 entity base_bank_with_registers is
    generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
@@ -53,6 +56,9 @@ architecture PlainRegisters of base_bank_with_registers is
   signal read_data : std_logic_vector(g_data_width-1 downto 0);
 
 begin  -- PlainRegisters
+
+  assert false report "SP MEMFF " & Convert_To_String ( g_data_width*(2**g_addr_width)) 
+		severity note;
 
   -- read/write process
   process(clk,addrin,enable,writebar)

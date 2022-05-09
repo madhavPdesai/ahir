@@ -1038,11 +1038,11 @@ bool Aa::parse_pipe_depth_spec(std::string line, std::string& pipe_name, int& pi
   char* line_str = (char*) line.c_str();
   lifo_flag = false;
 
-  char* name_str = strtok(line_str," ");
+  char* name_str = strtok(line_str," \t");
   if(name_str != NULL)
     {
       pipe_name = std::string(name_str);
-      char* wid_str = strtok(NULL," \n");
+      char* wid_str = strtok(NULL," \t\n");
       if(wid_str != NULL)
 	{
 	  int wid = atoi(wid_str);

@@ -51,6 +51,7 @@ package Utilities is
   function Ceil (constant x, y : integer)   return integer;
 
   function Ceil_Log2( constant x : integer)  return integer;
+  function LogWidth (constant x: integer) return integer;
 
   function Max (constant x : NaturalArray)    return natural;
   function Sum (constant x : IntegerArray) return integer;
@@ -250,6 +251,29 @@ package body Utilities is
     end if;
     return(ret_var);
   end Ceil_Log2;
+
+  -- x is assumed to be > 0
+  function LogWidth
+    ( constant x : integer)
+    return integer is
+    variable ret_val : integer;
+    variable pow_val : integer;
+  begin
+    assert (x > 0) report "In LogWidth, argument must be > 0" severity error;
+    ret_val := 1;
+
+    if(x > 1) then
+      while true loop
+         ret_val := ret_val + 1;
+         pow_val := 2**ret_val;
+         if(pow_val > x) then
+            exit;
+         end if;
+      end loop; 
+    end if;
+
+    return(ret_val);
+  end LogWidth;
 
   function Max
     (constant x : NaturalArray)

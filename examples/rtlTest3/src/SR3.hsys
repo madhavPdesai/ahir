@@ -1,0 +1,81 @@
+$system SR3  $library TOPLEVEL
+	$in 
+		$pipe in_data 32 $depth 2
+        $out 
+		$pipe out_data 32 $depth 2
+{
+        $pipe T0 32 $depth 2
+	$pipe T1 32 $depth 2
+
+	$instance S1_INST  SLIB:STAGE
+			in_data => in_data
+			out_data => T0
+
+	$instance S3_INST  SLIB:STAGE
+			in_data => T1
+			out_data => out_data
+
+
+	// intermediate stage instantiates repeater
+	$thread   REPEATER
+		$in  $pipe    rdata : $unsigned<32>
+		$out $pipe    wdata : $unsigned<32>
+
+		$signal data_reg : $unsigned<32>
+		$constant One_1: $unsigned<1> := ($unsigned<1>) _b1
+		$constant Z1: $unsigned<1> := ($unsigned<1>) _b0
+		$constant Z32: $unsigned<32> := ($unsigned<32>) 0
+
+
+		$default 
+			$now rdata$req := Z1
+			$now wdata$req := Z1
+			$now wdata     := Z32
+
+		<init>  {
+				data_reg := ($unsigned<32>) 0 
+			}
+		<reset>  {
+			$now rdata$req := One_1
+			$if (rdata$ack == One_1)
+			{
+
+				// note: wdata must be updated before emitting wreq.
+				$now wdata := rdata
+				$now wdata $req := One_1
+				$if (wdata $ack == One_1) 
+				{
+					$goto reset
+				}
+				$else
+				{
+				    $goto wait_state	
+				    data_reg := rdata
+				}
+			}
+			$else {
+				$goto reset
+			}
+		}
+		<wait_state>  {
+				$now wdata := data_reg
+				$now wdata $req := One_1
+				$if(wdata $ack == One_1)
+				{
+					$goto reset
+				}
+				$else
+				{
+					$goto wait_state
+				}
+		}
+	$now
+	$tick
+
+
+	$string S2_INST:REPEATER
+		rdata => T0
+		wdata => T1
+
+}
+

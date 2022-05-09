@@ -48,20 +48,6 @@ use aHiR_ieee_proposed.float_pkg.all;
 
 package MemCutsPackage is
 
-	-- available single-port memory cuts.
-	--    16x4, 32x16, 256x8, 512x24
-	constant spmem_cut_row_heights    :IntegerArray(1 to 4):=(16, 32, 256, 512);
-	constant spmem_cut_address_widths :IntegerArray(1 to 4):=(4, 5, 8, 9); -- log of row-widths.
-
-	constant spmem_cut_data_widths    :IntegerArray(1 to 4):=(4, 16, 8, 24);
-	
-	-- available dual-port memory cuts.
-	--    16x4, 16x8, 32x8
-	constant dpmem_cut_row_heights    :IntegerArray(1 to 3):=(16, 16, 32);
-	constant dpmem_cut_address_widths :IntegerArray(1 to 3):=(4, 4, 5); -- log of row-widths.
-
-	constant dpmem_cut_data_widths    :IntegerArray(1 to 3):=(4, 8, 8);
-
 	-- For a requirement of a memory with MxN (M-rows, N-columns) aspect
 	-- ratio, we will first determine uniform columns to implement the
 	-- memory.  For each available memory cut, we will find the number
@@ -104,11 +90,28 @@ package MemCutsPackage is
 		index: out integer; 
 		n_cols: out natural;
 		extra_cols: out integer);
+
+	-- return the cut that fills the maximum percentage of the
+	-- area (with tie break advantage to row filling).
+	-- returns a vector of length 3.
+	--       index of cut (-1 if not found)
+	--       addr_width of cut
+        --       data_width of cut
+	--       number of rows of cut
+	--       number of columns of cut.
+        function find_best_cut 
+		(constant cut_address_widths: IntegerArray;
+		    constant cut_data_widths: IntegerArray;
+		    constant cut_row_heights: IntegerArray;
+		    addr_width: in natural;  
+		    data_width: in natural) return IntegerArray;
+
 	function find_n_cols (constant cut_address_widths: IntegerArray;
 		constant cut_data_widths: IntegerArray;
 		constant cut_row_heights: IntegerArray;
 		addr_width: natural;
 		data_width: natural) return IntegerArray;
+
 	--function Ceil_Log2(constant x : integer) return integer;
 	function find_data_width (constant cut_data_widths: IntegerArray; 
 		constant n_cols: Integerarray) return integer;
@@ -216,6 +219,55 @@ package body MemCutsPackage is
 	extra_cols := extra_col_array(location);
 	
   end opt_find;
+	
+	-- return the cut that fills the maximum percentage of the
+	-- area (with tie break advantage to row filling).
+	-- returns a vector of length 3.
+	--       index of cut (-1 if not found)
+	--       addr_width of cut
+        --       data_width of cut
+	--       number of rows of cut
+   function find_best_cut 
+		(constant cut_address_widths: IntegerArray;
+		    constant cut_data_widths: IntegerArray;
+		    constant cut_row_heights: IntegerArray;
+		    addr_width: in natural;  
+		    data_width: in natural) return IntegerArray is
+	variable a, r, s: natural;
+	variable best_area, best_data_width, best_addr_width: natural;
+	variable best_index: integer;
+	variable ret_var: IntegerArray(1 to 5);
+  begin
+
+	s := ((2**addr_width) * data_width);
+	ret_var := (others => 0);
+
+	best_area := 0;
+	best_data_width := 0;
+ 	best_addr_width := 0;
+        best_index := -1;
+
+        for  I in 1 to cut_address_widths'length loop
+                a := (cut_row_heights(I) * cut_data_widths(I));
+		if (a <= s) and  (cut_data_widths(I) <= data_width) and (cut_address_widths(I) <= addr_width)
+			and ((a > best_area) or ((a = best_area) and (cut_data_widths(I) > best_data_width))) then
+		   best_index := I;
+		   best_area  := a;
+                   best_data_width  := cut_data_widths(I);
+		   best_addr_width := cut_address_widths(I);
+		end if;
+	end loop;
+
+	ret_var(1) := best_index;
+	if(best_index > 0) then
+	   ret_var(2) := best_addr_width;
+           ret_var(3) := best_data_width;
+	   ret_var(4) := (2 ** (addr_width - best_addr_width));
+	   ret_var(5) := (data_width/best_data_width);
+        end if;
+
+	return ret_var;
+  end find_best_cut;
 
   -- function: find_n_cols
   -- Description: Finds the number of columns of each cut required to completely

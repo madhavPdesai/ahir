@@ -36,7 +36,7 @@
 int main(int argc, char* argv[])
 {
 	uint32_t c;
-	start_daemons(stderr);
+	start_daemons(stderr,0);
 	sum_mod_wrap(15,15,&c);
 	fprintf(stderr,"c = %x\n", c);
 	return(1);

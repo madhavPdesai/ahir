@@ -372,10 +372,78 @@ between the write to to\_pipe and the read from from\_pipe.
 This delay information is used by the compiler to 
 balance pipelines.
 
+The {\bf Aa} compiler will optimize away dangling
+assignment statements (whose targets are not
+used any where in the program). In order to prevent
+this from happening, you can use the \$keep keyword.
+\begin{verbatim}
+sacrifical_value := signal_from_somwhere $keep
+\end{verbatim}
+The \$keep keyword must be placed after the \$delay
+keyword.
 
 More details of the syntax are provided in 
 Section \ref{sec:Syntax}.
 
+\subsection{Reporting and trace statements}
+
+It is possible to convert an {\bf Aa} description
+to C and then execute this C description.  During
+the execution, we can generate log messages using the
+following statement:
+\begin{verbatim}
+$rreport (Descriptor  Comment  var1 var2 .. varn)
+\end{verbatim}
+This generates a message during execution with
+the following format.
+\begin{verbatim}
+Descriptor    Comment
+         var1 <var1-value>
+         var2 <var1-value>
+         ....
+         varn <varn-value>
+\end{verbatim}
+
+Another useful statement is the assert statement.
+\begin{verbatim}
+$assert (expr)
+   $rreport (Descriptor  Comment  var1 var2 .. varn)
+\end{verbatim}
+This prints a report if expr is false, and then
+exits the execution.
+
+Finally, we have
+\begin{verbatim}
+$trace simple-identifier [ ( integer-level) ]
+\end{verbatim}
+This produces a message
+\begin{verbatim}
+TRACE simple-identifier
+\end{verbatim}
+it the trace-level (set in the execution of the AA2C
+model) is set to integer-level or lower.
+
+Note that these statements are not converted to hardware.
+
+
+\subsection{A synthetic statement: the \$split statement}
+
+Often, we need to split a large vector into several pieces.
+Suppose you want
+to split a 32 bit variable into two 8-bit variables
+and four 4-bit variables.  This can be done using
+\begin{verbatim}
+$split (X 8 8 4 4 4 4) (a8 b8 c4 d4 e4 f4)
+\end{verbatim}
+This is actually translated to the following
+sequence of assignment statements.
+\begin{verbatim}
+a8 := ($slice X 31 24)
+a7 := ($slice X 23 16)
+c4 := ($slice X 15 12)
+...
+f4 := ($slice X 3 0)
+\end{verbatim}
 
 \subsection{Complete Block Statements}
 
@@ -930,6 +998,7 @@ Expressions in \Aa fall into the following classes
 \item Bitmap (bit permutation) expressions.
 \item Binary expressions.
 \item Ternary expressions.
+\item Zero, One expressions.
 \end{itemize}
 
 \subsection{Constant literal references} 
@@ -1298,6 +1367,78 @@ For example
 ($mux a (b+1) (c+d))
 \end{verbatim}
 
+\subsection{Zero, One expressions}
+
+For convenience, the following expressions represent
+a zero and one value with the specified uint type:
+\begin{verbatim}
+$zero<width>
+$one<width>
+\end{verbatim}
+
+The following expression 
+\begin{verbatim}
+$zero<16>
+\end{verbatim}
+expands to
+\begin{verbatim}
+($bitcast ($uint<16>) 0)
+\end{verbatim}
+and the  following expression
+\begin{verbatim}
+$one<16>
+\end{verbatim}
+expands to
+\begin{verbatim}
+($bitcast ($uint<16>) 1)
+\end{verbatim}
+
+\section{Synthetic instructions}
+
+For convenience, there are some synthetic operations which
+you can use to simplify coding an Aa program.  These
+are listed below
+\begin{itemize}
+\item The \$reduce operation:
+\begin{verbatim}
+($reduce |  a  b  c)   
+    (note: this is the same as  ((a+b)+c))
+\end{verbatim}
+Any associative operation may be used instead
+of the or (add, mul, xor, and).
+\item The \$concat operation:  This is the
+reverse of a \$split.  
+\begin{verbatim}
+Y := ($concat a8 b8 c4 d4 e4 f4)
+  (note: Y := (a8 && (b8 && (c4 && d4 ....))
+\end{verbatim}
+\item The \$excmux operations:  A multiplexor
+whose selects are expected to be mutually exclusive.
+\begin{verbatim}
+Y := ($excmux s0 X0 s1 X1 s2 X2)
+\end{verbatim}
+This is equivalent to 
+\begin{verbatim}
+Y := ($reduce |
+           ($mux s0 X0 0)
+           ($mux s1 X1 0)
+           ($mux s2 X2 0))
+\end{verbatim}
+Note that if all of s0,s1,s2 are 0, then
+Y is assigned to 0.
+\item The \$prioritymux operations:  A multiplexor
+whose selects may not be mutually exclusive.
+\begin{verbatim}
+Y := ($prioritymux s0 X0 s1 X1 s2 X2
+                $default 1)
+\end{verbatim}
+This is equivalent to 
+\begin{verbatim}
+Y := ($mux s0 X0
+           ($mux s1 X1
+                $mux s2 X2 1))
+\end{verbatim}
+\end{itemize}
 
 
 \section{Specifying buffering for expressions}

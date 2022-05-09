@@ -1,17 +1,17 @@
-
+$parameter B1   1
 $system store_and_forward 
 	$in 
-		$pipe in_data 32 
+		$pipe in_data 32  $depth 1
         $out 
-		$pipe out_data 32
+		$pipe out_data 32 $depth 1
 
 {
-        $pipe   mem_wr_cmd 64
-	$pipe   mem_rd_cmd 32
-	$pipe   mem_rd_response 32
+        $pipe   mem_wr_cmd 64 $depth 1
+	$pipe   mem_rd_cmd 32 $depth 1
+	$pipe   mem_rd_response 32 $depth 1
 
 	$thread MEMORY
-		$constant One_1: $unsigned<1> := ($unsigned<1>) _b1
+		$constant One_1: $unsigned<1> := ($unsigned<1>) B1
 		$constant Z1: $unsigned<1> := ($unsigned<1>) _b0
 		$constant Z32: $unsigned<32> := ($unsigned<32>) _b0
 		$constant Z64: $unsigned<64> := ($unsigned<64>) _b0

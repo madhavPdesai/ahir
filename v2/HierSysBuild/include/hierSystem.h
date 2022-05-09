@@ -283,6 +283,11 @@ public:
 	bool Is_Driving_Pipe(string pname) {return(_driving_pipes.find(pname) != _driving_pipes.end());}
 
 
+	bool Pipe_Is_Mapped_To_Subsystem(string pname)
+        {
+		bool ret_val = (_pipe_to_subsystem_connection_map.find(pname) !=  _pipe_to_subsystem_connection_map.end());
+		return(ret_val);
+        }
 	int Get_Instance_Count() {return(_instance_count);}
 	void Increment_Instance_Count() {_instance_count++;}
 
@@ -672,7 +677,7 @@ public:
 	// print Vhdl
 	void Print_Vhdl_Port_Declarations(ostream& ofile);
 	void Print_Vhdl_Component_Declaration(ostream& ofile);
-	void Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work);
+	void Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work, bool print_fence);
 	void Print_Vhdl_Rtl_Threads(ostream& ofile, int map_all_libs_to_work);
 	void Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_to_work);
 	void Print_Vhdl_Test_Bench(string sim_link_lib, string sim_link_prefix, ostream& ofile, int map_all_libs_to_work); // in progress.
@@ -865,4 +870,5 @@ void addPipeToGlobalMaps(string oname,
 
 
 string IntToStr(int u);
+string UintToStr(unsigned int u);
 #endif

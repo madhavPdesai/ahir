@@ -1,0 +1,21 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2
+
+$module [p2p_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 9 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi init_flag := ($bitcast ($uint<1>) 1) $on $entry 0 $on $loopback
+		$endmerge
+
+	 	CMD := in_data
+		SUM := ($mux init_flag CMD nSUM)
+
+		$volatile nSUM := (CMD + SUM)
+
+		out_data :=  SUM
+
+		$while 1
+	}
+}

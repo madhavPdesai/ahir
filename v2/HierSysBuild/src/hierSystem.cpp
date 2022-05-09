@@ -636,7 +636,7 @@ void hierSystem::Print_Vhdl_Rtl_Type_Package(ostream& ofile)
 	ofile << "end package;" << endl;
 }
 
-void hierSystem::Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work)
+void hierSystem::Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work, bool print_fence)
 {
 	ofile << "library ahir;" << endl;
 	ofile << "use ahir.BaseComponents.all;" << endl;
@@ -648,14 +648,16 @@ void hierSystem::Print_Vhdl_Inclusions(ostream& ofile, int map_all_libs_to_work)
 	ofile << "use ieee.std_logic_1164.all;" << endl;
 	ofile << "use ieee.numeric_std.all;" << endl;
 	string this_lib;
-	ofile << "-->>>>>"  << endl;
+	if (print_fence)
+		ofile << "-->>>>>"  << endl;
 	if(map_all_libs_to_work)
 		this_lib = "work";
 	else 
 		this_lib = this->_library;
 	ofile << "library " << this_lib << ";" << endl;
 	ofile << "use " << this_lib << "." << this->Get_Id() << "_Type_Package.all;" << endl;
-	ofile << "--<<<<<"  << endl;
+	if (print_fence)
+		ofile << "--<<<<<"  << endl;
 }
 
 
@@ -679,7 +681,7 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs
 		return;
 	}
 
-	this->Print_Vhdl_Inclusions(ofile, map_all_libs_to_work);
+	this->Print_Vhdl_Inclusions(ofile, map_all_libs_to_work, true);
 	// library refs..
 	ofile << "-->>>>>" << endl;
 	for(map<string,hierSystemInstance*>::iterator iter = _child_map.begin(), fiter = _child_map.end();	
@@ -760,7 +762,7 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs
 
 		if(!map_all_libs_to_work && (bt->Get_Parent() && (bt->Get_Parent()->Get_Library() != "work")))
 		{
-			ofile << "-->>>>" << endl;
+			ofile << "-->>>>>" << endl;
 			ofile << "for " << s->Get_Id() << " :  " << bt->Get_Id() << " -- { " << endl;
 			ofile << "   use entity " << bt->Get_Parent()->Get_Library() << "." 
 				<< bt->Get_Id() << "; -- } " << endl;
@@ -991,7 +993,7 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		int pipe_width   = (*iter).second->Get_Width();
 
 		ofile << "signal " << pipe_name << "_pipe_write_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		ofile << "signal " << pipe_name << "_pipe_write_req  : std_logic_vector(0  downto 0);" << endl;
+		ofile << "signal " << pipe_name << "_pipe_write_req  : std_logic_vector(0  downto 0) := (others => '0');" << endl;
 		ofile << "signal " << pipe_name << "_pipe_write_ack  : std_logic_vector(0  downto 0);" << endl;
 
 		if(this->Is_Signal(pipe_name))
@@ -1007,12 +1009,12 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 		int pipe_width   = (*iter).second->Get_Width();
 
 		ofile << "signal " << pipe_name << "_pipe_read_data : std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-		ofile << "signal " << pipe_name << "_pipe_read_req  : std_logic_vector(0  downto 0);" << endl;
+		ofile << "signal " << pipe_name << "_pipe_read_req  : std_logic_vector(0  downto 0) := (others => '0');" << endl;
 		ofile << "signal " <<  pipe_name << "_pipe_read_ack  : std_logic_vector(0  downto 0);" << endl;
 
 		if(this->Is_Signal(pipe_name))
 		{
-			ofile << "signal " << pipe_name << ": std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+			ofile << "signal " << pipe_name << ": std_logic_vector(" << pipe_width-1 << " downto 0) := (others => '0');" << endl;
 		}
 	}
 	ofile << "signal clk : std_logic := '0'; " << endl; 
@@ -1034,6 +1036,10 @@ void hierSystem::Print_Vhdl_Test_Bench(string sim_link_library, string sim_link_
 	ofile << "begin --{" << endl;
 	ofile << sim_link_prefix << "Initialize;" << endl;
 	ofile << "wait until clk = '1';" << endl;
+	ofile << "wait until clk = '1';" << endl;
+	ofile << "wait until clk = '1';" << endl;
+	ofile << "wait until clk = '1';" << endl;
+	ofile << "wait for 5 ns;" << endl;
 	ofile << "reset <= '0';" << endl;
 	ofile << "while true loop --{" << endl;
 	ofile << "wait until clk = '0';" << endl;
@@ -1160,7 +1166,7 @@ bool hierSystem::Check_For_Errors()
 	}
 
 	vector<string> in_pipes;
-	this->List_In_Pipe_Names(internal_pipes);
+	this->List_In_Pipe_Names(in_pipes);
 	for(int I = 0, fI = in_pipes.size(); I < fI; I++)
 	{
 		string pname = in_pipes[I];
@@ -1169,7 +1175,6 @@ bool hierSystem::Check_For_Errors()
 			hierRoot::Report_Error("in " + this->Get_Id() + ", in pipe " + pname + " does not drive anything.");
 			ret_val = true;
 		}
-		
 	}
 
 	vector<string> out_pipes;

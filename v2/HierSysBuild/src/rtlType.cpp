@@ -93,7 +93,6 @@ void rtlIntegerType::Print(ostream& ofile)
 
 void rtlUnsignedType::Print_C_Struct_Field_Initialization(string prefix, rtlValue* v, ostream& ofile)
 {
-	// TODO.
 	ofile << "init_bit_vector(&(" << prefix << "), " << this->Size() << ");" << endl;
 	ofile << "bit_vector_clear(&(" << prefix << "));" << endl;
 	if(v != NULL)

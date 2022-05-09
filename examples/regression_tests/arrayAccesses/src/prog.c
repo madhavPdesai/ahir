@@ -4,9 +4,14 @@
 #include <stdio.h>
 #include "prog.h"
 
-float A[ORDER][ORDER];
-float B[ORDER][ORDER][ORDER];
-float C[ORDER][ORDER][ORDER][ORDER];
+typedef struct __Myrec {
+	float A[ORDER][ORDER];
+	float B[ORDER][ORDER][ORDER];
+	float C[ORDER][ORDER][ORDER][ORDER];
+	uint8_t flag;
+} Myrec;
+
+Myrec test_struct;
 
 #ifndef SW
 void __loop_pipelining_on__(uint32_t val, uint32_t buf, uint32_t extreme_flag);
@@ -15,6 +20,7 @@ void __loop_pipelining_on__(uint32_t val, uint32_t buf, uint32_t extreme_flag);
 void getData()
 {
 	int idx;
+	test_struct.flag = 0;
 	for(idx = 0; idx < ORDER; idx++)
 	{
 #ifndef SW
@@ -24,8 +30,9 @@ void getData()
 #ifdef SW
 		fprintf(stderr,"Info: read %f from in_data_pipe.\n",val);
 #endif
-		A[idx][idx] = val;
-		B[idx][idx][idx]= val;
+		test_struct.flag += idx;
+		test_struct.A[idx][idx] = val;
+		test_struct.B[idx][idx][idx]= val;
 	}
 }
 
@@ -38,7 +45,7 @@ void sendResult()
 		__loop_pipelining_on__(16,2,1);
 #endif 
 		
-		float val = C[0][idx][1][idx];
+		float val = test_struct.C[0][idx][1][idx];
 		write_float32("out_data_pipe",val);
 #ifdef SW
 		fprintf(stderr,"Info: wrote %f to out_data_pipe.\n",val);
@@ -64,7 +71,7 @@ void _vectorSum_()
 #ifndef SW
 		__loop_pipelining_on__(16,2,1);
 #endif 
-		C[0][I][1][I]  = A[I][I]+B[I][I][I];
+		test_struct.C[0][I][1][I]  = test_struct.A[I][I] + test_struct.B[I][I][I];
 	}
 }
 

@@ -61,7 +61,8 @@ void  append_string(char* strbuf, char* str)
 uint64_t get_uint64_t(char* str, char** save_str)
 {
 #ifdef DEBUG
-  fprintf(stderr, "Info: in get_uint64_t, received string %s\n",str);
+  if(str != NULL)
+  	fprintf(stderr, "Info: in get_uint64_t, received string %s\n",str);
 #endif
 
   char* pstr = strtok_r(str," ", save_str);
@@ -541,7 +542,7 @@ void send_packet_and_wait_for_response(char* buffer, int send_len, char* server_
 #endif
 
 #ifdef DEBUG
-      char payload[4096];
+      char payload[MAX_BUF_SIZE];
       int pl = extract_payload(buffer,payload,send_len);
       fprintf(stderr, "Info: sent message %s to server (payload of %d bytes)\n", buffer, pl);
       if(pl > 0)

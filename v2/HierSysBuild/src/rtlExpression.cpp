@@ -90,8 +90,22 @@ string rtlExpression::C_Int_Reference()
 
 void rtlExpression::Print_C_Declaration(rtlValue* v, ostream& ofile)
 {
-	ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << this->Get_Type()->Get_C_Dimension_String() << ";" << endl;
-	this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), v, ofile);
+	if(this->Get_Type()->Is("rtlUnsignedType"))
+	{
+		string c_name = this->Get_C_Name();
+		ofile << "__declare_static_bit_vector(" << c_name << "," <<  this->Get_Type()->Size() 
+				<< ");" << endl;
+		if(v != NULL)
+		{
+			string init_string =  v->To_Bit_Vector_String();
+			ofile << "bit_vector_assign_string(&(" << c_name << "),\"" << init_string << "\");" << endl;
+		}
+	}
+	else
+	{
+		ofile << this->Get_Type()->Get_C_Name() << " " << this->Get_C_Name() << this->Get_Type()->Get_C_Dimension_String() << ";" << endl;
+		this->Get_Type()->Print_C_Struct_Field_Initialization(this->Get_C_Name(), v, ofile);
+	}
 }
 
 void rtlObjectReference::Set_Tick(bool v) 

@@ -95,7 +95,9 @@ class AaModule: public AaSeriesBlockStatement
   set<AaStorageObject*> _objects_that_are_read;
   set<AaStorageObject*> _objects_that_are_written;
 
+  string _gated_clock_name;
 
+  bool _use_gated_clock;
   bool _foreign_flag;
   bool _inline_flag;
   bool _macro_flag;
@@ -107,6 +109,7 @@ class AaModule: public AaSeriesBlockStatement
   bool _reads_from_shared_pipe;
   bool _noopt_flag;
   bool _opaque_flag;
+  bool _use_once_flag;
   bool _print_guard_complement;
 
  public:
@@ -131,6 +134,26 @@ class AaModule: public AaSeriesBlockStatement
   virtual void Set_Pipeline_Deterministic_Flag(bool v) {_pipeline_deterministic_flag = v;}
   virtual bool Get_Pipeline_Deterministic_Flag() {return(_pipeline_deterministic_flag);}
 
+  virtual void Set_Use_Gated_Clock(bool v, string gc_name) 
+  {
+	if(!this->Get_Operator_Flag() && !this->Get_Volatile_Flag() && !this->Get_Macro_Flag()
+			&& !this->Get_Inline_Flag())
+	{
+		_use_gated_clock = v;
+		_gated_clock_name = gc_name;
+	}
+	else
+	{
+		AaRoot::Warning ("gated clock is possible only on normal modules", this);
+	}
+  }
+
+  virtual bool Get_Use_Gated_Clock() {return(_use_gated_clock);}
+  virtual string Get_Gated_Clock_Name() {return(_gated_clock_name);}
+  virtual bool Uses_Auto_Gated_Clock()
+  {return(_use_gated_clock && (_gated_clock_name == ""));}
+
+
   virtual void Set_Operator_Flag(bool v) {_operator_flag = v;}
   virtual bool Get_Operator_Flag() {return(_operator_flag);}
 
@@ -143,6 +166,9 @@ class AaModule: public AaSeriesBlockStatement
   virtual void Set_Opaque_Flag(bool v) {_opaque_flag = v;}
   virtual bool Get_Opaque_Flag() {return(_opaque_flag);}
 
+  virtual void Set_Use_Once_Flag(bool v) {_use_once_flag = v;}
+  virtual bool Get_Use_Once_Flag() {return(_use_once_flag);}
+
   virtual bool Is_Part_Of_Fullrate_Pipeline()
   {
 	return(_pipeline_flag && _pipeline_full_rate_flag);
@@ -150,6 +176,7 @@ class AaModule: public AaSeriesBlockStatement
 
   virtual bool Get_Is_Volatile() {return(this->Get_Volatile_Flag());}
 
+  bool Is_Volatizable();
   void Update_Memory_Space_Info();
 
   void Add_Written_Global_Object(AaStorageObject* sobj) {_global_objects_that_are_written.insert(sobj);}
@@ -193,7 +220,13 @@ class AaModule: public AaSeriesBlockStatement
 
   void Increment_Number_Of_Times_Called()
   {
+
     _number_of_times_called++;
+    if(_use_once_flag && (_number_of_times_called > 1))
+    {
+	AaRoot::Error("Use-once module " + this->Get_Label() + " called more than once\n", this);
+    }
+
   }
   int Get_Number_Of_Times_Called()
   {
@@ -274,6 +307,7 @@ class AaModule: public AaSeriesBlockStatement
   virtual string Kind() {return("AaModule");}
 
   virtual AaRoot* Find_Child(string tag);
+  virtual void Map_Targets();
   virtual void Map_Source_References();
 
   void Set_Foreign_Object_Representatives();

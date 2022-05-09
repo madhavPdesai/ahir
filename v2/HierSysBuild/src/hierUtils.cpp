@@ -38,6 +38,13 @@ string IntToStr(int u)
   return(string_stream.str());
 }
 
+string UintToStr(unsigned int u)
+{
+  ostringstream string_stream(ostringstream::out);
+  string_stream << u;
+  return(string_stream.str());
+}
+
 string  Make_C_Legal(string x)
 {
 	string ret_string;

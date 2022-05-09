@@ -40,15 +40,17 @@ use ahir.Subprograms.all;
 use ahir.mem_function_pack.all;
 use ahir.memory_subsystem_package.all;
 
+use ahir.MemcutDescriptionPackage.all;
 use ahir.MemCutsPackage.all;
 use ahir.mem_ASIC_components.all;
+use ahir.mem_component_pack.all;
 
 library aHiR_ieee_proposed;
 use aHiR_ieee_proposed.math_utility_pkg.all;
 use aHiR_ieee_proposed.float_pkg.all;
 
 entity spmem_column is
-   generic ( name: string:="SPRAM_16x4"; 
+   generic ( name: string:="spmem_column"; 
 	g_addr_width: natural := 2;
 	g_base_bank_addr_width: natural:=4; 
 	g_base_bank_data_width : natural := 4);
@@ -71,7 +73,6 @@ architecture struct of spmem_column is
   constant resized_addr_width: integer := Maximum(g_addr_width, g_base_bank_addr_width);
   signal resized_addrin: std_logic_vector(resized_addr_width-1 downto 0);  
   type WordArray is array  ( natural range <> ) of std_logic_vector (g_base_bank_data_width-1 downto 0);
-  signal ZZZ_1 : std_logic := '0';
 
 begin
   process (addrin)
@@ -80,30 +81,7 @@ begin
 		resized_addrin(addrin'length-1 downto 0) <= addrin;
   end process;
 	
-  -- if only one cut is required to satisfy the address width
-  n_rows_1: if (n_rows = 1) generate
-	row_1_blk: block
-	  signal enb: std_logic := '1';
-	begin 
-	  process(enable, reset)
-	    begin
-		enb <= not (enable and not(reset));
- 	  end process;
-	  mem_inst: spmem_selector generic map (address_width => g_base_bank_addr_width,
-				data_width => g_base_bank_data_width )
-		port map(A => resized_addrin(g_base_bank_addr_width-1 downto 0),
-			CE => clk,
-			WEB => writebar,
-			OEB => ZZZ_1,
-			CSB => enb,
-			I => datain,
-			O => dataout );
-	end block row_1_blk;
-  end generate n_rows_1;
-	
-  --if more than one cuts are required to satisfy the address width
-  n_rows_gt_1: if (n_rows > 1) generate
-	row_gt_1_blk: block
+  rowgen_block: block
 	  
   	   signal decoded_CSB, decoded_CSB_d: std_logic_vector(n_rows-1 downto 0):= (others=>'1');
   	   signal dataout_array : WordArray(n_rows-1 downto 0);
@@ -111,10 +89,11 @@ begin
 	  --chipselect is made low only when enable is high and reset is low.
 	  --memory will not be read or written when enable is low.
 	begin
-	  process(resized_addrin, enable, clk, reset)
-	     variable decoded_CSB_var: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
+	  process(resized_addrin, enable, clk)
+	     variable decoded_CSB_var: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 
+							downto 0):= (others=>'1');
 	    begin
-		if (enable = '1' and reset = '0') then
+		if (enable = '1') then
 		  decoded_CSB_var := MemDecoder(resized_addrin(resized_addr_width-1
 		  downto resized_addr_width-Ceil_log2(n_rows)));
 		else 
@@ -129,13 +108,13 @@ begin
 	  row_gen: for j in 0 to n_rows-1 generate
 		mem_inst: spmem_selector generic map(address_width => g_base_bank_addr_width,
 					data_width => g_base_bank_data_width )
-			port map(A => resized_addrin(g_base_bank_addr_width-1 downto 0),
-				CE => clk,
-				WEB => writebar,
-				OEB => ZZZ_1,
-				CSB => decoded_CSB(j),
-				I => datain,
-				O => dataout_array(j));
+			port map(ADDR => resized_addrin(g_base_bank_addr_width-1 downto 0),
+				 CLK => clk,
+				 RESET => reset,
+				 WRITE_BAR => writebar,
+				 ENABLE_BAR => decoded_CSB(j),
+				 DATAIN => datain,
+				 DATAOUT => dataout_array(j));
 	  end generate row_gen;
 
   	  -- mux.
@@ -150,7 +129,6 @@ begin
 		end loop;
 		dataout <= sel_data_var;
 	  end process;
-	end block;
-  end generate n_rows_gt_1;
+   end block;
   
 end struct;

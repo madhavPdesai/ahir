@@ -99,9 +99,11 @@ begin
 		begin
 			if(clock'event and clock = '1') then
 				if(reset = '1') then 
+					busy <= '0';
 				elsif (sr_req_in(I) = '1') then
 					busy <= '1';
-					sc_tag_out(((I+1)*tag_width)-1 downto I*tag_width) <= sr_tag_in;
+					sc_tag_out(((I+1)*tag_width)-1 downto I*tag_width) <= 
+						sr_tag_in(((I+1)*tag_width)-1 downto I*tag_width);
 				elsif (sc_req_in(I) = '1') then
 					busy <= '0';
 				end if;

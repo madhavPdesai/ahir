@@ -13,3 +13,4 @@ env.Program('bin/hierSys2C', 'util/hierSys2C.cpp', CCFLAGS='-g ',LINKFLAGS='-g '
 env.Program('bin/hierSysCheck', 'util/hierSysCheck.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['HierSys', 'antlr' , 'Value' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ../Value/lib/ ' + ANTLR_LIB_PATH))
 env.Program('bin/hierSysPartition', 'util/hierSysPartition.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['HierSys', 'antlr' , 'Value' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ../Value/lib/ ' + ANTLR_LIB_PATH))
 env.Program('bin/hierSysUniquify', 'util/hierSysUniquify.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['HierSys', 'antlr' , 'Value' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ../Value/lib/ ' + ANTLR_LIB_PATH))
+env.Program('bin/hierSysGenVhdlComponentsPackage', 'util/hierSysGenVhdlComponentsPackage.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['HierSys', 'antlr' , 'Value' ], LIBPATH=Split('/usr/local/lib/ ./lib/ ../Value/lib/ ' + ANTLR_LIB_PATH))

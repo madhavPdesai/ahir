@@ -40,15 +40,17 @@ use ahir.Subprograms.all;
 use ahir.mem_function_pack.all;
 use ahir.memory_subsystem_package.all;
 
+use ahir.MemcutDescriptionPackage.all;
 use ahir.MemCutsPackage.all;
 use ahir.mem_ASIC_components.all;
+use ahir.mem_component_pack.all;
 
 library aHiR_ieee_proposed;
 use aHiR_ieee_proposed.math_utility_pkg.all;
 use aHiR_ieee_proposed.float_pkg.all;
 
 entity dpmem_column is
-   generic ( name: string:="DPRAM_16x4"; 
+   generic (name: string:="dpmem_column"; 
 	g_addr_width: natural := 2;
 	g_base_bank_addr_width: natural:=4; 
 	g_base_bank_data_width : natural := 4);
@@ -79,12 +81,8 @@ architecture struct of dpmem_column is
   signal resized_addrin_0: std_logic_vector(resized_addr_width-1 downto 0);  
   signal resized_addrin_1: std_logic_vector(resized_addr_width-1 downto 0);  
 
-  signal ZZZ_1 : std_logic;
-
 begin
 
-  ZZZ_1 <= '0';
-  
   process (addrin_0, addrin_1)
 	begin 
 		resized_addrin_0 <= (others => '0');
@@ -93,53 +91,18 @@ begin
 		resized_addrin_1(addrin_1'length-1 downto 0) <= addrin_1;
   end process;
 	
-  -- if only one cut is required to satisfy the address width
-  n_rows_1: if (n_rows = 1) generate
-	row_1_blk: block
-	  signal enb_0 : std_logic;
-	  signal enb_1: std_logic;
-	begin 
-	  process (enable_0, reset, clk)
-	    begin
-		enb_0 <= not (enable_0 and not(reset));
- 	  end process;
-	  process (enable_1, reset, clk)
-	    begin 
-		enb_1 <= not (enable_1 and not(reset));
-	  end process;
- 
-	  mem_inst: dpmem_selector generic map (address_width => g_base_bank_addr_width,
-				data_width => g_base_bank_data_width )
-		port map(A1 => resized_addrin_0 (g_base_bank_addr_width-1 downto 0),
-			A2 => resized_addrin_1 (g_base_bank_addr_width-1 downto 0),
-			CE1 => clk,
-			CE2 => clk,
-			WEB1 => writebar_0,
-			WEB2 => writebar_1,
-			OEB1 => ZZZ_1,
-			OEB2 => ZZZ_1,
-			CSB1 => enb_0,
-			CSB2 => enb_1,
-			I1 => datain_0,
-			I2 => datain_1,
-			O1 => dataout_0,
-			O2 => dataout_1 );
-	end block row_1_blk;
-  end generate n_rows_1;
-	
-  --if more than one cuts are required to satisfy the address width
-  n_rows_gt_1: if (n_rows > 1) generate
-	row_gt_1_blk: block
+  rowgen_block : block
 	  signal decoded_CSB_0, decoded_CSB_0_d: std_logic_vector(n_rows-1 downto 0):= (others=>'1');
 	  signal decoded_CSB_1, decoded_CSB_1_d: std_logic_vector(n_rows-1 downto 0):= (others=>'1');
 	  
   	   signal dataout_array_0 : WordArray(n_rows-1 downto 0);
   	   signal dataout_array_1 : WordArray(n_rows-1 downto 0);
-	  --chipselect is made low only when enable is high and reset is low.
-	  --memory will not be read or written when enable is low.
+
 	begin
 	  process(enable_0, resized_addrin_0, clk, reset)
-	  	variable decoded_CSB_0_var: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
+	  	variable decoded_CSB_0_var: 
+			std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= 
+								(others=>'1');
 	    begin
 		if (enable_0 = '1' and reset = '0') then
 		  decoded_CSB_0_var := MemDecoder(resized_addrin_0(resized_addr_width-1
@@ -156,7 +119,9 @@ begin
 	  end process;
 	  
 	  process(enable_1, resized_addrin_1,  clk, reset)
-	  	variable decoded_CSB_1_var: std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0):= (others=>'1');
+	  	variable decoded_CSB_1_var: 
+			std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0)
+										:= (others=>'1');
 	    begin
 		if (enable_1 = '1' and reset = '0') then
 		  decoded_CSB_1_var := MemDecoder(resized_addrin_1(resized_addr_width-1
@@ -173,20 +138,17 @@ begin
 	  row_gen: for j in 0 to n_rows-1 generate
 		mem_inst: dpmem_selector generic map(address_width => g_base_bank_addr_width,
 					data_width => g_base_bank_data_width )
-			port map(A1 => resized_addrin_0 (g_base_bank_addr_width-1 downto 0),
-			A2 => resized_addrin_1 (g_base_bank_addr_width-1 downto 0),
-			CE1 => clk,
-			CE2 => clk,
-			WEB1 => writebar_0,
-			WEB2 => writebar_1,
-			OEB1 => ZZZ_1,
-			OEB2 => ZZZ_1,
-			CSB1 => decoded_CSB_0(j),
-			CSB2 => decoded_CSB_1(j),
-			I1 => datain_0,
-			I2 => datain_1,
-			O1 => dataout_array_0(j),
-			O2 => dataout_array_1(j) );
+		port map(ADDR_0 => resized_addrin_0 (g_base_bank_addr_width-1 downto 0),
+			 ADDR_1 => resized_addrin_1 (g_base_bank_addr_width-1 downto 0),
+			 ENABLE_0_BAR => decoded_CSB_0(j),
+			 ENABLE_1_BAR => decoded_CSB_1(j),
+			 WRITE_0_BAR  => writebar_0,
+			 WRITE_1_BAR  => writebar_1,
+			 DATAIN_0 => datain_0,
+			 DATAIN_1 => datain_1,
+			 DATAOUT_0 => dataout_array_0(j),
+			 DATAOUT_1 => dataout_array_1(j),
+			 CLK => clk, RESET => reset );
 	  end generate row_gen;
 
 	-- muxes.
@@ -212,6 +174,5 @@ begin
 		end loop;
 		dataout_1 <= sel_data_var;
 	  end process;
-	end block;
-  end generate n_rows_gt_1;
+  end block rowgen_block;
 end struct;

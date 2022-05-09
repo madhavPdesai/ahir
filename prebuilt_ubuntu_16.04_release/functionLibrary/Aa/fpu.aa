@@ -1,0 +1,267 @@
+$constant fp_d_ZERO: $float<11,52> := _f0.0e+0
+$constant c_ZERO_1 : $uint<1> := 0
+$constant c_ONE_64 : $uint<64> := _b1
+
+$constant ADDOP: $uint<8> := 0
+$constant SUBOP: $uint<8> := 1
+$constant MULOP: $uint<8> := 2
+
+$pipeline $depth 15 $buffering 2 $fullrate $module [fpmul32] 
+$in (L : $float<8,23> R : $float<8,23> )
+$out (ret_val_x_x : $float<8,23>)
+$is 
+{
+    ret_val_x_x := (L * R)
+    $attribute delay 12
+}
+
+$pipeline $depth 15 $buffering 2 $fullrate $module [fpadd32] 
+$in (L : $float<8,23> R : $float<8,23> )
+$out (ret_val_x_x : $float<8,23>)
+$is 
+{
+    ret_val_x_x := (L + R)
+    $attribute delay 14
+}
+
+$pipeline $depth 15 $buffering 2  $fullrate $module [fpsub32] 
+$in (L : $float<8,23> R : $float<8,23> )
+$out (ret_val_x_x : $float<8,23>)
+$is 
+{
+    ret_val_x_x := (L - R)
+    $attribute delay 14
+}
+
+$pipeline  $depth 15 $buffering 2 $fullrate $module [fpu32] 
+$in (L : $float<8,23> R : $float<8,23> OP_ID : $uint<8> )
+$out (ret_val_x_x : $float<8,23>)
+$is 
+{
+	is_add := (OP_ID == ADDOP)
+	is_sub := (OP_ID == SUBOP)
+	is_mul := (OP_ID == MULOP)
+    	$guard (is_add) oadd := (L + R)
+    	$guard (is_sub) osub := (L - R)
+        $guard (is_mul) omul := (L * R)
+	ret_val_x_x := ($mux is_add oadd ($mux is_sub osub ($mux is_mul omul 0)))
+    $attribute delay 16
+}
+
+// double precision..
+
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpmul64] 
+$in (L : $float<11,52> R : $float<11,52> )
+$out (ret_val_x_x : $float<11,52>)
+$is 
+{
+    $call fpmul64_inner (L R) (ret_val_x_x)
+    $attribute delay 14
+}
+
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpmul64_inner] 
+$in (L : $float<11,52> R : $float<11,52> )
+$out (ret_val_x_x : $float<11,52>)
+$is 
+{
+    ret_val_x_x := (L * R)
+    $attribute delay 12
+}
+
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpadd64] 
+$in (L : $float<11,52> R : $float<11,52> )
+$out (ret_val_x_x : $float<11,52>)
+$is 
+{
+    $call fpadd64_inner (L R) (ret_val_x_x)
+    $attribute delay 16
+}
+
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpadd64_inner] 
+$in (L : $float<11,52> R : $float<11,52> )
+$out (ret_val_x_x : $float<11,52>)
+$is 
+{
+    ret_val_x_x := (L + R)
+    $attribute delay 16
+}
+
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpsub64] 
+$in (L : $float<11,52> R : $float<11,52> )
+$out (ret_val_x_x : $float<11,52>)
+$is 
+{
+    $call fpsub64_inner (L R) (ret_val_x_x)
+    $attribute delay 16
+}
+
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpsub64_inner] 
+$in (L : $float<11,52> R : $float<11,52> )
+$out (ret_val_x_x : $float<11,52>)
+$is 
+{
+    ret_val_x_x := (L - R)
+    $attribute delay 16
+}
+
+$pipeline  $depth 31 $buffering 2 $fullrate $module [fpu64] 
+$in (L : $float<11,52> R : $float<11,52> OP_ID : $uint<8> )
+$out (ret_val_x_x : $float<11,52>)
+$is 
+{
+	is_add := (OP_ID == ADDOP)
+	is_sub := (OP_ID == SUBOP)
+	is_mul := (OP_ID == MULOP)
+    	$guard (is_add) oadd := (L + R)
+    	$guard (is_sub) osub := (L - R)
+        $guard (is_mul) omul := (L * R)
+	ret_val_x_x := ($mux is_add oadd ($mux is_sub osub ($mux is_mul omul 0)))
+    	$attribute delay 18
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+/////  divide/sqrt stuff extracted from fpu.c  /////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+$module [fpdiv64]
+$in ( a : $float<11,52>   b : $float<11,52>  )
+$out ( ret_val__ : $float<11,52>  )
+$is
+{
+	$call fpdiv64_inner (a b) (ret_val__)
+}
+
+
+$module [fpdiv32_inner] $in ( a b : $float<8,23>)  $out ( aByb: $float<8,23>) $is
+{
+	// convert to double and use double divide algorithm..
+	// finally convert back to single
+	$call fpdiv64_inner (($cast ($float<11,52>) a) ($cast ($float<11,52>) b)) (aByb_d)
+	aByb := ($cast ($float<8,23>) aByb_d)
+}
+
+
+$module [fpdiv64_inner] $in ( a b : $float<11,52>)  $out ( aByb: $float<11,52>) $is
+{
+
+	$constant C0 : $float<11,52> := _f1.88235294818878173828125e+0
+	$constant C1 : $float<11,52> := _f2.8235294818878173828125e+0
+	$constant C2 : $float<11,52> := _f2.0e+0
+
+
+	n := ($bitcast ($uint<64>) a)
+	d := ($bitcast ($uint<64>) b)
+
+	n_val := ($slice n 62 0)
+	d_val := ($slice d 62 0)
+
+	s_n := (n [] 63) 
+	s_d := (d [] 63)
+
+	e1 := ($slice n 62 52) 
+	e2 := ($slice d 62 52) 
+
+	e1_new := ($mux (n_val == 0)  0  ((e1 - e2) + 1022))
+	e2_new := ($bitcast ($uint<11>) 1022)
+
+	n1 := (e1_new && ($slice n 51 0)) 
+	d1 := (e2_new && ($slice d 51 0)) 
+
+	n_new := (c_ZERO_1 && n1)
+	d_new := (c_ZERO_1 && d1) 
+
+	a_new  := ($bitcast ($float<11,52>) n_new) 
+	b_new  := ($bitcast ($float<11,52>) d_new) 
+	
+	$call fpmul64_inner (C0  b_new) (t0)
+	$call fpsub64_inner (C1 t0) (x0)
+	
+	$call fpmul64_inner (b_new x0) (u1)
+	$call fpsub64_inner (C2 u1) (v1)
+	$call fpmul64_inner (x0 v1)  (x1)
+
+	$call fpmul64_inner (b_new x1) (u2)
+	$call fpsub64_inner (C2 u2) (v2)
+	$call fpmul64_inner (x1 v2)  (x2)
+
+	$call fpmul64_inner (b_new x2) (u3)
+	$call fpsub64_inner (C2 u3) (v3)
+	$call fpmul64_inner (x2 v3)  (x3)
+
+	$call fpmul64_inner (b_new x3) (u4)
+	$call fpsub64_inner (C2 u4) (v4)
+	$call fpmul64_inner (x3 v4)  (x4)
+
+	$call fpmul64_inner (a_new x4) (zz) 
+
+	res := ($mux ((n_val != 0) & (d_val != 0))  zz fp_d_ZERO)
+
+	ures := ($bitcast ($uint<64>) res)
+	res_int :=  ($concat (s_n ^ s_d) ($slice ures 62 0))
+
+	aByb := ($bitcast ($float<11,52>) res_int)
+}
+
+$module [fpsqrt32] $in ( a  : $float<8,23>)  $out ( sqrt_a : $float<8,23>) $is
+{
+	// convert to double and use double sqrt algorithm..
+	// finally convert back to single
+	$call fpsqrt64_inner (($cast ($float<11,52>) a)) (sqrt_a_d)
+	sqrt_a := ($cast ($float<8,23>) sqrt_a_d)
+}
+
+
+ $module [sqrtDoubleApprox] $in (a: $uint<64>) $out (sqrt_approx: $float<11,52>) $is
+{
+	a0 := (a - (c_ONE_64 << 52))
+	a1 := (a0 >> 1)
+	a2 := (a1 + (c_ONE_64 << 61)) 
+	sqrt_approx := ($bitcast ($float<11,52>) a2)
+}
+
+
+$module [fpsqrt64] $in ( a : $float<11,52>)  $out ( sqrt_a: $float<11,52>) $is
+{
+	$call fpsqrt64_inner (a) (sqrt_a)
+}
+
+$module [fpsqrt64_inner] $in ( a : $float<11,52>)  $out ( sqrt_a: $float<11,52>) $is
+{
+	$constant C3 : $float<11,52> := _f0.5e+0
+
+	// sqrt algorithm.
+	ua := ($bitcast ($uint<64>) a) 
+	
+	$call sqrtDoubleApprox (ua) (sqrt_approx)
+	x  := ($mux (a <= 0 )  fp_d_ZERO  sqrt_approx)
+	s  := (ua [] 63)
+	ua_val := ($slice ua 62 0)
+
+	
+	$branchblock [loop] {
+
+		$merge $entry loopback
+			$phi curr_X := x $on $entry next_X $on loopback
+			$phi STEP   := ($bitcast ($uint<4>) 0)  $on $entry next_STEP $on loopback
+		$endmerge
+
+		ret_X := curr_X
+
+		not_zero := (curr_X != fp_d_ZERO)
+		next_STEP := (STEP + 1)
+
+		break_from_loop := ((STEP == 3) | (~not_zero))
+
+		$guard (~break_from_loop) $call fpdiv64_inner (a curr_X) (Q)
+		$guard (~break_from_loop) $call fpadd64_inner (curr_X Q) (R)
+		$guard (~break_from_loop) $call fpmul64_inner (C3 R) (next_X)
+
+		$if (~break_from_loop) $then
+			$place [loopback]
+		$endif
+
+	} (ret_X => xf)
+
+	sqrt_a := ($mux ((ua_val != 0) & (~s)) xf fp_d_ZERO)
+}
+
+

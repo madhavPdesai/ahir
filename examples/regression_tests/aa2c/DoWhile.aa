@@ -15,7 +15,7 @@ $module [Daemon] $in () $out () $is
 			T[I][I] := in_data
                         gflag := (I >= 0)
 			$guard (gflag) out_data := (T[I][I] * T[I][I])
-			NI := (I + 1)
+			NI := ((I + 1) + ($bitcast ($uint<8>) $zero<18>))
 		$while (NI < 4)
 	}
 }

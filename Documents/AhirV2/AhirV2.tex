@@ -7,8 +7,7 @@
 %%\end{figure}
 
 \documentclass[12pt]{article}
-\usepackage{epsfig}
-\usepackage{graphics}
+\usepackage{graphicx}
 
 \title{AhirV2: from algorithms to hardware \\ An overview }
 \author{Madhav Desai \\ Department of Electrical Engineering \\ Indian Institute of Technology \\
@@ -30,10 +29,9 @@ the design of  hardware.
 
 The flow of transformations is illustrated in Figure \ref{fig:AhirFlow}.
 \begin{figure}
-\begin{centering}
-\centerline{\psfig{figure=AHIRv2Flow.eps,width=3.0in,height=3.0in}}
+\centering
+\includegraphics[width=8cm]{AHIRv2Flow.pdf}
 \caption{AhirV2 flow}
-\end{centering}
  \label{fig:AhirFlow}
 \end{figure}
 
@@ -298,7 +296,7 @@ The VHDL implementation of a module in the AHIR system
 corresponds to that of a pipeline stage (see Figure \ref{fig:ModulePipeline}).
 \begin{figure}
 \begin{centering}
-\centerline{\psfig{figure=ModulePipeline.eps,width=3.0in,height=3.0in}}
+\includegraphics[width=10cm]{ModulePipeline.pdf}
 \caption{System and Module Interfaces}
  \label{fig:ModulePipeline}
 \end{centering}
@@ -422,7 +420,7 @@ Note that in this case, we use the -T option in vc2vhdl to
 specify that foo and bar are free-running top-level modules.
 \begin{figure}
 \begin{centering}
-\centerline{\psfig{figure=FooBarPipeline.eps,width=3.0in,height=3.0in}}
+\includegraphics[width=10cm]{FooBarPipeline.pdf}
 \caption{Hardware implementation of Foo-Bar pipeline}
  \label{fig:FooBarPipeline}
 \end{centering}

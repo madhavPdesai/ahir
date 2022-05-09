@@ -64,8 +64,8 @@ architecture default_arch of place_with_bypass is
 
   signal incoming_token : boolean;      -- true if a pred fires
   signal backward_reset : boolean;      -- true if a succ fires
-  signal token_latch    : unsigned (Ceil_Log2(capacity+1)-1 downto 0);
-  constant U0    : unsigned (Ceil_Log2(capacity+1)-1 downto 0) := (others => '0');
+  signal token_latch    : unsigned (LogWidth(capacity)-1 downto 0);
+  constant U0    : unsigned (LogWidth(capacity)-1 downto 0) := (others => '0');
 
   signal non_zero       : boolean;
 
@@ -76,7 +76,7 @@ architecture default_arch of place_with_bypass is
 
 begin  -- default_arch
 
-  assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;
+  assert capacity > 0 report "in place " & name & ": place must have capacity > 0." severity error;
   assert marking <= capacity report "in place " & name & ": initial marking must be less than place capacity." severity error;
 
   -- At most one of the preds can send a pulse.
@@ -115,7 +115,7 @@ begin  -- default_arch
           token_latch <= next_token_latch_var;
         end if;
   
-        if(debug_flag and decr) then
+        if((reset /= '1') and debug_flag and decr) then
              
         	  if (token_latch = 0) then
           		  assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
@@ -124,7 +124,7 @@ begin  -- default_arch
 		 	  severity note;
         end if;
   
-        if (debug_flag and incr) then
+        if ((reset /= '1') and debug_flag and incr) then
   
        		  if(token_latch = capacity) then
          		  assert false report "in place-with-bypass: " & name & " number of tokens "
@@ -169,7 +169,7 @@ begin  -- default_arch
           non_zero    <= next_non_zero_var;
         end if;
   
-        if(debug_flag and decr) then
+        if((reset /= '1') and debug_flag and decr) then
              
         	  if (not non_zero) then
           		  assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
@@ -177,7 +177,7 @@ begin  -- default_arch
            	  assert false report "in place " & name & ": token count decremented from 1 to 0 " severity note;
         end if;
   
-        if (debug_flag and incr) then
+        if ((reset /= '1') and debug_flag and incr) then
   
        		  if(non_zero) then
          		  assert false report "in place-with-bypass: " & name & " number of tokens "

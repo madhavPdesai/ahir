@@ -1,0 +1,9 @@
+import os
+env = Environment(ENV = {'PATH' : os.environ['PATH']})
+env.Append(CPPPATH = './src/:./include/')
+env.Library('lib/libAhirVersion', Glob('src/*.cpp'), CCFLAGS='-g ')
+
+
+
+
+

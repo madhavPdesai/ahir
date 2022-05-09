@@ -46,6 +46,7 @@ entity InputPort_P2P is
 	   data_width: integer;
 	   queue_depth: integer;
 	   bypass_flag: boolean := false;
+	   barrier_flag: boolean := false;
 	   nonblocking_read_flag: boolean);
   port (
     -- pulse interface with the data-path
@@ -65,20 +66,57 @@ end entity;
 architecture Base of InputPort_P2P is
   signal noblock_update_req, noblock_update_ack: boolean;
   signal noblock_data : std_logic_vector(data_width-1 downto 0);
+  type SampleFsmState is (IDLE, WAITING);
+  signal fsm_state: SampleFsmState;
+  signal has_data: std_logic;
 begin
 
-     sample_ack <= sample_req; -- sacrificial
+    noBarrier: if (not barrier_flag) or nonblocking_read_flag generate
+	sample_ack <= sample_req;
+    end generate noBarrier; 
+
+    withBarrier: if (barrier_flag and (not nonblocking_read_flag)) generate
+     -- sample ack when there is something at the 
+     -- input of the port.  This is useful in 
+     -- setting up barriers.
+       process(clk, reset, fsm_state, sample_req, oack)
+       	variable next_fsm_state: SampleFsmState;
+       begin
+	next_fsm_state := fsm_state;
+	sample_ack <= false;
+	case fsm_state is
+		when IDLE => 
+			if ((oack = '1') or (has_data = '1')) then
+				sample_ack <= sample_req;
+			elsif sample_req then
+				next_fsm_state := WAITING;
+			end if;
+		when WAITING => 
+			if (has_data = '1') or (oack = '1') then
+				sample_ack <= true;
+				next_fsm_state := IDLE;
+			end if;
+	end case;
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			fsm_state <= IDLE;
+		else
+			fsm_state <= next_fsm_state;
+		end if;
+	end if;
+       end process;
+     end generate withBarrier;
+	
      ub: UnloadBuffer
 	generic map (name => name & "-ub", 
 				data_width => data_width,
 				   buffer_size => queue_depth, 
 					bypass_flag => bypass_flag,  
-						nonblocking_read_flag => nonblocking_read_flag,
-							full_rate => false -- no longer relevant..
-					)
+						nonblocking_read_flag => nonblocking_read_flag)
 	port map (write_req => oack, write_ack => oreq, 
 					write_data => odata,
 				unload_req => update_req,
 				unload_ack => update_ack,
+				has_data => has_data,
 				read_data =>  data, clk => clk, reset => reset);
 end Base;

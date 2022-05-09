@@ -106,10 +106,28 @@ void AaRoot::DebugInfo(string msg)
 bool AaRoot::Get_Error_Flag() { return AaRoot::_error_flag; }
 bool AaRoot::Get_Warning_Flag() { return AaRoot::_warning_flag; }
 
+string AaRoot::Get_Name()
+{
+	if(this == AaProgram::_dummy_root)
+		return("EXIT");
+	else
+		assert(0);
+}
+  
+string AaRoot::Get_VC_Name()
+{
+	if(this == AaProgram::_dummy_root)
+		return("VC_EXIT");
+	else
+		assert(0);
+}
+
 void AaRoot::Print(ostream& ofile)
 {
   assert(0);
 }
+  
+
 void AaRoot::Print(ofstream& ofile)
 {
   ostream *outstr = &ofile;
@@ -243,8 +261,8 @@ void __InsMap(map<AaRoot*,vector< pair<AaRoot*, int> > >& amap, AaRoot* src, AaR
 		amap[src].push_back(pair<AaRoot*,int>(dest,Dist));
 		if(AaProgram::_verbose_flag)
 		{
-			cerr << "Info:aa: added adjacency " << ((src != NULL) ? src->Get_Name() : "NULL") << " -> " << dest->Get_Name() << "(" << Dist << ")" << endl;
-			cerr << "Info:aa:vc: added adjacency " << ((src != NULL) ? src->Get_VC_Name() : "NULL") << " -> " << dest->Get_VC_Name() << "(" << Dist << ")" << endl;
+			cerr << "Info:aa: added adjacency " << ((src != NULL) ? src->Get_Name() : "NULL") << " -> " <<  ((dest == AaProgram::_dummy_root) ? "EXIT" : dest->Get_Name()) << "(" << Dist << ")" << endl;
+			cerr << "Info:aa:vc: added adjacency " << ((src != NULL) ? src->Get_VC_Name() : "NULL") << " -> " << ((dest == AaProgram::_dummy_root) ? "EXIT" : dest->Get_VC_Name()) << "(" << Dist << ")" << endl;
 		}
 	}
 	else

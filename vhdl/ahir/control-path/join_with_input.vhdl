@@ -39,8 +39,8 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity join_with_input is
-  generic (place_capacity : integer := 1; bypass : boolean := true; name : string);
-  port ( preds      : in   BooleanArray;
+  generic (number_of_predecessors: integer; place_capacity : integer := 1; bypass : boolean := true; name : string);
+  port ( preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -51,8 +51,8 @@ architecture default_arch of join_with_input is
   signal symbol_out_sig : BooleanArray(0 downto 0);
   signal place_sigs: BooleanArray(preds'range);
   signal inp_place_sig: Boolean;
-  constant H: integer := preds'high;
-  constant L: integer := preds'low;
+  constant H: integer := number_of_predecessors-1;
+  constant L: integer := 0;
 begin  -- default_arch
   
   Byp: if bypass generate 

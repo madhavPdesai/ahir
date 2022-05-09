@@ -34,6 +34,7 @@
 #include <AaLexer.hpp>
 #include <getopt.h>
 #include <fstream>
+#include "ahir_version.h"
 using namespace std;
 using namespace antlr;
 
@@ -83,6 +84,8 @@ int main(int argc, char* argv[])
 {
   signal(SIGSEGV, Handle_Segfault);
 
+
+  printAhirVersion(argv[0]);
 
   if(argc < 2)
     {
@@ -166,6 +169,7 @@ int main(int argc, char* argv[])
       
       string filename = argv[i];      
       AaParse(filename);
+      cerr << "Info: finished parsing file " << filename << endl;
       
       if(AaRoot::Get_Error_Flag())
 	{

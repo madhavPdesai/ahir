@@ -143,7 +143,7 @@ void vcEquivalence::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 		int L = (H- w->Get_Size())+1;
 		ofile << Z
 			<< " <= ov(" << H << " downto " << L << ");" << endl;
-		H = H-L;
+		H = H - w->Get_Size();
     	}
 	ofile << "--}" << endl;
 	ofile << "end process;" << endl;
@@ -198,6 +198,17 @@ void vcOperator::Print_VHDL_Logger(vcModule* parent_module, ostream& ofile)
 		ofile <<  "--}" << endl << "begin -- {" << endl;
 		ofile << " LogRecordPrint(global_clock_cycle_count,  " << print_message << ");" << endl;
 		ofile << "--} " << endl << "end process; " << endl;
+	}
+}
+
+void vcSplitOperator::Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+{
+	if(this->Get_Output_Buffering(this->Get_Output_Wire(0)) < 2)
+		this->vcDatapathElement::Append_Zero_Delay_Successors_To_Req(t, zero_delay_successors);	
+	else
+	{
+		if (t == _reqs[0])
+			zero_delay_successors.insert(_acks[0]);
 	}
 }
 
@@ -372,6 +383,21 @@ vcPhi::vcPhi(string id, vector<vcWire*>& inwires, vcWire* outwire):vcDatapathEle
 
 	this->Set_Input_Wires(inwires);
 	this->Set_Output_Wires(owires);
+}
+  
+void vcPhi::Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+{
+	// not full rate pipelined? no paths.
+	if(!this->Get_Full_Rate())
+		return;
+
+	for(int idx = 0, fidx = _reqs.size(); idx < fidx; idx++)
+	{
+		if(t == _reqs[idx])
+		{	
+			zero_delay_successors.insert(_acks[0]);
+		}
+	}
 }
 
 void vcPhi::Print(ostream& ofile)
@@ -551,6 +577,14 @@ bool vcCall::Is_Part_Of_Pipeline()
 	return(ret_val);
 }
 
+void vcCall::Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+{
+	if(this->_called_module->Get_Operator_Flag())
+	{
+		this->vcDatapathElement::Append_Zero_Delay_Successors_To_Req(t, zero_delay_successors);	
+	}
+}
+
 string vcCall::Get_Logger_Description()
 {
 	return("Call to module " + _called_module->Get_Id());
@@ -682,7 +716,9 @@ void vcCall::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 		first_one = false;
 		ofile << this->_called_module->Get_Output_Argument(idx) << " => " << ow_name;
 	}
-	if(vcSystem::_enable_logging)
+
+	// add instrumentation..
+	if(vcSystem::_enable_logging && !this->_called_module->Get_Is_Function_Library_Module())
 	{
 		if(!first_one)
 			ofile << ", ";
@@ -754,6 +790,7 @@ void vcCall::Print_Operator_VHDL(ostream& ofile)
 	string block_name = inst_name + "_block"; 
 	string name = '"' + inst_name + '"';
 
+
 	ofile << block_name << " : block -- { " << endl;
 	this->Print_VHDL_Instantiation_Preamble(false, ofile);
 
@@ -780,7 +817,7 @@ void vcCall::Print_Operator_VHDL(ostream& ofile)
 	ofile << "-- }" << endl << "end block;" << endl;
 }
 
-  
+
 bool vcCall::Is_Deterministic_Pipeline_Operator()
 {
 	bool ret_val = false;
@@ -805,7 +842,7 @@ void vcCall::Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostrea
 	string local_stall_sig = stall_sig + "(" + IntToStr(det_il) + " to " + IntToStr(det_ol) + ")";
 
 	string inst_name = "deterministic_pipeline_operator_" + this->_called_module->Get_VHDL_Id() + "_" + 
-					Int64ToStr(this->Get_Root_Index());
+		Int64ToStr(this->Get_Root_Index());
 	string block_name = inst_name + "_block"; 
 	string name = '"' + inst_name + '"';
 
@@ -841,7 +878,7 @@ void vcCall::Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostrea
 	}
 	ofile << "clk => clk, reset => reset  " << endl;
 	ofile << "-- }" << endl << ");" << endl;
-		
+
 
 	ofile << "-- }" << endl << "end block; " << endl;
 }
@@ -858,6 +895,7 @@ string vcIOport::Get_Pipe_Id()
 
 vcInport::vcInport(string id, vcPipe* pipe, vcWire* w):vcIOport(id,pipe) 
 {
+	_barrier_flag = false;
 	vector<vcWire*> owires; owires.push_back(w);
 	this->Set_Output_Wires(owires);
 }
@@ -867,6 +905,10 @@ void vcInport::Print(ostream& ofile)
 	ofile << vcLexerKeywords[__IOPORT] << " " <<  vcLexerKeywords[__IN] << " " << this->Get_Label() << "  " 
 		<< vcLexerKeywords[__LPAREN] << this->Get_Pipe_Id() << vcLexerKeywords[__RPAREN] << " "
 		<< vcLexerKeywords[__LPAREN] << this->Get_Data()->Get_Id() << vcLexerKeywords[__RPAREN] << " ";
+
+	if(_barrier_flag)
+		ofile << vcLexerKeywords[__BARRIER] << " ";
+
 	this->Print_Guard(ofile);
 	ofile << endl;
 	this->Print_Delay(ofile);
@@ -1399,6 +1441,9 @@ void vcSelect::Print_VHDL(ostream& ofile)
 vcInterlockBuffer::vcInterlockBuffer(string id, vcWire* din, vcWire* dout):vcSplitOperator(id)
 {
 	assert(din && dout);
+
+	_cut_through = false;
+
 	vector<vcWire*> iwires; iwires.push_back(din);
 	this->Set_Input_Wires(iwires);
 
@@ -1406,6 +1451,34 @@ vcInterlockBuffer::vcInterlockBuffer(string id, vcWire* din, vcWire* dout):vcSpl
 	this->Set_Output_Wires(owires);
 }
 
+void vcInterlockBuffer::Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+{
+	if(this->Get_Cut_Through())
+	{
+		if (t == _reqs[0])
+		{
+			zero_delay_successors.insert(_acks[0]);
+			zero_delay_successors.insert(_acks[1]);
+		}
+		if (t == _reqs[1])
+		{
+			zero_delay_successors.insert(_acks[0]);
+		}
+	}
+	else  if(this->Get_Output_Buffering(this->Get_Dout()) > 1)
+	{
+		if (t == _reqs[0])
+			zero_delay_successors.insert(_acks[0]);
+		
+	}
+	else
+	{
+		if (t == _reqs[0])
+			zero_delay_successors.insert(_acks[0]);
+		if (t == _reqs[1])
+			zero_delay_successors.insert(_acks[0]);
+	}
+}
 void vcInterlockBuffer::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
 	ofile << "-- interlock " << this->Get_VHDL_Id() << endl;
@@ -1497,16 +1570,17 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 	int in_data_width = this->Get_Din()->Get_Size();
 	int out_data_width = this->Get_Dout()->Get_Size();
 	bool flow_through = this->Get_Flow_Through();
+	bool cut_through  = this->Get_Cut_Through();
 
 	ofile << this->Get_VHDL_Id() << " : InterlockBuffer ";
 	ofile << "generic map ( -- { " << endl;
 	ofile << " name => " << name << "," << endl;
 	ofile << " buffer_size => " << buf_size << "," << endl;
 	ofile << " flow_through => " <<  (flow_through ? " true " : " false ") << "," << endl;
-	ofile << " full_rate => " <<  (full_rate ? " true " : " false ") << "," << endl;
+	ofile << " cut_through => " <<  (cut_through ? " true " : " false ") << "," << endl;
 	ofile << " in_data_width => " << in_data_width << "," << endl;
 	ofile << " out_data_width => " << out_data_width <<  "," << endl;
-	ofile << " bypass_flag => true " <<  endl;
+	ofile << " bypass_flag => " << (cut_through ? " true " : " false ")  <<  endl;
 	ofile << " -- }" << endl << ")";
 	ofile << "port map ( -- { " << endl;
 	ofile << " write_req => wreq(0), "   << endl;
@@ -1519,6 +1593,7 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 	ofile << " -- }" << endl << ");" << endl;
 	ofile << "end block; -- } " << endl;
 }
+  
 
 void vcInterlockBuffer::Print(ostream& ofile)
 {
@@ -1532,6 +1607,8 @@ void vcInterlockBuffer::Print(ostream& ofile)
 		<< this->Get_Dout()->Get_Id()
 		<< vcLexerKeywords[__RPAREN] 
 		<< " ";
+	if(this->Get_Cut_Through())
+		ofile << " " << vcLexerKeywords[__CUT_THROUGH] << " ";
 	this->Print_Guard(ofile);
 	this->Print_Flow_Through(ofile);
 	ofile << endl;
@@ -1936,6 +2013,18 @@ vcBranch::vcBranch(string id, vector<vcWire*>& wires, bool bypass_flag): vcDatap
 {
 	this->Set_Input_Wires(wires);
 	_bypass_flag = bypass_flag;
+}
+
+void vcBranch::Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+{
+	if(this->_bypass_flag)
+	{
+		if(t == _reqs[0])
+		{
+			zero_delay_successors.insert(_acks[0]);
+			zero_delay_successors.insert(_acks[1]);
+		}
+	}
 }
 
 void vcBranch::Print(ostream& ofile)

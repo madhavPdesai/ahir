@@ -36,9 +36,9 @@
 // the main program which calls the shift register
 int main(int argc, char* argv[])
 {
-	init_pipe_handler_with_log();
+	init_pipe_handler_with_log("pipe_handler_log.txt");
 
-	start_daemons(stderr);
+	start_daemons(stderr, 0);
 
 	uint8_t done = read_uint8("done_pipe");
 
@@ -60,7 +60,7 @@ void Print(uint16_t a)
    if(count == 16)
 	write_uint8("done_pipe",1);
 
-   return(0);
+   return;
 }
 
 void Read(uint16_t *a)
@@ -73,5 +73,5 @@ void Read(uint16_t *a)
   if(count == 1025)
 	// EXIT if you have sent in enough stuff.
 	exit(0); 
-  return(0);
+  return;
 }

@@ -333,6 +333,48 @@ int check_shifts(uint64_t bit_width)
 	return(ret_val);
 }
 
+int check_rotates()
+{
+	int ret_val = 0;
+
+	int I;
+	for(I = 0; I < 1024; I++)
+	{
+		uint8_t A = rand();
+		uint8_t B = rand() % 8;
+
+		bit_vector p,q,sp;
+
+		init_bit_vector(&p, 8);
+		init_bit_vector(&q, 8);
+		init_bit_vector(&sp, 8);
+
+		bit_vector_assign_uint64(0,&p, A);
+		bit_vector_assign_uint64(0,&sp, B);
+		bit_vector_rotate_left(&p, &sp, &q);
+
+		uint8_t result = bit_vector_to_uint64(0, &q);
+		uint8_t expected_result = (A << B) | (A >> (8-B));
+
+		if(expected_result != result)
+		{
+			fprintf(stderr,"Error: in rotate left.\n");
+			ret_val = 1;
+		}
+
+		bit_vector_rotate_right(&p, &sp, &q);
+		result = bit_vector_to_uint64(0, &q);
+		expected_result = (A >> B) | (A << (8-B));
+
+		if(expected_result != result)
+		{
+			fprintf(stderr,"Error: in rotate right.\n");
+			ret_val = 1;
+		}
+	}
+	return(ret_val);
+}
+
 int check_compares(uint64_t A, uint64_t B, uint64_t bit_width)
 {
 
@@ -380,18 +422,24 @@ int check_if_tests_passed(uint64_t def_size)
 	uint64_t A = rand();
 	uint64_t B = rand();
 
-	bit_vector a,b,c,d,e;
+	bit_vector a,b,c,d,e, sa,sb,sc;
 
 	init_bit_vector(&a,def_size);
+	init_bit_vector(&sa,def_size);
 	init_bit_vector(&b,def_size);
+	init_bit_vector(&sb,def_size);
 	init_bit_vector(&c,def_size);
+	init_bit_vector(&sc,def_size);
 
 
 	bit_vector_assign_uint64(0,&a,A);
 	bit_vector_assign_uint64(0,&b,B);
 
+	bit_vector_assign_uint64(1,&sa,A);
+	bit_vector_assign_uint64(1,&sb,B);
 
 	bit_vector_assign_uint64(0,&c,0);
+	bit_vector_assign_uint64(0,&sc,0);
 
 
 	//
@@ -434,6 +482,9 @@ int check_if_tests_passed(uint64_t def_size)
 			bit_vector_div(&(a),&(b),&(c));
 			check_error(&c, Atrunc, Btrunc, "(A/B)", (Atrunc/Btrunc), &ret_val, def_size);
 		}
+
+		bit_vector_smul(&(sa), &(sb), &(sc));
+		check_error(&sc, Atrunc, Btrunc, "(A*B)", (Atrunc*Btrunc), &ret_val, def_size);
 	}
 
 
@@ -489,6 +540,13 @@ int main(int argc, char* argv[])
 
 	if(argc > 2)
 		H = atoi(argv[2]);
+
+
+	if(check_rotates())
+	{
+	    fprintf(stderr,"Error: rotate tests failed.\n");
+	    fail_count++;
+	}
 
 	if(check_decode_encode())
 	{

@@ -49,6 +49,8 @@ vc_System[vcSystem* sys]
 }
 :
 (
+ vc_GatedClock[sys]
+ |
  (nf = vc_Module[sys]) // module added to sys during rule match.
  |
  (ms = vc_MemorySpace[sys,NULL] {sys->Add_Memory_Space(ms);})
@@ -62,6 +64,22 @@ vc_System[vcSystem* sys]
  (vc_SysBufferingSpec[sys])
  )*
 	;
+
+//-----------------------------------------------------------------------------------------------
+// vc_GatedClock :  (LIFO | NOBLOCK)? PIPE vc_Label UINTEGER
+//-----------------------------------------------------------------------------------------------
+vc_GatedClock [vcSystem* sys]
+{
+   string gc_name, enable_name;
+}:
+    GATED_CLOCK gcid: SIMPLE_IDENTIFIER eid: SIMPLE_IDENTIFIER
+    	{
+		gc_name = gcid->getText();
+		enable_name = eid->getText();
+		sys->Add_Gated_Clock(gc_name, enable_name);
+	}
+;
+
 
 //-----------------------------------------------------------------------------------------------
 // vc_Pipe :  (LIFO | NOBLOCK)? PIPE vc_Label UINTEGER
@@ -159,15 +177,21 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
     int buffering = 1;
     bool full_rate_flag = false;
     bool deterministic_flag = false;
+    bool use_once_flag = false;
+    bool use_gated_clock = false;
+    string gated_clock_name;
 }
-    : ((FOREIGN {foreign_flag = true;}) | 
-	(PIPELINE {pipeline_flag = true;} 
+    : 
+	(USE_GATED_CLOCK {use_gated_clock = true;} (gcid:SIMPLE_IDENTIFIER {gated_clock_name = gcid->getText();})?)?
+        ((FOREIGN {foreign_flag = true;}) | 
+	  (PIPELINE {pipeline_flag = true;} 
 		(DEPTH did: UINTEGER {depth = atoi(did->getText().c_str());})? 
 		(BUFFERING bid: UINTEGER {buffering = atoi(bid->getText().c_str());})? 
 		(FULLRATE {full_rate_flag = true;})? 
 		(DETERMINISTIC {deterministic_flag = true;})? 
 	))?
-	( (OPERATOR {operator_flag = true;} ) | (VOLATILE {volatile_flag = true;}) )?
+	((OPERATOR {operator_flag = true;} ) | (VOLATILE {volatile_flag = true;}))?
+	(USEONCE {use_once_flag = true;})?
         MODULE lbl = vc_Label 
         { 
             m = new vcModule(sys,lbl); 
@@ -182,10 +206,12 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 	    }
 	    m->Set_Operator_Flag(operator_flag);
 	    m->Set_Volatile_Flag(volatile_flag);
+	    m->Set_Use_Once_Flag(use_once_flag);
+            m->Set_Use_Gated_Clock(use_gated_clock, gated_clock_name);
         } 
         LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
-        (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
         (vc_Pipe[NULL,m])*
+        (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
         (vc_Controlpath[sys,m] { assert(!foreign_flag);})? 
         (vc_Datapath[sys,m] {assert(!foreign_flag);})? 
         (vc_Link[m] {assert(!foreign_flag);})*
@@ -319,6 +345,21 @@ vc_Controlpath[vcSystem* sys, vcModule* m]
 //-----------------------------------------------------------------------------------------------
 vc_CPElement[vcCPElement* p] returns [vcCPElement* cpe]
 : (cpe = vc_CPPlace[p]) | (cpe = vc_CPTransition[p]);
+
+//-----------------------------------------------------------------------------------------------
+// vc_CPAlias: ALIAS SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER 
+//-----------------------------------------------------------------------------------------------
+vc_CPAlias[vcCPElement* p]
+{
+	string alias_id, reference_id;
+}
+: ALIAS alias_id = vc_Label reference_id = vc_Label
+	{
+		p->Add_Alias (alias_id, reference_id);
+	}
+
+;
+
 
 
 //-----------------------------------------------------------------------------------------------
@@ -620,12 +661,14 @@ vc_CPPipelinedForkBlock[vcCPBlock* cp, vcModule* m]
     	string internal_id;
 }
 : PIPELINEDFORKBLOCK lbl = vc_Label { fb = new vcCPPipelinedForkBlock(cp,lbl); fb->Set_Max_Iterations_In_Flight(m->Get_Pipeline_Depth());} LBRACE 
- ((vc_CPRegion[fb]) | 
- ( vc_CPFork[fb] ) |
- ( vc_CPJoin[fb] ) | 
- ( vc_CPMarkedJoin[fb] ) | 
- ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
-        (vc_AttributeSpec[fb])  )* RBRACE
+ (
+	(vc_CPRegion[fb]) | 
+ 	( vc_CPFork[fb] ) |
+ 	( vc_CPJoin[fb] ) | 
+ 	( vc_CPMarkedJoin[fb] ) | 
+ 	( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
+ 	(vc_AttributeSpec[fb])  
+ )* RBRACE
 { cp->Add_CPElement(fb); fb->Set_Pipeline_Parent(fb);}
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})* RPAREN ) 
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Output(internal_id);})* RPAREN ) 
@@ -651,6 +694,7 @@ vc_CPPipelinedLoopBody[vcCPBlock* cp]
             ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
             ( vc_CPPhiSequencer[fb]) |
             ( vc_CPTransitionMerge[fb]) |
+ 	    ( vc_CPAlias[fb] ) | 
             (vc_AttributeSpec[fb]) )* RBRACE
 { cp->Add_CPElement(fb); fb->Set_Pipeline_Parent(fb);}
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})* RPAREN ) 
@@ -1086,14 +1130,19 @@ vc_InterlockBuffer_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   string din;
   string dout;
   vector<bool> war_flags;
+  bool cut_through = false;
 }: HASH  as_id: ASSIGN_OP id = vc_Label LPAREN x = vc_Wire_Connection[war_flags,dp]
 			 {NOT_FOUND__("wire",x,din,as_id) }
                           RPAREN
                           LPAREN dout = vc_Identifier { y = dp->Find_Wire(dout); 
                                NOT_FOUND__("wire",y,dout,as_id) }
                           RPAREN
+			  (CUT_THROUGH {cut_through = true;})?
    {  
       new_reg = new vcInterlockBuffer(id, x, y); 
+
+      new_reg->Set_Cut_Through(cut_through);
+
       dp->Add_Interlock_Buffer(new_reg);
       dpe = (vcDatapathElement*) new_reg;
       dpe->Set_Input_WAR_Flags(war_flags);
@@ -1176,7 +1225,7 @@ vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp] returns[vcDatapathElement* 
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_IOPort_Instantiation[dp]: IOPORT  (IN | OUT) vc_LABEL LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN
+// vc_IOPort_Instantiation[dp]: IOPORT  (IN | OUT) vc_LABEL LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN (BARRIER?)
 //-------------------------------------------------------------------------------------------------------------------------
 vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
@@ -1184,9 +1233,10 @@ vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
  vcWire* w;
  vcPipe* p = NULL;
  bool in_flag = false;
+ bool barrier_flag = false;
 }
 : ipid: IOPORT (( IN {in_flag = true;})  | OUT)  id = vc_Label LPAREN in_id = vc_Identifier RPAREN 
-    lpid: LPAREN out_id = vc_Identifier RPAREN
+    lpid: LPAREN out_id = vc_Identifier RPAREN (BARRIER {barrier_flag = true;})?
        {
           if(in_flag)
           {
@@ -1215,6 +1265,7 @@ vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
              vcInport* np = new vcInport(id,p,w);
              dp->Add_Inport(np);
 	     dpe=(vcDatapathElement*) np;
+	     np->Set_Barrier_Flag(barrier_flag);
           }
           else
           {
@@ -1783,6 +1834,7 @@ FOREIGN       : "$foreign";
 PIPELINE      : "$pipeline";
 OPERATOR      : "$operator";
 VOLATILE      : "$volatile";
+USEONCE       : "$useonce";
 SERIESBLOCK   : ";;";
 PARALLELBLOCK : "||";
 FORKBLOCK     : "::";
@@ -1950,6 +2002,13 @@ BYPASS	      : "$bypass";
 
 WAR : "$war";
 DETERMINISTIC: "$deterministic";
+
+ALIAS: "$A";
+BARRIER: "$barrier";
+CUT_THROUGH: "$cut_through";
+
+GATED_CLOCK:"$gated_clock";
+USE_GATED_CLOCK: "$use_gated_clock";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

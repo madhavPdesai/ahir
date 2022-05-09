@@ -88,6 +88,7 @@ public:
   vcSplitOperator(string id):vcDatapathElement(id) {}
   virtual string Kind() {return("vcSplitOperator");}
 
+  virtual bool Is_Split_Operator() {return(true);}
   virtual void Check_Consistency() {assert(0);}
   virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
 
@@ -99,6 +100,7 @@ public:
 
   virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile) {assert(0);}
   virtual void Print_VHDL_Instantiation_Preamble(bool flow_through_flag, ostream& ofile);
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);
   virtual string Get_Logger_Description() {return ("");}
   friend class vcDataPath;
 };
@@ -148,6 +150,7 @@ public:
   virtual bool Is_Deterministic_Pipeline_Operator();
   virtual void Print_Deterministic_Pipeline_Operator_VHDL(string stall_sig, ostream& ofile);
 
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);
   friend class vcDataPath;
 };
 
@@ -203,10 +206,16 @@ public:
   virtual string Get_Logger_Description() {return (" PipeWrite to " + _pipe->Get_Id()); }
   friend class vcDataPath;
 
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+  {
+	if(t == _reqs[0])
+		zero_delay_successors.insert(_acks[0]);
+  }
 };
 
 class vcInport: public vcIOport
 {
+  bool _barrier_flag;
 public:
   vcInport(string id, vcPipe* pipe, vcWire* w);
   
@@ -225,6 +234,15 @@ public:
 	vcWire* d  = this->Get_Data();
 	if(d != NULL)
 		outwire_buffering.push_back(this->Get_Output_Buffering(d, num_reqs));
+  }
+  void Set_Barrier_Flag(bool v) {_barrier_flag =v;}
+  bool Get_Barrier_Flag() {return(_barrier_flag);}
+
+ 
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+  {
+	if(t == _reqs[0])
+		zero_delay_successors.insert(_acks[0]);
   }
 
   virtual string Get_Logger_Description() {return (" PipeRead from " + _pipe->Get_Id()); }
@@ -254,6 +272,12 @@ public:
   virtual bool Is_Local_To_Datapath()
   {
     return(false);
+  }
+
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors)
+  {
+	if(t == _reqs[0])
+		zero_delay_successors.insert(_acks[0]);
   }
 
   friend class vcDataPath;
@@ -319,6 +343,9 @@ public:
 
   virtual void Print_VHDL(ostream& ofile);
   virtual void Print_VHDL_Logger(vcModule* parent_module, ostream& ofile);
+
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);
+
   friend class vcDataPath;
 };
 
@@ -463,6 +490,7 @@ public:
   virtual string Kind() {return("vcBranch");}
   bool Get_Bypass_Flag() {return(_bypass_flag);}
 
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);
   friend class vcDataPath;
 };
 
@@ -483,6 +511,8 @@ public:
 // new operator to support full-rate pipelining..
 class vcInterlockBuffer: public vcSplitOperator
 {
+  bool _cut_through;
+
   public:
   vcInterlockBuffer(string id, vcWire* x, vcWire* z);
 
@@ -493,8 +523,13 @@ class vcInterlockBuffer: public vcSplitOperator
   virtual vcWire* Get_Din() {return(this->Get_Input_Wire(0));}
   virtual vcWire* Get_Dout() {return(this->Get_Output_Wire(0));}
 
+  virtual void Set_Cut_Through(bool v) {_cut_through = v;}
+  bool Get_Cut_Through() {return(_cut_through);}
+
   // combinational operator..
   virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);
+  virtual void Append_Zero_Delay_Successors_To_Req(vcTransition* t,set<vcCPElement*>& zero_delay_successors);
+
 };
 // dout := din[_high_index downto _low_index]
 class vcSlice: public vcInterlockBuffer

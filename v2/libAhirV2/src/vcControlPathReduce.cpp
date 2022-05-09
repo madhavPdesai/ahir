@@ -32,6 +32,7 @@
 #include <vcRoot.hpp>
 #include <vcControlPath.hpp>
 #include <vcDataPath.hpp>
+#include <vcOperator.hpp>
 #include <vcSystem.hpp>
 #include <vcModule.hpp>
 #include <BGLWrap.hpp>
@@ -156,6 +157,14 @@ void vcCPBlock::Connect_CPElement_Group_Graph(vcControlPath* cp)
   // connect this block to it's predecessors
   // and successors.
   this->vcCPElement::Connect_CPElement_Group_Graph(cp);
+}
+
+vcCPElement* vcCPElementGroup::Get_Top_Element()
+{
+	vcCPElement* cpe = NULL;
+	if(_elements.size() > 0)
+		cpe = *(_elements.begin());
+	return(cpe);	
 }
 
   
@@ -759,6 +768,19 @@ void vcControlPath::Construct_Reduced_Group_Graph()
 	{
 		vcSystem::Error("malformed group graph after construction.");
 	}
+
+	vcSystem::Info("Detect and try to fix combinational loops by increasing interlock-buffering (two passes)");
+	int err = this->Fix_Combinational_Loops(1); // first-pass
+	if (err)
+	{
+		err = this->Fix_Combinational_Loops(2); // second-pass
+
+		if(err)
+		{
+			err = this->Fix_Combinational_Loops(3);
+		}
+	}
+
 	this->Reduce_CPElement_Group_Graph();
 	if(this->Check_Group_Graph_Structure())
 	{
@@ -768,6 +790,269 @@ void vcControlPath::Construct_Reduced_Group_Graph()
 	//this->Print_Groups(cerr);	
 }
 
+	
+//
+// when pass-index == 1, it tries to fix combinational loops by double buffering
+// interlock buffers.
+//
+// when pass-index == 2, it tries to fix combinational loops by double buffering
+// Split operators.
+//
+// when pass_index == 3, it reports an error if there is a loop
+//
+// returns 0 if no loops found, 1 otherwise
+// 
+int vcControlPath::Fix_Combinational_Loops(int pass_index)
+{
+	vcSystem::Info("Started Fix_Combinational_Loops (pass " + IntToStr(pass_index) + ")");
+        if(pass_index == 1)
+		vcSystem::Info("Started will double buffer interlock-buffers if needed");
+	if(pass_index == 2)
+		vcSystem::Info("Started will double buffer split-protocol operartors if needed");
+	if(pass_index == 3)
+		vcSystem::Info("Final pass to check if double buffering has worked"); 
+	
+
+	int err = 0;
+
+	// first build a graph.
+	GraphBase  t_graph;
+
+	//
+	// At this point, each group has one element.
+	//
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
+			iter++)
+	{
+		vcCPElementGroup* g = *iter;
+	
+		// must have one element.
+		assert(g->_elements.size() == 1);
+		vcCPElement* e = g->Get_Top_Element();
+
+		t_graph.Add_Vertex ((void*) e);
+		if(vcSystem::_verbose_flag)
+			cerr << "FCL (pass " << pass_index << "): added vertex " << e->Get_Id() << endl;
+	}
+
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
+			iter++)
+	{
+		vcCPElementGroup* g = *iter;
+		vcCPElement* e = g->Get_Top_Element();
+		if(!e->Get_Is_Delay_Element() && !e->Is_Output_Transition() && !e->Get_Is_Bound_As_Input_To_CP_Function() && !e->Get_Is_Dead())
+		// If e is a delay element, no need to look at its successors..
+		// If e is an output transition, then the DPE to which it is linked
+		//   will set-up the arc.
+		// If e is bound as output of CP function, then the CP function will
+		//   set up th earc.
+		// If e is dead, it is dead.
+		{
+			for(set<vcCPElementGroup*>::iterator succ_iter = g->_successors.begin(), fsucc_iter = g->_successors.end();
+					succ_iter != fsucc_iter; succ_iter++)
+			{
+				vcCPElementGroup* s = *succ_iter;
+				vcCPElement* f = s->Get_Top_Element();
+
+				if(e != f)
+					t_graph.Add_Edge(e,f);	
+
+				if(vcSystem::_verbose_flag)
+					cerr << "FCL (pass " << pass_index << "): added control edge " << e->Get_Id() << " -> " << f->Get_Id() <<  endl;
+			}
+
+			for(set<vcCPElementGroup*>::iterator msucc_iter = g->_marked_successors.begin(), fmsucc_iter = g->_marked_successors.end();
+					msucc_iter != fmsucc_iter; msucc_iter++)
+			{
+				vcCPElementGroup* s = *msucc_iter;
+				vcCPElement* h = s->Get_Top_Element();
+				
+				int m_delay = e->Get_Marked_Successor_Delay(h);
+
+				// add e -> h if not delayed.
+				if(m_delay == 0)
+				{
+					if(e != h)
+						t_graph.Add_Edge(e,h);	
+
+					if(vcSystem::_verbose_flag)
+						cerr << "FCL (pass " << pass_index << "): added (marked) control edge " << e->Get_Id() << " -> " << h->Get_Id() <<  endl;
+				}
+			}
+
+		}
+
+		if(e->Is_Output_Transition())
+		//
+		// check which one it is and if there is an output transition
+		// to which it has a zero delay connection
+		//
+		{
+			set<vcCPElement*> zero_delay_successors;
+
+			zero_delay_successors.clear();
+			vcTransition* te = (vcTransition*) e;		
+
+			this->Find_Zero_Delay_Successors_Via_DPE(te, zero_delay_successors);
+			for(set<vcCPElement*>::iterator uiter = zero_delay_successors.begin(), fuiter = zero_delay_successors.end();
+				uiter != fuiter; uiter++)
+			{
+				if(e != *uiter)
+					t_graph.Add_Edge(e, *uiter);
+				if(vcSystem::_verbose_flag)
+					cerr << "FCL (pass " << pass_index << "): added (dpe) control edge " << e->Get_Id() << " -> " << (*uiter)->Get_Id() <<  endl;
+			}
+		}
+		
+		if(e->Is_Transition() && e->Get_Is_Bound_As_Input_To_CP_Function())
+		{
+			set<vcCPElement*> zero_delay_successors;
+			this->Find_Zero_Delay_Successors_Via_CP_Function((vcTransition*)e, zero_delay_successors);
+			for(set<vcCPElement*>::iterator uiter = zero_delay_successors.begin(), fuiter = zero_delay_successors.end();
+				uiter != fuiter; uiter++)
+			{
+				if (e != *uiter)	
+					t_graph.Add_Edge(e, *uiter);
+				if(vcSystem::_verbose_flag)
+					cerr << "FCL (pass " << pass_index << "): added (cpf) control edge " << e->Get_Id() << " -> " << (*uiter)->Get_Id() <<  endl;
+			}
+		}
+	}
+
+	map<void*, int>   scc_map;
+	t_graph.Strongly_Connected_Components(scc_map);
+
+	map<int, vector<vcCPElement*> >  scc_member_map;
+	for(map<void*,int>::iterator miter=scc_map.begin(), fmiter = scc_map.end(); miter != fmiter; miter++)
+	{
+		vcCPElement* cpeg = (vcCPElement*) ((*miter).first);
+		int scc_index = (*miter).second;
+
+		scc_member_map[scc_index].push_back(cpeg);
+	}
+
+		
+	set <vcDatapathElement*> dpes_in_combinational_cycle;
+	for(map<int, vector<vcCPElement*> >::iterator mmiter=scc_member_map.begin(), fmmiter = scc_member_map.end(); mmiter != fmmiter; mmiter++)
+	{
+		int I = (*mmiter).first;
+		int vsize = (*mmiter).second.size();
+		if(vsize > 1) 
+		{
+			err = 1;
+			if(pass_index == 3)
+			{
+				vcSystem::Error("Fix_Combinational (pass 2): found a combinational cycle (strongly-connected-component) in module " + this->_parent_module->Get_Label());
+			}
+			else
+			{
+				vcSystem::Warning("Fix_Combinational (pass " + IntToStr(pass_index) + "): found a combinational cycle (strongly-connected-component) in module " + this->_parent_module->Get_Label());
+			}
+			cerr << "Combination cycle control elements  " << endl;
+			for(int J = 0, fJ = (*mmiter).second.size();  J < fJ; J++)
+			{
+				vcCPElement* q = (*mmiter).second[J];
+				if(q->Is_Input_Transition())
+				{
+					vcTransition* tq = (vcTransition*) q;
+					this->Include_DPE_Elements_Bound_With_Ack_Transition(tq, dpes_in_combinational_cycle);
+				}
+				cerr << "   " <<  (*mmiter).second[J]->Get_Id() << endl;
+			}
+		}
+	}
+
+	if(dpes_in_combinational_cycle.size() > 0)
+	{
+		cerr << "The following DPE's are involved in combinational cycles" << endl;
+		for(set<vcDatapathElement*>::iterator siter = dpes_in_combinational_cycle.begin(), fsiter = dpes_in_combinational_cycle.end();
+				siter != fsiter; siter++)
+		{
+			vcDatapathElement* dpe = *siter;
+			cerr << " " << 	dpe->Get_Id() << endl;
+
+			if((dpe->Kind() == "vcInterlockBuffer") && (pass_index == 1))
+			{
+				vcInterlockBuffer* ilb = (vcInterlockBuffer*) dpe;
+				if(ilb->Get_Output_Buffering(ilb->Get_Dout()) < 2)
+				{
+					cerr << "  Setting buffering on ILB " << dpe->Get_Id() << " to 2" << endl;
+					ilb->Set_Output_Buffering(ilb->Get_Dout(),2);
+				}
+
+				cerr << "  Setting cut_through = false on ILB " << dpe->Get_Id() << endl;
+				ilb->Set_Cut_Through(false);
+			}
+
+			if(dpe->Is_Split_Operator() && (dpe->Get_Number_Of_Output_Wires() == 1) && (pass_index == 2))
+			{
+				cerr << "  Setting buffering on Split-operator " << dpe->Get_Id() << " to 2" << endl;
+				dpe->Set_Output_Buffering(dpe->Get_Output_Wire(0),2);
+			}
+		}
+	}
+
+	if(!err)
+	{
+		vcSystem::Info(" Fix_Combi pass OK");	
+	}
+	return(err);
+}
+
+
+void vcControlPath::Find_Zero_Delay_Successors_Via_DPE(vcTransition* t, set<vcCPElement*>& zero_delay_successors)
+{
+	for(int idx = 0, fidx = t->_dp_link.size(); idx < fidx; idx++)
+	{
+		vcDatapathElement* dpe = t->_dp_link[idx].first;
+		dpe->Append_Zero_Delay_Successors_To_Req(t,zero_delay_successors);	
+	}
+}
+  
+void vcControlPath::Find_Zero_Delay_Successors_Via_CP_Function(vcTransition* t, set<vcCPElement*>& zero_delay_successors)
+{
+	for(set<vcCPSimpleLoopBlock*>::iterator slb_iter = _simple_loop_blocks.begin(), fslb_iter = _simple_loop_blocks.end();
+			slb_iter != fslb_iter;
+			slb_iter++)
+	{
+		vcCPSimpleLoopBlock* slb = *slb_iter;
+		slb->Get_Terminator()->Append_Zero_Delay_Successors(t, zero_delay_successors);
+
+		vcCPPipelinedLoopBody* plb = slb->Get_Loop_Body();
+		for(int idx = 0, fidx = plb->Get_Number_Of_Phi_Sequencers();  idx < fidx; idx++)
+		{
+			vcPhiSequencer* ps = plb->Get_Phi_Sequencer(idx);
+			ps->Append_Zero_Delay_Successors(t,zero_delay_successors);
+		}
+
+		for(int jdx = 0, fjdx = plb->Get_Number_Of_Transition_Merges(); jdx < fjdx; jdx++)
+		{
+			vcTransitionMerge* tm = plb->Get_Transition_Merge(jdx);
+			tm->Append_Zero_Delay_Successors(t,zero_delay_successors);
+		}
+
+	}
+}
+
+void vcControlPath::Include_DPE_Elements_Bound_With_Ack_Transition(vcTransition* t, set<vcDatapathElement*>& dpe_set)
+{
+	for(int idx = 0, fidx = t->_dp_link.size(); idx < fidx; idx++)
+	{
+		vcDatapathElement* dpe = t->_dp_link[idx].first;
+		vcTransitionType tt = t->_dp_link[idx].second;
+	
+		if(tt == _IN_TRANSITION)
+		{
+			dpe_set.insert(dpe);
+		}		
+	}
+}
+
+
 void vcControlPath::Index_Groups()
 {
 	int idx = 0;
@@ -776,7 +1061,8 @@ void vcControlPath::Index_Groups()
 			iter != fiter;
 			iter++)
 	{
-		(*iter)->Set_Group_Index(idx);
+		vcCPElementGroup* g = *iter;
+		g->Set_Group_Index(idx);
 		idx++;
 	}
 }
@@ -811,8 +1097,8 @@ void vcControlPath::Reduce_CPElement_Group_Graph()
 		this->Reduce_From_Nucleus(nucleus, absorbed_elements, nucleii);
 	}
 
-	this->Last_Gasp_Reduce();
 
+	this->Last_Gasp_Reduce();
 
 	// index the groups.. again..
 	this->Index_Groups();
@@ -833,10 +1119,10 @@ void vcControlPath::Last_Gasp_Reduce()
 	{
 		vcCPElementGroup* g = (*iter);
 		if((!g->_is_bound_as_output_from_cp_function) &&
-		   (!g->_has_input_transition) &&
-		   (g->_marked_predecessors.size() == 0) &&
-		   (!g->_is_delay_element) &&
-		   (g->_predecessors.size() == 1))
+				(!g->_has_input_transition) &&
+				(g->_marked_predecessors.size() == 0) &&
+				(!g->_is_delay_element) &&
+				(g->_predecessors.size() == 1))
 		{
 			reduction_candidates.push_back(g);
 		} 	  
@@ -845,12 +1131,21 @@ void vcControlPath::Last_Gasp_Reduce()
 	for(int I = 0, fI = reduction_candidates.size(); I < fI; I++)
 	{
 		vcCPElementGroup* g = reduction_candidates[I];
-	 	vcCPElementGroup* pg = *(g->_predecessors.begin());
+		vcCPElementGroup* pg = *(g->_predecessors.begin());
 
 		if((g->_pipeline_parent == pg->_pipeline_parent) &&
-			(g->_associated_cp_function == pg->_associated_cp_function))
+				(g->_associated_cp_function == pg->_associated_cp_function))
 		{
-			this->Merge_Groups(g,pg);	
+			// Do not create merge/join OR branch/fork
+			// aliasing.
+			if((g->_pipeline_parent != NULL) ||
+				(!(pg->_is_join && g->_is_merge) &&
+				 !(pg->_is_merge && g->_is_join) &&
+				 !(g->_is_branch && pg->_is_fork) &&
+				 !(g->_is_fork && pg->_is_branch)))
+			{
+				this->Merge_Groups(g,pg);	
+			}
 		}
 	}
 }
@@ -1041,6 +1336,13 @@ void vcControlPath::Identify_Strongly_Connected_Components()
 void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole)
 {
 
+	// no join/merge fork/branch confusion.
+	assert(
+		(!part->_is_join || !whole->_is_merge) && 
+		(!part->_is_fork || !whole->_is_branch) &&
+		(!whole->_is_join || !part->_is_merge) && 
+		(!whole->_is_fork || !part->_is_branch)
+	     );
 
 
 	assert(part->_predecessors.size() == 1);

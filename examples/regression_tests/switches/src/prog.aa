@@ -1,0 +1,35 @@
+$pipe out_data : $uint<16> $depth 2
+$pipe in_data : $uint<32> $depth 2 
+
+$module [p2p_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$merge $entry loopback $endmerge
+
+	 	CMD := in_data
+		$volatile $split (CMD 2 15 15) (opcode a b)
+
+		$switch opcode
+			$when 0 $then
+				sum := (a + b)
+			$when 1 $then
+				diff := (a - b)
+			$when 2 $then
+				prod := (a * b)
+			$when 3 $then
+				xor  := (a ^ b)
+			$default $null
+		$endswitch
+
+		result := ($excmux 
+				(opcode == 0)  sum
+				(opcode == 1)  diff
+				(opcode == 2)  prod
+				(opcode == 3)  xor)
+
+		out_data := ($concat $zero<1> result)
+
+		$place [loopback]
+	}
+
+}

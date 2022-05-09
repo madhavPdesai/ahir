@@ -34,6 +34,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library ahir;
+use ahir.utilities.all;
 --
 -- dual port synchronous memory.. implemented with registers..
 --
@@ -60,6 +62,8 @@ architecture PlainRegisters of base_bank_dual_port_with_registers is
   signal mem_array : MemArray((2**g_addr_width)-1 downto 0) := (others => (others => '0'));
 begin  -- PlainRegisters
 
+  assert false report "DP MEMFF " & Convert_To_String ( g_data_width*(2**g_addr_width)) 
+		severity note;
   --
   -- try to flag read/write clash!
   --

@@ -39,8 +39,8 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity join is
-  generic (place_capacity : integer := 1;bypass: boolean := true; name : string );
-  port ( preds      : in   BooleanArray;
+  generic (number_of_predecessors: integer; place_capacity : integer := 1;bypass: boolean := true; name : string );
+  port ( preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
     	symbol_out : out  boolean;
 	clk: in std_logic;
 	reset: in std_logic);

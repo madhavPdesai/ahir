@@ -1,0 +1,42 @@
+$module [smul] $in (a b: $int<16>) $out (c: $int<16>) $is
+{
+	c := (a*b)
+}
+
+//$module [sdiv] $in (a b: $int<16>) $out (c: $int<16>) $is
+//{
+	//c := (a/b)
+//}
+
+$module [sadd] $in (a b: $int<16>) $out (c: $int<16>) $is
+{
+	c := (a + b)
+}
+
+$module [ssub] $in (a b: $int<16>) $out (c: $int<16>) $is
+{
+	c := (a - b)
+}
+
+$module [fdotP] $in (ia ib: $int<8>)  $out (c: $int<32>) $is
+{
+	
+	a := ($bitcast ($uint<8>) ia)
+	a8 := ($concat a a a a a a a a)
+	a128 := ($concat a8 a8 a8 a8 
+				a8 a8 a8 a8
+				a8 a8 a8 a8
+				a8 a8 a8 a8)
+
+	b := ($bitcast ($uint<8>) ib)
+	b8 := ($concat b b b b b b b b)
+	b128 := ($concat b8 b8 b8 b8 
+				b8 b8 b8 b8
+				b8 b8 b8 b8
+				b8 b8 b8 b8)
+
+	$call dot_product_for_filter_2_3_128 (a128 b128) (c23)
+	c := ($cast ($int<32>) ($bitcast ($uint<23>) c23))
+}
+
+

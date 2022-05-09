@@ -96,7 +96,7 @@ void delete_job(PipeJob* job)
   if(job == NULL)
     return;
 
-  cfree(job->buffer.ptr8);
+  free(job->buffer.ptr8);
   free(job->pipe_name);
 }
 
@@ -166,7 +166,9 @@ PipeRec* add_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo_mode
 	return(p);
   }
 
-  PipeRec* new_p = (PipeRec*) calloc(1,sizeof(PipeRec));
+  PipeRec* new_p = (PipeRec*) malloc(sizeof(PipeRec));
+  memset(new_p, 0, sizeof(PipeRec));
+
   new_p->pipe_name = strdup(pipe_name);
   new_p->pipe_width = pipe_width;
   new_p->pipe_depth = pipe_depth;
@@ -191,7 +193,9 @@ void add_job(char* pipe_name, int read_write_bar, int width, int number_of_words
 	return;
   }
 
-  PipeJob* new_job = (PipeJob*) calloc(1, sizeof(PipeJob));
+  PipeJob* new_job = (PipeJob*) malloc(sizeof(PipeJob));
+  memset(new_job, 0, sizeof(PipeJob));
+
   new_job->pipe_name = strdup(pipe_name);
   new_job->pipe_record = p;
   new_job->word_length = width;
@@ -206,28 +210,28 @@ void add_job(char* pipe_name, int read_write_bar, int width, int number_of_words
   switch(width)
     {
     case 8: 
-      new_job->buffer.ptr8 = (uint8_t*) calloc(1,(number_of_words_requested*sizeof(uint8_t))); 
+      new_job->buffer.ptr8 = (uint8_t*) malloc(number_of_words_requested*sizeof(uint8_t)); 
       if(!burst_access && (single_binary_payload != NULL))
 		*(new_job->buffer.ptr8) = get_uint8_t(single_binary_payload,&ss);
       else if(burst_access && (burst_payload != NULL))
 	bcopy(burst_payload, new_job->buffer.ptr8,(number_of_words_requested*width)/8);
       break;
     case 16: 
-      new_job->buffer.ptr16 = (uint16_t*) calloc(1,(number_of_words_requested*sizeof(uint16_t))); 
+      new_job->buffer.ptr16 = (uint16_t*) malloc(number_of_words_requested*sizeof(uint16_t)); 
       if(!burst_access && (single_binary_payload != NULL))
 	*(new_job->buffer.ptr16) = get_uint16_t(single_binary_payload,&ss);
       else if(burst_access && (burst_payload != NULL))
 	bcopy(burst_payload, new_job->buffer.ptr16,(number_of_words_requested*width)/8);
       break;
     case 32: 
-      new_job->buffer.ptr32 = (uint32_t*) calloc(1,(number_of_words_requested*sizeof(uint32_t))); 
+      new_job->buffer.ptr32 = (uint32_t*) malloc(number_of_words_requested*sizeof(uint32_t)); 
       if(!burst_access && (single_binary_payload != NULL))
 	*(new_job->buffer.ptr32) = get_uint32_t(single_binary_payload,&ss);
       else if(burst_access && (burst_payload != NULL))
 	bcopy(burst_payload, new_job->buffer.ptr32,(number_of_words_requested*width)/8);
       break;
     case 64:
-      new_job->buffer.ptr64 = (uint64_t*) calloc(1,(number_of_words_requested*sizeof(uint64_t))); 
+      new_job->buffer.ptr64 = (uint64_t*) malloc(number_of_words_requested*sizeof(uint64_t)); 
 
       if(!burst_access && (single_binary_payload != NULL))
 	*(new_job->buffer.ptr64) = get_uint64_t(single_binary_payload,&ss);

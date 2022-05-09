@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SocketLib.h>
+#include "Pipes.h"
 #include "vhdlCStubs.h"
 
 #define N 16

@@ -28,6 +28,8 @@
 // ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 // TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+using namespace std;
+#include <map>
 #include <signal.h>
 #include <Value.hpp>
 #include <hierSystem.h>
@@ -35,7 +37,6 @@
 #include <hierSysLexer.hpp>
 #include <rtlThread.h>
 
-using namespace std;
 
 // command-line parsing
 extern int optind;
@@ -384,7 +385,7 @@ int main(int argc, char* argv[])
 				use_gnu_pth  = true;
 				cerr << "Info: will link to Gnu Pth." << endl;
 				break;
-			default: cerr << "Error: unknown option " << opt << endl; ret_val = 1; break;
+			default: cerr << "Error: unknown option " << opt << " ignored " <<  endl;  break;
 		}
 	}
 

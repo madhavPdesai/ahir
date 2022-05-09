@@ -66,21 +66,6 @@ architecture XilinxBramInfer of base_bank_dual_port_for_xst is
   signal rd_enable_reg_1 : std_logic;
 begin  -- XilinxBramInfer
 
-  --
-  -- try to flag read/write clash!
-  --
-  process(clk, enable_0, enable_1, addrin_0, addrin_1) 
-  begin
-	if(clk'event and clk = '1') then
-		if((enable_0 = '1') and (enable_1 = '1') and (addrin_0 = addrin_1) and
-			(writebar_0 /= writebar_1)) then
-			assert false report
-				"Read and Write port clash in base_bank_dual_port " & name 
-					severity error;
-		end if;
-	end if;
-  end process; 
-
   -- read/write process
   process(clk, addrin_0,enable_0,writebar_0, addrin_1,enable_1,writebar_1)
   begin

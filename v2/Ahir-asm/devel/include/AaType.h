@@ -46,6 +46,7 @@ class AaType: public AaRoot
  public:
   virtual AaScope* Get_Scope() {return(this->_scope);}
 
+  virtual unsigned int Get_Width() {assert(0);}
   AaType(AaScope* parent);
   ~AaType();
   virtual string Kind() {return("AaType");}
@@ -270,6 +271,9 @@ class AaPointerType: public AaUintType
   virtual bool Is_Integer_Type() {return(false);}
   virtual bool Is_Uinteger_Type() {return(false);}
 
+  // no pointer passing across boundary.
+  virtual bool Is_A_Native_C_Type()  {return(false);}
+
   virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
 };
 
@@ -290,6 +294,9 @@ class AaFloatType : public AaScalarType
   void Print(ostream& ofile);
   virtual string Kind() {return("AaFloatType");}
 
+  virtual unsigned int Get_Width() {
+	return(this->Get_Characteristic() + this->Get_Mantissa() + 1);
+  }
   
   virtual string C_Base_Name() 
   {

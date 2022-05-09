@@ -1,0 +1,31 @@
+!
+! Unique memory cuts in the IITBNAVIC SOC.
+!
+!  Format:
+!  Mem-type   addr-width    data-width
+!
+!  Mem-types are
+!     1R1W   two-port memory with 1 read and 1 write port.
+!     DP     true dual-port memory.
+!     SP     single-port memory.
+!
+!  Tech supported: scl180 or umc65
+scl180
+!----------------------------------------------------
+! DP ram
+!----------------------------------------------------
+DP 5 4  dpram   ignore
+DP 4 8  obc11_dpram    ignore
+DP 5 8  dpram   ignore
+!----------------------------------------------------
+! SP ram 
+!----------------------------------------------------
+SP 4 4   spram   ignore
+SP 5 16  spram   ignore
+SP 8 8   obc11   ignore
+SP 9 24  spram   ignore
+!
+! Not real, but kept for completeness 
+!
+1R1W 1 1  fake_1r1w ignore
+1R1W 2 2  fake_1r1w ignore

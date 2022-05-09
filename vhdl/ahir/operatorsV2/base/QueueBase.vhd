@@ -121,41 +121,26 @@ begin  -- SimModel
   NTB: block 
    signal queue_array : QueueArray(queue_depth-1 downto 0);
    signal read_pointer, write_pointer: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
-   signal next_read_pointer, next_write_pointer: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
+   signal next_read_pointer, next_write_pointer, write_pointer_plus_1: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
 
   constant URW0: unsigned ((Ceil_Log2(queue_depth))-1 downto 0):= (others => '0');
 
+  signal full_flag, empty_flag: boolean;
   signal queue_size : unsigned ((Ceil_Log2(queue_depth+1))-1 downto 0);
   signal incr_read_pointer, incr_write_pointer: boolean;
   signal incr_queue_size, decr_queue_size: boolean;
 
   signal write_flag : boolean;
+  signal eq_flag: boolean;
 
   begin
  
-    assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
-    assert (queue_size < (3*queue_depth/4)) report "Queue " & name & " is three-quarters-full." severity note;
-    assert (queue_size < (queue_depth/2)) report "Queue " & name & " is half-full." severity note;
-    assert (queue_size < (queue_depth/4)) report "Queue " & name & " is quarter-full." severity note;
+    assert (not full_flag) report "Queue " & name & " is full." severity note;
 
+    write_pointer_plus_1 <= (others => '0') when (write_pointer = queue_depth-1) else (write_pointer+1);
 
-    process(clk, reset, incr_queue_size, decr_queue_size, queue_size)
-    begin
-	if (clk'event and (clk = '1')) then
-		if(reset  = '1') then
-			queue_size <= (others => '0');
-		else
-			if incr_queue_size then
-           			queue_size <= queue_size + 1;
-			elsif decr_queue_size then
-				queue_size <= queue_size - 1;
-			end if;
-		end if;
-	end if;
-    end process;
-
-    push_ack <= '1' when (queue_size < queue_depth) else '0';
-    pop_ack  <= '1' when (queue_size > 0) else '0';
+    push_ack <= '1' when (not full_flag) else '0';
+    pop_ack  <= '1' when (not empty_flag) else '0';
 
     -- next read pointer, write pointer.
     process(incr_read_pointer, read_pointer) 
@@ -173,18 +158,23 @@ begin  -- SimModel
     rdpReg: SynchResetRegisterUnsigned generic map (name => name & ":rpreg", data_width => read_pointer'length)
 		port map (clk => clk, reset => reset, din => next_read_pointer, dout => read_pointer);
 
-    process(incr_write_pointer, write_pointer) 
+    process(incr_write_pointer, write_pointer, write_pointer_plus_1) 
     begin
 	if(incr_write_pointer) then
-		if(write_pointer = queue_depth-1) then
-			next_write_pointer <= (others => '0');
-		else
-			next_write_pointer <= write_pointer + 1;
-		end if;
+		next_write_pointer <= write_pointer_plus_1;
 	else
 		next_write_pointer <= write_pointer;
 	end if;
     end process;
+
+    -- empty/full logic.
+    eq_flag <= (next_read_pointer = next_write_pointer);
+    fe_logic: QueueEmptyFullLogic 
+	port map (clk => clk, reset => reset, 
+			read => incr_read_pointer, write => incr_write_pointer,
+				eq_flag => eq_flag,
+				full => full_flag, empty => empty_flag);
+
     wrpReg: SynchResetRegisterUnsigned generic map (name => name & ":wrpreg", data_width => write_pointer'length)
 		port map (clk => clk, reset => reset, din => next_write_pointer, dout => write_pointer);
 
@@ -216,24 +206,22 @@ begin  -- SimModel
     end generate Wgen;
   
     -- single process..  Synopsys mangles the logic... split it into two.
-    process(read_pointer, write_pointer, queue_size, push_req, pop_req)
+    process(read_pointer, write_pointer, empty_flag, full_flag, push_req, pop_req)
       variable push,pop : boolean;
     begin
       push  := false;
       pop   := false;
       
-      if((queue_size < queue_depth) and push_req = '1') then
+      if((not full_flag) and push_req = '1') then
           push := true;
       end if;
   
-      if((queue_size > 0) and pop_req = '1') then
+      if((not empty_flag) and pop_req = '1') then
           pop := true;
       end if;
   
       incr_read_pointer <= pop;
       incr_write_pointer <= push;
-      incr_queue_size <= push and (not pop);
-      decr_queue_size <= pop and (not push);
   
       write_flag <= push;
     end process;

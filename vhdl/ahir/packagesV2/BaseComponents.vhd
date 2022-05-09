@@ -118,10 +118,11 @@ package BaseComponents is
   end component;
 
   component join is
-     generic(place_capacity : integer := 1;
+     generic(number_of_predecessors: integer;
+		place_capacity : integer := 1;
 		bypass: boolean := true;
       		name : string );
-     port (preds      : in   BooleanArray;
+     port (preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
     	symbol_out : out  boolean;
 	clk: in std_logic;
 	reset: in std_logic);
@@ -155,10 +156,11 @@ package BaseComponents is
   end component;
 
   component join_with_input is
-     generic(place_capacity : integer := 1;
+     generic(number_of_predecessors: integer;
+		place_capacity : integer := 1;
 		bypass: boolean := false;
       		name : string );
-     port (preds      : in   BooleanArray;
+     port (preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -166,8 +168,9 @@ package BaseComponents is
   end component;
   
   component  generic_join 
-   generic(name: string; place_capacities: IntegerArray; place_markings: IntegerArray; place_delays: IntegerArray);
-   port ( preds      : in   BooleanArray;
+   generic(number_of_predecessors: integer;
+		name: string; place_capacities: IntegerArray; place_markings: IntegerArray; place_delays: IntegerArray);
+   port ( preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
     	symbol_out : out  boolean;
 	clk: in std_logic;
 	reset: in std_logic);
@@ -196,23 +199,27 @@ package BaseComponents is
   
 
   component marked_join is
-     generic(place_capacity : integer := 1;
+     generic(number_of_predecessors: integer;
+		number_of_marked_predecessors: integer;
+		place_capacity : integer := 1;
 		bypass: boolean := true;
       		name : string;
 		marked_predecessor_bypass: BooleanArray);
-     port (preds      : in   BooleanArray;
-           marked_preds      : in   BooleanArray;
+     port (preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
+           marked_preds      : in   BooleanArray(number_of_marked_predecessors-1 downto 0);
            symbol_out : out  boolean;
            clk: in std_logic;
            reset: in std_logic);
   end component;
 
   component marked_join_with_input is
-     generic(place_capacity : integer := 1;
+     generic(number_of_predecessors: integer;
+		number_of_marked_predecessors: integer;
+		place_capacity : integer := 1;
 		bypass: boolean := false;
       		name : string);
-     port (preds      : in   BooleanArray;
-           marked_preds      : in   BooleanArray;
+     port (preds      : in   BooleanArray(number_of_predecessors-1 downto 0);
+           marked_preds      : in   BooleanArray(number_of_marked_predecessors-1 downto 0);
            symbol_in : in boolean;
            symbol_out : out  boolean;
            clk: in std_logic;
@@ -563,6 +570,26 @@ package BaseComponents is
          pop_ack : out std_logic;
          pop_req: in std_logic);
   end component QueueBaseWithBypass;
+
+  component QueueBaseWithEmptyFull
+    generic(name : string; queue_depth: integer := 2; reverse_bypass_flag: boolean := false; data_width: integer := 32);
+    port(clk: in std_logic;
+         reset: in std_logic;
+         empty, full: out std_logic;
+         data_in: in std_logic_vector(data_width-1 downto 0);
+         push_req: in std_logic;
+         push_ack: out std_logic;
+         data_out: out std_logic_vector(data_width-1 downto 0);
+         pop_ack : out std_logic;
+         pop_req: in std_logic);
+  end component QueueBaseWithEmptyFull;
+
+  component QueueEmptyFullLogic is
+	port (clk, reset: in std_logic;
+		read,write,eq_flag: in boolean;
+		full, empty: out boolean);
+  end component;
+
 
   --
   -- a special purpose queue which keeps a 1-bit data value.
@@ -2239,6 +2266,7 @@ package BaseComponents is
 	   data_width: integer;
 	   queue_depth: integer;
 	   bypass_flag: boolean := false;
+	   barrier_flag: boolean := false;
 	   nonblocking_read_flag: boolean := false);
     port (
     -- pulse interface with the data-path
@@ -2342,8 +2370,8 @@ package BaseComponents is
 		in_data_width : integer := 32;
 		out_data_width : integer := 32;
 		flow_through: boolean := false;
-		bypass_flag : boolean := false; 
-		full_rate: boolean := false);
+		cut_through: boolean  := false;
+		bypass_flag : boolean := false); 
     port ( write_req: in boolean;
         write_ack: out boolean;
         write_data: in std_logic_vector(in_data_width-1 downto 0);
@@ -2439,13 +2467,14 @@ package BaseComponents is
   component UnloadBuffer 
     generic (name: string; buffer_size: integer; data_width : integer; 
 				bypass_flag: boolean := false; nonblocking_read_flag: boolean := false;
-	   				full_rate : boolean);
+					use_unload_register: boolean := true);
     port (write_req: in std_logic;
           write_ack: out std_logic;
           write_data: in std_logic_vector(data_width-1 downto 0);
           unload_req: in boolean;
           unload_ack: out boolean;
           read_data: out std_logic_vector(data_width-1 downto 0);
+	  has_data: out std_logic;
           clk : in std_logic;
           reset: in std_logic);
   end component UnloadBuffer;
@@ -2457,9 +2486,25 @@ package BaseComponents is
         unload_req: in boolean;
         unload_ack: out boolean;
         read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
         clk : in std_logic;
         reset: in std_logic);
   end component UnloadBufferDeep;
+  component UnloadBufferRevised is
+    generic (name: string; 
+		buffer_size: integer ; 
+		data_width : integer ; 
+		bypass_flag: boolean := false);
+    port ( write_req: in std_logic;
+        write_ack: out std_logic;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        unload_req: in boolean;
+        unload_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
+        clk : in std_logic;
+        reset: in std_logic);
+  end component;
 
   component UnloadRegister is
     generic (name: string; 
@@ -2475,6 +2520,20 @@ package BaseComponents is
            clk : in std_logic;
            reset: in std_logic);
   end component UnloadRegister;
+
+  component UnloadFsm is
+  generic (name: string; data_width: integer);
+  port ( 
+	 write_req: in std_logic;
+         write_ack: out std_logic;
+         unload_req: in boolean;
+         unload_ack: out boolean;
+	 data_in :  in std_logic_vector(data_width-1 downto 0);
+	 data_out :  out std_logic_vector(data_width-1 downto 0);
+         clk : in std_logic;
+         reset: in std_logic);
+  end component;
+
   -----------------------------------------------------------------------------------------
   --  System Ports
   -----------------------------------------------------------------------------------------
@@ -2625,4 +2684,18 @@ package BaseComponents is
   );
   -- 
   end component dpram_1w_1r_1024x32_Operator;
+
+  component module_clock_gate is
+	port (reset, start_req, start_ack, fin_req, fin_ack, clock_in: in std_logic;
+		clock_out : out std_logic);
+  end component module_clock_gate;
+
+  component signal_clock_gate is
+	port (reset, clock_enable, clock_in: in std_logic; clock_out : out std_logic);
+  end component signal_clock_gate;
+
+  component clock_gater is
+	port (clock_in, clock_enable: in std_logic; clock_out : out std_logic);
+  end component clock_gater;
+
 end BaseComponents;

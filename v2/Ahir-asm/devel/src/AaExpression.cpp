@@ -45,6 +45,8 @@ using namespace std;
 #include <Aa2C.h>
 #include <AaDelays.h>
 
+#define __endl__  "\\\n" 
+
 /***************************************** EXPRESSION  ****************************/
 //---------------------------------------------------------------------
 // AaExpression
@@ -92,7 +94,7 @@ void AaExpression::Check_Volatile_Inconsistency(AaStatement* stmt)
 		if (!stmt->Is_Call_Statement() && !this->Is_Trivial())
 		{
 			AaRoot::Error("Expression "  + this->To_String() 
-				+ " is not trivial but appears in an assignment statement.", stmt);
+				+ " is not trivial but appears in a volatile assignment statement.", stmt);
 		}
 	}
 }
@@ -107,7 +109,19 @@ void AaExpression::Write_VC_Output_Buffering(string dpe_name, string tgt_name, o
 	{
 		AaAssignmentStatement* astmt = (AaAssignmentStatement*) stmt;
 		if(astmt->Get_Source() == this)
+		{
 			stmt_buf = astmt->Get_Buffering();
+			
+			//
+			// Buffering may be attached to the target of
+			// the assignment statement..
+			//
+			if(astmt->Get_Target()->Is_Implicit_Variable_Reference())
+			{
+				if(astmt->Get_Target()->Get_Buffering() > stmt_buf)
+					stmt_buf = astmt->Get_Target()->Get_Buffering();
+			}
+		}
 	}
 
 	if(stmt_buf > this_buffering)
@@ -266,7 +280,11 @@ void AaExpression::Replace_Field_Expression(AaExpression** eptr, AaExpression* u
 
 			if(match_flag)
 			{
+
 				new_expr = new AaSimpleObjectReference(this->Get_Scope(),replacement);
+				
+				replacement->Get_Target()->Add_Target(new_expr);
+
 				*eptr  = new_expr;
 				this->AaExpression::Replace_Uses_By(fexpr, new_expr);
 			}
@@ -500,6 +518,20 @@ void AaObjectReference::Print(ostream& ofile)
 	ofile << this->Get_Object_Ref_String();
 }
 
+bool AaObjectReference::Can_Be_Combinationalized()
+{
+	bool ret_val = false;
+	if(this->_object != NULL)
+	{
+		if(!this->_object->Is_Storage_Object() && !this->_object->Is_Pipe_Object())
+		{
+			ret_val = true;
+		}
+	}
+	return(ret_val);
+}
+
+
 AaType* AaObjectReference::Get_Object_Type()
 {
 	AaType* ret_type = NULL;
@@ -513,6 +545,25 @@ AaType* AaObjectReference::Get_Object_Type()
 	return(ret_type);
 }
 
+int AaObjectReference::Get_Delay()
+{
+	int ret_val = this->AaExpression::Get_Delay();
+	if(this->_object && this->_object->Is_Storage_Object())
+	{
+		AaStorageObject* sobj = (AaStorageObject*) this->_object;
+		if(!this->Get_Is_Target())
+		{
+			if(sobj->Get_Number_Of_Reader_Modules() > 1)
+				ret_val++;
+		}
+		else
+		{
+			if(sobj->Get_Number_Of_Writer_Modules() > 1)
+				ret_val++;
+		}
+	}
+	return(ret_val);
+}
 
 // cannot assign a value to a storage object!
 void AaObjectReference::Assign_Expression_Value(AaValue* expr_value)
@@ -756,8 +807,14 @@ void AaConstantLiteralReference::Evaluate()
 {
 	if(!_already_evaluated)
 	{
-		assert(this->_type);
-		_expression_value = Make_Aa_Value(this->Get_Scope(), this->Get_Type(), _literals);
+		if(this->_type == NULL)
+		{
+			AaRoot::Error("could not determine type of constant expression", this);
+		}
+		else
+		{
+			_expression_value = Make_Aa_Value(this->Get_Scope(), this->Get_Type(), _literals);
+		}
 		_already_evaluated = true;
 	}
 }
@@ -970,6 +1027,10 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 			// object in the module if appropriate.
 		{
 			this->Update_Globally_Accessed_Objects((AaStorageObject*) obj);
+			if(this->Get_Is_Target())
+				((AaStorageObject*)obj)->Add_Writer_Expression(this);
+			else
+				((AaStorageObject*)obj)->Add_Reader_Expression(this);
 		}
 
 	}
@@ -996,9 +1057,8 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 	{
 		this->Set_Delay(PIPE_ACCESS_DELAY);
 	}
-	else
+	else if(obj->Is_Storage_Object())
 	{
-
 		this->Set_Delay(MEMORY_ACCESS_DELAY);
 	}
 
@@ -1035,6 +1095,13 @@ bool AaSimpleObjectReference::Is_Trivial()
 			&& (this->Is_Implicit_Variable_Reference() || this->Is_Signal_Read()));
 }
 
+bool AaSimpleObjectReference::Can_Be_Combinationalized()
+{
+	bool ret_val = (this->Is_Implicit_Variable_Reference() || this->Is_Signal_Read());
+	return(ret_val);
+}
+
+
 bool AaSimpleObjectReference::Is_Write_To_Pipe(AaPipeObject* obj)
 {
 	return(this->Get_Is_Target()  &&
@@ -1044,7 +1111,7 @@ bool AaSimpleObjectReference::Is_Write_To_Pipe(AaPipeObject* obj)
 
 AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, AaAssignmentStatement* root_obj):AaObjectReference(parent_tpr, root_obj) 
 {
-	this->Set_Object(root_obj);
+	this->Set_Object(root_obj->Get_Target());
 	this->Set_Type(root_obj->Get_Target()->Get_Type());
 }
 
@@ -1569,7 +1636,7 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 			{
 				// the expression/statement which sets the value of this implicit variable
 				// is not found in the visited elements.  
-				return(__UST(this));
+				return("$null");
 			}
 		}
 
@@ -1859,10 +1926,10 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
 		// for pipe accesses, chained protocol.
 		ofile << "// " << this->To_String() << endl;
 		ofile << ";;[" << this->Get_VC_Name() << "_Sample] { // sample-data. " << endl;
-		ofile << "$T [req] $T [req] " << endl;
+		ofile << "$T [req] $T [ack] " << endl;
 		ofile << "}" << endl;
 		ofile << ";;[" << this->Get_VC_Name() << "_Update] { // data to pipe. " << endl;
-		ofile << "$T [req] $T [req] " << endl;
+		ofile << "$T [req] $T [ack] " << endl;
 		ofile << "}" << endl;
 	}
 }
@@ -2110,7 +2177,6 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& of
 				(source != NULL ? 
 				 source->Get_VC_Driver_Name() : this->Get_VC_Driver_Name());
 
-
 			// io write.
 			Write_VC_IO_Output_Port((AaPipeObject*) this->_object,
 					this->Get_VC_Datapath_Instance_Name(),
@@ -2188,6 +2254,12 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances(AaExpression* target, 
 			string dpe_name = this->Get_VC_Datapath_Instance_Name();
 			string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
+			bool barrier_flag = 
+				(this->Get_Associated_Statement() != NULL) && 
+				this->Get_Associated_Statement()->Is_Phi_Statement() &&
+					((AaPhiStatement*)this->Get_Associated_Statement())->Get_Barrier_Flag();
+
+
 			//
 			// io read.
 			//
@@ -2196,7 +2268,9 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances(AaExpression* target, 
 					tgt_name,
 					this->Get_VC_Guard_String(),
 					full_rate, 
+					barrier_flag,
 					ofile);
+
 			this->Write_VC_Output_Buffering(dpe_name, tgt_name, ofile);
 		}
 	}
@@ -2290,9 +2364,16 @@ void AaSimpleObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaR
 			}		
 			else
 			{
-				root = NULL;
-				__InsMap(adjacency_map,root,this,0);
-				visited_elements.insert(this);
+				bool is_war = ((root != NULL) && root->Is_Statement() &&
+						(((AaStatement*)root)->Get_Scope() == this->Get_Scope()));
+
+				if(!is_war)
+				{
+					root = NULL;
+					__InsMap(adjacency_map,root,this,0);
+					visited_elements.insert(this);
+				}
+
 			}
 		}
 		else
@@ -2318,7 +2399,11 @@ void AaSimpleObjectReference::Replace_Uses_By(AaExpression* used_expr, AaAssignm
 	if(this->_object == used_expr->Get_Root_Object())
 	{
 		AaRoot* obj   = this->_object;
-		this->_object = replacement;
+		this->_object = replacement->Get_Target();
+
+		// need to link replacement to this else we
+		// have an orphan.
+		replacement->Get_Target()->Add_Target(this);
 	}
 }
 
@@ -2375,11 +2460,13 @@ void AaArrayObjectReference::Set_Type(AaType* t)
 void AaArrayObjectReference::Add_Target_Reference(AaRoot* referrer)
 {
 	this->AaRoot::Add_Target_Reference(referrer);
+	/*
 	if(referrer->Is("AaInterfaceObject"))
 	{
 		AaType* rtype = ((AaInterfaceObject*)referrer)->Get_Type();
 		this->Set_Type(rtype);
 	}
+	*/
 }
 void AaArrayObjectReference::Add_Source_Reference(AaRoot* referrer)
 {
@@ -2422,7 +2509,13 @@ void AaArrayObjectReference::Set_Object(AaRoot* obj)
 			this->Set_Does_Pipe_Access(true);
 
 		if(obj->Is_Storage_Object())
+		{
 			this->Update_Globally_Accessed_Objects((AaStorageObject*) obj);
+			if(this->Get_Is_Target())
+				((AaStorageObject*)obj)->Add_Writer_Expression(this);
+			else
+				((AaStorageObject*)obj)->Add_Reader_Expression(this);
+		}
 	}
 	else if(obj->Is_Expression())
 	{
@@ -2704,11 +2797,11 @@ string AaArrayObjectReference::C_Reference_String()
 	if(this->_object->Get_Type()->Is_Pointer_Type())
 	{
 		AaType* t  = this->_object->Get_Type();
-		ret_string += "(*(";
+		ret_string += "&((*(";
 		ret_string += this->Get_Object()->C_Reference_String();
-		ret_string += " + " ;
+		ret_string += " + bit_vector_to_uint64(0,&" ;
 		ret_string += _indices[0]->C_Reference_String();
-		ret_string += "))";
+		ret_string += ")))";
 		AaType* rt = ((AaPointerType*)t)->Get_Ref_Type();
 		ret_string += this->C_Index_String(rt,1,&_indices);
 		ret_string += ")";
@@ -3220,6 +3313,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 				this->Get_VC_Guard_String(),
 				false, // flow-through
 				full_rate, 
+				false, // cut-through
 				ofile);
 
 		//
@@ -3267,8 +3361,14 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 			source_wire = this->Get_VC_Name() + "_pipe_read_data";
 			obj_type = ((AaObject*)(this->_object))->Get_Type();
 			string pipe_inst = this->Get_VC_Name() + "_pipe_access";
+
+			bool barrier_flag = 
+				this->Get_Associated_Statement() && 
+					this->Get_Associated_Statement()->Is_Phi_Statement() && 
+					 ((AaPhiStatement*) this->Get_Associated_Statement())->Get_Barrier_Flag();
+
 			Write_VC_IO_Input_Port((AaPipeObject*)(this->_object), pipe_inst,source_wire,
-					this->Get_VC_Guard_String(), full_rate, ofile);
+					this->Get_VC_Guard_String(), full_rate, barrier_flag, ofile);
 			// pipelining: address calculation path is double buffered.
 			if(this->Get_Pipeline_Parent() != NULL)
 			{
@@ -3489,7 +3589,14 @@ AaPointerDereferenceExpression::AaPointerDereferenceExpression(AaScope* scope,
 	AaProgram::Add_Storage_Dependency_Graph_Vertex(this);
 	AaProgram::_pointer_dereferences.insert(this);
 
-	this->Set_Delay(MEMORY_ACCESS_DELAY);
+
+	// 1. multiple readers/writers,
+	//    we need to add an extra delay 
+	// 2. multiple modules accessing the
+	//    memory, we need to add an extra
+	//    delay.
+	int additional_delay = 2;
+	this->Set_Delay(MEMORY_ACCESS_DELAY + additional_delay);
 
 }
 
@@ -3614,6 +3721,7 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 				obj->Set_Is_Written_Into(true);
 				if(r_scope->Is_Module())
 					obj->Add_Writer_Module((AaModule*) r_scope);
+				
 			}
 			else
 			{
@@ -3622,6 +3730,10 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 					obj->Add_Reader_Module((AaModule*) r_scope);
 			}
 
+			if(this->Get_Is_Target())
+				((AaStorageObject*)obj)->Add_Writer_Expression(this);
+			else
+				((AaStorageObject*)obj)->Add_Reader_Expression(this);
 
 			if(!obj->Is_Foreign_Storage_Object())
 				// this expression accesses obj.
@@ -4004,7 +4116,6 @@ void AaAddressOfExpression::PrintC_Declaration(ofstream& ofile)
 void AaAddressOfExpression::PrintC(ofstream& ofile)
 {
 	this->_reference_to_object->PrintC(ofile);
-	this->PrintC_Declaration(ofile);
 	ofile << this->C_Reference_String() << " = ";
 	ofile << "&(" << this->_reference_to_object->C_Reference_String() << ");";
 }
@@ -4291,6 +4402,7 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
 				this->Get_VC_Guard_String(),
 				false,
 				full_rate,
+				false, // cut-through
 				ofile);
 
 		this->Write_VC_Output_Buffering(dpe_name, tgt_name, ofile);
@@ -4528,7 +4640,15 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 		bool ilb_flag = false;
 		if(this->Is_Trivial())
 		{
-			ilb_flag = true;
+			//
+			// its just an interlock buffer if the target type is unsigned.
+			// else its a sign extension.
+			//
+			if(this->Get_Type()->Is_Uinteger_Type() ||
+				(this->Get_Type()->Size() == this->_rest->Get_Type()->Size()))
+			{
+				ilb_flag = true;
+			}
 		}
 
 
@@ -4551,6 +4671,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 					this->Get_VC_Guard_String(),
 					false,
 					full_rate, 
+					false, // cut-through
 					ofile);
 
 		}
@@ -5343,8 +5464,9 @@ bool AaBinaryExpression::Is_Trivial()
 
 	bool second_is_constant = (this->_second != NULL) && this->_second->Is_Constant();
 	// 64-bit mul/shifts are trivial (ha ha)
-	if((this->_operation == __MUL) || 
-		(Is_Shift_Operation(this->_operation) && !second_is_constant))
+	if(!this->Get_Type()->Is_Float_Type() && 
+			((this->_operation == __MUL) || 
+				(Is_Shift_Operation(this->_operation) && !second_is_constant)))
 	{
 		// lets say we can do up to 64-bit mul/shift operations in one cycle.
 		// even though they have quadratic complexity.
@@ -5645,15 +5767,42 @@ void AaTernaryExpression::PrintC_Declaration(ofstream& ofile)
 
 void AaTernaryExpression::PrintC(ofstream& ofile)
 {
+	assert(this->_test->Get_Type()->Is_Integer_Type());
+
 	this->_test->PrintC(ofile);
 	if(!this->_test->Is_Constant())
 	{
 		Print_C_Assert_If_Bitvector_Undefined(this->_test->C_Reference_String(), ofile);
 	}
 
-	this->_if_true->PrintC(ofile);
-	this->_if_false->PrintC(ofile);
+	AaType* tgt_type = this->Get_Type();
+	string tgt = this->C_Reference_String();
 
+	AaType* if_expr_type = this->_if_true->Get_Type();
+	string if_expr = this->_if_true->C_Reference_String();
+
+	AaType* else_expr_type = this->_if_false->Get_Type();
+	string else_expr = this->_if_false->C_Reference_String();
+
+	ofile << "if(" << C_Value_Expression(this->_test->C_Reference_String(), this->_test->Get_Type()) << ")";
+	ofile << "{";
+	this->_if_true->PrintC(ofile);
+	if(tgt_type->Is_Integer_Type())
+		ofile << "bit_vector_cast_to_bit_vector(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << tgt 
+			<< "), &(" << if_expr << "));" << __endl__;
+	else
+		ofile << tgt << " = " << if_expr << ";" << __endl__;
+	ofile << "}";
+	ofile << "else {";
+	this->_if_false->PrintC(ofile);
+	if(tgt_type->Is_Integer_Type())
+		ofile << "bit_vector_cast_to_bit_vector(" << (!tgt_type->Is_Uinteger_Type() ? 1 : 0) << ", &(" << tgt << "), &(" 
+			<< else_expr << "));" << __endl__;
+	else
+		ofile << tgt << " = " << else_expr<< ";" << __endl__;
+	ofile << "}";
+
+	/*
 	Print_C_Ternary_Operation(this->_test->C_Reference_String(),
 			this->_test->Get_Type(),
 			this->_if_true->C_Reference_String(), 
@@ -5663,6 +5812,7 @@ void AaTernaryExpression::PrintC(ofstream& ofile)
 			this->C_Reference_String(), 
 			this->Get_Type(),
 			ofile);
+	*/
 }
 
 void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)
@@ -6089,11 +6239,12 @@ void AaFunctionCallExpression::Write_VC_Datapath_Instances(AaExpression* target,
 	}
 
 	string dpe_name = this->Get_VC_Datapath_Instance_Name();
+	string guard_string = this->Get_VC_Guard_String();
 	Write_VC_Call_Operator(dpe_name,
 			_module_identifier,
 			inargs,
 			outargs,
-			"",	// guard-string
+			guard_string,	// guard-string
 			this->Is_Trivial(), // volatile.
 			full_rate,		      
 			ofile);
@@ -6135,6 +6286,7 @@ void AaFunctionCallExpression::Write_VC_Datapath_Instances(AaExpression* target,
 	ofile << "$buffering  $out " << dpe_name << " "
 		<< tgt_name << " " << buffering << endl;
 }
+
 
 void AaFunctionCallExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
@@ -6182,7 +6334,12 @@ void AaFunctionCallExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<Aa
 	for(int I = 0, fI = _arguments.size(); I < fI; I++)
 	{
 		_arguments[I]->Update_Adjacency_Map(adjacency_map, visited_elements);
-		__InsMap(adjacency_map,_arguments[I],this,_called_module->Get_Delay());
+		
+		int delay = 0;
+		if(!this->_called_module->Get_Volatile_Flag())
+			delay = this->_called_module->Get_Delay();
+
+		__InsMap(adjacency_map,_arguments[I],this,delay);
 	}
 	this->Update_Guard_Adjacency(adjacency_map,visited_elements);
 	visited_elements.insert(this);
@@ -6236,6 +6393,14 @@ void AaFunctionCallExpression::Collect_Root_Sources(set<AaRoot*>& root_set)
 bool AaFunctionCallExpression::Is_Trivial() // return false if called module is volatile.
 {
 	return(_called_module->Get_Volatile_Flag());
+}
+
+bool AaFunctionCallExpression::Can_Be_Combinationalized()
+{
+	bool ret_val = false;
+	if((this->_called_module != NULL)  && this->_called_module->Get_Is_Volatile())
+		ret_val = true;
+	return(ret_val);
 }
 
 /////////////////////////////////////////////////  Utilities //////////////////////////////////////////////

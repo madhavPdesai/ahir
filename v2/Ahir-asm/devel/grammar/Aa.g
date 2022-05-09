@@ -101,6 +101,8 @@ aA_Program
 }
     :
         (
+	    aA_Gated_Clock_Declaration
+	    | 
             (nf = aA_Module {AaProgram::Add_Module(nf);} )
             |
             (  
@@ -118,6 +120,10 @@ aA_Program
 	    (
 		aA_Integer_Parameter_Declaration
 	    )
+	    |
+      	    (
+		aA_Use_Gated_Clock_Statement
+	    )
         )*
     ;
 
@@ -131,9 +137,42 @@ aA_Mutex_Declaration
 ;
 
 
+//-----------------------------------------------------------------------------------------------
+// Gated clock declaration  GATED_CLOCK <clock-name> <enable-sig-name>
+//-----------------------------------------------------------------------------------------------
+aA_Gated_Clock_Declaration
+{
+    string enable_sig_name;
+    string gated_clock_name;
+}
+:
+   GATED_CLOCK cid:SIMPLE_IDENTIFIER eid:SIMPLE_IDENTIFIER 
+	{ 
+		gated_clock_name = cid->getText();
+		enable_sig_name = eid->getText();
+		AaProgram::Add_Gated_Clock(gated_clock_name, enable_sig_name);
+	}
+;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE)? (NOOPT)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
+// Gated clock use statement  USE_GATED_CLOCK <module-name> <clock-name> 
+//-----------------------------------------------------------------------------------------------
+aA_Use_Gated_Clock_Statement
+{
+    string module_name;
+    string gated_clock_name = "";
+}
+:
+   USE_GATED_CLOCK mid:SIMPLE_IDENTIFIER 
+		(cid:SIMPLE_IDENTIFIER  {gated_clock_name = cid->getText();})?
+	{ 
+		module_name = mid->getText();
+		AaProgram::Add_Use_Gated_Clock_Statement(module_name, gated_clock_name);
+	}
+;
+
+//-----------------------------------------------------------------------------------------------
+// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE )? (NOOPT)? (USEONCE)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 aA_Module returns [AaModule* new_module]
 {
@@ -154,8 +193,11 @@ aA_Module returns [AaModule* new_module]
     bool noopt_flag = false;
     int lno;
     bool deterministic_flag = false;
+    bool use_once_flag = false;
 }
-    : ((FOREIGN {foreign_flag = true;}) | 
+
+    : 
+	((FOREIGN {foreign_flag = true;}) | 
 	(PIPELINE {pipeline_flag = true; } 
 		(DEPTH (depth = aA_Integer_Parameter_Expression [lno] ))?
 		(BUFFERING (buffering = aA_Integer_Parameter_Expression [lno] ))?
@@ -164,6 +206,7 @@ aA_Module returns [AaModule* new_module]
 	) | (INLINE {inline_flag = true;}) | (MACRO {macro_flag = true;}) )? 
 	((OPERATOR {operator_flag = true;}) | (VOLATILE {volatile_flag = true;}) | (OPAQUE {opaque_flag = true;}))?
 	(NOOPT {noopt_flag = true;})?
+	(USEONCE {use_once_flag = true;})?
 	mt: MODULE 
         lbl = aA_Label 
         {
@@ -175,6 +218,7 @@ aA_Module returns [AaModule* new_module]
             new_module->Set_Pipeline_Flag(pipeline_flag);
 	    new_module->Set_Noopt_Flag(noopt_flag);
 	    new_module->Set_Opaque_Flag(opaque_flag);
+	    new_module->Set_Use_Once_Flag(use_once_flag);
 
 	    if(!foreign_flag)
 	    {
@@ -183,7 +227,9 @@ aA_Module returns [AaModule* new_module]
 	    }
 	    else
 	    {
-                        AaRoot::Warning("foreign module cannot be marked as operator/volatile ",new_module);
+		AaRoot::Warning("foreign module cannot be marked as operator/volatile ",new_module);
+            	new_module->Set_Volatile_Flag(false);
+            	new_module->Set_Operator_Flag(false);
 	    }
 
 	    if(pipeline_flag)
@@ -285,7 +331,7 @@ aA_Out_Args[AaModule* parent]
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Atomic_Statement : aA_Assignment_Statement | aA_Call_Statement | aA_Null_Statement | aA_Block_Statement
+// aA_Atomic_Statement : aA_Assignment_Statement | aA_Call_Statement | aA_Null_Statement | aA_Block_Statement | aA_Barrier_Statement
 //-----------------------------------------------------------------------------------------------
 aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist] 
 {
@@ -306,6 +352,7 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
     int lno;
     AaSimpleObjectReference* guard_expr = NULL;
     bool update_flag = false;
+    bool keep_flag = false;
 }
     :  
       ( 
@@ -342,6 +389,7 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 				{
 					ss = dlid->getText();
 					delay_stmts.push_back(pair<string,int>(ss, delay_val));})+ RPAREN )? 
+           (KEEP {keep_flag = true;})?
 	   {
 		for(int I = 0, fI = llist.size(); I < fI; I++)
 		{
@@ -349,6 +397,9 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 			stmt = llist[I];
 			if(volatile_flag)
 				stmt->Set_Is_Volatile(true);
+
+			stmt->Set_Keep_Flag(keep_flag);
+
 			if(guard_expr != NULL)
 			{
 				stmt->Set_Guard_Expression(guard_expr);
@@ -383,11 +434,11 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 	   }
 	) | 
 	(
-		((stmt = aA_Null_Statement[scope]) | (stmt = aA_Block_Statement[scope]))
+		((stmt = aA_Null_Statement[scope]) | (stmt = aA_Block_Statement[scope]) | (stmt = aA_Barrier_Statement[scope]))
 		{
 			slist.push_back(stmt);
 		}
-	)
+	) 
       )
     ;
 
@@ -402,6 +453,16 @@ aA_Null_Statement[AaScope* scope] returns[AaStatement* new_stmt]
         }
     ;
 
+//-----------------------------------------------------------------------------------------------
+// aA_Barrier_Statement : BARRIER
+//-----------------------------------------------------------------------------------------------
+aA_Barrier_Statement[AaScope* scope] returns[AaStatement* new_stmt]
+    : BARRIER 
+        {
+            // NuLL statements have no labels.
+            new_stmt = new AaBarrierStatement(scope);
+        }
+    ;
 
 //-----------------------------------------------------------------------------------------------
 // aA_Lock_Statement : $lock simple-identifier
@@ -530,7 +591,7 @@ aA_Report_Statement[AaScope* scope, vector<AaStatement*>& slist]
 ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Assignment: ASSIGN aA_Object_Reference  aA_Expression
+// aA_Assignment: ASSIGN aA_Object_Reference  aA_Expression KEEP?
 //-----------------------------------------------------------------------------------------------
 aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
 {
@@ -539,6 +600,7 @@ aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
     AaExpression* source = NULL;
     int buf_val;
     int lno;
+    bool cut_through_flag = false;
 }
     : 
 
@@ -556,7 +618,12 @@ aA_Assignment_Statement[AaScope* scope, vector<AaStatement*>& slist]
 	    }
         }
 	(BUFFERING buf_val = aA_Integer_Parameter_Expression [lno]
-		{ ((AaAssignmentStatement*)new_stmt)->Set_Buffering(buf_val);}
+	  (CUT_THROUGH  {cut_through_flag = true;})?
+		{ 
+			((AaAssignmentStatement*)new_stmt)->Set_Buffering(buf_val);
+			((AaAssignmentStatement*)new_stmt)->Set_Cut_Through(cut_through_flag);
+		}
+         
 	)?
     ;
 
@@ -892,7 +959,7 @@ aA_Join_Fork_Statement[AaForkBlockStatement* scope] returns [AaJoinForkStatement
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Phi_Statement: PHI SIMPLE_IDENTIFIER  :=  ( aA_Object_Reference  ON  (SIMPLE_IDENTIFIER | ENTRY | LOOPBACK))+
+// aA_Phi_Statement: PHI SIMPLE_IDENTIFIER  :=  ( aA_Object_Reference  ON  (SIMPLE_IDENTIFIER | ENTRY | LOOPBACK))+ ($barrier)?
 //-----------------------------------------------------------------------------------------------
 aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_set, AaMergeStatement* pm, bool do_while_flag] returns [AaPhiStatement* new_ps]
 {
@@ -904,6 +971,7 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
     set<string,StringCompare> tset;
     vector<string> labels;
     bool not_flag = false;
+    bool barrier_flag = false;
 }
     : pl: PHI tgt:SIMPLE_IDENTIFIER 
         {
@@ -947,6 +1015,8 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
 			(aeid: ENTRY {labels.push_back(aeid->getText());}) |
 			(abid: LOOPBACK {labels.push_back(abid->getText());}) )
 	    )*
+
+
             {
 		int I;
 		for(I=0; I < labels.size(); I++)
@@ -975,6 +1045,11 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
 		labels.clear();
             }
         )+ 
+	    
+	(BARRIER {barrier_flag = true;})?
+	{
+		new_ps->Set_Barrier_Flag(barrier_flag);
+	}
 ;
 
 
@@ -1253,7 +1328,8 @@ aA_Expression[AaScope* scope] returns [AaExpression* expr]
 	    (expr = aA_ExclusiveMux_Expression[scope]) |
 	    (expr = aA_Reduce_Expression[scope]) |
 	    (expr = aA_VectorConcatenate_Expression[scope]) |
-	    (expr = aA_FunctionCall_Expression[scope])
+	    (expr = aA_FunctionCall_Expression[scope]) |
+	    (expr = aA_One_Or_Zero_Expression[scope]) 
         )
 ;
 
@@ -1363,7 +1439,7 @@ aA_Cast_Expression[AaScope* scope] returns [AaExpression* expr]
     expr = NULL;
     bool bit_cast = false;
 }:
-        lpid: LPAREN 
+       lpid: LPAREN 
             (
                 (CAST | (BITCAST {bit_cast = true;}))
 
@@ -1377,6 +1453,36 @@ aA_Cast_Expression[AaScope* scope] returns [AaExpression* expr]
             }
 	    (aA_Expression_Buffering_Spec[expr])?
 	RPAREN
+
+;
+
+// $zero<n> or $one<n> where n is a positive integer.
+aA_One_Or_Zero_Expression[AaScope* scope] returns [AaExpression* expr]
+{
+	AaExpression* rest = NULL;
+	string full_name;
+	vector<string> literals;
+	bool zero_flag = 0;
+	int lno;
+	uint32_t width=0;
+}:
+	(CONSTZERO {zero_flag = 1;} | CONSTONE ) lid:LESS width = aA_Integer_Parameter_Expression[lno]  gid:GREATER
+	{
+		full_name = (zero_flag ? "_b0" : "_b1");
+		literals.push_back(full_name);
+
+		rest = new AaConstantLiteralReference(scope, full_name, literals);
+		if(width == 0)
+		{
+			AaRoot::Error("invalid width of $zero/$one at line " + IntToStr(lid->getLine()), NULL);
+		}
+		else
+		{
+	    		AaType* t = AaProgram::Make_Uinteger_Type(width);
+	    		expr = new AaTypeCastExpression(scope,t,rest);
+            		((AaTypeCastExpression*)expr)->Set_Bit_Cast(true);
+		}
+	}
 ;
 
 
@@ -1387,6 +1493,7 @@ aA_Slice_Expression[AaScope* scope] returns [AaExpression* expr]
   	int lno;
 }:
 		lpid: LPAREN SLICE rest=aA_Expression[scope] 
+			{ lno = lpid->getLine(); }
 			hindex = aA_Integer_Parameter_Expression [lno]
 			lindex = aA_Integer_Parameter_Expression [lno]
 		{
@@ -1883,6 +1990,10 @@ aA_Pipe_Object_Declaration_List[AaBlockStatement* scope]
 			AaProgram::Add_Object(obj);
 		else
 			scope->Add_Object(obj);
+
+		cerr << "Info: parsed and added pipe " << oname << " width = " << otype->Get_Width() 
+			<< " depth = " << pipe_depth
+				<<  endl;
             }
 	}
 	 
@@ -2194,14 +2305,14 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
     {
         string full_name;
         vector<string> literals;
-        int line_number;
+        int line_number=0;
 	int param_value;
         int dlno;
         bool scalar_flag = true;
     }
     : 
           (           
-           (aA_Integer_Literal_Reference[full_name,literals,dlno]) 
+           (aA_Integer_Literal_Reference[full_name,literals,dlno] {line_number = dlno;} ) 
            |
             (lid:LESS  {full_name += lid->getText(); line_number = lid->getLine();}
             (aA_Integer_Literal_Reference[full_name,literals,dlno])+
@@ -2491,6 +2602,8 @@ LOCK          : "$lock";
 UNLOCK        : "$unlock";
 PARAMETER     : "$parameter";
 SLEEP	      : "$sleep";
+USE_GATED_CLOCK   : "$use_gated_clock";
+GATED_CLOCK   : "$gated_clock";
 
 
 // Special symbols
@@ -2619,9 +2732,17 @@ VOLATILE   : "$volatile";
 OPERATOR   : "$operator";
 NOOPT      : "$noopt";
 OPAQUE     : "$opaque";
+USEONCE     : "$useonce";
+
+// keep flag..
+KEEP     : "$keep";
 
 
 DETERMINISTIC: "$deterministic";
+CUT_THROUGH: "$cut_through";
+
+CONSTZERO: "$zero";
+CONSTONE: "$one";
 // data format
 UINTEGER          : DIGIT (DIGIT)*;
 FLOATCONST : "_f" ('-')? DIGIT '.' (DIGIT)+ 'e' ('+' | '-') (DIGIT)+;
