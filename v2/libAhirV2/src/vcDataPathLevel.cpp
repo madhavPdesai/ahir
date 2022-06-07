@@ -80,6 +80,7 @@ void vcWire::Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile)
 
 
 	bool f = true;
+	bool all_inputs_are_constants = true; 
 
 	string enable_string = "constant_one_1";
 	vcWire* gw = dpe->Get_Guard_Wire();
@@ -102,21 +103,32 @@ void vcWire::Print_VHDL_Level_Repeater(string stall_sig, ostream& ofile)
 		if(!iw->Is_Constant() && !dpe->Get_Input_WAR_Flag(I))
 		{
 			f = false;
+			if(!iw->Is_Constant())
+				all_inputs_are_constants = false;
 		}
 	}
 
 
 	// f flag = true implies wire dpe has no useful inputs.
 	if(f)
+	//
+	// This is a problem?  All inputs to the dpe are either
+	// constants or WAR wires.
+	// 
 	{
-		vcSystem::Error("wire " + this->Get_VHDL_Signal_Id() + 
-				" has no non-trivial, non-WAR wires on which it depends");
-		return;
+		if(!all_inputs_are_constants || !dpe->Get_Flow_Through())
+		{
+			vcSystem::Error("Non-flow-through output wire " + this->Get_VHDL_Signal_Id() + " has WAR wires on which it depends");
+		}
+		else
+		{
+			vcSystem::Warning("wire " + this->Get_VHDL_Signal_Id() + " has only constant wires on which it depends");
+			ofile << "-- flow-through dpe with only constant inputs, pass values" << endl;
+			ofile << this->Get_VHDL_Signal_Id() << " <= " << this->Get_VHDL_Level_Rptr_In_Id() << ";" << endl;
+		}
 	}
-
-
 	// now instantiate the repeater.
-	if(dpe->Get_Flow_Through())
+	else if(dpe->Get_Flow_Through())
 	{
 		ofile << "-- flow-through dpe, pass valids, values" << endl;
 		ofile << this->Get_VHDL_Signal_Id() << " <= " << this->Get_VHDL_Level_Rptr_In_Id() << ";" << endl;
