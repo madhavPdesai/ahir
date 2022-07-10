@@ -1,0 +1,68 @@
+$system sys  $library SYS_LIB
+	$in 
+		$pipe  In_1  8 $depth 1
+		$pipe  In_2  8 $depth 1
+	$out 
+		$pipe  Out_1  8 $depth 1
+{
+
+	$thread MuxT
+		$in $pipe In_1: $unsigned<8>
+		$in $pipe In_2: $unsigned<8>
+		$out $pipe Out_1: $unsigned<8>
+
+		$constant z1  : $unsigned<1> := ($unsigned<1>) 0
+		$constant o1  : $unsigned<1> := ($unsigned<1>) 1
+
+		$variable d_var : $unsigned<8>
+		$variable  d_buffer: $unsigned<8>
+		$signal  priority: $unsigned<1>
+	$default
+
+		$now In_1$req := z1
+		$now In_2$req := z1
+		$now Out_1$req := z1
+		$now Out_1 := ($unsigned<8>) 0
+
+		<uc_rst> {
+				priority := ($unsigned<1>) 1
+				$goto uc_Receive
+			}
+		<uc_Receive> {
+
+			$now In_1$req := priority
+			$now In_2$req := (~ priority)
+
+			$if (priority & In_1$ack) {
+				d_buffer := In_1
+				$goto uc_send
+			}
+			$else {
+				$if ((~priority) & In_2$ack) {
+					d_buffer := In_2
+					$goto uc_send
+				}
+				$else
+				{
+					$goto uc_Receive
+				}
+			}
+			
+		}
+		<uc_send> {
+	
+			$now Out_1$req := o1
+			$now Out_1 := d_buffer
+
+			$if Out_1$ack {
+				$goto uc_Receive
+				priority := (~priority)
+			}
+		}
+
+	$now  $tick
+
+	$string mux_inst: MuxT
+		In_1 => In_1 In_2 => In_2 Out_1 => Out_1
+}	
+
