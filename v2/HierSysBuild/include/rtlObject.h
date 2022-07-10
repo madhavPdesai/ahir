@@ -90,6 +90,10 @@ class rtlObject: public hierRoot
 		{
 			return(this->Get_Id());
 		}
+		virtual string Get_Buf_Id()
+		{
+			return(this->Get_Id() + "_buffer");
+		}
 		virtual void Print_C_Struct_Field_Initialization(string obj_name, ostream& source_file);
 		virtual void Print_C_Probe_Matcher(ostream& source_file);
 

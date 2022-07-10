@@ -1,0 +1,42 @@
+$system sys  $library SYS_LIB
+	$in 
+		$signal UP  8 $depth 1
+	$out 
+		$signal DONE  8 $depth 1
+{
+
+	$thread UpCounter
+		$in $signal UP: $unsigned<8>
+		$out $signal DONE: $unsigned<8>
+		$constant z8  : $unsigned<8> := ($unsigned<8>) 0
+		$constant o8  : $unsigned<8> := ($unsigned<8>) 1
+		$variable d_var : $unsigned<8>
+	$default
+		$now d_var := z8
+
+		<uc_S0> {
+			$if (UP != z8) {
+				$goto uc_S1
+			}	
+		}
+		<uc_S1>  {
+			$if (UP != z8) {
+				$goto uc_S2
+			}	
+		}
+		<uc_S2> {
+			$if (UP != z8) {
+				$goto uc_S0
+				$now d_var := o8
+			}	
+		}
+
+
+	$now  DONE := d_var
+	$tick
+
+	$string counter_inst: UpCounter
+			UP => UP
+			DONE => DONE
+}	
+

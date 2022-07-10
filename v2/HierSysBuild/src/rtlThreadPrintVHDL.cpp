@@ -81,6 +81,18 @@ void rtlThread::Print_Vhdl_Port_Declarations(ostream& ofile)
 }
 
 
+void rtlThread::Print_Vhdl_Buffer_Assignments(ostream& ofile)
+{
+	for(map<string,rtlObject*>::iterator iter = _objects.begin(), fiter = _objects.end(); iter != fiter; iter++)
+	{
+		rtlObject* obj = (*iter).second;
+		if(obj->Is_Signal()  && obj->Is_OutPort())
+		{
+			ofile << obj->Get_Id() << " <= " <<  obj->Get_Buf_Id() << ";" << endl;
+		}
+	}
+}
+
 void rtlThread::Print_Vhdl_Object_Declarations(bool signal_flag, bool constant_flag, bool variable_flag, ostream& ofile)
 {
 	for(map<string,rtlObject*>::iterator iter = _objects.begin(), fiter = _objects.end(); iter != fiter; iter++)
@@ -89,6 +101,11 @@ void rtlThread::Print_Vhdl_Object_Declarations(bool signal_flag, bool constant_f
 		if(signal_flag && obj->Is_Signal()  && !obj->Is_InPort() && !obj->Is_OutPort())
 		{
 				ofile << "signal " <<  obj->Get_Id() << ": " 
+						<< Get_Type_Identifier(obj->Get_Type()) << ";" << endl;
+		}
+		else if(signal_flag && obj->Is_Signal()  && obj->Is_OutPort())
+		{
+				ofile << "signal " <<  obj->Get_Buf_Id() << ": " 
 						<< Get_Type_Identifier(obj->Get_Type()) << ";" << endl;
 		}
 		else if(constant_flag && obj->Is_Constant())
@@ -142,6 +159,8 @@ void rtlThread::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_
 	this->Print_Vhdl_Object_Declarations(true, true, false, ofile);
 	ofile << "--} " << endl;
 	ofile << "begin -- { " << endl;
+	// print all buffer signal assignments..
+	this->Print_Vhdl_Buffer_Assignments(ofile);
 	ofile << "process(clk, reset, current_thread_state ";
 	for(map<string,rtlObject*>::iterator iter = _objects.begin(), fiter = _objects.end(); iter != fiter; iter++)
 	{
@@ -150,6 +169,7 @@ void rtlThread::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_
 		{
 			ofile <<  ", " << obj->Get_Id();
 		}
+		
 		if(obj->Is_OutPort() && obj->Is_Pipe())
 			ofile << ", " << obj->Get_Id() << "_pipe_write_ack";	
 		if(obj->Is_InPort() && obj->Is_Pipe())
@@ -163,6 +183,7 @@ void rtlThread::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_
 	ofile << "begin -- {" << endl;
 	ofile << " -- default values " << endl;
 	ofile << " next_thread_state := current_thread_state;" << endl;
+	ofile << " -- default initializations... " << endl;
 	for(int I = 0, fI = _default_statements.size(); I < fI; I++)
 	{
 		_default_statements[I]->Print_Vhdl(ofile);
@@ -174,6 +195,11 @@ void rtlThread::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_
 		if(obj->Needs_Next_Vhdl_Variable() && !obj->Is_OutPort())
 		{
 			ofile << obj->Get_Variable_Id() << " := " << obj->Get_Id() << ";" << endl;
+		}
+		else if(obj->Needs_Next_Vhdl_Variable()  && obj->Is_OutPort())
+		{
+			ofile << " -- default initializations for output buffer ..... " << endl;
+			ofile << obj->Get_Variable_Id() << " := " << obj->Get_Buf_Id() << ";" << endl;
 		}
 	}
 
@@ -209,7 +235,10 @@ void rtlThread::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_
 		rtlObject* obj = (*iter).second;
 		if(obj->Needs_Next_Vhdl_Variable())
 		{
-			ofile << obj->Get_Id() << " <= " << obj->Get_Variable_Id() << ";" << endl;
+			if(obj->Is_OutPort())
+				ofile << obj->Get_Buf_Id() << " <= " << obj->Get_Variable_Id() << ";" << endl;
+			else	
+				ofile << obj->Get_Id() << " <= " << obj->Get_Variable_Id() << ";" << endl;
 		}
 	}
 	ofile << " -- specified tick assignments. " << endl;

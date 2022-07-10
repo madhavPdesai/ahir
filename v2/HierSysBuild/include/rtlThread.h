@@ -121,6 +121,7 @@ class rtlThread: public hierRoot
 
 	void Print_Vhdl_Port_Declarations(ostream& ofile);
 	void Print_Vhdl_Object_Declarations(bool signal_flag, bool constant_flag, bool variable_flag, ostream& ofile);
+	void Print_Vhdl_Buffer_Assignments(ostream& ofile);
 	void Print_Vhdl_Component(ostream& ofile);
 	void Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_to_work);
 

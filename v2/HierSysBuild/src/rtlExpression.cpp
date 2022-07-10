@@ -226,8 +226,15 @@ string rtlSimpleObjectReference::To_Vhdl_String()
 		{
 			return(this->_object->Get_Variable_Id());
 		}
+		if(this->Get_Is_Target() && !this->_object->Needs_Next_Vhdl_Variable() &&
+					this->_object->Is_OutPort())
+		{
+			return(this->_object->Get_Buf_Id());
+		}
 		else
+		{
 			return(this->_object->Get_Id());
+		}
 	}
 }
 	
