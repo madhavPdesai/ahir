@@ -131,7 +131,8 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 		int pval = 0;
 		if(defines_map.find(key)  != defines_map.end())
 		{
-			if(defines_map[key] != "0")
+			int print_on = (ifdef_stack.size() == 0) || (ifdef_stack.top() != 0);
+			if((defines_map[key] != "0") && print_on)
 			{
 				pval = 1;
 			}
