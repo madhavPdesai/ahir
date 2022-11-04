@@ -38,6 +38,8 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.mem_ASIC_components.all;
+use ahir.types.all;
+use ahir.utilities.all;
 
 -- Entity to instantiate different available memory cuts based on the 
 -- address_width and data_width generics passed.
@@ -58,10 +60,13 @@ end entity dpmem_selector;
 
 architecture StructGen of dpmem_selector is
 	signal TIE_HIGH, TIE_LOW: std_logic;
+        signal TIE_LOW_2, TIE_HIGH_2: std_logic_vector(1 downto 0);
         signal TIE_LOW_3: std_logic_vector(2 downto 0);
         signal TIE_LOW_4: std_logic_vector(3 downto 0);
 begin
 	TIE_HIGH <= '1';
 	TIE_LOW <= '0';
+	TIE_LOW_2 <= (others => '0');
+	TIE_HIGH_2 <= (others => '1');
 	TIE_LOW_3 <= (others => '0');
 	TIE_LOW_4 <= (others => '0');

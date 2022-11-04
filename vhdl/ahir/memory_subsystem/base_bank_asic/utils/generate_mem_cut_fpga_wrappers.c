@@ -54,6 +54,8 @@ int main(int argc, char* argv[])
 			tech = SCL180;
 		else if(strcmp(descr,"umc65") == 0)
 			tech = UMC65;
+		else if(strcmp(descr,"sac") == 0)
+			tech = SAC;
 		else if (strcmp (descr,"DP") == 0)
 		{
 			sscanf(rest_of_line,"%d %d %s %s", &addr_width, &data_width, entity_prefix, entity_postfix);
@@ -65,7 +67,13 @@ int main(int argc, char* argv[])
 		}
 		else if ((strcmp (descr,"SP") == 0) || (strcmp(descr,"1RW") == 0))
 		{
-			sscanf(rest_of_line,"%d %d %s %s", &addr_width, &data_width, entity_prefix, entity_postfix);
+			if(tech == SAC)
+			{
+				sscanf(rest_of_line,"%d %d %s ", &addr_width, &data_width, entity_prefix);
+			}	
+			else
+				sscanf(rest_of_line,"%d %d %s %s", &addr_width, &data_width, entity_prefix, 
+												entity_postfix);
 			printWrapperEntity(tech, descr,
 						fpga_wrapper_file, 
 						entity_prefix, 
@@ -75,10 +83,13 @@ int main(int argc, char* argv[])
 		else if (strcmp (descr,"1R1W") == 0)
 		{
 			sscanf(rest_of_line,"%d %d %s %s", &addr_width, &data_width, entity_prefix, entity_postfix);
-			printWrapperEntity(tech, "RF",
+			if(tech != SAC)
+			{
+				printWrapperEntity(tech, "RF",
 						fpga_wrapper_file, 
 						entity_prefix,
 						addr_width, data_width, entity_postfix);
+			}
 		}
 	}
 

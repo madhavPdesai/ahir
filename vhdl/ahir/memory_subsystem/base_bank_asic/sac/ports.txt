@@ -1,0 +1,178 @@
+//---------------------------------------------------------------------------------------
+//  Assumptions:   ports on SRAM 
+//---------------------------------------------------------------------------------------
+module SRAM_8192X8(
+            SLP,
+            SD,
+            CLK, 
+	    CEB, 
+	    WEB,
+            CEBM, 
+	    WEBM,
+            AWT,
+            A, D,
+            BWEB,
+            AM, 
+	    DM,
+            BWEBM,
+            BIST,
+            Q);
+
+//======== IO Ports =============//
+// Mode Control
+input BIST; // can be left open?
+input AWT;  // can be left open?
+
+// Normal Mode Input
+input SLP; // MPD: what is this?
+input SD;  // MPD: what is this?
+input CLK; // MPD: CLK rising edge used?
+input CEB; // MPD: active low?
+input WEB; // MPD: active low?
+
+input [12:0] A;
+input [7:0]  D;
+input [7:0]  BWEB; // MPD: what is this?
+
+ 
+
+// BIST Mode Input
+input CEBM;
+input WEBM;
+
+input [12:0] AM;
+input [7:0]  DM;
+input [7:0]  BWEBM;
+ 
+
+// Data Output
+output [7:0] Q;
+
+//---------------------------------------------------------------------------------------
+//  Assumptions:   Internal behaviour of SRAM 
+//---------------------------------------------------------------------------------------
+ 
+MPD:  I am assuming the behaviour of the memory is
+     always at posedge of CLK
+        if((WEB == 0)  and (CEB == 0))
+           MEM[A] = D (only those bits selected by BWEB (active low) are  modified)
+        else if (CEB == 0)
+           Q  = MEM[A]
+
+      and the other inputs are to be left unconnected.
+	
+//---------------------------------------------------------------------------------------
+//  Assumptions:   Ports on DRAM 
+//---------------------------------------------------------------------------------------
+module DPRAM_256X52
+    (
+    	SLP,
+    	SD,
+        WTSEL, // [1:0]
+        RTSEL,
+        VG,
+        VS,
+    
+	AA,
+    	DA,
+    	BWEBA,
+    	WEBA,CEBA,CLKA,
+
+    	AB,
+    	DB,
+    	BWEBB,
+    	WEBB,CEBB,CLKB,
+
+    	AWT,
+    	AMA,
+    	DMA,
+    	BWEBMA,
+    	WEBMA,CEBMA,
+    	AMB,
+    	DMB,
+
+    	BWEBMB,
+    	WEBMB,CEBMB,
+    	BIST,CLKM,
+
+    	QA,
+    	QB
+  );
+
+ 
+
+// Parameter declarations
+
+parameter  N = 52;
+parameter  W = 256;
+parameter  M = 8;
+
+ 
+
+    input SLP;
+    wire DSLP=1'b0;
+
+    input SD;
+
+    input [1:0] WTSEL;
+    input [1:0] RTSEL;
+    input VG;
+    input VS;
+
+ 
+
+// Input-Output declarations
+
+    input [M-1:0] AA;
+    input [N-1:0] DA;
+    input WEBA;
+    input CEBA;
+    input [N-1:0] BWEBA; // bit enables?
+    input CLKA;
+    output [N-1:0] QA;
+
+
+    input [M-1:0] AB;
+    input [N-1:0] DB;
+    input [N-1:0] BWEBB;  // bit enables?
+    input WEBB;
+    input CEBB;
+    input CLKB;
+    output [N-1:0] QB;
+
+    // bist ports?
+    input AWT;
+    input [M-1:0] AMA;
+    input [N-1:0] DMA;
+    input [N-1:0] BWEBMA;
+    input WEBMA;
+    input CEBMA;
+
+    input [M-1:0] AMB;
+    input [N-1:0] DMB;
+    input [N-1:0] BWEBMB;
+    input WEBMB;
+    input CEBMB;
+
+    input BIST;
+    input CLKM;
+
+//---------------------------------------------------------------------------------------
+//  Assumptions:   Internal behaviour in DRAM 
+//---------------------------------------------------------------------------------------
+ 
+MPD:  I am assuming the behaviour of the memory is
+     always at posedge of CLKA
+        if((WEBA = 0)  and (CEBA = 0))
+           MEM[A] = DA (only those bits selected by BWEBA (active low) are modified)
+        else if (CEBA = 0)
+           QA  = MEM[AA]
+
+     always at posedge of CLKB
+        if((WEBB = 0)  and (CEBB = 0))
+           MEM[A] = DB (only those bits selected by BWEBB (active low) are modified)
+        else if (CEBB = 0)
+           QB  = MEM[AB]
+
+      and the other inputs are to be left unconnected.
+	

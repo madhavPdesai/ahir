@@ -69,7 +69,10 @@ package Utilities is
 
   function Reverse(x: unsigned) return unsigned;
   procedure TruncateOrPad(signal rhs: in std_logic_vector; signal lhs : out std_logic_vector);
-  
+
+  function TieLowSlvConstant (constant W: integer) return std_logic_vector;
+  function TieHighSlvConstant (constant W: integer) return std_logic_vector;
+
 end Utilities;
 
 
@@ -397,4 +400,18 @@ package body Utilities is
 	alhs(L downto 1) <= arhs(L downto 1);
   end procedure TruncateOrPad;
 
+  function TieLowSlvConstant (constant W: integer) return std_logic_vector is
+	variable ret_var : std_logic_vector(1 to W) ;
+  begin
+	ret_var := (others => '0');
+	return(ret_var);
+  end TieLowSlvConstant;
+
+  function TieHighSlvConstant (constant W: integer) return std_logic_vector is
+	variable ret_var : std_logic_vector(1 to W) ;
+  begin
+	ret_var := (others => '1');
+	return(ret_var);
+  end TieHighSlvConstant;
+  
 end Utilities;

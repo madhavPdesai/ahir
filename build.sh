@@ -14,6 +14,8 @@ cd vhdl/release
 . catForAsicFpga.scl180.sh
 . catForAsic.umc65.sh
 . catForAsicFpga.umc65.sh
+. catForAsic.sac.sh
+. catForAsicFpga.sac.sh
 cd $CWD
 echo "Running scons to build tools."
 cd v2

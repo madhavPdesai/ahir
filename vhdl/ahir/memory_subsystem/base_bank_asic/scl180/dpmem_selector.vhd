@@ -38,6 +38,8 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.mem_ASIC_components.all;
+use ahir.types.all;
+use ahir.utilities.all;
 
 -- Entity to instantiate different available memory cuts based on the 
 -- address_width and data_width generics passed.
@@ -58,24 +60,60 @@ end entity dpmem_selector;
 
 architecture StructGen of dpmem_selector is
 	signal TIE_HIGH, TIE_LOW: std_logic;
+        signal TIE_LOW_2, TIE_HIGH_2: std_logic_vector(1 downto 0);
         signal TIE_LOW_3: std_logic_vector(2 downto 0);
         signal TIE_LOW_4: std_logic_vector(3 downto 0);
 begin
 	TIE_HIGH <= '1';
 	TIE_LOW <= '0';
+	TIE_LOW_2 <= (others => '0');
+	TIE_HIGH_2 <= (others => '1');
 	TIE_LOW_3 <= (others => '0');
 	TIE_LOW_4 <= (others => '0');
   dpram_5X4_gen: if (address_width = 5) and (data_width = 4) generate
-       inst: dpram_5X4
-   port map (A1 => ADDR_0, A2 => ADDR_1, CE1 => CLK, CE2 => CLK, WEB1 => WRITE_0_BAR, WEB2 => WRITE_1_BAR, OEB1 => TIE_LOW, OEB2 => TIE_LOW, CSB1 => ENABLE_0_BAR, CSB2 => ENABLE_1_BAR, I1 => DATAIN_0, I2 => DATAIN_1, O1 => DATAOUT_0, O2 => DATAOUT_1);
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(4 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(4 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: dpram_5X4
+   port map (AB => ADDR_0, A2 => ADDR_1, CE1 => CLK, CE2 => CLK, WEBB => WRITE_0_BAR, WEB2 => WRITE_1_BAR, OEB1 => TIE_LOW, OEB2 => TIE_LOW, CSB1 => ENABLE_0_BAR, CSB2 => ENABLE_1_BAR, I1 => DATAIN_0, I2 => DATAIN_1, O1 => DATAOUT_0, O2 => DATAOUT_1);
+         end block;
   end generate dpram_5X4_gen;
   obc11_dpram_4X8_gen: if (address_width = 4) and (data_width = 8) generate
-       inst: obc11_dpram_4X8
-   port map (A1 => ADDR_0, A2 => ADDR_1, CE1 => CLK, CE2 => CLK, WEB1 => WRITE_0_BAR, WEB2 => WRITE_1_BAR, OEB1 => TIE_LOW, OEB2 => TIE_LOW, CSB1 => ENABLE_0_BAR, CSB2 => ENABLE_1_BAR, I1 => DATAIN_0, I2 => DATAIN_1, O1 => DATAOUT_0, O2 => DATAOUT_1);
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(3 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: obc11_dpram_4X8
+   port map (AB => ADDR_0, A2 => ADDR_1, CE1 => CLK, CE2 => CLK, WEBB => WRITE_0_BAR, WEB2 => WRITE_1_BAR, OEB1 => TIE_LOW, OEB2 => TIE_LOW, CSB1 => ENABLE_0_BAR, CSB2 => ENABLE_1_BAR, I1 => DATAIN_0, I2 => DATAIN_1, O1 => DATAOUT_0, O2 => DATAOUT_1);
+         end block;
   end generate obc11_dpram_4X8_gen;
   dpram_5X8_gen: if (address_width = 5) and (data_width = 8) generate
-       inst: dpram_5X8
-   port map (A1 => ADDR_0, A2 => ADDR_1, CE1 => CLK, CE2 => CLK, WEB1 => WRITE_0_BAR, WEB2 => WRITE_1_BAR, OEB1 => TIE_LOW, OEB2 => TIE_LOW, CSB1 => ENABLE_0_BAR, CSB2 => ENABLE_1_BAR, I1 => DATAIN_0, I2 => DATAIN_1, O1 => DATAOUT_0, O2 => DATAOUT_1);
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(4 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(4 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: dpram_5X8
+   port map (AB => ADDR_0, A2 => ADDR_1, CE1 => CLK, CE2 => CLK, WEBB => WRITE_0_BAR, WEB2 => WRITE_1_BAR, OEB1 => TIE_LOW, OEB2 => TIE_LOW, CSB1 => ENABLE_0_BAR, CSB2 => ENABLE_1_BAR, I1 => DATAIN_0, I2 => DATAIN_1, O1 => DATAOUT_0, O2 => DATAOUT_1);
+         end block;
   end generate dpram_5X8_gen;
 end StructGen;
 

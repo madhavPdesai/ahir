@@ -58,9 +58,21 @@ int main(int argc, char* argv[])
 			tech = SCL180;
 		else if(strcmp(descr,"umc65") == 0)
 			tech = UMC65;
-		else if (strcmp (descr,"DP") == 0)
+		else if(strcmp(descr,"sac") == 0)
+			tech = SAC;
+
+		if (strcmp (descr,"DP") == 0)
 		{
-			sscanf(rest_of_line,"%d %d %s %s", &addr_width, &data_width, entity_prefix, entity_postfix);
+			if(tech == SAC)
+			{
+				sscanf(rest_of_line,"%d %d %s ", &addr_width, &data_width, entity_prefix);
+			}
+			else
+			{
+				sscanf(rest_of_line,"%d %d %s %s", &addr_width, &data_width, entity_prefix, 
+												entity_postfix);
+			}
+
 			printInstanceAndComponents(tech, "DP",
 							dp_arch_file, 
 							comp_decls_file, 
@@ -69,7 +81,7 @@ int main(int argc, char* argv[])
 							entity_postfix);
 			appendToList(addr_width, data_width, &dp_list);
 		}
-		else if ((strcmp (descr,"SP") == 0) || (strcmp (descr,"1RW") == 0))
+		else if (strcmp (descr,"SP") == 0) 
 		{
 			sscanf(rest_of_line,"%d %d %s %s", &addr_width, &data_width, entity_prefix, entity_postfix);
 			printInstanceAndComponents(tech, descr,
@@ -84,19 +96,27 @@ int main(int argc, char* argv[])
 		{
 			sscanf(rest_of_line,"%d %d %s %s", &addr_width, &data_width, entity_prefix, entity_postfix);
 			printInstanceAndComponents(tech, "RF",
-							rf_arch_file, comp_decls_file, entity_prefix,
-							addr_width, data_width, entity_postfix);
+						rf_arch_file, comp_decls_file, entity_prefix,
+						addr_width, data_width, entity_postfix);
 			appendToList(addr_width, data_width, &rf_list);
 		}
-		
+
 	}
 
 	if(sp_list != NULL)
 		printCutConstants(cut_constants_file, "spmem", sp_list);
+	else
+		printDummyCutConstants(cut_constants_file, "spmem");
+
 	if(dp_list != NULL)
 		printCutConstants(cut_constants_file, "dpmem", dp_list);
+	else
+		printDummyCutConstants(cut_constants_file, "dpmem");
+
 	if(rf_list != NULL)
 		printCutConstants(cut_constants_file, "register_file_1w_1r",    rf_list);
+	else
+		printDummyCutConstants(cut_constants_file, "register_file_1w_1r");
 
 	fclose(comp_decls_file);
 	fclose(sp_arch_file);

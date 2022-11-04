@@ -80,6 +80,8 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.mem_ASIC_components.all;
+use ahir.GlobalConstants.all;
+use ahir.mem_component_pack.all;
 
 -- Entity to instantiate different available memory cuts based on the 
 -- address_width and data_width generics passed.
@@ -103,13 +105,43 @@ architecture XilinxBramInfer of dpram_generic_reverse_wrapper is
 
   type MemArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
 
-  signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
-
 begin  -- XilinxBramInfer
+  genVivado: if global_use_vivado_bbank_dual_port generate
+    gVblock: block
+	signal ena, enb, wea, web: std_logic;
+    begin
+	ena <= not ENABLE_0_bAR;
+	enb <= not ENABLE_1_bAR;
+	wea <= not WRITE_0_BAR;
+	web <= not WRITE_1_BAR;
 
+	bbVivado: base_bank_dual_port_for_vivado
+		generic map (name => "bbVivado", g_addr_width => address_Width, g_data_width => data_width)
+		port map (
+			clka => clk, 
+			clkb => clk, 
+			ena => ena,
+			enb => enb,
+			wea => wea,
+			web => web,
+			addra => ADDR_0,
+			addrb => ADDR_1,
+			dia => DATAIN_0,
+			dib => DATAIN_1,
+			doa => DATAOUT_0,
+			dob => DATAOUT_1
+		);
+      end block;
+  end generate genVivado;
+
+  noGenVivado: if not global_use_vivado_bbank_dual_port generate
+  bbNoGen: block
+  	signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
+  begin
   -- read/write process
   process(CLK, ADDR_0, ENABLE_0_BAR, WRITE_0_BAR, ADDR_1, ENABLE_1_BAR, WRITE_1_BAR)
   begin
+
 
     -- synch read-write memory
     if(CLK'event and CLK ='1') then
@@ -136,6 +168,8 @@ begin  -- XilinxBramInfer
 		end if;
 	end if;
   end process;
+  end block;
+  end generate noGenVivado;
   
 end XilinxBramInfer;
 

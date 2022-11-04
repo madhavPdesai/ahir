@@ -32,6 +32,9 @@
 --------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
+library ahir;
+use ahir.types.all;
+use ahir.utilities.all;
 
 package mem_ASIC_components is
 
@@ -352,28 +355,6 @@ package mem_ASIC_components is
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
       DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end component;
-  component SYKA65_8X64X1CM2 is
-   port(       DO : out std_logic_vector(63 downto 0);
-      A : in std_logic_vector(2 downto 0);
-      DI : in std_logic_vector(63 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (3 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end component;
-  component SYKA65_16X32X1CM2 is
-   port(       DO : out std_logic_vector(31 downto 0);
-      A : in std_logic_vector(3 downto 0);
-      DI : in std_logic_vector(31 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (3 downto 0);
       CK   :   IN   std_logic;
       CSB  :   IN   std_logic
 );

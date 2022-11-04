@@ -183,11 +183,6 @@ void rtlThread::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_
 	ofile << "begin -- {" << endl;
 	ofile << " -- default values " << endl;
 	ofile << " next_thread_state := current_thread_state;" << endl;
-	ofile << " -- default initializations... " << endl;
-	for(int I = 0, fI = _default_statements.size(); I < fI; I++)
-	{
-		_default_statements[I]->Print_Vhdl(ofile);
-	}
 
 	for(map<string,rtlObject*>::iterator iter = _objects.begin(), fiter = _objects.end(); iter != fiter; iter++)
 	{
@@ -201,6 +196,12 @@ void rtlThread::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs_
 			ofile << " -- default initializations for output buffer ..... " << endl;
 			ofile << obj->Get_Variable_Id() << " := " << obj->Get_Buf_Id() << ";" << endl;
 		}
+	}
+
+	ofile << " -- default initializations... " << endl;
+	for(int I = 0, fI = _default_statements.size(); I < fI; I++)
+	{
+		_default_statements[I]->Print_Vhdl(ofile);
 	}
 
 	ofile << " -- case statement " << endl;

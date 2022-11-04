@@ -1,0 +1,49 @@
+!
+! Unique memory cuts received from foundry X
+!
+!  Mem-type   addr-width    data-width
+!
+!  Mem-types are
+!     1R1W   two-port memory with 1 read and 1 write port.
+!			In SACm same as dual port...
+!     DP     true dual-port memory.
+!     SP     single-port memory (single port SRAM and single port register file)
+! technology descriptor
+sac
+!
+DP 5 8		 DPRAM 
+DP 8 32		 DPRAM
+DP 11 8		 DPRAM
+DP 11 36	 DPRAM
+DP 8 52		 DPRAM
+DP 5 64 	 DPRAM
+DP 5 4		 DPRAM
+!
+1R1W 5 8	 DPRAM 
+1R1W 8 32	 DPRAM
+1R1W 11 8	 DPRAM
+1R1W 11 36	 DPRAM
+1R1W 8 52	 DPRAM
+1R1W 5 64 	 DPRAM
+1R1W 5 4	 DPRAM
+!
+SP 6 4		 SRAM 
+SP 6 32		 SRAM
+SP 8 8		 SRAM
+SP 8 32		 SRAM
+SP 13 8		 SRAM
+!
+SP 5 32		 SRAM
+! repeated
+!SP 5 32	 SRAM
+SP 7 22		 SRAM
+SP 10 8		 SRAM
+SP 10 64	 SRAM
+SP 6 128 	 SRAM
+SP 6 67		 SRAM
+SP 6 24		 SRAM
+SP 6 90		 SRAM
+! repeated.
+!SP 6 128
+!SP 5 32		 SRAM
+!SP 13 8		 SRAM

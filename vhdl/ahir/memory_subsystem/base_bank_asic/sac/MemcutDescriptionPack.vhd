@@ -35,36 +35,25 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ahir;
-use ahir.mem_ASIC_components.all;
-use ahir.types.all;
-use ahir.utilities.all;
+library ahir;	
+use ahir.Types.all;	
+use ahir.Subprograms.all;	
+use ahir.mem_function_pack.all;
+use ahir.memory_subsystem_package.all;
+--use ahir.Utilities.all;
 
--- Entity to instantiate different available memory cuts based on the 
--- address_width and data_width generics passed.
-entity spmem_selector is
-	generic(address_width: integer:=8; data_width: integer:=8);
-	port (ADDR : in std_logic_vector(address_width-1 downto 0 );
-		CLK : in std_logic;
-	        RESET: in std_logic;
-		WRITE_BAR: in std_logic;
-		ENABLE_BAR: in std_logic;
-		DATAIN  : in std_logic_vector(data_width-1 downto 0);
-		DATAOUT  : out std_logic_vector(data_width-1 downto 0));
-end entity spmem_selector;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;
+use aHiR_ieee_proposed.float_pkg.all;
 
-architecture StructGen of spmem_selector is
-
-  signal TIE_HIGH, TIE_LOW: std_logic;
-  signal TIE_LOW_2, TIE_HIGH_2: std_logic_vector(1 downto 0);
-  signal TIE_LOW_3: std_logic_vector(2 downto 0);
-  signal TIE_LOW_4: std_logic_vector(3 downto 0);
-
-begin
-  
-  TIE_HIGH <= '1';
-  TIE_LOW  <= '0';
-  TIE_LOW_2 <= (others => '0');
-  TIE_HIGH_2 <= (others => '1');
-  TIE_LOW_3 <= (others => '0');
-  TIE_LOW_4 <= (others => '0');
+package MemcutDescriptionPackage is
+   constant spmem_cut_row_heights : IntegerArray(1 to 13) := (64, 64, 64, 64, 1024, 1024, 128, 32, 8192, 256, 256, 64, 64);
+    constant spmem_cut_address_widths : IntegerArray(1 to 13) := (6, 6, 6, 6, 10, 10, 7, 5, 13, 8, 8, 6, 6);
+    constant spmem_cut_data_widths : IntegerArray(1 to 13) := (90, 24, 67, 128, 64, 8, 22, 32, 8, 32, 8, 32, 4);
+   constant dpmem_cut_row_heights : IntegerArray(1 to 7) := (32, 32, 256, 2048, 2048, 256, 32);
+    constant dpmem_cut_address_widths : IntegerArray(1 to 7) := (5, 5, 8, 11, 11, 8, 5);
+    constant dpmem_cut_data_widths : IntegerArray(1 to 7) := (4, 64, 52, 36, 8, 32, 8);
+   constant register_file_1w_1r_cut_row_heights : IntegerArray(1 to 7) := (32, 32, 256, 2048, 2048, 256, 32);
+    constant register_file_1w_1r_cut_address_widths : IntegerArray(1 to 7) := (5, 5, 8, 11, 11, 8, 5);
+    constant register_file_1w_1r_cut_data_widths : IntegerArray(1 to 7) := (4, 64, 52, 36, 8, 32, 8);
+end package;

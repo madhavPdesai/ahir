@@ -32,25 +32,28 @@
 --------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
+library ahir;
+use ahir.types.all;
+use ahir.utilities.all;
 
 package mem_ASIC_components is
 
   component dpram_5X4 is
-   port(       A1,A2  : in std_logic_vector(4 downto 0);
+   port(       AB,A2  : in std_logic_vector(4 downto 0);
       I1,I2  : in std_logic_vector(3 downto 0);
-      CE1,CE2,CSB1,CSB2,WEB1,WEB2: in std_logic;
+      CE1,CE2,CSB1,CSB2,WEBB,WEB2: in std_logic;
       O1,O2 : out std_logic_vector(3 downto 0));
   end component;
   component obc11_dpram_4X8 is
-   port(       A1,A2  : in std_logic_vector(3 downto 0);
+   port(       AB,A2  : in std_logic_vector(3 downto 0);
       I1,I2  : in std_logic_vector(7 downto 0);
-      CE1,CE2,CSB1,CSB2,WEB1,WEB2: in std_logic;
+      CE1,CE2,CSB1,CSB2,WEBB,WEB2: in std_logic;
       O1,O2 : out std_logic_vector(7 downto 0));
   end component;
   component dpram_5X8 is
-   port(       A1,A2  : in std_logic_vector(4 downto 0);
+   port(       AB,A2  : in std_logic_vector(4 downto 0);
       I1,I2  : in std_logic_vector(7 downto 0);
-      CE1,CE2,CSB1,CSB2,WEB1,WEB2: in std_logic;
+      CE1,CE2,CSB1,CSB2,WEBB,WEB2: in std_logic;
       O1,O2 : out std_logic_vector(7 downto 0));
   end component;
   component spram_4X4 is

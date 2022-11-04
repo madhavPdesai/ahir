@@ -54,32 +54,90 @@ end entity register_file_1w_1r_selector;
 
 architecture StructGen of register_file_1w_1r_selector is
 	signal TIE_HIGH, TIE_LOW: std_logic;
+        signal TIE_LOW_2, TIE_HIGH_2: std_logic_vector(1 downto 0);
         signal TIE_LOW_3: std_logic_vector(2 downto 0);
         signal TIE_LOW_4: std_logic_vector(3 downto 0);
 begin
 	TIE_HIGH <= '1';
 	TIE_LOW <= '0';
+        TIE_LOW_2 <= (others => '0');
+        TIE_HIGH_2 <= (others => '1');
 	TIE_LOW_3 <= (others => '0');
 	TIE_LOW_4 <= (others => '0');
   SZKA65_16X16X1CM2_gen: if (address_width = 4) and (data_width = 16) generate
-       inst: SZKA65_16X16X1CM2
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(3 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SZKA65_16X16X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+         end block;
   end generate SZKA65_16X16X1CM2_gen;
   SZKA65_16X32X1CM2_gen: if (address_width = 4) and (data_width = 32) generate
-       inst: SZKA65_16X32X1CM2
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(3 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SZKA65_16X32X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+         end block;
   end generate SZKA65_16X32X1CM2_gen;
   SZKA65_64X4X1CM2_gen: if (address_width = 6) and (data_width = 4) generate
-       inst: SZKA65_64X4X1CM2
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SZKA65_64X4X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+         end block;
   end generate SZKA65_64X4X1CM2_gen;
   SZKA65_64X8X1CM2_gen: if (address_width = 6) and (data_width = 8) generate
-       inst: SZKA65_64X8X1CM2
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SZKA65_64X8X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+         end block;
   end generate SZKA65_64X8X1CM2_gen;
   SZKA65_64X16X1CM2_gen: if (address_width = 6) and (data_width = 16) generate
-       inst: SZKA65_64X16X1CM2
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SZKA65_64X16X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+         end block;
   end generate SZKA65_64X16X1CM2_gen;
 end StructGen;
 

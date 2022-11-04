@@ -138,7 +138,6 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 			}
 		}
 		ifdef_stack.push(pval);
-		
 	}
 	else if (keyword == "endif")
 	{
