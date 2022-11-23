@@ -3100,6 +3100,15 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 			}
 			else if(called_module->Get_Operator_Flag())
 			{
+				if(so->Is_Part_Of_Pipeline() &&
+						called_module->Get_Operator_Flag()  &&
+						!called_module->Get_Pipeline_Flag())
+				{
+					vcSystem::Warning("non-pipelined operator " + called_module->Get_Id() 
+							+ " in pipelined data-path of module " +
+							this->Get_Parent()->Get_Id());
+				}
+
 				so->Print_Operator_VHDL(ofile);
 				skip_because_operator = true;
 			}
@@ -3133,6 +3142,8 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
 			so->Append_Guard(guard_wires,guard_complements);
 			part_of_pipeline = (part_of_pipeline | so->Is_Part_Of_Pipeline());
+
+
 		}
 		this->Rationalize_Outwire_Buffering(outwire_buffering,part_of_pipeline);
 		assert(called_module != NULL);
@@ -3154,8 +3165,8 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 		else
 			output_buffering_string =  "constant outBUFs: IntegerArray(" + IntToStr(num_reqs-1) + " downto 0) := (others => 1);";
 
-			
-			
+
+
 		string guard_flags;
 		string guard_buffering;
 		Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guard_wires);

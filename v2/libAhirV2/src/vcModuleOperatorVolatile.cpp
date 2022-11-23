@@ -316,15 +316,15 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 			pred_markings.push_back(0);
 			pred_delays.push_back(0); // revisit later..
 			
-			// non-pipeline case is like pipeline-depth = 1.
-			preds.push_back("update_ack_symbol");
-			pred_capacities.push_back(this->Get_Pipeline_Depth());
-			pred_markings.push_back(this->Get_Pipeline_Depth());
-			pred_delays.push_back(1); // revisit later..
 
 			int ninputs = 0;
 			if(this->_pipeline_flag)
 			{
+				preds.push_back("update_ack_symbol");
+				pred_capacities.push_back(this->Get_Pipeline_Depth());
+				pred_markings.push_back(this->Get_Pipeline_Depth());
+				pred_delays.push_back(1); // revisit later..
+
 				// in the pipeline case, need re-enable 
 				// after each input has been sampled.
 				for(int idx = 0, fidx = inarg_wires.size(); idx < fidx; idx++)
@@ -374,8 +374,23 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 			}
 			else
 			{
-				// sample-req.
-				ofile << cp_entry_symbol << " <= sample_req;" << endl;
+				//
+				// join sample_req and update_req 
+				// to trigger the control path.
+				//
+				preds.push_back("update_req");
+				pred_capacities.push_back(1);
+				pred_markings.push_back(0);
+				pred_delays.push_back(0); // revisit later..
+
+				ofile << "-- join of sample-req and update-req.. used to trigger CP." << endl;
+				Print_VHDL_Join(cp_entry_symbol + "_join", 
+						preds,
+						pred_markings,
+						pred_capacities, 
+						pred_delays, 
+						cp_entry_symbol,
+						ofile);
 			}
 		}
 
