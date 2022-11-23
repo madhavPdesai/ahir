@@ -36,6 +36,9 @@ package GlobalConstants is
     constant global_use_vivado_bbank_dual_port : boolean := false;
     constant global_use_vivado_distributed_ram_queue : boolean := false;
 
+    -- clock gating using Xilinx IP?
+    constant use_xilinx_bufce: boolean := true;
+
     --
     -- for guarded statements... increase this with care!
     --
@@ -177,7 +180,10 @@ package Utilities is
 
   function Reverse(x: unsigned) return unsigned;
   procedure TruncateOrPad(signal rhs: in std_logic_vector; signal lhs : out std_logic_vector);
-  
+
+  function TieLowSlvConstant (constant W: integer) return std_logic_vector;
+  function TieHighSlvConstant (constant W: integer) return std_logic_vector;
+
 end Utilities;
 
 
@@ -505,6 +511,20 @@ package body Utilities is
 	alhs(L downto 1) <= arhs(L downto 1);
   end procedure TruncateOrPad;
 
+  function TieLowSlvConstant (constant W: integer) return std_logic_vector is
+	variable ret_var : std_logic_vector(1 to W) ;
+  begin
+	ret_var := (others => '0');
+	return(ret_var);
+  end TieLowSlvConstant;
+
+  function TieHighSlvConstant (constant W: integer) return std_logic_vector is
+	variable ret_var : std_logic_vector(1 to W) ;
+  begin
+	ret_var := (others => '1');
+	return(ret_var);
+  end TieHighSlvConstant;
+  
 end Utilities;
 ------------------------------------------------------------------------------------------------
 --
@@ -4605,6 +4625,20 @@ package BaseComponents is
   );
   -- 
   end component dpram_1w_1r_1024x32_Operator;
+
+  component module_clock_gate is
+	port (reset, start_req, start_ack, fin_req, fin_ack, clock_in: in std_logic;
+		clock_out : out std_logic);
+  end component module_clock_gate;
+
+  component signal_clock_gate is
+	port (reset, clock_enable, clock_in: in std_logic; clock_out : out std_logic);
+  end component signal_clock_gate;
+
+  component clock_gater is
+	port (clock_in, clock_enable: in std_logic; clock_out : out std_logic);
+  end component clock_gater;
+
 end BaseComponents;
 ------------------------------------------------------------------------------------------------
 --
@@ -5797,6 +5831,23 @@ component register_file_1w_1r_port is
          clk: in std_logic;
          reset : in std_logic);
 end component register_file_1w_1r_port;
+
+-- with write to read bypass.
+component register_file_1w_1r_port_with_bypass is
+   generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
+   port (
+         -- write port 0
+         datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         -- read port 1 
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+
+         clk: in std_logic;
+         reset : in std_logic);
+end component register_file_1w_1r_port_with_bypass;
 
 component fifo_mem_synch_write_asynch_read is
    generic ( name: string; address_width: natural;  data_width : natural;
@@ -8211,25 +8262,28 @@ end package body;
 --------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
+library ahir;
+use ahir.types.all;
+use ahir.utilities.all;
 
 package mem_ASIC_components is
 
   component dpram_5X4 is
-   port(       A1,A2  : in std_logic_vector(4 downto 0);
+   port(       AB,A2  : in std_logic_vector(4 downto 0);
       I1,I2  : in std_logic_vector(3 downto 0);
-      CE1,CE2,CSB1,CSB2,WEB1,WEB2: in std_logic;
+      CE1,CE2,CSB1,CSB2,WEBB,WEB2: in std_logic;
       O1,O2 : out std_logic_vector(3 downto 0));
   end component;
   component obc11_dpram_4X8 is
-   port(       A1,A2  : in std_logic_vector(3 downto 0);
+   port(       AB,A2  : in std_logic_vector(3 downto 0);
       I1,I2  : in std_logic_vector(7 downto 0);
-      CE1,CE2,CSB1,CSB2,WEB1,WEB2: in std_logic;
+      CE1,CE2,CSB1,CSB2,WEBB,WEB2: in std_logic;
       O1,O2 : out std_logic_vector(7 downto 0));
   end component;
   component dpram_5X8 is
-   port(       A1,A2  : in std_logic_vector(4 downto 0);
+   port(       AB,A2  : in std_logic_vector(4 downto 0);
       I1,I2  : in std_logic_vector(7 downto 0);
-      CE1,CE2,CSB1,CSB2,WEB1,WEB2: in std_logic;
+      CE1,CE2,CSB1,CSB2,WEBB,WEB2: in std_logic;
       O1,O2 : out std_logic_vector(7 downto 0));
   end component;
   component spram_4X4 is
@@ -9748,6 +9802,98 @@ begin  -- PlainRegisters
 end PlainRegisters;
 ------------------------------------------------------------------------------------------------
 --
+-- Copyright (C) 2010-: Madhav P. Desai
+-- All Rights Reserved.
+--  
+-- Permission is hereby granted, free of charge, to any person obtaining a
+-- copy of this software and associated documentation files (the
+-- "Software"), to deal with the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject to
+-- the following conditions:
+-- 
+--  * Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimers.
+--  * Redistributions in binary form must reproduce the above
+--    copyright notice, this list of conditions and the following
+--    disclaimers in the documentation and/or other materials provided
+--    with the distribution.
+--  * Neither the names of the AHIR Team, the Indian Institute of
+--    Technology Bombay, nor the names of its contributors may be used
+--    to endorse or promote products derived from this Software
+--    without specific prior written permission.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+-- OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+-- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+-- IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+-- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+------------------------------------------------------------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+--
+-- dual port synchronous memory.
+--   similar to a flip-flop as far as simultaneous read/write  is concerned
+--   if both ports try to write to the same address, the second port (1) wins
+--
+entity base_bank_dual_port_for_vivado is
+   generic ( name: string;  g_addr_width: natural := 10; g_data_width : natural := 16);
+	port(
+		clka : in std_logic;
+		clkb : in std_logic;
+		ena : in std_logic;
+		enb : in std_logic;
+		wea : in std_logic;
+		web : in std_logic;
+		addra : in std_logic_vector(g_addr_width-1 downto 0);
+		addrb : in std_logic_vector(g_addr_width-1 downto 0);
+		dia : in std_logic_vector(g_data_width-1 downto 0);
+		dib : in std_logic_vector(g_data_width-1 downto 0);
+		doa : out std_logic_vector(g_data_width-1 downto 0);
+		dob : out std_logic_vector(g_data_width-1 downto 0)
+		);
+end entity base_bank_dual_port_for_vivado;
+
+
+architecture XilinxBramInfer of base_bank_dual_port_for_vivado is
+  type MemArray is array (natural range <>) of std_logic_vector(g_data_width-1 downto 0);
+  shared variable mem_array : MemArray((2**g_addr_width)-1 downto 0) := (others => (others => '0'));
+begin  -- XilinxBramInfer
+
+
+ process(CLKA)	
+	begin
+	if CLKA'event and CLKA = '1' then
+			if ENA = '1' then
+					DOA <= mem_array(to_integer(unsigned(ADDRA)));
+				if WEA = '1' then
+					mem_array(to_integer(unsigned(ADDRA))) := DIA;
+				end if;
+			end if;
+		end if;
+	end process;
+
+	process(CLKB)
+	begin
+		if CLKB'event and CLKB = '1' then
+			if ENB = '1' then
+				DOB <= mem_array(to_integer(unsigned(ADDRB)));
+				if WEB = '1' then
+					mem_array(to_integer(unsigned(ADDRB))) := DIB;
+				end if;
+			end if;
+		end if;
+	end process;
+end XilinxBramInfer;
+
+
+------------------------------------------------------------------------------------------------
+--
 -- Copyright (C) 2010-: Madhav P. Desai, Ch. V. Kalyani
 -- All Rights Reserved.
 --  
@@ -10600,6 +10746,8 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.mem_ASIC_components.all;
+use ahir.GlobalConstants.all;
+use ahir.mem_component_pack.all;
 
 -- Entity to instantiate different available memory cuts based on the 
 -- address_width and data_width generics passed.
@@ -10623,13 +10771,43 @@ architecture XilinxBramInfer of dpram_generic_reverse_wrapper is
 
   type MemArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
 
-  signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
-
 begin  -- XilinxBramInfer
+  genVivado: if global_use_vivado_bbank_dual_port generate
+    gVblock: block
+	signal ena, enb, wea, web: std_logic;
+    begin
+	ena <= not ENABLE_0_bAR;
+	enb <= not ENABLE_1_bAR;
+	wea <= not WRITE_0_BAR;
+	web <= not WRITE_1_BAR;
 
+	bbVivado: base_bank_dual_port_for_vivado
+		generic map (name => "bbVivado", g_addr_width => address_Width, g_data_width => data_width)
+		port map (
+			clka => clk, 
+			clkb => clk, 
+			ena => ena,
+			enb => enb,
+			wea => wea,
+			web => web,
+			addra => ADDR_0,
+			addrb => ADDR_1,
+			dia => DATAIN_0,
+			dib => DATAIN_1,
+			doa => DATAOUT_0,
+			dob => DATAOUT_1
+		);
+      end block;
+  end generate genVivado;
+
+  noGenVivado: if not global_use_vivado_bbank_dual_port generate
+  bbNoGen: block
+  	signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
+  begin
   -- read/write process
   process(CLK, ADDR_0, ENABLE_0_BAR, WRITE_0_BAR, ADDR_1, ENABLE_1_BAR, WRITE_1_BAR)
   begin
+
 
     -- synch read-write memory
     if(CLK'event and CLK ='1') then
@@ -10656,6 +10834,8 @@ begin  -- XilinxBramInfer
 		end if;
 	end if;
   end process;
+  end block;
+  end generate noGenVivado;
   
 end XilinxBramInfer;
 
@@ -11418,54 +11598,62 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity dpram_5X4 is
-   port(       A1,A2  : in std_logic_vector(4 downto 0);
+   port(       AB,A2  : in std_logic_vector(4 downto 0);
       I1,I2  : in std_logic_vector(3 downto 0);
-      CE1,CE2,CSB1,CSB2,WEB1,WEB2: in std_logic;
+      CE1,CE2,CSB1,CSB2,WEBB,WEB2: in std_logic;
       O1,O2 : out std_logic_vector(3 downto 0));
   end entity;
 architecture SimpleWrap of dpram_5X4 is 
 begin
   dpram_5X4_wrap_inst: dpram_generic_reverse_wrapper 
        generic map (address_width => 5, data_width => 4)
-   port map (ADDR_0 => A1, ADDR_1 => A2, CLK => CE1, WRITE_0_BAR => WEB1, WRITE_1_BAR => WEB2,  ENABLE_0_BAR => CSB1, ENABLE_1_BAR => CSB2, DATAIN_0 => I1, DATAIN_1 => I2, DATAOUT_0 => O1, DATAOUT_1 => O2);
+   port map (ADDR_0 => AB, ADDR_1 => A2, CLK => CE1, WRITE_0_BAR => WEBB, WRITE_1_BAR => WEB2,  ENABLE_0_BAR => CSB1, ENABLE_1_BAR => CSB2, DATAIN_0 => I1, DATAIN_1 => I2, DATAOUT_0 => O1, DATAOUT_1 => O2);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity obc11_dpram_4X8 is
-   port(       A1,A2  : in std_logic_vector(3 downto 0);
+   port(       AB,A2  : in std_logic_vector(3 downto 0);
       I1,I2  : in std_logic_vector(7 downto 0);
-      CE1,CE2,CSB1,CSB2,WEB1,WEB2: in std_logic;
+      CE1,CE2,CSB1,CSB2,WEBB,WEB2: in std_logic;
       O1,O2 : out std_logic_vector(7 downto 0));
   end entity;
 architecture SimpleWrap of obc11_dpram_4X8 is 
 begin
   obc11_dpram_4X8_wrap_inst: dpram_generic_reverse_wrapper 
        generic map (address_width => 4, data_width => 8)
-   port map (ADDR_0 => A1, ADDR_1 => A2, CLK => CE1, WRITE_0_BAR => WEB1, WRITE_1_BAR => WEB2,  ENABLE_0_BAR => CSB1, ENABLE_1_BAR => CSB2, DATAIN_0 => I1, DATAIN_1 => I2, DATAOUT_0 => O1, DATAOUT_1 => O2);
+   port map (ADDR_0 => AB, ADDR_1 => A2, CLK => CE1, WRITE_0_BAR => WEBB, WRITE_1_BAR => WEB2,  ENABLE_0_BAR => CSB1, ENABLE_1_BAR => CSB2, DATAIN_0 => I1, DATAIN_1 => I2, DATAOUT_0 => O1, DATAOUT_1 => O2);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity dpram_5X8 is
-   port(       A1,A2  : in std_logic_vector(4 downto 0);
+   port(       AB,A2  : in std_logic_vector(4 downto 0);
       I1,I2  : in std_logic_vector(7 downto 0);
-      CE1,CE2,CSB1,CSB2,WEB1,WEB2: in std_logic;
+      CE1,CE2,CSB1,CSB2,WEBB,WEB2: in std_logic;
       O1,O2 : out std_logic_vector(7 downto 0));
   end entity;
 architecture SimpleWrap of dpram_5X8 is 
 begin
   dpram_5X8_wrap_inst: dpram_generic_reverse_wrapper 
        generic map (address_width => 5, data_width => 8)
-   port map (ADDR_0 => A1, ADDR_1 => A2, CLK => CE1, WRITE_0_BAR => WEB1, WRITE_1_BAR => WEB2,  ENABLE_0_BAR => CSB1, ENABLE_1_BAR => CSB2, DATAIN_0 => I1, DATAIN_1 => I2, DATAOUT_0 => O1, DATAOUT_1 => O2);
+   port map (ADDR_0 => AB, ADDR_1 => A2, CLK => CE1, WRITE_0_BAR => WEBB, WRITE_1_BAR => WEB2,  ENABLE_0_BAR => CSB1, ENABLE_1_BAR => CSB2, DATAIN_0 => I1, DATAIN_1 => I2, DATAOUT_0 => O1, DATAOUT_1 => O2);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity spram_4X4 is
    port(       A : in std_logic_vector(3 downto 0);
       I  : in std_logic_vector(3 downto 0);
@@ -11482,6 +11670,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity spram_5X16 is
    port(       A : in std_logic_vector(4 downto 0);
       I  : in std_logic_vector(15 downto 0);
@@ -11498,6 +11688,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity obc11_8X8 is
    port(       A : in std_logic_vector(7 downto 0);
       I  : in std_logic_vector(7 downto 0);
@@ -11514,6 +11706,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity spram_9X24 is
    port(       A : in std_logic_vector(8 downto 0);
       I  : in std_logic_vector(23 downto 0);
@@ -11530,6 +11724,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity fake_1r1w_1X1 is
    port(   FAKEIN:in std_logic; FAKEOUT: out std_logic );
   end entity;
@@ -11540,6 +11736,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity fake_1r1w_2X2 is
    port(   FAKEIN:in std_logic; FAKEOUT: out std_logic );
   end entity;

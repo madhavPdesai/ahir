@@ -1,13 +1,19 @@
-commit 37a65ec564362f1f758a813f62d8cf383c2b5906
+commit 8926eac7b8f81dee6e37a43c8c7488e46d8a5541
 Author: Madhav Pandurang Desai <madhav@ee.iitb.ac.in>
-Date:   Mon Jun 14 13:58:19 2021 +0530
+Date:   Wed Nov 23 15:44:41 2022 +0530
 
-    Added prebuilt_ubuntu_16.04_release to git repo.
+    Fixed a bug in the implementation of the VHDL for
+    a non-pipelined operator.   Could cause incorrect
+    behaviour when the operator is instantiated in
+    a pipeline :-!
 ----------------------------------------------------------------------------
-Mon Aug 16 13:52:58 IST 2021
-commit 37a65ec564362f1f758a813f62d8cf383c2b5906
+Wed Nov 23 16:50:56 IST 2022
+commit 8926eac7b8f81dee6e37a43c8c7488e46d8a5541
 Author: Madhav Pandurang Desai <madhav@ee.iitb.ac.in>
-Date:   Mon Jun 14 13:58:19 2021 +0530
+Date:   Wed Nov 23 15:44:41 2022 +0530
 
-    Added prebuilt_ubuntu_16.04_release to git repo.
+    Fixed a bug in the implementation of the VHDL for
+    a non-pipelined operator.   Could cause incorrect
+    behaviour when the operator is instantiated in
+    a pipeline :-!
 ----------------------------------------------------------------------------

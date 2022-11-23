@@ -21,12 +21,19 @@ Definition of parser AaParser, which is a subclass of LLkParser.
 
 
 <a name="aA_Program">aA_Program</a>
-	:	(	( <a href="AaParser.html#aA_Module">aA_Module</a> ) 
+	:	(	<a href="AaParser.html#aA_Gated_Clock_Declaration">aA_Gated_Clock_Declaration</a> 
+		|	( <a href="AaParser.html#aA_Module">aA_Module</a> ) 
 		|	( <a href="AaParser.html#aA_Object_Declaration_List">aA_Object_Declaration_List</a> ) 
 		|	( <a href="AaParser.html#aA_Named_Record_Type_Declaration">aA_Named_Record_Type_Declaration</a> ) 
 		|	( <a href="AaParser.html#aA_Mutex_Declaration">aA_Mutex_Declaration</a> ) 
 		|	( <a href="AaParser.html#aA_Integer_Parameter_Declaration">aA_Integer_Parameter_Declaration</a> ) 
+		|	( <a href="AaParser.html#aA_Use_Gated_Clock_Statement">aA_Use_Gated_Clock_Statement</a> ) 
 		)* 
+	;
+
+
+<a name="aA_Gated_Clock_Declaration">aA_Gated_Clock_Declaration</a>
+	:	GATED_CLOCK SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER 
 	;
 
 
@@ -90,6 +97,15 @@ Definition of parser AaParser, which is a subclass of LLkParser.
 
 <a name="aA_Integer_Parameter_Declaration">aA_Integer_Parameter_Declaration</a>
 	:	PARAMETER SIMPLE_IDENTIFIER <a href="AaParser.html#aA_Integer_Parameter_Expression">aA_Integer_Parameter_Expression</a> 
+	;
+
+
+<a name="aA_Use_Gated_Clock_Statement">aA_Use_Gated_Clock_Statement</a>
+	:	USE_GATED_CLOCK SIMPLE_IDENTIFIER 
+		(	SIMPLE_IDENTIFIER 
+		|	
+		) 
+		
 	;
 
 

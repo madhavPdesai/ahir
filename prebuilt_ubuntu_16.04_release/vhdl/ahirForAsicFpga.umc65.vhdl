@@ -36,6 +36,9 @@ package GlobalConstants is
     constant global_use_vivado_bbank_dual_port : boolean := false;
     constant global_use_vivado_distributed_ram_queue : boolean := false;
 
+    -- clock gating using Xilinx IP?
+    constant use_xilinx_bufce: boolean := true;
+
     --
     -- for guarded statements... increase this with care!
     --
@@ -177,7 +180,10 @@ package Utilities is
 
   function Reverse(x: unsigned) return unsigned;
   procedure TruncateOrPad(signal rhs: in std_logic_vector; signal lhs : out std_logic_vector);
-  
+
+  function TieLowSlvConstant (constant W: integer) return std_logic_vector;
+  function TieHighSlvConstant (constant W: integer) return std_logic_vector;
+
 end Utilities;
 
 
@@ -505,6 +511,20 @@ package body Utilities is
 	alhs(L downto 1) <= arhs(L downto 1);
   end procedure TruncateOrPad;
 
+  function TieLowSlvConstant (constant W: integer) return std_logic_vector is
+	variable ret_var : std_logic_vector(1 to W) ;
+  begin
+	ret_var := (others => '0');
+	return(ret_var);
+  end TieLowSlvConstant;
+
+  function TieHighSlvConstant (constant W: integer) return std_logic_vector is
+	variable ret_var : std_logic_vector(1 to W) ;
+  begin
+	ret_var := (others => '1');
+	return(ret_var);
+  end TieHighSlvConstant;
+  
 end Utilities;
 ------------------------------------------------------------------------------------------------
 --
@@ -4605,6 +4625,20 @@ package BaseComponents is
   );
   -- 
   end component dpram_1w_1r_1024x32_Operator;
+
+  component module_clock_gate is
+	port (reset, start_req, start_ack, fin_req, fin_ack, clock_in: in std_logic;
+		clock_out : out std_logic);
+  end component module_clock_gate;
+
+  component signal_clock_gate is
+	port (reset, clock_enable, clock_in: in std_logic; clock_out : out std_logic);
+  end component signal_clock_gate;
+
+  component clock_gater is
+	port (clock_in, clock_enable: in std_logic; clock_out : out std_logic);
+  end component clock_gater;
+
 end BaseComponents;
 ------------------------------------------------------------------------------------------------
 --
@@ -5797,6 +5831,23 @@ component register_file_1w_1r_port is
          clk: in std_logic;
          reset : in std_logic);
 end component register_file_1w_1r_port;
+
+-- with write to read bypass.
+component register_file_1w_1r_port_with_bypass is
+   generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
+   port (
+         -- write port 0
+         datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         -- read port 1 
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+
+         clk: in std_logic;
+         reset : in std_logic);
+end component register_file_1w_1r_port_with_bypass;
 
 component fifo_mem_synch_write_asynch_read is
    generic ( name: string; address_width: natural;  data_width : natural;
@@ -8211,6 +8262,9 @@ end package body;
 --------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
+library ahir;
+use ahir.types.all;
+use ahir.utilities.all;
 
 package mem_ASIC_components is
 
@@ -8535,28 +8589,6 @@ package mem_ASIC_components is
       CSB  :   IN   std_logic
 );
   end component;
-  component SYKA65_8X64X1CM2 is
-   port(       DO : out std_logic_vector(63 downto 0);
-      A : in std_logic_vector(2 downto 0);
-      DI : in std_logic_vector(63 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (3 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end component;
-  component SYKA65_16X32X1CM2 is
-   port(       DO : out std_logic_vector(31 downto 0);
-      A : in std_logic_vector(3 downto 0);
-      DI : in std_logic_vector(31 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (3 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end component;
 end package;
 
 ------------------------------------------------------------------------------------------------
@@ -8608,9 +8640,9 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 use aHiR_ieee_proposed.float_pkg.all;
 
 package MemcutDescriptionPackage is
-   constant spmem_cut_row_heights : IntegerArray(1 to 14) := (16, 8, 16384, 4096, 4096, 512, 512, 512, 128, 128, 64, 64, 64, 32);
-    constant spmem_cut_address_widths : IntegerArray(1 to 14) := (4, 3, 14, 12, 12, 9, 9, 9, 7, 7, 6, 6, 6, 5);
-    constant spmem_cut_data_widths : IntegerArray(1 to 14) := (32, 64, 8, 64, 8, 64, 16, 4, 64, 32, 128, 64, 16, 32);
+   constant spmem_cut_row_heights : IntegerArray(1 to 12) := (16384, 4096, 4096, 512, 512, 512, 128, 128, 64, 64, 64, 32);
+    constant spmem_cut_address_widths : IntegerArray(1 to 12) := (14, 12, 12, 9, 9, 9, 7, 7, 6, 6, 6, 5);
+    constant spmem_cut_data_widths : IntegerArray(1 to 12) := (8, 64, 8, 64, 16, 4, 64, 32, 128, 64, 16, 32);
    constant dpmem_cut_row_heights : IntegerArray(1 to 7) := (256, 256, 256, 64, 64, 64, 32);
     constant dpmem_cut_address_widths : IntegerArray(1 to 7) := (8, 8, 8, 6, 6, 6, 5);
     constant dpmem_cut_data_widths : IntegerArray(1 to 7) := (32, 16, 4, 16, 8, 4, 128);
@@ -8658,6 +8690,8 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.mem_ASIC_components.all;
+use ahir.types.all;
+use ahir.utilities.all;
 
 -- Entity to instantiate different available memory cuts based on the 
 -- address_width and data_width generics passed.
@@ -8678,40 +8712,120 @@ end entity dpmem_selector;
 
 architecture StructGen of dpmem_selector is
 	signal TIE_HIGH, TIE_LOW: std_logic;
+        signal TIE_LOW_2, TIE_HIGH_2: std_logic_vector(1 downto 0);
         signal TIE_LOW_3: std_logic_vector(2 downto 0);
         signal TIE_LOW_4: std_logic_vector(3 downto 0);
 begin
 	TIE_HIGH <= '1';
 	TIE_LOW <= '0';
+	TIE_LOW_2 <= (others => '0');
+	TIE_HIGH_2 <= (others => '1');
 	TIE_LOW_3 <= (others => '0');
 	TIE_LOW_4 <= (others => '0');
   SJKA65_32X128X1CM4_gen: if (address_width = 5) and (data_width = 128) generate
-       inst: SJKA65_32X128X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(127 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(127 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(4 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(4 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SJKA65_32X128X1CM4
    port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
+         end block;
   end generate SJKA65_32X128X1CM4_gen;
   SJKA65_64X4X1CM4_gen: if (address_width = 6) and (data_width = 4) generate
-       inst: SJKA65_64X4X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SJKA65_64X4X1CM4
    port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
+         end block;
   end generate SJKA65_64X4X1CM4_gen;
   SJKA65_64X8X1CM4_gen: if (address_width = 6) and (data_width = 8) generate
-       inst: SJKA65_64X8X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SJKA65_64X8X1CM4
    port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
+         end block;
   end generate SJKA65_64X8X1CM4_gen;
   SJKA65_64X16X1CM4_gen: if (address_width = 6) and (data_width = 16) generate
-       inst: SJKA65_64X16X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SJKA65_64X16X1CM4
    port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
+         end block;
   end generate SJKA65_64X16X1CM4_gen;
   SJKA65_256X4X1CM4_gen: if (address_width = 8) and (data_width = 4) generate
-       inst: SJKA65_256X4X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(7 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(7 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SJKA65_256X4X1CM4
    port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
+         end block;
   end generate SJKA65_256X4X1CM4_gen;
   SJKA65_256X16X1CM4_gen: if (address_width = 8) and (data_width = 16) generate
-       inst: SJKA65_256X16X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(7 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(7 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SJKA65_256X16X1CM4
    port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
+         end block;
   end generate SJKA65_256X16X1CM4_gen;
   SJKA65_256X32X1CM4_gen: if (address_width = 8) and (data_width = 32) generate
-       inst: SJKA65_256X32X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(7 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(7 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SJKA65_256X32X1CM4
    port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
+         end block;
   end generate SJKA65_256X32X1CM4_gen;
 end StructGen;
 
@@ -8771,32 +8885,90 @@ end entity register_file_1w_1r_selector;
 
 architecture StructGen of register_file_1w_1r_selector is
 	signal TIE_HIGH, TIE_LOW: std_logic;
+        signal TIE_LOW_2, TIE_HIGH_2: std_logic_vector(1 downto 0);
         signal TIE_LOW_3: std_logic_vector(2 downto 0);
         signal TIE_LOW_4: std_logic_vector(3 downto 0);
 begin
 	TIE_HIGH <= '1';
 	TIE_LOW <= '0';
+        TIE_LOW_2 <= (others => '0');
+        TIE_HIGH_2 <= (others => '1');
 	TIE_LOW_3 <= (others => '0');
 	TIE_LOW_4 <= (others => '0');
   SZKA65_16X16X1CM2_gen: if (address_width = 4) and (data_width = 16) generate
-       inst: SZKA65_16X16X1CM2
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(3 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SZKA65_16X16X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+         end block;
   end generate SZKA65_16X16X1CM2_gen;
   SZKA65_16X32X1CM2_gen: if (address_width = 4) and (data_width = 32) generate
-       inst: SZKA65_16X32X1CM2
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(3 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SZKA65_16X32X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+         end block;
   end generate SZKA65_16X32X1CM2_gen;
   SZKA65_64X4X1CM2_gen: if (address_width = 6) and (data_width = 4) generate
-       inst: SZKA65_64X4X1CM2
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SZKA65_64X4X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+         end block;
   end generate SZKA65_64X4X1CM2_gen;
   SZKA65_64X8X1CM2_gen: if (address_width = 6) and (data_width = 8) generate
-       inst: SZKA65_64X8X1CM2
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SZKA65_64X8X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+         end block;
   end generate SZKA65_64X8X1CM2_gen;
   SZKA65_64X16X1CM2_gen: if (address_width = 6) and (data_width = 16) generate
-       inst: SZKA65_64X16X1CM2
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SZKA65_64X16X1CM2
    port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+         end block;
   end generate SZKA65_64X16X1CM2_gen;
 end StructGen;
 
@@ -8839,6 +9011,8 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.mem_ASIC_components.all;
+use ahir.types.all;
+use ahir.utilities.all;
 
 -- Entity to instantiate different available memory cuts based on the 
 -- address_width and data_width generics passed.
@@ -8856,6 +9030,7 @@ end entity spmem_selector;
 architecture StructGen of spmem_selector is
 
   signal TIE_HIGH, TIE_LOW: std_logic;
+  signal TIE_LOW_2, TIE_HIGH_2: std_logic_vector(1 downto 0);
   signal TIE_LOW_3: std_logic_vector(2 downto 0);
   signal TIE_LOW_4: std_logic_vector(3 downto 0);
 
@@ -8863,64 +9038,190 @@ begin
   
   TIE_HIGH <= '1';
   TIE_LOW  <= '0';
+  TIE_LOW_2 <= (others => '0');
+  TIE_HIGH_2 <= (others => '1');
   TIE_LOW_3 <= (others => '0');
   TIE_LOW_4 <= (others => '0');
   SHKA65_32X32X1CM4_gen: if (address_width = 5) and (data_width = 32) generate
-       inst: SHKA65_32X32X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(4 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(4 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_32X32X1CM4
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+         end block;
   end generate SHKA65_32X32X1CM4_gen;
   SHKA65_64X16X1CM4_gen: if (address_width = 6) and (data_width = 16) generate
-       inst: SHKA65_64X16X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_64X16X1CM4
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+         end block;
   end generate SHKA65_64X16X1CM4_gen;
   SHKA65_64X64X1CM4_gen: if (address_width = 6) and (data_width = 64) generate
-       inst: SHKA65_64X64X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(63 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(63 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_64X64X1CM4
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+         end block;
   end generate SHKA65_64X64X1CM4_gen;
   SHKA65_64X128X1CM4_gen: if (address_width = 6) and (data_width = 128) generate
-       inst: SHKA65_64X128X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(127 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(127 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_64X128X1CM4
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+         end block;
   end generate SHKA65_64X128X1CM4_gen;
   SHKA65_128X32X1CM4_gen: if (address_width = 7) and (data_width = 32) generate
-       inst: SHKA65_128X32X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(6 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(6 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_128X32X1CM4
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+         end block;
   end generate SHKA65_128X32X1CM4_gen;
   SHKA65_128X64X1CM4_gen: if (address_width = 7) and (data_width = 64) generate
-       inst: SHKA65_128X64X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(63 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(63 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(6 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(6 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_128X64X1CM4
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+         end block;
   end generate SHKA65_128X64X1CM4_gen;
   SHKA65_512X4X1CM4_gen: if (address_width = 9) and (data_width = 4) generate
-       inst: SHKA65_512X4X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(8 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(8 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_512X4X1CM4
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+         end block;
   end generate SHKA65_512X4X1CM4_gen;
   SHKA65_512X16X1CM4_gen: if (address_width = 9) and (data_width = 16) generate
-       inst: SHKA65_512X16X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(8 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(8 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_512X16X1CM4
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+         end block;
   end generate SHKA65_512X16X1CM4_gen;
   SHKA65_512X64X1CM4_gen: if (address_width = 9) and (data_width = 64) generate
-       inst: SHKA65_512X64X1CM4
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(63 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(63 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(8 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(8 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_512X64X1CM4
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+         end block;
   end generate SHKA65_512X64X1CM4_gen;
   SHKA65_4096X8X1CM16_gen: if (address_width = 12) and (data_width = 8) generate
-       inst: SHKA65_4096X8X1CM16
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(11 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(11 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_4096X8X1CM16
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+         end block;
   end generate SHKA65_4096X8X1CM16_gen;
   SHKA65_4096X64X1CM8_gen: if (address_width = 12) and (data_width = 64) generate
-       inst: SHKA65_4096X64X1CM8
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(63 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(63 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(11 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(11 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_4096X64X1CM8
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+         end block;
   end generate SHKA65_4096X64X1CM8_gen;
   SHKA65_16384X8X1CM16_gen: if (address_width = 14) and (data_width = 8) generate
-       inst: SHKA65_16384X8X1CM16
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(13 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(13 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_16384X8X1CM16
    port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+         end block;
   end generate SHKA65_16384X8X1CM16_gen;
-  SYKA65_8X64X1CM2_gen: if (address_width = 3) and (data_width = 64) generate
-       inst: SYKA65_8X64X1CM2
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_4);
-  end generate SYKA65_8X64X1CM2_gen;
-  SYKA65_16X32X1CM2_gen: if (address_width = 4) and (data_width = 32) generate
-       inst: SYKA65_16X32X1CM2
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_4);
-  end generate SYKA65_16X32X1CM2_gen;
 end StructGen;
 
 ------------------------------------------------------------------------------------------------
@@ -10348,6 +10649,98 @@ begin  -- PlainRegisters
 end PlainRegisters;
 ------------------------------------------------------------------------------------------------
 --
+-- Copyright (C) 2010-: Madhav P. Desai
+-- All Rights Reserved.
+--  
+-- Permission is hereby granted, free of charge, to any person obtaining a
+-- copy of this software and associated documentation files (the
+-- "Software"), to deal with the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject to
+-- the following conditions:
+-- 
+--  * Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimers.
+--  * Redistributions in binary form must reproduce the above
+--    copyright notice, this list of conditions and the following
+--    disclaimers in the documentation and/or other materials provided
+--    with the distribution.
+--  * Neither the names of the AHIR Team, the Indian Institute of
+--    Technology Bombay, nor the names of its contributors may be used
+--    to endorse or promote products derived from this Software
+--    without specific prior written permission.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+-- OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+-- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+-- IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+-- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+------------------------------------------------------------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+--
+-- dual port synchronous memory.
+--   similar to a flip-flop as far as simultaneous read/write  is concerned
+--   if both ports try to write to the same address, the second port (1) wins
+--
+entity base_bank_dual_port_for_vivado is
+   generic ( name: string;  g_addr_width: natural := 10; g_data_width : natural := 16);
+	port(
+		clka : in std_logic;
+		clkb : in std_logic;
+		ena : in std_logic;
+		enb : in std_logic;
+		wea : in std_logic;
+		web : in std_logic;
+		addra : in std_logic_vector(g_addr_width-1 downto 0);
+		addrb : in std_logic_vector(g_addr_width-1 downto 0);
+		dia : in std_logic_vector(g_data_width-1 downto 0);
+		dib : in std_logic_vector(g_data_width-1 downto 0);
+		doa : out std_logic_vector(g_data_width-1 downto 0);
+		dob : out std_logic_vector(g_data_width-1 downto 0)
+		);
+end entity base_bank_dual_port_for_vivado;
+
+
+architecture XilinxBramInfer of base_bank_dual_port_for_vivado is
+  type MemArray is array (natural range <>) of std_logic_vector(g_data_width-1 downto 0);
+  shared variable mem_array : MemArray((2**g_addr_width)-1 downto 0) := (others => (others => '0'));
+begin  -- XilinxBramInfer
+
+
+ process(CLKA)	
+	begin
+	if CLKA'event and CLKA = '1' then
+			if ENA = '1' then
+					DOA <= mem_array(to_integer(unsigned(ADDRA)));
+				if WEA = '1' then
+					mem_array(to_integer(unsigned(ADDRA))) := DIA;
+				end if;
+			end if;
+		end if;
+	end process;
+
+	process(CLKB)
+	begin
+		if CLKB'event and CLKB = '1' then
+			if ENB = '1' then
+				DOB <= mem_array(to_integer(unsigned(ADDRB)));
+				if WEB = '1' then
+					mem_array(to_integer(unsigned(ADDRB))) := DIB;
+				end if;
+			end if;
+		end if;
+	end process;
+end XilinxBramInfer;
+
+
+------------------------------------------------------------------------------------------------
+--
 -- Copyright (C) 2010-: Madhav P. Desai, Ch. V. Kalyani
 -- All Rights Reserved.
 --  
@@ -11200,6 +11593,8 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.mem_ASIC_components.all;
+use ahir.GlobalConstants.all;
+use ahir.mem_component_pack.all;
 
 -- Entity to instantiate different available memory cuts based on the 
 -- address_width and data_width generics passed.
@@ -11223,13 +11618,43 @@ architecture XilinxBramInfer of dpram_generic_reverse_wrapper is
 
   type MemArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
 
-  signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
-
 begin  -- XilinxBramInfer
+  genVivado: if global_use_vivado_bbank_dual_port generate
+    gVblock: block
+	signal ena, enb, wea, web: std_logic;
+    begin
+	ena <= not ENABLE_0_bAR;
+	enb <= not ENABLE_1_bAR;
+	wea <= not WRITE_0_BAR;
+	web <= not WRITE_1_BAR;
 
+	bbVivado: base_bank_dual_port_for_vivado
+		generic map (name => "bbVivado", g_addr_width => address_Width, g_data_width => data_width)
+		port map (
+			clka => clk, 
+			clkb => clk, 
+			ena => ena,
+			enb => enb,
+			wea => wea,
+			web => web,
+			addra => ADDR_0,
+			addrb => ADDR_1,
+			dia => DATAIN_0,
+			dib => DATAIN_1,
+			doa => DATAOUT_0,
+			dob => DATAOUT_1
+		);
+      end block;
+  end generate genVivado;
+
+  noGenVivado: if not global_use_vivado_bbank_dual_port generate
+  bbNoGen: block
+  	signal mem_array : MemArray((2**address_width)-1 downto 0) := (others => (others => '0'));
+  begin
   -- read/write process
   process(CLK, ADDR_0, ENABLE_0_BAR, WRITE_0_BAR, ADDR_1, ENABLE_1_BAR, WRITE_1_BAR)
   begin
+
 
     -- synch read-write memory
     if(CLK'event and CLK ='1') then
@@ -11256,6 +11681,8 @@ begin  -- XilinxBramInfer
 		end if;
 	end if;
   end process;
+  end block;
+  end generate noGenVivado;
   
 end XilinxBramInfer;
 
@@ -12018,6 +12445,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SZKA65_16X16X1CM2 is
    port(       DO : out std_logic_vector(15 downto 0);
       A : in std_logic_vector(3 downto 0);
@@ -12042,6 +12471,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SZKA65_16X32X1CM2 is
    port(       DO : out std_logic_vector(31 downto 0);
       A : in std_logic_vector(3 downto 0);
@@ -12066,6 +12497,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SZKA65_64X4X1CM2 is
    port(       DO : out std_logic_vector(3 downto 0);
       A : in std_logic_vector(5 downto 0);
@@ -12090,6 +12523,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SZKA65_64X8X1CM2 is
    port(       DO : out std_logic_vector(7 downto 0);
       A : in std_logic_vector(5 downto 0);
@@ -12114,6 +12549,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SZKA65_64X16X1CM2 is
    port(       DO : out std_logic_vector(15 downto 0);
       A : in std_logic_vector(5 downto 0);
@@ -12138,6 +12575,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SJKA65_32X128X1CM4 is
    port(       DOA : out std_logic_vector(127 downto 0);
       DOB : out std_logic_vector(127 downto 0);
@@ -12165,6 +12604,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SJKA65_64X4X1CM4 is
    port(       DOA : out std_logic_vector(3 downto 0);
       DOB : out std_logic_vector(3 downto 0);
@@ -12192,6 +12633,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SJKA65_64X8X1CM4 is
    port(       DOA : out std_logic_vector(7 downto 0);
       DOB : out std_logic_vector(7 downto 0);
@@ -12219,6 +12662,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SJKA65_64X16X1CM4 is
    port(       DOA : out std_logic_vector(15 downto 0);
       DOB : out std_logic_vector(15 downto 0);
@@ -12246,6 +12691,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SJKA65_256X4X1CM4 is
    port(       DOA : out std_logic_vector(3 downto 0);
       DOB : out std_logic_vector(3 downto 0);
@@ -12273,6 +12720,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SJKA65_256X16X1CM4 is
    port(       DOA : out std_logic_vector(15 downto 0);
       DOB : out std_logic_vector(15 downto 0);
@@ -12300,6 +12749,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SJKA65_256X32X1CM4 is
    port(       DOA : out std_logic_vector(31 downto 0);
       DOB : out std_logic_vector(31 downto 0);
@@ -12327,6 +12778,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SHKA65_32X32X1CM4 is
    port(       DO : out std_logic_vector(31 downto 0);
       A : in std_logic_vector(4 downto 0);
@@ -12348,6 +12801,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SHKA65_64X16X1CM4 is
    port(       DO : out std_logic_vector(15 downto 0);
       A : in std_logic_vector(5 downto 0);
@@ -12369,6 +12824,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SHKA65_64X64X1CM4 is
    port(       DO : out std_logic_vector(63 downto 0);
       A : in std_logic_vector(5 downto 0);
@@ -12390,6 +12847,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SHKA65_64X128X1CM4 is
    port(       DO : out std_logic_vector(127 downto 0);
       A : in std_logic_vector(5 downto 0);
@@ -12411,6 +12870,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SHKA65_128X32X1CM4 is
    port(       DO : out std_logic_vector(31 downto 0);
       A : in std_logic_vector(6 downto 0);
@@ -12432,6 +12893,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SHKA65_128X64X1CM4 is
    port(       DO : out std_logic_vector(63 downto 0);
       A : in std_logic_vector(6 downto 0);
@@ -12453,6 +12916,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SHKA65_512X4X1CM4 is
    port(       DO : out std_logic_vector(3 downto 0);
       A : in std_logic_vector(8 downto 0);
@@ -12474,6 +12939,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SHKA65_512X16X1CM4 is
    port(       DO : out std_logic_vector(15 downto 0);
       A : in std_logic_vector(8 downto 0);
@@ -12495,6 +12962,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SHKA65_512X64X1CM4 is
    port(       DO : out std_logic_vector(63 downto 0);
       A : in std_logic_vector(8 downto 0);
@@ -12516,6 +12985,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SHKA65_4096X8X1CM16 is
    port(       DO : out std_logic_vector(7 downto 0);
       A : in std_logic_vector(11 downto 0);
@@ -12537,6 +13008,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SHKA65_4096X64X1CM8 is
    port(       DO : out std_logic_vector(63 downto 0);
       A : in std_logic_vector(11 downto 0);
@@ -12558,6 +13031,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SHKA65_16384X8X1CM16 is
    port(       DO : out std_logic_vector(7 downto 0);
       A : in std_logic_vector(13 downto 0);
@@ -12579,6 +13054,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SYKA65_8X64X1CM2 is
    port(       DO : out std_logic_vector(63 downto 0);
       A : in std_logic_vector(2 downto 0);
@@ -12600,6 +13077,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_component_pack.all;
+use ahir.types.all;
+use ahir.utilities.all;
 entity SYKA65_16X32X1CM2 is
    port(       DO : out std_logic_vector(31 downto 0);
       A : in std_logic_vector(3 downto 0);

@@ -36,6 +36,9 @@ package GlobalConstants is
     constant global_use_vivado_bbank_dual_port : boolean := false;
     constant global_use_vivado_distributed_ram_queue : boolean := false;
 
+    -- clock gating using Xilinx IP?
+    constant use_xilinx_bufce: boolean := true;
+
     --
     -- for guarded statements... increase this with care!
     --
@@ -177,7 +180,10 @@ package Utilities is
 
   function Reverse(x: unsigned) return unsigned;
   procedure TruncateOrPad(signal rhs: in std_logic_vector; signal lhs : out std_logic_vector);
-  
+
+  function TieLowSlvConstant (constant W: integer) return std_logic_vector;
+  function TieHighSlvConstant (constant W: integer) return std_logic_vector;
+
 end Utilities;
 
 
@@ -505,6 +511,20 @@ package body Utilities is
 	alhs(L downto 1) <= arhs(L downto 1);
   end procedure TruncateOrPad;
 
+  function TieLowSlvConstant (constant W: integer) return std_logic_vector is
+	variable ret_var : std_logic_vector(1 to W) ;
+  begin
+	ret_var := (others => '0');
+	return(ret_var);
+  end TieLowSlvConstant;
+
+  function TieHighSlvConstant (constant W: integer) return std_logic_vector is
+	variable ret_var : std_logic_vector(1 to W) ;
+  begin
+	ret_var := (others => '1');
+	return(ret_var);
+  end TieHighSlvConstant;
+  
 end Utilities;
 ------------------------------------------------------------------------------------------------
 --
@@ -4605,6 +4625,20 @@ package BaseComponents is
   );
   -- 
   end component dpram_1w_1r_1024x32_Operator;
+
+  component module_clock_gate is
+	port (reset, start_req, start_ack, fin_req, fin_ack, clock_in: in std_logic;
+		clock_out : out std_logic);
+  end component module_clock_gate;
+
+  component signal_clock_gate is
+	port (reset, clock_enable, clock_in: in std_logic; clock_out : out std_logic);
+  end component signal_clock_gate;
+
+  component clock_gater is
+	port (clock_in, clock_enable: in std_logic; clock_out : out std_logic);
+  end component clock_gater;
+
 end BaseComponents;
 ------------------------------------------------------------------------------------------------
 --
@@ -5797,6 +5831,23 @@ component register_file_1w_1r_port is
          clk: in std_logic;
          reset : in std_logic);
 end component register_file_1w_1r_port;
+
+-- with write to read bypass.
+component register_file_1w_1r_port_with_bypass is
+   generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
+   port (
+         -- write port 0
+         datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+         -- read port 1 
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+
+         clk: in std_logic;
+         reset : in std_logic);
+end component register_file_1w_1r_port_with_bypass;
 
 component fifo_mem_synch_write_asynch_read is
    generic ( name: string; address_width: natural;  data_width : natural;
@@ -9743,6 +9794,122 @@ begin  -- XilinxBramInfer
 				-- reset active high.
 				reset => reset
 			 );
+
+end Struct;
+------------------------------------------------------------------------------------------------
+--
+-- Copyright (C) 2010-: Madhav P. Desai
+-- All Rights Reserved.
+--  
+-- Permission is hereby granted, free of charge, to any person obtaining a
+-- copy of this software and associated documentation files (the
+-- "Software"), to deal with the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject to
+-- the following conditions:
+-- 
+--  * Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimers.
+--  * Redistributions in binary form must reproduce the above
+--    copyright notice, this list of conditions and the following
+--    disclaimers in the documentation and/or other materials provided
+--    with the distribution.
+--  * Neither the names of the AHIR Team, the Indian Institute of
+--    Technology Bombay, nor the names of its contributors may be used
+--    to endorse or promote products derived from this Software
+--    without specific prior written permission.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+-- OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+-- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+-- IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+-- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+------------------------------------------------------------------------------------------------
+library ahir;
+use ahir.Utilities.all;
+use ahir.GlobalConstants.all;
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.mem_component_pack.all;
+use ahir.GlobalConstants.all;
+--
+-- synchronous memory with 1 write and 1 read port.
+--    write value is bypassed to read out on address match.
+entity register_file_1w_1r_port_with_bypass is
+   generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
+   port (
+	 -- write port 0
+	 datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+	 -- read port 1
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+	
+         clk: in std_logic;
+         reset : in std_logic);
+end entity register_file_1w_1r_port_with_bypass;
+
+
+architecture Struct of register_file_1w_1r_port_with_bypass is
+
+	signal bypassed_write_to_read: std_logic_vector(g_data_width-1 downto 0);
+        signal mem_dataout_1, mem_dataout_1_reg, resolved_mem_dataout_1: std_logic_vector(g_data_width-1 downto 0);
+	signal write_to_read_bypass, use_bypassed_value, enable_1_reg: std_logic;
+
+begin  -- XilinxBramInfer
+
+	base_inst: register_file_1w_1r_port 
+			generic map (name => name & ":Base", 
+					g_addr_width => g_addr_width,
+					g_data_width => g_data_width)
+			port map (clk => clk, reset => reset,
+	 				datain_0 => datain_0,
+         				addrin_0 => addrin_0,
+         				enable_0 => enable_0,
+         				dataout_1 => mem_dataout_1,
+         				addrin_1 => addrin_1,
+         				enable_1 => enable_1);
+					
+
+	write_to_read_bypass <= '1' when
+		(enable_1 = '1') and (enable_0 = '1') and (addrin_0 = addrin_1) else '0';
+
+	process(clk)
+	begin
+		if(clk'event and (clk = '1')) then
+			if(reset = '1') then
+				use_bypassed_value <= '0';
+				bypassed_write_to_read <= (others => '0');
+				enable_1_reg <= '0';
+			else 
+				enable_1_reg <= enable_1;
+				if(write_to_read_bypass = '1') then
+					bypassed_write_to_read <= datain_0;
+					use_bypassed_value <= '1';
+				elsif (enable_1 = '1') then  -- an unmatched memory read resets the bypass flag.
+					bypassed_write_to_read <= (others => '0');
+					use_bypassed_value <= '0';
+				end if;
+
+				if(enable_1_reg = '1') then
+					mem_dataout_1_reg <= mem_dataout_1;
+				end if;
+			end if;
+		end if;
+	end process;
+
+	-- hold the data...
+	resolved_mem_dataout_1 <= mem_dataout_1 when (enable_1_reg = '1') else mem_dataout_1_reg;
+	dataout_1 <= bypassed_write_to_read when (use_bypassed_value = '1') else resolved_mem_dataout_1;
 
 end Struct;
 ------------------------------------------------------------------------------------------------
@@ -34119,3 +34286,921 @@ begin  -- Pipelined
   slv_RESULT <= intermediate_results(pipe_depth);
   
 end Pipelined;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+entity module_clock_gate is
+	port (reset, start_req, 
+		start_ack, fin_req, fin_ack, clock_in: in std_logic;
+		clock_out : out std_logic);
+end entity module_clock_gate;
+
+architecture behavioural of module_clock_gate is
+	signal clock_enable_raw, clock_enable: std_logic;
+	type FsmState is (RESET_STATE, IDLE, STARTED, WORKING);
+	signal fsm_state: FsmState;
+	signal job_counter: integer;
+begin
+
+       -------------------------------------------------------------------
+       -- clock enabler.
+       -------------------------------------------------------------------
+       cgInst: clock_gater
+			port map (clock_in => clock_in,
+					clock_enable => clock_enable_raw,
+					clock_out => clock_out);
+	-------------------------------------------------------
+	-- FSM.  If there is something going on inside, enable
+	-- the clock...
+	-------------------------------------------------------
+	process(clock_in, reset, start_req, start_ack, fin_req, fin_ack)
+
+		variable next_fsm_state_var: FsmState;
+		variable incr_counter_var, decr_counter_var: boolean;
+		variable clock_enable_raw_var: std_logic;
+
+	begin
+		next_fsm_state_var := fsm_state;
+		incr_counter_var := false;
+		decr_counter_var := false;
+		clock_enable_raw_var := '0';
+
+		case fsm_state is 
+			when RESET_STATE =>
+				--
+				-- enable in reset state to ensure that
+				-- reset gets applied correctly....
+				--
+				clock_enable_raw_var := '1';
+				if(reset = '0') then 
+					next_fsm_state_var := IDLE;
+				end if;
+			when IDLE => 
+				if(start_req = '1') then
+					clock_enable_raw_var := '1';
+
+					if(start_ack = '1') then
+						incr_counter_var := true;
+						next_fsm_state_var := 	WORKING;
+					else
+						next_fsm_state_var := STARTED;
+					end if;
+				end if;
+			when STARTED =>
+
+				clock_enable_raw_var := '1';
+				if(start_ack = '1') then
+					incr_counter_var := true;
+					next_fsm_state_var := WORKING;
+				end if;
+
+			when WORKING =>
+				clock_enable_raw_var := '1';
+				incr_counter_var := ((start_req = '1') and (start_ack = '1'));
+				decr_counter_var := ((fin_req = '1') and (fin_ack = '1'));
+				if((job_counter = 0) and (start_req = '0')) then
+					next_fsm_state_var := IDLE;
+				end if;
+		end case;
+
+		clock_enable_raw <= clock_enable_raw_var;
+		if (clock_in'event and (clock_in = '1')) then
+			if(reset = '1') then
+				fsm_state <= RESET_STATE;
+				job_counter <= 0;
+			else
+				fsm_state <= next_fsm_state_var;
+				if(incr_counter_var and (not decr_counter_var)) then
+					job_counter <= job_counter + 1;
+				elsif ((not incr_counter_var) and decr_counter_var) then
+					job_counter <= job_counter - 1;
+				end if;
+			end if;
+		end if;
+	end process;
+	
+end behavioural;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+entity signal_clock_gate is
+	port (reset, clock_enable, clock_in: in std_logic; clock_out : out std_logic);
+end entity signal_clock_gate;
+
+architecture behavioural of signal_clock_gate is
+	signal clock_enable_final, clock_enable_reset: std_logic;
+	type FsmState is (RESET_STATE, RUN_STATE);
+	signal fsm_state: FsmState;
+	signal job_counter: integer;
+begin
+	
+       -------------------------------------------------------------------
+       -- final clock enable...
+       -------------------------------------------------------------------
+       clock_enable_final <= clock_enable or clock_enable_reset;
+
+       -------------------------------------------------------------------
+       -- clock enabler.
+       -------------------------------------------------------------------
+       cgInst: clock_gater
+			port map (clock_in => clock_in,
+					clock_enable => clock_enable_final,
+					clock_out => clock_out);
+	-------------------------------------------------------
+        -- ensure that reset is applied.
+        -------------------------------------------------------------------
+	process(clock_in, reset)
+		variable next_fsm_state_var: FsmState;
+		variable clock_enable_reset_var: std_logic;
+
+	begin
+		next_fsm_state_var := fsm_state;
+		clock_enable_reset_var := '0';
+
+		case fsm_state is 
+			when RESET_STATE =>
+				clock_enable_reset_var := '1';
+				--
+				-- enable in reset state to ensure that
+				-- reset gets applied correctly....
+				--
+				if(reset = '0') then 
+					next_fsm_state_var := RUN_STATE;
+				end if;
+			when RUN_STATE => 
+				clock_enable_reset_var := '0';
+		end case;
+
+		clock_enable_reset <= clock_enable_reset_var;
+		if (clock_in'event and (clock_in = '1')) then
+			if(reset = '1') then
+				fsm_state <= RESET_STATE;
+			else
+				fsm_state <= next_fsm_state_var;
+			end if;
+		end if;
+	end process;
+
+	
+end behavioural;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.GlobalConstants.all;
+
+
+entity clock_gater is
+	port (clock_in, clock_enable: in std_logic; clock_out : out std_logic);
+end entity clock_gater;
+
+architecture behavioural of clock_gater is
+      signal clock_enable_latched: std_logic;
+begin
+	assert (not use_xilinx_bufce) report "For vanilla AHIR, use_xilinx_bufce must be set false"
+		severity failure;
+
+	-------------------------------------------------------
+	-- latch followed by AND.
+	-------------------------------------------------------
+	process(clock_in)
+	begin
+		if(clock_in = '0') then
+			clock_enable_latched <= clock_enable;
+		end if;
+	end process;
+	clock_out <= clock_in and clock_enable_latched;
+	-------------------------------------------------------
+
+end behavioural;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+entity module_clock_gate is
+	port (reset, start_req, 
+		start_ack, fin_req, fin_ack, clock_in: in std_logic;
+		clock_out : out std_logic);
+end entity module_clock_gate;
+
+architecture behavioural of module_clock_gate is
+	signal clock_enable_raw, clock_enable: std_logic;
+	type FsmState is (RESET_STATE, IDLE, STARTED, WORKING);
+	signal fsm_state: FsmState;
+	signal job_counter: integer;
+begin
+
+       -------------------------------------------------------------------
+       -- clock enabler.
+       -------------------------------------------------------------------
+       cgInst: clock_gater
+			port map (clock_in => clock_in,
+					clock_enable => clock_enable_raw,
+					clock_out => clock_out);
+	-------------------------------------------------------
+	-- FSM.  If there is something going on inside, enable
+	-- the clock...
+	-------------------------------------------------------
+	process(clock_in, reset, start_req, start_ack, fin_req, fin_ack)
+
+		variable next_fsm_state_var: FsmState;
+		variable incr_counter_var, decr_counter_var: boolean;
+		variable clock_enable_raw_var: std_logic;
+
+	begin
+		next_fsm_state_var := fsm_state;
+		incr_counter_var := false;
+		decr_counter_var := false;
+		clock_enable_raw_var := '0';
+
+		case fsm_state is 
+			when RESET_STATE =>
+				--
+				-- enable in reset state to ensure that
+				-- reset gets applied correctly....
+				--
+				clock_enable_raw_var := '1';
+				if(reset = '0') then 
+					next_fsm_state_var := IDLE;
+				end if;
+			when IDLE => 
+				if(start_req = '1') then
+					clock_enable_raw_var := '1';
+
+					if(start_ack = '1') then
+						incr_counter_var := true;
+						next_fsm_state_var := 	WORKING;
+					else
+						next_fsm_state_var := STARTED;
+					end if;
+				end if;
+			when STARTED =>
+
+				clock_enable_raw_var := '1';
+				if(start_ack = '1') then
+					incr_counter_var := true;
+					next_fsm_state_var := WORKING;
+				end if;
+
+			when WORKING =>
+				clock_enable_raw_var := '1';
+				incr_counter_var := ((start_req = '1') and (start_ack = '1'));
+				decr_counter_var := ((fin_req = '1') and (fin_ack = '1'));
+				if((job_counter = 0) and (start_req = '0')) then
+					next_fsm_state_var := IDLE;
+				end if;
+		end case;
+
+		clock_enable_raw <= clock_enable_raw_var;
+		if (clock_in'event and (clock_in = '1')) then
+			if(reset = '1') then
+				fsm_state <= RESET_STATE;
+				job_counter <= 0;
+			else
+				fsm_state <= next_fsm_state_var;
+				if(incr_counter_var and (not decr_counter_var)) then
+					job_counter <= job_counter + 1;
+				elsif ((not incr_counter_var) and decr_counter_var) then
+					job_counter <= job_counter - 1;
+				end if;
+			end if;
+		end if;
+	end process;
+	
+end behavioural;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+entity signal_clock_gate is
+	port (reset, clock_enable, clock_in: in std_logic; clock_out : out std_logic);
+end entity signal_clock_gate;
+
+architecture behavioural of signal_clock_gate is
+	signal clock_enable_final, clock_enable_reset: std_logic;
+	type FsmState is (RESET_STATE, RUN_STATE);
+	signal fsm_state: FsmState;
+	signal job_counter: integer;
+begin
+	
+       -------------------------------------------------------------------
+       -- final clock enable...
+       -------------------------------------------------------------------
+       clock_enable_final <= clock_enable or clock_enable_reset;
+
+       -------------------------------------------------------------------
+       -- clock enabler.
+       -------------------------------------------------------------------
+       cgInst: clock_gater
+			port map (clock_in => clock_in,
+					clock_enable => clock_enable_final,
+					clock_out => clock_out);
+	-------------------------------------------------------
+        -- ensure that reset is applied.
+        -------------------------------------------------------------------
+	process(clock_in, reset)
+		variable next_fsm_state_var: FsmState;
+		variable clock_enable_reset_var: std_logic;
+
+	begin
+		next_fsm_state_var := fsm_state;
+		clock_enable_reset_var := '0';
+
+		case fsm_state is 
+			when RESET_STATE =>
+				clock_enable_reset_var := '1';
+				--
+				-- enable in reset state to ensure that
+				-- reset gets applied correctly....
+				--
+				if(reset = '0') then 
+					next_fsm_state_var := RUN_STATE;
+				end if;
+			when RUN_STATE => 
+				clock_enable_reset_var := '0';
+		end case;
+
+		clock_enable_reset <= clock_enable_reset_var;
+		if (clock_in'event and (clock_in = '1')) then
+			if(reset = '1') then
+				fsm_state <= RESET_STATE;
+			else
+				fsm_state <= next_fsm_state_var;
+			end if;
+		end if;
+	end process;
+
+	
+end behavioural;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.GlobalConstants.all;
+
+
+entity clock_gater is
+	port (clock_in, clock_enable: in std_logic; clock_out : out std_logic);
+end entity clock_gater;
+
+architecture behavioural of clock_gater is
+      signal clock_enable_latched: std_logic;
+begin
+	assert (not use_xilinx_bufce) report "For vanilla AHIR, use_xilinx_bufce must be set false"
+		severity failure;
+
+	-------------------------------------------------------
+	-- latch followed by AND.
+	-------------------------------------------------------
+	process(clock_in)
+	begin
+		if(clock_in = '0') then
+			clock_enable_latched <= clock_enable;
+		end if;
+	end process;
+	clock_out <= clock_in and clock_enable_latched;
+	-------------------------------------------------------
+
+end behavioural;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+entity module_clock_gate is
+	port (reset, start_req, 
+		start_ack, fin_req, fin_ack, clock_in: in std_logic;
+		clock_out : out std_logic);
+end entity module_clock_gate;
+
+architecture behavioural of module_clock_gate is
+	signal clock_enable_raw, clock_enable: std_logic;
+	type FsmState is (RESET_STATE, IDLE, STARTED, WORKING);
+	signal fsm_state: FsmState;
+	signal job_counter: integer;
+begin
+
+       -------------------------------------------------------------------
+       -- clock enabler.
+       -------------------------------------------------------------------
+       cgInst: clock_gater
+			port map (clock_in => clock_in,
+					clock_enable => clock_enable_raw,
+					clock_out => clock_out);
+	-------------------------------------------------------
+	-- FSM.  If there is something going on inside, enable
+	-- the clock...
+	-------------------------------------------------------
+	process(clock_in, reset, start_req, start_ack, fin_req, fin_ack)
+
+		variable next_fsm_state_var: FsmState;
+		variable incr_counter_var, decr_counter_var: boolean;
+		variable clock_enable_raw_var: std_logic;
+
+	begin
+		next_fsm_state_var := fsm_state;
+		incr_counter_var := false;
+		decr_counter_var := false;
+		clock_enable_raw_var := '0';
+
+		case fsm_state is 
+			when RESET_STATE =>
+				--
+				-- enable in reset state to ensure that
+				-- reset gets applied correctly....
+				--
+				clock_enable_raw_var := '1';
+				if(reset = '0') then 
+					next_fsm_state_var := IDLE;
+				end if;
+			when IDLE => 
+				if(start_req = '1') then
+					clock_enable_raw_var := '1';
+
+					if(start_ack = '1') then
+						incr_counter_var := true;
+						next_fsm_state_var := 	WORKING;
+					else
+						next_fsm_state_var := STARTED;
+					end if;
+				end if;
+			when STARTED =>
+
+				clock_enable_raw_var := '1';
+				if(start_ack = '1') then
+					incr_counter_var := true;
+					next_fsm_state_var := WORKING;
+				end if;
+
+			when WORKING =>
+				clock_enable_raw_var := '1';
+				incr_counter_var := ((start_req = '1') and (start_ack = '1'));
+				decr_counter_var := ((fin_req = '1') and (fin_ack = '1'));
+				if((job_counter = 0) and (start_req = '0')) then
+					next_fsm_state_var := IDLE;
+				end if;
+		end case;
+
+		clock_enable_raw <= clock_enable_raw_var;
+		if (clock_in'event and (clock_in = '1')) then
+			if(reset = '1') then
+				fsm_state <= RESET_STATE;
+				job_counter <= 0;
+			else
+				fsm_state <= next_fsm_state_var;
+				if(incr_counter_var and (not decr_counter_var)) then
+					job_counter <= job_counter + 1;
+				elsif ((not incr_counter_var) and decr_counter_var) then
+					job_counter <= job_counter - 1;
+				end if;
+			end if;
+		end if;
+	end process;
+	
+end behavioural;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+entity signal_clock_gate is
+	port (reset, clock_enable, clock_in: in std_logic; clock_out : out std_logic);
+end entity signal_clock_gate;
+
+architecture behavioural of signal_clock_gate is
+	signal clock_enable_final, clock_enable_reset: std_logic;
+	type FsmState is (RESET_STATE, RUN_STATE);
+	signal fsm_state: FsmState;
+	signal job_counter: integer;
+begin
+	
+       -------------------------------------------------------------------
+       -- final clock enable...
+       -------------------------------------------------------------------
+       clock_enable_final <= clock_enable or clock_enable_reset;
+
+       -------------------------------------------------------------------
+       -- clock enabler.
+       -------------------------------------------------------------------
+       cgInst: clock_gater
+			port map (clock_in => clock_in,
+					clock_enable => clock_enable_final,
+					clock_out => clock_out);
+	-------------------------------------------------------
+        -- ensure that reset is applied.
+        -------------------------------------------------------------------
+	process(clock_in, reset)
+		variable next_fsm_state_var: FsmState;
+		variable clock_enable_reset_var: std_logic;
+
+	begin
+		next_fsm_state_var := fsm_state;
+		clock_enable_reset_var := '0';
+
+		case fsm_state is 
+			when RESET_STATE =>
+				clock_enable_reset_var := '1';
+				--
+				-- enable in reset state to ensure that
+				-- reset gets applied correctly....
+				--
+				if(reset = '0') then 
+					next_fsm_state_var := RUN_STATE;
+				end if;
+			when RUN_STATE => 
+				clock_enable_reset_var := '0';
+		end case;
+
+		clock_enable_reset <= clock_enable_reset_var;
+		if (clock_in'event and (clock_in = '1')) then
+			if(reset = '1') then
+				fsm_state <= RESET_STATE;
+			else
+				fsm_state <= next_fsm_state_var;
+			end if;
+		end if;
+	end process;
+
+	
+end behavioural;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+entity module_clock_gate is
+	port (reset, start_req, 
+		start_ack, fin_req, fin_ack, clock_in: in std_logic;
+		clock_out : out std_logic);
+end entity module_clock_gate;
+
+architecture behavioural of module_clock_gate is
+	signal clock_enable_raw, clock_enable: std_logic;
+	type FsmState is (RESET_STATE, IDLE, STARTED, WORKING);
+	signal fsm_state: FsmState;
+	signal job_counter: integer;
+begin
+
+       -------------------------------------------------------------------
+       -- clock enabler.
+       -------------------------------------------------------------------
+       cgInst: clock_gater
+			port map (clock_in => clock_in,
+					clock_enable => clock_enable_raw,
+					clock_out => clock_out);
+	-------------------------------------------------------
+	-- FSM.  If there is something going on inside, enable
+	-- the clock...
+	-------------------------------------------------------
+	process(clock_in, reset, start_req, start_ack, fin_req, fin_ack)
+
+		variable next_fsm_state_var: FsmState;
+		variable incr_counter_var, decr_counter_var: boolean;
+		variable clock_enable_raw_var: std_logic;
+
+	begin
+		next_fsm_state_var := fsm_state;
+		incr_counter_var := false;
+		decr_counter_var := false;
+		clock_enable_raw_var := '0';
+
+		case fsm_state is 
+			when RESET_STATE =>
+				--
+				-- enable in reset state to ensure that
+				-- reset gets applied correctly....
+				--
+				clock_enable_raw_var := '1';
+				if(reset = '0') then 
+					next_fsm_state_var := IDLE;
+				end if;
+			when IDLE => 
+				if(start_req = '1') then
+					clock_enable_raw_var := '1';
+
+					if(start_ack = '1') then
+						incr_counter_var := true;
+						next_fsm_state_var := 	WORKING;
+					else
+						next_fsm_state_var := STARTED;
+					end if;
+				end if;
+			when STARTED =>
+
+				clock_enable_raw_var := '1';
+				if(start_ack = '1') then
+					incr_counter_var := true;
+					next_fsm_state_var := WORKING;
+				end if;
+
+			when WORKING =>
+				clock_enable_raw_var := '1';
+				incr_counter_var := ((start_req = '1') and (start_ack = '1'));
+				decr_counter_var := ((fin_req = '1') and (fin_ack = '1'));
+				if((job_counter = 0) and (start_req = '0')) then
+					next_fsm_state_var := IDLE;
+				end if;
+		end case;
+
+		clock_enable_raw <= clock_enable_raw_var;
+		if (clock_in'event and (clock_in = '1')) then
+			if(reset = '1') then
+				fsm_state <= RESET_STATE;
+				job_counter <= 0;
+			else
+				fsm_state <= next_fsm_state_var;
+				if(incr_counter_var and (not decr_counter_var)) then
+					job_counter <= job_counter + 1;
+				elsif ((not incr_counter_var) and decr_counter_var) then
+					job_counter <= job_counter - 1;
+				end if;
+			end if;
+		end if;
+	end process;
+	
+end behavioural;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+entity signal_clock_gate is
+	port (reset, clock_enable, clock_in: in std_logic; clock_out : out std_logic);
+end entity signal_clock_gate;
+
+architecture behavioural of signal_clock_gate is
+	signal clock_enable_final, clock_enable_reset: std_logic;
+	type FsmState is (RESET_STATE, RUN_STATE);
+	signal fsm_state: FsmState;
+	signal job_counter: integer;
+begin
+	
+       -------------------------------------------------------------------
+       -- final clock enable...
+       -------------------------------------------------------------------
+       clock_enable_final <= clock_enable or clock_enable_reset;
+
+       -------------------------------------------------------------------
+       -- clock enabler.
+       -------------------------------------------------------------------
+       cgInst: clock_gater
+			port map (clock_in => clock_in,
+					clock_enable => clock_enable_final,
+					clock_out => clock_out);
+	-------------------------------------------------------
+        -- ensure that reset is applied.
+        -------------------------------------------------------------------
+	process(clock_in, reset)
+		variable next_fsm_state_var: FsmState;
+		variable clock_enable_reset_var: std_logic;
+
+	begin
+		next_fsm_state_var := fsm_state;
+		clock_enable_reset_var := '0';
+
+		case fsm_state is 
+			when RESET_STATE =>
+				clock_enable_reset_var := '1';
+				--
+				-- enable in reset state to ensure that
+				-- reset gets applied correctly....
+				--
+				if(reset = '0') then 
+					next_fsm_state_var := RUN_STATE;
+				end if;
+			when RUN_STATE => 
+				clock_enable_reset_var := '0';
+		end case;
+
+		clock_enable_reset <= clock_enable_reset_var;
+		if (clock_in'event and (clock_in = '1')) then
+			if(reset = '1') then
+				fsm_state <= RESET_STATE;
+			else
+				fsm_state <= next_fsm_state_var;
+			end if;
+		end if;
+	end process;
+
+	
+end behavioural;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.GlobalConstants.all;
+
+
+entity clock_gater is
+	port (clock_in, clock_enable: in std_logic; clock_out : out std_logic);
+end entity clock_gater;
+
+architecture behavioural of clock_gater is
+      signal clock_enable_latched: std_logic;
+begin
+	assert (not use_xilinx_bufce) report "For vanilla AHIR, use_xilinx_bufce must be set false"
+		severity failure;
+
+	-------------------------------------------------------
+	-- latch followed by AND.
+	-------------------------------------------------------
+	process(clock_in)
+	begin
+		if(clock_in = '0') then
+			clock_enable_latched <= clock_enable;
+		end if;
+	end process;
+	clock_out <= clock_in and clock_enable_latched;
+	-------------------------------------------------------
+
+end behavioural;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+entity module_clock_gate is
+	port (reset, start_req, 
+		start_ack, fin_req, fin_ack, clock_in: in std_logic;
+		clock_out : out std_logic);
+end entity module_clock_gate;
+
+architecture behavioural of module_clock_gate is
+	signal clock_enable_raw, clock_enable: std_logic;
+	type FsmState is (RESET_STATE, IDLE, STARTED, WORKING);
+	signal fsm_state: FsmState;
+	signal job_counter: integer;
+begin
+
+       -------------------------------------------------------------------
+       -- clock enabler.
+       -------------------------------------------------------------------
+       cgInst: clock_gater
+			port map (clock_in => clock_in,
+					clock_enable => clock_enable_raw,
+					clock_out => clock_out);
+	-------------------------------------------------------
+	-- FSM.  If there is something going on inside, enable
+	-- the clock...
+	-------------------------------------------------------
+	process(clock_in, reset, start_req, start_ack, fin_req, fin_ack)
+
+		variable next_fsm_state_var: FsmState;
+		variable incr_counter_var, decr_counter_var: boolean;
+		variable clock_enable_raw_var: std_logic;
+
+	begin
+		next_fsm_state_var := fsm_state;
+		incr_counter_var := false;
+		decr_counter_var := false;
+		clock_enable_raw_var := '0';
+
+		case fsm_state is 
+			when RESET_STATE =>
+				--
+				-- enable in reset state to ensure that
+				-- reset gets applied correctly....
+				--
+				clock_enable_raw_var := '1';
+				if(reset = '0') then 
+					next_fsm_state_var := IDLE;
+				end if;
+			when IDLE => 
+				if(start_req = '1') then
+					clock_enable_raw_var := '1';
+
+					if(start_ack = '1') then
+						incr_counter_var := true;
+						next_fsm_state_var := 	WORKING;
+					else
+						next_fsm_state_var := STARTED;
+					end if;
+				end if;
+			when STARTED =>
+
+				clock_enable_raw_var := '1';
+				if(start_ack = '1') then
+					incr_counter_var := true;
+					next_fsm_state_var := WORKING;
+				end if;
+
+			when WORKING =>
+				clock_enable_raw_var := '1';
+				incr_counter_var := ((start_req = '1') and (start_ack = '1'));
+				decr_counter_var := ((fin_req = '1') and (fin_ack = '1'));
+				if((job_counter = 0) and (start_req = '0')) then
+					next_fsm_state_var := IDLE;
+				end if;
+		end case;
+
+		clock_enable_raw <= clock_enable_raw_var;
+		if (clock_in'event and (clock_in = '1')) then
+			if(reset = '1') then
+				fsm_state <= RESET_STATE;
+				job_counter <= 0;
+			else
+				fsm_state <= next_fsm_state_var;
+				if(incr_counter_var and (not decr_counter_var)) then
+					job_counter <= job_counter + 1;
+				elsif ((not incr_counter_var) and decr_counter_var) then
+					job_counter <= job_counter - 1;
+				end if;
+			end if;
+		end if;
+	end process;
+	
+end behavioural;
+library std;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+entity signal_clock_gate is
+	port (reset, clock_enable, clock_in: in std_logic; clock_out : out std_logic);
+end entity signal_clock_gate;
+
+architecture behavioural of signal_clock_gate is
+	signal clock_enable_final, clock_enable_reset: std_logic;
+	type FsmState is (RESET_STATE, RUN_STATE);
+	signal fsm_state: FsmState;
+	signal job_counter: integer;
+begin
+	
+       -------------------------------------------------------------------
+       -- final clock enable...
+       -------------------------------------------------------------------
+       clock_enable_final <= clock_enable or clock_enable_reset;
+
+       -------------------------------------------------------------------
+       -- clock enabler.
+       -------------------------------------------------------------------
+       cgInst: clock_gater
+			port map (clock_in => clock_in,
+					clock_enable => clock_enable_final,
+					clock_out => clock_out);
+	-------------------------------------------------------
+        -- ensure that reset is applied.
+        -------------------------------------------------------------------
+	process(clock_in, reset)
+		variable next_fsm_state_var: FsmState;
+		variable clock_enable_reset_var: std_logic;
+
+	begin
+		next_fsm_state_var := fsm_state;
+		clock_enable_reset_var := '0';
+
+		case fsm_state is 
+			when RESET_STATE =>
+				clock_enable_reset_var := '1';
+				--
+				-- enable in reset state to ensure that
+				-- reset gets applied correctly....
+				--
+				if(reset = '0') then 
+					next_fsm_state_var := RUN_STATE;
+				end if;
+			when RUN_STATE => 
+				clock_enable_reset_var := '0';
+		end case;
+
+		clock_enable_reset <= clock_enable_reset_var;
+		if (clock_in'event and (clock_in = '1')) then
+			if(reset = '1') then
+				fsm_state <= RESET_STATE;
+			else
+				fsm_state <= next_fsm_state_var;
+			end if;
+		end if;
+	end process;
+
+	
+end behavioural;
