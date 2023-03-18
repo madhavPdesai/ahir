@@ -522,6 +522,21 @@ package BaseComponents is
   -----------------------------------------------------------------------------
   -- queue, fifo, lifo
   -----------------------------------------------------------------------------
+  component QueueBaseCore is
+  generic(name : string := "Anon"; 
+		queue_depth: integer := 3; 
+		reverse_bypass_flag: boolean := false;
+		data_width: integer := 32);
+  port(clk: in std_logic;
+       reset: in std_logic;
+       empty, full: out std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+  end component QueueBaseCore;
   
   component QueueBase 
     generic(name : string; queue_depth: integer := 2; data_width: integer := 32; save_one_slot: Boolean := false);
