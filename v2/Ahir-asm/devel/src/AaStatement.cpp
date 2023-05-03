@@ -6187,13 +6187,18 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 	if(phi_stmts.size() > 0)
 	{
 		__T("aggregated_phi_sample_req");
+
 		__T("aggregated_phi_sample_ack");
+		__TD("aggregated_phi_sample_ack_d");
+		__J("aggregated_phi_sample_ack_d", "aggregated_phi_sample_ack");
+
 		__T("aggregated_phi_update_req");
 		__T("aggregated_phi_update_ack");
 
 		// do not loop-back unless all phi's have used
 		// up their triggering tokens.  Delay introduced
 		ofile << "// do not loop-back unless all phi's have used up their triggering tokens." << endl;
+		__J("condition_evaluated", "aggregated_phi_sample_ack_d");
 		__J("condition_evaluated", "aggregated_phi_update_ack");
 
 		//

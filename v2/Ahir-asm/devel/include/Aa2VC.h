@@ -34,6 +34,7 @@
 #include <AaIncludes.h>
 
 #define __T(x) ofile << "$T[" << x << "] " << endl; 
+#define __TD(x) ofile << "$T[" << x << "] $delay" << endl; 
 #define __Place(x) ofile << "$P[" << x << "] " << endl; 
 #define __J(x,y) ofile << x << " <-& (" << y << ")" << endl;
 #define __ALIAS(x,y) ofile << "$A [" <<  x << "] [" << y <<  "]" << endl;
