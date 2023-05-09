@@ -1002,10 +1002,17 @@ void AaSimpleObjectReference::Write_VC_Guard_Forward_Dependency(AaRoot* guard_ex
 			// No Phi-Phi dependencies
 			if(this->_object->Is("AaPipeObject") && !this->Get_Is_Target() && !this->Is_Signal_Read())
 			{
-				__J(__UST(this), __UCT(guard_expr_root));
+				// Not relevant for pipe reads any more....
+				//__J(__UST(this), __UCT(guard_expr_root));
+				//
+				// Guard will be sampled inside the split guard interface..
+				//
+				ofile << "// Guard forward dependency for pipe read " << endl;
+				__J(__SST(this), __UCT(guard_expr_root));
 			}
 			else
 			{
+				ofile << "// Guard forward dependency " << endl;
 				__J(__SST(this), __UCT(guard_expr_root));
 			}
 
@@ -1029,7 +1036,12 @@ void AaSimpleObjectReference::Write_VC_Guard_Backward_Dependency(AaExpression* e
 	// Added: special case for pipe read!
 	if(this->_object->Is("AaPipeObject") && !this->Get_Is_Target() && !this->Is_Signal_Read())
 	{
-		expr->Write_VC_Update_Reenables (this, __UST(this), bypass_flag, visited_elements, ofile);
+		// expr->Write_VC_Update_Reenables (this, __UST(this), bypass_flag, visited_elements, ofile);
+		//
+		// 	Special case is not needed with new split guard interface
+		//
+		ofile << "// Guard backward dependency for pipe read " << endl;
+		this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
 	}
 	else
 	{

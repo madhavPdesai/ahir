@@ -1612,7 +1612,12 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	if(!ok_flag)
 		assert(0);
 
+	// a bit ugly.
+	int relaxed_count, strict_count;
+	this->_parent_merge->Get_Phi_Statement_Counts(relaxed_count, strict_count);
+
 	assert(pipeline_flag);
+
 
 	if(this->_target->Is_Constant())
 	{
@@ -1634,7 +1639,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		return;
 	}
 	
-	ofile << "// start:  PHI statement " << this->Get_VC_Name() << endl;
+	ofile << "// start:  multi-source PHI statement " << this->Get_VC_Name() << (this->Get_Relaxed_Flag() ? "relaxed" : "") << endl;
 	ofile << "// " << this->To_String() << endl;
 	__DeclTransSplitProtocolPattern;
 
@@ -1649,7 +1654,14 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	__F((__SCT(this) + "_ps"),"aggregated_phi_sample_ack");
 
 	__T(__UST(this) + "_ps");
-	__J((__UST(this) + "_ps"), "aggregated_phi_update_req");
+	if(this->Get_Relaxed_Flag())
+	{
+		__J((__UST(this) + "_ps"), __UST(this));
+	}
+	else
+	{
+		__J((__UST(this) + "_ps"), "aggregated_phi_update_req");
+	}
 
 	__T(__UCT(this) + "_ps");
 	__J(__UCT(this), __UCT(this) + "_ps");
@@ -1659,7 +1671,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	// is not mentioned here...
 	__J("aggregated_phi_sample_req", __SST(this));
         __F("aggregated_phi_sample_ack", __SCT(this));
-        __J("aggregated_phi_update_req", __UST(this));
+	if(!this->Get_Relaxed_Flag())
+	{
+        	__J("aggregated_phi_update_req", __UST(this));
+	}
 
 
 	// the active, completed and the active transitions
@@ -1935,13 +1950,22 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized_Single_Source(bool pipeline
 		ostream& ofile)
 {
 
-	ofile << "// start:  single source PHI statement " << this->Get_VC_Name() << endl;
+	
+	// a bit ugly.
+	int relaxed_count, strict_count;
+	this->_parent_merge->Get_Phi_Statement_Counts(relaxed_count, strict_count);
+
+	ofile << "// start:  single source PHI statement " << this->Get_VC_Name() << (this->Get_Relaxed_Flag() ? "relaxed" : "") << endl;
 	ofile << "// " << this->To_String() << endl;
 	__DeclTransSplitProtocolPattern;
 
         __J("aggregated_phi_sample_req", __SST(this));
         __F("aggregated_phi_sample_ack", __SCT(this));
-        __J("aggregated_phi_update_req", __UST(this));
+	
+	if(!this->Get_Relaxed_Flag())
+	{
+        	__J("aggregated_phi_update_req", __UST(this));
+	}
 
 	AaExpression* source_expr = (*(this->_source_label_vector.begin())).first;
 
@@ -2030,7 +2054,17 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized_Single_Source(bool pipeline
 
 	__F ("aggregated_phi_sample_req", __SST(source_expr));
 	__J ("aggregated_phi_sample_ack", __SCT(source_expr));
-	__F ("aggregated_phi_update_req", __UST(source_expr));
+
+	if(this->Get_Relaxed_Flag())
+	{
+		__F (__UST(this), __UST(source_expr));
+
+	}
+	else
+	{
+		__F ("aggregated_phi_update_req", __UST(source_expr));
+	}
+
 	__J (__UCT(this), __UCT(source_expr));
         __J ("aggregated_phi_update_ack", __UCT(this));
 

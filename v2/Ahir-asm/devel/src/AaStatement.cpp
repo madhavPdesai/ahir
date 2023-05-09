@@ -4036,6 +4036,24 @@ bool AaMergeStatement::Can_Block(bool pipeline_flag)
 
 	return(false);
 }
+  
+void AaMergeStatement::Get_Phi_Statement_Counts(int& relaxed_count, int& strict_count)
+{
+	relaxed_count = 0;
+	strict_count = 0;
+
+	for(unsigned int idx = 0; idx < this->Get_Statement_Count(); idx++)
+	{
+		AaPhiStatement* ps = (AaPhiStatement*) (this->Get_Statement(idx));
+
+		if(ps->Get_Relaxed_Flag())
+			relaxed_count++;
+		else
+			strict_count++;
+
+	}
+}
+
 
 void AaMergeStatement::Print(ostream& ofile)
 {
@@ -4483,6 +4501,9 @@ void AaPhiStatement::Print(ostream& ofile)
 
 	if(this->Get_Barrier_Flag())
 		ofile << " $barrier";
+
+	if(this->Get_Relaxed_Flag())
+		ofile << " $relaxed ";
 
 	ofile << endl;
 	if(this->_target->Get_Type())
@@ -6154,9 +6175,19 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 
 	// get the list of Phi-stmts.
 	vector<AaStatement*> phi_stmts;
+	bool has_relaxed = false;
+	bool has_strict  = false;
 	for(unsigned int idx = 0; idx < this->_merge_statement->Get_Statement_Count(); idx++)
 	{
-		phi_stmts.push_back(this->_merge_statement->Get_Statement(idx));
+		AaPhiStatement* ps = (AaPhiStatement*) (this->_merge_statement->Get_Statement(idx));
+		phi_stmts.push_back(ps);
+
+		if(ps->Get_Relaxed_Flag())
+			has_relaxed = true;
+		else
+			has_strict = true;
+
+
 	}
 
 
@@ -6192,7 +6223,11 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 		__TD("aggregated_phi_sample_ack_d");
 		__J("aggregated_phi_sample_ack_d", "aggregated_phi_sample_ack");
 
-		__T("aggregated_phi_update_req");
+		if(has_strict)
+		{
+			__T("aggregated_phi_update_req");
+		}
+
 		__T("aggregated_phi_update_ack");
 
 		// do not loop-back unless all phi's have used

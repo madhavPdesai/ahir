@@ -68,18 +68,29 @@ architecture Behave of SplitUpdateGuardInterfaceBase is
 	Type FsmState is (Idle, Busy);
 	signal fsm_state: FsmState;
 	signal ca_out_u, ca_out_d: Boolean;
-	signal sampled_guard_interface: std_logic;
+	signal guard_interface_reg, sampled_guard_interface: std_logic;
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
 begin
+	sa_out <= sr_in;
+	sr_out <= false;
 		
 	-- sr/sa interface is a dummy... no need to forward to the
-	sa_out <= sr_in;
+	process (clk, reset, sr_in)
+	begin
+		if(clk'event and (clk = '1')) then
+			if(reset = '1') then
+				guard_interface_reg <= '0';
+			elsif sr_in then
+				guard_interface_reg <= guard_interface;
+			end if;
+		end if;
+	end process;
+	sampled_guard_interface <= guard_interface when sr_in else guard_interface_reg;
 
-	sr_out <= false;
 
 	-- update guard FSM.
-	process(clk, guard_interface, fsm_state, cr_in, ca_in)
+	process(clk, sampled_guard_interface, fsm_state, cr_in, ca_in)
 		variable next_state : FsmState;
 		variable cr_out_var, ca_out_var_d, ca_out_var_u: Boolean;
 	begin
@@ -90,7 +101,7 @@ begin
 		case fsm_state is
 			when Idle =>
 				if(cr_in) then
-					if(guard_interface  = '1') then
+					if(sampled_guard_interface  = '1') then
 						cr_out_var := true;
 						next_state := Busy;
 					else
@@ -102,7 +113,7 @@ begin
 				if(ca_in) then
 					ca_out_var_u := true;
 					if(cr_in) then
-						if(guard_interface = '1') then
+						if(sampled_guard_interface = '1') then
 							cr_out_var := true;
 						else
 							ca_out_var_d := true;

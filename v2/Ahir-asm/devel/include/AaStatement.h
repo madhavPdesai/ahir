@@ -1236,6 +1236,8 @@ class AaMergeStatement: public AaSeriesBlockStatement
   void Set_In_Do_While(bool v);
   bool Get_In_Do_While() {return(_in_do_while);}
 
+  void Get_Phi_Statement_Counts(int& relaxed_count, int& strict_count);
+
 
   
   AaMergeStatement(AaBranchBlockStatement* scope);
@@ -1282,6 +1284,7 @@ class AaMergeStatement: public AaSeriesBlockStatement
 class AaPhiStatement: public AaStatement
 {
   bool _barrier_flag;
+  bool _relaxed_flag;
   AaMergeStatement* _parent_merge;
   AaObjectReference* _target;
   vector<pair<string,AaExpression*> > _source_pairs;
@@ -1295,6 +1298,9 @@ class AaPhiStatement: public AaStatement
 
   void Set_Barrier_Flag(bool v) {_barrier_flag = v;}
   bool Get_Barrier_Flag() {return(_barrier_flag);}
+
+  void Set_Relaxed_Flag(bool v) {_relaxed_flag = v;}
+  bool Get_Relaxed_Flag() {return(_relaxed_flag);}
 
   void Set_Target(AaObjectReference* tgt);
   AaObjectReference* Get_Target() {return(_target);}

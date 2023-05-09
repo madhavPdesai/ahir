@@ -972,6 +972,7 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
     vector<string> labels;
     bool not_flag = false;
     bool barrier_flag = false;
+    bool relaxed_flag = false;
 }
     : pl: PHI tgt:SIMPLE_IDENTIFIER 
         {
@@ -1049,6 +1050,11 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
 	(BARRIER {barrier_flag = true;})?
 	{
 		new_ps->Set_Barrier_Flag(barrier_flag);
+	}
+
+	(RELAXED {relaxed_flag = true;})?
+	{
+		new_ps->Set_Relaxed_Flag(relaxed_flag);
 	}
 ;
 
@@ -2699,6 +2705,8 @@ FLOAT          : "$float"   ;
 POINTER        : "$pointer" ;
 NuLL           : "$null";
 BARRIER        : "$barrier";
+RELAXED	       : "$relaxed";
+
 ARRAY          : "$array";
 RECORD         : "$record";
 
