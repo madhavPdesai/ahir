@@ -1,0 +1,18 @@
+$system shift_reg_4  $library shift_reg_lib
+	$in 
+		$pipe in_data 32 $depth 2 
+	$out 
+		$pipe out_data 32 $depth 2 
+{
+	// internal pipe
+	$pipe mid_data 32 $depth 2
+        
+	$instance sleft   shift_reg_lib:shift_reg_2
+			   in_data  => in_data  
+			   out_data => mid_data
+	$instance sright  shift_reg_lib:shift_reg_2
+			   in_data  => mid_data  
+			   out_data => out_data
+	
+}
+

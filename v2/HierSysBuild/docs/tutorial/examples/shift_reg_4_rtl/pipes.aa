@@ -1,0 +1,1 @@
+$pipe in_data mid_data mid_data_left mid_data_right out_data: $uint<32> $depth 2

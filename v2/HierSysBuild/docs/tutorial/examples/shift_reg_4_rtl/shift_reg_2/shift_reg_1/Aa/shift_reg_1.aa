@@ -1,0 +1,12 @@
+$pipe in_data out_data: $uint<32> $depth 2
+
+$module [shift_reg_1_daemon] $in () $out () $is
+{
+	$branchblock[loop] {
+		$merge $entry loopback $endmerge
+		X := in_data
+		out_data := X
+
+		$place [loopback]
+	}
+}

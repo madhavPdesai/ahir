@@ -1,0 +1,50 @@
+$system shift_reg_4  $library shift_reg_lib
+	$in 
+		$pipe in_data 32 $depth 2 
+	$out 
+		$pipe out_data 32 $depth 2 
+{
+	// internal pipe
+	$pipe mid_data_left   32 $depth 2
+	$pipe mid_data_right  32 $depth 2
+        
+	$instance sleft   shift_reg_lib:shift_reg_2
+			   in_data  => in_data  
+			   out_data => mid_data_left
+	$instance sright  shift_reg_lib:shift_reg_2
+			   in_data  => mid_data_right
+			   out_data => out_data
+	
+	$thread complementerFsm
+   		$in $pipe input_data: $unsigned<32>
+   		$out $pipe output_data: $unsigned<32>
+   		$variable  data_reg: $unsigned<32>
+   		$constant z1  : $unsigned<1> := ($unsigned<1>) 0
+   		$constant o1  : $unsigned<1> := ($unsigned<1>) 1
+	$default
+   
+	$now input_data$req  := z1 // default value of pipe read req
+   	$now output_data$req := z1 // default valu of pipe write req
+   	<st_empty> {
+          $now input_data$req := o1
+          $if input_data$ack { // input pipe has data
+              data_reg := (~ input_data) // register!
+              $goto st_full
+          }  
+	  $else {$goto st_empty}
+   	}
+   	<st_full> {
+          $now output_data$req := o1 // request write to pipe
+          $now output_data := data_reg // data to pipe
+          $if output_data$ack { // pipe accepts..
+                $goto st_empty
+          }
+          $else { $goto st_full }
+   	}
+   	$now $tick
+
+	$string complementer_inst: complementerFsm
+		input_data => mid_data_left
+		output_data => mid_data_right
+}
+

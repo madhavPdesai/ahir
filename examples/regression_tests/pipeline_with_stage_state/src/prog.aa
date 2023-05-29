@@ -1,0 +1,23 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2 $p2p
+
+$module [p2p_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 9 $buffering 2 $fullrate
+		$merge $entry $loopback 
+	 		$phi CMD := in_data $on $entry, $loopback
+			$phi init_flag := $one<1> $on $entry $zero<1> $on $loopback
+		$endmerge
+
+		// stage one depends on everything above it.
+		stage_1 := ($mux init_flag CMD (CMD + stage_1))
+
+		// stage two depends on everything above it.
+		stage_2 := ($mux init_flag _b0 (stage_2 + stage_1))
+		
+		
+		out_data :=  stage_2
+		$while 1
+	}
+}

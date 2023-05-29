@@ -1,0 +1,18 @@
+The hierachical description of the 2-stage shift register
+is here
+	shift_reg_2.hsys
+
+The make-file to build the VHDL model of shift_reg_2 is
+here
+	Makefile
+
+This make-file is called from the build.sh at the shift_reg_4
+level.
+
+The VHDL code for the shift_reg_2 entity is kept in this 
+directory
+	vhdl/
+
+The description of the 1-stage shift register is in this
+directory
+	shift_reg_1/

@@ -1,0 +1,15 @@
+The description of the 1-stage
+shift register is in the Aa file
+	shift_reg_1.aa
+
+The make-file to build shift_reg_1 from the
+Aa file
+	Makefile
+
+The products of the make
+	aa2c/
+		aa2c code.
+	hsys/
+		generated hsys wrapper.
+	vhdl/
+		generated vhdl code.
