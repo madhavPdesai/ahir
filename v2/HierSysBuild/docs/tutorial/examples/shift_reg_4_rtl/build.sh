@@ -16,7 +16,7 @@ PIPES="pipes.aa"
 #
 # The final model uses shift_register_lib as a prefix..
 #
-buildHierarchicalModel.py -D -M -H -s ghdl  -a  shift_register_lib -I$AHIR_RELEASE/include $PARAMETERS $PIPES
+buildHierarchicalModel.py -u -C -D -M -H -s ghdl  -a  shift_register_lib -I$AHIR_RELEASE/include $PARAMETERS $PIPES
 
 
 

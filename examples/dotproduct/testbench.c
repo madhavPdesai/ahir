@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 #endif
 
 #ifdef PIPELINEDUNROLLED
-	fprintf(stdout,"calling dot_pipelined_unrolled.\n", result);
+	fprintf(stdout,"calling dot_pipelined_unrolled.\n");
 	result = dotp_pipelined_unrolled();	
 	fprintf(stdout,"pipelined-unrolled result = %f.\n", result);
 #endif

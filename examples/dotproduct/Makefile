@@ -1,10 +1,7 @@
 # build software version of testbench (to check the "desired behaviour")
-IOLIB_INCLUDE=../../iolib/include
-IOLIB_LIB=../../iolib/lib
-SOCKETLIB_INCLUDE=../../CtestBench/include
-SOCKETLIB_LIB=../../CtestBench/lib
-VHDL_LIB=../../vhdl
-VHDL_VHPI_LIB=../../CtestBench/vhdl
+AHIR_INCLUDE=$(AHIR_RELEASE)/include 
+AHIR_LIB=$(AHIR_RELEASE)/lib
+VHDL_LIB=$(AHIR_RELEASE)/vhdl
 
 #TOPMODULES=-t init -t dotp_experimental
 #DEFS=-DEXPERIMENTAL
@@ -38,23 +35,23 @@ vc2vhdl: prog.vc
 # note the use of SOCKETLIB in building the testbench.
 vhdlsim: TB GHDL
 TB:  testbench.c vhdlCStubs.h vhdlCStubs.c
-	gcc -g -c vhdlCStubs.c -I./ -I$(SOCKETLIB_INCLUDE)
-	gcc -g -c testbench.c $(DEFS) -I./ -I$(SOCKETLIB_INCLUDE)
-	gcc -g -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLibPipeHandler -lpthread
+	gcc -g -c vhdlCStubs.c -I./ -I$(AHIR_INCLUDE)
+	gcc -g -c testbench.c $(DEFS) -I./ -I$(AHIR_INCLUDE)
+	gcc -g -o testbench_hw testbench.o vhdlCStubs.o  -L$(AHIR_LIB) -lSocketLibPipeHandler -lpthread
 
 GHDL:	ahir_system.vhdl ahir_system_test_bench.vhdl 	
 	ghdl --clean
 	ghdl --remove
+	ghdl -i --work=GhdlLink $(VHDL_LIB)/GhdlLink.vhdl
 	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
 	ghdl -i --work=aHiR_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
-	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
-	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
 	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl
-	ghdl -m --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
+	ghdl -m --work=work -Wc,-g -Wl,-L$(AHIR_LIB) -Wl,-lVhpi ahir_system_test_bench 
 
 clean:
 	rm -f *.o *.vc *.cf *.*vhdl *.opt.aa vhdlCStubs.* *.vcd in_data* testbench_hw ahir_system_test_bench vhpi.log
+	rm -f run.ghw
 
 PHONY: all clean	

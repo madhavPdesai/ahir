@@ -1,4 +1,3 @@
-
 $storage  a: $array [16] $of $float<8,23>
 $storage  b: $array [16] $of $float<8,23>
 $storage  a1: $array [16] $of $float<8,23>
@@ -22,7 +21,7 @@ $module [init] $in() $out () $is
 $module [dotp_experimental] $in() $out (c: $float<8,23> ) $is
 {
 	$branchblock[run] {
-		$do
+		$dopipeline $depth 31 
 			$merge $entry $loopback
 			$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
 			$phi sum := ($bitcast($float<8,23>) _f0.0e+1) $on $entry nsum $on $loopback
@@ -49,7 +48,7 @@ $module [dotp_pipelined_unrolled] $in() $out (c: $float<8,23> ) $is
 {
 
 	$branchblock[run] {
-		$do
+		$dopipeline $depth 31 $fullrate
 			$merge $entry $loopback
 			$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
 			$phi sum := ($bitcast($float<8,23>) _f0.0e+1) $on $entry nsum $on $loopback
@@ -97,7 +96,7 @@ $module [dotp_pipelined] $in() $out (c: $float<8,23> ) $is
 {
 
 	$branchblock[run] {
-	   $do 
+	   $dopipeline $depth 31 $fullrate
 		$merge $entry $loopback
 		$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
 		$phi sum := ($bitcast($float<8,23>) _f0.0e+1) $on $entry nsum $on $loopback
