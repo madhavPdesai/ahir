@@ -127,10 +127,14 @@ void AaExpression::Write_VC_Output_Buffering(string dpe_name, string tgt_name, o
 	if(stmt_buf > this_buffering)
 		this_buffering = stmt_buf;
 
-	if(this->Is_Part_Of_Fullrate_Pipeline())
+	//
+	// Guarded expression with unit delay and full-rate?
+	//   Double buffer!
+	//
+	if((this->Get_Guard_Expression() != NULL) && (this_buffering < 2) && !this->Is_Pipe_Read() 
+			&& (this->Get_Delay() == 1))
 	{
-		if((this_buffering < 2) && (this->Get_Delay() == 1) && 
-				(this->Get_Guard_Expression() != NULL))
+		if(this->Is_Part_Of_Fullrate_Pipeline())
 		{
 			this_buffering = 2;
 			ofile << "// Buffering of fullrate unit-delay guarded expression is set to 2." << endl;
