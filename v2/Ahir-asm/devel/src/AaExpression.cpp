@@ -132,7 +132,7 @@ void AaExpression::Write_VC_Output_Buffering(string dpe_name, string tgt_name, o
 	//   Double buffer!
 	//
 	if((this->Get_Guard_Expression() != NULL) && (this_buffering < 2) && !this->Is_Pipe_Read() 
-			&& (this->Get_Delay() == 1))
+			&& (this->Get_Delay() < 2))
 	{
 		if(this->Is_Part_Of_Fullrate_Pipeline())
 		{

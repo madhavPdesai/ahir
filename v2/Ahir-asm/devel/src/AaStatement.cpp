@@ -2045,6 +2045,17 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				{
 
 					int bufval = this->Get_Buffering();
+				
+					// corner case: guarded, unit-delay, full-rate.	
+					if((bufval < 2) && 
+						(this->Get_Guard_Expression() != NULL) &&
+						this->Is_Part_Of_Fullrate_Pipeline())
+					{
+						ofile << "// Buffering of fullrate unit-delay guarded simple-reference is set to 2." << endl;
+
+						bufval = 2;
+					}
+
 					if(bufval > 1)
 					{
 						ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " " << bufval << endl;
