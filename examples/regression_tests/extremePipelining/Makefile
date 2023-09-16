@@ -53,8 +53,8 @@ llvmbc2aa:  prog.opt.o
 # Aa to vC
 aalink: prog.aa 
 	AaLinkExtMem prog.aa $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.linked.aa
-	AaOpt -C prog.linked.aa | vcFormat > prog.linked.c.aa
-	AaOpt -B prog.linked.c.aa | vcFormat > prog.linked.c.opt.aa
+	#AaOpt -C prog.linked.aa | vcFormat > prog.linked.c.aa
+	AaOpt -B prog.linked.aa | vcFormat > prog.linked.c.opt.aa
 
 aa2vc: prog.linked.c.opt.aa
 	Aa2VC -O -C prog.linked.c.opt.aa | vcFormat > prog.vc

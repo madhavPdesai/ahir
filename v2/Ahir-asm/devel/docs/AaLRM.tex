@@ -821,12 +821,6 @@ in all descendent scopes.
 \item A reference to a variable $b$ in a scope X is resolved by checking
 whether the variable is defined in that scope, and if not found there,
 by checking in the scope that contains the scope X, and so on.
-\item A scope can read from variables that are defined in descendant
-scopes.  
-\item A scope can export a variable defined within its scope to
-its parent scope.   The name  of the exported variable must not
-clash with the name of any other variable visible in the
-parent scope.
 \item A scope can read from variables that are defined in ancestor scopes.
 \item A scope can only write to one of the following:
 \begin{itemize}
@@ -839,41 +833,10 @@ which writes to this output argument.
 \end{itemize}
 \end{enumerate}
 
-A variable reference in a statement may be specified 
-as follows
-\begin{verbatim}
-a            look for variable a in current scope; 
-             if not found look in the parent.
-
-:a           same as the previous case
-
-../:a        look for variable a starting from the parent of
-             the current scope.
-
-%p:a         look for variable a starting from the child scope 
-             with label p (child scope of the current scope).
-
-../../:a     look for variable starting from the parent of
-             the parent of the current scope.
-
-%p%q:a       look for variable starting from the child scope 
-             with label q of the child scope with label p of 
-             the current scope
-
-a[10]        look for a storage variable a defined in the 
-             current scope.  If not found, look for it in
-             the parent scope, and so on.  If eventually found, 
-             access the corresponding element of the composite
-             object.
-\end{verbatim}
-Thus, a generic variable reference has the form 
-\begin{verbatim} 
-    scope-reference : variable-reference 
-\end{verbatim} 
-and the scoping rules forbid a scope from accessing variables
-which are not defined in either an ancestor or a descendant
-of the scope (the export mechanism should be used if this
-is needed).
+If, from within a scope, we wish to read the value of
+a variable defined in a child scope, then the child scope
+must export the value of the variable so that the parent
+scope can access it.
 
 \section{Types} \label{sec:Types}
 
@@ -1785,6 +1748,58 @@ The \Aa compiler then considers that the module GetValue
 is defined ``elsewhere'' and does not try to link to it
 directly.  This linking is done outside by other tools which
 use the results of the \Aa compilation process.
+
+\section{Gated clocks}
+
+	Gated clocks can be declared and controlled within the Aa
+	language framework.   There are two control scenarios which
+	are supported.
+\begin{itemize}
+\item  Automatic mode:
+	   the gated clock can be attached to a module, and is
+	  enabled whenever the module is activated (by the
+	  start\_req/start\_ack pair), and disabled when the
+	  module is no longer active, i.e., it has no further
+	  jobs in progress inside it.
+\item Explicit mode:
+	   the gated clock enable signal is generated from within
+	   some logic described in Aa.
+\end{itemize}
+
+\subsection{Creating and using an explicitly controlled gated clock}
+
+	To create an explicit gated clock, we need to declare an enable signal
+	and a gated clock to which it is matched.  For example
+\begin{verbatim}
+// signal declaration of an enable.
+$pipe  data_1_clock_enable: $uint<1> $signal
+// gated clock attached to enable.
+$gated_clock  data_1_clock data_1_clock_enable
+\end{verbatim}
+
+	Now the declared gated clock can be applied to
+	a module foo by the statement
+\begin{verbatim}
+	$use_gated_clock foo  data_1_clock
+\end{verbatim}
+ 	It is the responsibility of the programmer
+	to control the enable signal (data\_1\_clock\_enable above).
+	This enable signal will control the gated clock data\_1\_clock
+	which is used by the module foo.
+
+
+\subsection{Declaring and using automatic gated clocks}
+
+	In this case, all we need to declare is that 
+	a module ``bar'' will run on a gated clock which
+	is enabled when the module is working on an active job
+	and disabled otherwise.  This is done by the
+	statement
+\begin{verbatim}
+$use_gated_clock bar
+\end{verbatim}
+
+
 
 \section{Examples}
 

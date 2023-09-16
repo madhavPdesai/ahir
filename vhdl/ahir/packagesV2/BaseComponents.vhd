@@ -2706,7 +2706,7 @@ package BaseComponents is
   end component module_clock_gate;
 
   component signal_clock_gate is
-	port (reset, clock_enable, clock_in: in std_logic; clock_out : out std_logic);
+	port (reset, clock_in, clock_enable: in std_logic; clock_out : out std_logic);
   end component signal_clock_gate;
 
   component clock_gater is

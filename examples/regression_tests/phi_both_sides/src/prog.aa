@@ -6,8 +6,9 @@ $module [p2p_check_daemon] $in() $out () $is
 	$branchblock[lOoP] {
 		$dopipeline $depth 9 $buffering 2 $fullrate
 		$merge $entry $loopback 
-			$phi IDX := ($bitcast ($uint<32>) 0) $on $entry nIDX  $on $loopback
 			$phi K := ($bitcast($uint<32>) 1) $on $entry 1 $on $loopback
+			$phi IDX := ($bitcast ($uint<32>) 0) $on $entry nIDX  $on $loopback
+					$barrier
 			$phi X := in_data $on $entry, $loopback
 		$endmerge
 

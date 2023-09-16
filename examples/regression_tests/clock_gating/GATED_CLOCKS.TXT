@@ -1,0 +1,60 @@
+	Gated clocks in Aa descriptions.
+		Madhav Desai
+
+1. Overview
+	Gated clocks can be declared and controlled within the Aa
+	language framework.   There are two control scenarios
+
+	- automatic mode:
+	   the gated clock can be attached to a module, and is
+	  enabled whenever the module is activated (by the
+	  start_req/start_ack pair), and disabled when the
+	  module is no longer active, i.e., it has no further
+	  jobs in progress inside it.
+
+	- explicit mode
+	   the gated clock enable signal is generated from within
+	   some logic described in Aa.
+
+	This example illustrates both modes.
+
+2. Declaring and using explicit gated clocks
+
+	To create an explicit gated clock, we need to declare an enable signal
+	and a gated clock to which it is matched.  For example
+	
+        // signal declaration of an enable.
+        $pipe  data_1_clock_enable: $uint<1> $signal
+        // gated clock attached to enable.
+        $gated_clock  data_1_clock data_1_clock_enable
+
+	Now the declared gated clock can be applied to
+	a module foo by a $use_gated_clock statement
+
+	$use_gated_clock foo  data_1_clock
+
+	Now it is the responsibility of the programmer
+	to control the enable signal (data_1_clock_enable above).
+	This enable signal will control the gated clock data_1_clock
+	which is used by the module foo.
+
+
+2. Declaring and using automatic gated clocks
+
+	In this case, all we need to declare is that 
+	a module ``bar'' will run on a gated clock which
+	is enabled when the module has an active job
+	and disabled otherwise.  This is done by the
+	statement
+
+	$use_gated_clock bar
+
+3.  Summary
+
+	In an Aa description, we can generate
+	gated clocks for modules.   This can be done
+	implicitly (the automatic) mode, or explicitly
+	as shown above.
+
+
+

@@ -358,6 +358,37 @@ vcOutputWire::vcOutputWire(string id, vcType* t): vcWire(id,t)
 {
 }
  
+bool vcDatapathElement::Is_Part_Of_Full_Rate_Pipeline()
+{
+	bool ret_val = false;
+	vcCPElement* t = NULL;
+
+	// just check a req or an ack and see if it
+	// is part of a pipelined loop.
+	if(this->Get_Number_Of_Reqs() > 0)
+		t = this->Get_Req(0);
+	else if(this->Get_Number_Of_Acks() > 0)
+		t = this->Get_Ack(0);
+	
+	if(t != NULL)
+	{
+		vcCPBlock* p  = t->Get_Pipeline_Parent();
+		if(p != NULL)
+		{
+			vcCPElement* pp = p->Get_Parent();
+			if(pp->Is("vcCPSimpleLoopBlock"))
+			{
+				 ret_val = ((vcCPSimpleLoopBlock*) pp)->Get_Pipeline_Full_Rate_Flag();
+			}
+			else if(pp->Is("vcControlPath"))
+			{
+				ret_val = ((vcControlPath*) pp)->Get_Pipeline_Full_Rate_Flag();
+			}
+		}
+	}
+	return(ret_val);
+}
+
 bool vcDatapathElement::Is_Part_Of_Pipelined_Loop(int& depth, int& buffering)
 {
 	bool ret_val = false;
@@ -416,7 +447,7 @@ int vcDatapathElement::Get_Output_Buffering(vcWire* w, int num_reqs)
 	return(R);
 }
 
-  
+
 int vcDatapathElement::Estimate_Buffering_Bits()
 {
 	int ret_val = 0;
@@ -441,7 +472,7 @@ int vcDatapathElement::Estimate_Buffering_Bits()
 	if(ret_val > 0)
 	{
 		vcSystem::Info("estimated buffering for operator " + this->Get_VHDL_Id() +  " = " +
-			IntToStr(ret_val));
+				IntToStr(ret_val));
 	}
 	return(ret_val);
 }

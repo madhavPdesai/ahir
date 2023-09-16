@@ -9,7 +9,7 @@ $pipe mid_pipe_4 : $uint<32> $depth 32 $p2p
 $module [p2p_check_daemon] $in() $out () $is
 {
 	$branchblock[lOoP] {
-		$dopipeline //$depth 9 $buffering 2 $fullrate
+		$dopipeline $depth 9 $buffering 2 $fullrate
 		$merge $entry $loopback $endmerge
 	 	CMD := in_data
 

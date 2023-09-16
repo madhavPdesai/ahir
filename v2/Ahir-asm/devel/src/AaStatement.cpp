@@ -6547,6 +6547,8 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 
 
 	AaExpression* tgt_expression = this->Get_Target();
+	bool has_guard = (tgt_expression->Get_Guard_Expression() != NULL);
+
 	tgt_expression->Update_Adjacency_Map(adjacency_map,visited_elements);
 
 	if(this->_guard_expression != NULL)
@@ -6573,6 +6575,10 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 	{
 		delay = src_expression->Get_Delay();
 	}
+
+	// increment delay if guard is not null.
+	if(has_guard)
+		delay++;
 
 	// arc from root to tgt_expression.
 	__InsMap(adjacency_map,this,tgt_expression,delay);
@@ -6620,7 +6626,8 @@ void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, in
 	{
 		AaExpression* tgt = _output_args[idx];
 		tgt->Update_Adjacency_Map(adjacency_map, visited_elements);
-		__InsMap(adjacency_map,this,tgt,delay);
+		bool has_guard = (tgt->Get_Guard_Expression() != NULL);
+		__InsMap(adjacency_map,this,tgt,(has_guard ? delay : (delay + 1)));
 	}
 
 
