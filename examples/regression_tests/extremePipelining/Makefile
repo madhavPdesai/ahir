@@ -12,7 +12,7 @@ all: SW HW
 TOAA:c2llvmbc llvmbc2aa  aalink
 TOVC:c2llvmbc llvmbc2aa  aalink aa2vc 
 VC2VHDL: vc2vhdl  vhdlsim
-AA2VHDLSIM: aa2vc  vc2vhdl  vhdlsim
+AA2VHDLSIM: aa2vc  vc2vhdl  vhdltb vhdlsim
 TOVHDL:TOVC vc2vhdl
 
 # llvm2aa opts: pipelined case, extract-do-while.
@@ -36,9 +36,9 @@ SW: $(SRC)/prog.c $(SRC)/prog.h $(SRC)/testbench.c
 	gcc -g -o testbench_sw prog.o fpu.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
-HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
+HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl vhdltb vhdlsim
 
-AA2VHDL: aa2vc vc2vhdl vhdlsim
+AA2VHDL: aa2vc vc2vhdl vhdltb vhdlsim
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: $(SRC)/prog.c $(SRC)/prog.h
@@ -68,10 +68,12 @@ vc2vhdl: prog.vc
 
 # build testbench and ghdl executable
 # note the use of SOCKETLIB in building the testbench.
-vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl $(SRC)/testbench.c vhdlCStubs.h vhdlCStubs.c
+vhdltb: $(SRC)/testbench.c vhdlCStubs.h vhdlCStubs.c
 	gcc -c vhdlCStubs.c  -I$(SRC) -I./ -I$(SOCKETLIB_INCLUDE)
 	gcc -c $(SRC)/testbench.c -I$(PTHREADUTILS_INCLUDE) -I$(SRC) -I./ -I$(SOCKETLIB_INCLUDE)
 	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLibPipeHandler -lpthread
+
+vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl

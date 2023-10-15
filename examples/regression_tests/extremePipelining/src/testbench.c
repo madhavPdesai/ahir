@@ -65,14 +65,31 @@ int main(int argc, char* argv[])
 
 	read_float32_n("out_data_pipe",result,ORDER);
 
+	int err_flag = 0;
 	for(idx = 0; idx < ORDER; idx++)
 	{
-		fprintf(stdout,"Result = %f, expected = %f.\n", result[idx],expected_result[idx]);
+		// result[idx] = read_float32("out_data_pipe");
+
+		uint32_t r = *((uint32_t*) &(result[idx]));
+		uint32_t e = *((uint32_t*) &(expected_result[idx]));
+
+		fprintf(stdout,"Result = %f (0x%x), expected = %f (0x%x)\n", result[idx],r,
+									expected_result[idx],e);
+
+		err_flag = (r != e) || err_flag;
 	}
 	PTHREAD_CANCEL(Sender);
 #ifdef SW
 	close_pipe_handler();
 	PTHREAD_CANCEL(vectorSum);
 #endif
+	if(err_flag)
+	{
+		fprintf(stderr, "There were errors.\n");
+	}
+	else
+	{
+		fprintf(stderr, "There were no errors.\n");
+	}
 	return(0);
 }

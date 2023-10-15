@@ -44,7 +44,7 @@ use ahir.SubPrograms.all;
 -- a special purpose queue which keeps a 1-bit data value.
 --
 entity SingleBitQueueBase is
-  generic(name : string; queue_depth: integer := 1);
+  generic(name : string; queue_depth: integer := 1; bypass_flag: boolean := false);
   port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(0 downto 0);
@@ -86,7 +86,10 @@ begin  -- SimModel
   	signal write_pointer, incr_write_pointer: std_logic_vector(queue_depth-1 downto 0);
   	signal read_pointer, incr_read_pointer: std_logic_vector(queue_depth-1 downto 0);
      	signal queue_size : unsigned ((Ceil_Log2(queue_depth+1))-1 downto 0);
+	signal empty_flag, bypass_active : boolean := false;
+	signal actual_push_req: std_logic;
   begin
+
  
     assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
     assert (queue_size < (3*queue_depth/4)) report "Queue " & name & " is three-quarters-full." severity note;
@@ -98,19 +101,40 @@ begin  -- SimModel
      incr_write_pointer <= write_pointer;
     end generate qD1;
 
+    byp_gen: if bypass_flag generate
+
+	empty_flag <= (queue_size = 0);
+	bypass_active <= (empty_flag and (push_req = '1'));
+
+	actual_push_req <= '0' when (bypass_active and (pop_req = '1')) else push_req;
+    	pop_ack  <= '1' when ((queue_size > 0) or bypass_active) else '0';
+
+    	data_out(0) <= data_in(0) when bypass_active else
+				OrReduce (queue_vector and read_pointer);
+    end generate byp_gen;
+
+    no_byp_gen: if not bypass_flag generate
+
+	bypass_active <= false;
+	actual_push_req <= push_req;
+    	pop_ack  <= '1' when (queue_size > 0) else '0';
+    
+	-- bottom pointer gives the data in FIFO mode..
+    	data_out(0) <= OrReduce (queue_vector and read_pointer);
+
+    end generate no_byp_gen;
+
     qDG1: if (queue_depth > 1) generate
      incr_read_pointer <= rotate_left(read_pointer);
      incr_write_pointer <= rotate_left(write_pointer);
     end generate qDG1;
 
     push_ack <= '1' when (queue_size < queue_depth) else '0';
-    pop_ack  <= '1' when (queue_size > 0) else '0';
 
-    -- bottom pointer gives the data in FIFO mode..
-    data_out(0) <= OrReduce (queue_vector and read_pointer);
   
     -- single process
-    process(clk, reset, read_pointer, write_pointer, incr_read_pointer, incr_write_pointer, queue_size, push_req, pop_req)
+    process(clk, reset, read_pointer, write_pointer, incr_read_pointer, incr_write_pointer, queue_size, 
+			actual_push_req, pop_req)
       variable qsize : unsigned ((Ceil_Log2(queue_depth+1))-1 downto 0);
       variable push,pop : boolean;
       variable next_read_ptr,next_write_ptr : std_logic_vector(queue_depth-1 downto 0);
@@ -122,11 +146,11 @@ begin  -- SimModel
       next_read_ptr := read_pointer;
       next_write_ptr := write_pointer;
       
-      if((qsize < queue_depth) and push_req = '1') then
+      if((qsize < queue_depth) and (actual_push_req = '1')) then
           push := true;
       end if;
   
-      if((qsize > 0) and pop_req = '1') then
+      if((qsize > 0) and (pop_req = '1') and (not bypass_active)) then
           pop := true;
       end if;
   
@@ -140,6 +164,7 @@ begin  -- SimModel
       end if;
   
   
+      -- queue size modified only in non-bypass case
       if(pop and (not push)) then
           qsize := qsize - 1;
       elsif(push and (not pop)) then

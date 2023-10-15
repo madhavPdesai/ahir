@@ -392,6 +392,22 @@ where Ctype is either a float or double or (int/uint)(64/32/16/8)\_t type.
 You can then link your external code with the generated {\bf C} code
 in the usual way.
 
+\subsubsection{Restrictions in using {\bf Aa2C}}
+
+The current implementation of {\bf Aa2C} produces un-threaded code.
+Thus, if you have a parallel block in your {\bf Aa} code, the
+statements in the parallel block are serialized in the resulting
+{\bf C} program.  This can result in the generated {\bf C} program
+potentially hanging (if one of the statements in the parallel
+block runs for-ever).   Another situation is when two
+concurrent blocks in the {\bf Aa} program are writing and reading
+from the same pipe.  In such a case, the serialized code may
+get dead-locked.  You need to be careful that your {\bf Aa} code
+does not have such situations (the simplest option is
+to not use parallel blocks in the {\bf Aa} code!).
+
+This issue will be fixed in a future release of {\bf Aa2C}.
+
 \subsection{{\bf AaPreprocess}: Preprocessor for {\bf Aa} description}
 
 The {\bf AaPreprocess} utility takes an input \Aa file and applies pre-processing
@@ -468,21 +484,6 @@ This adds flexibility to the programmer and
 can reduce the amount of repetitive code.
 
 
-\subsubsection{Restrictions in using {\bf Aa2C}}
-
-The current implementation of {\bf Aa2C} produces un-threaded code.
-Thus, if you have a parallel block in your {\bf Aa} code, the
-statements in the parallel block are serialized in the resulting
-{\bf C} program.  This can result in the generated {\bf C} program
-potentially hanging (if one of the statements in the parallel
-block runs for-ever).   Another situation is when two
-concurrent blocks in the {\bf Aa} program are writing and reading
-from the same pipe.  In such a case, the serialized code may
-get dead-locked.  You need to be careful that your {\bf Aa} code
-does not have such situations (the simplest option is
-to not use parallel blocks in the {\bf Aa} code!).
-
-This issue will be fixed in a future release of {\bf Aa2C}.
 
 \subsection{Miscellaneous: {\bf vcFormat} and {\bf vhdlFormat}}
 

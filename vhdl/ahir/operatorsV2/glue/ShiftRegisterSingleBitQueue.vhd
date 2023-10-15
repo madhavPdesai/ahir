@@ -45,7 +45,7 @@ use ahir.GlobalConstants.all;
 -- often good enough.
 --
 entity ShiftRegisterSingleBitQueue is
-  generic(name : string; queue_depth: integer; number_of_stages: integer);
+  generic(name : string; queue_depth: integer; number_of_stages: integer; bypass_flag: boolean := false);
   port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(0 downto 0);
@@ -75,7 +75,7 @@ begin  -- SimModel
      stageGen: for I in 0 to number_of_stages-1 generate
 	qinst: SingleBitQueueBase 
 		generic map (name => name & "-stageGen-qinst-" & Convert_To_String(I),
-				queue_depth => stage_depth)
+				queue_depth => stage_depth, bypass_flag => bypass_flag)
 		port map ( reset => reset, clk => clk, 
 				data_in => intermediate_data(I to I),
 				push_req => intermediate_lr_req(I),

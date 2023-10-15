@@ -610,7 +610,7 @@ package BaseComponents is
   -- a special purpose queue which keeps a 1-bit data value.
   --
   component SingleBitQueueBase is
-    generic(name : string; queue_depth: integer := 1);
+    generic(name : string; queue_depth: integer := 1; bypass_flag: boolean := false);
     port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(0 downto 0);
@@ -677,7 +677,7 @@ package BaseComponents is
 
 
   component ShiftRegisterSingleBitQueue is
-    generic(name : string; queue_depth: integer; number_of_stages: integer);
+    generic(name : string; queue_depth: integer; number_of_stages: integer; bypass_flag: boolean := false);
     port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(0 downto 0);
@@ -1905,6 +1905,18 @@ package BaseComponents is
 		sr_in_q: out Boolean;
 		push_req: out std_logic;
 		push_ack: in std_logic;
+		clk, reset: in std_logic);
+  end component;
+
+  component SgiUpdateFsm is
+	generic (name: string);
+	port (cr_in: in Boolean;
+		cr_out: out Boolean;
+		ca_in: in Boolean;
+		ca_out: out Boolean;
+		pop_req: out std_logic;
+		pop_ack: in std_logic;
+		pop_data: in std_logic_vector(0 downto 0);
 		clk, reset: in std_logic);
   end component;
 
