@@ -1467,3 +1467,26 @@ void AaModule::Get_Accessed_Memory_Spaces(set<AaMemorySpace*>& ms_set)
 			cm->Get_Accessed_Memory_Spaces(ms_set);
 	}
 }
+
+void AaModule::Update_Pipe_Map(map<AaPipeObject*,vector<AaRoot*> >& pipe_map, AaRoot* r)
+{
+	set<AaPipeObject*>  accessed_pipes;
+	this->Get_Accessed_Pipes(accessed_pipes);
+	for(set<AaPipeObject*>::iterator iter = accessed_pipes.begin(), 
+		fiter = accessed_pipes.end(); iter != fiter; iter++)
+	{
+		pipe_map[*iter].push_back(r);
+	}
+}
+
+void AaModule::Update_Memory_Space_Map(map<AaMemorySpace*,vector<AaRoot*> >& ls_map, AaRoot* r)
+{
+	set<AaMemorySpace*> accessed_memory_spaces;
+	this->Get_Accessed_Memory_Spaces(accessed_memory_spaces);
+	for(set<AaMemorySpace*>::iterator mter = accessed_memory_spaces.begin(), 
+			fmter = accessed_memory_spaces.end(); mter != fmter; mter++)
+	{
+		ls_map[*mter].push_back(r);
+	}
+
+}

@@ -6403,6 +6403,37 @@ bool AaFunctionCallExpression::Can_Be_Combinationalized()
 	return(ret_val);
 }
 
+bool AaFunctionCallExpression::Is_Write_To_Pipe(AaPipeObject* obj)
+{
+	
+	bool ret_val = false;
+	if(this->_called_module)
+	{
+		ret_val = this->_called_module->Writes_To_Pipe(obj);
+	}
+	return(ret_val);
+}
+
+bool AaFunctionCallExpression::Writes_To_Memory_Space(AaMemorySpace* ms)
+{
+	bool ret_val = false;
+	if(this->_called_module && !this->_called_module->Get_Foreign_Flag())
+	{
+		ret_val = this->_called_module->Writes_To_Memory_Space(ms);
+	}
+	return(ret_val);
+}
+
+bool AaFunctionCallExpression:: Get_Is_Volatile() 
+{
+	return(_called_module->Get_Is_Volatile());
+}
+
+bool AaFunctionCallExpression::Is_Opaque_Function_Call_Expression()
+{
+	return(_called_module->Get_Opaque_Flag());
+}
+
 /////////////////////////////////////////////////  Utilities //////////////////////////////////////////////
 AaExpression* Make_Reduce_Expression_Base(AaScope* scope, int line_no, 
 		int sindex, int findex, 
@@ -6486,3 +6517,5 @@ AaExpression* Make_Exclusive_Mux_Expression(AaScope* scope, int line_no, int sin
 	AaExpression* ret_expr = Make_Reduce_Expression(scope, line_no, __OR, and_expr_vector);
 	return(ret_expr);
 }
+
+

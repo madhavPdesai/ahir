@@ -585,10 +585,12 @@ void Write_VC_Load_Store_Dependency(bool pipeline_flag,
 		<<  " -> " 
 		<< tgt->Get_VC_Name()  << (tgt->Writes_To_Memory_Space(ms) ? "(store)" : "(load)" ) << endl;
 
-	if(tgt->Is_Expression())
+	if(tgt->Is_Expression() &&  !tgt->Is("AaFunctionCallExpression"))
+	{
 		assert(ms_index == ((AaExpression*) tgt)->Get_VC_Memory_Space_Index());
+	}
 
-	if(ms->Get_Is_Ordered() && src->Is_Expression())
+	if(ms->Get_Is_Ordered() && src->Is_Expression()  && !src->Is("AaFunctionCallExpression"))
 	{
   		ofile << __SST(tgt) << " <-& (" << delay_trans << ")" << endl;
   		ofile << delay_trans << " <-& (" << __SCT(src) << ")" << endl;
@@ -634,13 +636,15 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(AaMemorySpace* ms,
 		titer++)
 	{
 		AaRoot* expr = *titer;
-		if(ms->Get_Is_Ordered() && expr->Is_Expression())
+		if(ms->Get_Is_Ordered() && expr->Is_Expression() && !expr->Is("AaFunctionCallExpression"))
 		{
 			ofile << "// ordered memory-subsystem." << endl;
 			__J(reenable_trans, __SCT(expr))
 		}
 		else
+		{
 			__J(reenable_trans, __UCT(expr))
+		}
 			
 	}
 

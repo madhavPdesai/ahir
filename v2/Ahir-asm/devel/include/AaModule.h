@@ -392,6 +392,10 @@ class AaModule: public AaSeriesBlockStatement
    void Check_That_All_Out_Args_Are_Driven();
   
    virtual void Initialize_Visited_Elements(set<AaRoot*>& visited_elements);
+
+
+   void Update_Pipe_Map(map<AaPipeObject*,vector<AaRoot*> >& pipe_map, AaRoot* r);
+   void Update_Memory_Space_Map(map<AaMemorySpace*,vector<AaRoot*> >& ls_map, AaRoot* r);
 };
 
 #endif
