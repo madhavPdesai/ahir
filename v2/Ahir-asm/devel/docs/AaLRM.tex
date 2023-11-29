@@ -960,6 +960,7 @@ Expressions in \Aa fall into the following classes
 \item Binary expressions.
 \item Ternary expressions.
 \item Zero, One expressions.
+\item Funcion call expressions.
 \end{itemize}
 
 \subsection{Constant literal references} 
@@ -1354,6 +1355,28 @@ expands to
 ($bitcast ($uint<16>) 1)
 \end{verbatim}
 
+\subsection{Function call expressions}
+
+When a module is declared with only a single
+output argument, then it can be ``called'' in
+another way, using a function call expression.
+
+For example
+\begin{verbatim}
+$module [add8] $in (X Y: $uint<8>) 
+    $out(Z: $uint<8>)
+$is
+{
+  Y := (X + 1)
+}
+\end{verbatim}
+
+can be invoked in an expression as
+\begin{verbatim}
+P := ($call add8 (U V))
+\end{verbatim}
+for convenience.
+
 \section{Synthetic instructions}
 
 For convenience, there are some synthetic operations which
@@ -1650,7 +1673,7 @@ A volatile module cannot make any memory accesses or
 reads/writes to pipes.  Inside a volatile module, 
 a function call must be to volatile modules only.
 
-\subsection{Opaque Modules}
+\subsection{Opaque Modules} \label{sec:Opaque}
 
 The {\bf Aa} compiler normally looks inside module
 descriptions to identify load/store or pipe access

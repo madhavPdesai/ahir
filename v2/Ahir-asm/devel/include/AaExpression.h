@@ -426,6 +426,8 @@ class AaExpression: public AaRoot
 	virtual bool Is_Pipe_Write() {return(false);}
 
 	virtual bool Can_Be_Combinationalized() {return(false);}
+	virtual bool Is_Opaque_Function_Call_Expression() {return(false);}
+	virtual bool Get_Is_Volatile() {return(false);}
 
 };
 
@@ -1802,6 +1804,9 @@ class AaFunctionCallExpression: public AaExpression
 
 	virtual void Print(ostream& ofile); 
 
+	AaModule* Get_Called_Module() {return (_called_module);}
+	virtual bool Is_Opaque_Function_Call_Expression();
+
 	AaExpression*      Get_Argument(int id) 
 	{
 		if((id >= 0) && (id < _arguments.size()))
@@ -1899,6 +1904,10 @@ class AaFunctionCallExpression: public AaExpression
 	virtual bool Is_Trivial(); // return false if called module is volatile.
 	virtual bool Is_Volatile_Function_Call() {return(this->Is_Trivial());}
 	virtual bool Can_Be_Combinationalized();
+
+  	virtual bool Is_Write_To_Pipe(AaPipeObject* obj);
+  	virtual bool Writes_To_Memory_Space(AaMemorySpace* ms);
+	virtual bool Get_Is_Volatile();
 };
 
 

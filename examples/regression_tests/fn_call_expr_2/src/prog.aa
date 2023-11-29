@@ -1,0 +1,49 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2 $p2p
+
+$storage P: $array[256] $of $uint<32>
+
+$module [getData] $in () $out (X: $uint<32>) $is
+{
+	X := in_data
+
+	$attribute input_buffering  0
+	$attribute output_buffering 0
+}
+
+$module [setMem] $in (A X: $uint<32>) $out () $is
+{
+	P[A] := X
+
+	$attribute input_buffering  0
+	$attribute output_buffering 0
+}
+
+$module [getMem] $in (A: $uint<32>) $out (X: $uint<32>) $is
+{
+	X := P[A] 
+
+	$attribute input_buffering  0
+	$attribute output_buffering 0
+}
+
+
+
+$module [check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 9 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+
+		A := ($call getData ())
+		$call setMem (A A) ()
+
+		$call getData () (B)
+		$call setMem (B B) ()
+
+		out_data := ($call getMem (A))
+		out_data := ($call getMem (B))
+
+		$while 1
+	}
+}

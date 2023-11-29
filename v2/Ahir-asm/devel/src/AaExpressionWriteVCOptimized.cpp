@@ -2539,6 +2539,11 @@ void AaFunctionCallExpression::Write_VC_Control_Path_Optimized(bool pipeline_fla
 		}
 
 		this->Write_VC_Phi_Start_Dependency(ofile);
+
+		// Update the pipe map
+		AaModule* cm = this->Get_Called_Module();
+		cm->Update_Pipe_Map(pipe_map, this);
+		cm->Update_Memory_Space_Map(ls_map, this);
 	}
 	visited_elements.insert(this);
 }
