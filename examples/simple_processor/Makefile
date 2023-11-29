@@ -1,10 +1,10 @@
 # build software version of testbench (to check the "desired behaviour")
-IOLIB_INCLUDE=../../iolib/include
-IOLIB_LIB=../../iolib/lib
-SOCKETLIB_INCLUDE=../../CtestBench/include
-SOCKETLIB_LIB=../../CtestBench/lib
-VHDL_LIB=../../vhdl
-VHDL_VHPI_LIB=../../CtestBench/vhdl
+IOLIB_INCLUDE=$(AHIR_RELEASE)/include
+IOLIB_LIB=$(AHIR_RELEASE)/lib
+SOCKETLIB_INCLUDE=$(AHIR_RELEASE)/include
+SOCKETLIB_LIB=$(AHIR_RELEASE)/lib
+VHDL_LIB=$(AHIR_RELEASE)/vhdl
+VHDL_VHPI_LIB=$(AHIR_RELEASE)/vhdl
 all: SW HW 
  
 TOVC: c2llvmbc llvmbc2aa aaopt aa2vc 
@@ -56,10 +56,8 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl
-	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
 	ghdl -i --work=ahir_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
-	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
-	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
+	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
 	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl

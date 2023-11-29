@@ -721,7 +721,7 @@ void rtlBinaryExpression::Print(ostream& ofile)
 rtlTernaryExpression::rtlTernaryExpression(rtlExpression* test, rtlExpression* if_true, rtlExpression* if_false)
 	: rtlExpression(string("(") + test->Get_Id() + " ? " + if_true->Get_Id() + " : " + if_false->Get_Id())
 {
-	assert(_if_true->Get_Type() == _if_false->Get_Type());
+	assert((if_true != NULL) && (if_false != NULL) && (if_true->Get_Type() == if_false->Get_Type()));
 	_test = test;
 	_if_true = if_true;
 	_if_false = if_false;

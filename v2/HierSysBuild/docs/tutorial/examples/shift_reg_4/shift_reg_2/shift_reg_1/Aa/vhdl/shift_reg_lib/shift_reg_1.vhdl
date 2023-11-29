@@ -210,12 +210,12 @@ begin --
     -- CP-element group 2: successors 
     -- CP-element group 2: 	3 
     -- CP-element group 2:  members (6) 
+      -- CP-element group 2: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14/RPIPE_in_data_10_Sample/$exit
       -- CP-element group 2: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14/RPIPE_in_data_10_Sample/ra
       -- CP-element group 2: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14/RPIPE_in_data_10_Update/$entry
       -- CP-element group 2: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14/RPIPE_in_data_10_Update/cr
       -- CP-element group 2: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14/RPIPE_in_data_10_sample_completed_
       -- CP-element group 2: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14/RPIPE_in_data_10_update_start_
-      -- CP-element group 2: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14/RPIPE_in_data_10_Sample/$exit
       -- 
     ra_27_symbol_link_from_dp: control_delay_element -- 
       generic map(name => " 2_delay",delay_value => 0)
@@ -286,12 +286,12 @@ begin --
     -- CP-element group 6: successors 
     -- CP-element group 6: 	2 
     -- CP-element group 6:  members (10) 
+      -- CP-element group 6: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14/RPIPE_in_data_10_Sample/$entry
       -- CP-element group 6: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14/RPIPE_in_data_10_Sample/rr
       -- CP-element group 6: 	 branch_block_stmt_7/merge_stmt_8__exit__
       -- CP-element group 6: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14__entry__
       -- CP-element group 6: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14/$entry
       -- CP-element group 6: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14/RPIPE_in_data_10_sample_start_
-      -- CP-element group 6: 	 branch_block_stmt_7/assign_stmt_11_to_assign_stmt_14/RPIPE_in_data_10_Sample/$entry
       -- CP-element group 6: 	 branch_block_stmt_7/merge_stmt_8_PhiReqMerge
       -- CP-element group 6: 	 branch_block_stmt_7/merge_stmt_8_PhiAck/$entry
       -- CP-element group 6: 	 branch_block_stmt_7/merge_stmt_8_PhiAck/$exit
@@ -472,6 +472,7 @@ architecture shift_reg_1_arch  of shift_reg_1 is -- system-architecture
   signal out_data_pipe_write_data: std_logic_vector(31 downto 0);
   signal out_data_pipe_write_req: std_logic_vector(0 downto 0);
   signal out_data_pipe_write_ack: std_logic_vector(0 downto 0);
+  -- gated clock signal declarations.
   -- 
 begin -- 
   -- module shift_reg_1_daemon
@@ -538,5 +539,6 @@ begin --
       write_data => out_data_pipe_write_data,
       clk => clk,reset => reset -- 
     ); -- 
+  -- gated clock generators 
   -- 
 end shift_reg_1_arch;

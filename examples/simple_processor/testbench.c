@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
 #ifdef SW
-#include <iolib.h>
+#include <pipeHandler.h>
 #else
 #include "vhdlCStubs.h"
 #endif
