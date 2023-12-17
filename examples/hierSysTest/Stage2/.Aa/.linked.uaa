@@ -35,9 +35,10 @@ $is
 	{
 		$merge $entry loopback 
 		$endmerge
-		x := TMP
-		B := x
+		x := TMP $buffering 1// bits of buffering = 32. 
+		B := x $buffering 1// bits of buffering = 32. 
 		$place[loopback]
 	}
 }
 // Memory space 0: default_mem_pool 
+// use of gated clocks in modules 

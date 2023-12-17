@@ -105,6 +105,11 @@ hierPipe::hierPipe(string pname, int w, int d):hierRoot(pname)
 	_is_output = false;
 	_is_internal = false;
 	_bypass = false;
+	_is_clock = false;
+	_is_reset = false;
+
+	_default_clock = "clk";
+	_default_reset = "reset";
 }
 
 
@@ -129,6 +134,18 @@ void hierPipe::Print_Vhdl_Instance(hierSystem* sys, ostream& ofile)
 		ofile << " -- this is marked as a non-blocking pipe... InputPorts should take care of it! " << endl;
 	}
 
+	string def_clk   = "clk";
+	if(_default_clock == "$null")
+		def_clk = "hsys_tie_low";
+	else 
+		def_clk = ((this->_default_clock == "clk") ? "clk" : (this->_default_clock + "(0)"));
+
+	string def_reset = "reset";
+	if(_default_reset == "$null")
+		def_reset = "hsys_tie_low";
+	else
+		def_reset = ((this->_default_reset == "reset") ? "reset" : (this->_default_reset + "(0)"));
+
 	string inst_name = pipe_name + "_inst";
 	ofile << inst_name << ": ";
 	ofile << " PipeBase -- { " << endl;
@@ -149,8 +166,8 @@ void hierPipe::Print_Vhdl_Instance(hierSystem* sys, ostream& ofile)
 		<< "write_req => " << sys->Get_Pipe_Vhdl_Write_Req_Name(pipe_name) << "," << endl 
 		<< "write_ack => " << sys->Get_Pipe_Vhdl_Write_Ack_Name(pipe_name) << "," << endl 
 		<< "write_data => "<< sys->Get_Pipe_Vhdl_Write_Data_Name(pipe_name) << "," << endl 
-		<< "clk => clk,"
-		<< "reset => reset -- }\n ); -- }" << endl;
+		<< "clk => " << def_clk << ", " 
+		<< "reset => " << def_reset << " -- }\n ); -- }" << endl;
 }
 	
 void hierRoot::Print(string& ostring)
@@ -206,6 +223,36 @@ void hierSystem::List_Internal_Pipes(vector<hierPipe*>& pvec)
 {
 	listPipeMap(_internal_pipes,pvec);
 }
+	
+void  hierSystem::Set_Pipe_Default_Clock (string pipe_name, string clk_name)
+{
+	hierPipe* p = this->Find_Pipe(pipe_name);
+	if ((p != NULL) && (p->Get_Is_Internal()))
+	{
+		bool actual_is_clock = this->Is_Marked_As_Clock(clk_name);
+		if(actual_is_clock)
+		{
+			p->_default_clock = clk_name;
+			hierRoot::Report_Info ( "pipe " + pipe_name + " will be implemented using clock " 
+								+ clk_name);
+		}
+	}
+}
+
+void  hierSystem::Set_Pipe_Default_Reset (string pipe_name, string reset_name)
+{
+	hierPipe* p = this->Find_Pipe(pipe_name);
+	if ((p != NULL) && (p->Get_Is_Internal()))
+	{
+		bool actual_is_reset = this->Is_Marked_As_Reset(reset_name);
+		if(actual_is_reset)
+		{
+			p->_default_reset = reset_name;
+			hierRoot::Report_Info ( "pipe " + pipe_name + " will be implemented using reset " 
+								+ reset_name);
+		}
+	}
+}
 
 hierSystemInstance::hierSystemInstance(hierSystem* parent, hierSystem* base_sys, string id):hierRoot(id) 
 {	
@@ -216,6 +263,9 @@ hierSystemInstance::hierSystemInstance(hierSystem* parent, hierSystem* base_sys,
 
 	// global instance id
 	_global_instance_id = getGlobalInstanceId ();
+
+	_default_clock = "clk";
+	_default_reset = "reset";
 }
 
 bool hierSystemInstance::Add_Port_Mapping(string formal, string actual,
@@ -273,6 +323,24 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 		return(true);
 	}
 
+	bool formal_is_clock = _base_system->Is_Marked_As_Clock(formal);
+	bool actual_is_clock = (actual == "$null") || parent->Is_Marked_As_Clock(actual);
+	if(formal_is_input && (formal_is_clock != actual_is_clock))
+	{
+		hierRoot::Report_Error("clock mismatch: instance " + this->Get_Id() + " in " 
+				+ parent->Get_Id() + " for " + formal  + " => " + actual);
+		return(true);
+	}
+
+	bool formal_is_reset = _base_system->Is_Marked_As_Reset(formal);
+	bool actual_is_reset = (actual == "$null") || parent->Is_Marked_As_Reset(actual);
+	if(formal_is_input && (formal_is_reset != actual_is_reset))
+	{
+		hierRoot::Report_Error("reset mismatch: instance " + this->Get_Id() + " in " 
+				+ parent->Get_Id() + " for " + formal  + " => " + actual);
+		return(true);
+	}
+
 	if(formal_is_input)
 		parent->Set_Driving_Pipe(actual);
 	if(formal_is_output)
@@ -298,6 +366,50 @@ bool hierSystemInstance::Add_Port_Mapping(string formal, string actual)
 	return(err);
 }
 	
+	
+void hierSystemInstance::Set_Default_Clock(string clk_id)
+{
+	hierSystem* parent = _parent;
+
+	bool actual_is_clock = parent->Is_Marked_As_Clock(clk_id);
+	bool actual_is_input = (parent->Get_Input_Pipe_Width(clk_id) > 0);
+	bool actual_is_null  = (clk_id == "$null");
+
+	if(actual_is_null || (actual_is_clock && actual_is_input))
+	{
+		this->_default_clock = clk_id;
+		if(!actual_is_null)
+			parent->Set_Driving_Pipe(clk_id);
+	}
+	else
+	{
+		hierRoot::Report_Error("default clock mismatch: instance " + this->Get_Id() + " in "
+				+ parent->Get_Id() + " default clock mapped to  " + clk_id);
+	}
+}
+
+
+void hierSystemInstance::Set_Default_Reset(string reset_id)
+{
+	hierSystem* parent = _parent;
+
+	bool actual_is_reset = parent->Is_Marked_As_Reset(reset_id);
+	bool actual_is_input = (parent->Get_Input_Pipe_Width(reset_id) > 0);
+	bool actual_is_null  = (reset_id == "$null");
+
+	if(actual_is_null || (actual_is_reset && actual_is_input))
+	{
+		this->_default_reset = reset_id;
+		if(!actual_is_null)
+			parent->Set_Driving_Pipe(reset_id);
+	}
+	else
+	{
+		hierRoot::Report_Error("default reset mismatch: instance " + this->Get_Id() + " in "
+				+ parent->Get_Id() + " default reset mapped to  " + reset_id);
+	}
+}
+
 // unmapped ports will be mapped to default
 // pipes in parent if they exist.
 bool hierSystemInstance::Map_Unmapped_Ports_To_Defaults( map<string, hierPipe* >& pmap)
@@ -333,6 +445,10 @@ void hierSystemInstance::Print(ostream& ofile)
 		<< this->_base_system->Get_Id() << " " << endl;
 	for(map<string,string>::iterator iter = _port_map.begin(), fiter = _port_map.end(); iter != fiter; iter++)
 		ofile << "   " << (*iter).first << " => " << (*iter).second << " " << endl;	
+	if(this->_default_clock != "clk")
+		ofile << "   $clk => " << this->_default_clock << endl;
+	if(this->_default_reset != "reset")
+		ofile << "   $reset => " << this->_default_reset << endl;
 	ofile << endl;
 }
 
@@ -401,7 +517,34 @@ void hierSystemInstance::Print_Vhdl(ostream& ofile)
 			}
 		}
 	}
-	ofile << "clk => clk, reset => reset " << endl;
+
+	// clock can be tied to default or can be forced to signal.
+	string def_clk = "clk";
+
+	if(_default_clock == "$null")
+	{
+		def_clk = "hsys_tie_low";
+	}
+	else  if(_default_clock != "clk")
+	{
+		def_clk = _default_clock + "(0)";
+	}
+	
+	// reset can be tied to default or can be forced to signal.
+	string def_rst = "reset";
+
+	if (_default_reset == "$null")
+	{
+		def_rst = "hsys_tie_low";
+	}
+	else if(_default_reset != "reset") 	
+	{
+		def_rst = _default_reset + "(0)";
+	}
+
+	ofile << " clk => " << def_clk << ", ";
+	ofile << " reset => " << def_rst <<  endl;
+
 	ofile << "); -- }" << endl;
 }
 
@@ -701,6 +844,7 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs
 	ofile << "--} " << endl << "end entity " << this->Get_Id() << ";" << endl;
 
 	ofile << "architecture struct of " << this->Get_Id() << " is -- {" << endl;
+	ofile << "  signal hsys_tie_low, hsys_tie_high: std_logic;" << endl;
 	for(map<string, hierPipe* >::iterator iter = _internal_pipes.begin(), fiter = _internal_pipes.end();
 		iter != fiter; iter++)
 	{
@@ -773,6 +917,10 @@ void hierSystem::Print_Vhdl_Entity_Architecture(ostream& ofile, int map_all_libs
 
 	ofile << "-- } " << endl;
 	ofile << "begin -- { " << endl;
+
+	ofile << "hsys_tie_low  <= '0';" << endl;
+	ofile << "hsys_tie_high <= '1';" << endl;
+
 	for(map<string,hierSystemInstance*>::iterator iter = _child_map.begin(), fiter = _child_map.end();	
 			iter != fiter; iter++)
 	{

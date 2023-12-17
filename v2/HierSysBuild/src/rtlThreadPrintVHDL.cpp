@@ -308,7 +308,20 @@ void rtlString::Print_Vhdl_Instance(ostream& ofile)
 			}
 		}
 	}
-	ofile << "clk => clk, reset => reset";
+
+	string clk_str = "clk";
+	if(this->_default_clock == "$null")
+		clk_str = "hsys_tie_low";
+	else if(this->_default_clock != "clk")
+		clk_str = this->_default_clock + "(0)";
+
+	string reset_str = "reset";
+	if(this->_default_reset == "$null")
+		reset_str = "hsys_tie_low";
+	else if(this->_default_reset != "clk")
+		reset_str = this->_default_reset + "(0)";
+
+	ofile << "clk => " << clk_str << ", reset => " <<  reset_str;
 	ofile << "--} " << endl;
 	ofile << "); -- }" << endl;
 }

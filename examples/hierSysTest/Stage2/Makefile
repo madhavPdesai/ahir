@@ -5,6 +5,8 @@ AA2C_C_FILE=$(AA2CPREFIX)aa_c_model.c
 all: cmodel vhdlmodel
 
 cmodel: pipes.aa stage2.aa
+	rm -rf aa2c
+	mkdir aa2c
 	Aa2C -I dummy_mempool  -o aa2c -P $(AA2CPREFIX) $(TOPMODULES) pipes.aa stage2.aa
 	indent aa2c/$(AA2C_C_FILE)
           

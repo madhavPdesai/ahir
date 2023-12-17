@@ -249,6 +249,84 @@ void hierInstanceGraph::Build_Connectivity()
 		hierInstanceGraph* child_node = _child_nodes[J];
 		child_node->Build_Connectivity();
 	}
+
+	this->Set_Default_Flat_Clock();
+	this->Set_Default_Flat_Reset();
+}
+
+string hierInstanceGraph::Find_Default_Flat_Clock()
+{
+	if(this->_instance == NULL)
+		return ("clk");
+
+	string ret_val = this->_instance->_default_clock;
+
+	if(this->_instance->_default_clock == "clk")
+	{
+		ret_val = this->_parent->Find_Default_Flat_Clock();
+	}
+	else
+	{
+		vector<hierPipe*> in_pipes;
+		this->_system->List_In_Pipes(in_pipes);
+		for(int I = 0, fI = in_pipes.size(); I < fI; I++)
+		{
+			hierPipe* ip = in_pipes[I];
+			if(ip->Get_Id() == this->_instance->_default_clock)
+			{
+				hierPipeInstance* ipp = _pipe_instance_map[ip];
+				hierPipeInstance* ripp = ipp->_root_actual_pipe;
+				
+				assert(ripp != NULL);
+				ret_val = ripp->Hierarchical_Name();
+				break;
+			}
+		}
+	}
+	return(ret_val);
+}
+
+string hierInstanceGraph::Find_Default_Flat_Reset()
+{
+	if(this->_instance == NULL)
+		return ("reset");
+
+	string ret_val = this->_instance->_default_reset;
+	if(this->_instance->_default_reset == "reset")
+	{
+		ret_val = this->_parent->Find_Default_Flat_Reset();
+	}
+	else
+	{
+		vector<hierPipe*> in_pipes;
+		this->_system->List_In_Pipes(in_pipes);
+		for(int I = 0, fI = in_pipes.size(); I < fI; I++)
+		{
+			hierPipe* ip = in_pipes[I];
+			if(ip->Get_Id() == this->_instance->_default_reset)
+			{
+				hierPipeInstance* ipp = _pipe_instance_map[ip];
+				hierPipeInstance* ripp = ipp->_root_actual_pipe;
+				
+				assert(ripp != NULL);
+				ret_val = ripp->Hierarchical_Name();
+				break;
+			}
+		}
+	}
+	return(ret_val);
+}
+
+void hierInstanceGraph::Set_Default_Flat_Clock()
+{
+	string def_clk = this->Find_Default_Flat_Clock();
+	this->_default_flat_clock = def_clk;
+}
+
+void hierInstanceGraph::Set_Default_Flat_Reset()
+{
+	string def_reset = this->Find_Default_Flat_Reset();
+	this->_default_flat_reset = def_reset;
 }
 
 
@@ -306,6 +384,8 @@ void hierInstanceGraph::Print(ostream& ofile)
 	if(this->_child_nodes.size() == 0)
 	{
 		ofile << "=LEAF";
+		ofile << " $clk => " << this->_default_flat_clock << " "; 
+		ofile << " $reset => " << this->_default_flat_reset << " "; 
 	}
 	if(this->_instance == NULL)
 		ofile << "=TOP";

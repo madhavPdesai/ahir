@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 
 #ifdef SW
 	init_pipe_handler();
-	_start_daemons(stderr);
+	_start_daemons(stderr,0);
 #endif
 	PTHREAD_DECL_AND_CREATE(Sender);
 

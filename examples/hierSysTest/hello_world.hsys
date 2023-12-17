@@ -1,9 +1,17 @@
 $system Top  $library TopLib
 	$in 
 		$pipe A
+		$signal $clk EXTCLK 1 $depth 1
+		$signal $reset EXTRESET 1 $depth 1
         $out 
 		$pipe B
 {
+	$pipe TMP $clk => EXTCLK $reset =>  EXTRESET 
         $instance i0  S1:Stage1 
+		$clk => EXTCLK
+		$reset => EXTRESET
+
         $instance i1  S2:Stage2 
+		$clk => EXTCLK
+		$reset => EXTRESET
 }

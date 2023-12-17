@@ -143,6 +143,10 @@ class rtlString: public hierRoot
 	map<string,string>  _formal_to_actual_map;
 
 	public:
+
+	string _default_clock;
+	string _default_reset;
+
 	
 	rtlString(string inst_name, rtlThread* base);
 	void Add_Port_Map_Entry(string formal_obj, string actual);

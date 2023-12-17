@@ -16,14 +16,14 @@ $in ( address : $uint<32>  )
 $out ( data : $uint<8>  )
 $is
 {
-  data := default_mem_pool[((address * 1 ) + 0 )]
+  data := default_mem_pool[((address * 1 ) + 0 )] $buffering 1// bits of buffering = 8. 
 }
 $module [mem_store__]
 $in ( address : $uint<32>   data : $uint<8>  )
 $out ()
 $is
 {
-  default_mem_pool[((address * 1 ) + 0 )] := data
+  default_mem_pool[((address * 1 ) + 0 )] := data $buffering 1// bits of buffering = 8. 
 }
 $module [stage_2_daemon]
 $in ()
@@ -34,10 +34,11 @@ $is
   {
     $merge $entry loopback 
     $endmerge
-    x := TMP
-    B := x
+    x := TMP $buffering 1// bits of buffering = 32. 
+    B := x $buffering 1// bits of buffering = 32. 
     $place[loopback]
   }
 }
 // Memory space 0: mempool 
 // Memory space 1: default_mem_pool 
+// use of gated clocks in modules 

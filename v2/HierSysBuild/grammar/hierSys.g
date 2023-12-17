@@ -102,10 +102,12 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,hierPipe*>&  global_pipe
 	( 
 	  hier_system_Pipe_Base [sys, global_pipe_map, true,false]
         )*
+
 	OUT
 	( 
 	  hier_system_Pipe_Base [sys, global_pipe_map, false,true]
 	)*
+
 	LBRACE
 	( 
 	  hier_system_Pipe_Base [sys, global_pipe_map, false,false]
@@ -168,12 +170,26 @@ hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map,
 	bool bypass_flag = false;
 	bool depth_specified = false;
 	bool width_specified = false;
+	bool is_clock = false;
+	bool is_reset = false;
+	string clk_str = "clk";
+	string reset_str = "reset";
 }:
 		(NOBLOCK {noblock_flag = true;})? 
 		((P2P {p2p_flag = true;})| (SHIFTREG {shiftreg_flag = true;})) ?
 		(BYPASS {bypass_flag = true;})?
 
-		(PIPE | (SIGNAL {signal_flag = true;}))
+		(PIPE | 
+			( 
+				SIGNAL {signal_flag = true;}
+
+				// Clock/Reset....
+				(
+					(CLOCK {is_clock = true;})  |
+					(RESET {is_reset = true;})  
+				)?
+			       ))
+
 		sidi: SIMPLE_IDENTIFIER  (uidi: UINTEGER {width_specified = true; pipe_width = atoi(uidi->getText().c_str());})?
 				(DEPTH didi: UINTEGER {depth_specified = true; depth = atoi(didi->getText().c_str());})?
 			{
@@ -203,8 +219,46 @@ hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map,
 								shiftreg_flag, bypass_flag);
 
 				if(signal_flag)
+				{
+					sys->Report_Info ("Added signal " + sidi->getText() + " to system " + 
+								sys->Get_Id());
 					sys->Add_Signal(sidi->getText());
+
+					if(is_clock)
+					{
+						sys->Mark_As_Clock(sidi->getText());
+						sys->Report_Info ("signal " + sidi->getText() + " in system " + 
+								sys->Get_Id() + " marked as clock");
+					}
+
+					if(is_reset)
+					{
+						sys->Mark_As_Reset(sidi->getText());
+						sys->Report_Info ("signal " + sidi->getText() + " in system " + 
+								sys->Get_Id() + " marked as reset");
+					}
+						
+				}
 			} 
+		(CLOCK IMPLIES  ((NuLL 
+				{
+					clk_str = "$null"; 
+					sys->Report_Info("default clock set to null in system " + sys->Get_Id() );
+				}) |
+				(cidi: SIMPLE_IDENTIFIER 
+				{
+					clk_str = cidi->getText();
+					sys->Report_Info("default clock set to " + clk_str + " in system " 
+								+ sys->Get_Id());
+				}))
+			{
+			 	sys->Set_Pipe_Default_Clock(sidi->getText(), clk_str);
+			})?
+		(RESET IMPLIES ((NuLL {reset_str = "$null";}) |
+					(ridi: SIMPLE_IDENTIFIER  {reset_str = ridi->getText();}))
+			{
+			 	sys->Set_Pipe_Default_Reset(sidi->getText(), reset_str);
+			})?
 ;
 
 
@@ -213,6 +267,8 @@ hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<strin
 {
 	sys_inst = NULL;
 	string lib_id = "work";
+	string clk_str = "clk";
+	string reset_str = "reset";
 }
 :
 	INSTANCE inst_name: SIMPLE_IDENTIFIER  
@@ -251,6 +307,21 @@ hier_System_Instance[hierSystem* sys, vector<hierSystem*>& sys_vector, map<strin
 				
 				}
 			)*
+			( 
+			  (CLOCK IMPLIES ((NuLL  {clk_str = "$null";})| 
+						(clk_id: SIMPLE_IDENTIFIER {clk_str = clk_id->getText();}))
+				{
+					if(sys_inst)
+						sys_inst->Set_Default_Clock(clk_str);
+				})?
+			  (RESET IMPLIES ((NuLL {reset_str = "$null";}) |
+						(reset_id: SIMPLE_IDENTIFIER {reset_str = reset_id->getText();}))
+				{
+					if(sys_inst)
+						sys_inst->Set_Default_Reset(reset_str);
+				})?
+			)
+			
 			{
 				//
 				// 	add internal pipe to parent if needed..
@@ -355,6 +426,9 @@ rtl_String[hierSystem* sys] returns [rtlString* ti]
 	string actual;
 	string formal_group;
 
+	string clk_str = "clk";
+	string reset_str = "reset";
+
 }:
         STRING 
 		inst_name_id: SIMPLE_IDENTIFIER
@@ -383,6 +457,21 @@ rtl_String[hierSystem* sys] returns [rtlString* ti]
 					ti->Add_Port_Map_Entry(formal_group, actual);
 			}
 		)*
+			( 
+			  (CLOCK IMPLIES ((NuLL  {clk_str = "$null";})| 
+						(clk_id: SIMPLE_IDENTIFIER {clk_str = clk_id->getText();}))
+				{
+					if(ti)
+						ti->_default_clock = clk_str;
+				})?
+			  (RESET IMPLIES ((NuLL {reset_str = "$null";}) |
+						(reset_id: SIMPLE_IDENTIFIER {reset_str = reset_id->getText();}))
+				{
+					if(ti)
+						ti->_default_reset = reset_str;
+				})?
+			)
+		
     ;
 
 
@@ -1112,6 +1201,8 @@ REQ: "$req";
 ACK: "$ack";
 SLICE: "$slice";
 PARAMETER     : "$parameter";
+CLOCK: "$clk";
+RESET: "$reset";
 
 POWER            : "**" ; // powering operation.
 

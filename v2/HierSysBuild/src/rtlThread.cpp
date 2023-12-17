@@ -122,6 +122,8 @@ void rtlThread::Print(ostream& ofile)
 rtlString::rtlString(string inst_name, rtlThread* base):hierRoot(inst_name)
 {
 	_base_thread = base;
+	_default_clock = "clk";
+	_default_reset = "reset";
 }
 
 
@@ -172,6 +174,12 @@ void rtlString::Print(ostream& ofile)
 		ofile << " => ";
 		ofile <<  (*piter).second << endl;
 	}
+
+	if(this->_default_clock != "clk")
+		ofile << "$clk => " << this->_default_clock << endl;
+	if(this->_default_reset != "reset")
+		ofile << "$reset => " << this->_default_reset << endl;
+
 }
 
 

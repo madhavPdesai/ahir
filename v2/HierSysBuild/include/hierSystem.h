@@ -137,6 +137,11 @@ class hierPipe: public hierRoot
 	bool   _is_output;
 	bool   _is_internal;
         bool   _bypass;
+	bool   _is_clock;
+	bool   _is_reset;
+
+	string _default_clock;
+	string _default_reset;
 
 	hierPipe(string name, int width, int depth);
 	void Set_Is_Signal(bool v) {_is_signal = v;}
@@ -147,6 +152,8 @@ class hierPipe: public hierRoot
 	void Set_Is_Output(bool v) {_is_output = v;}
 	void Set_Is_Internal(bool v) {_is_internal = v;}
 	void Set_Bypass(bool v) {_bypass = v;}
+	void Set_Is_Clock(bool v) {_is_clock = v;}
+	void Set_Is_Reset(bool v) {_is_reset = v;}
 
 	bool Get_Is_Signal() {return(_is_signal);}
 	bool Get_Is_Noblock() {return(_is_noblock);}
@@ -156,6 +163,8 @@ class hierPipe: public hierRoot
 	bool Get_Is_Output() {return(_is_output);}
 	bool Get_Is_Internal() {return(_is_internal);}
 	bool Get_Bypass() {return(_bypass);}
+	bool Get_Is_Clock() {return(_is_clock);}
+	bool Get_Is_Reset() {return(_is_reset);}
 
 	string Get_Name() {return(_name);}
 	int    Get_Depth() {return(_depth);}
@@ -171,7 +180,11 @@ class hierPipe: public hierRoot
 		if(_bypass)
 			ofile << "$bypass ";
 		if(_is_signal)
+		{
 			ofile << "$signal ";
+			if(_is_clock) ofile << " $clk " ;
+			else if(_is_reset) ofile << " $reset ";
+		}
 		else
 			ofile << "$pipe ";
 
@@ -194,6 +207,10 @@ class hierSystemInstance: public hierRoot
 	uint32_t _global_instance_id;
 	void  	  Set_Global_Instance_Id(uint32_t u) { _global_instance_id = u;}
 	uint32_t  Get_Global_Instance_Id() {return (_global_instance_id);}
+
+	// defaults are clk, reset.
+	string _default_clock;
+	string _default_reset;
 
 	map<string, string> _port_map;
 	map<string, string> _reverse_port_map;
@@ -229,8 +246,14 @@ class hierSystemInstance: public hierRoot
 	}
 
 
+	void Set_Default_Clock(string clk_id);
+	void Set_Default_Reset(string reset_id);
+	
+
 	virtual void Print(ostream& ofile);
 	void Print_Vhdl(ostream& ofile);
+
+
 };
 
 class hierInstanceGraph;
@@ -266,7 +289,6 @@ class hierSystem: public hierRoot
 	//
 	map<string, rtlString*> _rtl_string_map;
 	vector<rtlString*> _rtl_strings;
-
 
 public:
 
@@ -342,6 +364,42 @@ public:
 			return(_pipe_map[pname]->Get_Is_Signal());
 		else	
 			return(false);
+	}
+
+	void Mark_As_Clock(string sname)
+	{
+		if(this->Is_Signal(sname))
+		{
+			_pipe_map[sname]->Set_Is_Clock(true);
+		}
+	}	
+
+	void Mark_As_Reset(string sname)
+	{
+		if(this->Is_Signal(sname))
+		{
+			_pipe_map[sname]->Set_Is_Reset(true);
+		}
+	}	
+
+	bool Is_Marked_As_Clock(string sname)
+	{
+		bool rv = false;
+		if(this->Is_Signal(sname))
+		{
+			rv =  (_pipe_map[sname]->Get_Is_Clock());
+		}
+		return(rv);
+	}
+
+	bool Is_Marked_As_Reset(string sname)
+	{
+		bool rv = false;
+		if(this->Is_Signal(sname))
+		{
+			rv =  (_pipe_map[sname]->Get_Is_Reset());
+		}
+		return(rv);
 	}
 
 	int Get_Pipe_Width(map<string, hierPipe*>& pmap, string pname)
@@ -699,6 +757,8 @@ public:
 	void Build_Instance_Graph_Arcs (hierInstanceGraph* instance_graph);
 	void Partition_Flat_Graph(FlatLeafGraph* g, set<string>& hw_instances, FlatLeafGraph** sw_graph, FlatLeafGraph** hw_graph);
 
+	void Set_Pipe_Default_Clock (string pipe_name, string clk_name);
+	void Set_Pipe_Default_Reset (string pipe_name, string reset_name);
 };
 
 class hierInstanceGraph;
@@ -783,6 +843,9 @@ class hierInstanceGraph: public hierRoot
 		vector<hierInstanceGraphArc*> _arcs;
 
 
+		string _default_flat_clock;
+		string _default_flat_reset;
+
 		// pipe-instance map.
 		map<hierPipe*, hierPipeInstance*> _pipe_instance_map;
 
@@ -827,8 +890,15 @@ class hierInstanceGraph: public hierRoot
 		void Set_Root_Pipes(map<hierPipeInstance*,hierPipeInstance*>& root_pipe_map);
 		void Build_Flat_Leaf_Graph(FlatLeafGraph** flg);
 
+		string Find_Default_Flat_Clock();
+		string Find_Default_Flat_Reset();
+
+		void Set_Default_Flat_Clock();
+		void Set_Default_Flat_Reset();
+
 		virtual void Print(ostream& ofile);
 	
+		
 		string Hierarchical_Name();
 };
 
