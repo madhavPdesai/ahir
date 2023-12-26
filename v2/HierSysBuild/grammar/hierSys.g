@@ -1234,7 +1234,7 @@ SINGLELINECOMMENT:
 
 
 // Identifiers
-SIMPLE_IDENTIFIER options {testLiterals=true;} : ALPHA (ALPHA | DIGIT | '_')*; 
+SIMPLE_IDENTIFIER options {testLiterals=true;} : ALPHA (ALPHA | DIGIT | '_' )*; 
 
 // base
 protected ALPHA: 'a'..'z'|'A'..'Z';

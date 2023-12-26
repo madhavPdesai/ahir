@@ -1,0 +1,23 @@
+$pipe input_data : $uint<8> 
+$pipe output_data : $uint<8> 
+
+$record [MyRecord] < $uint<8> >   < $uint<8> > 
+
+$module [add] $in (a: $uint<16>) $out (s: $uint<8>) $is
+{
+	ar :=  ($cast (MyRecord) a)
+	s :=   (ar[0] + ar[1])
+}
+
+$module [add_daemon] $in () $out () $is
+{
+	// fields..
+	u := input_data
+	v := input_data
+
+	r := ($concat u v)
+
+	$call add (r) (w)
+	output_data := w
+}
+

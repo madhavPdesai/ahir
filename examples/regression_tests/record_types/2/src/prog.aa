@@ -1,0 +1,45 @@
+$pipe input_data : $uint<8> 
+$pipe output_data : $uint<8> 
+
+$record [MyRecord] < $uint<8> >   < $uint<8> >  < $uint<16> > < $uint<32> >
+
+
+$pipeline $depth 7 $fullrate $module [add] $in (a: MyRecord) $out (s: $uint<8>) $is
+{
+	$volatile $call ungroup_MyRecord__ (a) (a.u a.v a.w a.x)
+
+	s  :=   ($reduce + 
+			a.u 
+			a.v 
+			($slice a.w 15 8)
+			($slice a.x 31 24)
+		)
+}
+
+$module [add_daemon] $in () $out () $is
+{
+	$branchblock[loop] {
+
+
+		$dopipeline $depth 7 $fullrate 
+		$merge $entry $loopback 
+		$endmerge
+	
+		// fields..
+		c.u := input_data
+		c.v := input_data
+
+		$volatile c.w := ($concat c.u c.u)
+		c.x := ($concat c.v c.v c.v c.v)
+
+		
+		$volatile $call group_MyRecord__ (c.u c.v c.w c.x) (c)
+
+		
+		$call add (c) (s)
+		output_data := s
+
+		$while 1
+	}
+}
+

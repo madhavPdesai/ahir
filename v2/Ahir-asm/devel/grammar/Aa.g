@@ -2776,13 +2776,8 @@ SINGLELINECOMMENT:
 }
 ;
 
-
-// Scope-id
-SCOPE_IDENTIFIER : '.' (SIMPLE_IDENTIFIER '.')* ;
-
 // Identifiers
-SIMPLE_IDENTIFIER options {testLiterals=true;} : ALPHA (ALPHA | DIGIT | '_')*; 
-
+SIMPLE_IDENTIFIER options {testLiterals=true;} : ALPHA (ALPHA | DIGIT | '_' | '.')*; 
 
 
 // base

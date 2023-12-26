@@ -2982,15 +2982,6 @@ void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 				ofile << "}" << endl;
 				ofile << "}" << endl;
 			}
-			ofile << "|| [Slice] {" <<  endl;
-			ofile << " ;; [Sample] { " << endl;
-			ofile << "$T [req] $T [ack]" << endl;
-			ofile << "}" << endl;
-			ofile << " ;; [Update] { " << endl;
-			ofile << "$T [req] $T [ack] " << endl;
-			ofile << "}" << endl;
-			ofile << "}" << endl;
-
 			ofile << "}" << endl;
 
 		}
@@ -3250,18 +3241,64 @@ void AaArrayObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 	else if(this->_object->Is_Storage_Object())
 		root_set.insert(this);
 	else 
+	// object is an expression/pipe/stmt/interface reference..
 	{
-		string source_wire;
-		AaType* obj_type =  NULL;
 		if(this->_object->Is_Expression())
+		// expression?
 		{
-			AaExpression* expr =(AaExpression*) (this->_object);
-			root_set.insert(expr);
+			((AaExpression*) (this->_object))->Collect_Root_Sources(root_set);
 		}
 		else if(this->_object->Is("AaPipeObject"))
+		// Pipe?
 		{
 			// no flow through.
 			root_set.insert(this);
+		}
+		else if(this->_object->Is_Interface_Object())
+		// interface object.
+		{
+			// an output interface object may be written by
+			// a statement. Add this statement to the roots.
+			AaInterfaceObject* io = ((AaInterfaceObject*) this->_object);
+			AaStatement* sio = io->Get_Unique_Driver_Statement();
+
+			if(sio != NULL)
+				sio->Collect_Root_Sources(root_set);
+			else 
+				//
+				// this must be an input interface object..
+				// put it into the root-set!
+				//
+			{	
+				//
+				// interface object can link to 
+				// update enables in operators.
+				//
+					root_set.insert(io);
+			}
+
+		} 
+		else
+		// statement.
+		{
+			AaRoot* root_obj = this->Get_Root_Object();
+			if(root_obj->Is_Statement())
+			{
+				AaStatement* r = (AaStatement*) root_obj;
+				if(r->Get_Is_Volatile())
+				{
+					r->Collect_Root_Sources(root_set);
+				}
+				else
+				{
+					root_set.insert(r);
+				}
+			}	
+			else
+			{
+				// should never get here.
+				assert(0);
+			}
 		}
 	}
 	this->Set_Is_On_Collect_Root_Sources_Stack(false);
@@ -3353,27 +3390,13 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 		}
 		else if(this->_object->Is("AaInterfaceObject"))
 		{
-			source_wire = ((AaObject*)this->_object)->Get_VC_Name();
-			obj_type = ((AaObject*)(this->_object))->Get_Type();
+			ofile << "// array reference to interface object... " << endl;
+			source_wire = ((AaInterfaceObject*) this->_object)->Get_Name();
 		}
 		else if(this->_object->Is("AaPipeObject"))
 		{
-			source_wire = this->Get_VC_Name() + "_pipe_read_data";
-			obj_type = ((AaObject*)(this->_object))->Get_Type();
-			string pipe_inst = this->Get_VC_Name() + "_pipe_access";
-
-			bool barrier_flag = 
-				this->Get_Associated_Statement() && 
-					this->Get_Associated_Statement()->Is_Phi_Statement() && 
-					 ((AaPhiStatement*) this->Get_Associated_Statement())->Get_Barrier_Flag();
-
-			Write_VC_IO_Input_Port((AaPipeObject*)(this->_object), pipe_inst,source_wire,
-					this->Get_VC_Guard_String(), full_rate, barrier_flag, ofile);
-			// pipelining: address calculation path is double buffered.
-			if(this->Get_Pipeline_Parent() != NULL)
-			{
-				ofile << "$buffering  $out " << pipe_inst << " " << source_wire << " 2" << endl;
-			}
+			AaRoot::Error("indexed array expression not supported on pipe object." ,this->_object);
+			// not supported.
 		}
 		else
 			assert(0);
@@ -3395,21 +3418,16 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 			string src_name = source_wire;
 			string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
-			bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+			bool flow_through = true;
 			Write_VC_Slice_Operator(dpe_name,
 					src_name,
 					tgt_name,
 					high_index,
 					low_index,
 					this->Get_VC_Guard_String(),
-					flow_through,
+					flow_through, // flow-through is set to true.
 					full_rate,
 					ofile);
-			// extreme pipelining
-			if(!flow_through && full_rate)
-			{
-				ofile << "$buffering  $out " << dpe_name << " " << tgt_name << " 2" << endl;
-			}
 		}
 		else
 		{
@@ -3492,32 +3510,15 @@ void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
 		}
 		else if(this->_object->Is("AaInterfaceObject"))
 		{
+			// not supported.
 		}
 		else if(this->_object->Is("AaPipeObject"))
 		{
-
-			reqs.push_back(hier_id + "/PipeRead/Sample/req");
-			reqs.push_back(hier_id + "/PipeRead/Update/req");
-			acks.push_back(hier_id + "/PipeRead/Sample/ack");
-			acks.push_back(hier_id + "/PipeRead/Update/ack");
-			Write_VC_Link(this->Get_VC_Name() + "_pipe_access",
-					reqs,
-					acks,
-					ofile);
+			// not supported.
 		}
 
 		reqs.clear();
 		acks.clear();
-
-		reqs.push_back(hier_id + "/Slice/Sample/req");
-		reqs.push_back(hier_id + "/Slice/Update/req");
-		acks.push_back(hier_id + "/Slice/Sample/ack");
-		acks.push_back(hier_id + "/Slice/Update/ack");
-
-		Write_VC_Link(this->Get_VC_Name() + "_slice",
-				reqs,
-				acks,
-				ofile);
 	}
 }
 
@@ -4609,7 +4610,8 @@ void AaTypeCastExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostre
 
 bool AaTypeCastExpression::Is_Trivial()
 {
-	if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+	if(this->_rest->Is_Trivial() && 
+		(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type())))
 		return(true);
 	else 
 		return(false);

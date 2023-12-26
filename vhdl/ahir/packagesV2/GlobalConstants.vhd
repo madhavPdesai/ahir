@@ -33,8 +33,8 @@
 package GlobalConstants is
     constant global_debug_flag: boolean := false;
     constant global_pipe_report_flag: boolean := true;
-    constant global_use_vivado_bbank_dual_port : boolean := false;
-    constant global_use_vivado_distributed_ram_queue : boolean := false;
+    constant global_use_vivado_bbank_dual_port : boolean := true;
+    constant global_use_vivado_distributed_ram_queue : boolean := true;
 
     -- clock gating using Xilinx IP?
     constant use_xilinx_bufce: boolean := true;

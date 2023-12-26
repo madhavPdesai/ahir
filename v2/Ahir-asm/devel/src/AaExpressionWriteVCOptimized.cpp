@@ -1191,45 +1191,14 @@ void AaArrayObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& o
 		{
 			AaExpression* expr =(AaExpression*) (this->_object);
 			expr->Write_VC_Links(hier_id,ofile);
-			hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Complete_Region_Name());
-			reqs.push_back(hier_id + "/slice_req");
-			acks.push_back(hier_id + "/slice_ack");
-			Write_VC_Link(this->Get_VC_Name() + "_slice",
-					reqs,
-					acks,
-					ofile);
 		}
 		else if(this->_object->Is("AaInterfaceObject"))
 		{
-			hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Complete_Region_Name());
-			reqs.push_back(hier_id + "/slice_req");
-			acks.push_back(hier_id + "/slice_ack");
-			Write_VC_Link(this->Get_VC_Name() + "_slice",
-					reqs,
-					acks,
-					ofile);
-
+			// not supported for now.
 		}
 		else if(this->_object->Is("AaPipeObject"))
 		{
-			hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Complete_Region_Name());
-
-			reqs.push_back(hier_id + "/pipe_read_req");
-			acks.push_back(hier_id + "/pipe_read_ack");
-			Write_VC_Link(this->Get_VC_Name() + "_pipe_access",
-					reqs,
-					acks,
-					ofile);
-
-			reqs.clear();
-			acks.clear();
-			reqs.push_back(hier_id + "/slice_req");
-			acks.push_back(hier_id + "/slice_ack");
-			Write_VC_Link(this->Get_VC_Name() + "_slice",
-					reqs,
-					acks,
-					ofile);
-
+			// not supported for now.
 		}
 	}
 }
@@ -1260,17 +1229,19 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		AaRoot* barrier,
 		ostream& ofile)
 {
+	bool is_record_access  = false;
 	if(!this->Is_Constant())
 	{
 		this->Check_Volatile_Inconsistency();
 		ofile << "// " << this->To_String() << endl;
 
-		string base_addr_calc = (this->Get_VC_Name() + "_base_address_calculated");
-		__T(base_addr_calc);
 
 		if(this->Get_Object_Type()->Is_Pointer_Type())
 			// array expression is a pointer-evaluation expression.
 		{
+			string base_addr_calc = (this->Get_VC_Name() + "_base_address_calculated");
+			__T(base_addr_calc);
+
 			__DeclTransSplitProtocolPattern;
 
 			int word_size = this->Get_Word_Size();
@@ -1407,57 +1378,16 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			// neither storage object nor pointer.. must be
 			// a structure access expression..
 		{
+			is_record_access = true;
+			ofile << "// Record field access " << endl;
+
 			if(this->_object->Is_Expression())
 			{
-				__DeclTransSplitProtocolPattern;
-				AaExpression* expr = ((AaExpression*) (this->_object));
-				expr->Write_VC_Control_Path_Optimized(pipeline_flag, 
-						visited_elements,
-						ls_map,
-						pipe_map,
-						barrier,
-						ofile);
-
-				// expression has been evaluated.. go to active
-				expr->Write_Forward_Dependency_From_Roots(__SST(this), this->Get_Index(),
-						visited_elements, ofile);
-
-				// TODO: use split protocol to implement Slice.
-				//       (note that Slice doubles as a register..)
-				ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
-				ofile << "$T [slice_req] $T [slice_ack]" << endl;
-				ofile << "}" << endl;
-
-				__J(__SCT(this),__SST(this));
-				__F(__SCT(this), __UST(this));
-				__F(__UST(this),this->Get_VC_Complete_Region_Name());
-				__J(__UCT(this), this->Get_VC_Complete_Region_Name());
-
-				bool flow_through = this->Is_Flow_Through();
-				if(flow_through)
-				{
-					ofile << "// flow-through" << endl;
-					__J(__UST(this), __SCT(this));
-				}
-
-				if(pipeline_flag)
-				{
-					// reenable expression when this completes.
-					// note: conservative
-					// __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __UCT(this), true); // bypass
-					expr->Write_VC_Update_Reenables(this, __UCT(this), 
-							(!flow_through),
-							visited_elements,ofile);
-
-					if(!flow_through)
-						__MJ(__UST(this),__UCT(this), true); // bypass
-				}
+				ofile << "// record field in expression " << endl;
 			}
 			else if(this->_object->Is("AaInterfaceObject"))
 			{
-				AaRoot::Error("indexed array expression not supported on interface object." ,this->_object);
-				// not supported.
-				assert(0);
+				ofile << "// record field in interface object " << endl;
 			}
 			else if(this->_object->Is("AaPipeObject"))
 			{
@@ -1469,13 +1399,16 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				assert(0);
 		}
 
-		this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
-		if((barrier != NULL) && !this->Is_Flow_Through())
+		if(!is_record_access)
 		{
-			ofile << "// barrier " << endl;
-			__J(__SST(this), __UCT(barrier));
+			this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
+			if((barrier != NULL) && !this->Is_Flow_Through())
+			{
+				ofile << "// barrier " << endl;
+				__J(__SST(this), __UCT(barrier));
+			}
 		}
-
+	
 		visited_elements.insert(this);
 		this->Write_VC_Phi_Start_Dependency(ofile);
 	}

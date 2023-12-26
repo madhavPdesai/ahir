@@ -1613,6 +1613,25 @@ void AaProgram::Print_Global_Storage_Initializer(ostream& ofile)
 	ofile << "}" << endl;
 }
 
+void AaProgram::Print_Record_Type_Helpers(ostream& ofile)
+{
+	for(std::map<string,AaType*,StringCompare>::iterator miter = AaProgram::_type_map.begin();
+			miter != AaProgram::_type_map.end();
+			miter++)
+	{
+		AaType* t  = (*miter).second;
+		if(t->Is_Record_Type())
+		{
+			AaRecordType* rt = (AaRecordType*) t;
+			if(rt->Get_Is_Named())
+			{
+				rt->Print_Group_Function (ofile);
+				rt->Print_Ungroup_Function (ofile);
+			}
+		}
+	}
+}
+
 
 void AaProgram::Mark_As_Root_Module(string& mod_name)
 {

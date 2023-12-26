@@ -50,7 +50,7 @@ string To_VHDL(string x)
   bool replace_underscore = false;;
   for (int i = 0; i < x.size(); i++)
     {
-      if(x[i] == '/' || x[i] == '$')
+      if(x[i] == '/' || x[i] == '$' || x[i] == '.')
 	{
 	  ret_string += 'X';
 	}

@@ -366,6 +366,7 @@ class AaProgram
   static void Print_Memory_Space_Info();
 
   static void Print_Global_Storage_Initializer(ostream& ofile);
+  static void Print_Record_Type_Helpers (ostream& ofile);
 
   static void Mark_As_Root_Module(string& mod_name);
   static void Mark_Reachable_Modules(set<AaModule*>& reachable_modules);

@@ -182,6 +182,7 @@ int main(int argc, char* argv[])
   string gsi_file_name = ".gsi.aa";
   ofstream gsi_file(gsi_file_name.c_str(),ios::out);
   AaProgram::Print_Global_Storage_Initializer(gsi_file);
+  AaProgram::Print_Record_Type_Helpers (gsi_file);
   gsi_file.close();
 
   // now parse the temporary file.

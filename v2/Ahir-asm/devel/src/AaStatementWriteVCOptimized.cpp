@@ -546,6 +546,29 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					visited_elements.insert(root_obj);
 				}
 			}
+			else if(expr->Is_Store() || expr->Is_Pipe_Write())
+			{
+				// If the statement was volatile, then the output argument 
+				// expression sample should be triggered by all the input argument 
+				// expression update completes.
+				for(int jdx = 0; jdx < _input_args.size(); jdx++)
+				{
+
+					AaExpression* i_expr = _input_args[jdx];
+					if(!i_expr->Is_Constant()) 
+					{
+						i_expr->Write_Forward_Dependency_From_Roots(__SST(expr),
+								expr->Get_Index(),
+								visited_elements,
+								ofile);
+						if(pipeline_flag)
+						{
+							i_expr->Write_VC_Update_Reenables(this, __SCT(expr), true,
+									visited_elements, ofile);
+						}
+					}
+				}
+			}
 
 			//
 			// if expr is a interface-object in pipelined module, this kicks in

@@ -306,3 +306,95 @@ int AaRecordType::Get_Start_Bit_Offset(int start_idx, vector<AaExpression*>& ind
     }
   return(ret_offset);
 }
+
+void AaRecordType::Print_Group_Function (ostream& ofile)
+{
+	ofile << "// Grouping function for record " << this->_record_type_name << endl;
+	ofile << "$volatile $module [group_" << this->_record_type_name << "__ ] " << endl;
+	ofile << "  $in (";
+
+	int idx;
+      	for(idx = 0; idx < _element_types.size(); idx++)
+	{
+		string fname = "f_" + IntToStr(idx);
+
+		ofile << " " << fname << " : ";
+		this->_element_types[idx]->Print(ofile);
+		ofile << endl;
+
+	}
+	ofile << ")" << endl;
+	ofile << "  $out ( ";
+	ofile << "  r : " << this->_record_type_name << endl;
+	ofile << ")" << endl;
+	ofile << "$is  " << endl;
+	ofile << "{" << endl;
+	ofile << "r := ($bitcast (" << this->_record_type_name << ")" << endl;
+	ofile << "        ($concat " << endl;
+      	for(idx = _element_types.size()-1; idx >= 0; idx--)
+	{
+		string fname = "f_" + IntToStr(idx);
+		ofile << "              ($bitcast ($uint<" 
+			<< _element_types[idx]->Get_Width() << ">) " << fname << ")" 
+			<< endl;
+	}
+	ofile << "         )" << endl;
+	ofile << ") " << endl;
+
+	ofile << "}" << endl;
+}
+
+void AaRecordType::Print_Ungroup_Function (ostream& ofile)
+{
+	ofile << "// Ungrouping function for record " << this->_record_type_name << endl;
+	ofile << "$volatile $module [ungroup_" << this->_record_type_name << "__ ] " << endl;
+	ofile << "  $in (r : " << this->_record_type_name << ") " << endl;
+	ofile << "  $out ( ";
+	int idx;
+      	for(idx = 0; idx < _element_types.size(); idx++)
+	{
+		string fname = "f_" + IntToStr(idx);
+
+		ofile << " " << fname << " : ";
+		this->_element_types[idx]->Print(ofile);
+		ofile << endl;
+
+	}
+	ofile << ")" << endl;
+	ofile << "$is  " << endl;
+	ofile << "{" << endl;
+        ofile << "   $volatile ru := ($bitcast ($uint<" << this->Get_Width() << ">) r)" << endl;
+	ofile << "   $volatile $split (ru " << endl;
+      	for(idx = _element_types.size()-1; idx >= 0; idx--)
+	{
+		ofile << "                       " << this->_element_types[idx]->Get_Width() << endl;
+	}
+	ofile << ")" << endl;
+	ofile << "(" << endl;
+      	for(idx = _element_types.size()-1; idx >= 0; idx--)
+	{
+		string ufname = "uf_" + IntToStr(idx);
+		ofile << "    " << ufname << endl;
+	}
+	ofile << ")" << endl;
+
+      	for(idx = 0; idx < _element_types.size(); idx++)
+	{
+		string ufname = "uf_" + IntToStr(idx);
+		string fname  = "f_" + IntToStr(idx);
+		ofile << fname << " := ($bitcast (";
+		this->_element_types[idx]->Print(ofile);
+		ofile << ") " <<  ufname << ")" << endl;
+	}
+	ofile << "}" << endl;
+}
+
+unsigned int AaRecordType::Get_Width()
+{
+	unsigned int ret_val = 0;
+      	for(int idx = 0; idx < _element_types.size(); idx++)
+		ret_val += _element_types[idx]->Get_Width();
+
+	return(ret_val);
+}
+

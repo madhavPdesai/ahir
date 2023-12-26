@@ -941,6 +941,45 @@ defines a record type with name myrec, one of whose
 fields is a pointer to myrec.
 \end{itemize}
 
+\subsection{The bit-level layout of a Record-type}
+
+Consider a record type:
+\begin{verbatim}
+$record [myrec] <$uint<8> >  < $uint<16> >
+\end{verbatim}
+which has an 8-bit field and a 16-bit field.  The
+record type when implemented in hardware will
+use 24 bits organized as follows
+\begin{verbatim}
+[23:8]                [7:0]
+second-field          first-field
+   16bit                8bit
+\end{verbatim}
+
+A cast from the record type to an integer type
+will be consistent with this bit layout.
+For example
+\begin{verbatim}
+// concatenate fields last-field to first-field.
+r := ($cast (myrec) ($concat u16 u8))
+
+//
+// The cast from the record gives the 
+// last field as the left-most.
+// w[23:8] will be field 2, 
+// w[7:0]  will be field 1.
+w := ($bitcast ($uint<24>) r) 
+\end{verbatim}
+
+Note that an assignment to an SSA variable
+with record type which writes only to
+a part of a record is not permitted.
+That is
+\begin{verbatim}
+r [0] := ....
+\end{verbatim}
+is not permitted if $r$ is an SSA variable
+with a record type.
 
 
 \section{Expressions} \label{sec:Expressions}
