@@ -2,6 +2,7 @@ Some examples of AA code (shift-registers basically)
 	1/
 	2/
 	3/
+	4/
 
 and the synthesis of the resulting logic compared
 with a reference VHDL implementation
@@ -17,11 +18,11 @@ Notes:
 		synthesizes to a larger number of LUTs...
 
 
-TODO:
-	Replace the common operations
-		AND/OR/NAND/NOR/XOR/XNOR/ADD/SHIFT etc
-			to simpler descriptions so that
-			the VIVADO tool does not end up
-			using too many LUTs.
 
-	(this is in UnsharedOperatorBase).
+Observations:
+	1. As far as possible use SSA variables
+		(note: using pipes has an overhead)
+	2. Control-path overheads add up as 
+		the complexity of the loop body increases
+		(trivial operations to be moved to volatiles!)
+	3. Deterministic operator is as efficient as hand-written.
