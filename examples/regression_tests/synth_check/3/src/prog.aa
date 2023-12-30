@@ -1,0 +1,20 @@
+$pipe input_data output_data : $uint<32>   $depth 1 $p2p
+
+$module [shift_register_daemon] $in () $out () $is
+{
+	$branchblock[Stage1] {
+		$dopipeline $depth 7 $fullrate
+			$merge $entry $loopback 
+				$phi s1 := input_data $on $entry, $loopback
+				$phi s2 := _b0 $on $entry ns2 $on $loopback
+				$phi s3 := _b0 $on $entry ns3 $on $loopback
+			$endmerge
+
+			$volatile ns2 := s1
+			$volatile ns3 := s2
+
+			output_data := s3
+		$while 1
+	}
+}
+

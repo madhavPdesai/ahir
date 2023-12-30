@@ -6,7 +6,6 @@ $record [MyRecord] < $uint<8> >   < $uint<8> >  < $uint<16> > < $uint<32> >
 $storage R: MyRecord
 
 
-// record manipulation functions.
 
 $pipeline $depth 7 $fullrate $module [add] $in () $out (s: $uint<8>) $is
 {
@@ -36,7 +35,6 @@ $module [add_daemon] $in () $out () $is
 
 		
 		$volatile $call group_MyRecord__ (c.u c.v c.w c.x) (R)
-		//R := c
 
 		
 		$call add () (s)

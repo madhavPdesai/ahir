@@ -489,6 +489,8 @@ void vcSystem::Print_VHDL_Global_Package(ostream& ofile)
   string sys_package = this->Get_Sys_Package_Name();
   ofile << "library ieee;" << endl
 	<< "use ieee.std_logic_1164.all;" << endl;
+  ofile << "use ieee.numeric_std.all;" << endl;
+
   ofile << "package " << sys_package << " is -- { " << endl;
   this->Print_VHDL_Constant_Declarations(ofile);
   if(vcSystem::_vhdl_work_library != "work")
@@ -1334,6 +1336,7 @@ void  vcSystem::Print_VHDL_Inclusions(ostream& ofile)
 
   ofile << "library ieee;\n\
 use ieee.std_logic_1164.all;\n			\
+use ieee.numeric_std.all;\n			\
 library aHiR_ieee_proposed;\n \
 use aHiR_ieee_proposed.math_utility_pkg.all;\n \
 use aHiR_ieee_proposed.fixed_pkg.all;\n \

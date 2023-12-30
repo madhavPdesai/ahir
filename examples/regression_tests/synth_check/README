@@ -1,0 +1,27 @@
+Some examples of AA code (shift-registers basically)
+	1/
+	2/
+	3/
+
+and the synthesis of the resulting logic compared
+with a reference VHDL implementation
+	ref/
+
+
+
+Notes:
+	1.  With SSA variables FF results are very close.
+	2.  For incrementer, the VHDL version ends up being
+		smaller because a longer carry chain is 
+		inferred.  The ApIntAdd based operator 
+		synthesizes to a larger number of LUTs...
+
+
+TODO:
+	Replace the common operations
+		AND/OR/NAND/NOR/XOR/XNOR/ADD/SHIFT etc
+			to simpler descriptions so that
+			the VIVADO tool does not end up
+			using too many LUTs.
+
+	(this is in UnsharedOperatorBase).

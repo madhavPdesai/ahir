@@ -1,0 +1,45 @@
+$pipe input_data s1 s2 s3 output_data : $uint<32>   $depth 1 $p2p
+
+$volatile $module [add2] $in (a b: $uint<32>) $out (c: $uint<32>) $is
+{
+  c := (a + b)
+}
+
+$module [shift_register_daemon] $in () $out () $is
+{
+	$parallelblock[loop] {
+		$branchblock[Stage1] {
+			$dopipeline $depth 7 $fullrate
+				$merge $entry $loopback $endmerge
+				x := input_data
+				$volatile y := ($call add2 (x (x+1)))
+				s1 := y
+			$while 1
+		}
+		$branchblock[Stage2] {
+			$dopipeline $depth 7 $fullrate
+				$merge $entry $loopback $endmerge
+				x := s1
+				$volatile y := ($call add2 (x (x+2)))
+				s2 := y
+			$while 1
+		}
+		$branchblock[Stage3] {
+			$dopipeline $depth 7 $fullrate
+				$merge $entry $loopback $endmerge
+				x := s2
+				$volatile y := ($call add2 (x (x+3)))
+				s3 := y
+			$while 1
+		}
+		$branchblock[Stage4] {
+			$dopipeline $depth 7 $fullrate
+				$merge $entry $loopback $endmerge
+				x := s3
+				$volatile y := ($call add2 (x (x+4)))
+				output_data := y
+			$while 1
+		}
+	}
+}
+

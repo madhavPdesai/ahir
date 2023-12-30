@@ -1,0 +1,4 @@
+A shift-register in a do-pipeline loop.
+
+Reduce overheads by using deterministic
+pipelined module

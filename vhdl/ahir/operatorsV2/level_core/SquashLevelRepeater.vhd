@@ -59,7 +59,7 @@ begin  -- SimModel
 
         assert (g_depth > 0) report "SquashLevelRepeater:" & name & " depth must be > 0" severity error;
 
-	-- if enable is low, we stuff the data-in else we stuff in the
+	-- if enable is high, we stuff the data-in else we stuff in the
 	-- last data seen..  (ie, hold it.)
  	nontriv: if (g_depth > 0) generate
         	data_regs(0) <= data_in when (enable = '1') else data_regs(1);

@@ -1223,58 +1223,98 @@ void vcBinarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_buffer
 
 void vcBinarySplitOperator::Print_Flow_Through_VHDL(bool level_flag, ostream& ofile)
 {
-	ofile << "-- binary operator " << this->Get_VHDL_Id() << endl;
+	ofile << "-- flow through binary operator " << this->Get_VHDL_Id() << endl;
 	string X = (level_flag  ? 
 			this->Get_X()->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(0))
 			: this->Get_X()->Get_VHDL_Signal_Id());
 	string Y = (level_flag  ? 
 			this->Get_Y()->Get_VHDL_Deterministic_Delayed_Id(this->Get_Input_Slack(1))
 			: this->Get_Y()->Get_VHDL_Signal_Id());
-	ofile << "process(";
-	ofile << X;
-	if(!this->Get_Y()->Is_Constant())
-		ofile << ", " << Y;
-	ofile << ") -- {" << endl;
-	ofile << "variable tmp_var : " << this->Get_Output_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
-	ofile << "begin -- { " << endl;
-	string vhdl_op_id  = Get_VHDL_Op_Id(this->_op_id, this->Get_Input_Type(), this->Get_Output_Type(), false);
+
+	vcWire* ow = this->Get_Z();
+	string Z = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());
 
 	bool ip_is_float = (this->Get_X()->Get_Type()->Is("vcFloatType")); 
 	bool op_is_float = (this->Get_Z()->Get_Type()->Is("vcFloatType")); 
 	bool is_compare_op = Is_Compare_Op(this->_op_id);
 
-	int exponent_width, fraction_width;
-	if(ip_is_float)
+	if(!ip_is_float && (this->Get_Op_Id() == "+"))
 	{
-		exponent_width = ((vcFloatType*) (this->Get_X()->Get_Type()))->Get_Characteristic_Width();
-		fraction_width = ((vcFloatType*) (this->Get_X()->Get_Type()))->Get_Mantissa_Width();
+		ofile << Z << " <= std_logic_vector(unsigned(" << X << ") + unsigned(" << Y << "));" << endl;
 	}
+	else if(!ip_is_float && (this->Get_Op_Id() == "-"))
+	{
+		ofile << Z << " <= std_logic_vector(unsigned(" << X << ") - unsigned(" << Y << "));" << endl;
+	}
+	else if(this->Get_Op_Id() == "|")
+	{
+		ofile << Z << " <= (" << X <<  " or " << Y << ");" << endl;
+	}
+	else if(this->Get_Op_Id() == "&")
+	{
+		ofile << Z << " <= (" << X <<  " and " << Y << ");" << endl;
+	}
+	else if(this->Get_Op_Id() == "^")
+	{
+		ofile << Z << " <= (" << X <<  " xor " << Y << ");" << endl;
+	}
+	else if(this->Get_Op_Id() == "~|")
+	{
+		ofile << Z << " <= not (" << X <<  " or " << Y << ");" << endl;
+	}
+	else if(this->Get_Op_Id() == "~&")
+	{
+		ofile << Z << " <= not (" << X <<  " and " << Y << ");" << endl;
+	}
+	else if(this->Get_Op_Id() == "~^")
+	{
+		ofile << Z << " <= not (" << X <<  " xor " << Y << ");" << endl;
+	}
+	else
+	{
 
 
-	if(ip_is_float & is_compare_op) 
-	{
-		ofile << "TwoInputFloatCompareOperation(\"" << vhdl_op_id << "\", ";
-		ofile << X << ", " << Y ;
-		ofile << "," << exponent_width << ", " << fraction_width << ", tmp_var);" << endl;
-	}
-	else if(ip_is_float)
-	{
-		ofile << "TwoInputFloatArithOperation(\"" << vhdl_op_id << "\", ";
-		ofile << X << ", " << Y ;
-		ofile << "," << exponent_width << ", " << fraction_width << ", tmp_var);" << endl;
-	}
-	else 
-	{
-		string procedure_name = vhdl_op_id + "_proc";
-		ofile << procedure_name << "(";
-		ofile << X << ", " << Y ;
-		ofile << ", tmp_var);" << endl;
-	}
+		ofile << "process(";
+		ofile << X;
+		if(!this->Get_Y()->Is_Constant())
+			ofile << ", " << Y;
+		ofile << ") -- {" << endl;
+		ofile << "variable tmp_var : " << this->Get_Output_Type()->Get_VHDL_Type_Name() << "; -- }" << endl;
+		ofile << "begin -- { " << endl;
+		string vhdl_op_id  = Get_VHDL_Op_Id(this->_op_id, this->Get_Input_Type(), this->Get_Output_Type(), false);
 
-	vcWire* ow = this->Get_Z();
-	string Z = (level_flag ? ow->Get_VHDL_Level_Rptr_In_Id() : ow->Get_VHDL_Signal_Id());
-	ofile << Z << " <= tmp_var; --}" << endl;
-	ofile << "end process;" << endl; 
+
+		int exponent_width, fraction_width;
+		if(ip_is_float)
+		{
+			exponent_width = ((vcFloatType*) (this->Get_X()->Get_Type()))->Get_Characteristic_Width();
+			fraction_width = ((vcFloatType*) (this->Get_X()->Get_Type()))->Get_Mantissa_Width();
+		}
+
+
+		if(ip_is_float & is_compare_op) 
+		{
+			ofile << "TwoInputFloatCompareOperation(\"" << vhdl_op_id << "\", ";
+			ofile << X << ", " << Y ;
+			ofile << "," << exponent_width << ", " << fraction_width << ", tmp_var);" << endl;
+		}
+		else if(ip_is_float)
+		{
+			ofile << "TwoInputFloatArithOperation(\"" << vhdl_op_id << "\", ";
+			ofile << X << ", " << Y ;
+			ofile << "," << exponent_width << ", " << fraction_width << ", tmp_var);" << endl;
+		}
+		else 
+		{
+			string procedure_name = vhdl_op_id + "_proc";
+			ofile << procedure_name << "(";
+			ofile << X << ", " << Y ;
+			ofile << ", tmp_var);" << endl;
+		}
+
+		ofile << Z << " <= tmp_var; --}" << endl;
+		ofile << "end process;" << endl; 
+	}
 }
 
 void vcBinarySplitOperator::Print(ostream& ofile)
