@@ -58,7 +58,6 @@ $module [mem_load__]
       //  file ./.Aa//linked.opt.aa, line 19
       // Source expression
       // default_mem_pool[((address * 1 ) + 0 )]
-      $T[array_obj_ref_20_base_address_calculated] 
       $T[array_obj_ref_20_sample_start_] 
       $T[array_obj_ref_20_sample_completed_] 
       $T[array_obj_ref_20_update_start_] 

@@ -318,7 +318,7 @@ void rtlString::Print_Vhdl_Instance(ostream& ofile)
 	string reset_str = "reset";
 	if(this->_default_reset == "$null")
 		reset_str = "hsys_tie_low";
-	else if(this->_default_reset != "clk")
+	else if(this->_default_reset != "reset")
 		reset_str = this->_default_reset + "(0)";
 
 	ofile << "clk => " << clk_str << ", reset => " <<  reset_str;
