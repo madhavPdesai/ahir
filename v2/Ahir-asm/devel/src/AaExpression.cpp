@@ -1254,7 +1254,12 @@ void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
 			AaInterfaceObject* io = ((AaInterfaceObject*) root_obj);
 			AaStatement* sio = io->Get_Unique_Driver_Statement();
 			if(sio != NULL)
-				sio->Collect_Root_Sources(root_set);
+			{
+				if(sio->Is_Phi_Statement())
+					root_set.insert(sio);
+				else
+					sio->Collect_Root_Sources(root_set);
+			}
 			else 
 			//
 			// this must be an input interface object..
