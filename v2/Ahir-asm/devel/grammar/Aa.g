@@ -457,10 +457,14 @@ aA_Null_Statement[AaScope* scope] returns[AaStatement* new_stmt]
 // aA_Barrier_Statement : BARRIER
 //-----------------------------------------------------------------------------------------------
 aA_Barrier_Statement[AaScope* scope] returns[AaStatement* new_stmt]
-    : BARRIER 
+{
+	int line_number = 0;
+}
+    : bid: BARRIER  {line_number = bid->getLine();}
         {
             // NuLL statements have no labels.
             new_stmt = new AaBarrierStatement(scope);
+	    new_stmt->Set_Line_Number (line_number);
         }
     ;
 

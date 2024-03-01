@@ -666,6 +666,7 @@ void AaBlockStatement::Identify_Maximal_Sequences( AaStatementSequence* sseq,
 
 			if(stmt->Is("AaBarrierStatement"))
 			{
+				AaRoot::Info ("found $barrier statement on line " + IntToStr(stmt->Get_Line_Number()));
 				// barrier.. 
 				end_idx++;
 				break;
@@ -757,6 +758,48 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		for(int idx = 0, fidx = sseq->Get_Statement_Count(); idx < fidx; idx++)
 		{
 			AaStatement* stmt = sseq->Get_Statement(idx);
+			
+			// If this is a barrier, handle it appropriately.
+			if(stmt->Is("AaBarrierStatement"))
+			{
+				ofile << "// Barrier in pipelined body " << endl;
+				// Here, we should ensure that 
+				// succeeding statements from this point on
+				// can execute only if all preceding statements 
+				// up to this point have completed execution.
+				// 
+				// There is a lower level mark/synch pair
+				// that gives individual predecessor->successor
+				// dependencies (with re-enables also).
+				//
+				__T(__UCT(stmt))	
+				if(idx > 0)
+				{
+					int jdx;
+					for(jdx =  idx-1; jdx >= 0; jdx--)
+					{
+						AaStatement* pstmt = sseq->Get_Statement(jdx);
+						if(pstmt->Is("AaBarrierStatement") ||
+							(!pstmt->Get_Is_Volatile() && 
+								!pstmt->Is_Null_Like_Statement()))
+						// volatiles, nulls, reports ignored..
+						{
+							__J(__UCT(stmt), __UCT(pstmt))
+						}
+
+						if(pstmt->Is("AaBarrierStatement"))
+						{
+							break;
+						}
+					}
+				}
+					
+				// continuing, with stmt as the barrier.
+				trailing_barrier = stmt;
+				
+				//AaRoot::Error("in pipelined bodies, a $barrier is ignored", stmt);
+				//AaRoot::Info("in pipelined bodies, use the $mark/$synch construct instead.");
+			}
 
 			// skip null, report statements.
 			if(stmt->Is_Null_Like_Statement())

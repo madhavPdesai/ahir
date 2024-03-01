@@ -529,6 +529,12 @@ class AaBarrierStatement: public AaNullStatement
     return("_barrier_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
+  virtual string Get_VC_Name()
+  {
+    string ret_string = "barrier_stmt_" + Int64ToStr(this->Get_Index());
+    return(ret_string);
+  }
+
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual bool Is_Control_Flow_Statement() {return(true);}
 };
