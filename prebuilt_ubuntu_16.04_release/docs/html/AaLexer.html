@@ -145,6 +145,7 @@ Definition of lexer AaLexer, which is a subclass of CharScanner.
 |	<a href="AaLexer.html#mPOINTER">mPOINTER</a> 
 |	<a href="AaLexer.html#mNuLL">mNuLL</a> 
 |	<a href="AaLexer.html#mBARRIER">mBARRIER</a> 
+|	<a href="AaLexer.html#mRELAXED">mRELAXED</a> 
 |	<a href="AaLexer.html#mARRAY">mARRAY</a> 
 |	<a href="AaLexer.html#mRECORD">mRECORD</a> 
 |	<a href="AaLexer.html#mCAST">mCAST</a> 
@@ -175,7 +176,6 @@ Definition of lexer AaLexer, which is a subclass of CharScanner.
 |	<a href="AaLexer.html#mHEXCSTYLEINTEGER">mHEXCSTYLEINTEGER</a> 
 |	<a href="AaLexer.html#mWHITESPACE">mWHITESPACE</a> 
 |	<a href="AaLexer.html#mSINGLELINECOMMENT">mSINGLELINECOMMENT</a> 
-|	<a href="AaLexer.html#mSCOPE_IDENTIFIER">mSCOPE_IDENTIFIER</a> 
 |	<a href="AaLexer.html#mSIMPLE_IDENTIFIER">mSIMPLE_IDENTIFIER</a> 
 <a name="mFOREIGN">mFOREIGN</a>
 	:	&quot;$foreign&quot; 
@@ -661,6 +661,10 @@ Definition of lexer AaLexer, which is a subclass of CharScanner.
 	:	&quot;$barrier&quot; 
 	;
 
+<a name="mRELAXED">mRELAXED</a>
+	:	&quot;$relaxed&quot; 
+	;
+
 <a name="mARRAY">mARRAY</a>
 	:	&quot;$array&quot; 
 	;
@@ -832,15 +836,12 @@ protected <a name="mDIGIT">mDIGIT</a>
 	:	( &quot;//&quot; ( ~&#039;\n&#039; )* &#039;\n&#039; ) 
 	;
 
-<a name="mSCOPE_IDENTIFIER">mSCOPE_IDENTIFIER</a>
-	:	&#039;.&#039; ( <a href="AaLexer.html#mSIMPLE_IDENTIFIER">mSIMPLE_IDENTIFIER</a> &#039;.&#039; )* 
-	;
-
 <a name="mSIMPLE_IDENTIFIER">mSIMPLE_IDENTIFIER</a>
 	:	<a href="AaLexer.html#mALPHA">mALPHA</a> 
 		(	<a href="AaLexer.html#mALPHA">mALPHA</a> 
 		|	<a href="AaLexer.html#mDIGIT">mDIGIT</a> 
 		|	&#039;_&#039; 
+		|	&#039;.&#039; 
 		)* 
 	;
 

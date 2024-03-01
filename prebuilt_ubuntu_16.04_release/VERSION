@@ -1,19 +1,19 @@
-commit 8926eac7b8f81dee6e37a43c8c7488e46d8a5541
-Author: Madhav Pandurang Desai <madhav@ee.iitb.ac.in>
-Date:   Wed Nov 23 15:44:41 2022 +0530
+commit a135b16e76e37b24bb56094c0af377e57d6a748f
+Author: madhav <madhav@localhost.localdomain>
+Date:   Thu Feb 22 18:30:02 2024 +0530
 
-    Fixed a bug in the implementation of the VHDL for
-    a non-pipelined operator.   Could cause incorrect
-    behaviour when the operator is instantiated in
-    a pipeline :-!
+    Bug fix:  when Phi statement was updating an
+    output argument of a module, forward dependencies
+    from the Phi to statements in the body were not
+    being correctly set up.
 ----------------------------------------------------------------------------
-Wed Nov 23 16:50:56 IST 2022
-commit 8926eac7b8f81dee6e37a43c8c7488e46d8a5541
-Author: Madhav Pandurang Desai <madhav@ee.iitb.ac.in>
-Date:   Wed Nov 23 15:44:41 2022 +0530
+Thu Feb 29 23:04:16 IST 2024
+commit a135b16e76e37b24bb56094c0af377e57d6a748f
+Author: madhav <madhav@localhost.localdomain>
+Date:   Thu Feb 22 18:30:02 2024 +0530
 
-    Fixed a bug in the implementation of the VHDL for
-    a non-pipelined operator.   Could cause incorrect
-    behaviour when the operator is instantiated in
-    a pipeline :-!
+    Bug fix:  when Phi statement was updating an
+    output argument of a module, forward dependencies
+    from the Phi to statements in the body were not
+    being correctly set up.
 ----------------------------------------------------------------------------
