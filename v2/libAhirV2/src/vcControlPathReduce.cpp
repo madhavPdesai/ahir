@@ -1271,10 +1271,27 @@ void vcControlPath::Collapse_Pure_Transition_Set(set<void*>& tset)
 	}
 }
 
+void vcControlPath::Add_To_Reverse_Map(map<vcTransition*, vcCPElementGroup*>& transition_group_map,
+			vcCPElementGroup* g)
+{
+
+	for(set<vcCPElement*>::iterator esiter = g->_elements.begin(),
+			fesiter = g->_elements.end(); 
+			esiter != fesiter; esiter++)
+	{
+		vcCPElement* e = *esiter;
+		if(e->Is_Transition())
+		{
+			transition_group_map[(vcTransition*) e] = g;
+		}
+	}
+}
 
 void vcControlPath::Identify_Strongly_Connected_Components()
 {
 	GraphBase  t_graph;
+	set<vcCPBlock*, vcRoot_Compare> pipeline_parents;
+	map<vcTransition*, vcCPElementGroup*> transition_group_map;
 
 	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
 			fiter = _cpelement_groups.end();
@@ -1282,7 +1299,14 @@ void vcControlPath::Identify_Strongly_Connected_Components()
 			iter++)
 	{
 		vcCPElementGroup* g = *iter;
+		if(g->_pipeline_parent)
+		{
+			pipeline_parents.insert(g->_pipeline_parent);
+		}
 		t_graph.Add_Vertex ((void*) g);
+
+		// keep the reverse map from transition to group.
+		this->Add_To_Reverse_Map(transition_group_map, g);
 	}
 
 	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
@@ -1291,14 +1315,17 @@ void vcControlPath::Identify_Strongly_Connected_Components()
 			iter++)
 	{
 		vcCPElementGroup* g = *iter;
-		for(set<vcCPElementGroup*>::iterator succ_iter = g->_successors.begin(), fsucc_iter = g->_successors.end();
+		for(set<vcCPElementGroup*>::iterator succ_iter = g->_successors.begin(), 
+				fsucc_iter = g->_successors.end();
 				succ_iter != fsucc_iter; succ_iter++)
 		{
 			vcCPElementGroup* s = *succ_iter;
 			if(g->_pipeline_parent == s->_pipeline_parent)
 				t_graph.Add_Edge(g,s);	
 		}
-		for(set<vcCPElementGroup*>::iterator msucc_iter = g->_marked_successors.begin(), fmsucc_iter = g->_marked_successors.end();
+
+		for(set<vcCPElementGroup*>::iterator msucc_iter = g->_marked_successors.begin(), 
+				fmsucc_iter = g->_marked_successors.end();
 				msucc_iter != fmsucc_iter; msucc_iter++)
 		{
 			vcCPElementGroup* s = *msucc_iter;
@@ -1307,6 +1334,39 @@ void vcControlPath::Identify_Strongly_Connected_Components()
 		}
 
 	}
+
+	// make connections through the PHI Sequencer blocks in order to identify
+	// SCC elements.
+	for(set<vcCPBlock*,vcRoot_Compare>::iterator pp_iter = pipeline_parents.begin(), 
+			fpp_iter = pipeline_parents.end(); pp_iter != fpp_iter; pp_iter++)
+	{
+		vcCPBlock* pp = *pp_iter;
+		if(pp->Is("vcCPPipelinedLoopBody"))
+			// through phi sequencer...  These paths were missed earlier.
+		{
+			vcCPPipelinedLoopBody* plb = (vcCPPipelinedLoopBody*) pp;
+			vcPhiSequencer* ps = NULL;
+			for(int pidx = 0, fpidx = plb->Get_Number_Of_Phi_Sequencers();
+					pidx < fpidx; pidx++)
+			{
+				ps = plb->Get_Phi_Sequencer(pidx);
+				vcTransition* sr = ps->_phi_sample_req;
+				vcTransition* sc = ps->_phi_sample_ack; 
+
+				vcCPElementGroup* srg = transition_group_map[sr];
+				vcCPElementGroup* scg = transition_group_map[sc];
+				t_graph.Add_Edge(srg,scg);	
+
+				vcTransition* ur = ps->_phi_update_req;
+				vcTransition* uc = ps->_phi_update_ack;
+
+				vcCPElementGroup* urg = transition_group_map[ur];
+				vcCPElementGroup* ucg = transition_group_map[uc];
+				t_graph.Add_Edge(urg,ucg);	
+			}
+		}		
+	}
+
 
 	map<void*, int>   scc_map;
 	t_graph.Strongly_Connected_Components(scc_map);

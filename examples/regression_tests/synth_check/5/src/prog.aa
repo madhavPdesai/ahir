@@ -1,0 +1,28 @@
+$pipe input_data output_data : $uint<32>   $depth 1 $p2p
+
+$module [shift_register_daemon] $in () $out () $is
+{
+	$branchblock[Stage1] {
+		$dopipeline $depth 7 $fullrate
+			$merge $entry $loopback 
+				$phi first_time := $one<1> $on $entry $zero<1> $on $loopback
+			$endmerge
+
+			// potentially blocked.
+			s1 := input_data 
+
+			//
+			// non-blocking region
+			//
+			sv0 := ($mux first_time s1 (s1 + sv0))
+			sv1 := sv0
+			sv2 := sv1
+			sv3 := sv2
+
+			// potentially blocked.
+			output_data := sv3
+
+		$while 1
+	}
+}
+

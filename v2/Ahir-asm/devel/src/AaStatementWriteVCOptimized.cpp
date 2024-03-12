@@ -277,6 +277,13 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 			__ConnectSplitProtocolPattern;
 
+			// barrier can hold up this statement.
+			if(barrier != NULL)
+			{
+				ofile << "// barrier dependency for statement " << endl;
+				__J (__SST(this), __UCT(barrier))
+			}
+
 			if(this->_guard_expression && !this->_guard_expression->Is_Constant())
 			{
 				ofile << "// Guard dependency" << endl;
@@ -776,27 +783,47 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				if(idx > 0)
 				{
 					int jdx;
+					bool found_one = false;
 					for(jdx =  idx-1; jdx >= 0; jdx--)
 					{
 						AaStatement* pstmt = sseq->Get_Statement(jdx);
-						if(pstmt->Is("AaBarrierStatement") ||
-							(!pstmt->Get_Is_Volatile() && 
-								!pstmt->Is_Null_Like_Statement()))
+						bool p_is_barrier = pstmt->Is("AaBarrierStatement");
+
+						if(!pstmt->Get_Is_Volatile() && 
+								!pstmt->Is_Null_Like_Statement())
 						// volatiles, nulls, reports ignored..
 						{
+							// ensure that barrier is triggered
+							// only after all preceding statements
+							// up to the previous barrier have completed.
 							__J(__UCT(stmt), __UCT(pstmt))
+							if(!p_is_barrier)
+								found_one = true;
 						}
 
-						if(pstmt->Is("AaBarrierStatement"))
+						if(p_is_barrier)
 						{
+							if(!found_one) 
+							{
+								ofile 
+									<< "// barrier to barrier dependency with delay" 
+									<< endl;
+
+								string delay_trans =
+									__UCT(pstmt) + "_to_" + __UCT(stmt) + "_delay";
+								__TD (delay_trans)
+								__J  (delay_trans, __UCT(pstmt))
+								__J  (__UCT(stmt), delay_trans)
+							}
+
 							break;
 						}
 					}
 				}
-					
+
 				// continuing, with stmt as the barrier.
 				trailing_barrier = stmt;
-				
+
 				//AaRoot::Error("in pipelined bodies, a $barrier is ignored", stmt);
 				//AaRoot::Info("in pipelined bodies, use the $mark/$synch construct instead.");
 			}
@@ -869,9 +896,9 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag,
 
 			bool is_volatile_call = 
 				(is_call_stmt ?  
-					((AaCallStatement*)expr)->Get_Is_Volatile()
-						: (is_fn_call_expr ? 
-							((AaFunctionCallExpression*)expr)->Get_Is_Volatile() : false));
+				 ((AaCallStatement*)expr)->Get_Is_Volatile()
+				 : (is_fn_call_expr ? 
+					 ((AaFunctionCallExpression*)expr)->Get_Is_Volatile() : false));
 			bool is_opaque_call = 
 				(is_call_stmt ?  
 				 ((AaCallStatement*)expr)->Is_Opaque_Call_Statement()

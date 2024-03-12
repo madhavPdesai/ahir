@@ -1,0 +1,7 @@
+Only use PHI for first time flag.
+
+This keeps the number of data-path flip-flops
+down.
+
+Number of flip-flops in the control path is
+a concern however.

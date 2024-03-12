@@ -309,6 +309,9 @@ int AaRecordType::Get_Start_Bit_Offset(int start_idx, vector<AaExpression*>& ind
 
 void AaRecordType::Print_Group_Function (ostream& ofile)
 {
+	if(!this->Is_Single_Level_Record_Type())
+		return;
+
 	ofile << "// Grouping function for record " << this->_record_type_name << endl;
 	ofile << "$volatile $module [group_" << this->_record_type_name << "__ ] " << endl;
 	ofile << "  $in (";
@@ -346,6 +349,9 @@ void AaRecordType::Print_Group_Function (ostream& ofile)
 
 void AaRecordType::Print_Ungroup_Function (ostream& ofile)
 {
+	if(!this->Is_Single_Level_Record_Type())
+		return;
+
 	ofile << "// Ungrouping function for record " << this->_record_type_name << endl;
 	ofile << "$volatile $module [ungroup_" << this->_record_type_name << "__ ] " << endl;
 	ofile << "  $in (r : " << this->_record_type_name << ") " << endl;

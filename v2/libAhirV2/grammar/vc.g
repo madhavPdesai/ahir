@@ -703,7 +703,7 @@ vc_CPPipelinedLoopBody[vcCPBlock* cp]
 
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPJoin: (vc_Identifier | EXIT | ENTRY | NULL) JOIN LPAREN  ENTRY? (vc_Identifier)+  RPAREN
+// vc_CPJoin: (vc_Identifier | EXIT | ENTRY | NULL) JOIN LPAREN  ENTRY? EXIT? (vc_Identifier)+  RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPJoin[vcCPForkBlock* fb]
 {
@@ -715,13 +715,16 @@ vc_CPJoin[vcCPForkBlock* fb]
 	(je:EXIT {lbl = je->getText();}) | 
 	(jen:ENTRY {lbl = jen->getText();}) |
 	(jnull:N_ULL {lbl = jnull->getText();})
-   ) JOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
+   ) JOIN  
+   LPAREN 
+	(e:ENTRY {join_ids.push_back(e->getText());})?
+	(ee:EXIT {join_ids.push_back(ee->getText());})?
 (b =  vc_Identifier {join_ids.push_back(b);})* RPAREN
  {fb->Add_Join_Point(lbl,join_ids);}
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPMarkedJoin: (vc_Identifier | EXIT | NULL) MARKEDJOIN LPAREN  ENTRY? (vc_Identifier)+  RPAREN
+// vc_CPMarkedJoin: (vc_Identifier | EXIT | NULL) MARKEDJOIN LPAREN  ENTRY? EXIT? (vc_Identifier)+  RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPMarkedJoin[vcCPPipelinedForkBlock* fb]
 {
@@ -736,8 +739,11 @@ vc_CPMarkedJoin[vcCPPipelinedForkBlock* fb]
 ((lbl = vc_Identifier) | 
 	(je:ENTRY {lbl = je->getText();}) |
 	(jnull:N_ULL {lbl = jnull->getText();})
-	) MARKEDJOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());} 
+	) MARKEDJOIN  LPAREN 
+		(e:ENTRY {join_ids.push_back(e->getText());} 
                   me:UINTEGER {join_markings.push_back(atoi(me->getText().c_str()));})?
+		(ee:EXIT {join_ids.push_back(ee->getText());} 
+                  mee:UINTEGER {join_markings.push_back(atoi(mee->getText().c_str()));})?
 (b =  vc_Identifier {join_ids.push_back(b);} be:UINTEGER {join_markings.push_back(atoi(be->getText().c_str())); } )* RPAREN
  {fb->Add_Marked_Join_Point(lbl,join_ids, join_markings);}
 ;

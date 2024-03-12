@@ -1218,6 +1218,8 @@ public:
   string Generate_Marked_Join_Bypass_String();
 
   vcCPElement* Get_Top_Element();
+  bool Has_Entry_As_Predecessor ();
+
 
   friend class vcCPElement;
   friend class vcControlPath;
@@ -1372,6 +1374,8 @@ public:
   // ensure correct connectivity.
   bool Check_Group_Graph_Structure();
   void Identify_Strongly_Connected_Components();
+  void Add_To_Reverse_Map(map<vcTransition*, vcCPElementGroup*>& transition_group_map,
+			vcCPElementGroup* g);
 
 };
 
