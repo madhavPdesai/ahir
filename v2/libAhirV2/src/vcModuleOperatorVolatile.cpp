@@ -341,7 +341,7 @@ void vcModule::Print_VHDL_Operator_Architecture(ostream& ofile)
 						ninputs++;
 
 					ipreds.push_back(w->Get_VHDL_Id() + "_update_enable_unmarked");
-					ipred_capacities.push_back(this->Get_Pipeline_Depth());
+					ipred_capacities.push_back(1); // no need to keep depth tokens after scc arc fix.
 					ipred_markings.push_back(0);
 					ipred_delays.push_back(0); // revisit later..
 				}

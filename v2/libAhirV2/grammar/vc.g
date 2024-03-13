@@ -666,6 +666,7 @@ vc_CPPipelinedForkBlock[vcCPBlock* cp, vcModule* m]
  	( vc_CPFork[fb] ) |
  	( vc_CPJoin[fb] ) | 
  	( vc_CPMarkedJoin[fb] ) | 
+	( vc_CPSccArc [fb]   ) | 
  	( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
  	(vc_AttributeSpec[fb])  
  )* RBRACE
@@ -746,6 +747,24 @@ vc_CPMarkedJoin[vcCPPipelinedForkBlock* fb]
                   mee:UINTEGER {join_markings.push_back(atoi(mee->getText().c_str()));})?
 (b =  vc_Identifier {join_ids.push_back(b);} be:UINTEGER {join_markings.push_back(atoi(be->getText().c_str())); } )* RPAREN
  {fb->Add_Marked_Join_Point(lbl,join_ids, join_markings);}
+;
+
+//-----------------------------------------------------------------------------------------------
+// vc_CPSccArc: vc_Identifier SCC_ARC vc_Identifier
+//-----------------------------------------------------------------------------------------------
+vc_CPSccArc[vcCPForkBlock* fb]
+{
+	string tail_lbl;
+	string head_lbl;
+}
+:
+	SCC_ARC
+	((tail_lbl = vc_Identifier) | (ENTRY {tail_lbl = "$entry";}) | (EXIT {tail_lbl = "$exit";}))
+	IMPLIES
+	((head_lbl = vc_Identifier) | (ENTRY {head_lbl = "$entry";}) | (EXIT {head_lbl = "$exit";}))
+	{
+		fb->Add_Scc_Arc (tail_lbl, head_lbl);
+	}
 ;
 
 //-----------------------------------------------------------------------------------------------
@@ -2016,6 +2035,7 @@ CUT_THROUGH: "$cut_through";
 GATED_CLOCK:"$gated_clock";
 USE_GATED_CLOCK: "$use_gated_clock";
 
+SCC_ARC: "$scc_arc";
 // data format
 UINTEGER          : DIGIT (DIGIT)*;
 

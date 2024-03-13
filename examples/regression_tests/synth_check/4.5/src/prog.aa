@@ -1,0 +1,33 @@
+$pipe input_data output_data : $uint<32>   $depth 1 $p2p
+
+$pipeline $depth 7 $buffering 1 $fullrate $operator $module [core]
+$in (s1: $uint<32>) $out (ts4 : $uint<32>) $is
+{
+
+	$volatile ts1 := (s1 + 1)
+	s2 := ts1
+
+	$volatile ts2 := (s2 + 1)
+	s3 := ts2
+
+	$volatile ts3 := (s3 + 1)
+	s4 := ts3
+
+	// add and then push into output_data.
+	$volatile ts4 := (s4 + 1)
+}
+
+
+$module [shift_register_daemon] $in () $out () $is
+{
+	$branchblock[Stage1] {
+		$dopipeline $depth 7 $fullrate
+			$merge $entry $loopback $endmerge
+			s1 := input_data 
+			$call core (s1) (ts4)
+			output_data := ts4
+
+		$while 1
+	}
+}
+

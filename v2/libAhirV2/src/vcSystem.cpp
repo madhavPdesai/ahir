@@ -64,6 +64,7 @@ int vcSystem::_bypass_stride = 1;
 // uses library?
 bool vcSystem::_uses_function_library = false;
 set<string> vcSystem::_non_ahir_function_library_libs;
+vector<pair<vcTransition*, vcTransition*> > vcSystem::_scc_arcs;
 
 // set on error.
 bool vcSystem::_error_flag = false;

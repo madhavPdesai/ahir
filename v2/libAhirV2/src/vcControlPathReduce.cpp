@@ -1367,6 +1367,27 @@ void vcControlPath::Identify_Strongly_Connected_Components()
 		}		
 	}
 
+	// Add SCC arcs
+	vcSystem::Info ("in CPForkblock " + this->Get_Label() + ", adding SCC arcs");
+	int scc_count = 0;
+	for(vector<pair<vcTransition*, vcTransition*> >:: iterator sc_iter = vcSystem::_scc_arcs.begin(),
+				fsc_iter = vcSystem::_scc_arcs.end(); sc_iter != fsc_iter;
+				sc_iter++)
+	{
+		vcTransition* tail  = (*sc_iter).first;
+		vcTransition* head  = (*sc_iter).second;
+
+		vcCPElementGroup* tg = transition_group_map[tail];
+		vcCPElementGroup* hg = transition_group_map[head];
+
+		if((tg != NULL) && (hg != NULL) && (tg != hg))
+		{
+			scc_count++;
+			t_graph.Add_Edge (tg, hg);
+		}
+	}
+	vcSystem::Info ("in CPForkblock " + this->Get_Label() + ", added " + IntToStr (scc_count) + " SCC arcs");
+
 
 	map<void*, int>   scc_map;
 	t_graph.Strongly_Connected_Components(scc_map);

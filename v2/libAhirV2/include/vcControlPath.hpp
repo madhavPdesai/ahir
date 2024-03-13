@@ -873,6 +873,7 @@ public:
   void Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_vec);
   void Add_Join_Point(string& join_name, vector<string>& join_cpe_vec);
 
+  void Add_Scc_Arc (string tail_lbl, string head_lbl);
 
   virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m);
 

@@ -2175,6 +2175,33 @@ void vcCPForkBlock::Add_Fork_Point(vcTransition* fp, vcCPElement* fre)
 	}
 }
 
+void vcCPForkBlock::Add_Scc_Arc (string tail_lbl, string head_lbl)
+{
+	vcCPElement* tail_cpe = this->Find_CPElement(tail_lbl);
+	if((tail_cpe != NULL) && (tail_cpe->Is_Transition()))
+	{
+		vcCPElement* head_cpe = this->Find_CPElement(head_lbl);
+		if((head_cpe != NULL) && (head_cpe->Is_Transition()))
+		{
+			vcSystem::_scc_arcs.
+				push_back(pair<vcTransition*, vcTransition*> 
+					((vcTransition*)tail_cpe,
+						(vcTransition*) head_cpe));
+		}
+		else
+		{
+			vcSystem::Error("did not find tail transition " + tail_lbl + " in Add_Scc_Arc in block " +
+						this->Get_Label());
+		}
+	}
+	else
+	{
+		vcSystem::Error("did not find head transition " + head_lbl + " in Add_Scc_Arc in block " +
+						this->Get_Label());
+	}
+	
+}
+
 void vcCPForkBlock::Remove_Fork_Point(vcTransition* fp, vcCPElement* fre)
 {
 	if(_fork_map.find(fp) != _fork_map.end())

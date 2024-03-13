@@ -47,6 +47,8 @@ class vcModule;
 class vcConstantWire;
 class vcValue;
 class vcPipe;
+class vcTransition;
+
 class vcSystem: public vcRoot
 {
   map<string, vcMemorySpace*> _memory_space_map;
@@ -85,6 +87,7 @@ class vcSystem: public vcRoot
 
   static bool _uses_function_library;
   static set<string> _non_ahir_function_library_libs;
+  static vector<pair<vcTransition*, vcTransition*> > _scc_arcs;
 
   static string _top_entity_name;
   static int _estimated_buffering_bits;
@@ -100,6 +103,7 @@ class vcSystem: public vcRoot
 
   static int _fifo_register_count;
   static void Increment_Fifo_Register_Count(int S);
+
 
   void Register_Pipe_Read(string pipe_id, vcModule* m, int idx);
   int Get_Num_Pipe_Reads(string pipe_id);
