@@ -1,0 +1,31 @@
+	Adding arcs to influence strongly-connected component identification
+	---------------------------------------------------------------------
+		Madhav P. Desai
+
+1. Overview
+
+	Finding strongly connected components is the
+	mechanism for identifying the places in the
+	control path which are 1-safe.   This is
+	done by a local analysis within a fork block's
+	scope.   Consequently, some dependencies which
+	are at a higher scope (e.g. caller of a module)
+	are missed and the control path may needlessly need extra
+	flip-flops and logic for implementation.
+
+	
+2. $scc_arc
+
+	The control path can include the statement
+
+	$scc_arc  tail_transition =>  head_transition
+
+	to specify an external dependency between two
+	internal transitions.   This will lead to larger
+	strongly-connected components, hence leading to
+	more places being marked as 1-safe.
+
+	The $scc_arc statements are inserted by Aa2VC
+	during the Aa->vC conversion.
+
+	
