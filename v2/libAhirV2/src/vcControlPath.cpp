@@ -3037,7 +3037,7 @@ void vcCPPipelinedForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* 
 void vcCPPipelinedForkBlock::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map)
 {
 	// If (v,u) and (w,u) are two reenable arcs
-	// and distance[v][w] > 0 and marking(v,u) <= marking(w,u)
+	// and distance[v][w] > 0 and delay(v,u) <= delay(w,u)
 	// then (v,u) is redundant.
 	for(map<vcCPElement*,map<vcCPElement*,int> >::iterator iter = distance_map.begin(),
 			fiter = distance_map.end(); iter != fiter; iter++)
@@ -3103,6 +3103,67 @@ void vcCPPipelinedForkBlock::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map
 			if(vcSystem::_verbose_flag)
 				vcSystem::Info("removed redundant marked link: " + u->Get_Label() + " o<-& "
 						+ v->Get_Label());
+		}
+	}
+
+	this->Remove_Redundant_Reenable_Arcs_Pass2(distance_map);
+}
+
+
+//
+// Look to get rid of redundant self-reenable arcs.
+//
+void vcCPPipelinedForkBlock::Remove_Redundant_Reenable_Arcs_Pass2(map<vcCPElement*,map<vcCPElement*,int> >& distance_map)
+{
+	// If (u,v) and (u,w) are two marked arcs such that
+	// distance[w][v] > 0, then (u,v) can be dropped.
+	for(map<vcCPElement*,map<vcCPElement*,int> >::iterator iter = distance_map.begin(),
+			fiter = distance_map.end(); iter != fiter; iter++)
+	{
+		vcCPElement* u = (*iter).first;
+		vector<vcCPElement*> marked_successors;
+
+		int N = u->Get_Number_Of_Marked_Successors();
+
+		for(int idx = 0, fidx = N; idx  < fidx; idx++)
+		{
+			vcCPElement* v = u->Get_Marked_Successor(idx);
+			marked_successors.push_back(v);
+		}
+
+		// Look to drop one arc.
+		int I,J;
+		int drop_one = 0;
+		vcCPElement* evicted_element = NULL;
+		for(I = 0; I < N; I++)
+		{
+			vcCPElement* x = marked_successors[I];
+			for(J = 0; J < N; J++)
+			{
+				if(I != J) 
+				{
+					vcCPElement* y = marked_successors[J];
+					if (distance_map[y][x] > 0)
+					{ 
+						// (u,x) can be dropped!
+						drop_one = 1;
+						evicted_element = x;
+						break;
+					}
+				}
+			}
+			if(drop_one)
+				break;
+		}
+
+		if(drop_one)
+		// erase that one
+		{
+			u->Remove_Marked_Successor(evicted_element);
+			evicted_element->Remove_Marked_Predecessor(u);
+			if(vcSystem::_verbose_flag)
+				vcSystem::Info("removed redundant marked link: " + evicted_element->Get_Label() + " o<-& "
+						+ u->Get_Label());
 		}
 	}
 }

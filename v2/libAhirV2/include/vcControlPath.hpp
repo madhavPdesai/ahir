@@ -925,6 +925,7 @@ public:
   virtual void Eliminate_Redundant_Dependencies();
   virtual void Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
   virtual void Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
+  virtual void Remove_Redundant_Reenable_Arcs_Pass2(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
 
   void Add_Exported_Input(string internal_id);
   void Add_Exported_Output(string internal_id);
