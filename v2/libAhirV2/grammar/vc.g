@@ -696,7 +696,9 @@ vc_CPPipelinedLoopBody[vcCPBlock* cp]
             ( vc_CPPhiSequencer[fb]) |
             ( vc_CPTransitionMerge[fb]) |
  	    ( vc_CPAlias[fb] ) | 
-            (vc_AttributeSpec[fb]) )* RBRACE
+ 	    ( vc_CPSccArc[fb] ) | 
+            (vc_AttributeSpec[fb]) 
+ )* RBRACE
 { cp->Add_CPElement(fb); fb->Set_Pipeline_Parent(fb);}
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})* RPAREN ) 
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Output(internal_id);})* RPAREN ) 
@@ -752,7 +754,7 @@ vc_CPMarkedJoin[vcCPPipelinedForkBlock* fb]
 //-----------------------------------------------------------------------------------------------
 // vc_CPSccArc: vc_Identifier SCC_ARC vc_Identifier
 //-----------------------------------------------------------------------------------------------
-vc_CPSccArc[vcCPForkBlock* fb]
+vc_CPSccArc[vcCPBlock* fb]
 {
 	string tail_lbl;
 	string head_lbl;

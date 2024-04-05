@@ -1,0 +1,44 @@
+$pipe nic_rx_to_header : $uint<73> $depth 2
+
+$module [foo] $in (lock rwbar : $uint<1> bmask: $uint<8> ptr: $uint<64> offset: $uint<64> wdata: $uint<64>) $out (rdata: $uint<64>) $is
+{
+	rdata := wdata
+}
+
+
+$module [writeEthernetHeaderToMem]
+	$in (buf_pointer : $uint<64>) $out(addr_offset : $uint<16>)
+$is
+{
+	$branchblock [main]
+	{
+		$dopipeline $depth 15 $fullrate
+		$merge $entry $loopback
+			//
+			// Start from buffer dword 1, ie to buf_pointer + 8.
+			// Because, the buffer dword 0 is reserved for control information.
+			//
+			$phi addr_offset :=  ($bitcast ($uint<16>) 8) $on $entry naddr_offset $on $loopback
+
+			// keep track of number of dwords read so far.
+			$phi first_time := $one<1> $on $entry $zero<1> $on $loopback 
+		
+			// Read Header word from pipe
+			$phi ethernet_header := nic_rx_to_header $on $entry, $loopback
+		$endmerge
+	
+
+		// Extract individual components of the word 
+		$volatile $split (ethernet_header 1 64 8)(last_bit wdata wkeep)
+	
+		// write control information.
+		$call foo (0 0 wkeep buf_pointer ($bitcast ($uint<64>) addr_offset)  wdata)  (ignore_return) 
+
+		$volatile naddr_offset := (addr_offset + 8)
+
+		// If 2 words are stored, then end
+		$while first_time
+	}  
+}
+
+

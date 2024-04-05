@@ -546,6 +546,8 @@ public:
   virtual void Bind(string place_name, string region_name, string transition_name, bool input_binding);
   virtual void Print_VHDL_Bindings(vcControlPath* cp, ostream& ofile);
   void Update_Binding_Predecessor_Successor_Links();
+  
+  virtual void Add_Scc_Arc (string tail_lbl, string head_lbl);
 };
 
 class vcCPSeriesBlock: public vcCPBlock
@@ -873,7 +875,6 @@ public:
   void Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_vec);
   void Add_Join_Point(string& join_name, vector<string>& join_cpe_vec);
 
-  void Add_Scc_Arc (string tail_lbl, string head_lbl);
 
   virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m);
 

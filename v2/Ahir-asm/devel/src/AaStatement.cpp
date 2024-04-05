@@ -6326,9 +6326,16 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 
 	__F("condition_evaluated", "$null");
 
+
+
 	// dependencies.
 	pstmt->Write_VC_Load_Store_Dependencies(true, load_store_ordering_map,ofile);
 	pstmt->Write_VC_Pipe_Dependencies(true, pipe_map,ofile);
+
+	// from condition_evaluated to entry, there is an arc to be used
+	// while computing strongly connected components.
+	ofile << "// SCC arc from condition_evaluated to entry" << endl;
+	ofile << "$scc_arc condition_evaluated => $entry" << endl;
 
 	ofile << "}"; // end of loop-body.
 	//exports
