@@ -1,0 +1,32 @@
+$pipe input_data output_data: $uint<32> $depth 2
+
+$pipeline $depth 15 $buffering 1 $fullrate $deterministic $operator $module [core]
+	$in (X0: $uint<32>) $out (X7 : $uint<32>) $is
+{
+		X1 := X0
+		X2 := X1
+		X3 := X2
+		X4 := X3
+		X5 := X4
+		X6 := X5
+		X7 := X6
+}
+
+
+
+$module [shift_register_daemon] $in () $out () $is
+{
+	$branchblock[loop]  {
+	     $dopipeline $depth 15 $fullrate
+		$merge $entry $loopback $endmerge
+
+		X0 := input_data
+
+		$call core (X0) (X7)
+
+		output_data := X7
+
+	      $while 1
+	}
+}
+
