@@ -404,6 +404,9 @@ int main(int argc, char* argv[])
 	  sys_file.close();
 	  cerr << "Info: number of register bits used in FIFO's = " << vcSystem::_fifo_register_count << endl;
 
+	  cerr << "Info: number of marked arcs removed during redundancy removal = " <<
+			vcSystem::_number_of_marked_arcs_saved << endl;	
+
 	  ofstream sys_tb_file;
 	  string tb_file_name = sys_name + "_test_bench.unformatted_vhdl";
 	  sys_tb_file.open(tb_file_name.c_str());

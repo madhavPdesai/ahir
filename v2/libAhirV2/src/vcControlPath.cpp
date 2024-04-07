@@ -3100,6 +3100,9 @@ void vcCPPipelinedForkBlock::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map
 			vcCPElement* v = *eiter;
 			u->Remove_Marked_Predecessor(v);
 			v->Remove_Marked_Successor(u);
+
+			vcSystem::_number_of_marked_arcs_saved += 1;
+
 			if(vcSystem::_verbose_flag)
 				vcSystem::Info("removed redundant marked link: " + u->Get_Label() + " o<-& "
 						+ v->Get_Label());
@@ -3152,17 +3155,21 @@ void vcCPPipelinedForkBlock::Remove_Redundant_Reenable_Arcs_Pass2(map<vcCPElemen
 					}
 				}
 			}
+
 			if(drop_one)
 				break;
 		}
 
 		if(drop_one)
-		// erase that one
+			// erase that one
 		{
 			u->Remove_Marked_Successor(evicted_element);
 			evicted_element->Remove_Marked_Predecessor(u);
+			vcSystem::_number_of_marked_arcs_saved += 1;
+
 			if(vcSystem::_verbose_flag)
-				vcSystem::Info("removed redundant marked link: " + evicted_element->Get_Label() + " o<-& "
+				vcSystem::Info("removed redundant marked link: " + 
+						evicted_element->Get_Label() + " o<-& "
 						+ u->Get_Label());
 		}
 	}

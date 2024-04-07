@@ -85,6 +85,7 @@ string vcSystem::_vhdl_work_library = "work";
 string vcSystem::_tool_name;
 string vcSystem::_top_entity_name = "ahir_system";
 int    vcSystem::_estimated_buffering_bits = 0;
+int    vcSystem::_number_of_marked_arcs_saved = 0;
 
 
 vcSystem::vcSystem(string id):vcRoot(id)

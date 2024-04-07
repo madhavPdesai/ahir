@@ -91,6 +91,7 @@ class vcSystem: public vcRoot
 
   static string _top_entity_name;
   static int _estimated_buffering_bits;
+  static int _number_of_marked_arcs_saved;
 
   static int _bypass_stride;
   static bool _generate_hsys_file;
