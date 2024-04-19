@@ -206,7 +206,6 @@ begin  -- SimModel
 
  qDGt1: if queue_depth > 1 generate 
   NTB: block 
-   signal queue_array : QueueArray(queue_depth-1 downto 0);
    signal read_pointer, write_pointer, write_pointer_plus_1: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
    signal next_read_pointer, next_write_pointer: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
 
@@ -255,35 +254,43 @@ begin  -- SimModel
     end process;
     wrpReg: SynchResetRegisterUnsigned generic map (name => name & ":wrpreg", data_width => write_pointer'length)
 		port map (clk => clk, reset => reset, din => next_write_pointer, dout => write_pointer);
+
+  -----------------------------------------  declared the array if not distrib ram case ------------------------
   notDistribRam: if not global_use_vivado_distributed_ram_queue generate
-    -- bottom pointer gives the data in FIFO mode..
-    process (read_pointer, queue_array)
-	variable data_out_var : std_logic_vector(data_width-1 downto 0);
-    begin
-	data_out_var := (others =>  '0');
-        for I in 0 to queue_depth-1 loop
-	    if(I = To_Integer(read_pointer)) then
-    		data_out_var := queue_array(I);
-	    end if;
-	end loop;
-	base_data_out <= data_out_var;
-    end process;
+    QueueArrayBlock: block
+   	signal queue_array : QueueArray(queue_depth-1 downto 0);
+    begin 
+        -- bottom pointer gives the data in FIFO mode..
+        process (read_pointer, queue_array)
+	    variable data_out_var : std_logic_vector(data_width-1 downto 0);
+        begin
+	    data_out_var := (others =>  '0');
+            for I in 0 to queue_depth-1 loop
+	        if(I = To_Integer(read_pointer)) then
+    		    data_out_var := queue_array(I);
+	        end if;
+	    end loop;
+	    base_data_out <= data_out_var;
+        end process;
 
-    -- write to queue-array.
-    Wgen: for W in 0 to queue_depth-1 generate
-       process(clk, reset, write_flag, write_pointer, data_in) 
-       begin
-		if(clk'event and (clk = '1')) then
-			if(reset = '1') then
-                             queue_array(W) <= (others => '0');
-			elsif (write_flag and (W = write_pointer)) then
-			     queue_array(W) <= data_in;
-			end if;
-		end if;
-       end process;
-    end generate Wgen;
+        -- write to queue-array.
+        Wgen: for W in 0 to queue_depth-1 generate
+           process(clk, reset, write_flag, write_pointer, data_in) 
+           begin
+		    if(clk'event and (clk = '1')) then
+			    if(reset = '1') then
+                                 queue_array(W) <= (others => '0');
+			    elsif (write_flag and (W = write_pointer)) then
+			         queue_array(W) <= data_in;
+			    end if;
+		    end if;
+           end process;
+        end generate Wgen;
+    end block QueueArrayBlock;
   end generate notDistribRam;
+  -----------------------------------------  end non distrib ram case -------------------------------------------
 
+  -----------------------------------------  begin distrib ram case   -------------------------------------------
   write_enable <= '1' when write_flag else '0';
   DistribRam: if global_use_vivado_distributed_ram_queue generate
       distrib_ram_inst:
@@ -301,6 +308,7 @@ begin  -- SimModel
 					clk => clk
 				);
   end generate DistribRam;
+  -----------------------------------------  end distrib ram case   -------------------------------------------
   
    not_rbypGen: if not reverse_bypass_flag generate
 

@@ -1,4 +1,4 @@
-$pipe input_data output_data: $uint<32> $depth 2
+$pipe input_data output_data: $uint<32> $depth 1 $p2p
 
 $pipeline $depth 15 $buffering 1 $fullrate $deterministic $operator $module [core]
 	$in (X0: $uint<32>) $out (X7 : $uint<32>) $is

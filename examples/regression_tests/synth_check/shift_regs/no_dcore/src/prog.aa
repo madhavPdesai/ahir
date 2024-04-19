@@ -1,4 +1,4 @@
-$pipe input_data output_data: $uint<32> $depth 2
+$pipe input_data output_data: $uint<32> $depth 1 $p2p
 
 
 $module [shift_register_daemon] $in () $out () $is

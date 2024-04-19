@@ -69,6 +69,9 @@ architecture Base of InputPort_P2P is
   type SampleFsmState is (IDLE, WAITING);
   signal fsm_state: SampleFsmState;
   signal has_data: std_logic;
+
+  constant use_unload_register :boolean := (queue_depth = 1) or bypass_flag;
+
 begin
 
     noBarrier: if (not barrier_flag) or nonblocking_read_flag generate
@@ -112,7 +115,8 @@ begin
 				data_width => data_width,
 				   buffer_size => queue_depth, 
 					bypass_flag => bypass_flag,  
-						nonblocking_read_flag => nonblocking_read_flag)
+						use_unload_register => use_unload_register,
+							nonblocking_read_flag => nonblocking_read_flag)
 	port map (write_req => oack, write_ack => oreq, 
 					write_data => odata,
 				unload_req => update_req,

@@ -50,4 +50,10 @@ package GlobalConstants is
     constant global_pipe_shallowness_threshold : integer := 10;  
 
 
+    -- use the optimized unload buffer implementation if possible.
+    -- this saves a substantial amount of logic, but  can result
+    -- in a slight (2.5%) performance reduction.  use it for the
+    -- minimizing resource usage.
+    constant global_use_optimized_unload_buffer : boolean := false;
+
 end package GlobalConstants;
