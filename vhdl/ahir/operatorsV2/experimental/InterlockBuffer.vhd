@@ -73,6 +73,9 @@ architecture default_arch of InterlockBuffer is
   signal has_data: std_logic;
 
   constant use_unload_register : boolean := not cut_through;
+  constant use_simple_ilock_implementation :boolean 
+			:= (not flow_through) and (not bypass_flag) and (buffer_size = 1);
+			
   
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
@@ -121,59 +124,91 @@ begin  -- default_arch
         buf_write_data <= write_data(data_width-1 downto 0);
         read_data  <= buf_read_data;
       end generate outSmaller;
-  
-      -- write FSM to pipe.
-      process(clk,reset, l_fsm_state, buf_write_ack, write_req)
-        variable nstate : LoadFsmState;
-      begin
-        nstate := l_fsm_state;
-        buf_write_req <= '0';
-        write_ack <= false;
-        if(l_fsm_state = l_idle) then
-	  if(write_req) then
-            buf_write_req <= '1';
-            if(buf_write_ack = '1') then
-              write_ack <= true;
-            else
-              nstate := l_busy;
-            end if;
-	  end if;
-        else
-	  buf_write_req <= '1';
-	  if(buf_write_ack = '1') then
-            nstate := l_idle;
-            write_ack <= true;
-	  end if;
-        end if;
-  
-        if(clk'event and clk = '1') then
-	  if(reset = '1') then
-            l_fsm_state <= l_idle;
-	  else
-            l_fsm_state <= nstate;
-	  end if;
-        end if;
-      end process;
-  
-      -- the unload buffer.
-      buf : UnloadBuffer generic map (
-        name =>  name & " buffer ",
-        data_width => data_width,
-        buffer_size => buffer_size, 
-	use_unload_register => use_unload_register,
-        bypass_flag => bypass_flag)
-        port map (
-          write_req   => buf_write_req,
-          write_ack   => buf_write_ack,
-          write_data  => buf_write_data,
-          unload_req  => read_req,
-          unload_ack  => read_ack,
-          read_data   => buf_read_data,
- 	  has_data => has_data,
-          clk         => clk,
-          reset       => reset);
+      
+      SimpleImplGen: if use_simple_ilock_implementation  generate
+	 -- for some reason this is getting deadlocked.  This means
+	 -- that there is some dependency 
+	 --       sample_req -> sample_ack -> update_req 
+	 -- somewhere in the logic.
+         sb: block
+             signal joined_sig: boolean;
+         begin
 
-    end generate interlockBuf;
-  end generate NoFlowThrough;
+		cj: join2 generic map (bypass => true, name => "simpleImplGen:join2")
+			port map (pred0 => write_req, pred1 => read_req, 
+					symbol_out => joined_sig, 
+						clk => clk, reset => reset);
 
+		write_ack <= joined_sig;
+		process(clk, reset, joined_sig, buf_write_data)
+		begin
+			if (clk'event and (clk = '1')) then 
+				if(reset = '1') then
+					read_ack <= false;
+				else
+					if(joined_sig) then
+						buf_read_data <= buf_write_data;
+					end if;
+					read_ack <= joined_sig;
+				end if;
+			 end if;	
+		end process;
+         end block sb;
+      end generate SimpleImplGen;
+
+      ulbImplGen: if (not use_simple_ilock_implementation) generate
+         -- write FSM to pipe.
+         process(clk,reset, l_fsm_state, buf_write_ack, write_req)
+           variable nstate : LoadFsmState;
+         begin
+           nstate := l_fsm_state;
+           buf_write_req <= '0';
+           write_ack <= false;
+           if(l_fsm_state = l_idle) then
+	     if(write_req) then
+               buf_write_req <= '1';
+               if(buf_write_ack = '1') then
+                 write_ack <= true;
+               else
+                 nstate := l_busy;
+               end if;
+	     end if;
+           else
+	     buf_write_req <= '1';
+	     if(buf_write_ack = '1') then
+               nstate := l_idle;
+               write_ack <= true;
+	     end if;
+           end if;
+     
+           if(clk'event and clk = '1') then
+	     if(reset = '1') then
+               l_fsm_state <= l_idle;
+	     else
+               l_fsm_state <= nstate;
+	     end if;
+           end if;
+         end process;
+     
+         -- the unload buffer.
+         buf : UnloadBuffer generic map (
+           name =>  name & " buffer ",
+           data_width => data_width,
+           buffer_size => buffer_size, 
+	   use_unload_register => use_unload_register,
+           bypass_flag => bypass_flag)
+           port map (
+             write_req   => buf_write_req,
+             write_ack   => buf_write_ack,
+             write_data  => buf_write_data,
+             unload_req  => read_req,
+             unload_ack  => read_ack,
+             read_data   => buf_read_data,
+ 	     has_data => has_data,
+             clk         => clk,
+             reset       => reset);
+  
+	end generate ulbImplGen; 
+       end generate interlockBuf;
+     end generate NoFlowThrough;
 end default_arch;

@@ -126,16 +126,15 @@ architecture default_arch of UnloadBuffer is
 
   constant optimized_case : boolean :=
 			global_use_optimized_unload_buffer 
-				and (buffer_size > 0) and shallow_flag and (not bypass_flag) and
-									(not use_unload_register);
+				and (buffer_size > 1) and shallow_flag and (not bypass_flag);
+									-- (not use_unload_register);
 
   constant revised_case: boolean := 
 	(not optimized_case) and 
-		((buffer_size > 0) and shallow_flag and (not use_unload_register) and (not nonblocking_read_flag));
+		((buffer_size > 0) and (bypass_flag or (buffer_size > 1))
+				and shallow_flag and (not use_unload_register) and (not nonblocking_read_flag));
 
-  constant un_revised_case: boolean :=  (not revised_case) and (not optimized_case);
-
-  -- constant revised_case: boolean := false;
+  constant un_revised_case: boolean :=  (not revised_case) and (not optimized_case) and shallow_flag;
 
 -- see comment above..
 --##decl_synopsys_sync_set_reset##

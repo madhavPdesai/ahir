@@ -25,8 +25,8 @@ void Sender()
 	uint32_t val[ORDER];
 	for(idx = 0; idx < ORDER; idx++)
 	{
-		val[idx] = idx;
-		expected_result[idx] = idx;
+		val[idx] = (1 << 31) | idx;
+		expected_result[idx] = (1 << 31) | idx;
 	}
 	write_uint32_n("input_data",val,ORDER);
 }

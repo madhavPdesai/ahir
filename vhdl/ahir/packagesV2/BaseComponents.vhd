@@ -2518,7 +2518,8 @@ package BaseComponents is
         reset: in std_logic);
   end component UnloadBufferDeep;
   component UnloadBufferOptimized is
-    generic (name: string; buffer_size: integer ; data_width : integer ; nonblocking_read_flag : boolean := false);
+    generic (name: string; buffer_size: integer ; data_width : integer ; 
+			bypass_flag, nonblocking_read_flag : boolean := false);
     port ( write_req: in std_logic;
         write_ack: out std_logic;
         write_data: in std_logic_vector(data_width-1 downto 0);

@@ -70,7 +70,9 @@ architecture Base of InputPort_P2P is
   signal fsm_state: SampleFsmState;
   signal has_data: std_logic;
 
-  constant use_unload_register :boolean := (queue_depth = 1) or bypass_flag;
+  -- by default, use unload register.. override
+  -- using global flag in unload-buffer.
+  constant use_unload_register :boolean := true;
 
 begin
 
