@@ -39,6 +39,7 @@ use ahir.Components.all;
 use ahir.BaseComponents.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
+use ahir.GlobalConstants.all;
 
 --  input port specialized for P2P ports.
 entity InputPort_P2P is
@@ -70,9 +71,8 @@ architecture Base of InputPort_P2P is
   signal fsm_state: SampleFsmState;
   signal has_data: std_logic;
 
-  -- by default, use unload register.. override
-  -- using global flag in unload-buffer.
-  constant use_unload_register :boolean := true;
+  -- Don't f-around with this.
+  constant use_unload_register :boolean :=  (not global_use_optimized_unload_buffer) or bypass_flag;
 
 begin
 

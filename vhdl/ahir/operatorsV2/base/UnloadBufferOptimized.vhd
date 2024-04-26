@@ -71,7 +71,7 @@ architecture default_arch of UnloadBufferOptimized is
 
 begin  -- default_arch
 
-  assert (buffer_size > 1) report "UnloadBufferOptimized must have queue-size > 1" severity failure;
+  assert (buffer_size /= 1) report "UnloadBufferOptimized must have queue-size != 1" severity failure;
 
   has_data <= not empty;
 

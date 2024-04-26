@@ -2545,6 +2545,21 @@ package BaseComponents is
         clk : in std_logic;
         reset: in std_logic);
   end component;
+  component UnloadBufferRevisedNonblocking is
+    generic (name: string; 
+		buffer_size: integer ; 
+		data_width : integer ; 
+		bypass_flag: boolean := false);
+    port ( write_req: in std_logic;
+        write_ack: out std_logic;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        unload_req: in boolean;
+        unload_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
+        clk : in std_logic;
+        reset: in std_logic);
+  end component;
 
   component UnloadRegister is
     generic (name: string; 
@@ -2562,6 +2577,19 @@ package BaseComponents is
   end component UnloadRegister;
 
   component UnloadFsm is
+  generic (name: string; data_width: integer);
+  port ( 
+	 write_req: in std_logic;
+         write_ack: out std_logic;
+         unload_req: in boolean;
+         unload_ack: out boolean;
+	 data_in :  in std_logic_vector(data_width-1 downto 0);
+	 data_out :  out std_logic_vector(data_width-1 downto 0);
+         clk : in std_logic;
+         reset: in std_logic);
+  end component;
+
+  component UnloadFsmNoblock is
   generic (name: string; data_width: integer);
   port ( 
 	 write_req: in std_logic;

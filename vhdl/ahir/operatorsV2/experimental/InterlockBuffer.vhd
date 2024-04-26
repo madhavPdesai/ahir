@@ -38,6 +38,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
+use ahir.GlobalConstants.all;
 
 -- Synopsys DC ($^^$@!)  needs you to declare an attribute
 -- to infer a synchronous set/reset ... unbelievable.
@@ -72,9 +73,18 @@ architecture default_arch of InterlockBuffer is
 
   signal has_data: std_logic;
 
-  constant use_unload_register : boolean := not cut_through;
+  -- Don't F-around with this.
+  constant use_unload_register : boolean := 
+		((not global_use_optimized_unload_buffer) and (not cut_through))
+		or (global_use_optimized_unload_buffer and (not cut_through) and (buffer_size /= 2));
+
+  --
+  -- Do not slow down the interlock buffer!
+  --
   constant use_simple_ilock_implementation :boolean 
-			:= (not flow_through) and (not bypass_flag) and (buffer_size = 1);
+			:= global_use_optimized_unload_buffer and
+					(not flow_through) and  (buffer_size = 1) and
+						(not bypass_flag); 
 			
   
 -- see comment above..
@@ -126,10 +136,6 @@ begin  -- default_arch
       end generate outSmaller;
       
       SimpleImplGen: if use_simple_ilock_implementation  generate
-	 -- for some reason this is getting deadlocked.  This means
-	 -- that there is some dependency 
-	 --       sample_req -> sample_ack -> update_req 
-	 -- somewhere in the logic.
          sb: block
              signal joined_sig: boolean;
          begin

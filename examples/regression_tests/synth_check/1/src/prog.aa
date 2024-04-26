@@ -10,14 +10,10 @@ $module [shift_register_daemon] $in () $out () $is
 	$parallelblock[loop] {
 		$branchblock[Stage1] {
 			$dopipeline $depth 7 $fullrate
-				$merge $entry $loopback 
-					$phi ft := $one<1> $on $entry $zero<1> $on $loopback
-				$endmerge
+				$merge $entry $loopback $endmerge
 
-
-				x := input_data
-				xs := (x  + ($mux ft 0 (xs - xs)))
-
+				x  := input_data
+				xs := x
 				$volatile send := (xs [] 31)
 				$guard (send) s1 := xs
 			$while 1
@@ -39,14 +35,9 @@ $module [shift_register_daemon] $in () $out () $is
 				xs := x
 
 				$volatile send := (xs [] 31)
-				$guard (send) s3 := x
+				$guard (send) s3 := xs
 			$while 1
-		}
-		$branchblock[Stage4] {
-			$dopipeline $depth 7 $fullrate
-				$merge $entry $loopback $endmerge
-				x := s3
-				xs := x
+		} $branchblock[Stage4] { $dopipeline $depth 7 $fullrate $merge $entry $loopback $endmerge x := s3 xs := x
 
 				$volatile send := (xs [] 31)
 				$guard (send) output_data := xs

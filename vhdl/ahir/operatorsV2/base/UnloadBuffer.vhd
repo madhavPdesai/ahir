@@ -124,41 +124,31 @@ architecture default_arch of UnloadBuffer is
 
   constant shallow_flag : boolean :=    (buffer_size < global_pipe_shallowness_threshold);
 
-  constant optimized_case : boolean :=
-			global_use_optimized_unload_buffer 
-				and (buffer_size > 1) and shallow_flag and (not bypass_flag);
-									-- (not use_unload_register);
+  constant revised_case_blocking: boolean := 
+		((buffer_size > 0) 
+			and (bypass_flag or (buffer_size > 1))
+                        and shallow_flag 
+			and (not use_unload_register) 
+			and (not nonblocking_read_flag));
 
-  constant revised_case: boolean := 
-	(not optimized_case) and 
-		((buffer_size > 0) and (bypass_flag or (buffer_size > 1))
-				and shallow_flag and (not use_unload_register) and (not nonblocking_read_flag));
+  constant revised_case_non_blocking: boolean := 
+		global_use_optimized_unload_buffer and
+			((buffer_size > 1) and (not bypass_flag) and
+				 shallow_flag and  nonblocking_read_flag);
 
-  constant un_revised_case: boolean :=  (not revised_case) and (not optimized_case) and shallow_flag;
 
+  constant un_revised_case: boolean :=  (not revised_case_blocking) and 
+						(not revised_case_non_blocking) and
+							shallow_flag;
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
 begin  -- default_arch
 
-  OptimizedCase: if optimized_case generate
-     ulb_revised: UnloadBufferOptimized
-			generic map (name => name & "-revised",
-					buffer_size => buffer_size, 
-					data_width => data_width,
-					nonblocking_read_flag => nonblocking_read_flag)
-			port map (
-				write_req => write_req,
-				write_ack => write_ack,
-				unload_req => unload_req,
-				unload_ack => unload_ack,
-				write_data => write_data,
-				read_data => read_data, 
-				has_data => has_data,
-				clk => clk, reset => reset);
-	
-  end generate OptimizedCase;
+  RevisedCaseBlocking: if revised_case_blocking generate
 
-  RevisedCase: if revised_case generate
+         assert false report "ULB REVISED BLOCKING  " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+
 	ulb_revised: UnloadBufferRevised
 			generic map (name => name & "-revised",
 					buffer_size => buffer_size, data_width => data_width,
@@ -172,9 +162,32 @@ begin  -- default_arch
 				read_data => read_data, 
 				has_data => has_data,
 				clk => clk, reset => reset);
-  end generate RevisedCase;
+  end generate RevisedCaseBlocking;
+
+  RevisedCaseNonblocking: if revised_case_non_blocking generate
+
+         assert false report "ULB REVISED NONBLOCKING  " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+
+	ulb_revised: UnloadBufferRevisedNonblocking
+			generic map (name => name & "-revised",
+					buffer_size => buffer_size, data_width => data_width,
+						bypass_flag => bypass_flag)
+			port map (
+				write_req => write_req,
+				write_ack => write_ack,
+				unload_req => unload_req,
+				unload_ack => unload_ack,
+				write_data => write_data,
+				read_data => read_data, 
+				has_data => has_data,
+				clk => clk, reset => reset);
+  end generate RevisedCaseNonblocking;
 
   DeepCase: if not shallow_flag generate
+         assert false report "ULB DEEP " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+
 	ulb_deep: UnloadBufferDeep
 			generic map (name => name & "-deep",
 					buffer_size => buffer_size, data_width => data_width,
@@ -193,6 +206,9 @@ begin  -- default_arch
   NotRevisedCase: if un_revised_case generate
 
     ShallowCase: if shallow_flag  generate
+      assert false report "ULB with ULREG " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+
       bufGt0: if actual_buffer_size > 0 generate
 
   	has_data <= '1' when pipe_has_data else '0';
