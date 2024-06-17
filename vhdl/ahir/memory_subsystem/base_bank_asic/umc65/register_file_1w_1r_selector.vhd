@@ -64,40 +64,99 @@ begin
         TIE_HIGH_2 <= (others => '1');
 	TIE_LOW_3 <= (others => '0');
 	TIE_LOW_4 <= (others => '0');
-  SZKA65_16X16X1CM2_gen: if (address_width = 4) and (data_width = 16) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(3 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(3 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SZKA65_16X16X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
-         end block;
-  end generate SZKA65_16X16X1CM2_gen;
-  SZKA65_16X32X1CM2_gen: if (address_width = 4) and (data_width = 32) generate
+  SZKA65_32X32X1CM2_gen: if (address_width = 5) and (data_width = 32) generate
      mc: block 
             signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
             signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(3 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(4 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(4 downto 0); 
          begin 
               DATA_TIE_LOW <= (others => '0'); 
               DATA_TIE_HIGH <= (others => '1'); 
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SZKA65_16X32X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+               inst: SZKA65_32X32X1CM2
+   port map (       A0 => ADDR_1(0), 
+       A1 => ADDR_1(1), 
+       A2 => ADDR_1(2), 
+       A3 => ADDR_1(3), 
+       A4 => ADDR_1(4), 
+       B0 => ADDR_0(0), 
+       B1 => ADDR_0(1), 
+       B2 => ADDR_0(2), 
+       B3 => ADDR_0(3), 
+       B4 => ADDR_0(4), 
+       DI0 => DATAIN_0(0), 
+       DI1 => DATAIN_0(1), 
+       DI2 => DATAIN_0(2), 
+       DI3 => DATAIN_0(3), 
+       DI4 => DATAIN_0(4), 
+       DI5 => DATAIN_0(5), 
+       DI6 => DATAIN_0(6), 
+       DI7 => DATAIN_0(7), 
+       DI8 => DATAIN_0(8), 
+       DI9 => DATAIN_0(9), 
+       DI10 => DATAIN_0(10), 
+       DI11 => DATAIN_0(11), 
+       DI12 => DATAIN_0(12), 
+       DI13 => DATAIN_0(13), 
+       DI14 => DATAIN_0(14), 
+       DI15 => DATAIN_0(15), 
+       DI16 => DATAIN_0(16), 
+       DI17 => DATAIN_0(17), 
+       DI18 => DATAIN_0(18), 
+       DI19 => DATAIN_0(19), 
+       DI20 => DATAIN_0(20), 
+       DI21 => DATAIN_0(21), 
+       DI22 => DATAIN_0(22), 
+       DI23 => DATAIN_0(23), 
+       DI24 => DATAIN_0(24), 
+       DI25 => DATAIN_0(25), 
+       DI26 => DATAIN_0(26), 
+       DI27 => DATAIN_0(27), 
+       DI28 => DATAIN_0(28), 
+       DI29 => DATAIN_0(29), 
+       DI30 => DATAIN_0(30), 
+       DI31 => DATAIN_0(31), 
+       DO0 => DATAOUT_1(0), 
+       DO1 => DATAOUT_1(1), 
+       DO2 => DATAOUT_1(2), 
+       DO3 => DATAOUT_1(3), 
+       DO4 => DATAOUT_1(4), 
+       DO5 => DATAOUT_1(5), 
+       DO6 => DATAOUT_1(6), 
+       DO7 => DATAOUT_1(7), 
+       DO8 => DATAOUT_1(8), 
+       DO9 => DATAOUT_1(9), 
+       DO10 => DATAOUT_1(10), 
+       DO11 => DATAOUT_1(11), 
+       DO12 => DATAOUT_1(12), 
+       DO13 => DATAOUT_1(13), 
+       DO14 => DATAOUT_1(14), 
+       DO15 => DATAOUT_1(15), 
+       DO16 => DATAOUT_1(16), 
+       DO17 => DATAOUT_1(17), 
+       DO18 => DATAOUT_1(18), 
+       DO19 => DATAOUT_1(19), 
+       DO20 => DATAOUT_1(20), 
+       DO21 => DATAOUT_1(21), 
+       DO22 => DATAOUT_1(22), 
+       DO23 => DATAOUT_1(23), 
+       DO24 => DATAOUT_1(24), 
+       DO25 => DATAOUT_1(25), 
+       DO26 => DATAOUT_1(26), 
+       DO27 => DATAOUT_1(27), 
+       DO28 => DATAOUT_1(28), 
+       DO29 => DATAOUT_1(29), 
+       DO30 => DATAOUT_1(30), 
+       DO31 => DATAOUT_1(31), 
+ CKA => CLK, CKB => CLK,  WEB => ENABLE_0_BAR, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW);
          end block;
-  end generate SZKA65_16X32X1CM2_gen;
-  SZKA65_64X4X1CM2_gen: if (address_width = 6) and (data_width = 4) generate
+  end generate SZKA65_32X32X1CM2_gen;
+  SZKA65_64X32X1CM2_gen: if (address_width = 6) and (data_width = 32) generate
      mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
+            signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
             signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
             signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
          begin 
@@ -105,39 +164,85 @@ begin
               DATA_TIE_HIGH <= (others => '1'); 
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SZKA65_64X4X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+               inst: SZKA65_64X32X1CM2
+   port map (       A0 => ADDR_1(0), 
+       A1 => ADDR_1(1), 
+       A2 => ADDR_1(2), 
+       A3 => ADDR_1(3), 
+       A4 => ADDR_1(4), 
+       A5 => ADDR_1(5), 
+       B0 => ADDR_0(0), 
+       B1 => ADDR_0(1), 
+       B2 => ADDR_0(2), 
+       B3 => ADDR_0(3), 
+       B4 => ADDR_0(4), 
+       B5 => ADDR_0(5), 
+       DI0 => DATAIN_0(0), 
+       DI1 => DATAIN_0(1), 
+       DI2 => DATAIN_0(2), 
+       DI3 => DATAIN_0(3), 
+       DI4 => DATAIN_0(4), 
+       DI5 => DATAIN_0(5), 
+       DI6 => DATAIN_0(6), 
+       DI7 => DATAIN_0(7), 
+       DI8 => DATAIN_0(8), 
+       DI9 => DATAIN_0(9), 
+       DI10 => DATAIN_0(10), 
+       DI11 => DATAIN_0(11), 
+       DI12 => DATAIN_0(12), 
+       DI13 => DATAIN_0(13), 
+       DI14 => DATAIN_0(14), 
+       DI15 => DATAIN_0(15), 
+       DI16 => DATAIN_0(16), 
+       DI17 => DATAIN_0(17), 
+       DI18 => DATAIN_0(18), 
+       DI19 => DATAIN_0(19), 
+       DI20 => DATAIN_0(20), 
+       DI21 => DATAIN_0(21), 
+       DI22 => DATAIN_0(22), 
+       DI23 => DATAIN_0(23), 
+       DI24 => DATAIN_0(24), 
+       DI25 => DATAIN_0(25), 
+       DI26 => DATAIN_0(26), 
+       DI27 => DATAIN_0(27), 
+       DI28 => DATAIN_0(28), 
+       DI29 => DATAIN_0(29), 
+       DI30 => DATAIN_0(30), 
+       DI31 => DATAIN_0(31), 
+       DO0 => DATAOUT_1(0), 
+       DO1 => DATAOUT_1(1), 
+       DO2 => DATAOUT_1(2), 
+       DO3 => DATAOUT_1(3), 
+       DO4 => DATAOUT_1(4), 
+       DO5 => DATAOUT_1(5), 
+       DO6 => DATAOUT_1(6), 
+       DO7 => DATAOUT_1(7), 
+       DO8 => DATAOUT_1(8), 
+       DO9 => DATAOUT_1(9), 
+       DO10 => DATAOUT_1(10), 
+       DO11 => DATAOUT_1(11), 
+       DO12 => DATAOUT_1(12), 
+       DO13 => DATAOUT_1(13), 
+       DO14 => DATAOUT_1(14), 
+       DO15 => DATAOUT_1(15), 
+       DO16 => DATAOUT_1(16), 
+       DO17 => DATAOUT_1(17), 
+       DO18 => DATAOUT_1(18), 
+       DO19 => DATAOUT_1(19), 
+       DO20 => DATAOUT_1(20), 
+       DO21 => DATAOUT_1(21), 
+       DO22 => DATAOUT_1(22), 
+       DO23 => DATAOUT_1(23), 
+       DO24 => DATAOUT_1(24), 
+       DO25 => DATAOUT_1(25), 
+       DO26 => DATAOUT_1(26), 
+       DO27 => DATAOUT_1(27), 
+       DO28 => DATAOUT_1(28), 
+       DO29 => DATAOUT_1(29), 
+       DO30 => DATAOUT_1(30), 
+       DO31 => DATAOUT_1(31), 
+ CKA => CLK, CKB => CLK,  WEB => ENABLE_0_BAR, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW);
          end block;
-  end generate SZKA65_64X4X1CM2_gen;
-  SZKA65_64X8X1CM2_gen: if (address_width = 6) and (data_width = 8) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SZKA65_64X8X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
-         end block;
-  end generate SZKA65_64X8X1CM2_gen;
-  SZKA65_64X16X1CM2_gen: if (address_width = 6) and (data_width = 16) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SZKA65_64X16X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
-         end block;
-  end generate SZKA65_64X16X1CM2_gen;
+  end generate SZKA65_64X32X1CM2_gen;
 end StructGen;
 

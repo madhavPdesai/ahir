@@ -58,6 +58,8 @@ int main(int argc, char* argv[])
 			tech = SCL180;
 		else if(strcmp(descr,"umc65") == 0)
 			tech = UMC65;
+		else if(strcmp(descr,"umc65_2024") == 0)
+			tech = UMC65_2024;
 		else if(strcmp(descr,"sac") == 0)
 			tech = SAC;
 
@@ -95,7 +97,7 @@ int main(int argc, char* argv[])
 		else if (strcmp (descr,"1R1W") == 0)
 		{
 			sscanf(rest_of_line,"%d %d %s %s", &addr_width, &data_width, entity_prefix, entity_postfix);
-			printInstanceAndComponents(tech, "RF",
+			printInstanceAndComponents(tech, "1R1W",
 						rf_arch_file, comp_decls_file, entity_prefix,
 						addr_width, data_width, entity_postfix);
 			appendToList(addr_width, data_width, &rf_list);

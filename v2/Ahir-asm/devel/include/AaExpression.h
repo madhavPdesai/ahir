@@ -157,6 +157,8 @@ class AaExpression: public AaRoot
 
 	virtual bool Is_Trivial() {return(false);}
 	virtual bool Is_Flow_Through();
+	virtual bool Is_A_Volatile_Function_Call() {return (false);}
+
 
 
 	virtual bool Is_Signal_Read() {return(false);}
@@ -1868,6 +1870,7 @@ class AaFunctionCallExpression: public AaExpression
 		return(this->Get_VC_Sample_Start_Transition_Name());
 	}
 
+	virtual bool Is_A_Volatile_Function_Call();
 	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC( ofstream& ofile);
 	virtual void Write_VC_Control_Path( ostream& ofile);

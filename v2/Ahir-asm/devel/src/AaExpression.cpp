@@ -937,6 +937,7 @@ void AaExpression::Get_Non_Trivial_Source_References(set<AaRoot*>& root_set, set
 				root_set.insert(this);
 			}
 		}
+
 		//
 		//  Possible predicates
 		//       a. this is in a phi
@@ -952,7 +953,12 @@ void AaExpression::Get_Non_Trivial_Source_References(set<AaRoot*>& root_set, set
 		{
 			root_set.insert(stmt);
 		}
-		else if(!this->Is_Flow_Through() && !this->Is_Implicit_Variable_Reference())
+		// flow-through means trivial and intermediate...
+		else if(!this->Is_Flow_Through() &&
+				// volatile function call is flow-through but different.
+				 !this->Is_A_Volatile_Function_Call() && 
+					// implicit means flow-through.
+					 !this->Is_Implicit_Variable_Reference())
 		//  2. if this is not flow-through, no issues.
 		//       insert this if it is serious.
 		{
@@ -962,9 +968,12 @@ void AaExpression::Get_Non_Trivial_Source_References(set<AaRoot*>& root_set, set
 		//  3. if it is intermediate.. hunt its targets down
 		//       it is a flow-through intermediate.
 		//      
-		else if(this->Get_Is_Intermediate())
+		else if(this->Get_Is_Intermediate() || 
+			// This case added later, since it is a bit special.
+					this->Is_A_Volatile_Function_Call())
 		{
-			for(set<AaExpression*>::iterator iter = _targets.begin(), fiter = _targets.end(); iter != fiter; iter++)
+			for(set<AaExpression*>::iterator iter = _targets.begin(), 
+					fiter = _targets.end(); iter != fiter; iter++)
 			{
 				AaExpression* expr = *iter;
 				expr->Get_Non_Trivial_Source_References(root_set, visited_elements);
@@ -6047,6 +6056,11 @@ AaFunctionCallExpression::AaFunctionCallExpression
 }
 
 AaFunctionCallExpression::~AaFunctionCallExpression()  {};
+
+bool AaFunctionCallExpression::Is_A_Volatile_Function_Call() 
+{
+	return (this->_called_module->Get_Volatile_Flag());
+}
 
 void AaFunctionCallExpression::Print(ostream& ofile)
 {

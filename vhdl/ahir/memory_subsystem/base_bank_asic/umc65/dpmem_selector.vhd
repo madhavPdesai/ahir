@@ -70,10 +70,10 @@ begin
 	TIE_HIGH_2 <= (others => '1');
 	TIE_LOW_3 <= (others => '0');
 	TIE_LOW_4 <= (others => '0');
-  SJKA65_32X128X1CM4_gen: if (address_width = 5) and (data_width = 128) generate
+  SJKA65_32X32X1CM4_gen: if (address_width = 5) and (data_width = 32) generate
      mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(127 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(127 downto 0); 
+            signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
             signal ADDR_TIE_LOW  : std_logic_vector(4 downto 0); 
             signal ADDR_TIE_HIGH : std_logic_vector(4 downto 0); 
          begin 
@@ -81,89 +81,309 @@ begin
               DATA_TIE_HIGH <= (others => '1'); 
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_32X128X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
+               inst: SJKA65_32X32X1CM4
+   port map (       A0 => ADDR_0(0), 
+       A1 => ADDR_0(1), 
+       A2 => ADDR_0(2), 
+       A3 => ADDR_0(3), 
+       A4 => ADDR_0(4), 
+       B0 => ADDR_1(0), 
+       B1 => ADDR_1(1), 
+       B2 => ADDR_1(2), 
+       B3 => ADDR_1(3), 
+       B4 => ADDR_1(4), 
+       DIA0 => DATAIN_0(0), 
+       DIA1 => DATAIN_0(1), 
+       DIA2 => DATAIN_0(2), 
+       DIA3 => DATAIN_0(3), 
+       DIA4 => DATAIN_0(4), 
+       DIA5 => DATAIN_0(5), 
+       DIA6 => DATAIN_0(6), 
+       DIA7 => DATAIN_0(7), 
+       DIA8 => DATAIN_0(8), 
+       DIA9 => DATAIN_0(9), 
+       DIA10 => DATAIN_0(10), 
+       DIA11 => DATAIN_0(11), 
+       DIA12 => DATAIN_0(12), 
+       DIA13 => DATAIN_0(13), 
+       DIA14 => DATAIN_0(14), 
+       DIA15 => DATAIN_0(15), 
+       DIA16 => DATAIN_0(16), 
+       DIA17 => DATAIN_0(17), 
+       DIA18 => DATAIN_0(18), 
+       DIA19 => DATAIN_0(19), 
+       DIA20 => DATAIN_0(20), 
+       DIA21 => DATAIN_0(21), 
+       DIA22 => DATAIN_0(22), 
+       DIA23 => DATAIN_0(23), 
+       DIA24 => DATAIN_0(24), 
+       DIA25 => DATAIN_0(25), 
+       DIA26 => DATAIN_0(26), 
+       DIA27 => DATAIN_0(27), 
+       DIA28 => DATAIN_0(28), 
+       DIA29 => DATAIN_0(29), 
+       DIA30 => DATAIN_0(30), 
+       DIA31 => DATAIN_0(31), 
+       DIB0 => DATAIN_1(0), 
+       DIB1 => DATAIN_1(1), 
+       DIB2 => DATAIN_1(2), 
+       DIB3 => DATAIN_1(3), 
+       DIB4 => DATAIN_1(4), 
+       DIB5 => DATAIN_1(5), 
+       DIB6 => DATAIN_1(6), 
+       DIB7 => DATAIN_1(7), 
+       DIB8 => DATAIN_1(8), 
+       DIB9 => DATAIN_1(9), 
+       DIB10 => DATAIN_1(10), 
+       DIB11 => DATAIN_1(11), 
+       DIB12 => DATAIN_1(12), 
+       DIB13 => DATAIN_1(13), 
+       DIB14 => DATAIN_1(14), 
+       DIB15 => DATAIN_1(15), 
+       DIB16 => DATAIN_1(16), 
+       DIB17 => DATAIN_1(17), 
+       DIB18 => DATAIN_1(18), 
+       DIB19 => DATAIN_1(19), 
+       DIB20 => DATAIN_1(20), 
+       DIB21 => DATAIN_1(21), 
+       DIB22 => DATAIN_1(22), 
+       DIB23 => DATAIN_1(23), 
+       DIB24 => DATAIN_1(24), 
+       DIB25 => DATAIN_1(25), 
+       DIB26 => DATAIN_1(26), 
+       DIB27 => DATAIN_1(27), 
+       DIB28 => DATAIN_1(28), 
+       DIB29 => DATAIN_1(29), 
+       DIB30 => DATAIN_1(30), 
+       DIB31 => DATAIN_1(31), 
+       DOA0 => DATAOUT_0(0), 
+       DOA1 => DATAOUT_0(1), 
+       DOA2 => DATAOUT_0(2), 
+       DOA3 => DATAOUT_0(3), 
+       DOA4 => DATAOUT_0(4), 
+       DOA5 => DATAOUT_0(5), 
+       DOA6 => DATAOUT_0(6), 
+       DOA7 => DATAOUT_0(7), 
+       DOA8 => DATAOUT_0(8), 
+       DOA9 => DATAOUT_0(9), 
+       DOA10 => DATAOUT_0(10), 
+       DOA11 => DATAOUT_0(11), 
+       DOA12 => DATAOUT_0(12), 
+       DOA13 => DATAOUT_0(13), 
+       DOA14 => DATAOUT_0(14), 
+       DOA15 => DATAOUT_0(15), 
+       DOA16 => DATAOUT_0(16), 
+       DOA17 => DATAOUT_0(17), 
+       DOA18 => DATAOUT_0(18), 
+       DOA19 => DATAOUT_0(19), 
+       DOA20 => DATAOUT_0(20), 
+       DOA21 => DATAOUT_0(21), 
+       DOA22 => DATAOUT_0(22), 
+       DOA23 => DATAOUT_0(23), 
+       DOA24 => DATAOUT_0(24), 
+       DOA25 => DATAOUT_0(25), 
+       DOA26 => DATAOUT_0(26), 
+       DOA27 => DATAOUT_0(27), 
+       DOA28 => DATAOUT_0(28), 
+       DOA29 => DATAOUT_0(29), 
+       DOA30 => DATAOUT_0(30), 
+       DOA31 => DATAOUT_0(31), 
+       DOB0 => DATAOUT_1(0), 
+       DOB1 => DATAOUT_1(1), 
+       DOB2 => DATAOUT_1(2), 
+       DOB3 => DATAOUT_1(3), 
+       DOB4 => DATAOUT_1(4), 
+       DOB5 => DATAOUT_1(5), 
+       DOB6 => DATAOUT_1(6), 
+       DOB7 => DATAOUT_1(7), 
+       DOB8 => DATAOUT_1(8), 
+       DOB9 => DATAOUT_1(9), 
+       DOB10 => DATAOUT_1(10), 
+       DOB11 => DATAOUT_1(11), 
+       DOB12 => DATAOUT_1(12), 
+       DOB13 => DATAOUT_1(13), 
+       DOB14 => DATAOUT_1(14), 
+       DOB15 => DATAOUT_1(15), 
+       DOB16 => DATAOUT_1(16), 
+       DOB17 => DATAOUT_1(17), 
+       DOB18 => DATAOUT_1(18), 
+       DOB19 => DATAOUT_1(19), 
+       DOB20 => DATAOUT_1(20), 
+       DOB21 => DATAOUT_1(21), 
+       DOB22 => DATAOUT_1(22), 
+       DOB23 => DATAOUT_1(23), 
+       DOB24 => DATAOUT_1(24), 
+       DOB25 => DATAOUT_1(25), 
+       DOB26 => DATAOUT_1(26), 
+       DOB27 => DATAOUT_1(27), 
+       DOB28 => DATAOUT_1(28), 
+       DOB29 => DATAOUT_1(29), 
+       DOB30 => DATAOUT_1(30), 
+       DOB31 => DATAOUT_1(31), 
+CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW, DVS3 => TIE_LOW, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR
+);
          end block;
-  end generate SJKA65_32X128X1CM4_gen;
-  SJKA65_64X4X1CM4_gen: if (address_width = 6) and (data_width = 4) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_64X4X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
-         end block;
-  end generate SJKA65_64X4X1CM4_gen;
-  SJKA65_64X8X1CM4_gen: if (address_width = 6) and (data_width = 8) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_64X8X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
-         end block;
-  end generate SJKA65_64X8X1CM4_gen;
-  SJKA65_64X16X1CM4_gen: if (address_width = 6) and (data_width = 16) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_64X16X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
-         end block;
-  end generate SJKA65_64X16X1CM4_gen;
-  SJKA65_256X4X1CM4_gen: if (address_width = 8) and (data_width = 4) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(7 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(7 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_256X4X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
-         end block;
-  end generate SJKA65_256X4X1CM4_gen;
-  SJKA65_256X16X1CM4_gen: if (address_width = 8) and (data_width = 16) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(7 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(7 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_256X16X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
-         end block;
-  end generate SJKA65_256X16X1CM4_gen;
-  SJKA65_256X32X1CM4_gen: if (address_width = 8) and (data_width = 32) generate
+  end generate SJKA65_32X32X1CM4_gen;
+  SJKA65_64X32X1CM4_gen: if (address_width = 6) and (data_width = 32) generate
      mc: block 
             signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
             signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SJKA65_64X32X1CM4
+   port map (       A0 => ADDR_0(0), 
+       A1 => ADDR_0(1), 
+       A2 => ADDR_0(2), 
+       A3 => ADDR_0(3), 
+       A4 => ADDR_0(4), 
+       A5 => ADDR_0(5), 
+       B0 => ADDR_1(0), 
+       B1 => ADDR_1(1), 
+       B2 => ADDR_1(2), 
+       B3 => ADDR_1(3), 
+       B4 => ADDR_1(4), 
+       B5 => ADDR_1(5), 
+       DIA0 => DATAIN_0(0), 
+       DIA1 => DATAIN_0(1), 
+       DIA2 => DATAIN_0(2), 
+       DIA3 => DATAIN_0(3), 
+       DIA4 => DATAIN_0(4), 
+       DIA5 => DATAIN_0(5), 
+       DIA6 => DATAIN_0(6), 
+       DIA7 => DATAIN_0(7), 
+       DIA8 => DATAIN_0(8), 
+       DIA9 => DATAIN_0(9), 
+       DIA10 => DATAIN_0(10), 
+       DIA11 => DATAIN_0(11), 
+       DIA12 => DATAIN_0(12), 
+       DIA13 => DATAIN_0(13), 
+       DIA14 => DATAIN_0(14), 
+       DIA15 => DATAIN_0(15), 
+       DIA16 => DATAIN_0(16), 
+       DIA17 => DATAIN_0(17), 
+       DIA18 => DATAIN_0(18), 
+       DIA19 => DATAIN_0(19), 
+       DIA20 => DATAIN_0(20), 
+       DIA21 => DATAIN_0(21), 
+       DIA22 => DATAIN_0(22), 
+       DIA23 => DATAIN_0(23), 
+       DIA24 => DATAIN_0(24), 
+       DIA25 => DATAIN_0(25), 
+       DIA26 => DATAIN_0(26), 
+       DIA27 => DATAIN_0(27), 
+       DIA28 => DATAIN_0(28), 
+       DIA29 => DATAIN_0(29), 
+       DIA30 => DATAIN_0(30), 
+       DIA31 => DATAIN_0(31), 
+       DIB0 => DATAIN_1(0), 
+       DIB1 => DATAIN_1(1), 
+       DIB2 => DATAIN_1(2), 
+       DIB3 => DATAIN_1(3), 
+       DIB4 => DATAIN_1(4), 
+       DIB5 => DATAIN_1(5), 
+       DIB6 => DATAIN_1(6), 
+       DIB7 => DATAIN_1(7), 
+       DIB8 => DATAIN_1(8), 
+       DIB9 => DATAIN_1(9), 
+       DIB10 => DATAIN_1(10), 
+       DIB11 => DATAIN_1(11), 
+       DIB12 => DATAIN_1(12), 
+       DIB13 => DATAIN_1(13), 
+       DIB14 => DATAIN_1(14), 
+       DIB15 => DATAIN_1(15), 
+       DIB16 => DATAIN_1(16), 
+       DIB17 => DATAIN_1(17), 
+       DIB18 => DATAIN_1(18), 
+       DIB19 => DATAIN_1(19), 
+       DIB20 => DATAIN_1(20), 
+       DIB21 => DATAIN_1(21), 
+       DIB22 => DATAIN_1(22), 
+       DIB23 => DATAIN_1(23), 
+       DIB24 => DATAIN_1(24), 
+       DIB25 => DATAIN_1(25), 
+       DIB26 => DATAIN_1(26), 
+       DIB27 => DATAIN_1(27), 
+       DIB28 => DATAIN_1(28), 
+       DIB29 => DATAIN_1(29), 
+       DIB30 => DATAIN_1(30), 
+       DIB31 => DATAIN_1(31), 
+       DOA0 => DATAOUT_0(0), 
+       DOA1 => DATAOUT_0(1), 
+       DOA2 => DATAOUT_0(2), 
+       DOA3 => DATAOUT_0(3), 
+       DOA4 => DATAOUT_0(4), 
+       DOA5 => DATAOUT_0(5), 
+       DOA6 => DATAOUT_0(6), 
+       DOA7 => DATAOUT_0(7), 
+       DOA8 => DATAOUT_0(8), 
+       DOA9 => DATAOUT_0(9), 
+       DOA10 => DATAOUT_0(10), 
+       DOA11 => DATAOUT_0(11), 
+       DOA12 => DATAOUT_0(12), 
+       DOA13 => DATAOUT_0(13), 
+       DOA14 => DATAOUT_0(14), 
+       DOA15 => DATAOUT_0(15), 
+       DOA16 => DATAOUT_0(16), 
+       DOA17 => DATAOUT_0(17), 
+       DOA18 => DATAOUT_0(18), 
+       DOA19 => DATAOUT_0(19), 
+       DOA20 => DATAOUT_0(20), 
+       DOA21 => DATAOUT_0(21), 
+       DOA22 => DATAOUT_0(22), 
+       DOA23 => DATAOUT_0(23), 
+       DOA24 => DATAOUT_0(24), 
+       DOA25 => DATAOUT_0(25), 
+       DOA26 => DATAOUT_0(26), 
+       DOA27 => DATAOUT_0(27), 
+       DOA28 => DATAOUT_0(28), 
+       DOA29 => DATAOUT_0(29), 
+       DOA30 => DATAOUT_0(30), 
+       DOA31 => DATAOUT_0(31), 
+       DOB0 => DATAOUT_1(0), 
+       DOB1 => DATAOUT_1(1), 
+       DOB2 => DATAOUT_1(2), 
+       DOB3 => DATAOUT_1(3), 
+       DOB4 => DATAOUT_1(4), 
+       DOB5 => DATAOUT_1(5), 
+       DOB6 => DATAOUT_1(6), 
+       DOB7 => DATAOUT_1(7), 
+       DOB8 => DATAOUT_1(8), 
+       DOB9 => DATAOUT_1(9), 
+       DOB10 => DATAOUT_1(10), 
+       DOB11 => DATAOUT_1(11), 
+       DOB12 => DATAOUT_1(12), 
+       DOB13 => DATAOUT_1(13), 
+       DOB14 => DATAOUT_1(14), 
+       DOB15 => DATAOUT_1(15), 
+       DOB16 => DATAOUT_1(16), 
+       DOB17 => DATAOUT_1(17), 
+       DOB18 => DATAOUT_1(18), 
+       DOB19 => DATAOUT_1(19), 
+       DOB20 => DATAOUT_1(20), 
+       DOB21 => DATAOUT_1(21), 
+       DOB22 => DATAOUT_1(22), 
+       DOB23 => DATAOUT_1(23), 
+       DOB24 => DATAOUT_1(24), 
+       DOB25 => DATAOUT_1(25), 
+       DOB26 => DATAOUT_1(26), 
+       DOB27 => DATAOUT_1(27), 
+       DOB28 => DATAOUT_1(28), 
+       DOB29 => DATAOUT_1(29), 
+       DOB30 => DATAOUT_1(30), 
+       DOB31 => DATAOUT_1(31), 
+CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW, DVS3 => TIE_LOW, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR
+);
+         end block;
+  end generate SJKA65_64X32X1CM4_gen;
+  SJKA65_256X54X1CM4_gen: if (address_width = 8) and (data_width = 54) generate
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(53 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(53 downto 0); 
             signal ADDR_TIE_LOW  : std_logic_vector(7 downto 0); 
             signal ADDR_TIE_HIGH : std_logic_vector(7 downto 0); 
          begin 
@@ -171,9 +391,242 @@ begin
               DATA_TIE_HIGH <= (others => '1'); 
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_256X32X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
+               inst: SJKA65_256X54X1CM4
+   port map (       A0 => ADDR_0(0), 
+       A1 => ADDR_0(1), 
+       A2 => ADDR_0(2), 
+       A3 => ADDR_0(3), 
+       A4 => ADDR_0(4), 
+       A5 => ADDR_0(5), 
+       A6 => ADDR_0(6), 
+       A7 => ADDR_0(7), 
+       B0 => ADDR_1(0), 
+       B1 => ADDR_1(1), 
+       B2 => ADDR_1(2), 
+       B3 => ADDR_1(3), 
+       B4 => ADDR_1(4), 
+       B5 => ADDR_1(5), 
+       B6 => ADDR_1(6), 
+       B7 => ADDR_1(7), 
+       DIA0 => DATAIN_0(0), 
+       DIA1 => DATAIN_0(1), 
+       DIA2 => DATAIN_0(2), 
+       DIA3 => DATAIN_0(3), 
+       DIA4 => DATAIN_0(4), 
+       DIA5 => DATAIN_0(5), 
+       DIA6 => DATAIN_0(6), 
+       DIA7 => DATAIN_0(7), 
+       DIA8 => DATAIN_0(8), 
+       DIA9 => DATAIN_0(9), 
+       DIA10 => DATAIN_0(10), 
+       DIA11 => DATAIN_0(11), 
+       DIA12 => DATAIN_0(12), 
+       DIA13 => DATAIN_0(13), 
+       DIA14 => DATAIN_0(14), 
+       DIA15 => DATAIN_0(15), 
+       DIA16 => DATAIN_0(16), 
+       DIA17 => DATAIN_0(17), 
+       DIA18 => DATAIN_0(18), 
+       DIA19 => DATAIN_0(19), 
+       DIA20 => DATAIN_0(20), 
+       DIA21 => DATAIN_0(21), 
+       DIA22 => DATAIN_0(22), 
+       DIA23 => DATAIN_0(23), 
+       DIA24 => DATAIN_0(24), 
+       DIA25 => DATAIN_0(25), 
+       DIA26 => DATAIN_0(26), 
+       DIA27 => DATAIN_0(27), 
+       DIA28 => DATAIN_0(28), 
+       DIA29 => DATAIN_0(29), 
+       DIA30 => DATAIN_0(30), 
+       DIA31 => DATAIN_0(31), 
+       DIA32 => DATAIN_0(32), 
+       DIA33 => DATAIN_0(33), 
+       DIA34 => DATAIN_0(34), 
+       DIA35 => DATAIN_0(35), 
+       DIA36 => DATAIN_0(36), 
+       DIA37 => DATAIN_0(37), 
+       DIA38 => DATAIN_0(38), 
+       DIA39 => DATAIN_0(39), 
+       DIA40 => DATAIN_0(40), 
+       DIA41 => DATAIN_0(41), 
+       DIA42 => DATAIN_0(42), 
+       DIA43 => DATAIN_0(43), 
+       DIA44 => DATAIN_0(44), 
+       DIA45 => DATAIN_0(45), 
+       DIA46 => DATAIN_0(46), 
+       DIA47 => DATAIN_0(47), 
+       DIA48 => DATAIN_0(48), 
+       DIA49 => DATAIN_0(49), 
+       DIA50 => DATAIN_0(50), 
+       DIA51 => DATAIN_0(51), 
+       DIA52 => DATAIN_0(52), 
+       DIA53 => DATAIN_0(53), 
+       DIB0 => DATAIN_1(0), 
+       DIB1 => DATAIN_1(1), 
+       DIB2 => DATAIN_1(2), 
+       DIB3 => DATAIN_1(3), 
+       DIB4 => DATAIN_1(4), 
+       DIB5 => DATAIN_1(5), 
+       DIB6 => DATAIN_1(6), 
+       DIB7 => DATAIN_1(7), 
+       DIB8 => DATAIN_1(8), 
+       DIB9 => DATAIN_1(9), 
+       DIB10 => DATAIN_1(10), 
+       DIB11 => DATAIN_1(11), 
+       DIB12 => DATAIN_1(12), 
+       DIB13 => DATAIN_1(13), 
+       DIB14 => DATAIN_1(14), 
+       DIB15 => DATAIN_1(15), 
+       DIB16 => DATAIN_1(16), 
+       DIB17 => DATAIN_1(17), 
+       DIB18 => DATAIN_1(18), 
+       DIB19 => DATAIN_1(19), 
+       DIB20 => DATAIN_1(20), 
+       DIB21 => DATAIN_1(21), 
+       DIB22 => DATAIN_1(22), 
+       DIB23 => DATAIN_1(23), 
+       DIB24 => DATAIN_1(24), 
+       DIB25 => DATAIN_1(25), 
+       DIB26 => DATAIN_1(26), 
+       DIB27 => DATAIN_1(27), 
+       DIB28 => DATAIN_1(28), 
+       DIB29 => DATAIN_1(29), 
+       DIB30 => DATAIN_1(30), 
+       DIB31 => DATAIN_1(31), 
+       DIB32 => DATAIN_1(32), 
+       DIB33 => DATAIN_1(33), 
+       DIB34 => DATAIN_1(34), 
+       DIB35 => DATAIN_1(35), 
+       DIB36 => DATAIN_1(36), 
+       DIB37 => DATAIN_1(37), 
+       DIB38 => DATAIN_1(38), 
+       DIB39 => DATAIN_1(39), 
+       DIB40 => DATAIN_1(40), 
+       DIB41 => DATAIN_1(41), 
+       DIB42 => DATAIN_1(42), 
+       DIB43 => DATAIN_1(43), 
+       DIB44 => DATAIN_1(44), 
+       DIB45 => DATAIN_1(45), 
+       DIB46 => DATAIN_1(46), 
+       DIB47 => DATAIN_1(47), 
+       DIB48 => DATAIN_1(48), 
+       DIB49 => DATAIN_1(49), 
+       DIB50 => DATAIN_1(50), 
+       DIB51 => DATAIN_1(51), 
+       DIB52 => DATAIN_1(52), 
+       DIB53 => DATAIN_1(53), 
+       DOA0 => DATAOUT_0(0), 
+       DOA1 => DATAOUT_0(1), 
+       DOA2 => DATAOUT_0(2), 
+       DOA3 => DATAOUT_0(3), 
+       DOA4 => DATAOUT_0(4), 
+       DOA5 => DATAOUT_0(5), 
+       DOA6 => DATAOUT_0(6), 
+       DOA7 => DATAOUT_0(7), 
+       DOA8 => DATAOUT_0(8), 
+       DOA9 => DATAOUT_0(9), 
+       DOA10 => DATAOUT_0(10), 
+       DOA11 => DATAOUT_0(11), 
+       DOA12 => DATAOUT_0(12), 
+       DOA13 => DATAOUT_0(13), 
+       DOA14 => DATAOUT_0(14), 
+       DOA15 => DATAOUT_0(15), 
+       DOA16 => DATAOUT_0(16), 
+       DOA17 => DATAOUT_0(17), 
+       DOA18 => DATAOUT_0(18), 
+       DOA19 => DATAOUT_0(19), 
+       DOA20 => DATAOUT_0(20), 
+       DOA21 => DATAOUT_0(21), 
+       DOA22 => DATAOUT_0(22), 
+       DOA23 => DATAOUT_0(23), 
+       DOA24 => DATAOUT_0(24), 
+       DOA25 => DATAOUT_0(25), 
+       DOA26 => DATAOUT_0(26), 
+       DOA27 => DATAOUT_0(27), 
+       DOA28 => DATAOUT_0(28), 
+       DOA29 => DATAOUT_0(29), 
+       DOA30 => DATAOUT_0(30), 
+       DOA31 => DATAOUT_0(31), 
+       DOA32 => DATAOUT_0(32), 
+       DOA33 => DATAOUT_0(33), 
+       DOA34 => DATAOUT_0(34), 
+       DOA35 => DATAOUT_0(35), 
+       DOA36 => DATAOUT_0(36), 
+       DOA37 => DATAOUT_0(37), 
+       DOA38 => DATAOUT_0(38), 
+       DOA39 => DATAOUT_0(39), 
+       DOA40 => DATAOUT_0(40), 
+       DOA41 => DATAOUT_0(41), 
+       DOA42 => DATAOUT_0(42), 
+       DOA43 => DATAOUT_0(43), 
+       DOA44 => DATAOUT_0(44), 
+       DOA45 => DATAOUT_0(45), 
+       DOA46 => DATAOUT_0(46), 
+       DOA47 => DATAOUT_0(47), 
+       DOA48 => DATAOUT_0(48), 
+       DOA49 => DATAOUT_0(49), 
+       DOA50 => DATAOUT_0(50), 
+       DOA51 => DATAOUT_0(51), 
+       DOA52 => DATAOUT_0(52), 
+       DOA53 => DATAOUT_0(53), 
+       DOB0 => DATAOUT_1(0), 
+       DOB1 => DATAOUT_1(1), 
+       DOB2 => DATAOUT_1(2), 
+       DOB3 => DATAOUT_1(3), 
+       DOB4 => DATAOUT_1(4), 
+       DOB5 => DATAOUT_1(5), 
+       DOB6 => DATAOUT_1(6), 
+       DOB7 => DATAOUT_1(7), 
+       DOB8 => DATAOUT_1(8), 
+       DOB9 => DATAOUT_1(9), 
+       DOB10 => DATAOUT_1(10), 
+       DOB11 => DATAOUT_1(11), 
+       DOB12 => DATAOUT_1(12), 
+       DOB13 => DATAOUT_1(13), 
+       DOB14 => DATAOUT_1(14), 
+       DOB15 => DATAOUT_1(15), 
+       DOB16 => DATAOUT_1(16), 
+       DOB17 => DATAOUT_1(17), 
+       DOB18 => DATAOUT_1(18), 
+       DOB19 => DATAOUT_1(19), 
+       DOB20 => DATAOUT_1(20), 
+       DOB21 => DATAOUT_1(21), 
+       DOB22 => DATAOUT_1(22), 
+       DOB23 => DATAOUT_1(23), 
+       DOB24 => DATAOUT_1(24), 
+       DOB25 => DATAOUT_1(25), 
+       DOB26 => DATAOUT_1(26), 
+       DOB27 => DATAOUT_1(27), 
+       DOB28 => DATAOUT_1(28), 
+       DOB29 => DATAOUT_1(29), 
+       DOB30 => DATAOUT_1(30), 
+       DOB31 => DATAOUT_1(31), 
+       DOB32 => DATAOUT_1(32), 
+       DOB33 => DATAOUT_1(33), 
+       DOB34 => DATAOUT_1(34), 
+       DOB35 => DATAOUT_1(35), 
+       DOB36 => DATAOUT_1(36), 
+       DOB37 => DATAOUT_1(37), 
+       DOB38 => DATAOUT_1(38), 
+       DOB39 => DATAOUT_1(39), 
+       DOB40 => DATAOUT_1(40), 
+       DOB41 => DATAOUT_1(41), 
+       DOB42 => DATAOUT_1(42), 
+       DOB43 => DATAOUT_1(43), 
+       DOB44 => DATAOUT_1(44), 
+       DOB45 => DATAOUT_1(45), 
+       DOB46 => DATAOUT_1(46), 
+       DOB47 => DATAOUT_1(47), 
+       DOB48 => DATAOUT_1(48), 
+       DOB49 => DATAOUT_1(49), 
+       DOB50 => DATAOUT_1(50), 
+       DOB51 => DATAOUT_1(51), 
+       DOB52 => DATAOUT_1(52), 
+       DOB53 => DATAOUT_1(53), 
+CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW, DVS3 => TIE_LOW, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR
+);
          end block;
-  end generate SJKA65_256X32X1CM4_gen;
+  end generate SJKA65_256X54X1CM4_gen;
 end StructGen;
 

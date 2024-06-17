@@ -1,6 +1,13 @@
 $pipe out_data : $uint<32> $depth 2
 $pipe in_data : $uint<32> $depth 2
 
+$volatile $module [nextResult] $in (count: $uint<8> cmd result: $uint<32>) $out (n_result: $uint<32>)
+$is
+{
+	n_result := ($mux (count == 0) 0 (result + cmd))
+}
+
+
 $module [p2p_check_daemon] $in() $out () $is
 {
 	$branchblock[lOoP] {
@@ -13,8 +20,12 @@ $module [p2p_check_daemon] $in() $out () $is
 		$volatile result_send := (COUNT == 16)
 		$volatile continue_flag := (COUNT < 16)
 
-		RESULT := ($mux (COUNT == 0) 0 (RESULT + CMD))
-		$guard (result_send) out_data :=  RESULT
+		// here is a pipeline, coded using single-stages
+		RESULT0 := ($call nextResult (COUNT CMD RESULT0))
+		RESULT1 := ($call nextResult (COUNT RESULT0 RESULT1))
+		RESULT2 := ($call nextResult (COUNT RESULT1 RESULT2))
+
+		$guard (result_send) out_data :=  RESULT2
 
 		$while continue_flag
 	}

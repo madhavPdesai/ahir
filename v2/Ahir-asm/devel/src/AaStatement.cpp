@@ -1408,6 +1408,7 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 	this->_source->Add_Target(this->_target);
 
 	this->_buffering = 1;
+
 }
 
 AaAssignmentStatement::~AaAssignmentStatement() {};
@@ -1742,6 +1743,7 @@ void AaAssignmentStatement::Map_Source_References()
 
 
 	this->_source->Map_Source_References(this->_source_objects);
+
 
 	if(this->_guard_expression)
 	{
@@ -6568,7 +6570,8 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 	// check if delay not accounted for.
 	if(!this->Get_Is_Volatile())
 	{
-		if(src_expression->Is_Implicit_Variable_Reference())
+		if(src_expression->Is_Implicit_Variable_Reference()
+			|| src_expression->Is_Volatile_Function_Call())
 		{
 			if(tgt_expression->Is_Implicit_Variable_Reference())
 				delay = INTERLOCK_DELAY;

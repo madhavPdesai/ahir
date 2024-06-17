@@ -2,6 +2,8 @@
 #define UMC65  1
 #define SAC    2
 
+#define UMC65_2024  3
+
 typedef struct __IntPairList IntPairList;
 
 struct __IntPairList {
@@ -19,6 +21,11 @@ void generate_scl180_reverse_port_map_string (char* mem_type, char* result_strin
 void generate_umc65_port_string (const char* mem_type,  int addr_width, int data_width, char* result_string);
 void generate_umc65_port_map_string (const char* mem_type,char* result_string);
 void generate_umc65_reverse_port_map_string (const char* mem_type,char* result_string);
+
+void generate_umc65_2024_port_string (const char* mem_type,  int addr_width, int data_width, char* result_string);
+void generate_umc65_2024_port_map_string (const char* mem_type, int addr_width, int data_width, char* result_string);
+void generate_umc65_2024_reverse_port_map_string (const char* mem_type, int addr_width, int data_width, 
+											char* result_string);
 
 void generate_sac_port_string (const char* mem_type,  int addr_width, int data_width, char* result_string);
 void generate_sac_port_map_string (const char* mem_type,char* result_string);

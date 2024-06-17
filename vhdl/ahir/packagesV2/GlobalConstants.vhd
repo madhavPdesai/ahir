@@ -54,6 +54,10 @@ package GlobalConstants is
     -- this saves a substantial amount of logic, but  can result
     -- in a slight (2.5%) performance reduction.  use it for the
     -- minimizing resource usage.
+    --
+    -- DANGER ALERT: do not turn this to true under any circumstances.
+    --               A bug hunt is in progress.
+    --
     constant global_use_optimized_unload_buffer : boolean := false;
 
 end package GlobalConstants;
