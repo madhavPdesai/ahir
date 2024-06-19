@@ -6235,7 +6235,12 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 		// do not loop-back unless all phi's have used
 		// up their triggering tokens.  Delay introduced
 		ofile << "// do not loop-back unless all phi's have used up their triggering tokens." << endl;
-		__J("condition_evaluated", "aggregated_phi_sample_ack_d");
+		// 
+		// This is redundant, because update ack will always occur
+		// after sample ack.
+		//
+		// __J("condition_evaluated", "aggregated_phi_sample_ack_d");
+		//
 		__J("condition_evaluated", "aggregated_phi_update_ack");
 
 		//
@@ -6336,8 +6341,16 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 
 	// from condition_evaluated to entry, there is an arc to be used
 	// while computing strongly connected components.
-	ofile << "// SCC arc from condition_evaluated to entry" << endl;
-	ofile << "$scc_arc condition_evaluated => $entry" << endl;
+	// 
+	// This is overly aggressive..  Re-think.
+	//
+	// ofile << "// SCC arc from condition_evaluated to entry" << endl;
+	// ofile << "$scc_arc condition_evaluated => $entry" << endl;
+	//
+	// Note: The invariance of the number of tokens in a loop
+	//       is valid only if the entire cycle is inside a
+	//       fork-join block.
+	//
 
 	ofile << "}"; // end of loop-body.
 	//exports

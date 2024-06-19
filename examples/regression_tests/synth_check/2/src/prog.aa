@@ -14,7 +14,7 @@ $module [shift_register_daemon] $in () $out () $is
 			s3 := ts2
 
 			$volatile ts3 := (s3 + 1)
-			s4 := ts2
+			s4 := ts3
 
 			// add and then push into output_data.
 			$volatile ts4 := (s4 + 1)
