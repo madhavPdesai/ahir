@@ -50,6 +50,16 @@ package GlobalConstants is
     constant global_pipe_shallowness_threshold : integer := 10;  
 
 
+    -- use the optimized unload buffer implementation if possible.
+    -- this saves a substantial amount of logic, but  can result
+    -- in a slight (2.5%) performance reduction.  use it for the
+    -- minimizing resource usage.
+    --
+    -- DANGER ALERT: do not turn this to true under any circumstances.
+    --               A bug hunt is in progress.
+    --
+    constant global_use_optimized_unload_buffer : boolean := false;
+
 end package GlobalConstants;
 ------------------------------------------------------------------------------------------------
 --
@@ -4458,7 +4468,35 @@ package BaseComponents is
         clk : in std_logic;
         reset: in std_logic);
   end component UnloadBufferDeep;
+  component UnloadBufferOptimized is
+    generic (name: string; buffer_size: integer ; data_width : integer ; 
+			bypass_flag, nonblocking_read_flag : boolean := false);
+    port ( write_req: in std_logic;
+        write_ack: out std_logic;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        unload_req: in boolean;
+        unload_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
+        clk : in std_logic;
+        reset: in std_logic);
+  end component UnloadBufferOptimized;
   component UnloadBufferRevised is
+    generic (name: string; 
+		buffer_size: integer ; 
+		data_width : integer ; 
+		bypass_flag: boolean := false);
+    port ( write_req: in std_logic;
+        write_ack: out std_logic;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        unload_req: in boolean;
+        unload_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
+        clk : in std_logic;
+        reset: in std_logic);
+  end component;
+  component UnloadBufferRevisedNonblocking is
     generic (name: string; 
 		buffer_size: integer ; 
 		data_width : integer ; 
@@ -4490,6 +4528,19 @@ package BaseComponents is
   end component UnloadRegister;
 
   component UnloadFsm is
+  generic (name: string; data_width: integer);
+  port ( 
+	 write_req: in std_logic;
+         write_ack: out std_logic;
+         unload_req: in boolean;
+         unload_ack: out boolean;
+	 data_in :  in std_logic_vector(data_width-1 downto 0);
+	 data_out :  out std_logic_vector(data_width-1 downto 0);
+         clk : in std_logic;
+         reset: in std_logic);
+  end component;
+
+  component UnloadFsmNoblock is
   generic (name: string; data_width: integer);
   port ( 
 	 write_req: in std_logic;
@@ -20251,7 +20302,6 @@ begin  -- SimModel
 
  qDGt1: if queue_depth > 1 generate 
   NTB: block 
-   signal queue_array : QueueArray(queue_depth-1 downto 0);
    signal read_pointer, write_pointer, write_pointer_plus_1: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
    signal next_read_pointer, next_write_pointer: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
 
@@ -20300,35 +20350,43 @@ begin  -- SimModel
     end process;
     wrpReg: SynchResetRegisterUnsigned generic map (name => name & ":wrpreg", data_width => write_pointer'length)
 		port map (clk => clk, reset => reset, din => next_write_pointer, dout => write_pointer);
+
+  -----------------------------------------  declared the array if not distrib ram case ------------------------
   notDistribRam: if not global_use_vivado_distributed_ram_queue generate
-    -- bottom pointer gives the data in FIFO mode..
-    process (read_pointer, queue_array)
-	variable data_out_var : std_logic_vector(data_width-1 downto 0);
-    begin
-	data_out_var := (others =>  '0');
-        for I in 0 to queue_depth-1 loop
-	    if(I = To_Integer(read_pointer)) then
-    		data_out_var := queue_array(I);
-	    end if;
-	end loop;
-	base_data_out <= data_out_var;
-    end process;
+    QueueArrayBlock: block
+   	signal queue_array : QueueArray(queue_depth-1 downto 0);
+    begin 
+        -- bottom pointer gives the data in FIFO mode..
+        process (read_pointer, queue_array)
+	    variable data_out_var : std_logic_vector(data_width-1 downto 0);
+        begin
+	    data_out_var := (others =>  '0');
+            for I in 0 to queue_depth-1 loop
+	        if(I = To_Integer(read_pointer)) then
+    		    data_out_var := queue_array(I);
+	        end if;
+	    end loop;
+	    base_data_out <= data_out_var;
+        end process;
 
-    -- write to queue-array.
-    Wgen: for W in 0 to queue_depth-1 generate
-       process(clk, reset, write_flag, write_pointer, data_in) 
-       begin
-		if(clk'event and (clk = '1')) then
-			if(reset = '1') then
-                             queue_array(W) <= (others => '0');
-			elsif (write_flag and (W = write_pointer)) then
-			     queue_array(W) <= data_in;
-			end if;
-		end if;
-       end process;
-    end generate Wgen;
+        -- write to queue-array.
+        Wgen: for W in 0 to queue_depth-1 generate
+           process(clk, reset, write_flag, write_pointer, data_in) 
+           begin
+		    if(clk'event and (clk = '1')) then
+			    if(reset = '1') then
+                                 queue_array(W) <= (others => '0');
+			    elsif (write_flag and (W = write_pointer)) then
+			         queue_array(W) <= data_in;
+			    end if;
+		    end if;
+           end process;
+        end generate Wgen;
+    end block QueueArrayBlock;
   end generate notDistribRam;
+  -----------------------------------------  end non distrib ram case -------------------------------------------
 
+  -----------------------------------------  begin distrib ram case   -------------------------------------------
   write_enable <= '1' when write_flag else '0';
   DistribRam: if global_use_vivado_distributed_ram_queue generate
       distrib_ram_inst:
@@ -20346,6 +20404,7 @@ begin  -- SimModel
 					clk => clk
 				);
   end generate DistribRam;
+  -----------------------------------------  end distrib ram case   -------------------------------------------
   
    not_rbypGen: if not reverse_bypass_flag generate
 
@@ -23250,6 +23309,211 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
+
+--
+-- An optimized version of the unload buffer, to be used when the buffer_size is > 1.
+--     Uses a standard queue followed by a state machine..
+--
+entity UnloadBufferOptimized is
+  generic (name: string; buffer_size: integer ; data_width : integer; 
+		bypass_flag: boolean; nonblocking_read_flag : boolean := false);
+  port ( write_req: in std_logic;
+        write_ack: out std_logic;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        unload_req: in boolean;
+        unload_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data : out std_logic;
+        clk : in std_logic;
+        reset: in std_logic);
+end UnloadBufferOptimized;
+
+architecture default_arch of UnloadBufferOptimized is
+
+  signal pop_req, pop_ack : std_logic;
+  signal unload_ack_sig: boolean; 
+  signal empty, full: std_logic;
+
+   type FsmState is (sA, sB, sC, sD);
+   signal fsm_state: FsmState;
+
+   signal queue_data_out: std_logic_vector(data_width-1 downto 0);
+
+begin  -- default_arch
+
+  assert (buffer_size /= 1) report "UnloadBufferOptimized must have queue-size != 1" severity failure;
+
+  has_data <= not empty;
+
+  qinst: QueueBaseWithEmptyFull
+		generic map (name => name & ":qinst",
+				queue_depth => buffer_size,
+				data_width => data_width,
+				reverse_bypass_flag => bypass_flag
+			    )
+		port map (
+				empty => empty,
+				full  => full,
+				push_req => write_req,
+				push_ack => write_ack,
+				pop_req => pop_req,
+				pop_ack => pop_ack,
+				data_in => write_data,
+				data_out => queue_data_out,
+				clk => clk,
+				reset => reset);	
+
+	-- FSM
+        process(clk, reset, pop_ack, fsm_state, unload_req, queue_data_out)
+		variable next_fsm_state_var:  FsmState;
+		variable unload_ack_var: boolean;
+		variable pop_req_var: std_logic;
+   		variable read_data_var: std_logic_vector(data_width-1 downto 0);
+	begin
+		next_fsm_state_var := fsm_state;
+		unload_ack_var := false;
+		pop_req_var := '0';
+		read_data_var := queue_data_out;
+
+		case fsm_state is
+			when sA =>
+				-- In the beginning, nothing has
+				-- been read from the queue.
+				if unload_req then
+					next_fsm_state_var := sB;
+				end if;
+			when sB =>
+				--
+				-- Ack if queue has data 
+				--
+				-- Careful about the non-blocking
+				-- behaviour.
+				if (pop_ack = '1') then		     -- p
+					unload_ack_var := true;
+					if unload_req then
+						-- pop from the queue
+						-- since the next-req
+						-- has arrived.
+						pop_req_var := '1';
+					else
+						next_fsm_state_var := sC;
+					end if;
+				elsif nonblocking_read_flag then -- (~p).n
+					-- non-blocking... as if pop_ack is
+					-- asserted except that read data 
+					-- will be zero-ed out.
+					read_data_var := (others => '0');
+
+					-- ack the zero data..
+					unload_ack_var := true;
+
+					if unload_req then
+						-- do not pop here
+						-- The queue data has not 
+						-- been used yet.
+						next_fsm_state_var := sB;
+					else
+						-- wait for update req
+						-- but ensure that read_data
+						-- is zero-ed out.
+						next_fsm_state_var := sD;
+					end if;
+				end if;
+			when sC =>
+				--
+				-- you will come to this state only
+				-- if pop_ack = '1'... you are waiting
+				-- for an update-req to start the
+				-- next cycle.
+				if unload_req then
+					-- pop only when signaled by
+					-- unload_req
+					pop_req_var := '1';
+
+					-- go to sB before reacting
+					-- to the update-req.
+					next_fsm_state_var := sB;
+				end if;
+
+			when SD =>
+				--
+				-- you got here because pop_ack was false
+				-- and non-block was true.  zero out the
+				-- read_data until the next unload_req.
+				-- 
+				-- you are waiting for an update-req to
+				-- start the next cycle.
+				--
+				-- Keep read_data_var = 0 here.  you
+				-- do not want the changed queue output
+				-- to sneak to the user.
+				--
+				read_data_var := (others => '0');
+				if unload_req then
+					--
+					-- do not pop!  
+					-- 
+					-- go to sB before reacting
+					-- to the update-req.
+					next_fsm_state_var := sB;
+				end if;
+		end case;
+
+		pop_req <= pop_req_var;
+		unload_ack <= unload_ack_var;
+		read_data <= read_data_var;
+
+		if(clk'event and (clk = '1')) then
+			if (reset = '1') then
+				fsm_state <= sA;
+			else
+				fsm_state <= next_fsm_state_var;
+			end if;
+		end if;
+	end process;
+
+end default_arch;
+------------------------------------------------------------------------------------------------
+--
+-- Copyright (C) 2010-: Madhav P. Desai
+-- All Rights Reserved.
+--  
+-- Permission is hereby granted, free of charge, to any person obtaining a
+-- copy of this software and associated documentation files (the
+-- "Software"), to deal with the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject to
+-- the following conditions:
+-- 
+--  * Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimers.
+--  * Redistributions in binary form must reproduce the above
+--    copyright notice, this list of conditions and the following
+--    disclaimers in the documentation and/or other materials provided
+--    with the distribution.
+--  * Neither the names of the AHIR Team, the Indian Institute of
+--    Technology Bombay, nor the names of its contributors may be used
+--    to endorse or promote products derived from this Software
+--    without specific prior written permission.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+-- OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+-- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+-- IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+-- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+------------------------------------------------------------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
 use ahir.GlobalConstants.all;
 -- Synopsys DC ($^^$@!)  needs you to declare an attribute
 -- to infer a synchronous set/reset ... unbelievable.
@@ -23318,15 +23582,15 @@ architecture default_arch of UnloadBuffer is
   -- and allows us to use 2-depth buffers to cut long
   -- combinational paths.
   --
-  function DecrDepth (buffer_size: integer; bypass: boolean)
+  function DecrDepth (buf_size: integer; bypass: boolean)
 	return integer is
-      variable actual_buffer_size: integer;
+      variable ret_val: integer;
   begin
-      actual_buffer_size := buffer_size;
+      ret_val := buf_size;
       if((not bypass) and (buffer_size = 1)) then
-	actual_buffer_size := buffer_size - 1;
+	ret_val := buf_size - 1;
       end if;
-      return actual_buffer_size;
+      return ret_val;
   end function DecrDepth;
 
   constant actual_buffer_size  : integer  := DecrDepth (buffer_size, bypass_flag);
@@ -23335,14 +23599,31 @@ architecture default_arch of UnloadBuffer is
 
   constant shallow_flag : boolean :=    (buffer_size < global_pipe_shallowness_threshold);
 
-  constant revised_case: boolean := ((buffer_size > 0) and shallow_flag and (not use_unload_register) and (not nonblocking_read_flag));
-  -- constant revised_case: boolean := false;
+  constant revised_case_blocking: boolean := 
+		((buffer_size > 0) 
+			and (bypass_flag or (buffer_size > 1))
+                        and shallow_flag 
+			and (not use_unload_register) 
+			and (not nonblocking_read_flag));
 
+  constant revised_case_non_blocking: boolean := 
+		global_use_optimized_unload_buffer and
+			((buffer_size > 1) and (not bypass_flag) and
+				 shallow_flag and  nonblocking_read_flag);
+
+
+  constant un_revised_case: boolean :=  (not revised_case_blocking) and 
+						(not revised_case_non_blocking) and
+							shallow_flag;
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
 begin  -- default_arch
 
-  RevisedCase: if revised_case generate
+  RevisedCaseBlocking: if revised_case_blocking generate
+
+         assert false report "ULB REVISED BLOCKING  " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+
 	ulb_revised: UnloadBufferRevised
 			generic map (name => name & "-revised",
 					buffer_size => buffer_size, data_width => data_width,
@@ -23356,9 +23637,32 @@ begin  -- default_arch
 				read_data => read_data, 
 				has_data => has_data,
 				clk => clk, reset => reset);
-  end generate RevisedCase;
+  end generate RevisedCaseBlocking;
+
+  RevisedCaseNonblocking: if revised_case_non_blocking generate
+
+         assert false report "ULB REVISED NONBLOCKING  " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+
+	ulb_revised: UnloadBufferRevisedNonblocking
+			generic map (name => name & "-revised",
+					buffer_size => buffer_size, data_width => data_width,
+						bypass_flag => bypass_flag)
+			port map (
+				write_req => write_req,
+				write_ack => write_ack,
+				unload_req => unload_req,
+				unload_ack => unload_ack,
+				write_data => write_data,
+				read_data => read_data, 
+				has_data => has_data,
+				clk => clk, reset => reset);
+  end generate RevisedCaseNonblocking;
 
   DeepCase: if not shallow_flag generate
+         assert false report "ULB DEEP " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+
 	ulb_deep: UnloadBufferDeep
 			generic map (name => name & "-deep",
 					buffer_size => buffer_size, data_width => data_width,
@@ -23374,9 +23678,12 @@ begin  -- default_arch
 				clk => clk, reset => reset);
   end generate DeepCase;
 
-  NotRevisedCase: if not revised_case generate
+  NotRevisedCase: if un_revised_case generate
 
     ShallowCase: if shallow_flag  generate
+      assert false report "ULB with ULREG " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+
       bufGt0: if actual_buffer_size > 0 generate
 
   	has_data <= '1' when pipe_has_data else '0';
@@ -28560,6 +28867,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
+use ahir.GlobalConstants.all;
 
 -- Synopsys DC ($^^$@!)  needs you to declare an attribute
 -- to infer a synchronous set/reset ... unbelievable.
@@ -28594,7 +28902,19 @@ architecture default_arch of InterlockBuffer is
 
   signal has_data: std_logic;
 
-  constant use_unload_register : boolean := not cut_through;
+  -- Don't F-around with this.
+  constant use_unload_register : boolean := 
+		((not global_use_optimized_unload_buffer) and (not cut_through))
+		or (global_use_optimized_unload_buffer and (not cut_through) and (buffer_size /= 2));
+
+  --
+  -- Do not slow down the interlock buffer!
+  --
+  constant use_simple_ilock_implementation :boolean 
+			:= global_use_optimized_unload_buffer and
+					(not flow_through) and  (buffer_size = 1) and
+						(not bypass_flag); 
+			
   
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
@@ -28643,61 +28963,89 @@ begin  -- default_arch
         buf_write_data <= write_data(data_width-1 downto 0);
         read_data  <= buf_read_data;
       end generate outSmaller;
-  
-      -- write FSM to pipe.
-      process(clk,reset, l_fsm_state, buf_write_ack, write_req)
-        variable nstate : LoadFsmState;
-      begin
-        nstate := l_fsm_state;
-        buf_write_req <= '0';
-        write_ack <= false;
-        if(l_fsm_state = l_idle) then
-	  if(write_req) then
-            buf_write_req <= '1';
-            if(buf_write_ack = '1') then
-              write_ack <= true;
-            else
-              nstate := l_busy;
-            end if;
-	  end if;
-        else
-	  buf_write_req <= '1';
-	  if(buf_write_ack = '1') then
-            nstate := l_idle;
-            write_ack <= true;
-	  end if;
-        end if;
-  
-        if(clk'event and clk = '1') then
-	  if(reset = '1') then
-            l_fsm_state <= l_idle;
-	  else
-            l_fsm_state <= nstate;
-	  end if;
-        end if;
-      end process;
-  
-      -- the unload buffer.
-      buf : UnloadBuffer generic map (
-        name =>  name & " buffer ",
-        data_width => data_width,
-        buffer_size => buffer_size, 
-	use_unload_register => use_unload_register,
-        bypass_flag => bypass_flag)
-        port map (
-          write_req   => buf_write_req,
-          write_ack   => buf_write_ack,
-          write_data  => buf_write_data,
-          unload_req  => read_req,
-          unload_ack  => read_ack,
-          read_data   => buf_read_data,
- 	  has_data => has_data,
-          clk         => clk,
-          reset       => reset);
+      
+      SimpleImplGen: if use_simple_ilock_implementation  generate
+         sb: block
+             signal joined_sig: boolean;
+         begin
 
-    end generate interlockBuf;
-  end generate NoFlowThrough;
+		cj: join2 generic map (bypass => true, name => "simpleImplGen:join2")
+			port map (pred0 => write_req, pred1 => read_req, 
+					symbol_out => joined_sig, 
+						clk => clk, reset => reset);
 
+		write_ack <= joined_sig;
+		process(clk, reset, joined_sig, buf_write_data)
+		begin
+			if (clk'event and (clk = '1')) then 
+				if(reset = '1') then
+					read_ack <= false;
+				else
+					if(joined_sig) then
+						buf_read_data <= buf_write_data;
+					end if;
+					read_ack <= joined_sig;
+				end if;
+			 end if;	
+		end process;
+         end block sb;
+      end generate SimpleImplGen;
+
+      ulbImplGen: if (not use_simple_ilock_implementation) generate
+         -- write FSM to pipe.
+         process(clk,reset, l_fsm_state, buf_write_ack, write_req)
+           variable nstate : LoadFsmState;
+         begin
+           nstate := l_fsm_state;
+           buf_write_req <= '0';
+           write_ack <= false;
+           if(l_fsm_state = l_idle) then
+	     if(write_req) then
+               buf_write_req <= '1';
+               if(buf_write_ack = '1') then
+                 write_ack <= true;
+               else
+                 nstate := l_busy;
+               end if;
+	     end if;
+           else
+	     buf_write_req <= '1';
+	     if(buf_write_ack = '1') then
+               nstate := l_idle;
+               write_ack <= true;
+	     end if;
+           end if;
+     
+           if(clk'event and clk = '1') then
+	     if(reset = '1') then
+               l_fsm_state <= l_idle;
+	     else
+               l_fsm_state <= nstate;
+	     end if;
+           end if;
+         end process;
+     
+         -- the unload buffer.
+         buf : UnloadBuffer generic map (
+           name =>  name & " buffer ",
+           data_width => data_width,
+           buffer_size => buffer_size, 
+	   use_unload_register => use_unload_register,
+           bypass_flag => bypass_flag)
+           port map (
+             write_req   => buf_write_req,
+             write_ack   => buf_write_ack,
+             write_data  => buf_write_data,
+             unload_req  => read_req,
+             unload_ack  => read_ack,
+             read_data   => buf_read_data,
+ 	     has_data => has_data,
+             clk         => clk,
+             reset       => reset);
+  
+	end generate ulbImplGen; 
+       end generate interlockBuf;
+     end generate NoFlowThrough;
 end default_arch;
 ------------------------------------------------------------------------------------------------
 --
@@ -31840,6 +32188,137 @@ use ahir.GlobalConstants.all;
 -- when buffer-size > 1.
 --  
 --
+entity UnloadBufferRevisedNonblocking is
+
+  generic (name: string; 
+		buffer_size: integer ; 
+		data_width : integer ; 
+		bypass_flag: boolean );
+
+  port ( write_req: in std_logic;
+        write_ack: out std_logic;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        unload_req: in boolean;
+        unload_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
+        clk : in std_logic;
+        reset: in std_logic);
+
+end UnloadBufferRevisedNonblocking;
+
+architecture default_arch of UnloadBufferRevisedNonblocking is
+
+  signal pop_req, pop_ack, push_req, push_ack: std_logic_vector(0 downto 0);
+
+  signal pipe_data_out, ufsm_bypass_write_data, ufsm_write_data:  std_logic_vector(data_width-1 downto 0);
+  signal pipe_has_data: boolean;
+
+
+  signal write_to_pipe: boolean;
+  signal unload_from_pipe : boolean;
+
+  signal empty, full: std_logic;
+  signal ufsm_write_req, ufsm_write_ack: std_logic;
+  signal ufsm_bypass_write_req, ufsm_bypass_write_ack: std_logic;
+
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
+begin  -- default_arch
+
+	ufsm_write_data <= pipe_data_out;
+	ufsm_write_req  <= pop_ack(0);
+	pop_req(0) <= ufsm_write_ack;
+
+	push_req(0) <= write_req;
+	write_ack   <= push_ack(0);
+
+	ufsm: UnloadFsmNoblock generic map (name => name & ":ufsm", data_width => data_width)
+		port map (
+			   write_req => ufsm_write_req,
+			   write_ack => ufsm_write_ack,
+			   unload_req => unload_req,
+			   unload_ack => unload_ack,
+			   data_in => ufsm_write_data,
+			   data_out => read_data,
+			   clk => clk, reset => reset);
+
+  	pipe_has_data <= (empty = '0');
+  	has_data <= '1' when pipe_has_data else '0';
+
+
+  	bufPipe : QueueBaseWithEmptyFull generic map (
+        	name =>  name & "-blocking_read-bufPipe",
+        	data_width => data_width,
+		reverse_bypass_flag => bypass_flag,
+        	queue_depth      => buffer_size)
+      	port map (
+        	pop_req   => pop_req(0),
+        	pop_ack   => pop_ack(0),
+        	data_out  => pipe_data_out,
+        	push_req  => push_req(0),
+        	push_ack  => push_ack(0),
+        	data_in => write_data,
+		empty => empty,
+		full => full,
+        	clk        => clk,
+        	reset      => reset);
+
+	
+end default_arch;
+------------------------------------------------------------------------------------------------
+--
+-- Copyright (C) 2010-: Madhav P. Desai
+-- All Rights Reserved.
+--  
+-- Permission is hereby granted, free of charge, to any person obtaining a
+-- copy of this software and associated documentation files (the
+-- "Software"), to deal with the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject to
+-- the following conditions:
+-- 
+--  * Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimers.
+--  * Redistributions in binary form must reproduce the above
+--    copyright notice, this list of conditions and the following
+--    disclaimers in the documentation and/or other materials provided
+--    with the distribution.
+--  * Neither the names of the AHIR Team, the Indian Institute of
+--    Technology Bombay, nor the names of its contributors may be used
+--    to endorse or promote products derived from this Software
+--    without specific prior written permission.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+-- OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+-- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+-- IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+-- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+------------------------------------------------------------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+use ahir.GlobalConstants.all;
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
+--  
+--
+-- A more "optimized" version of the old UnloadBuffer.
+-- tries to avoid the use of an extra register.  Use
+-- when buffer-size > 1.
+--  
+--
 entity UnloadBufferRevised is
 
   generic (name: string; 
@@ -31917,6 +32396,177 @@ begin  -- default_arch
         	reset      => reset);
 
 	
+end default_arch;
+------------------------------------------------------------------------------------------------
+--
+-- Copyright (C) 2010-: Madhav P. Desai
+-- All Rights Reserved.
+--  
+-- Permission is hereby granted, free of charge, to any person obtaining a
+-- copy of this software and associated documentation files (the
+-- "Software"), to deal with the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject to
+-- the following conditions:
+-- 
+--  * Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimers.
+--  * Redistributions in binary form must reproduce the above
+--    copyright notice, this list of conditions and the following
+--    disclaimers in the documentation and/or other materials provided
+--    with the distribution.
+--  * Neither the names of the AHIR Team, the Indian Institute of
+--    Technology Bombay, nor the names of its contributors may be used
+--    to endorse or promote products derived from this Software
+--    without specific prior written permission.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+-- OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+-- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+-- IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+-- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+------------------------------------------------------------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
+--  A non-blocking version of the state machine for
+--  handling the revised case of the unload-buffer.
+--
+-- BUG ALERT:  there is something wrong about this 
+--             which causes incorrect behaviour. 
+--             Am stymied for the moment (MPD)
+--
+entity UnloadFsmNoBlock is
+  generic (name: string; data_width: integer);
+  port ( 
+	 write_req: in std_logic;
+         write_ack: out std_logic;
+         unload_req: in boolean;
+         unload_ack: out boolean;
+	 data_in :  in std_logic_vector(data_width-1 downto 0);
+	 data_out :  out std_logic_vector(data_width-1 downto 0);
+         clk : in std_logic;
+         reset: in std_logic
+	);
+end UnloadFsmNoBlock;
+
+architecture default_arch of UnloadFsmNoBlock is
+	signal unload_ack_sig : boolean;
+	signal unload_ack_d_sig : boolean;
+
+	signal write_ack_sig: std_logic;
+
+	type FsmState is (Idle, WhatWillItBe, DataValid, ZeroData);
+	signal fsm_state : FsmState;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
+begin  -- default_arch
+
+	process(fsm_state, write_req, data_in,  unload_req, clk, reset)
+		variable next_fsm_state_var : FsmState;
+		variable unload_ack_d_var: boolean;
+		variable write_ack_var : std_logic;
+
+		variable data_out_var: std_logic_vector(data_width-1 downto 0);
+
+	begin
+		unload_ack_d_var := false;
+
+		write_ack_var  := '0';
+		next_fsm_state_var := fsm_state;
+
+		data_out_var := data_in;
+
+		case fsm_state is 
+			-- reset state, nothing seen so far.
+			when Idle =>
+				if(unload_req) then
+					unload_ack_d_var := true;
+					next_fsm_state_var := WhatWillItBe;
+				end if;
+			when ZeroData => 
+				-- Acked state, hold until next unload-req
+				-- hold 0 data until next unload-req.
+				data_out_var := (others => '0');
+				if(unload_req) then
+					unload_ack_d_var := true;
+					next_fsm_state_var := WhatWillItBe;
+				end if;
+			when DataValid =>
+				-- Acked state, hold until next unload-req
+				-- write_req is '1' here... 
+				if(unload_req) then
+					unload_ack_d_var := true;
+
+					-------------------------------
+					-- ack it here..
+					-------------------------------
+					write_ack_var    := '1';
+					-------------------------------
+
+					-- what will we see next?
+					next_fsm_state_var := WhatWillItBe;
+				end if;
+			when WhatWillItBe =>
+				-- 
+				-- Acked state, but data will be determined
+				-- in this state.
+				--
+				if(write_req = '0') then
+
+					-- zero data..
+					data_out_var := (others => '0');
+					
+
+					if(unload_req) then
+						unload_ack_d_var := true;
+					else
+						-- hold zero data.	
+						next_fsm_state_var := ZeroData;
+					end if;
+				else 
+					-- valid data, must hold until next
+					-- unload-req.
+						
+
+					if(unload_req) then
+						unload_ack_d_var := true;
+
+						-------------------------------
+						-- ack it here..
+						-------------------------------
+						write_ack_var    := '1';
+						-------------------------------
+					else
+						next_fsm_state_var := DataValid;
+					end if;
+				end if;
+		end case;
+
+		write_ack_sig <= write_ack_var;
+		data_out <= data_out_var;
+
+		if(clk'event and clk='1') then
+			if(reset = '1') then
+				fsm_state <= Idle;
+				unload_ack_d_sig <= false;
+			else
+				fsm_state <= next_fsm_state_var;
+				unload_ack_d_sig <= unload_ack_d_var;
+			end if;
+		end if;
+	end process;
+
+	unload_ack <= unload_ack_d_sig;
+	write_ack  <= write_ack_sig;
+
 end default_arch;
 ------------------------------------------------------------------------------------------------
 --
@@ -32604,6 +33254,7 @@ use ahir.Components.all;
 use ahir.BaseComponents.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
+use ahir.GlobalConstants.all;
 
 --  input port specialized for P2P ports.
 entity InputPort_P2P is
@@ -32634,6 +33285,10 @@ architecture Base of InputPort_P2P is
   type SampleFsmState is (IDLE, WAITING);
   signal fsm_state: SampleFsmState;
   signal has_data: std_logic;
+
+  -- Don't f-around with this.
+  constant use_unload_register :boolean :=  (not global_use_optimized_unload_buffer) or bypass_flag;
+
 begin
 
     noBarrier: if (not barrier_flag) or nonblocking_read_flag generate
@@ -32677,7 +33332,8 @@ begin
 				data_width => data_width,
 				   buffer_size => queue_depth, 
 					bypass_flag => bypass_flag,  
-						nonblocking_read_flag => nonblocking_read_flag)
+						use_unload_register => use_unload_register,
+							nonblocking_read_flag => nonblocking_read_flag)
 	port map (write_req => oack, write_ack => oreq, 
 					write_data => odata,
 				unload_req => update_req,

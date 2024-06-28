@@ -50,6 +50,16 @@ package GlobalConstants is
     constant global_pipe_shallowness_threshold : integer := 10;  
 
 
+    -- use the optimized unload buffer implementation if possible.
+    -- this saves a substantial amount of logic, but  can result
+    -- in a slight (2.5%) performance reduction.  use it for the
+    -- minimizing resource usage.
+    --
+    -- DANGER ALERT: do not turn this to true under any circumstances.
+    --               A bug hunt is in progress.
+    --
+    constant global_use_optimized_unload_buffer : boolean := false;
+
 end package GlobalConstants;
 ------------------------------------------------------------------------------------------------
 --
@@ -4458,7 +4468,35 @@ package BaseComponents is
         clk : in std_logic;
         reset: in std_logic);
   end component UnloadBufferDeep;
+  component UnloadBufferOptimized is
+    generic (name: string; buffer_size: integer ; data_width : integer ; 
+			bypass_flag, nonblocking_read_flag : boolean := false);
+    port ( write_req: in std_logic;
+        write_ack: out std_logic;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        unload_req: in boolean;
+        unload_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
+        clk : in std_logic;
+        reset: in std_logic);
+  end component UnloadBufferOptimized;
   component UnloadBufferRevised is
+    generic (name: string; 
+		buffer_size: integer ; 
+		data_width : integer ; 
+		bypass_flag: boolean := false);
+    port ( write_req: in std_logic;
+        write_ack: out std_logic;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        unload_req: in boolean;
+        unload_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
+        clk : in std_logic;
+        reset: in std_logic);
+  end component;
+  component UnloadBufferRevisedNonblocking is
     generic (name: string; 
 		buffer_size: integer ; 
 		data_width : integer ; 
@@ -4490,6 +4528,19 @@ package BaseComponents is
   end component UnloadRegister;
 
   component UnloadFsm is
+  generic (name: string; data_width: integer);
+  port ( 
+	 write_req: in std_logic;
+         write_ack: out std_logic;
+         unload_req: in boolean;
+         unload_ack: out boolean;
+	 data_in :  in std_logic_vector(data_width-1 downto 0);
+	 data_out :  out std_logic_vector(data_width-1 downto 0);
+         clk : in std_logic;
+         reset: in std_logic);
+  end component;
+
+  component UnloadFsmNoblock is
   generic (name: string; data_width: integer);
   port ( 
 	 write_req: in std_logic;
@@ -8295,325 +8346,1136 @@ use ahir.utilities.all;
 
 package mem_ASIC_components is
 
-  component SZKA65_16X16X1CM2 is
-   port(       DO : out std_logic_vector(15 downto 0);
-      A : in std_logic_vector(3 downto 0);
-      B : in std_logic_vector(3 downto 0);
-      DI : in std_logic_vector(15 downto 0);
+  component SZKA65_32X32X1CM2 is
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      DO8 : out std_logic;
+      DO9 : out std_logic;
+      DO10 : out std_logic;
+      DO11 : out std_logic;
+      DO12 : out std_logic;
+      DO13 : out std_logic;
+      DO14 : out std_logic;
+      DO15 : out std_logic;
+      DO16 : out std_logic;
+      DO17 : out std_logic;
+      DO18 : out std_logic;
+      DO19 : out std_logic;
+      DO20 : out std_logic;
+      DO21 : out std_logic;
+      DO22 : out std_logic;
+      DO23 : out std_logic;
+      DO24 : out std_logic;
+      DO25 : out std_logic;
+      DO26 : out std_logic;
+      DO27 : out std_logic;
+      DO28 : out std_logic;
+      DO29 : out std_logic;
+      DO30 : out std_logic;
+      DO31 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
+      DI8 : in std_logic;
+      DI9 : in std_logic;
+      DI10 : in std_logic;
+      DI11 : in std_logic;
+      DI12 : in std_logic;
+      DI13 : in std_logic;
+      DI14 : in std_logic;
+      DI15 : in std_logic;
+      DI16 : in std_logic;
+      DI17 : in std_logic;
+      DI18 : in std_logic;
+      DI19 : in std_logic;
+      DI20 : in std_logic;
+      DI21 : in std_logic;
+      DI22 : in std_logic;
+      DI23 : in std_logic;
+      DI24 : in std_logic;
+      DI25 : in std_logic;
+      DI26 : in std_logic;
+      DI27 : in std_logic;
+      DI28 : in std_logic;
+      DI29 : in std_logic;
+      DI30 : in std_logic;
+      DI31 : in std_logic;
+      B0 : in std_logic;
+      B1 : in std_logic;
+      B2 : in std_logic;
+      B3 : in std_logic;
+      B4 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CKA   :   IN   std_logic;
-      CKB   :   IN   std_logic;
-      CSAN  :   IN   std_logic;
-      CSBN  :   IN   std_logic
+      DVS0, DVS1, DVS2:   IN   std_logic;
+      CKA, CKB   :   IN   std_logic;
+      CSAN, CSBN  :   IN   std_logic
 );
   end component;
-  component SZKA65_16X32X1CM2 is
-   port(       DO : out std_logic_vector(31 downto 0);
-      A : in std_logic_vector(3 downto 0);
-      B : in std_logic_vector(3 downto 0);
-      DI : in std_logic_vector(31 downto 0);
+  component SZKA65_64X32X1CM2 is
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      DO8 : out std_logic;
+      DO9 : out std_logic;
+      DO10 : out std_logic;
+      DO11 : out std_logic;
+      DO12 : out std_logic;
+      DO13 : out std_logic;
+      DO14 : out std_logic;
+      DO15 : out std_logic;
+      DO16 : out std_logic;
+      DO17 : out std_logic;
+      DO18 : out std_logic;
+      DO19 : out std_logic;
+      DO20 : out std_logic;
+      DO21 : out std_logic;
+      DO22 : out std_logic;
+      DO23 : out std_logic;
+      DO24 : out std_logic;
+      DO25 : out std_logic;
+      DO26 : out std_logic;
+      DO27 : out std_logic;
+      DO28 : out std_logic;
+      DO29 : out std_logic;
+      DO30 : out std_logic;
+      DO31 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
+      DI8 : in std_logic;
+      DI9 : in std_logic;
+      DI10 : in std_logic;
+      DI11 : in std_logic;
+      DI12 : in std_logic;
+      DI13 : in std_logic;
+      DI14 : in std_logic;
+      DI15 : in std_logic;
+      DI16 : in std_logic;
+      DI17 : in std_logic;
+      DI18 : in std_logic;
+      DI19 : in std_logic;
+      DI20 : in std_logic;
+      DI21 : in std_logic;
+      DI22 : in std_logic;
+      DI23 : in std_logic;
+      DI24 : in std_logic;
+      DI25 : in std_logic;
+      DI26 : in std_logic;
+      DI27 : in std_logic;
+      DI28 : in std_logic;
+      DI29 : in std_logic;
+      DI30 : in std_logic;
+      DI31 : in std_logic;
+      B0 : in std_logic;
+      B1 : in std_logic;
+      B2 : in std_logic;
+      B3 : in std_logic;
+      B4 : in std_logic;
+      B5 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CKA   :   IN   std_logic;
-      CKB   :   IN   std_logic;
-      CSAN  :   IN   std_logic;
-      CSBN  :   IN   std_logic
+      DVS0, DVS1, DVS2:   IN   std_logic;
+      CKA, CKB   :   IN   std_logic;
+      CSAN, CSBN  :   IN   std_logic
 );
   end component;
-  component SZKA65_64X4X1CM2 is
-   port(       DO : out std_logic_vector(3 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      B : in std_logic_vector(5 downto 0);
-      DI : in std_logic_vector(3 downto 0);
+  component SHKA65_16X30X1CM4 is
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      DO8 : out std_logic;
+      DO9 : out std_logic;
+      DO10 : out std_logic;
+      DO11 : out std_logic;
+      DO12 : out std_logic;
+      DO13 : out std_logic;
+      DO14 : out std_logic;
+      DO15 : out std_logic;
+      DO16 : out std_logic;
+      DO17 : out std_logic;
+      DO18 : out std_logic;
+      DO19 : out std_logic;
+      DO20 : out std_logic;
+      DO21 : out std_logic;
+      DO22 : out std_logic;
+      DO23 : out std_logic;
+      DO24 : out std_logic;
+      DO25 : out std_logic;
+      DO26 : out std_logic;
+      DO27 : out std_logic;
+      DO28 : out std_logic;
+      DO29 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
+      DI8 : in std_logic;
+      DI9 : in std_logic;
+      DI10 : in std_logic;
+      DI11 : in std_logic;
+      DI12 : in std_logic;
+      DI13 : in std_logic;
+      DI14 : in std_logic;
+      DI15 : in std_logic;
+      DI16 : in std_logic;
+      DI17 : in std_logic;
+      DI18 : in std_logic;
+      DI19 : in std_logic;
+      DI20 : in std_logic;
+      DI21 : in std_logic;
+      DI22 : in std_logic;
+      DI23 : in std_logic;
+      DI24 : in std_logic;
+      DI25 : in std_logic;
+      DI26 : in std_logic;
+      DI27 : in std_logic;
+      DI28 : in std_logic;
+      DI29 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CKA   :   IN   std_logic;
-      CKB   :   IN   std_logic;
-      CSAN  :   IN   std_logic;
-      CSBN  :   IN   std_logic
-);
-  end component;
-  component SZKA65_64X8X1CM2 is
-   port(       DO : out std_logic_vector(7 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      B : in std_logic_vector(5 downto 0);
-      DI : in std_logic_vector(7 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CKA   :   IN   std_logic;
-      CKB   :   IN   std_logic;
-      CSAN  :   IN   std_logic;
-      CSBN  :   IN   std_logic
-);
-  end component;
-  component SZKA65_64X16X1CM2 is
-   port(       DO : out std_logic_vector(15 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      B : in std_logic_vector(5 downto 0);
-      DI : in std_logic_vector(15 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CKA   :   IN   std_logic;
-      CKB   :   IN   std_logic;
-      CSAN  :   IN   std_logic;
-      CSBN  :   IN   std_logic
-);
-  end component;
-  component SJKA65_32X128X1CM4 is
-   port(       DOA : out std_logic_vector(127 downto 0);
-      DOB : out std_logic_vector(127 downto 0);
-      A : in std_logic_vector(4 downto 0);
-      B : in std_logic_vector(4 downto 0);
-      DIA : in std_logic_vector(127 downto 0);
-      DIB : in std_logic_vector(127 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end component;
-  component SJKA65_64X4X1CM4 is
-   port(       DOA : out std_logic_vector(3 downto 0);
-      DOB : out std_logic_vector(3 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      B : in std_logic_vector(5 downto 0);
-      DIA : in std_logic_vector(3 downto 0);
-      DIB : in std_logic_vector(3 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end component;
-  component SJKA65_64X8X1CM4 is
-   port(       DOA : out std_logic_vector(7 downto 0);
-      DOB : out std_logic_vector(7 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      B : in std_logic_vector(5 downto 0);
-      DIA : in std_logic_vector(7 downto 0);
-      DIB : in std_logic_vector(7 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end component;
-  component SJKA65_64X16X1CM4 is
-   port(       DOA : out std_logic_vector(15 downto 0);
-      DOB : out std_logic_vector(15 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      B : in std_logic_vector(5 downto 0);
-      DIA : in std_logic_vector(15 downto 0);
-      DIB : in std_logic_vector(15 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end component;
-  component SJKA65_256X4X1CM4 is
-   port(       DOA : out std_logic_vector(3 downto 0);
-      DOB : out std_logic_vector(3 downto 0);
-      A : in std_logic_vector(7 downto 0);
-      B : in std_logic_vector(7 downto 0);
-      DIA : in std_logic_vector(3 downto 0);
-      DIB : in std_logic_vector(3 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end component;
-  component SJKA65_256X16X1CM4 is
-   port(       DOA : out std_logic_vector(15 downto 0);
-      DOB : out std_logic_vector(15 downto 0);
-      A : in std_logic_vector(7 downto 0);
-      B : in std_logic_vector(7 downto 0);
-      DIA : in std_logic_vector(15 downto 0);
-      DIB : in std_logic_vector(15 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end component;
-  component SJKA65_256X32X1CM4 is
-   port(       DOA : out std_logic_vector(31 downto 0);
-      DOB : out std_logic_vector(31 downto 0);
-      A : in std_logic_vector(7 downto 0);
-      B : in std_logic_vector(7 downto 0);
-      DIA : in std_logic_vector(31 downto 0);
-      DIB : in std_logic_vector(31 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
+      DVS0,DVS1,DVS2:   IN   std_logic;
+      CK   :   IN   std_logic;
+      CSB  :   IN   std_logic
 );
   end component;
   component SHKA65_32X32X1CM4 is
-   port(       DO : out std_logic_vector(31 downto 0);
-      A : in std_logic_vector(4 downto 0);
-      DI : in std_logic_vector(31 downto 0);
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      DO8 : out std_logic;
+      DO9 : out std_logic;
+      DO10 : out std_logic;
+      DO11 : out std_logic;
+      DO12 : out std_logic;
+      DO13 : out std_logic;
+      DO14 : out std_logic;
+      DO15 : out std_logic;
+      DO16 : out std_logic;
+      DO17 : out std_logic;
+      DO18 : out std_logic;
+      DO19 : out std_logic;
+      DO20 : out std_logic;
+      DO21 : out std_logic;
+      DO22 : out std_logic;
+      DO23 : out std_logic;
+      DO24 : out std_logic;
+      DO25 : out std_logic;
+      DO26 : out std_logic;
+      DO27 : out std_logic;
+      DO28 : out std_logic;
+      DO29 : out std_logic;
+      DO30 : out std_logic;
+      DO31 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
+      DI8 : in std_logic;
+      DI9 : in std_logic;
+      DI10 : in std_logic;
+      DI11 : in std_logic;
+      DI12 : in std_logic;
+      DI13 : in std_logic;
+      DI14 : in std_logic;
+      DI15 : in std_logic;
+      DI16 : in std_logic;
+      DI17 : in std_logic;
+      DI18 : in std_logic;
+      DI19 : in std_logic;
+      DI20 : in std_logic;
+      DI21 : in std_logic;
+      DI22 : in std_logic;
+      DI23 : in std_logic;
+      DI24 : in std_logic;
+      DI25 : in std_logic;
+      DI26 : in std_logic;
+      DI27 : in std_logic;
+      DI28 : in std_logic;
+      DI29 : in std_logic;
+      DI30 : in std_logic;
+      DI31 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
+      DVS0,DVS1,DVS2:   IN   std_logic;
       CK   :   IN   std_logic;
       CSB  :   IN   std_logic
 );
   end component;
-  component SHKA65_64X16X1CM4 is
-   port(       DO : out std_logic_vector(15 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      DI : in std_logic_vector(15 downto 0);
+  component SHKA65_64X23X1CM4 is
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      DO8 : out std_logic;
+      DO9 : out std_logic;
+      DO10 : out std_logic;
+      DO11 : out std_logic;
+      DO12 : out std_logic;
+      DO13 : out std_logic;
+      DO14 : out std_logic;
+      DO15 : out std_logic;
+      DO16 : out std_logic;
+      DO17 : out std_logic;
+      DO18 : out std_logic;
+      DO19 : out std_logic;
+      DO20 : out std_logic;
+      DO21 : out std_logic;
+      DO22 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
+      DI8 : in std_logic;
+      DI9 : in std_logic;
+      DI10 : in std_logic;
+      DI11 : in std_logic;
+      DI12 : in std_logic;
+      DI13 : in std_logic;
+      DI14 : in std_logic;
+      DI15 : in std_logic;
+      DI16 : in std_logic;
+      DI17 : in std_logic;
+      DI18 : in std_logic;
+      DI19 : in std_logic;
+      DI20 : in std_logic;
+      DI21 : in std_logic;
+      DI22 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
+      DVS0,DVS1,DVS2:   IN   std_logic;
       CK   :   IN   std_logic;
       CSB  :   IN   std_logic
 );
   end component;
-  component SHKA65_64X64X1CM4 is
-   port(       DO : out std_logic_vector(63 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      DI : in std_logic_vector(63 downto 0);
+  component SHKA65_512X8X1CM4 is
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      A6 : in std_logic;
+      A7 : in std_logic;
+      A8 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end component;
-  component SHKA65_64X128X1CM4 is
-   port(       DO : out std_logic_vector(127 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      DI : in std_logic_vector(127 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end component;
-  component SHKA65_128X32X1CM4 is
-   port(       DO : out std_logic_vector(31 downto 0);
-      A : in std_logic_vector(6 downto 0);
-      DI : in std_logic_vector(31 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end component;
-  component SHKA65_128X64X1CM4 is
-   port(       DO : out std_logic_vector(63 downto 0);
-      A : in std_logic_vector(6 downto 0);
-      DI : in std_logic_vector(63 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end component;
-  component SHKA65_512X4X1CM4 is
-   port(       DO : out std_logic_vector(3 downto 0);
-      A : in std_logic_vector(8 downto 0);
-      DI : in std_logic_vector(3 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end component;
-  component SHKA65_512X16X1CM4 is
-   port(       DO : out std_logic_vector(15 downto 0);
-      A : in std_logic_vector(8 downto 0);
-      DI : in std_logic_vector(15 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
+      DVS0,DVS1,DVS2:   IN   std_logic;
       CK   :   IN   std_logic;
       CSB  :   IN   std_logic
 );
   end component;
   component SHKA65_512X64X1CM4 is
-   port(       DO : out std_logic_vector(63 downto 0);
-      A : in std_logic_vector(8 downto 0);
-      DI : in std_logic_vector(63 downto 0);
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      DO8 : out std_logic;
+      DO9 : out std_logic;
+      DO10 : out std_logic;
+      DO11 : out std_logic;
+      DO12 : out std_logic;
+      DO13 : out std_logic;
+      DO14 : out std_logic;
+      DO15 : out std_logic;
+      DO16 : out std_logic;
+      DO17 : out std_logic;
+      DO18 : out std_logic;
+      DO19 : out std_logic;
+      DO20 : out std_logic;
+      DO21 : out std_logic;
+      DO22 : out std_logic;
+      DO23 : out std_logic;
+      DO24 : out std_logic;
+      DO25 : out std_logic;
+      DO26 : out std_logic;
+      DO27 : out std_logic;
+      DO28 : out std_logic;
+      DO29 : out std_logic;
+      DO30 : out std_logic;
+      DO31 : out std_logic;
+      DO32 : out std_logic;
+      DO33 : out std_logic;
+      DO34 : out std_logic;
+      DO35 : out std_logic;
+      DO36 : out std_logic;
+      DO37 : out std_logic;
+      DO38 : out std_logic;
+      DO39 : out std_logic;
+      DO40 : out std_logic;
+      DO41 : out std_logic;
+      DO42 : out std_logic;
+      DO43 : out std_logic;
+      DO44 : out std_logic;
+      DO45 : out std_logic;
+      DO46 : out std_logic;
+      DO47 : out std_logic;
+      DO48 : out std_logic;
+      DO49 : out std_logic;
+      DO50 : out std_logic;
+      DO51 : out std_logic;
+      DO52 : out std_logic;
+      DO53 : out std_logic;
+      DO54 : out std_logic;
+      DO55 : out std_logic;
+      DO56 : out std_logic;
+      DO57 : out std_logic;
+      DO58 : out std_logic;
+      DO59 : out std_logic;
+      DO60 : out std_logic;
+      DO61 : out std_logic;
+      DO62 : out std_logic;
+      DO63 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      A6 : in std_logic;
+      A7 : in std_logic;
+      A8 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
+      DI8 : in std_logic;
+      DI9 : in std_logic;
+      DI10 : in std_logic;
+      DI11 : in std_logic;
+      DI12 : in std_logic;
+      DI13 : in std_logic;
+      DI14 : in std_logic;
+      DI15 : in std_logic;
+      DI16 : in std_logic;
+      DI17 : in std_logic;
+      DI18 : in std_logic;
+      DI19 : in std_logic;
+      DI20 : in std_logic;
+      DI21 : in std_logic;
+      DI22 : in std_logic;
+      DI23 : in std_logic;
+      DI24 : in std_logic;
+      DI25 : in std_logic;
+      DI26 : in std_logic;
+      DI27 : in std_logic;
+      DI28 : in std_logic;
+      DI29 : in std_logic;
+      DI30 : in std_logic;
+      DI31 : in std_logic;
+      DI32 : in std_logic;
+      DI33 : in std_logic;
+      DI34 : in std_logic;
+      DI35 : in std_logic;
+      DI36 : in std_logic;
+      DI37 : in std_logic;
+      DI38 : in std_logic;
+      DI39 : in std_logic;
+      DI40 : in std_logic;
+      DI41 : in std_logic;
+      DI42 : in std_logic;
+      DI43 : in std_logic;
+      DI44 : in std_logic;
+      DI45 : in std_logic;
+      DI46 : in std_logic;
+      DI47 : in std_logic;
+      DI48 : in std_logic;
+      DI49 : in std_logic;
+      DI50 : in std_logic;
+      DI51 : in std_logic;
+      DI52 : in std_logic;
+      DI53 : in std_logic;
+      DI54 : in std_logic;
+      DI55 : in std_logic;
+      DI56 : in std_logic;
+      DI57 : in std_logic;
+      DI58 : in std_logic;
+      DI59 : in std_logic;
+      DI60 : in std_logic;
+      DI61 : in std_logic;
+      DI62 : in std_logic;
+      DI63 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
+      DVS0,DVS1,DVS2:   IN   std_logic;
       CK   :   IN   std_logic;
       CSB  :   IN   std_logic
 );
   end component;
-  component SHKA65_4096X8X1CM16 is
-   port(       DO : out std_logic_vector(7 downto 0);
-      A : in std_logic_vector(11 downto 0);
-      DI : in std_logic_vector(7 downto 0);
+  component SHKA65_4096X8X1CM4 is
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      A6 : in std_logic;
+      A7 : in std_logic;
+      A8 : in std_logic;
+      A9 : in std_logic;
+      A10 : in std_logic;
+      A11 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
+      DVS0,DVS1,DVS2:   IN   std_logic;
       CK   :   IN   std_logic;
       CSB  :   IN   std_logic
 );
   end component;
-  component SHKA65_4096X64X1CM8 is
-   port(       DO : out std_logic_vector(63 downto 0);
-      A : in std_logic_vector(11 downto 0);
-      DI : in std_logic_vector(63 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
+  component SJKA65_32X32X1CM4 is
+   port(       DOA0 : out std_logic;
+      DOA1 : out std_logic;
+      DOA2 : out std_logic;
+      DOA3 : out std_logic;
+      DOA4 : out std_logic;
+      DOA5 : out std_logic;
+      DOA6 : out std_logic;
+      DOA7 : out std_logic;
+      DOA8 : out std_logic;
+      DOA9 : out std_logic;
+      DOA10 : out std_logic;
+      DOA11 : out std_logic;
+      DOA12 : out std_logic;
+      DOA13 : out std_logic;
+      DOA14 : out std_logic;
+      DOA15 : out std_logic;
+      DOA16 : out std_logic;
+      DOA17 : out std_logic;
+      DOA18 : out std_logic;
+      DOA19 : out std_logic;
+      DOA20 : out std_logic;
+      DOA21 : out std_logic;
+      DOA22 : out std_logic;
+      DOA23 : out std_logic;
+      DOA24 : out std_logic;
+      DOA25 : out std_logic;
+      DOA26 : out std_logic;
+      DOA27 : out std_logic;
+      DOA28 : out std_logic;
+      DOA29 : out std_logic;
+      DOA30 : out std_logic;
+      DOA31 : out std_logic;
+      DOB0 : out std_logic;
+      DOB1 : out std_logic;
+      DOB2 : out std_logic;
+      DOB3 : out std_logic;
+      DOB4 : out std_logic;
+      DOB5 : out std_logic;
+      DOB6 : out std_logic;
+      DOB7 : out std_logic;
+      DOB8 : out std_logic;
+      DOB9 : out std_logic;
+      DOB10 : out std_logic;
+      DOB11 : out std_logic;
+      DOB12 : out std_logic;
+      DOB13 : out std_logic;
+      DOB14 : out std_logic;
+      DOB15 : out std_logic;
+      DOB16 : out std_logic;
+      DOB17 : out std_logic;
+      DOB18 : out std_logic;
+      DOB19 : out std_logic;
+      DOB20 : out std_logic;
+      DOB21 : out std_logic;
+      DOB22 : out std_logic;
+      DOB23 : out std_logic;
+      DOB24 : out std_logic;
+      DOB25 : out std_logic;
+      DOB26 : out std_logic;
+      DOB27 : out std_logic;
+      DOB28 : out std_logic;
+      DOB29 : out std_logic;
+      DOB30 : out std_logic;
+      DOB31 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      B0 : in std_logic;
+      B1 : in std_logic;
+      B2 : in std_logic;
+      B3 : in std_logic;
+      B4 : in std_logic;
+      DIA0 : in std_logic;
+      DIA1 : in std_logic;
+      DIA2 : in std_logic;
+      DIA3 : in std_logic;
+      DIA4 : in std_logic;
+      DIA5 : in std_logic;
+      DIA6 : in std_logic;
+      DIA7 : in std_logic;
+      DIA8 : in std_logic;
+      DIA9 : in std_logic;
+      DIA10 : in std_logic;
+      DIA11 : in std_logic;
+      DIA12 : in std_logic;
+      DIA13 : in std_logic;
+      DIA14 : in std_logic;
+      DIA15 : in std_logic;
+      DIA16 : in std_logic;
+      DIA17 : in std_logic;
+      DIA18 : in std_logic;
+      DIA19 : in std_logic;
+      DIA20 : in std_logic;
+      DIA21 : in std_logic;
+      DIA22 : in std_logic;
+      DIA23 : in std_logic;
+      DIA24 : in std_logic;
+      DIA25 : in std_logic;
+      DIA26 : in std_logic;
+      DIA27 : in std_logic;
+      DIA28 : in std_logic;
+      DIA29 : in std_logic;
+      DIA30 : in std_logic;
+      DIA31 : in std_logic;
+      DIB0 : in std_logic;
+      DIB1 : in std_logic;
+      DIB2 : in std_logic;
+      DIB3 : in std_logic;
+      DIB4 : in std_logic;
+      DIB5 : in std_logic;
+      DIB6 : in std_logic;
+      DIB7 : in std_logic;
+      DIB8 : in std_logic;
+      DIB9 : in std_logic;
+      DIB10 : in std_logic;
+      DIB11 : in std_logic;
+      DIB12 : in std_logic;
+      DIB13 : in std_logic;
+      DIB14 : in std_logic;
+      DIB15 : in std_logic;
+      DIB16 : in std_logic;
+      DIB17 : in std_logic;
+      DIB18 : in std_logic;
+      DIB19 : in std_logic;
+      DIB20 : in std_logic;
+      DIB21 : in std_logic;
+      DIB22 : in std_logic;
+      DIB23 : in std_logic;
+      DIB24 : in std_logic;
+      DIB25 : in std_logic;
+      DIB26 : in std_logic;
+      DIB27 : in std_logic;
+      DIB28 : in std_logic;
+      DIB29 : in std_logic;
+      DIB30 : in std_logic;
+      DIB31 : in std_logic;
+     WEAN                          :   IN   std_logic;
+     WEBN                          :   IN   std_logic;
+     DVSE                          :   IN   std_logic;
+     DVS0, DVS1, DVS2, DVS3        :   IN   std_logic;
+     CKA                           :   IN   std_logic;
+     CKB                           :   IN   std_logic;
+     CSAN                          :   IN   std_logic;
+     CSBN                          :   IN   std_logic
 );
   end component;
-  component SHKA65_16384X8X1CM16 is
-   port(       DO : out std_logic_vector(7 downto 0);
-      A : in std_logic_vector(13 downto 0);
-      DI : in std_logic_vector(7 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
+  component SJKA65_64X32X1CM4 is
+   port(       DOA0 : out std_logic;
+      DOA1 : out std_logic;
+      DOA2 : out std_logic;
+      DOA3 : out std_logic;
+      DOA4 : out std_logic;
+      DOA5 : out std_logic;
+      DOA6 : out std_logic;
+      DOA7 : out std_logic;
+      DOA8 : out std_logic;
+      DOA9 : out std_logic;
+      DOA10 : out std_logic;
+      DOA11 : out std_logic;
+      DOA12 : out std_logic;
+      DOA13 : out std_logic;
+      DOA14 : out std_logic;
+      DOA15 : out std_logic;
+      DOA16 : out std_logic;
+      DOA17 : out std_logic;
+      DOA18 : out std_logic;
+      DOA19 : out std_logic;
+      DOA20 : out std_logic;
+      DOA21 : out std_logic;
+      DOA22 : out std_logic;
+      DOA23 : out std_logic;
+      DOA24 : out std_logic;
+      DOA25 : out std_logic;
+      DOA26 : out std_logic;
+      DOA27 : out std_logic;
+      DOA28 : out std_logic;
+      DOA29 : out std_logic;
+      DOA30 : out std_logic;
+      DOA31 : out std_logic;
+      DOB0 : out std_logic;
+      DOB1 : out std_logic;
+      DOB2 : out std_logic;
+      DOB3 : out std_logic;
+      DOB4 : out std_logic;
+      DOB5 : out std_logic;
+      DOB6 : out std_logic;
+      DOB7 : out std_logic;
+      DOB8 : out std_logic;
+      DOB9 : out std_logic;
+      DOB10 : out std_logic;
+      DOB11 : out std_logic;
+      DOB12 : out std_logic;
+      DOB13 : out std_logic;
+      DOB14 : out std_logic;
+      DOB15 : out std_logic;
+      DOB16 : out std_logic;
+      DOB17 : out std_logic;
+      DOB18 : out std_logic;
+      DOB19 : out std_logic;
+      DOB20 : out std_logic;
+      DOB21 : out std_logic;
+      DOB22 : out std_logic;
+      DOB23 : out std_logic;
+      DOB24 : out std_logic;
+      DOB25 : out std_logic;
+      DOB26 : out std_logic;
+      DOB27 : out std_logic;
+      DOB28 : out std_logic;
+      DOB29 : out std_logic;
+      DOB30 : out std_logic;
+      DOB31 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      B0 : in std_logic;
+      B1 : in std_logic;
+      B2 : in std_logic;
+      B3 : in std_logic;
+      B4 : in std_logic;
+      B5 : in std_logic;
+      DIA0 : in std_logic;
+      DIA1 : in std_logic;
+      DIA2 : in std_logic;
+      DIA3 : in std_logic;
+      DIA4 : in std_logic;
+      DIA5 : in std_logic;
+      DIA6 : in std_logic;
+      DIA7 : in std_logic;
+      DIA8 : in std_logic;
+      DIA9 : in std_logic;
+      DIA10 : in std_logic;
+      DIA11 : in std_logic;
+      DIA12 : in std_logic;
+      DIA13 : in std_logic;
+      DIA14 : in std_logic;
+      DIA15 : in std_logic;
+      DIA16 : in std_logic;
+      DIA17 : in std_logic;
+      DIA18 : in std_logic;
+      DIA19 : in std_logic;
+      DIA20 : in std_logic;
+      DIA21 : in std_logic;
+      DIA22 : in std_logic;
+      DIA23 : in std_logic;
+      DIA24 : in std_logic;
+      DIA25 : in std_logic;
+      DIA26 : in std_logic;
+      DIA27 : in std_logic;
+      DIA28 : in std_logic;
+      DIA29 : in std_logic;
+      DIA30 : in std_logic;
+      DIA31 : in std_logic;
+      DIB0 : in std_logic;
+      DIB1 : in std_logic;
+      DIB2 : in std_logic;
+      DIB3 : in std_logic;
+      DIB4 : in std_logic;
+      DIB5 : in std_logic;
+      DIB6 : in std_logic;
+      DIB7 : in std_logic;
+      DIB8 : in std_logic;
+      DIB9 : in std_logic;
+      DIB10 : in std_logic;
+      DIB11 : in std_logic;
+      DIB12 : in std_logic;
+      DIB13 : in std_logic;
+      DIB14 : in std_logic;
+      DIB15 : in std_logic;
+      DIB16 : in std_logic;
+      DIB17 : in std_logic;
+      DIB18 : in std_logic;
+      DIB19 : in std_logic;
+      DIB20 : in std_logic;
+      DIB21 : in std_logic;
+      DIB22 : in std_logic;
+      DIB23 : in std_logic;
+      DIB24 : in std_logic;
+      DIB25 : in std_logic;
+      DIB26 : in std_logic;
+      DIB27 : in std_logic;
+      DIB28 : in std_logic;
+      DIB29 : in std_logic;
+      DIB30 : in std_logic;
+      DIB31 : in std_logic;
+     WEAN                          :   IN   std_logic;
+     WEBN                          :   IN   std_logic;
+     DVSE                          :   IN   std_logic;
+     DVS0, DVS1, DVS2, DVS3        :   IN   std_logic;
+     CKA                           :   IN   std_logic;
+     CKB                           :   IN   std_logic;
+     CSAN                          :   IN   std_logic;
+     CSBN                          :   IN   std_logic
+);
+  end component;
+  component SJKA65_256X54X1CM4 is
+   port(       DOA0 : out std_logic;
+      DOA1 : out std_logic;
+      DOA2 : out std_logic;
+      DOA3 : out std_logic;
+      DOA4 : out std_logic;
+      DOA5 : out std_logic;
+      DOA6 : out std_logic;
+      DOA7 : out std_logic;
+      DOA8 : out std_logic;
+      DOA9 : out std_logic;
+      DOA10 : out std_logic;
+      DOA11 : out std_logic;
+      DOA12 : out std_logic;
+      DOA13 : out std_logic;
+      DOA14 : out std_logic;
+      DOA15 : out std_logic;
+      DOA16 : out std_logic;
+      DOA17 : out std_logic;
+      DOA18 : out std_logic;
+      DOA19 : out std_logic;
+      DOA20 : out std_logic;
+      DOA21 : out std_logic;
+      DOA22 : out std_logic;
+      DOA23 : out std_logic;
+      DOA24 : out std_logic;
+      DOA25 : out std_logic;
+      DOA26 : out std_logic;
+      DOA27 : out std_logic;
+      DOA28 : out std_logic;
+      DOA29 : out std_logic;
+      DOA30 : out std_logic;
+      DOA31 : out std_logic;
+      DOA32 : out std_logic;
+      DOA33 : out std_logic;
+      DOA34 : out std_logic;
+      DOA35 : out std_logic;
+      DOA36 : out std_logic;
+      DOA37 : out std_logic;
+      DOA38 : out std_logic;
+      DOA39 : out std_logic;
+      DOA40 : out std_logic;
+      DOA41 : out std_logic;
+      DOA42 : out std_logic;
+      DOA43 : out std_logic;
+      DOA44 : out std_logic;
+      DOA45 : out std_logic;
+      DOA46 : out std_logic;
+      DOA47 : out std_logic;
+      DOA48 : out std_logic;
+      DOA49 : out std_logic;
+      DOA50 : out std_logic;
+      DOA51 : out std_logic;
+      DOA52 : out std_logic;
+      DOA53 : out std_logic;
+      DOB0 : out std_logic;
+      DOB1 : out std_logic;
+      DOB2 : out std_logic;
+      DOB3 : out std_logic;
+      DOB4 : out std_logic;
+      DOB5 : out std_logic;
+      DOB6 : out std_logic;
+      DOB7 : out std_logic;
+      DOB8 : out std_logic;
+      DOB9 : out std_logic;
+      DOB10 : out std_logic;
+      DOB11 : out std_logic;
+      DOB12 : out std_logic;
+      DOB13 : out std_logic;
+      DOB14 : out std_logic;
+      DOB15 : out std_logic;
+      DOB16 : out std_logic;
+      DOB17 : out std_logic;
+      DOB18 : out std_logic;
+      DOB19 : out std_logic;
+      DOB20 : out std_logic;
+      DOB21 : out std_logic;
+      DOB22 : out std_logic;
+      DOB23 : out std_logic;
+      DOB24 : out std_logic;
+      DOB25 : out std_logic;
+      DOB26 : out std_logic;
+      DOB27 : out std_logic;
+      DOB28 : out std_logic;
+      DOB29 : out std_logic;
+      DOB30 : out std_logic;
+      DOB31 : out std_logic;
+      DOB32 : out std_logic;
+      DOB33 : out std_logic;
+      DOB34 : out std_logic;
+      DOB35 : out std_logic;
+      DOB36 : out std_logic;
+      DOB37 : out std_logic;
+      DOB38 : out std_logic;
+      DOB39 : out std_logic;
+      DOB40 : out std_logic;
+      DOB41 : out std_logic;
+      DOB42 : out std_logic;
+      DOB43 : out std_logic;
+      DOB44 : out std_logic;
+      DOB45 : out std_logic;
+      DOB46 : out std_logic;
+      DOB47 : out std_logic;
+      DOB48 : out std_logic;
+      DOB49 : out std_logic;
+      DOB50 : out std_logic;
+      DOB51 : out std_logic;
+      DOB52 : out std_logic;
+      DOB53 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      A6 : in std_logic;
+      A7 : in std_logic;
+      B0 : in std_logic;
+      B1 : in std_logic;
+      B2 : in std_logic;
+      B3 : in std_logic;
+      B4 : in std_logic;
+      B5 : in std_logic;
+      B6 : in std_logic;
+      B7 : in std_logic;
+      DIA0 : in std_logic;
+      DIA1 : in std_logic;
+      DIA2 : in std_logic;
+      DIA3 : in std_logic;
+      DIA4 : in std_logic;
+      DIA5 : in std_logic;
+      DIA6 : in std_logic;
+      DIA7 : in std_logic;
+      DIA8 : in std_logic;
+      DIA9 : in std_logic;
+      DIA10 : in std_logic;
+      DIA11 : in std_logic;
+      DIA12 : in std_logic;
+      DIA13 : in std_logic;
+      DIA14 : in std_logic;
+      DIA15 : in std_logic;
+      DIA16 : in std_logic;
+      DIA17 : in std_logic;
+      DIA18 : in std_logic;
+      DIA19 : in std_logic;
+      DIA20 : in std_logic;
+      DIA21 : in std_logic;
+      DIA22 : in std_logic;
+      DIA23 : in std_logic;
+      DIA24 : in std_logic;
+      DIA25 : in std_logic;
+      DIA26 : in std_logic;
+      DIA27 : in std_logic;
+      DIA28 : in std_logic;
+      DIA29 : in std_logic;
+      DIA30 : in std_logic;
+      DIA31 : in std_logic;
+      DIA32 : in std_logic;
+      DIA33 : in std_logic;
+      DIA34 : in std_logic;
+      DIA35 : in std_logic;
+      DIA36 : in std_logic;
+      DIA37 : in std_logic;
+      DIA38 : in std_logic;
+      DIA39 : in std_logic;
+      DIA40 : in std_logic;
+      DIA41 : in std_logic;
+      DIA42 : in std_logic;
+      DIA43 : in std_logic;
+      DIA44 : in std_logic;
+      DIA45 : in std_logic;
+      DIA46 : in std_logic;
+      DIA47 : in std_logic;
+      DIA48 : in std_logic;
+      DIA49 : in std_logic;
+      DIA50 : in std_logic;
+      DIA51 : in std_logic;
+      DIA52 : in std_logic;
+      DIA53 : in std_logic;
+      DIB0 : in std_logic;
+      DIB1 : in std_logic;
+      DIB2 : in std_logic;
+      DIB3 : in std_logic;
+      DIB4 : in std_logic;
+      DIB5 : in std_logic;
+      DIB6 : in std_logic;
+      DIB7 : in std_logic;
+      DIB8 : in std_logic;
+      DIB9 : in std_logic;
+      DIB10 : in std_logic;
+      DIB11 : in std_logic;
+      DIB12 : in std_logic;
+      DIB13 : in std_logic;
+      DIB14 : in std_logic;
+      DIB15 : in std_logic;
+      DIB16 : in std_logic;
+      DIB17 : in std_logic;
+      DIB18 : in std_logic;
+      DIB19 : in std_logic;
+      DIB20 : in std_logic;
+      DIB21 : in std_logic;
+      DIB22 : in std_logic;
+      DIB23 : in std_logic;
+      DIB24 : in std_logic;
+      DIB25 : in std_logic;
+      DIB26 : in std_logic;
+      DIB27 : in std_logic;
+      DIB28 : in std_logic;
+      DIB29 : in std_logic;
+      DIB30 : in std_logic;
+      DIB31 : in std_logic;
+      DIB32 : in std_logic;
+      DIB33 : in std_logic;
+      DIB34 : in std_logic;
+      DIB35 : in std_logic;
+      DIB36 : in std_logic;
+      DIB37 : in std_logic;
+      DIB38 : in std_logic;
+      DIB39 : in std_logic;
+      DIB40 : in std_logic;
+      DIB41 : in std_logic;
+      DIB42 : in std_logic;
+      DIB43 : in std_logic;
+      DIB44 : in std_logic;
+      DIB45 : in std_logic;
+      DIB46 : in std_logic;
+      DIB47 : in std_logic;
+      DIB48 : in std_logic;
+      DIB49 : in std_logic;
+      DIB50 : in std_logic;
+      DIB51 : in std_logic;
+      DIB52 : in std_logic;
+      DIB53 : in std_logic;
+     WEAN                          :   IN   std_logic;
+     WEBN                          :   IN   std_logic;
+     DVSE                          :   IN   std_logic;
+     DVS0, DVS1, DVS2, DVS3        :   IN   std_logic;
+     CKA                           :   IN   std_logic;
+     CKB                           :   IN   std_logic;
+     CSAN                          :   IN   std_logic;
+     CSBN                          :   IN   std_logic
 );
   end component;
 end package;
@@ -8667,15 +9529,15 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 use aHiR_ieee_proposed.float_pkg.all;
 
 package MemcutDescriptionPackage is
-   constant spmem_cut_row_heights : IntegerArray(1 to 12) := (16384, 4096, 4096, 512, 512, 512, 128, 128, 64, 64, 64, 32);
-    constant spmem_cut_address_widths : IntegerArray(1 to 12) := (14, 12, 12, 9, 9, 9, 7, 7, 6, 6, 6, 5);
-    constant spmem_cut_data_widths : IntegerArray(1 to 12) := (8, 64, 8, 64, 16, 4, 64, 32, 128, 64, 16, 32);
-   constant dpmem_cut_row_heights : IntegerArray(1 to 7) := (256, 256, 256, 64, 64, 64, 32);
-    constant dpmem_cut_address_widths : IntegerArray(1 to 7) := (8, 8, 8, 6, 6, 6, 5);
-    constant dpmem_cut_data_widths : IntegerArray(1 to 7) := (32, 16, 4, 16, 8, 4, 128);
-   constant register_file_1w_1r_cut_row_heights : IntegerArray(1 to 5) := (64, 64, 64, 16, 16);
-    constant register_file_1w_1r_cut_address_widths : IntegerArray(1 to 5) := (6, 6, 6, 4, 4);
-    constant register_file_1w_1r_cut_data_widths : IntegerArray(1 to 5) := (16, 8, 4, 32, 16);
+   constant spmem_cut_row_heights : IntegerArray(1 to 6) := (4096, 512, 512, 64, 32, 16);
+    constant spmem_cut_address_widths : IntegerArray(1 to 6) := (12, 9, 9, 6, 5, 4);
+    constant spmem_cut_data_widths : IntegerArray(1 to 6) := (8, 64, 8, 23, 32, 30);
+   constant dpmem_cut_row_heights : IntegerArray(1 to 3) := (256, 64, 32);
+    constant dpmem_cut_address_widths : IntegerArray(1 to 3) := (8, 6, 5);
+    constant dpmem_cut_data_widths : IntegerArray(1 to 3) := (54, 32, 32);
+   constant register_file_1w_1r_cut_row_heights : IntegerArray(1 to 2) := (64, 32);
+    constant register_file_1w_1r_cut_address_widths : IntegerArray(1 to 2) := (6, 5);
+    constant register_file_1w_1r_cut_data_widths : IntegerArray(1 to 2) := (32, 32);
 end package;
 ------------------------------------------------------------------------------------------------
 --
@@ -8749,10 +9611,10 @@ begin
 	TIE_HIGH_2 <= (others => '1');
 	TIE_LOW_3 <= (others => '0');
 	TIE_LOW_4 <= (others => '0');
-  SJKA65_32X128X1CM4_gen: if (address_width = 5) and (data_width = 128) generate
+  SJKA65_32X32X1CM4_gen: if (address_width = 5) and (data_width = 32) generate
      mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(127 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(127 downto 0); 
+            signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
             signal ADDR_TIE_LOW  : std_logic_vector(4 downto 0); 
             signal ADDR_TIE_HIGH : std_logic_vector(4 downto 0); 
          begin 
@@ -8760,89 +9622,309 @@ begin
               DATA_TIE_HIGH <= (others => '1'); 
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_32X128X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
+               inst: SJKA65_32X32X1CM4
+   port map (       A0 => ADDR_0(0), 
+       A1 => ADDR_0(1), 
+       A2 => ADDR_0(2), 
+       A3 => ADDR_0(3), 
+       A4 => ADDR_0(4), 
+       B0 => ADDR_1(0), 
+       B1 => ADDR_1(1), 
+       B2 => ADDR_1(2), 
+       B3 => ADDR_1(3), 
+       B4 => ADDR_1(4), 
+       DIA0 => DATAIN_0(0), 
+       DIA1 => DATAIN_0(1), 
+       DIA2 => DATAIN_0(2), 
+       DIA3 => DATAIN_0(3), 
+       DIA4 => DATAIN_0(4), 
+       DIA5 => DATAIN_0(5), 
+       DIA6 => DATAIN_0(6), 
+       DIA7 => DATAIN_0(7), 
+       DIA8 => DATAIN_0(8), 
+       DIA9 => DATAIN_0(9), 
+       DIA10 => DATAIN_0(10), 
+       DIA11 => DATAIN_0(11), 
+       DIA12 => DATAIN_0(12), 
+       DIA13 => DATAIN_0(13), 
+       DIA14 => DATAIN_0(14), 
+       DIA15 => DATAIN_0(15), 
+       DIA16 => DATAIN_0(16), 
+       DIA17 => DATAIN_0(17), 
+       DIA18 => DATAIN_0(18), 
+       DIA19 => DATAIN_0(19), 
+       DIA20 => DATAIN_0(20), 
+       DIA21 => DATAIN_0(21), 
+       DIA22 => DATAIN_0(22), 
+       DIA23 => DATAIN_0(23), 
+       DIA24 => DATAIN_0(24), 
+       DIA25 => DATAIN_0(25), 
+       DIA26 => DATAIN_0(26), 
+       DIA27 => DATAIN_0(27), 
+       DIA28 => DATAIN_0(28), 
+       DIA29 => DATAIN_0(29), 
+       DIA30 => DATAIN_0(30), 
+       DIA31 => DATAIN_0(31), 
+       DIB0 => DATAIN_1(0), 
+       DIB1 => DATAIN_1(1), 
+       DIB2 => DATAIN_1(2), 
+       DIB3 => DATAIN_1(3), 
+       DIB4 => DATAIN_1(4), 
+       DIB5 => DATAIN_1(5), 
+       DIB6 => DATAIN_1(6), 
+       DIB7 => DATAIN_1(7), 
+       DIB8 => DATAIN_1(8), 
+       DIB9 => DATAIN_1(9), 
+       DIB10 => DATAIN_1(10), 
+       DIB11 => DATAIN_1(11), 
+       DIB12 => DATAIN_1(12), 
+       DIB13 => DATAIN_1(13), 
+       DIB14 => DATAIN_1(14), 
+       DIB15 => DATAIN_1(15), 
+       DIB16 => DATAIN_1(16), 
+       DIB17 => DATAIN_1(17), 
+       DIB18 => DATAIN_1(18), 
+       DIB19 => DATAIN_1(19), 
+       DIB20 => DATAIN_1(20), 
+       DIB21 => DATAIN_1(21), 
+       DIB22 => DATAIN_1(22), 
+       DIB23 => DATAIN_1(23), 
+       DIB24 => DATAIN_1(24), 
+       DIB25 => DATAIN_1(25), 
+       DIB26 => DATAIN_1(26), 
+       DIB27 => DATAIN_1(27), 
+       DIB28 => DATAIN_1(28), 
+       DIB29 => DATAIN_1(29), 
+       DIB30 => DATAIN_1(30), 
+       DIB31 => DATAIN_1(31), 
+       DOA0 => DATAOUT_0(0), 
+       DOA1 => DATAOUT_0(1), 
+       DOA2 => DATAOUT_0(2), 
+       DOA3 => DATAOUT_0(3), 
+       DOA4 => DATAOUT_0(4), 
+       DOA5 => DATAOUT_0(5), 
+       DOA6 => DATAOUT_0(6), 
+       DOA7 => DATAOUT_0(7), 
+       DOA8 => DATAOUT_0(8), 
+       DOA9 => DATAOUT_0(9), 
+       DOA10 => DATAOUT_0(10), 
+       DOA11 => DATAOUT_0(11), 
+       DOA12 => DATAOUT_0(12), 
+       DOA13 => DATAOUT_0(13), 
+       DOA14 => DATAOUT_0(14), 
+       DOA15 => DATAOUT_0(15), 
+       DOA16 => DATAOUT_0(16), 
+       DOA17 => DATAOUT_0(17), 
+       DOA18 => DATAOUT_0(18), 
+       DOA19 => DATAOUT_0(19), 
+       DOA20 => DATAOUT_0(20), 
+       DOA21 => DATAOUT_0(21), 
+       DOA22 => DATAOUT_0(22), 
+       DOA23 => DATAOUT_0(23), 
+       DOA24 => DATAOUT_0(24), 
+       DOA25 => DATAOUT_0(25), 
+       DOA26 => DATAOUT_0(26), 
+       DOA27 => DATAOUT_0(27), 
+       DOA28 => DATAOUT_0(28), 
+       DOA29 => DATAOUT_0(29), 
+       DOA30 => DATAOUT_0(30), 
+       DOA31 => DATAOUT_0(31), 
+       DOB0 => DATAOUT_1(0), 
+       DOB1 => DATAOUT_1(1), 
+       DOB2 => DATAOUT_1(2), 
+       DOB3 => DATAOUT_1(3), 
+       DOB4 => DATAOUT_1(4), 
+       DOB5 => DATAOUT_1(5), 
+       DOB6 => DATAOUT_1(6), 
+       DOB7 => DATAOUT_1(7), 
+       DOB8 => DATAOUT_1(8), 
+       DOB9 => DATAOUT_1(9), 
+       DOB10 => DATAOUT_1(10), 
+       DOB11 => DATAOUT_1(11), 
+       DOB12 => DATAOUT_1(12), 
+       DOB13 => DATAOUT_1(13), 
+       DOB14 => DATAOUT_1(14), 
+       DOB15 => DATAOUT_1(15), 
+       DOB16 => DATAOUT_1(16), 
+       DOB17 => DATAOUT_1(17), 
+       DOB18 => DATAOUT_1(18), 
+       DOB19 => DATAOUT_1(19), 
+       DOB20 => DATAOUT_1(20), 
+       DOB21 => DATAOUT_1(21), 
+       DOB22 => DATAOUT_1(22), 
+       DOB23 => DATAOUT_1(23), 
+       DOB24 => DATAOUT_1(24), 
+       DOB25 => DATAOUT_1(25), 
+       DOB26 => DATAOUT_1(26), 
+       DOB27 => DATAOUT_1(27), 
+       DOB28 => DATAOUT_1(28), 
+       DOB29 => DATAOUT_1(29), 
+       DOB30 => DATAOUT_1(30), 
+       DOB31 => DATAOUT_1(31), 
+CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW, DVS3 => TIE_LOW, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR
+);
          end block;
-  end generate SJKA65_32X128X1CM4_gen;
-  SJKA65_64X4X1CM4_gen: if (address_width = 6) and (data_width = 4) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_64X4X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
-         end block;
-  end generate SJKA65_64X4X1CM4_gen;
-  SJKA65_64X8X1CM4_gen: if (address_width = 6) and (data_width = 8) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_64X8X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
-         end block;
-  end generate SJKA65_64X8X1CM4_gen;
-  SJKA65_64X16X1CM4_gen: if (address_width = 6) and (data_width = 16) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_64X16X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
-         end block;
-  end generate SJKA65_64X16X1CM4_gen;
-  SJKA65_256X4X1CM4_gen: if (address_width = 8) and (data_width = 4) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(7 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(7 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_256X4X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
-         end block;
-  end generate SJKA65_256X4X1CM4_gen;
-  SJKA65_256X16X1CM4_gen: if (address_width = 8) and (data_width = 16) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(7 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(7 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_256X16X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
-         end block;
-  end generate SJKA65_256X16X1CM4_gen;
-  SJKA65_256X32X1CM4_gen: if (address_width = 8) and (data_width = 32) generate
+  end generate SJKA65_32X32X1CM4_gen;
+  SJKA65_64X32X1CM4_gen: if (address_width = 6) and (data_width = 32) generate
      mc: block 
             signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
             signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SJKA65_64X32X1CM4
+   port map (       A0 => ADDR_0(0), 
+       A1 => ADDR_0(1), 
+       A2 => ADDR_0(2), 
+       A3 => ADDR_0(3), 
+       A4 => ADDR_0(4), 
+       A5 => ADDR_0(5), 
+       B0 => ADDR_1(0), 
+       B1 => ADDR_1(1), 
+       B2 => ADDR_1(2), 
+       B3 => ADDR_1(3), 
+       B4 => ADDR_1(4), 
+       B5 => ADDR_1(5), 
+       DIA0 => DATAIN_0(0), 
+       DIA1 => DATAIN_0(1), 
+       DIA2 => DATAIN_0(2), 
+       DIA3 => DATAIN_0(3), 
+       DIA4 => DATAIN_0(4), 
+       DIA5 => DATAIN_0(5), 
+       DIA6 => DATAIN_0(6), 
+       DIA7 => DATAIN_0(7), 
+       DIA8 => DATAIN_0(8), 
+       DIA9 => DATAIN_0(9), 
+       DIA10 => DATAIN_0(10), 
+       DIA11 => DATAIN_0(11), 
+       DIA12 => DATAIN_0(12), 
+       DIA13 => DATAIN_0(13), 
+       DIA14 => DATAIN_0(14), 
+       DIA15 => DATAIN_0(15), 
+       DIA16 => DATAIN_0(16), 
+       DIA17 => DATAIN_0(17), 
+       DIA18 => DATAIN_0(18), 
+       DIA19 => DATAIN_0(19), 
+       DIA20 => DATAIN_0(20), 
+       DIA21 => DATAIN_0(21), 
+       DIA22 => DATAIN_0(22), 
+       DIA23 => DATAIN_0(23), 
+       DIA24 => DATAIN_0(24), 
+       DIA25 => DATAIN_0(25), 
+       DIA26 => DATAIN_0(26), 
+       DIA27 => DATAIN_0(27), 
+       DIA28 => DATAIN_0(28), 
+       DIA29 => DATAIN_0(29), 
+       DIA30 => DATAIN_0(30), 
+       DIA31 => DATAIN_0(31), 
+       DIB0 => DATAIN_1(0), 
+       DIB1 => DATAIN_1(1), 
+       DIB2 => DATAIN_1(2), 
+       DIB3 => DATAIN_1(3), 
+       DIB4 => DATAIN_1(4), 
+       DIB5 => DATAIN_1(5), 
+       DIB6 => DATAIN_1(6), 
+       DIB7 => DATAIN_1(7), 
+       DIB8 => DATAIN_1(8), 
+       DIB9 => DATAIN_1(9), 
+       DIB10 => DATAIN_1(10), 
+       DIB11 => DATAIN_1(11), 
+       DIB12 => DATAIN_1(12), 
+       DIB13 => DATAIN_1(13), 
+       DIB14 => DATAIN_1(14), 
+       DIB15 => DATAIN_1(15), 
+       DIB16 => DATAIN_1(16), 
+       DIB17 => DATAIN_1(17), 
+       DIB18 => DATAIN_1(18), 
+       DIB19 => DATAIN_1(19), 
+       DIB20 => DATAIN_1(20), 
+       DIB21 => DATAIN_1(21), 
+       DIB22 => DATAIN_1(22), 
+       DIB23 => DATAIN_1(23), 
+       DIB24 => DATAIN_1(24), 
+       DIB25 => DATAIN_1(25), 
+       DIB26 => DATAIN_1(26), 
+       DIB27 => DATAIN_1(27), 
+       DIB28 => DATAIN_1(28), 
+       DIB29 => DATAIN_1(29), 
+       DIB30 => DATAIN_1(30), 
+       DIB31 => DATAIN_1(31), 
+       DOA0 => DATAOUT_0(0), 
+       DOA1 => DATAOUT_0(1), 
+       DOA2 => DATAOUT_0(2), 
+       DOA3 => DATAOUT_0(3), 
+       DOA4 => DATAOUT_0(4), 
+       DOA5 => DATAOUT_0(5), 
+       DOA6 => DATAOUT_0(6), 
+       DOA7 => DATAOUT_0(7), 
+       DOA8 => DATAOUT_0(8), 
+       DOA9 => DATAOUT_0(9), 
+       DOA10 => DATAOUT_0(10), 
+       DOA11 => DATAOUT_0(11), 
+       DOA12 => DATAOUT_0(12), 
+       DOA13 => DATAOUT_0(13), 
+       DOA14 => DATAOUT_0(14), 
+       DOA15 => DATAOUT_0(15), 
+       DOA16 => DATAOUT_0(16), 
+       DOA17 => DATAOUT_0(17), 
+       DOA18 => DATAOUT_0(18), 
+       DOA19 => DATAOUT_0(19), 
+       DOA20 => DATAOUT_0(20), 
+       DOA21 => DATAOUT_0(21), 
+       DOA22 => DATAOUT_0(22), 
+       DOA23 => DATAOUT_0(23), 
+       DOA24 => DATAOUT_0(24), 
+       DOA25 => DATAOUT_0(25), 
+       DOA26 => DATAOUT_0(26), 
+       DOA27 => DATAOUT_0(27), 
+       DOA28 => DATAOUT_0(28), 
+       DOA29 => DATAOUT_0(29), 
+       DOA30 => DATAOUT_0(30), 
+       DOA31 => DATAOUT_0(31), 
+       DOB0 => DATAOUT_1(0), 
+       DOB1 => DATAOUT_1(1), 
+       DOB2 => DATAOUT_1(2), 
+       DOB3 => DATAOUT_1(3), 
+       DOB4 => DATAOUT_1(4), 
+       DOB5 => DATAOUT_1(5), 
+       DOB6 => DATAOUT_1(6), 
+       DOB7 => DATAOUT_1(7), 
+       DOB8 => DATAOUT_1(8), 
+       DOB9 => DATAOUT_1(9), 
+       DOB10 => DATAOUT_1(10), 
+       DOB11 => DATAOUT_1(11), 
+       DOB12 => DATAOUT_1(12), 
+       DOB13 => DATAOUT_1(13), 
+       DOB14 => DATAOUT_1(14), 
+       DOB15 => DATAOUT_1(15), 
+       DOB16 => DATAOUT_1(16), 
+       DOB17 => DATAOUT_1(17), 
+       DOB18 => DATAOUT_1(18), 
+       DOB19 => DATAOUT_1(19), 
+       DOB20 => DATAOUT_1(20), 
+       DOB21 => DATAOUT_1(21), 
+       DOB22 => DATAOUT_1(22), 
+       DOB23 => DATAOUT_1(23), 
+       DOB24 => DATAOUT_1(24), 
+       DOB25 => DATAOUT_1(25), 
+       DOB26 => DATAOUT_1(26), 
+       DOB27 => DATAOUT_1(27), 
+       DOB28 => DATAOUT_1(28), 
+       DOB29 => DATAOUT_1(29), 
+       DOB30 => DATAOUT_1(30), 
+       DOB31 => DATAOUT_1(31), 
+CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW, DVS3 => TIE_LOW, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR
+);
+         end block;
+  end generate SJKA65_64X32X1CM4_gen;
+  SJKA65_256X54X1CM4_gen: if (address_width = 8) and (data_width = 54) generate
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(53 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(53 downto 0); 
             signal ADDR_TIE_LOW  : std_logic_vector(7 downto 0); 
             signal ADDR_TIE_HIGH : std_logic_vector(7 downto 0); 
          begin 
@@ -8850,10 +9932,243 @@ begin
               DATA_TIE_HIGH <= (others => '1'); 
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SJKA65_256X32X1CM4
-   port map (A => ADDR_0, B => ADDR_1, CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS => TIE_LOW_4, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR, DIA => DATAIN_0, DIB => DATAIN_1, DOA => DATAOUT_0, DOB => DATAOUT_1);
+               inst: SJKA65_256X54X1CM4
+   port map (       A0 => ADDR_0(0), 
+       A1 => ADDR_0(1), 
+       A2 => ADDR_0(2), 
+       A3 => ADDR_0(3), 
+       A4 => ADDR_0(4), 
+       A5 => ADDR_0(5), 
+       A6 => ADDR_0(6), 
+       A7 => ADDR_0(7), 
+       B0 => ADDR_1(0), 
+       B1 => ADDR_1(1), 
+       B2 => ADDR_1(2), 
+       B3 => ADDR_1(3), 
+       B4 => ADDR_1(4), 
+       B5 => ADDR_1(5), 
+       B6 => ADDR_1(6), 
+       B7 => ADDR_1(7), 
+       DIA0 => DATAIN_0(0), 
+       DIA1 => DATAIN_0(1), 
+       DIA2 => DATAIN_0(2), 
+       DIA3 => DATAIN_0(3), 
+       DIA4 => DATAIN_0(4), 
+       DIA5 => DATAIN_0(5), 
+       DIA6 => DATAIN_0(6), 
+       DIA7 => DATAIN_0(7), 
+       DIA8 => DATAIN_0(8), 
+       DIA9 => DATAIN_0(9), 
+       DIA10 => DATAIN_0(10), 
+       DIA11 => DATAIN_0(11), 
+       DIA12 => DATAIN_0(12), 
+       DIA13 => DATAIN_0(13), 
+       DIA14 => DATAIN_0(14), 
+       DIA15 => DATAIN_0(15), 
+       DIA16 => DATAIN_0(16), 
+       DIA17 => DATAIN_0(17), 
+       DIA18 => DATAIN_0(18), 
+       DIA19 => DATAIN_0(19), 
+       DIA20 => DATAIN_0(20), 
+       DIA21 => DATAIN_0(21), 
+       DIA22 => DATAIN_0(22), 
+       DIA23 => DATAIN_0(23), 
+       DIA24 => DATAIN_0(24), 
+       DIA25 => DATAIN_0(25), 
+       DIA26 => DATAIN_0(26), 
+       DIA27 => DATAIN_0(27), 
+       DIA28 => DATAIN_0(28), 
+       DIA29 => DATAIN_0(29), 
+       DIA30 => DATAIN_0(30), 
+       DIA31 => DATAIN_0(31), 
+       DIA32 => DATAIN_0(32), 
+       DIA33 => DATAIN_0(33), 
+       DIA34 => DATAIN_0(34), 
+       DIA35 => DATAIN_0(35), 
+       DIA36 => DATAIN_0(36), 
+       DIA37 => DATAIN_0(37), 
+       DIA38 => DATAIN_0(38), 
+       DIA39 => DATAIN_0(39), 
+       DIA40 => DATAIN_0(40), 
+       DIA41 => DATAIN_0(41), 
+       DIA42 => DATAIN_0(42), 
+       DIA43 => DATAIN_0(43), 
+       DIA44 => DATAIN_0(44), 
+       DIA45 => DATAIN_0(45), 
+       DIA46 => DATAIN_0(46), 
+       DIA47 => DATAIN_0(47), 
+       DIA48 => DATAIN_0(48), 
+       DIA49 => DATAIN_0(49), 
+       DIA50 => DATAIN_0(50), 
+       DIA51 => DATAIN_0(51), 
+       DIA52 => DATAIN_0(52), 
+       DIA53 => DATAIN_0(53), 
+       DIB0 => DATAIN_1(0), 
+       DIB1 => DATAIN_1(1), 
+       DIB2 => DATAIN_1(2), 
+       DIB3 => DATAIN_1(3), 
+       DIB4 => DATAIN_1(4), 
+       DIB5 => DATAIN_1(5), 
+       DIB6 => DATAIN_1(6), 
+       DIB7 => DATAIN_1(7), 
+       DIB8 => DATAIN_1(8), 
+       DIB9 => DATAIN_1(9), 
+       DIB10 => DATAIN_1(10), 
+       DIB11 => DATAIN_1(11), 
+       DIB12 => DATAIN_1(12), 
+       DIB13 => DATAIN_1(13), 
+       DIB14 => DATAIN_1(14), 
+       DIB15 => DATAIN_1(15), 
+       DIB16 => DATAIN_1(16), 
+       DIB17 => DATAIN_1(17), 
+       DIB18 => DATAIN_1(18), 
+       DIB19 => DATAIN_1(19), 
+       DIB20 => DATAIN_1(20), 
+       DIB21 => DATAIN_1(21), 
+       DIB22 => DATAIN_1(22), 
+       DIB23 => DATAIN_1(23), 
+       DIB24 => DATAIN_1(24), 
+       DIB25 => DATAIN_1(25), 
+       DIB26 => DATAIN_1(26), 
+       DIB27 => DATAIN_1(27), 
+       DIB28 => DATAIN_1(28), 
+       DIB29 => DATAIN_1(29), 
+       DIB30 => DATAIN_1(30), 
+       DIB31 => DATAIN_1(31), 
+       DIB32 => DATAIN_1(32), 
+       DIB33 => DATAIN_1(33), 
+       DIB34 => DATAIN_1(34), 
+       DIB35 => DATAIN_1(35), 
+       DIB36 => DATAIN_1(36), 
+       DIB37 => DATAIN_1(37), 
+       DIB38 => DATAIN_1(38), 
+       DIB39 => DATAIN_1(39), 
+       DIB40 => DATAIN_1(40), 
+       DIB41 => DATAIN_1(41), 
+       DIB42 => DATAIN_1(42), 
+       DIB43 => DATAIN_1(43), 
+       DIB44 => DATAIN_1(44), 
+       DIB45 => DATAIN_1(45), 
+       DIB46 => DATAIN_1(46), 
+       DIB47 => DATAIN_1(47), 
+       DIB48 => DATAIN_1(48), 
+       DIB49 => DATAIN_1(49), 
+       DIB50 => DATAIN_1(50), 
+       DIB51 => DATAIN_1(51), 
+       DIB52 => DATAIN_1(52), 
+       DIB53 => DATAIN_1(53), 
+       DOA0 => DATAOUT_0(0), 
+       DOA1 => DATAOUT_0(1), 
+       DOA2 => DATAOUT_0(2), 
+       DOA3 => DATAOUT_0(3), 
+       DOA4 => DATAOUT_0(4), 
+       DOA5 => DATAOUT_0(5), 
+       DOA6 => DATAOUT_0(6), 
+       DOA7 => DATAOUT_0(7), 
+       DOA8 => DATAOUT_0(8), 
+       DOA9 => DATAOUT_0(9), 
+       DOA10 => DATAOUT_0(10), 
+       DOA11 => DATAOUT_0(11), 
+       DOA12 => DATAOUT_0(12), 
+       DOA13 => DATAOUT_0(13), 
+       DOA14 => DATAOUT_0(14), 
+       DOA15 => DATAOUT_0(15), 
+       DOA16 => DATAOUT_0(16), 
+       DOA17 => DATAOUT_0(17), 
+       DOA18 => DATAOUT_0(18), 
+       DOA19 => DATAOUT_0(19), 
+       DOA20 => DATAOUT_0(20), 
+       DOA21 => DATAOUT_0(21), 
+       DOA22 => DATAOUT_0(22), 
+       DOA23 => DATAOUT_0(23), 
+       DOA24 => DATAOUT_0(24), 
+       DOA25 => DATAOUT_0(25), 
+       DOA26 => DATAOUT_0(26), 
+       DOA27 => DATAOUT_0(27), 
+       DOA28 => DATAOUT_0(28), 
+       DOA29 => DATAOUT_0(29), 
+       DOA30 => DATAOUT_0(30), 
+       DOA31 => DATAOUT_0(31), 
+       DOA32 => DATAOUT_0(32), 
+       DOA33 => DATAOUT_0(33), 
+       DOA34 => DATAOUT_0(34), 
+       DOA35 => DATAOUT_0(35), 
+       DOA36 => DATAOUT_0(36), 
+       DOA37 => DATAOUT_0(37), 
+       DOA38 => DATAOUT_0(38), 
+       DOA39 => DATAOUT_0(39), 
+       DOA40 => DATAOUT_0(40), 
+       DOA41 => DATAOUT_0(41), 
+       DOA42 => DATAOUT_0(42), 
+       DOA43 => DATAOUT_0(43), 
+       DOA44 => DATAOUT_0(44), 
+       DOA45 => DATAOUT_0(45), 
+       DOA46 => DATAOUT_0(46), 
+       DOA47 => DATAOUT_0(47), 
+       DOA48 => DATAOUT_0(48), 
+       DOA49 => DATAOUT_0(49), 
+       DOA50 => DATAOUT_0(50), 
+       DOA51 => DATAOUT_0(51), 
+       DOA52 => DATAOUT_0(52), 
+       DOA53 => DATAOUT_0(53), 
+       DOB0 => DATAOUT_1(0), 
+       DOB1 => DATAOUT_1(1), 
+       DOB2 => DATAOUT_1(2), 
+       DOB3 => DATAOUT_1(3), 
+       DOB4 => DATAOUT_1(4), 
+       DOB5 => DATAOUT_1(5), 
+       DOB6 => DATAOUT_1(6), 
+       DOB7 => DATAOUT_1(7), 
+       DOB8 => DATAOUT_1(8), 
+       DOB9 => DATAOUT_1(9), 
+       DOB10 => DATAOUT_1(10), 
+       DOB11 => DATAOUT_1(11), 
+       DOB12 => DATAOUT_1(12), 
+       DOB13 => DATAOUT_1(13), 
+       DOB14 => DATAOUT_1(14), 
+       DOB15 => DATAOUT_1(15), 
+       DOB16 => DATAOUT_1(16), 
+       DOB17 => DATAOUT_1(17), 
+       DOB18 => DATAOUT_1(18), 
+       DOB19 => DATAOUT_1(19), 
+       DOB20 => DATAOUT_1(20), 
+       DOB21 => DATAOUT_1(21), 
+       DOB22 => DATAOUT_1(22), 
+       DOB23 => DATAOUT_1(23), 
+       DOB24 => DATAOUT_1(24), 
+       DOB25 => DATAOUT_1(25), 
+       DOB26 => DATAOUT_1(26), 
+       DOB27 => DATAOUT_1(27), 
+       DOB28 => DATAOUT_1(28), 
+       DOB29 => DATAOUT_1(29), 
+       DOB30 => DATAOUT_1(30), 
+       DOB31 => DATAOUT_1(31), 
+       DOB32 => DATAOUT_1(32), 
+       DOB33 => DATAOUT_1(33), 
+       DOB34 => DATAOUT_1(34), 
+       DOB35 => DATAOUT_1(35), 
+       DOB36 => DATAOUT_1(36), 
+       DOB37 => DATAOUT_1(37), 
+       DOB38 => DATAOUT_1(38), 
+       DOB39 => DATAOUT_1(39), 
+       DOB40 => DATAOUT_1(40), 
+       DOB41 => DATAOUT_1(41), 
+       DOB42 => DATAOUT_1(42), 
+       DOB43 => DATAOUT_1(43), 
+       DOB44 => DATAOUT_1(44), 
+       DOB45 => DATAOUT_1(45), 
+       DOB46 => DATAOUT_1(46), 
+       DOB47 => DATAOUT_1(47), 
+       DOB48 => DATAOUT_1(48), 
+       DOB49 => DATAOUT_1(49), 
+       DOB50 => DATAOUT_1(50), 
+       DOB51 => DATAOUT_1(51), 
+       DOB52 => DATAOUT_1(52), 
+       DOB53 => DATAOUT_1(53), 
+CKA => CLK, CKB => CLK, WEAN => WRITE_0_BAR, WEBN => WRITE_1_BAR, DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW, DVS3 => TIE_LOW, CSAN => ENABLE_0_BAR, CSBN => ENABLE_1_BAR
+);
          end block;
-  end generate SJKA65_256X32X1CM4_gen;
+  end generate SJKA65_256X54X1CM4_gen;
 end StructGen;
 
 ------------------------------------------------------------------------------------------------
@@ -8922,40 +10237,99 @@ begin
         TIE_HIGH_2 <= (others => '1');
 	TIE_LOW_3 <= (others => '0');
 	TIE_LOW_4 <= (others => '0');
-  SZKA65_16X16X1CM2_gen: if (address_width = 4) and (data_width = 16) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(3 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(3 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SZKA65_16X16X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
-         end block;
-  end generate SZKA65_16X16X1CM2_gen;
-  SZKA65_16X32X1CM2_gen: if (address_width = 4) and (data_width = 32) generate
+  SZKA65_32X32X1CM2_gen: if (address_width = 5) and (data_width = 32) generate
      mc: block 
             signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
             signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(3 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(4 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(4 downto 0); 
          begin 
               DATA_TIE_LOW <= (others => '0'); 
               DATA_TIE_HIGH <= (others => '1'); 
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SZKA65_16X32X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+               inst: SZKA65_32X32X1CM2
+   port map (       A0 => ADDR_1(0), 
+       A1 => ADDR_1(1), 
+       A2 => ADDR_1(2), 
+       A3 => ADDR_1(3), 
+       A4 => ADDR_1(4), 
+       B0 => ADDR_0(0), 
+       B1 => ADDR_0(1), 
+       B2 => ADDR_0(2), 
+       B3 => ADDR_0(3), 
+       B4 => ADDR_0(4), 
+       DI0 => DATAIN_0(0), 
+       DI1 => DATAIN_0(1), 
+       DI2 => DATAIN_0(2), 
+       DI3 => DATAIN_0(3), 
+       DI4 => DATAIN_0(4), 
+       DI5 => DATAIN_0(5), 
+       DI6 => DATAIN_0(6), 
+       DI7 => DATAIN_0(7), 
+       DI8 => DATAIN_0(8), 
+       DI9 => DATAIN_0(9), 
+       DI10 => DATAIN_0(10), 
+       DI11 => DATAIN_0(11), 
+       DI12 => DATAIN_0(12), 
+       DI13 => DATAIN_0(13), 
+       DI14 => DATAIN_0(14), 
+       DI15 => DATAIN_0(15), 
+       DI16 => DATAIN_0(16), 
+       DI17 => DATAIN_0(17), 
+       DI18 => DATAIN_0(18), 
+       DI19 => DATAIN_0(19), 
+       DI20 => DATAIN_0(20), 
+       DI21 => DATAIN_0(21), 
+       DI22 => DATAIN_0(22), 
+       DI23 => DATAIN_0(23), 
+       DI24 => DATAIN_0(24), 
+       DI25 => DATAIN_0(25), 
+       DI26 => DATAIN_0(26), 
+       DI27 => DATAIN_0(27), 
+       DI28 => DATAIN_0(28), 
+       DI29 => DATAIN_0(29), 
+       DI30 => DATAIN_0(30), 
+       DI31 => DATAIN_0(31), 
+       DO0 => DATAOUT_1(0), 
+       DO1 => DATAOUT_1(1), 
+       DO2 => DATAOUT_1(2), 
+       DO3 => DATAOUT_1(3), 
+       DO4 => DATAOUT_1(4), 
+       DO5 => DATAOUT_1(5), 
+       DO6 => DATAOUT_1(6), 
+       DO7 => DATAOUT_1(7), 
+       DO8 => DATAOUT_1(8), 
+       DO9 => DATAOUT_1(9), 
+       DO10 => DATAOUT_1(10), 
+       DO11 => DATAOUT_1(11), 
+       DO12 => DATAOUT_1(12), 
+       DO13 => DATAOUT_1(13), 
+       DO14 => DATAOUT_1(14), 
+       DO15 => DATAOUT_1(15), 
+       DO16 => DATAOUT_1(16), 
+       DO17 => DATAOUT_1(17), 
+       DO18 => DATAOUT_1(18), 
+       DO19 => DATAOUT_1(19), 
+       DO20 => DATAOUT_1(20), 
+       DO21 => DATAOUT_1(21), 
+       DO22 => DATAOUT_1(22), 
+       DO23 => DATAOUT_1(23), 
+       DO24 => DATAOUT_1(24), 
+       DO25 => DATAOUT_1(25), 
+       DO26 => DATAOUT_1(26), 
+       DO27 => DATAOUT_1(27), 
+       DO28 => DATAOUT_1(28), 
+       DO29 => DATAOUT_1(29), 
+       DO30 => DATAOUT_1(30), 
+       DO31 => DATAOUT_1(31), 
+ CKA => CLK, CKB => CLK,  WEB => ENABLE_0_BAR, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW);
          end block;
-  end generate SZKA65_16X32X1CM2_gen;
-  SZKA65_64X4X1CM2_gen: if (address_width = 6) and (data_width = 4) generate
+  end generate SZKA65_32X32X1CM2_gen;
+  SZKA65_64X32X1CM2_gen: if (address_width = 6) and (data_width = 32) generate
      mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
+            signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
             signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
             signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
          begin 
@@ -8963,40 +10337,86 @@ begin
               DATA_TIE_HIGH <= (others => '1'); 
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SZKA65_64X4X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
+               inst: SZKA65_64X32X1CM2
+   port map (       A0 => ADDR_1(0), 
+       A1 => ADDR_1(1), 
+       A2 => ADDR_1(2), 
+       A3 => ADDR_1(3), 
+       A4 => ADDR_1(4), 
+       A5 => ADDR_1(5), 
+       B0 => ADDR_0(0), 
+       B1 => ADDR_0(1), 
+       B2 => ADDR_0(2), 
+       B3 => ADDR_0(3), 
+       B4 => ADDR_0(4), 
+       B5 => ADDR_0(5), 
+       DI0 => DATAIN_0(0), 
+       DI1 => DATAIN_0(1), 
+       DI2 => DATAIN_0(2), 
+       DI3 => DATAIN_0(3), 
+       DI4 => DATAIN_0(4), 
+       DI5 => DATAIN_0(5), 
+       DI6 => DATAIN_0(6), 
+       DI7 => DATAIN_0(7), 
+       DI8 => DATAIN_0(8), 
+       DI9 => DATAIN_0(9), 
+       DI10 => DATAIN_0(10), 
+       DI11 => DATAIN_0(11), 
+       DI12 => DATAIN_0(12), 
+       DI13 => DATAIN_0(13), 
+       DI14 => DATAIN_0(14), 
+       DI15 => DATAIN_0(15), 
+       DI16 => DATAIN_0(16), 
+       DI17 => DATAIN_0(17), 
+       DI18 => DATAIN_0(18), 
+       DI19 => DATAIN_0(19), 
+       DI20 => DATAIN_0(20), 
+       DI21 => DATAIN_0(21), 
+       DI22 => DATAIN_0(22), 
+       DI23 => DATAIN_0(23), 
+       DI24 => DATAIN_0(24), 
+       DI25 => DATAIN_0(25), 
+       DI26 => DATAIN_0(26), 
+       DI27 => DATAIN_0(27), 
+       DI28 => DATAIN_0(28), 
+       DI29 => DATAIN_0(29), 
+       DI30 => DATAIN_0(30), 
+       DI31 => DATAIN_0(31), 
+       DO0 => DATAOUT_1(0), 
+       DO1 => DATAOUT_1(1), 
+       DO2 => DATAOUT_1(2), 
+       DO3 => DATAOUT_1(3), 
+       DO4 => DATAOUT_1(4), 
+       DO5 => DATAOUT_1(5), 
+       DO6 => DATAOUT_1(6), 
+       DO7 => DATAOUT_1(7), 
+       DO8 => DATAOUT_1(8), 
+       DO9 => DATAOUT_1(9), 
+       DO10 => DATAOUT_1(10), 
+       DO11 => DATAOUT_1(11), 
+       DO12 => DATAOUT_1(12), 
+       DO13 => DATAOUT_1(13), 
+       DO14 => DATAOUT_1(14), 
+       DO15 => DATAOUT_1(15), 
+       DO16 => DATAOUT_1(16), 
+       DO17 => DATAOUT_1(17), 
+       DO18 => DATAOUT_1(18), 
+       DO19 => DATAOUT_1(19), 
+       DO20 => DATAOUT_1(20), 
+       DO21 => DATAOUT_1(21), 
+       DO22 => DATAOUT_1(22), 
+       DO23 => DATAOUT_1(23), 
+       DO24 => DATAOUT_1(24), 
+       DO25 => DATAOUT_1(25), 
+       DO26 => DATAOUT_1(26), 
+       DO27 => DATAOUT_1(27), 
+       DO28 => DATAOUT_1(28), 
+       DO29 => DATAOUT_1(29), 
+       DO30 => DATAOUT_1(30), 
+       DO31 => DATAOUT_1(31), 
+ CKA => CLK, CKB => CLK,  WEB => ENABLE_0_BAR, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW);
          end block;
-  end generate SZKA65_64X4X1CM2_gen;
-  SZKA65_64X8X1CM2_gen: if (address_width = 6) and (data_width = 8) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SZKA65_64X8X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
-         end block;
-  end generate SZKA65_64X8X1CM2_gen;
-  SZKA65_64X16X1CM2_gen: if (address_width = 6) and (data_width = 16) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SZKA65_64X16X1CM2
-   port map (B => ADDR_0, A => ADDR_1, CKA => CLK, CKB => CLK, WEB => ENABLE_0_BAR,  DVSE => TIE_LOW, DVS => TIE_LOW_3, CSAN => ENABLE_1_BAR, CSBN => ENABLE_0_BAR, DI => DATAIN_0,  DO => DATAOUT_1);
-         end block;
-  end generate SZKA65_64X16X1CM2_gen;
+  end generate SZKA65_64X32X1CM2_gen;
 end StructGen;
 
 ------------------------------------------------------------------------------------------------
@@ -9069,6 +10489,85 @@ begin
   TIE_HIGH_2 <= (others => '1');
   TIE_LOW_3 <= (others => '0');
   TIE_LOW_4 <= (others => '0');
+  SHKA65_16X30X1CM4_gen: if (address_width = 4) and (data_width = 30) generate
+     mc: block 
+            signal DATA_TIE_LOW  : std_logic_vector(29 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(29 downto 0); 
+            signal ADDR_TIE_LOW  : std_logic_vector(3 downto 0); 
+            signal ADDR_TIE_HIGH : std_logic_vector(3 downto 0); 
+         begin 
+              DATA_TIE_LOW <= (others => '0'); 
+              DATA_TIE_HIGH <= (others => '1'); 
+              ADDR_TIE_LOW <= (others => '0'); 
+              ADDR_TIE_HIGH <= (others => '1'); 
+               inst: SHKA65_16X30X1CM4
+   port map (       A0 => ADDR(0), 
+       A1 => ADDR(1), 
+       A2 => ADDR(2), 
+       A3 => ADDR(3), 
+       DI0 => DATAIN(0), 
+       DI1 => DATAIN(1), 
+       DI2 => DATAIN(2), 
+       DI3 => DATAIN(3), 
+       DI4 => DATAIN(4), 
+       DI5 => DATAIN(5), 
+       DI6 => DATAIN(6), 
+       DI7 => DATAIN(7), 
+       DI8 => DATAIN(8), 
+       DI9 => DATAIN(9), 
+       DI10 => DATAIN(10), 
+       DI11 => DATAIN(11), 
+       DI12 => DATAIN(12), 
+       DI13 => DATAIN(13), 
+       DI14 => DATAIN(14), 
+       DI15 => DATAIN(15), 
+       DI16 => DATAIN(16), 
+       DI17 => DATAIN(17), 
+       DI18 => DATAIN(18), 
+       DI19 => DATAIN(19), 
+       DI20 => DATAIN(20), 
+       DI21 => DATAIN(21), 
+       DI22 => DATAIN(22), 
+       DI23 => DATAIN(23), 
+       DI24 => DATAIN(24), 
+       DI25 => DATAIN(25), 
+       DI26 => DATAIN(26), 
+       DI27 => DATAIN(27), 
+       DI28 => DATAIN(28), 
+       DI29 => DATAIN(29), 
+       DO0 => DATAOUT(0), 
+       DO1 => DATAOUT(1), 
+       DO2 => DATAOUT(2), 
+       DO3 => DATAOUT(3), 
+       DO4 => DATAOUT(4), 
+       DO5 => DATAOUT(5), 
+       DO6 => DATAOUT(6), 
+       DO7 => DATAOUT(7), 
+       DO8 => DATAOUT(8), 
+       DO9 => DATAOUT(9), 
+       DO10 => DATAOUT(10), 
+       DO11 => DATAOUT(11), 
+       DO12 => DATAOUT(12), 
+       DO13 => DATAOUT(13), 
+       DO14 => DATAOUT(14), 
+       DO15 => DATAOUT(15), 
+       DO16 => DATAOUT(16), 
+       DO17 => DATAOUT(17), 
+       DO18 => DATAOUT(18), 
+       DO19 => DATAOUT(19), 
+       DO20 => DATAOUT(20), 
+       DO21 => DATAOUT(21), 
+       DO22 => DATAOUT(22), 
+       DO23 => DATAOUT(23), 
+       DO24 => DATAOUT(24), 
+       DO25 => DATAOUT(25), 
+       DO26 => DATAOUT(26), 
+       DO27 => DATAOUT(27), 
+       DO28 => DATAOUT(28), 
+       DO29 => DATAOUT(29), 
+ CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR,  DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW);
+         end block;
+  end generate SHKA65_16X30X1CM4_gen;
   SHKA65_32X32X1CM4_gen: if (address_width = 5) and (data_width = 32) generate
      mc: block 
             signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
@@ -9081,13 +10580,82 @@ begin
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
                inst: SHKA65_32X32X1CM4
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+   port map (       A0 => ADDR(0), 
+       A1 => ADDR(1), 
+       A2 => ADDR(2), 
+       A3 => ADDR(3), 
+       A4 => ADDR(4), 
+       DI0 => DATAIN(0), 
+       DI1 => DATAIN(1), 
+       DI2 => DATAIN(2), 
+       DI3 => DATAIN(3), 
+       DI4 => DATAIN(4), 
+       DI5 => DATAIN(5), 
+       DI6 => DATAIN(6), 
+       DI7 => DATAIN(7), 
+       DI8 => DATAIN(8), 
+       DI9 => DATAIN(9), 
+       DI10 => DATAIN(10), 
+       DI11 => DATAIN(11), 
+       DI12 => DATAIN(12), 
+       DI13 => DATAIN(13), 
+       DI14 => DATAIN(14), 
+       DI15 => DATAIN(15), 
+       DI16 => DATAIN(16), 
+       DI17 => DATAIN(17), 
+       DI18 => DATAIN(18), 
+       DI19 => DATAIN(19), 
+       DI20 => DATAIN(20), 
+       DI21 => DATAIN(21), 
+       DI22 => DATAIN(22), 
+       DI23 => DATAIN(23), 
+       DI24 => DATAIN(24), 
+       DI25 => DATAIN(25), 
+       DI26 => DATAIN(26), 
+       DI27 => DATAIN(27), 
+       DI28 => DATAIN(28), 
+       DI29 => DATAIN(29), 
+       DI30 => DATAIN(30), 
+       DI31 => DATAIN(31), 
+       DO0 => DATAOUT(0), 
+       DO1 => DATAOUT(1), 
+       DO2 => DATAOUT(2), 
+       DO3 => DATAOUT(3), 
+       DO4 => DATAOUT(4), 
+       DO5 => DATAOUT(5), 
+       DO6 => DATAOUT(6), 
+       DO7 => DATAOUT(7), 
+       DO8 => DATAOUT(8), 
+       DO9 => DATAOUT(9), 
+       DO10 => DATAOUT(10), 
+       DO11 => DATAOUT(11), 
+       DO12 => DATAOUT(12), 
+       DO13 => DATAOUT(13), 
+       DO14 => DATAOUT(14), 
+       DO15 => DATAOUT(15), 
+       DO16 => DATAOUT(16), 
+       DO17 => DATAOUT(17), 
+       DO18 => DATAOUT(18), 
+       DO19 => DATAOUT(19), 
+       DO20 => DATAOUT(20), 
+       DO21 => DATAOUT(21), 
+       DO22 => DATAOUT(22), 
+       DO23 => DATAOUT(23), 
+       DO24 => DATAOUT(24), 
+       DO25 => DATAOUT(25), 
+       DO26 => DATAOUT(26), 
+       DO27 => DATAOUT(27), 
+       DO28 => DATAOUT(28), 
+       DO29 => DATAOUT(29), 
+       DO30 => DATAOUT(30), 
+       DO31 => DATAOUT(31), 
+ CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR,  DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW);
          end block;
   end generate SHKA65_32X32X1CM4_gen;
-  SHKA65_64X16X1CM4_gen: if (address_width = 6) and (data_width = 16) generate
+  SHKA65_64X23X1CM4_gen: if (address_width = 6) and (data_width = 23) generate
      mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
+            signal DATA_TIE_LOW  : std_logic_vector(22 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(22 downto 0); 
             signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
             signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
          begin 
@@ -9095,74 +10663,66 @@ begin
               DATA_TIE_HIGH <= (others => '1'); 
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SHKA65_64X16X1CM4
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+               inst: SHKA65_64X23X1CM4
+   port map (       A0 => ADDR(0), 
+       A1 => ADDR(1), 
+       A2 => ADDR(2), 
+       A3 => ADDR(3), 
+       A4 => ADDR(4), 
+       A5 => ADDR(5), 
+       DI0 => DATAIN(0), 
+       DI1 => DATAIN(1), 
+       DI2 => DATAIN(2), 
+       DI3 => DATAIN(3), 
+       DI4 => DATAIN(4), 
+       DI5 => DATAIN(5), 
+       DI6 => DATAIN(6), 
+       DI7 => DATAIN(7), 
+       DI8 => DATAIN(8), 
+       DI9 => DATAIN(9), 
+       DI10 => DATAIN(10), 
+       DI11 => DATAIN(11), 
+       DI12 => DATAIN(12), 
+       DI13 => DATAIN(13), 
+       DI14 => DATAIN(14), 
+       DI15 => DATAIN(15), 
+       DI16 => DATAIN(16), 
+       DI17 => DATAIN(17), 
+       DI18 => DATAIN(18), 
+       DI19 => DATAIN(19), 
+       DI20 => DATAIN(20), 
+       DI21 => DATAIN(21), 
+       DI22 => DATAIN(22), 
+       DO0 => DATAOUT(0), 
+       DO1 => DATAOUT(1), 
+       DO2 => DATAOUT(2), 
+       DO3 => DATAOUT(3), 
+       DO4 => DATAOUT(4), 
+       DO5 => DATAOUT(5), 
+       DO6 => DATAOUT(6), 
+       DO7 => DATAOUT(7), 
+       DO8 => DATAOUT(8), 
+       DO9 => DATAOUT(9), 
+       DO10 => DATAOUT(10), 
+       DO11 => DATAOUT(11), 
+       DO12 => DATAOUT(12), 
+       DO13 => DATAOUT(13), 
+       DO14 => DATAOUT(14), 
+       DO15 => DATAOUT(15), 
+       DO16 => DATAOUT(16), 
+       DO17 => DATAOUT(17), 
+       DO18 => DATAOUT(18), 
+       DO19 => DATAOUT(19), 
+       DO20 => DATAOUT(20), 
+       DO21 => DATAOUT(21), 
+       DO22 => DATAOUT(22), 
+ CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR,  DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW);
          end block;
-  end generate SHKA65_64X16X1CM4_gen;
-  SHKA65_64X64X1CM4_gen: if (address_width = 6) and (data_width = 64) generate
+  end generate SHKA65_64X23X1CM4_gen;
+  SHKA65_512X8X1CM4_gen: if (address_width = 9) and (data_width = 8) generate
      mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(63 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(63 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SHKA65_64X64X1CM4
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
-         end block;
-  end generate SHKA65_64X64X1CM4_gen;
-  SHKA65_64X128X1CM4_gen: if (address_width = 6) and (data_width = 128) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(127 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(127 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(5 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(5 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SHKA65_64X128X1CM4
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
-         end block;
-  end generate SHKA65_64X128X1CM4_gen;
-  SHKA65_128X32X1CM4_gen: if (address_width = 7) and (data_width = 32) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(31 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(31 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(6 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(6 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SHKA65_128X32X1CM4
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
-         end block;
-  end generate SHKA65_128X32X1CM4_gen;
-  SHKA65_128X64X1CM4_gen: if (address_width = 7) and (data_width = 64) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(63 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(63 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(6 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(6 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SHKA65_128X64X1CM4
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
-         end block;
-  end generate SHKA65_128X64X1CM4_gen;
-  SHKA65_512X4X1CM4_gen: if (address_width = 9) and (data_width = 4) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(3 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(3 downto 0); 
+            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
+            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
             signal ADDR_TIE_LOW  : std_logic_vector(8 downto 0); 
             signal ADDR_TIE_HIGH : std_logic_vector(8 downto 0); 
          begin 
@@ -9170,25 +10730,35 @@ begin
               DATA_TIE_HIGH <= (others => '1'); 
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SHKA65_512X4X1CM4
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+               inst: SHKA65_512X8X1CM4
+   port map (       A0 => ADDR(0), 
+       A1 => ADDR(1), 
+       A2 => ADDR(2), 
+       A3 => ADDR(3), 
+       A4 => ADDR(4), 
+       A5 => ADDR(5), 
+       A6 => ADDR(6), 
+       A7 => ADDR(7), 
+       A8 => ADDR(8), 
+       DI0 => DATAIN(0), 
+       DI1 => DATAIN(1), 
+       DI2 => DATAIN(2), 
+       DI3 => DATAIN(3), 
+       DI4 => DATAIN(4), 
+       DI5 => DATAIN(5), 
+       DI6 => DATAIN(6), 
+       DI7 => DATAIN(7), 
+       DO0 => DATAOUT(0), 
+       DO1 => DATAOUT(1), 
+       DO2 => DATAOUT(2), 
+       DO3 => DATAOUT(3), 
+       DO4 => DATAOUT(4), 
+       DO5 => DATAOUT(5), 
+       DO6 => DATAOUT(6), 
+       DO7 => DATAOUT(7), 
+ CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR,  DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW);
          end block;
-  end generate SHKA65_512X4X1CM4_gen;
-  SHKA65_512X16X1CM4_gen: if (address_width = 9) and (data_width = 16) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(15 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(15 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(8 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(8 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SHKA65_512X16X1CM4
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
-         end block;
-  end generate SHKA65_512X16X1CM4_gen;
+  end generate SHKA65_512X8X1CM4_gen;
   SHKA65_512X64X1CM4_gen: if (address_width = 9) and (data_width = 64) generate
      mc: block 
             signal DATA_TIE_LOW  : std_logic_vector(63 downto 0); 
@@ -9201,10 +10771,147 @@ begin
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
                inst: SHKA65_512X64X1CM4
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+   port map (       A0 => ADDR(0), 
+       A1 => ADDR(1), 
+       A2 => ADDR(2), 
+       A3 => ADDR(3), 
+       A4 => ADDR(4), 
+       A5 => ADDR(5), 
+       A6 => ADDR(6), 
+       A7 => ADDR(7), 
+       A8 => ADDR(8), 
+       DI0 => DATAIN(0), 
+       DI1 => DATAIN(1), 
+       DI2 => DATAIN(2), 
+       DI3 => DATAIN(3), 
+       DI4 => DATAIN(4), 
+       DI5 => DATAIN(5), 
+       DI6 => DATAIN(6), 
+       DI7 => DATAIN(7), 
+       DI8 => DATAIN(8), 
+       DI9 => DATAIN(9), 
+       DI10 => DATAIN(10), 
+       DI11 => DATAIN(11), 
+       DI12 => DATAIN(12), 
+       DI13 => DATAIN(13), 
+       DI14 => DATAIN(14), 
+       DI15 => DATAIN(15), 
+       DI16 => DATAIN(16), 
+       DI17 => DATAIN(17), 
+       DI18 => DATAIN(18), 
+       DI19 => DATAIN(19), 
+       DI20 => DATAIN(20), 
+       DI21 => DATAIN(21), 
+       DI22 => DATAIN(22), 
+       DI23 => DATAIN(23), 
+       DI24 => DATAIN(24), 
+       DI25 => DATAIN(25), 
+       DI26 => DATAIN(26), 
+       DI27 => DATAIN(27), 
+       DI28 => DATAIN(28), 
+       DI29 => DATAIN(29), 
+       DI30 => DATAIN(30), 
+       DI31 => DATAIN(31), 
+       DI32 => DATAIN(32), 
+       DI33 => DATAIN(33), 
+       DI34 => DATAIN(34), 
+       DI35 => DATAIN(35), 
+       DI36 => DATAIN(36), 
+       DI37 => DATAIN(37), 
+       DI38 => DATAIN(38), 
+       DI39 => DATAIN(39), 
+       DI40 => DATAIN(40), 
+       DI41 => DATAIN(41), 
+       DI42 => DATAIN(42), 
+       DI43 => DATAIN(43), 
+       DI44 => DATAIN(44), 
+       DI45 => DATAIN(45), 
+       DI46 => DATAIN(46), 
+       DI47 => DATAIN(47), 
+       DI48 => DATAIN(48), 
+       DI49 => DATAIN(49), 
+       DI50 => DATAIN(50), 
+       DI51 => DATAIN(51), 
+       DI52 => DATAIN(52), 
+       DI53 => DATAIN(53), 
+       DI54 => DATAIN(54), 
+       DI55 => DATAIN(55), 
+       DI56 => DATAIN(56), 
+       DI57 => DATAIN(57), 
+       DI58 => DATAIN(58), 
+       DI59 => DATAIN(59), 
+       DI60 => DATAIN(60), 
+       DI61 => DATAIN(61), 
+       DI62 => DATAIN(62), 
+       DI63 => DATAIN(63), 
+       DO0 => DATAOUT(0), 
+       DO1 => DATAOUT(1), 
+       DO2 => DATAOUT(2), 
+       DO3 => DATAOUT(3), 
+       DO4 => DATAOUT(4), 
+       DO5 => DATAOUT(5), 
+       DO6 => DATAOUT(6), 
+       DO7 => DATAOUT(7), 
+       DO8 => DATAOUT(8), 
+       DO9 => DATAOUT(9), 
+       DO10 => DATAOUT(10), 
+       DO11 => DATAOUT(11), 
+       DO12 => DATAOUT(12), 
+       DO13 => DATAOUT(13), 
+       DO14 => DATAOUT(14), 
+       DO15 => DATAOUT(15), 
+       DO16 => DATAOUT(16), 
+       DO17 => DATAOUT(17), 
+       DO18 => DATAOUT(18), 
+       DO19 => DATAOUT(19), 
+       DO20 => DATAOUT(20), 
+       DO21 => DATAOUT(21), 
+       DO22 => DATAOUT(22), 
+       DO23 => DATAOUT(23), 
+       DO24 => DATAOUT(24), 
+       DO25 => DATAOUT(25), 
+       DO26 => DATAOUT(26), 
+       DO27 => DATAOUT(27), 
+       DO28 => DATAOUT(28), 
+       DO29 => DATAOUT(29), 
+       DO30 => DATAOUT(30), 
+       DO31 => DATAOUT(31), 
+       DO32 => DATAOUT(32), 
+       DO33 => DATAOUT(33), 
+       DO34 => DATAOUT(34), 
+       DO35 => DATAOUT(35), 
+       DO36 => DATAOUT(36), 
+       DO37 => DATAOUT(37), 
+       DO38 => DATAOUT(38), 
+       DO39 => DATAOUT(39), 
+       DO40 => DATAOUT(40), 
+       DO41 => DATAOUT(41), 
+       DO42 => DATAOUT(42), 
+       DO43 => DATAOUT(43), 
+       DO44 => DATAOUT(44), 
+       DO45 => DATAOUT(45), 
+       DO46 => DATAOUT(46), 
+       DO47 => DATAOUT(47), 
+       DO48 => DATAOUT(48), 
+       DO49 => DATAOUT(49), 
+       DO50 => DATAOUT(50), 
+       DO51 => DATAOUT(51), 
+       DO52 => DATAOUT(52), 
+       DO53 => DATAOUT(53), 
+       DO54 => DATAOUT(54), 
+       DO55 => DATAOUT(55), 
+       DO56 => DATAOUT(56), 
+       DO57 => DATAOUT(57), 
+       DO58 => DATAOUT(58), 
+       DO59 => DATAOUT(59), 
+       DO60 => DATAOUT(60), 
+       DO61 => DATAOUT(61), 
+       DO62 => DATAOUT(62), 
+       DO63 => DATAOUT(63), 
+ CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR,  DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW);
          end block;
   end generate SHKA65_512X64X1CM4_gen;
-  SHKA65_4096X8X1CM16_gen: if (address_width = 12) and (data_width = 8) generate
+  SHKA65_4096X8X1CM4_gen: if (address_width = 12) and (data_width = 8) generate
      mc: block 
             signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
             signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
@@ -9215,40 +10922,38 @@ begin
               DATA_TIE_HIGH <= (others => '1'); 
               ADDR_TIE_LOW <= (others => '0'); 
               ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SHKA65_4096X8X1CM16
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
+               inst: SHKA65_4096X8X1CM4
+   port map (       A0 => ADDR(0), 
+       A1 => ADDR(1), 
+       A2 => ADDR(2), 
+       A3 => ADDR(3), 
+       A4 => ADDR(4), 
+       A5 => ADDR(5), 
+       A6 => ADDR(6), 
+       A7 => ADDR(7), 
+       A8 => ADDR(8), 
+       A9 => ADDR(9), 
+       A10 => ADDR(10), 
+       A11 => ADDR(11), 
+       DI0 => DATAIN(0), 
+       DI1 => DATAIN(1), 
+       DI2 => DATAIN(2), 
+       DI3 => DATAIN(3), 
+       DI4 => DATAIN(4), 
+       DI5 => DATAIN(5), 
+       DI6 => DATAIN(6), 
+       DI7 => DATAIN(7), 
+       DO0 => DATAOUT(0), 
+       DO1 => DATAOUT(1), 
+       DO2 => DATAOUT(2), 
+       DO3 => DATAOUT(3), 
+       DO4 => DATAOUT(4), 
+       DO5 => DATAOUT(5), 
+       DO6 => DATAOUT(6), 
+       DO7 => DATAOUT(7), 
+ CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR,  DVSE => TIE_LOW, DVS0 => TIE_LOW, DVS1 => TIE_LOW, DVS2 => TIE_LOW);
          end block;
-  end generate SHKA65_4096X8X1CM16_gen;
-  SHKA65_4096X64X1CM8_gen: if (address_width = 12) and (data_width = 64) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(63 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(63 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(11 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(11 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SHKA65_4096X64X1CM8
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
-         end block;
-  end generate SHKA65_4096X64X1CM8_gen;
-  SHKA65_16384X8X1CM16_gen: if (address_width = 14) and (data_width = 8) generate
-     mc: block 
-            signal DATA_TIE_LOW  : std_logic_vector(7 downto 0); 
-            signal DATA_TIE_HIGH : std_logic_vector(7 downto 0); 
-            signal ADDR_TIE_LOW  : std_logic_vector(13 downto 0); 
-            signal ADDR_TIE_HIGH : std_logic_vector(13 downto 0); 
-         begin 
-              DATA_TIE_LOW <= (others => '0'); 
-              DATA_TIE_HIGH <= (others => '1'); 
-              ADDR_TIE_LOW <= (others => '0'); 
-              ADDR_TIE_HIGH <= (others => '1'); 
-               inst: SHKA65_16384X8X1CM16
-   port map (A => ADDR, CK => CLK, WEB => WRITE_BAR, CSB => ENABLE_BAR, DI => DATAIN, DO => DATAOUT, DVSE => TIE_LOW, DVS => TIE_LOW_3);
-         end block;
-  end generate SHKA65_16384X8X1CM16_gen;
+  end generate SHKA65_4096X8X1CM4_gen;
 end StructGen;
 
 ------------------------------------------------------------------------------------------------
@@ -12474,25 +14179,167 @@ library ahir;
 use ahir.mem_component_pack.all;
 use ahir.types.all;
 use ahir.utilities.all;
-entity SZKA65_16X16X1CM2 is
-   port(       DO : out std_logic_vector(15 downto 0);
-      A : in std_logic_vector(3 downto 0);
-      B : in std_logic_vector(3 downto 0);
-      DI : in std_logic_vector(15 downto 0);
+entity SZKA65_32X32X1CM2 is
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      DO8 : out std_logic;
+      DO9 : out std_logic;
+      DO10 : out std_logic;
+      DO11 : out std_logic;
+      DO12 : out std_logic;
+      DO13 : out std_logic;
+      DO14 : out std_logic;
+      DO15 : out std_logic;
+      DO16 : out std_logic;
+      DO17 : out std_logic;
+      DO18 : out std_logic;
+      DO19 : out std_logic;
+      DO20 : out std_logic;
+      DO21 : out std_logic;
+      DO22 : out std_logic;
+      DO23 : out std_logic;
+      DO24 : out std_logic;
+      DO25 : out std_logic;
+      DO26 : out std_logic;
+      DO27 : out std_logic;
+      DO28 : out std_logic;
+      DO29 : out std_logic;
+      DO30 : out std_logic;
+      DO31 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
+      DI8 : in std_logic;
+      DI9 : in std_logic;
+      DI10 : in std_logic;
+      DI11 : in std_logic;
+      DI12 : in std_logic;
+      DI13 : in std_logic;
+      DI14 : in std_logic;
+      DI15 : in std_logic;
+      DI16 : in std_logic;
+      DI17 : in std_logic;
+      DI18 : in std_logic;
+      DI19 : in std_logic;
+      DI20 : in std_logic;
+      DI21 : in std_logic;
+      DI22 : in std_logic;
+      DI23 : in std_logic;
+      DI24 : in std_logic;
+      DI25 : in std_logic;
+      DI26 : in std_logic;
+      DI27 : in std_logic;
+      DI28 : in std_logic;
+      DI29 : in std_logic;
+      DI30 : in std_logic;
+      DI31 : in std_logic;
+      B0 : in std_logic;
+      B1 : in std_logic;
+      B2 : in std_logic;
+      B3 : in std_logic;
+      B4 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CKA   :   IN   std_logic;
-      CKB   :   IN   std_logic;
-      CSAN  :   IN   std_logic;
-      CSBN  :   IN   std_logic
+      DVS0, DVS1, DVS2:   IN   std_logic;
+      CKA, CKB   :   IN   std_logic;
+      CSAN, CSBN  :   IN   std_logic
 );
   end entity;
-architecture SimpleWrap of SZKA65_16X16X1CM2 is 
+architecture SimpleWrap of SZKA65_32X32X1CM2 is 
 begin
-  SZKA65_16X16X1CM2_wrap_inst: register_file_1w_1r_generic_reverse_wrapper 
-       generic map (address_width => 4, data_width => 16)
-   port map (ADDR_0 => B, ADDR_1 => A, CLK => CKA,  ENABLE_0_BAR => CSBN , ENABLE_1_BAR => CSAN, DATAIN_0 => DI,  DATAOUT_1 => DO);
+  SZKA65_32X32X1CM2_wrap_inst: register_file_1w_1r_generic_reverse_wrapper 
+       generic map (address_width => 5, data_width => 32)
+   port map (       ADDR_1(0)=> A0, 
+       ADDR_1(1)=> A1, 
+       ADDR_1(2)=> A2, 
+       ADDR_1(3)=> A3, 
+       ADDR_1(4)=> A4, 
+       ADDR_0(0)=> B0, 
+       ADDR_0(1)=> B1, 
+       ADDR_0(2)=> B2, 
+       ADDR_0(3)=> B3, 
+       ADDR_0(4)=> B4, 
+       DATAIN_0(0)=> DI0, 
+       DATAIN_0(1)=> DI1, 
+       DATAIN_0(2)=> DI2, 
+       DATAIN_0(3)=> DI3, 
+       DATAIN_0(4)=> DI4, 
+       DATAIN_0(5)=> DI5, 
+       DATAIN_0(6)=> DI6, 
+       DATAIN_0(7)=> DI7, 
+       DATAIN_0(8)=> DI8, 
+       DATAIN_0(9)=> DI9, 
+       DATAIN_0(10)=> DI10, 
+       DATAIN_0(11)=> DI11, 
+       DATAIN_0(12)=> DI12, 
+       DATAIN_0(13)=> DI13, 
+       DATAIN_0(14)=> DI14, 
+       DATAIN_0(15)=> DI15, 
+       DATAIN_0(16)=> DI16, 
+       DATAIN_0(17)=> DI17, 
+       DATAIN_0(18)=> DI18, 
+       DATAIN_0(19)=> DI19, 
+       DATAIN_0(20)=> DI20, 
+       DATAIN_0(21)=> DI21, 
+       DATAIN_0(22)=> DI22, 
+       DATAIN_0(23)=> DI23, 
+       DATAIN_0(24)=> DI24, 
+       DATAIN_0(25)=> DI25, 
+       DATAIN_0(26)=> DI26, 
+       DATAIN_0(27)=> DI27, 
+       DATAIN_0(28)=> DI28, 
+       DATAIN_0(29)=> DI29, 
+       DATAIN_0(30)=> DI30, 
+       DATAIN_0(31)=> DI31, 
+       DATAOUT_1(0)=> DO0, 
+       DATAOUT_1(1)=> DO1, 
+       DATAOUT_1(2)=> DO2, 
+       DATAOUT_1(3)=> DO3, 
+       DATAOUT_1(4)=> DO4, 
+       DATAOUT_1(5)=> DO5, 
+       DATAOUT_1(6)=> DO6, 
+       DATAOUT_1(7)=> DO7, 
+       DATAOUT_1(8)=> DO8, 
+       DATAOUT_1(9)=> DO9, 
+       DATAOUT_1(10)=> DO10, 
+       DATAOUT_1(11)=> DO11, 
+       DATAOUT_1(12)=> DO12, 
+       DATAOUT_1(13)=> DO13, 
+       DATAOUT_1(14)=> DO14, 
+       DATAOUT_1(15)=> DO15, 
+       DATAOUT_1(16)=> DO16, 
+       DATAOUT_1(17)=> DO17, 
+       DATAOUT_1(18)=> DO18, 
+       DATAOUT_1(19)=> DO19, 
+       DATAOUT_1(20)=> DO20, 
+       DATAOUT_1(21)=> DO21, 
+       DATAOUT_1(22)=> DO22, 
+       DATAOUT_1(23)=> DO23, 
+       DATAOUT_1(24)=> DO24, 
+       DATAOUT_1(25)=> DO25, 
+       DATAOUT_1(26)=> DO26, 
+       DATAOUT_1(27)=> DO27, 
+       DATAOUT_1(28)=> DO28, 
+       DATAOUT_1(29)=> DO29, 
+       DATAOUT_1(30)=> DO30, 
+       DATAOUT_1(31)=> DO31, 
+ CLK => CKA,  ENABLE_0_BAR => WEB, ENABLE_1_BAR => CSAN);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -12500,25 +14347,171 @@ library ahir;
 use ahir.mem_component_pack.all;
 use ahir.types.all;
 use ahir.utilities.all;
-entity SZKA65_16X32X1CM2 is
-   port(       DO : out std_logic_vector(31 downto 0);
-      A : in std_logic_vector(3 downto 0);
-      B : in std_logic_vector(3 downto 0);
-      DI : in std_logic_vector(31 downto 0);
+entity SZKA65_64X32X1CM2 is
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      DO8 : out std_logic;
+      DO9 : out std_logic;
+      DO10 : out std_logic;
+      DO11 : out std_logic;
+      DO12 : out std_logic;
+      DO13 : out std_logic;
+      DO14 : out std_logic;
+      DO15 : out std_logic;
+      DO16 : out std_logic;
+      DO17 : out std_logic;
+      DO18 : out std_logic;
+      DO19 : out std_logic;
+      DO20 : out std_logic;
+      DO21 : out std_logic;
+      DO22 : out std_logic;
+      DO23 : out std_logic;
+      DO24 : out std_logic;
+      DO25 : out std_logic;
+      DO26 : out std_logic;
+      DO27 : out std_logic;
+      DO28 : out std_logic;
+      DO29 : out std_logic;
+      DO30 : out std_logic;
+      DO31 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
+      DI8 : in std_logic;
+      DI9 : in std_logic;
+      DI10 : in std_logic;
+      DI11 : in std_logic;
+      DI12 : in std_logic;
+      DI13 : in std_logic;
+      DI14 : in std_logic;
+      DI15 : in std_logic;
+      DI16 : in std_logic;
+      DI17 : in std_logic;
+      DI18 : in std_logic;
+      DI19 : in std_logic;
+      DI20 : in std_logic;
+      DI21 : in std_logic;
+      DI22 : in std_logic;
+      DI23 : in std_logic;
+      DI24 : in std_logic;
+      DI25 : in std_logic;
+      DI26 : in std_logic;
+      DI27 : in std_logic;
+      DI28 : in std_logic;
+      DI29 : in std_logic;
+      DI30 : in std_logic;
+      DI31 : in std_logic;
+      B0 : in std_logic;
+      B1 : in std_logic;
+      B2 : in std_logic;
+      B3 : in std_logic;
+      B4 : in std_logic;
+      B5 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CKA   :   IN   std_logic;
-      CKB   :   IN   std_logic;
-      CSAN  :   IN   std_logic;
-      CSBN  :   IN   std_logic
+      DVS0, DVS1, DVS2:   IN   std_logic;
+      CKA, CKB   :   IN   std_logic;
+      CSAN, CSBN  :   IN   std_logic
 );
   end entity;
-architecture SimpleWrap of SZKA65_16X32X1CM2 is 
+architecture SimpleWrap of SZKA65_64X32X1CM2 is 
 begin
-  SZKA65_16X32X1CM2_wrap_inst: register_file_1w_1r_generic_reverse_wrapper 
-       generic map (address_width => 4, data_width => 32)
-   port map (ADDR_0 => B, ADDR_1 => A, CLK => CKA,  ENABLE_0_BAR => CSBN , ENABLE_1_BAR => CSAN, DATAIN_0 => DI,  DATAOUT_1 => DO);
+  SZKA65_64X32X1CM2_wrap_inst: register_file_1w_1r_generic_reverse_wrapper 
+       generic map (address_width => 6, data_width => 32)
+   port map (       ADDR_1(0)=> A0, 
+       ADDR_1(1)=> A1, 
+       ADDR_1(2)=> A2, 
+       ADDR_1(3)=> A3, 
+       ADDR_1(4)=> A4, 
+       ADDR_1(5)=> A5, 
+       ADDR_0(0)=> B0, 
+       ADDR_0(1)=> B1, 
+       ADDR_0(2)=> B2, 
+       ADDR_0(3)=> B3, 
+       ADDR_0(4)=> B4, 
+       ADDR_0(5)=> B5, 
+       DATAIN_0(0)=> DI0, 
+       DATAIN_0(1)=> DI1, 
+       DATAIN_0(2)=> DI2, 
+       DATAIN_0(3)=> DI3, 
+       DATAIN_0(4)=> DI4, 
+       DATAIN_0(5)=> DI5, 
+       DATAIN_0(6)=> DI6, 
+       DATAIN_0(7)=> DI7, 
+       DATAIN_0(8)=> DI8, 
+       DATAIN_0(9)=> DI9, 
+       DATAIN_0(10)=> DI10, 
+       DATAIN_0(11)=> DI11, 
+       DATAIN_0(12)=> DI12, 
+       DATAIN_0(13)=> DI13, 
+       DATAIN_0(14)=> DI14, 
+       DATAIN_0(15)=> DI15, 
+       DATAIN_0(16)=> DI16, 
+       DATAIN_0(17)=> DI17, 
+       DATAIN_0(18)=> DI18, 
+       DATAIN_0(19)=> DI19, 
+       DATAIN_0(20)=> DI20, 
+       DATAIN_0(21)=> DI21, 
+       DATAIN_0(22)=> DI22, 
+       DATAIN_0(23)=> DI23, 
+       DATAIN_0(24)=> DI24, 
+       DATAIN_0(25)=> DI25, 
+       DATAIN_0(26)=> DI26, 
+       DATAIN_0(27)=> DI27, 
+       DATAIN_0(28)=> DI28, 
+       DATAIN_0(29)=> DI29, 
+       DATAIN_0(30)=> DI30, 
+       DATAIN_0(31)=> DI31, 
+       DATAOUT_1(0)=> DO0, 
+       DATAOUT_1(1)=> DO1, 
+       DATAOUT_1(2)=> DO2, 
+       DATAOUT_1(3)=> DO3, 
+       DATAOUT_1(4)=> DO4, 
+       DATAOUT_1(5)=> DO5, 
+       DATAOUT_1(6)=> DO6, 
+       DATAOUT_1(7)=> DO7, 
+       DATAOUT_1(8)=> DO8, 
+       DATAOUT_1(9)=> DO9, 
+       DATAOUT_1(10)=> DO10, 
+       DATAOUT_1(11)=> DO11, 
+       DATAOUT_1(12)=> DO12, 
+       DATAOUT_1(13)=> DO13, 
+       DATAOUT_1(14)=> DO14, 
+       DATAOUT_1(15)=> DO15, 
+       DATAOUT_1(16)=> DO16, 
+       DATAOUT_1(17)=> DO17, 
+       DATAOUT_1(18)=> DO18, 
+       DATAOUT_1(19)=> DO19, 
+       DATAOUT_1(20)=> DO20, 
+       DATAOUT_1(21)=> DO21, 
+       DATAOUT_1(22)=> DO22, 
+       DATAOUT_1(23)=> DO23, 
+       DATAOUT_1(24)=> DO24, 
+       DATAOUT_1(25)=> DO25, 
+       DATAOUT_1(26)=> DO26, 
+       DATAOUT_1(27)=> DO27, 
+       DATAOUT_1(28)=> DO28, 
+       DATAOUT_1(29)=> DO29, 
+       DATAOUT_1(30)=> DO30, 
+       DATAOUT_1(31)=> DO31, 
+ CLK => CKA,  ENABLE_0_BAR => WEB, ENABLE_1_BAR => CSAN);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -12526,280 +14519,147 @@ library ahir;
 use ahir.mem_component_pack.all;
 use ahir.types.all;
 use ahir.utilities.all;
-entity SZKA65_64X4X1CM2 is
-   port(       DO : out std_logic_vector(3 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      B : in std_logic_vector(5 downto 0);
-      DI : in std_logic_vector(3 downto 0);
+entity SHKA65_16X30X1CM4 is
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      DO8 : out std_logic;
+      DO9 : out std_logic;
+      DO10 : out std_logic;
+      DO11 : out std_logic;
+      DO12 : out std_logic;
+      DO13 : out std_logic;
+      DO14 : out std_logic;
+      DO15 : out std_logic;
+      DO16 : out std_logic;
+      DO17 : out std_logic;
+      DO18 : out std_logic;
+      DO19 : out std_logic;
+      DO20 : out std_logic;
+      DO21 : out std_logic;
+      DO22 : out std_logic;
+      DO23 : out std_logic;
+      DO24 : out std_logic;
+      DO25 : out std_logic;
+      DO26 : out std_logic;
+      DO27 : out std_logic;
+      DO28 : out std_logic;
+      DO29 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
+      DI8 : in std_logic;
+      DI9 : in std_logic;
+      DI10 : in std_logic;
+      DI11 : in std_logic;
+      DI12 : in std_logic;
+      DI13 : in std_logic;
+      DI14 : in std_logic;
+      DI15 : in std_logic;
+      DI16 : in std_logic;
+      DI17 : in std_logic;
+      DI18 : in std_logic;
+      DI19 : in std_logic;
+      DI20 : in std_logic;
+      DI21 : in std_logic;
+      DI22 : in std_logic;
+      DI23 : in std_logic;
+      DI24 : in std_logic;
+      DI25 : in std_logic;
+      DI26 : in std_logic;
+      DI27 : in std_logic;
+      DI28 : in std_logic;
+      DI29 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CKA   :   IN   std_logic;
-      CKB   :   IN   std_logic;
-      CSAN  :   IN   std_logic;
-      CSBN  :   IN   std_logic
+      DVS0,DVS1,DVS2:   IN   std_logic;
+      CK   :   IN   std_logic;
+      CSB  :   IN   std_logic
 );
   end entity;
-architecture SimpleWrap of SZKA65_64X4X1CM2 is 
+architecture SimpleWrap of SHKA65_16X30X1CM4 is 
 begin
-  SZKA65_64X4X1CM2_wrap_inst: register_file_1w_1r_generic_reverse_wrapper 
-       generic map (address_width => 6, data_width => 4)
-   port map (ADDR_0 => B, ADDR_1 => A, CLK => CKA,  ENABLE_0_BAR => CSBN , ENABLE_1_BAR => CSAN, DATAIN_0 => DI,  DATAOUT_1 => DO);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SZKA65_64X8X1CM2 is
-   port(       DO : out std_logic_vector(7 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      B : in std_logic_vector(5 downto 0);
-      DI : in std_logic_vector(7 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CKA   :   IN   std_logic;
-      CKB   :   IN   std_logic;
-      CSAN  :   IN   std_logic;
-      CSBN  :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SZKA65_64X8X1CM2 is 
-begin
-  SZKA65_64X8X1CM2_wrap_inst: register_file_1w_1r_generic_reverse_wrapper 
-       generic map (address_width => 6, data_width => 8)
-   port map (ADDR_0 => B, ADDR_1 => A, CLK => CKA,  ENABLE_0_BAR => CSBN , ENABLE_1_BAR => CSAN, DATAIN_0 => DI,  DATAOUT_1 => DO);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SZKA65_64X16X1CM2 is
-   port(       DO : out std_logic_vector(15 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      B : in std_logic_vector(5 downto 0);
-      DI : in std_logic_vector(15 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CKA   :   IN   std_logic;
-      CKB   :   IN   std_logic;
-      CSAN  :   IN   std_logic;
-      CSBN  :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SZKA65_64X16X1CM2 is 
-begin
-  SZKA65_64X16X1CM2_wrap_inst: register_file_1w_1r_generic_reverse_wrapper 
-       generic map (address_width => 6, data_width => 16)
-   port map (ADDR_0 => B, ADDR_1 => A, CLK => CKA,  ENABLE_0_BAR => CSBN , ENABLE_1_BAR => CSAN, DATAIN_0 => DI,  DATAOUT_1 => DO);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SJKA65_32X128X1CM4 is
-   port(       DOA : out std_logic_vector(127 downto 0);
-      DOB : out std_logic_vector(127 downto 0);
-      A : in std_logic_vector(4 downto 0);
-      B : in std_logic_vector(4 downto 0);
-      DIA : in std_logic_vector(127 downto 0);
-      DIB : in std_logic_vector(127 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SJKA65_32X128X1CM4 is 
-begin
-  SJKA65_32X128X1CM4_wrap_inst: dpram_generic_reverse_wrapper 
-       generic map (address_width => 5, data_width => 128)
-   port map (ADDR_0 => A, ADDR_1 => B, CLK => CKA,  WRITE_0_BAR => WEAN, WRITE_1_BAR => WEBN,   ENABLE_0_BAR => CSAN , ENABLE_1_BAR => CSBN, DATAIN_0 => DIA, DATAIN_1 => DIB, DATAOUT_0 => DOA, DATAOUT_1 => DOB);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SJKA65_64X4X1CM4 is
-   port(       DOA : out std_logic_vector(3 downto 0);
-      DOB : out std_logic_vector(3 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      B : in std_logic_vector(5 downto 0);
-      DIA : in std_logic_vector(3 downto 0);
-      DIB : in std_logic_vector(3 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SJKA65_64X4X1CM4 is 
-begin
-  SJKA65_64X4X1CM4_wrap_inst: dpram_generic_reverse_wrapper 
-       generic map (address_width => 6, data_width => 4)
-   port map (ADDR_0 => A, ADDR_1 => B, CLK => CKA,  WRITE_0_BAR => WEAN, WRITE_1_BAR => WEBN,   ENABLE_0_BAR => CSAN , ENABLE_1_BAR => CSBN, DATAIN_0 => DIA, DATAIN_1 => DIB, DATAOUT_0 => DOA, DATAOUT_1 => DOB);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SJKA65_64X8X1CM4 is
-   port(       DOA : out std_logic_vector(7 downto 0);
-      DOB : out std_logic_vector(7 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      B : in std_logic_vector(5 downto 0);
-      DIA : in std_logic_vector(7 downto 0);
-      DIB : in std_logic_vector(7 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SJKA65_64X8X1CM4 is 
-begin
-  SJKA65_64X8X1CM4_wrap_inst: dpram_generic_reverse_wrapper 
-       generic map (address_width => 6, data_width => 8)
-   port map (ADDR_0 => A, ADDR_1 => B, CLK => CKA,  WRITE_0_BAR => WEAN, WRITE_1_BAR => WEBN,   ENABLE_0_BAR => CSAN , ENABLE_1_BAR => CSBN, DATAIN_0 => DIA, DATAIN_1 => DIB, DATAOUT_0 => DOA, DATAOUT_1 => DOB);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SJKA65_64X16X1CM4 is
-   port(       DOA : out std_logic_vector(15 downto 0);
-      DOB : out std_logic_vector(15 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      B : in std_logic_vector(5 downto 0);
-      DIA : in std_logic_vector(15 downto 0);
-      DIB : in std_logic_vector(15 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SJKA65_64X16X1CM4 is 
-begin
-  SJKA65_64X16X1CM4_wrap_inst: dpram_generic_reverse_wrapper 
-       generic map (address_width => 6, data_width => 16)
-   port map (ADDR_0 => A, ADDR_1 => B, CLK => CKA,  WRITE_0_BAR => WEAN, WRITE_1_BAR => WEBN,   ENABLE_0_BAR => CSAN , ENABLE_1_BAR => CSBN, DATAIN_0 => DIA, DATAIN_1 => DIB, DATAOUT_0 => DOA, DATAOUT_1 => DOB);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SJKA65_256X4X1CM4 is
-   port(       DOA : out std_logic_vector(3 downto 0);
-      DOB : out std_logic_vector(3 downto 0);
-      A : in std_logic_vector(7 downto 0);
-      B : in std_logic_vector(7 downto 0);
-      DIA : in std_logic_vector(3 downto 0);
-      DIB : in std_logic_vector(3 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SJKA65_256X4X1CM4 is 
-begin
-  SJKA65_256X4X1CM4_wrap_inst: dpram_generic_reverse_wrapper 
-       generic map (address_width => 8, data_width => 4)
-   port map (ADDR_0 => A, ADDR_1 => B, CLK => CKA,  WRITE_0_BAR => WEAN, WRITE_1_BAR => WEBN,   ENABLE_0_BAR => CSAN , ENABLE_1_BAR => CSBN, DATAIN_0 => DIA, DATAIN_1 => DIB, DATAOUT_0 => DOA, DATAOUT_1 => DOB);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SJKA65_256X16X1CM4 is
-   port(       DOA : out std_logic_vector(15 downto 0);
-      DOB : out std_logic_vector(15 downto 0);
-      A : in std_logic_vector(7 downto 0);
-      B : in std_logic_vector(7 downto 0);
-      DIA : in std_logic_vector(15 downto 0);
-      DIB : in std_logic_vector(15 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SJKA65_256X16X1CM4 is 
-begin
-  SJKA65_256X16X1CM4_wrap_inst: dpram_generic_reverse_wrapper 
-       generic map (address_width => 8, data_width => 16)
-   port map (ADDR_0 => A, ADDR_1 => B, CLK => CKA,  WRITE_0_BAR => WEAN, WRITE_1_BAR => WEBN,   ENABLE_0_BAR => CSAN , ENABLE_1_BAR => CSBN, DATAIN_0 => DIA, DATAIN_1 => DIB, DATAOUT_0 => DOA, DATAOUT_1 => DOB);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SJKA65_256X32X1CM4 is
-   port(       DOA : out std_logic_vector(31 downto 0);
-      DOB : out std_logic_vector(31 downto 0);
-      A : in std_logic_vector(7 downto 0);
-      B : in std_logic_vector(7 downto 0);
-      DIA : in std_logic_vector(31 downto 0);
-      DIB : in std_logic_vector(31 downto 0);
-     WEAN                          :   IN   std_logic;
-     WEBN                          :   IN   std_logic;
-     DVSE                          :   IN   std_logic;
-     DVS                           :   IN   std_logic_vector (3 downto 0);
-     CKA                            :   IN   std_logic;
-     CKB                            :   IN   std_logic;
-     CSAN                            :   IN   std_logic;
-     CSBN                            :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SJKA65_256X32X1CM4 is 
-begin
-  SJKA65_256X32X1CM4_wrap_inst: dpram_generic_reverse_wrapper 
-       generic map (address_width => 8, data_width => 32)
-   port map (ADDR_0 => A, ADDR_1 => B, CLK => CKA,  WRITE_0_BAR => WEAN, WRITE_1_BAR => WEBN,   ENABLE_0_BAR => CSAN , ENABLE_1_BAR => CSBN, DATAIN_0 => DIA, DATAIN_1 => DIB, DATAOUT_0 => DOA, DATAOUT_1 => DOB);
+  SHKA65_16X30X1CM4_wrap_inst: spram_generic_reverse_wrapper 
+       generic map (address_width => 4, data_width => 30)
+   port map (       ADDR(0)=> A0, 
+       ADDR(1)=> A1, 
+       ADDR(2)=> A2, 
+       ADDR(3)=> A3, 
+       DATAIN(0)=> DI0, 
+       DATAIN(1)=> DI1, 
+       DATAIN(2)=> DI2, 
+       DATAIN(3)=> DI3, 
+       DATAIN(4)=> DI4, 
+       DATAIN(5)=> DI5, 
+       DATAIN(6)=> DI6, 
+       DATAIN(7)=> DI7, 
+       DATAIN(8)=> DI8, 
+       DATAIN(9)=> DI9, 
+       DATAIN(10)=> DI10, 
+       DATAIN(11)=> DI11, 
+       DATAIN(12)=> DI12, 
+       DATAIN(13)=> DI13, 
+       DATAIN(14)=> DI14, 
+       DATAIN(15)=> DI15, 
+       DATAIN(16)=> DI16, 
+       DATAIN(17)=> DI17, 
+       DATAIN(18)=> DI18, 
+       DATAIN(19)=> DI19, 
+       DATAIN(20)=> DI20, 
+       DATAIN(21)=> DI21, 
+       DATAIN(22)=> DI22, 
+       DATAIN(23)=> DI23, 
+       DATAIN(24)=> DI24, 
+       DATAIN(25)=> DI25, 
+       DATAIN(26)=> DI26, 
+       DATAIN(27)=> DI27, 
+       DATAIN(28)=> DI28, 
+       DATAIN(29)=> DI29, 
+       DATAOUT(0)=> DO0, 
+       DATAOUT(1)=> DO1, 
+       DATAOUT(2)=> DO2, 
+       DATAOUT(3)=> DO3, 
+       DATAOUT(4)=> DO4, 
+       DATAOUT(5)=> DO5, 
+       DATAOUT(6)=> DO6, 
+       DATAOUT(7)=> DO7, 
+       DATAOUT(8)=> DO8, 
+       DATAOUT(9)=> DO9, 
+       DATAOUT(10)=> DO10, 
+       DATAOUT(11)=> DO11, 
+       DATAOUT(12)=> DO12, 
+       DATAOUT(13)=> DO13, 
+       DATAOUT(14)=> DO14, 
+       DATAOUT(15)=> DO15, 
+       DATAOUT(16)=> DO16, 
+       DATAOUT(17)=> DO17, 
+       DATAOUT(18)=> DO18, 
+       DATAOUT(19)=> DO19, 
+       DATAOUT(20)=> DO20, 
+       DATAOUT(21)=> DO21, 
+       DATAOUT(22)=> DO22, 
+       DATAOUT(23)=> DO23, 
+       DATAOUT(24)=> DO24, 
+       DATAOUT(25)=> DO25, 
+       DATAOUT(26)=> DO26, 
+       DATAOUT(27)=> DO27, 
+       DATAOUT(28)=> DO28, 
+       DATAOUT(29)=> DO29, 
+ CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -12808,12 +14668,78 @@ use ahir.mem_component_pack.all;
 use ahir.types.all;
 use ahir.utilities.all;
 entity SHKA65_32X32X1CM4 is
-   port(       DO : out std_logic_vector(31 downto 0);
-      A : in std_logic_vector(4 downto 0);
-      DI : in std_logic_vector(31 downto 0);
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      DO8 : out std_logic;
+      DO9 : out std_logic;
+      DO10 : out std_logic;
+      DO11 : out std_logic;
+      DO12 : out std_logic;
+      DO13 : out std_logic;
+      DO14 : out std_logic;
+      DO15 : out std_logic;
+      DO16 : out std_logic;
+      DO17 : out std_logic;
+      DO18 : out std_logic;
+      DO19 : out std_logic;
+      DO20 : out std_logic;
+      DO21 : out std_logic;
+      DO22 : out std_logic;
+      DO23 : out std_logic;
+      DO24 : out std_logic;
+      DO25 : out std_logic;
+      DO26 : out std_logic;
+      DO27 : out std_logic;
+      DO28 : out std_logic;
+      DO29 : out std_logic;
+      DO30 : out std_logic;
+      DO31 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
+      DI8 : in std_logic;
+      DI9 : in std_logic;
+      DI10 : in std_logic;
+      DI11 : in std_logic;
+      DI12 : in std_logic;
+      DI13 : in std_logic;
+      DI14 : in std_logic;
+      DI15 : in std_logic;
+      DI16 : in std_logic;
+      DI17 : in std_logic;
+      DI18 : in std_logic;
+      DI19 : in std_logic;
+      DI20 : in std_logic;
+      DI21 : in std_logic;
+      DI22 : in std_logic;
+      DI23 : in std_logic;
+      DI24 : in std_logic;
+      DI25 : in std_logic;
+      DI26 : in std_logic;
+      DI27 : in std_logic;
+      DI28 : in std_logic;
+      DI29 : in std_logic;
+      DI30 : in std_logic;
+      DI31 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
+      DVS0,DVS1,DVS2:   IN   std_logic;
       CK   :   IN   std_logic;
       CSB  :   IN   std_logic
 );
@@ -12822,7 +14748,76 @@ architecture SimpleWrap of SHKA65_32X32X1CM4 is
 begin
   SHKA65_32X32X1CM4_wrap_inst: spram_generic_reverse_wrapper 
        generic map (address_width => 5, data_width => 32)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
+   port map (       ADDR(0)=> A0, 
+       ADDR(1)=> A1, 
+       ADDR(2)=> A2, 
+       ADDR(3)=> A3, 
+       ADDR(4)=> A4, 
+       DATAIN(0)=> DI0, 
+       DATAIN(1)=> DI1, 
+       DATAIN(2)=> DI2, 
+       DATAIN(3)=> DI3, 
+       DATAIN(4)=> DI4, 
+       DATAIN(5)=> DI5, 
+       DATAIN(6)=> DI6, 
+       DATAIN(7)=> DI7, 
+       DATAIN(8)=> DI8, 
+       DATAIN(9)=> DI9, 
+       DATAIN(10)=> DI10, 
+       DATAIN(11)=> DI11, 
+       DATAIN(12)=> DI12, 
+       DATAIN(13)=> DI13, 
+       DATAIN(14)=> DI14, 
+       DATAIN(15)=> DI15, 
+       DATAIN(16)=> DI16, 
+       DATAIN(17)=> DI17, 
+       DATAIN(18)=> DI18, 
+       DATAIN(19)=> DI19, 
+       DATAIN(20)=> DI20, 
+       DATAIN(21)=> DI21, 
+       DATAIN(22)=> DI22, 
+       DATAIN(23)=> DI23, 
+       DATAIN(24)=> DI24, 
+       DATAIN(25)=> DI25, 
+       DATAIN(26)=> DI26, 
+       DATAIN(27)=> DI27, 
+       DATAIN(28)=> DI28, 
+       DATAIN(29)=> DI29, 
+       DATAIN(30)=> DI30, 
+       DATAIN(31)=> DI31, 
+       DATAOUT(0)=> DO0, 
+       DATAOUT(1)=> DO1, 
+       DATAOUT(2)=> DO2, 
+       DATAOUT(3)=> DO3, 
+       DATAOUT(4)=> DO4, 
+       DATAOUT(5)=> DO5, 
+       DATAOUT(6)=> DO6, 
+       DATAOUT(7)=> DO7, 
+       DATAOUT(8)=> DO8, 
+       DATAOUT(9)=> DO9, 
+       DATAOUT(10)=> DO10, 
+       DATAOUT(11)=> DO11, 
+       DATAOUT(12)=> DO12, 
+       DATAOUT(13)=> DO13, 
+       DATAOUT(14)=> DO14, 
+       DATAOUT(15)=> DO15, 
+       DATAOUT(16)=> DO16, 
+       DATAOUT(17)=> DO17, 
+       DATAOUT(18)=> DO18, 
+       DATAOUT(19)=> DO19, 
+       DATAOUT(20)=> DO20, 
+       DATAOUT(21)=> DO21, 
+       DATAOUT(22)=> DO22, 
+       DATAOUT(23)=> DO23, 
+       DATAOUT(24)=> DO24, 
+       DATAOUT(25)=> DO25, 
+       DATAOUT(26)=> DO26, 
+       DATAOUT(27)=> DO27, 
+       DATAOUT(28)=> DO28, 
+       DATAOUT(29)=> DO29, 
+       DATAOUT(30)=> DO30, 
+       DATAOUT(31)=> DO31, 
+ CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -12830,22 +14825,123 @@ library ahir;
 use ahir.mem_component_pack.all;
 use ahir.types.all;
 use ahir.utilities.all;
-entity SHKA65_64X16X1CM4 is
-   port(       DO : out std_logic_vector(15 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      DI : in std_logic_vector(15 downto 0);
+entity SHKA65_64X23X1CM4 is
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      DO8 : out std_logic;
+      DO9 : out std_logic;
+      DO10 : out std_logic;
+      DO11 : out std_logic;
+      DO12 : out std_logic;
+      DO13 : out std_logic;
+      DO14 : out std_logic;
+      DO15 : out std_logic;
+      DO16 : out std_logic;
+      DO17 : out std_logic;
+      DO18 : out std_logic;
+      DO19 : out std_logic;
+      DO20 : out std_logic;
+      DO21 : out std_logic;
+      DO22 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
+      DI8 : in std_logic;
+      DI9 : in std_logic;
+      DI10 : in std_logic;
+      DI11 : in std_logic;
+      DI12 : in std_logic;
+      DI13 : in std_logic;
+      DI14 : in std_logic;
+      DI15 : in std_logic;
+      DI16 : in std_logic;
+      DI17 : in std_logic;
+      DI18 : in std_logic;
+      DI19 : in std_logic;
+      DI20 : in std_logic;
+      DI21 : in std_logic;
+      DI22 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
+      DVS0,DVS1,DVS2:   IN   std_logic;
       CK   :   IN   std_logic;
       CSB  :   IN   std_logic
 );
   end entity;
-architecture SimpleWrap of SHKA65_64X16X1CM4 is 
+architecture SimpleWrap of SHKA65_64X23X1CM4 is 
 begin
-  SHKA65_64X16X1CM4_wrap_inst: spram_generic_reverse_wrapper 
-       generic map (address_width => 6, data_width => 16)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
+  SHKA65_64X23X1CM4_wrap_inst: spram_generic_reverse_wrapper 
+       generic map (address_width => 6, data_width => 23)
+   port map (       ADDR(0)=> A0, 
+       ADDR(1)=> A1, 
+       ADDR(2)=> A2, 
+       ADDR(3)=> A3, 
+       ADDR(4)=> A4, 
+       ADDR(5)=> A5, 
+       DATAIN(0)=> DI0, 
+       DATAIN(1)=> DI1, 
+       DATAIN(2)=> DI2, 
+       DATAIN(3)=> DI3, 
+       DATAIN(4)=> DI4, 
+       DATAIN(5)=> DI5, 
+       DATAIN(6)=> DI6, 
+       DATAIN(7)=> DI7, 
+       DATAIN(8)=> DI8, 
+       DATAIN(9)=> DI9, 
+       DATAIN(10)=> DI10, 
+       DATAIN(11)=> DI11, 
+       DATAIN(12)=> DI12, 
+       DATAIN(13)=> DI13, 
+       DATAIN(14)=> DI14, 
+       DATAIN(15)=> DI15, 
+       DATAIN(16)=> DI16, 
+       DATAIN(17)=> DI17, 
+       DATAIN(18)=> DI18, 
+       DATAIN(19)=> DI19, 
+       DATAIN(20)=> DI20, 
+       DATAIN(21)=> DI21, 
+       DATAIN(22)=> DI22, 
+       DATAOUT(0)=> DO0, 
+       DATAOUT(1)=> DO1, 
+       DATAOUT(2)=> DO2, 
+       DATAOUT(3)=> DO3, 
+       DATAOUT(4)=> DO4, 
+       DATAOUT(5)=> DO5, 
+       DATAOUT(6)=> DO6, 
+       DATAOUT(7)=> DO7, 
+       DATAOUT(8)=> DO8, 
+       DATAOUT(9)=> DO9, 
+       DATAOUT(10)=> DO10, 
+       DATAOUT(11)=> DO11, 
+       DATAOUT(12)=> DO12, 
+       DATAOUT(13)=> DO13, 
+       DATAOUT(14)=> DO14, 
+       DATAOUT(15)=> DO15, 
+       DATAOUT(16)=> DO16, 
+       DATAOUT(17)=> DO17, 
+       DATAOUT(18)=> DO18, 
+       DATAOUT(19)=> DO19, 
+       DATAOUT(20)=> DO20, 
+       DATAOUT(21)=> DO21, 
+       DATAOUT(22)=> DO22, 
+ CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -12853,137 +14949,69 @@ library ahir;
 use ahir.mem_component_pack.all;
 use ahir.types.all;
 use ahir.utilities.all;
-entity SHKA65_64X64X1CM4 is
-   port(       DO : out std_logic_vector(63 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      DI : in std_logic_vector(63 downto 0);
+entity SHKA65_512X8X1CM4 is
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      A6 : in std_logic;
+      A7 : in std_logic;
+      A8 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
+      DVS0,DVS1,DVS2:   IN   std_logic;
       CK   :   IN   std_logic;
       CSB  :   IN   std_logic
 );
   end entity;
-architecture SimpleWrap of SHKA65_64X64X1CM4 is 
+architecture SimpleWrap of SHKA65_512X8X1CM4 is 
 begin
-  SHKA65_64X64X1CM4_wrap_inst: spram_generic_reverse_wrapper 
-       generic map (address_width => 6, data_width => 64)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SHKA65_64X128X1CM4 is
-   port(       DO : out std_logic_vector(127 downto 0);
-      A : in std_logic_vector(5 downto 0);
-      DI : in std_logic_vector(127 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SHKA65_64X128X1CM4 is 
-begin
-  SHKA65_64X128X1CM4_wrap_inst: spram_generic_reverse_wrapper 
-       generic map (address_width => 6, data_width => 128)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SHKA65_128X32X1CM4 is
-   port(       DO : out std_logic_vector(31 downto 0);
-      A : in std_logic_vector(6 downto 0);
-      DI : in std_logic_vector(31 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SHKA65_128X32X1CM4 is 
-begin
-  SHKA65_128X32X1CM4_wrap_inst: spram_generic_reverse_wrapper 
-       generic map (address_width => 7, data_width => 32)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SHKA65_128X64X1CM4 is
-   port(       DO : out std_logic_vector(63 downto 0);
-      A : in std_logic_vector(6 downto 0);
-      DI : in std_logic_vector(63 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SHKA65_128X64X1CM4 is 
-begin
-  SHKA65_128X64X1CM4_wrap_inst: spram_generic_reverse_wrapper 
-       generic map (address_width => 7, data_width => 64)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SHKA65_512X4X1CM4 is
-   port(       DO : out std_logic_vector(3 downto 0);
-      A : in std_logic_vector(8 downto 0);
-      DI : in std_logic_vector(3 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SHKA65_512X4X1CM4 is 
-begin
-  SHKA65_512X4X1CM4_wrap_inst: spram_generic_reverse_wrapper 
-       generic map (address_width => 9, data_width => 4)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SHKA65_512X16X1CM4 is
-   port(       DO : out std_logic_vector(15 downto 0);
-      A : in std_logic_vector(8 downto 0);
-      DI : in std_logic_vector(15 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SHKA65_512X16X1CM4 is 
-begin
-  SHKA65_512X16X1CM4_wrap_inst: spram_generic_reverse_wrapper 
-       generic map (address_width => 9, data_width => 16)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
+  SHKA65_512X8X1CM4_wrap_inst: spram_generic_reverse_wrapper 
+       generic map (address_width => 9, data_width => 8)
+   port map (       ADDR(0)=> A0, 
+       ADDR(1)=> A1, 
+       ADDR(2)=> A2, 
+       ADDR(3)=> A3, 
+       ADDR(4)=> A4, 
+       ADDR(5)=> A5, 
+       ADDR(6)=> A6, 
+       ADDR(7)=> A7, 
+       ADDR(8)=> A8, 
+       DATAIN(0)=> DI0, 
+       DATAIN(1)=> DI1, 
+       DATAIN(2)=> DI2, 
+       DATAIN(3)=> DI3, 
+       DATAIN(4)=> DI4, 
+       DATAIN(5)=> DI5, 
+       DATAIN(6)=> DI6, 
+       DATAIN(7)=> DI7, 
+       DATAOUT(0)=> DO0, 
+       DATAOUT(1)=> DO1, 
+       DATAOUT(2)=> DO2, 
+       DATAOUT(3)=> DO3, 
+       DATAOUT(4)=> DO4, 
+       DATAOUT(5)=> DO5, 
+       DATAOUT(6)=> DO6, 
+       DATAOUT(7)=> DO7, 
+ CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -12992,12 +15020,146 @@ use ahir.mem_component_pack.all;
 use ahir.types.all;
 use ahir.utilities.all;
 entity SHKA65_512X64X1CM4 is
-   port(       DO : out std_logic_vector(63 downto 0);
-      A : in std_logic_vector(8 downto 0);
-      DI : in std_logic_vector(63 downto 0);
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      DO8 : out std_logic;
+      DO9 : out std_logic;
+      DO10 : out std_logic;
+      DO11 : out std_logic;
+      DO12 : out std_logic;
+      DO13 : out std_logic;
+      DO14 : out std_logic;
+      DO15 : out std_logic;
+      DO16 : out std_logic;
+      DO17 : out std_logic;
+      DO18 : out std_logic;
+      DO19 : out std_logic;
+      DO20 : out std_logic;
+      DO21 : out std_logic;
+      DO22 : out std_logic;
+      DO23 : out std_logic;
+      DO24 : out std_logic;
+      DO25 : out std_logic;
+      DO26 : out std_logic;
+      DO27 : out std_logic;
+      DO28 : out std_logic;
+      DO29 : out std_logic;
+      DO30 : out std_logic;
+      DO31 : out std_logic;
+      DO32 : out std_logic;
+      DO33 : out std_logic;
+      DO34 : out std_logic;
+      DO35 : out std_logic;
+      DO36 : out std_logic;
+      DO37 : out std_logic;
+      DO38 : out std_logic;
+      DO39 : out std_logic;
+      DO40 : out std_logic;
+      DO41 : out std_logic;
+      DO42 : out std_logic;
+      DO43 : out std_logic;
+      DO44 : out std_logic;
+      DO45 : out std_logic;
+      DO46 : out std_logic;
+      DO47 : out std_logic;
+      DO48 : out std_logic;
+      DO49 : out std_logic;
+      DO50 : out std_logic;
+      DO51 : out std_logic;
+      DO52 : out std_logic;
+      DO53 : out std_logic;
+      DO54 : out std_logic;
+      DO55 : out std_logic;
+      DO56 : out std_logic;
+      DO57 : out std_logic;
+      DO58 : out std_logic;
+      DO59 : out std_logic;
+      DO60 : out std_logic;
+      DO61 : out std_logic;
+      DO62 : out std_logic;
+      DO63 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      A6 : in std_logic;
+      A7 : in std_logic;
+      A8 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
+      DI8 : in std_logic;
+      DI9 : in std_logic;
+      DI10 : in std_logic;
+      DI11 : in std_logic;
+      DI12 : in std_logic;
+      DI13 : in std_logic;
+      DI14 : in std_logic;
+      DI15 : in std_logic;
+      DI16 : in std_logic;
+      DI17 : in std_logic;
+      DI18 : in std_logic;
+      DI19 : in std_logic;
+      DI20 : in std_logic;
+      DI21 : in std_logic;
+      DI22 : in std_logic;
+      DI23 : in std_logic;
+      DI24 : in std_logic;
+      DI25 : in std_logic;
+      DI26 : in std_logic;
+      DI27 : in std_logic;
+      DI28 : in std_logic;
+      DI29 : in std_logic;
+      DI30 : in std_logic;
+      DI31 : in std_logic;
+      DI32 : in std_logic;
+      DI33 : in std_logic;
+      DI34 : in std_logic;
+      DI35 : in std_logic;
+      DI36 : in std_logic;
+      DI37 : in std_logic;
+      DI38 : in std_logic;
+      DI39 : in std_logic;
+      DI40 : in std_logic;
+      DI41 : in std_logic;
+      DI42 : in std_logic;
+      DI43 : in std_logic;
+      DI44 : in std_logic;
+      DI45 : in std_logic;
+      DI46 : in std_logic;
+      DI47 : in std_logic;
+      DI48 : in std_logic;
+      DI49 : in std_logic;
+      DI50 : in std_logic;
+      DI51 : in std_logic;
+      DI52 : in std_logic;
+      DI53 : in std_logic;
+      DI54 : in std_logic;
+      DI55 : in std_logic;
+      DI56 : in std_logic;
+      DI57 : in std_logic;
+      DI58 : in std_logic;
+      DI59 : in std_logic;
+      DI60 : in std_logic;
+      DI61 : in std_logic;
+      DI62 : in std_logic;
+      DI63 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
+      DVS0,DVS1,DVS2:   IN   std_logic;
       CK   :   IN   std_logic;
       CSB  :   IN   std_logic
 );
@@ -13006,7 +15168,144 @@ architecture SimpleWrap of SHKA65_512X64X1CM4 is
 begin
   SHKA65_512X64X1CM4_wrap_inst: spram_generic_reverse_wrapper 
        generic map (address_width => 9, data_width => 64)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
+   port map (       ADDR(0)=> A0, 
+       ADDR(1)=> A1, 
+       ADDR(2)=> A2, 
+       ADDR(3)=> A3, 
+       ADDR(4)=> A4, 
+       ADDR(5)=> A5, 
+       ADDR(6)=> A6, 
+       ADDR(7)=> A7, 
+       ADDR(8)=> A8, 
+       DATAIN(0)=> DI0, 
+       DATAIN(1)=> DI1, 
+       DATAIN(2)=> DI2, 
+       DATAIN(3)=> DI3, 
+       DATAIN(4)=> DI4, 
+       DATAIN(5)=> DI5, 
+       DATAIN(6)=> DI6, 
+       DATAIN(7)=> DI7, 
+       DATAIN(8)=> DI8, 
+       DATAIN(9)=> DI9, 
+       DATAIN(10)=> DI10, 
+       DATAIN(11)=> DI11, 
+       DATAIN(12)=> DI12, 
+       DATAIN(13)=> DI13, 
+       DATAIN(14)=> DI14, 
+       DATAIN(15)=> DI15, 
+       DATAIN(16)=> DI16, 
+       DATAIN(17)=> DI17, 
+       DATAIN(18)=> DI18, 
+       DATAIN(19)=> DI19, 
+       DATAIN(20)=> DI20, 
+       DATAIN(21)=> DI21, 
+       DATAIN(22)=> DI22, 
+       DATAIN(23)=> DI23, 
+       DATAIN(24)=> DI24, 
+       DATAIN(25)=> DI25, 
+       DATAIN(26)=> DI26, 
+       DATAIN(27)=> DI27, 
+       DATAIN(28)=> DI28, 
+       DATAIN(29)=> DI29, 
+       DATAIN(30)=> DI30, 
+       DATAIN(31)=> DI31, 
+       DATAIN(32)=> DI32, 
+       DATAIN(33)=> DI33, 
+       DATAIN(34)=> DI34, 
+       DATAIN(35)=> DI35, 
+       DATAIN(36)=> DI36, 
+       DATAIN(37)=> DI37, 
+       DATAIN(38)=> DI38, 
+       DATAIN(39)=> DI39, 
+       DATAIN(40)=> DI40, 
+       DATAIN(41)=> DI41, 
+       DATAIN(42)=> DI42, 
+       DATAIN(43)=> DI43, 
+       DATAIN(44)=> DI44, 
+       DATAIN(45)=> DI45, 
+       DATAIN(46)=> DI46, 
+       DATAIN(47)=> DI47, 
+       DATAIN(48)=> DI48, 
+       DATAIN(49)=> DI49, 
+       DATAIN(50)=> DI50, 
+       DATAIN(51)=> DI51, 
+       DATAIN(52)=> DI52, 
+       DATAIN(53)=> DI53, 
+       DATAIN(54)=> DI54, 
+       DATAIN(55)=> DI55, 
+       DATAIN(56)=> DI56, 
+       DATAIN(57)=> DI57, 
+       DATAIN(58)=> DI58, 
+       DATAIN(59)=> DI59, 
+       DATAIN(60)=> DI60, 
+       DATAIN(61)=> DI61, 
+       DATAIN(62)=> DI62, 
+       DATAIN(63)=> DI63, 
+       DATAOUT(0)=> DO0, 
+       DATAOUT(1)=> DO1, 
+       DATAOUT(2)=> DO2, 
+       DATAOUT(3)=> DO3, 
+       DATAOUT(4)=> DO4, 
+       DATAOUT(5)=> DO5, 
+       DATAOUT(6)=> DO6, 
+       DATAOUT(7)=> DO7, 
+       DATAOUT(8)=> DO8, 
+       DATAOUT(9)=> DO9, 
+       DATAOUT(10)=> DO10, 
+       DATAOUT(11)=> DO11, 
+       DATAOUT(12)=> DO12, 
+       DATAOUT(13)=> DO13, 
+       DATAOUT(14)=> DO14, 
+       DATAOUT(15)=> DO15, 
+       DATAOUT(16)=> DO16, 
+       DATAOUT(17)=> DO17, 
+       DATAOUT(18)=> DO18, 
+       DATAOUT(19)=> DO19, 
+       DATAOUT(20)=> DO20, 
+       DATAOUT(21)=> DO21, 
+       DATAOUT(22)=> DO22, 
+       DATAOUT(23)=> DO23, 
+       DATAOUT(24)=> DO24, 
+       DATAOUT(25)=> DO25, 
+       DATAOUT(26)=> DO26, 
+       DATAOUT(27)=> DO27, 
+       DATAOUT(28)=> DO28, 
+       DATAOUT(29)=> DO29, 
+       DATAOUT(30)=> DO30, 
+       DATAOUT(31)=> DO31, 
+       DATAOUT(32)=> DO32, 
+       DATAOUT(33)=> DO33, 
+       DATAOUT(34)=> DO34, 
+       DATAOUT(35)=> DO35, 
+       DATAOUT(36)=> DO36, 
+       DATAOUT(37)=> DO37, 
+       DATAOUT(38)=> DO38, 
+       DATAOUT(39)=> DO39, 
+       DATAOUT(40)=> DO40, 
+       DATAOUT(41)=> DO41, 
+       DATAOUT(42)=> DO42, 
+       DATAOUT(43)=> DO43, 
+       DATAOUT(44)=> DO44, 
+       DATAOUT(45)=> DO45, 
+       DATAOUT(46)=> DO46, 
+       DATAOUT(47)=> DO47, 
+       DATAOUT(48)=> DO48, 
+       DATAOUT(49)=> DO49, 
+       DATAOUT(50)=> DO50, 
+       DATAOUT(51)=> DO51, 
+       DATAOUT(52)=> DO52, 
+       DATAOUT(53)=> DO53, 
+       DATAOUT(54)=> DO54, 
+       DATAOUT(55)=> DO55, 
+       DATAOUT(56)=> DO56, 
+       DATAOUT(57)=> DO57, 
+       DATAOUT(58)=> DO58, 
+       DATAOUT(59)=> DO59, 
+       DATAOUT(60)=> DO60, 
+       DATAOUT(61)=> DO61, 
+       DATAOUT(62)=> DO62, 
+       DATAOUT(63)=> DO63, 
+ CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -13014,22 +15313,75 @@ library ahir;
 use ahir.mem_component_pack.all;
 use ahir.types.all;
 use ahir.utilities.all;
-entity SHKA65_4096X8X1CM16 is
-   port(       DO : out std_logic_vector(7 downto 0);
-      A : in std_logic_vector(11 downto 0);
-      DI : in std_logic_vector(7 downto 0);
+entity SHKA65_4096X8X1CM4 is
+   port(       DO0 : out std_logic;
+      DO1 : out std_logic;
+      DO2 : out std_logic;
+      DO3 : out std_logic;
+      DO4 : out std_logic;
+      DO5 : out std_logic;
+      DO6 : out std_logic;
+      DO7 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      A6 : in std_logic;
+      A7 : in std_logic;
+      A8 : in std_logic;
+      A9 : in std_logic;
+      A10 : in std_logic;
+      A11 : in std_logic;
+      DI0 : in std_logic;
+      DI1 : in std_logic;
+      DI2 : in std_logic;
+      DI3 : in std_logic;
+      DI4 : in std_logic;
+      DI5 : in std_logic;
+      DI6 : in std_logic;
+      DI7 : in std_logic;
       WEB  :   IN   std_logic;
       DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
+      DVS0,DVS1,DVS2:   IN   std_logic;
       CK   :   IN   std_logic;
       CSB  :   IN   std_logic
 );
   end entity;
-architecture SimpleWrap of SHKA65_4096X8X1CM16 is 
+architecture SimpleWrap of SHKA65_4096X8X1CM4 is 
 begin
-  SHKA65_4096X8X1CM16_wrap_inst: spram_generic_reverse_wrapper 
+  SHKA65_4096X8X1CM4_wrap_inst: spram_generic_reverse_wrapper 
        generic map (address_width => 12, data_width => 8)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
+   port map (       ADDR(0)=> A0, 
+       ADDR(1)=> A1, 
+       ADDR(2)=> A2, 
+       ADDR(3)=> A3, 
+       ADDR(4)=> A4, 
+       ADDR(5)=> A5, 
+       ADDR(6)=> A6, 
+       ADDR(7)=> A7, 
+       ADDR(8)=> A8, 
+       ADDR(9)=> A9, 
+       ADDR(10)=> A10, 
+       ADDR(11)=> A11, 
+       DATAIN(0)=> DI0, 
+       DATAIN(1)=> DI1, 
+       DATAIN(2)=> DI2, 
+       DATAIN(3)=> DI3, 
+       DATAIN(4)=> DI4, 
+       DATAIN(5)=> DI5, 
+       DATAIN(6)=> DI6, 
+       DATAIN(7)=> DI7, 
+       DATAOUT(0)=> DO0, 
+       DATAOUT(1)=> DO1, 
+       DATAOUT(2)=> DO2, 
+       DATAOUT(3)=> DO3, 
+       DATAOUT(4)=> DO4, 
+       DATAOUT(5)=> DO5, 
+       DATAOUT(6)=> DO6, 
+       DATAOUT(7)=> DO7, 
+ CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -13037,22 +15389,298 @@ library ahir;
 use ahir.mem_component_pack.all;
 use ahir.types.all;
 use ahir.utilities.all;
-entity SHKA65_4096X64X1CM8 is
-   port(       DO : out std_logic_vector(63 downto 0);
-      A : in std_logic_vector(11 downto 0);
-      DI : in std_logic_vector(63 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
+entity SJKA65_32X32X1CM4 is
+   port(       DOA0 : out std_logic;
+      DOA1 : out std_logic;
+      DOA2 : out std_logic;
+      DOA3 : out std_logic;
+      DOA4 : out std_logic;
+      DOA5 : out std_logic;
+      DOA6 : out std_logic;
+      DOA7 : out std_logic;
+      DOA8 : out std_logic;
+      DOA9 : out std_logic;
+      DOA10 : out std_logic;
+      DOA11 : out std_logic;
+      DOA12 : out std_logic;
+      DOA13 : out std_logic;
+      DOA14 : out std_logic;
+      DOA15 : out std_logic;
+      DOA16 : out std_logic;
+      DOA17 : out std_logic;
+      DOA18 : out std_logic;
+      DOA19 : out std_logic;
+      DOA20 : out std_logic;
+      DOA21 : out std_logic;
+      DOA22 : out std_logic;
+      DOA23 : out std_logic;
+      DOA24 : out std_logic;
+      DOA25 : out std_logic;
+      DOA26 : out std_logic;
+      DOA27 : out std_logic;
+      DOA28 : out std_logic;
+      DOA29 : out std_logic;
+      DOA30 : out std_logic;
+      DOA31 : out std_logic;
+      DOB0 : out std_logic;
+      DOB1 : out std_logic;
+      DOB2 : out std_logic;
+      DOB3 : out std_logic;
+      DOB4 : out std_logic;
+      DOB5 : out std_logic;
+      DOB6 : out std_logic;
+      DOB7 : out std_logic;
+      DOB8 : out std_logic;
+      DOB9 : out std_logic;
+      DOB10 : out std_logic;
+      DOB11 : out std_logic;
+      DOB12 : out std_logic;
+      DOB13 : out std_logic;
+      DOB14 : out std_logic;
+      DOB15 : out std_logic;
+      DOB16 : out std_logic;
+      DOB17 : out std_logic;
+      DOB18 : out std_logic;
+      DOB19 : out std_logic;
+      DOB20 : out std_logic;
+      DOB21 : out std_logic;
+      DOB22 : out std_logic;
+      DOB23 : out std_logic;
+      DOB24 : out std_logic;
+      DOB25 : out std_logic;
+      DOB26 : out std_logic;
+      DOB27 : out std_logic;
+      DOB28 : out std_logic;
+      DOB29 : out std_logic;
+      DOB30 : out std_logic;
+      DOB31 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      B0 : in std_logic;
+      B1 : in std_logic;
+      B2 : in std_logic;
+      B3 : in std_logic;
+      B4 : in std_logic;
+      DIA0 : in std_logic;
+      DIA1 : in std_logic;
+      DIA2 : in std_logic;
+      DIA3 : in std_logic;
+      DIA4 : in std_logic;
+      DIA5 : in std_logic;
+      DIA6 : in std_logic;
+      DIA7 : in std_logic;
+      DIA8 : in std_logic;
+      DIA9 : in std_logic;
+      DIA10 : in std_logic;
+      DIA11 : in std_logic;
+      DIA12 : in std_logic;
+      DIA13 : in std_logic;
+      DIA14 : in std_logic;
+      DIA15 : in std_logic;
+      DIA16 : in std_logic;
+      DIA17 : in std_logic;
+      DIA18 : in std_logic;
+      DIA19 : in std_logic;
+      DIA20 : in std_logic;
+      DIA21 : in std_logic;
+      DIA22 : in std_logic;
+      DIA23 : in std_logic;
+      DIA24 : in std_logic;
+      DIA25 : in std_logic;
+      DIA26 : in std_logic;
+      DIA27 : in std_logic;
+      DIA28 : in std_logic;
+      DIA29 : in std_logic;
+      DIA30 : in std_logic;
+      DIA31 : in std_logic;
+      DIB0 : in std_logic;
+      DIB1 : in std_logic;
+      DIB2 : in std_logic;
+      DIB3 : in std_logic;
+      DIB4 : in std_logic;
+      DIB5 : in std_logic;
+      DIB6 : in std_logic;
+      DIB7 : in std_logic;
+      DIB8 : in std_logic;
+      DIB9 : in std_logic;
+      DIB10 : in std_logic;
+      DIB11 : in std_logic;
+      DIB12 : in std_logic;
+      DIB13 : in std_logic;
+      DIB14 : in std_logic;
+      DIB15 : in std_logic;
+      DIB16 : in std_logic;
+      DIB17 : in std_logic;
+      DIB18 : in std_logic;
+      DIB19 : in std_logic;
+      DIB20 : in std_logic;
+      DIB21 : in std_logic;
+      DIB22 : in std_logic;
+      DIB23 : in std_logic;
+      DIB24 : in std_logic;
+      DIB25 : in std_logic;
+      DIB26 : in std_logic;
+      DIB27 : in std_logic;
+      DIB28 : in std_logic;
+      DIB29 : in std_logic;
+      DIB30 : in std_logic;
+      DIB31 : in std_logic;
+     WEAN                          :   IN   std_logic;
+     WEBN                          :   IN   std_logic;
+     DVSE                          :   IN   std_logic;
+     DVS0, DVS1, DVS2, DVS3        :   IN   std_logic;
+     CKA                           :   IN   std_logic;
+     CKB                           :   IN   std_logic;
+     CSAN                          :   IN   std_logic;
+     CSBN                          :   IN   std_logic
 );
   end entity;
-architecture SimpleWrap of SHKA65_4096X64X1CM8 is 
+architecture SimpleWrap of SJKA65_32X32X1CM4 is 
 begin
-  SHKA65_4096X64X1CM8_wrap_inst: spram_generic_reverse_wrapper 
-       generic map (address_width => 12, data_width => 64)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
+  SJKA65_32X32X1CM4_wrap_inst: dpram_generic_reverse_wrapper 
+       generic map (address_width => 5, data_width => 32)
+   port map (       ADDR_0(0)=> A0, 
+       ADDR_0(1)=> A1, 
+       ADDR_0(2)=> A2, 
+       ADDR_0(3)=> A3, 
+       ADDR_0(4)=> A4, 
+       ADDR_1(0)=> B0, 
+       ADDR_1(1)=> B1, 
+       ADDR_1(2)=> B2, 
+       ADDR_1(3)=> B3, 
+       ADDR_1(4)=> B4, 
+       DATAIN_0(0)=> DIA0, 
+       DATAIN_0(1)=> DIA1, 
+       DATAIN_0(2)=> DIA2, 
+       DATAIN_0(3)=> DIA3, 
+       DATAIN_0(4)=> DIA4, 
+       DATAIN_0(5)=> DIA5, 
+       DATAIN_0(6)=> DIA6, 
+       DATAIN_0(7)=> DIA7, 
+       DATAIN_0(8)=> DIA8, 
+       DATAIN_0(9)=> DIA9, 
+       DATAIN_0(10)=> DIA10, 
+       DATAIN_0(11)=> DIA11, 
+       DATAIN_0(12)=> DIA12, 
+       DATAIN_0(13)=> DIA13, 
+       DATAIN_0(14)=> DIA14, 
+       DATAIN_0(15)=> DIA15, 
+       DATAIN_0(16)=> DIA16, 
+       DATAIN_0(17)=> DIA17, 
+       DATAIN_0(18)=> DIA18, 
+       DATAIN_0(19)=> DIA19, 
+       DATAIN_0(20)=> DIA20, 
+       DATAIN_0(21)=> DIA21, 
+       DATAIN_0(22)=> DIA22, 
+       DATAIN_0(23)=> DIA23, 
+       DATAIN_0(24)=> DIA24, 
+       DATAIN_0(25)=> DIA25, 
+       DATAIN_0(26)=> DIA26, 
+       DATAIN_0(27)=> DIA27, 
+       DATAIN_0(28)=> DIA28, 
+       DATAIN_0(29)=> DIA29, 
+       DATAIN_0(30)=> DIA30, 
+       DATAIN_0(31)=> DIA31, 
+       DATAIN_1(0)=> DIB0, 
+       DATAIN_1(1)=> DIB1, 
+       DATAIN_1(2)=> DIB2, 
+       DATAIN_1(3)=> DIB3, 
+       DATAIN_1(4)=> DIB4, 
+       DATAIN_1(5)=> DIB5, 
+       DATAIN_1(6)=> DIB6, 
+       DATAIN_1(7)=> DIB7, 
+       DATAIN_1(8)=> DIB8, 
+       DATAIN_1(9)=> DIB9, 
+       DATAIN_1(10)=> DIB10, 
+       DATAIN_1(11)=> DIB11, 
+       DATAIN_1(12)=> DIB12, 
+       DATAIN_1(13)=> DIB13, 
+       DATAIN_1(14)=> DIB14, 
+       DATAIN_1(15)=> DIB15, 
+       DATAIN_1(16)=> DIB16, 
+       DATAIN_1(17)=> DIB17, 
+       DATAIN_1(18)=> DIB18, 
+       DATAIN_1(19)=> DIB19, 
+       DATAIN_1(20)=> DIB20, 
+       DATAIN_1(21)=> DIB21, 
+       DATAIN_1(22)=> DIB22, 
+       DATAIN_1(23)=> DIB23, 
+       DATAIN_1(24)=> DIB24, 
+       DATAIN_1(25)=> DIB25, 
+       DATAIN_1(26)=> DIB26, 
+       DATAIN_1(27)=> DIB27, 
+       DATAIN_1(28)=> DIB28, 
+       DATAIN_1(29)=> DIB29, 
+       DATAIN_1(30)=> DIB30, 
+       DATAIN_1(31)=> DIB31, 
+       DATAOUT_0(0)=> DOA0, 
+       DATAOUT_0(1)=> DOA1, 
+       DATAOUT_0(2)=> DOA2, 
+       DATAOUT_0(3)=> DOA3, 
+       DATAOUT_0(4)=> DOA4, 
+       DATAOUT_0(5)=> DOA5, 
+       DATAOUT_0(6)=> DOA6, 
+       DATAOUT_0(7)=> DOA7, 
+       DATAOUT_0(8)=> DOA8, 
+       DATAOUT_0(9)=> DOA9, 
+       DATAOUT_0(10)=> DOA10, 
+       DATAOUT_0(11)=> DOA11, 
+       DATAOUT_0(12)=> DOA12, 
+       DATAOUT_0(13)=> DOA13, 
+       DATAOUT_0(14)=> DOA14, 
+       DATAOUT_0(15)=> DOA15, 
+       DATAOUT_0(16)=> DOA16, 
+       DATAOUT_0(17)=> DOA17, 
+       DATAOUT_0(18)=> DOA18, 
+       DATAOUT_0(19)=> DOA19, 
+       DATAOUT_0(20)=> DOA20, 
+       DATAOUT_0(21)=> DOA21, 
+       DATAOUT_0(22)=> DOA22, 
+       DATAOUT_0(23)=> DOA23, 
+       DATAOUT_0(24)=> DOA24, 
+       DATAOUT_0(25)=> DOA25, 
+       DATAOUT_0(26)=> DOA26, 
+       DATAOUT_0(27)=> DOA27, 
+       DATAOUT_0(28)=> DOA28, 
+       DATAOUT_0(29)=> DOA29, 
+       DATAOUT_0(30)=> DOA30, 
+       DATAOUT_0(31)=> DOA31, 
+       DATAOUT_1(0)=> DOB0, 
+       DATAOUT_1(1)=> DOB1, 
+       DATAOUT_1(2)=> DOB2, 
+       DATAOUT_1(3)=> DOB3, 
+       DATAOUT_1(4)=> DOB4, 
+       DATAOUT_1(5)=> DOB5, 
+       DATAOUT_1(6)=> DOB6, 
+       DATAOUT_1(7)=> DOB7, 
+       DATAOUT_1(8)=> DOB8, 
+       DATAOUT_1(9)=> DOB9, 
+       DATAOUT_1(10)=> DOB10, 
+       DATAOUT_1(11)=> DOB11, 
+       DATAOUT_1(12)=> DOB12, 
+       DATAOUT_1(13)=> DOB13, 
+       DATAOUT_1(14)=> DOB14, 
+       DATAOUT_1(15)=> DOB15, 
+       DATAOUT_1(16)=> DOB16, 
+       DATAOUT_1(17)=> DOB17, 
+       DATAOUT_1(18)=> DOB18, 
+       DATAOUT_1(19)=> DOB19, 
+       DATAOUT_1(20)=> DOB20, 
+       DATAOUT_1(21)=> DOB21, 
+       DATAOUT_1(22)=> DOB22, 
+       DATAOUT_1(23)=> DOB23, 
+       DATAOUT_1(24)=> DOB24, 
+       DATAOUT_1(25)=> DOB25, 
+       DATAOUT_1(26)=> DOB26, 
+       DATAOUT_1(27)=> DOB27, 
+       DATAOUT_1(28)=> DOB28, 
+       DATAOUT_1(29)=> DOB29, 
+       DATAOUT_1(30)=> DOB30, 
+       DATAOUT_1(31)=> DOB31, 
+ CLK => CKA,  WRITE_0_BAR => WEAN, WRITE_1_BAR => WEBN,   ENABLE_0_BAR => CSAN , ENABLE_1_BAR => CSBN);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -13060,22 +15688,302 @@ library ahir;
 use ahir.mem_component_pack.all;
 use ahir.types.all;
 use ahir.utilities.all;
-entity SHKA65_16384X8X1CM16 is
-   port(       DO : out std_logic_vector(7 downto 0);
-      A : in std_logic_vector(13 downto 0);
-      DI : in std_logic_vector(7 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (2 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
+entity SJKA65_64X32X1CM4 is
+   port(       DOA0 : out std_logic;
+      DOA1 : out std_logic;
+      DOA2 : out std_logic;
+      DOA3 : out std_logic;
+      DOA4 : out std_logic;
+      DOA5 : out std_logic;
+      DOA6 : out std_logic;
+      DOA7 : out std_logic;
+      DOA8 : out std_logic;
+      DOA9 : out std_logic;
+      DOA10 : out std_logic;
+      DOA11 : out std_logic;
+      DOA12 : out std_logic;
+      DOA13 : out std_logic;
+      DOA14 : out std_logic;
+      DOA15 : out std_logic;
+      DOA16 : out std_logic;
+      DOA17 : out std_logic;
+      DOA18 : out std_logic;
+      DOA19 : out std_logic;
+      DOA20 : out std_logic;
+      DOA21 : out std_logic;
+      DOA22 : out std_logic;
+      DOA23 : out std_logic;
+      DOA24 : out std_logic;
+      DOA25 : out std_logic;
+      DOA26 : out std_logic;
+      DOA27 : out std_logic;
+      DOA28 : out std_logic;
+      DOA29 : out std_logic;
+      DOA30 : out std_logic;
+      DOA31 : out std_logic;
+      DOB0 : out std_logic;
+      DOB1 : out std_logic;
+      DOB2 : out std_logic;
+      DOB3 : out std_logic;
+      DOB4 : out std_logic;
+      DOB5 : out std_logic;
+      DOB6 : out std_logic;
+      DOB7 : out std_logic;
+      DOB8 : out std_logic;
+      DOB9 : out std_logic;
+      DOB10 : out std_logic;
+      DOB11 : out std_logic;
+      DOB12 : out std_logic;
+      DOB13 : out std_logic;
+      DOB14 : out std_logic;
+      DOB15 : out std_logic;
+      DOB16 : out std_logic;
+      DOB17 : out std_logic;
+      DOB18 : out std_logic;
+      DOB19 : out std_logic;
+      DOB20 : out std_logic;
+      DOB21 : out std_logic;
+      DOB22 : out std_logic;
+      DOB23 : out std_logic;
+      DOB24 : out std_logic;
+      DOB25 : out std_logic;
+      DOB26 : out std_logic;
+      DOB27 : out std_logic;
+      DOB28 : out std_logic;
+      DOB29 : out std_logic;
+      DOB30 : out std_logic;
+      DOB31 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      B0 : in std_logic;
+      B1 : in std_logic;
+      B2 : in std_logic;
+      B3 : in std_logic;
+      B4 : in std_logic;
+      B5 : in std_logic;
+      DIA0 : in std_logic;
+      DIA1 : in std_logic;
+      DIA2 : in std_logic;
+      DIA3 : in std_logic;
+      DIA4 : in std_logic;
+      DIA5 : in std_logic;
+      DIA6 : in std_logic;
+      DIA7 : in std_logic;
+      DIA8 : in std_logic;
+      DIA9 : in std_logic;
+      DIA10 : in std_logic;
+      DIA11 : in std_logic;
+      DIA12 : in std_logic;
+      DIA13 : in std_logic;
+      DIA14 : in std_logic;
+      DIA15 : in std_logic;
+      DIA16 : in std_logic;
+      DIA17 : in std_logic;
+      DIA18 : in std_logic;
+      DIA19 : in std_logic;
+      DIA20 : in std_logic;
+      DIA21 : in std_logic;
+      DIA22 : in std_logic;
+      DIA23 : in std_logic;
+      DIA24 : in std_logic;
+      DIA25 : in std_logic;
+      DIA26 : in std_logic;
+      DIA27 : in std_logic;
+      DIA28 : in std_logic;
+      DIA29 : in std_logic;
+      DIA30 : in std_logic;
+      DIA31 : in std_logic;
+      DIB0 : in std_logic;
+      DIB1 : in std_logic;
+      DIB2 : in std_logic;
+      DIB3 : in std_logic;
+      DIB4 : in std_logic;
+      DIB5 : in std_logic;
+      DIB6 : in std_logic;
+      DIB7 : in std_logic;
+      DIB8 : in std_logic;
+      DIB9 : in std_logic;
+      DIB10 : in std_logic;
+      DIB11 : in std_logic;
+      DIB12 : in std_logic;
+      DIB13 : in std_logic;
+      DIB14 : in std_logic;
+      DIB15 : in std_logic;
+      DIB16 : in std_logic;
+      DIB17 : in std_logic;
+      DIB18 : in std_logic;
+      DIB19 : in std_logic;
+      DIB20 : in std_logic;
+      DIB21 : in std_logic;
+      DIB22 : in std_logic;
+      DIB23 : in std_logic;
+      DIB24 : in std_logic;
+      DIB25 : in std_logic;
+      DIB26 : in std_logic;
+      DIB27 : in std_logic;
+      DIB28 : in std_logic;
+      DIB29 : in std_logic;
+      DIB30 : in std_logic;
+      DIB31 : in std_logic;
+     WEAN                          :   IN   std_logic;
+     WEBN                          :   IN   std_logic;
+     DVSE                          :   IN   std_logic;
+     DVS0, DVS1, DVS2, DVS3        :   IN   std_logic;
+     CKA                           :   IN   std_logic;
+     CKB                           :   IN   std_logic;
+     CSAN                          :   IN   std_logic;
+     CSBN                          :   IN   std_logic
 );
   end entity;
-architecture SimpleWrap of SHKA65_16384X8X1CM16 is 
+architecture SimpleWrap of SJKA65_64X32X1CM4 is 
 begin
-  SHKA65_16384X8X1CM16_wrap_inst: spram_generic_reverse_wrapper 
-       generic map (address_width => 14, data_width => 8)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
+  SJKA65_64X32X1CM4_wrap_inst: dpram_generic_reverse_wrapper 
+       generic map (address_width => 6, data_width => 32)
+   port map (       ADDR_0(0)=> A0, 
+       ADDR_0(1)=> A1, 
+       ADDR_0(2)=> A2, 
+       ADDR_0(3)=> A3, 
+       ADDR_0(4)=> A4, 
+       ADDR_0(5)=> A5, 
+       ADDR_1(0)=> B0, 
+       ADDR_1(1)=> B1, 
+       ADDR_1(2)=> B2, 
+       ADDR_1(3)=> B3, 
+       ADDR_1(4)=> B4, 
+       ADDR_1(5)=> B5, 
+       DATAIN_0(0)=> DIA0, 
+       DATAIN_0(1)=> DIA1, 
+       DATAIN_0(2)=> DIA2, 
+       DATAIN_0(3)=> DIA3, 
+       DATAIN_0(4)=> DIA4, 
+       DATAIN_0(5)=> DIA5, 
+       DATAIN_0(6)=> DIA6, 
+       DATAIN_0(7)=> DIA7, 
+       DATAIN_0(8)=> DIA8, 
+       DATAIN_0(9)=> DIA9, 
+       DATAIN_0(10)=> DIA10, 
+       DATAIN_0(11)=> DIA11, 
+       DATAIN_0(12)=> DIA12, 
+       DATAIN_0(13)=> DIA13, 
+       DATAIN_0(14)=> DIA14, 
+       DATAIN_0(15)=> DIA15, 
+       DATAIN_0(16)=> DIA16, 
+       DATAIN_0(17)=> DIA17, 
+       DATAIN_0(18)=> DIA18, 
+       DATAIN_0(19)=> DIA19, 
+       DATAIN_0(20)=> DIA20, 
+       DATAIN_0(21)=> DIA21, 
+       DATAIN_0(22)=> DIA22, 
+       DATAIN_0(23)=> DIA23, 
+       DATAIN_0(24)=> DIA24, 
+       DATAIN_0(25)=> DIA25, 
+       DATAIN_0(26)=> DIA26, 
+       DATAIN_0(27)=> DIA27, 
+       DATAIN_0(28)=> DIA28, 
+       DATAIN_0(29)=> DIA29, 
+       DATAIN_0(30)=> DIA30, 
+       DATAIN_0(31)=> DIA31, 
+       DATAIN_1(0)=> DIB0, 
+       DATAIN_1(1)=> DIB1, 
+       DATAIN_1(2)=> DIB2, 
+       DATAIN_1(3)=> DIB3, 
+       DATAIN_1(4)=> DIB4, 
+       DATAIN_1(5)=> DIB5, 
+       DATAIN_1(6)=> DIB6, 
+       DATAIN_1(7)=> DIB7, 
+       DATAIN_1(8)=> DIB8, 
+       DATAIN_1(9)=> DIB9, 
+       DATAIN_1(10)=> DIB10, 
+       DATAIN_1(11)=> DIB11, 
+       DATAIN_1(12)=> DIB12, 
+       DATAIN_1(13)=> DIB13, 
+       DATAIN_1(14)=> DIB14, 
+       DATAIN_1(15)=> DIB15, 
+       DATAIN_1(16)=> DIB16, 
+       DATAIN_1(17)=> DIB17, 
+       DATAIN_1(18)=> DIB18, 
+       DATAIN_1(19)=> DIB19, 
+       DATAIN_1(20)=> DIB20, 
+       DATAIN_1(21)=> DIB21, 
+       DATAIN_1(22)=> DIB22, 
+       DATAIN_1(23)=> DIB23, 
+       DATAIN_1(24)=> DIB24, 
+       DATAIN_1(25)=> DIB25, 
+       DATAIN_1(26)=> DIB26, 
+       DATAIN_1(27)=> DIB27, 
+       DATAIN_1(28)=> DIB28, 
+       DATAIN_1(29)=> DIB29, 
+       DATAIN_1(30)=> DIB30, 
+       DATAIN_1(31)=> DIB31, 
+       DATAOUT_0(0)=> DOA0, 
+       DATAOUT_0(1)=> DOA1, 
+       DATAOUT_0(2)=> DOA2, 
+       DATAOUT_0(3)=> DOA3, 
+       DATAOUT_0(4)=> DOA4, 
+       DATAOUT_0(5)=> DOA5, 
+       DATAOUT_0(6)=> DOA6, 
+       DATAOUT_0(7)=> DOA7, 
+       DATAOUT_0(8)=> DOA8, 
+       DATAOUT_0(9)=> DOA9, 
+       DATAOUT_0(10)=> DOA10, 
+       DATAOUT_0(11)=> DOA11, 
+       DATAOUT_0(12)=> DOA12, 
+       DATAOUT_0(13)=> DOA13, 
+       DATAOUT_0(14)=> DOA14, 
+       DATAOUT_0(15)=> DOA15, 
+       DATAOUT_0(16)=> DOA16, 
+       DATAOUT_0(17)=> DOA17, 
+       DATAOUT_0(18)=> DOA18, 
+       DATAOUT_0(19)=> DOA19, 
+       DATAOUT_0(20)=> DOA20, 
+       DATAOUT_0(21)=> DOA21, 
+       DATAOUT_0(22)=> DOA22, 
+       DATAOUT_0(23)=> DOA23, 
+       DATAOUT_0(24)=> DOA24, 
+       DATAOUT_0(25)=> DOA25, 
+       DATAOUT_0(26)=> DOA26, 
+       DATAOUT_0(27)=> DOA27, 
+       DATAOUT_0(28)=> DOA28, 
+       DATAOUT_0(29)=> DOA29, 
+       DATAOUT_0(30)=> DOA30, 
+       DATAOUT_0(31)=> DOA31, 
+       DATAOUT_1(0)=> DOB0, 
+       DATAOUT_1(1)=> DOB1, 
+       DATAOUT_1(2)=> DOB2, 
+       DATAOUT_1(3)=> DOB3, 
+       DATAOUT_1(4)=> DOB4, 
+       DATAOUT_1(5)=> DOB5, 
+       DATAOUT_1(6)=> DOB6, 
+       DATAOUT_1(7)=> DOB7, 
+       DATAOUT_1(8)=> DOB8, 
+       DATAOUT_1(9)=> DOB9, 
+       DATAOUT_1(10)=> DOB10, 
+       DATAOUT_1(11)=> DOB11, 
+       DATAOUT_1(12)=> DOB12, 
+       DATAOUT_1(13)=> DOB13, 
+       DATAOUT_1(14)=> DOB14, 
+       DATAOUT_1(15)=> DOB15, 
+       DATAOUT_1(16)=> DOB16, 
+       DATAOUT_1(17)=> DOB17, 
+       DATAOUT_1(18)=> DOB18, 
+       DATAOUT_1(19)=> DOB19, 
+       DATAOUT_1(20)=> DOB20, 
+       DATAOUT_1(21)=> DOB21, 
+       DATAOUT_1(22)=> DOB22, 
+       DATAOUT_1(23)=> DOB23, 
+       DATAOUT_1(24)=> DOB24, 
+       DATAOUT_1(25)=> DOB25, 
+       DATAOUT_1(26)=> DOB26, 
+       DATAOUT_1(27)=> DOB27, 
+       DATAOUT_1(28)=> DOB28, 
+       DATAOUT_1(29)=> DOB29, 
+       DATAOUT_1(30)=> DOB30, 
+       DATAOUT_1(31)=> DOB31, 
+ CLK => CKA,  WRITE_0_BAR => WEAN, WRITE_1_BAR => WEBN,   ENABLE_0_BAR => CSAN , ENABLE_1_BAR => CSBN);
 end SimpleWrap;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -13083,45 +15991,486 @@ library ahir;
 use ahir.mem_component_pack.all;
 use ahir.types.all;
 use ahir.utilities.all;
-entity SYKA65_8X64X1CM2 is
-   port(       DO : out std_logic_vector(63 downto 0);
-      A : in std_logic_vector(2 downto 0);
-      DI : in std_logic_vector(63 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (3 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
+entity SJKA65_256X54X1CM4 is
+   port(       DOA0 : out std_logic;
+      DOA1 : out std_logic;
+      DOA2 : out std_logic;
+      DOA3 : out std_logic;
+      DOA4 : out std_logic;
+      DOA5 : out std_logic;
+      DOA6 : out std_logic;
+      DOA7 : out std_logic;
+      DOA8 : out std_logic;
+      DOA9 : out std_logic;
+      DOA10 : out std_logic;
+      DOA11 : out std_logic;
+      DOA12 : out std_logic;
+      DOA13 : out std_logic;
+      DOA14 : out std_logic;
+      DOA15 : out std_logic;
+      DOA16 : out std_logic;
+      DOA17 : out std_logic;
+      DOA18 : out std_logic;
+      DOA19 : out std_logic;
+      DOA20 : out std_logic;
+      DOA21 : out std_logic;
+      DOA22 : out std_logic;
+      DOA23 : out std_logic;
+      DOA24 : out std_logic;
+      DOA25 : out std_logic;
+      DOA26 : out std_logic;
+      DOA27 : out std_logic;
+      DOA28 : out std_logic;
+      DOA29 : out std_logic;
+      DOA30 : out std_logic;
+      DOA31 : out std_logic;
+      DOA32 : out std_logic;
+      DOA33 : out std_logic;
+      DOA34 : out std_logic;
+      DOA35 : out std_logic;
+      DOA36 : out std_logic;
+      DOA37 : out std_logic;
+      DOA38 : out std_logic;
+      DOA39 : out std_logic;
+      DOA40 : out std_logic;
+      DOA41 : out std_logic;
+      DOA42 : out std_logic;
+      DOA43 : out std_logic;
+      DOA44 : out std_logic;
+      DOA45 : out std_logic;
+      DOA46 : out std_logic;
+      DOA47 : out std_logic;
+      DOA48 : out std_logic;
+      DOA49 : out std_logic;
+      DOA50 : out std_logic;
+      DOA51 : out std_logic;
+      DOA52 : out std_logic;
+      DOA53 : out std_logic;
+      DOB0 : out std_logic;
+      DOB1 : out std_logic;
+      DOB2 : out std_logic;
+      DOB3 : out std_logic;
+      DOB4 : out std_logic;
+      DOB5 : out std_logic;
+      DOB6 : out std_logic;
+      DOB7 : out std_logic;
+      DOB8 : out std_logic;
+      DOB9 : out std_logic;
+      DOB10 : out std_logic;
+      DOB11 : out std_logic;
+      DOB12 : out std_logic;
+      DOB13 : out std_logic;
+      DOB14 : out std_logic;
+      DOB15 : out std_logic;
+      DOB16 : out std_logic;
+      DOB17 : out std_logic;
+      DOB18 : out std_logic;
+      DOB19 : out std_logic;
+      DOB20 : out std_logic;
+      DOB21 : out std_logic;
+      DOB22 : out std_logic;
+      DOB23 : out std_logic;
+      DOB24 : out std_logic;
+      DOB25 : out std_logic;
+      DOB26 : out std_logic;
+      DOB27 : out std_logic;
+      DOB28 : out std_logic;
+      DOB29 : out std_logic;
+      DOB30 : out std_logic;
+      DOB31 : out std_logic;
+      DOB32 : out std_logic;
+      DOB33 : out std_logic;
+      DOB34 : out std_logic;
+      DOB35 : out std_logic;
+      DOB36 : out std_logic;
+      DOB37 : out std_logic;
+      DOB38 : out std_logic;
+      DOB39 : out std_logic;
+      DOB40 : out std_logic;
+      DOB41 : out std_logic;
+      DOB42 : out std_logic;
+      DOB43 : out std_logic;
+      DOB44 : out std_logic;
+      DOB45 : out std_logic;
+      DOB46 : out std_logic;
+      DOB47 : out std_logic;
+      DOB48 : out std_logic;
+      DOB49 : out std_logic;
+      DOB50 : out std_logic;
+      DOB51 : out std_logic;
+      DOB52 : out std_logic;
+      DOB53 : out std_logic;
+      A0 : in std_logic;
+      A1 : in std_logic;
+      A2 : in std_logic;
+      A3 : in std_logic;
+      A4 : in std_logic;
+      A5 : in std_logic;
+      A6 : in std_logic;
+      A7 : in std_logic;
+      B0 : in std_logic;
+      B1 : in std_logic;
+      B2 : in std_logic;
+      B3 : in std_logic;
+      B4 : in std_logic;
+      B5 : in std_logic;
+      B6 : in std_logic;
+      B7 : in std_logic;
+      DIA0 : in std_logic;
+      DIA1 : in std_logic;
+      DIA2 : in std_logic;
+      DIA3 : in std_logic;
+      DIA4 : in std_logic;
+      DIA5 : in std_logic;
+      DIA6 : in std_logic;
+      DIA7 : in std_logic;
+      DIA8 : in std_logic;
+      DIA9 : in std_logic;
+      DIA10 : in std_logic;
+      DIA11 : in std_logic;
+      DIA12 : in std_logic;
+      DIA13 : in std_logic;
+      DIA14 : in std_logic;
+      DIA15 : in std_logic;
+      DIA16 : in std_logic;
+      DIA17 : in std_logic;
+      DIA18 : in std_logic;
+      DIA19 : in std_logic;
+      DIA20 : in std_logic;
+      DIA21 : in std_logic;
+      DIA22 : in std_logic;
+      DIA23 : in std_logic;
+      DIA24 : in std_logic;
+      DIA25 : in std_logic;
+      DIA26 : in std_logic;
+      DIA27 : in std_logic;
+      DIA28 : in std_logic;
+      DIA29 : in std_logic;
+      DIA30 : in std_logic;
+      DIA31 : in std_logic;
+      DIA32 : in std_logic;
+      DIA33 : in std_logic;
+      DIA34 : in std_logic;
+      DIA35 : in std_logic;
+      DIA36 : in std_logic;
+      DIA37 : in std_logic;
+      DIA38 : in std_logic;
+      DIA39 : in std_logic;
+      DIA40 : in std_logic;
+      DIA41 : in std_logic;
+      DIA42 : in std_logic;
+      DIA43 : in std_logic;
+      DIA44 : in std_logic;
+      DIA45 : in std_logic;
+      DIA46 : in std_logic;
+      DIA47 : in std_logic;
+      DIA48 : in std_logic;
+      DIA49 : in std_logic;
+      DIA50 : in std_logic;
+      DIA51 : in std_logic;
+      DIA52 : in std_logic;
+      DIA53 : in std_logic;
+      DIB0 : in std_logic;
+      DIB1 : in std_logic;
+      DIB2 : in std_logic;
+      DIB3 : in std_logic;
+      DIB4 : in std_logic;
+      DIB5 : in std_logic;
+      DIB6 : in std_logic;
+      DIB7 : in std_logic;
+      DIB8 : in std_logic;
+      DIB9 : in std_logic;
+      DIB10 : in std_logic;
+      DIB11 : in std_logic;
+      DIB12 : in std_logic;
+      DIB13 : in std_logic;
+      DIB14 : in std_logic;
+      DIB15 : in std_logic;
+      DIB16 : in std_logic;
+      DIB17 : in std_logic;
+      DIB18 : in std_logic;
+      DIB19 : in std_logic;
+      DIB20 : in std_logic;
+      DIB21 : in std_logic;
+      DIB22 : in std_logic;
+      DIB23 : in std_logic;
+      DIB24 : in std_logic;
+      DIB25 : in std_logic;
+      DIB26 : in std_logic;
+      DIB27 : in std_logic;
+      DIB28 : in std_logic;
+      DIB29 : in std_logic;
+      DIB30 : in std_logic;
+      DIB31 : in std_logic;
+      DIB32 : in std_logic;
+      DIB33 : in std_logic;
+      DIB34 : in std_logic;
+      DIB35 : in std_logic;
+      DIB36 : in std_logic;
+      DIB37 : in std_logic;
+      DIB38 : in std_logic;
+      DIB39 : in std_logic;
+      DIB40 : in std_logic;
+      DIB41 : in std_logic;
+      DIB42 : in std_logic;
+      DIB43 : in std_logic;
+      DIB44 : in std_logic;
+      DIB45 : in std_logic;
+      DIB46 : in std_logic;
+      DIB47 : in std_logic;
+      DIB48 : in std_logic;
+      DIB49 : in std_logic;
+      DIB50 : in std_logic;
+      DIB51 : in std_logic;
+      DIB52 : in std_logic;
+      DIB53 : in std_logic;
+     WEAN                          :   IN   std_logic;
+     WEBN                          :   IN   std_logic;
+     DVSE                          :   IN   std_logic;
+     DVS0, DVS1, DVS2, DVS3        :   IN   std_logic;
+     CKA                           :   IN   std_logic;
+     CKB                           :   IN   std_logic;
+     CSAN                          :   IN   std_logic;
+     CSBN                          :   IN   std_logic
 );
   end entity;
-architecture SimpleWrap of SYKA65_8X64X1CM2 is 
+architecture SimpleWrap of SJKA65_256X54X1CM4 is 
 begin
-  SYKA65_8X64X1CM2_wrap_inst: spram_generic_reverse_wrapper 
-       generic map (address_width => 3, data_width => 64)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
-end SimpleWrap;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.mem_component_pack.all;
-use ahir.types.all;
-use ahir.utilities.all;
-entity SYKA65_16X32X1CM2 is
-   port(       DO : out std_logic_vector(31 downto 0);
-      A : in std_logic_vector(3 downto 0);
-      DI : in std_logic_vector(31 downto 0);
-      WEB  :   IN   std_logic;
-      DVSE :   IN   std_logic;
-      DVS  :   IN   std_logic_vector (3 downto 0);
-      CK   :   IN   std_logic;
-      CSB  :   IN   std_logic
-);
-  end entity;
-architecture SimpleWrap of SYKA65_16X32X1CM2 is 
-begin
-  SYKA65_16X32X1CM2_wrap_inst: spram_generic_reverse_wrapper 
-       generic map (address_width => 4, data_width => 32)
-   port map (ADDR => A, CLK => CK, WRITE_BAR => WEB, ENABLE_BAR => CSB, DATAIN => DI,  DATAOUT => DO);
+  SJKA65_256X54X1CM4_wrap_inst: dpram_generic_reverse_wrapper 
+       generic map (address_width => 8, data_width => 54)
+   port map (       ADDR_0(0)=> A0, 
+       ADDR_0(1)=> A1, 
+       ADDR_0(2)=> A2, 
+       ADDR_0(3)=> A3, 
+       ADDR_0(4)=> A4, 
+       ADDR_0(5)=> A5, 
+       ADDR_0(6)=> A6, 
+       ADDR_0(7)=> A7, 
+       ADDR_1(0)=> B0, 
+       ADDR_1(1)=> B1, 
+       ADDR_1(2)=> B2, 
+       ADDR_1(3)=> B3, 
+       ADDR_1(4)=> B4, 
+       ADDR_1(5)=> B5, 
+       ADDR_1(6)=> B6, 
+       ADDR_1(7)=> B7, 
+       DATAIN_0(0)=> DIA0, 
+       DATAIN_0(1)=> DIA1, 
+       DATAIN_0(2)=> DIA2, 
+       DATAIN_0(3)=> DIA3, 
+       DATAIN_0(4)=> DIA4, 
+       DATAIN_0(5)=> DIA5, 
+       DATAIN_0(6)=> DIA6, 
+       DATAIN_0(7)=> DIA7, 
+       DATAIN_0(8)=> DIA8, 
+       DATAIN_0(9)=> DIA9, 
+       DATAIN_0(10)=> DIA10, 
+       DATAIN_0(11)=> DIA11, 
+       DATAIN_0(12)=> DIA12, 
+       DATAIN_0(13)=> DIA13, 
+       DATAIN_0(14)=> DIA14, 
+       DATAIN_0(15)=> DIA15, 
+       DATAIN_0(16)=> DIA16, 
+       DATAIN_0(17)=> DIA17, 
+       DATAIN_0(18)=> DIA18, 
+       DATAIN_0(19)=> DIA19, 
+       DATAIN_0(20)=> DIA20, 
+       DATAIN_0(21)=> DIA21, 
+       DATAIN_0(22)=> DIA22, 
+       DATAIN_0(23)=> DIA23, 
+       DATAIN_0(24)=> DIA24, 
+       DATAIN_0(25)=> DIA25, 
+       DATAIN_0(26)=> DIA26, 
+       DATAIN_0(27)=> DIA27, 
+       DATAIN_0(28)=> DIA28, 
+       DATAIN_0(29)=> DIA29, 
+       DATAIN_0(30)=> DIA30, 
+       DATAIN_0(31)=> DIA31, 
+       DATAIN_0(32)=> DIA32, 
+       DATAIN_0(33)=> DIA33, 
+       DATAIN_0(34)=> DIA34, 
+       DATAIN_0(35)=> DIA35, 
+       DATAIN_0(36)=> DIA36, 
+       DATAIN_0(37)=> DIA37, 
+       DATAIN_0(38)=> DIA38, 
+       DATAIN_0(39)=> DIA39, 
+       DATAIN_0(40)=> DIA40, 
+       DATAIN_0(41)=> DIA41, 
+       DATAIN_0(42)=> DIA42, 
+       DATAIN_0(43)=> DIA43, 
+       DATAIN_0(44)=> DIA44, 
+       DATAIN_0(45)=> DIA45, 
+       DATAIN_0(46)=> DIA46, 
+       DATAIN_0(47)=> DIA47, 
+       DATAIN_0(48)=> DIA48, 
+       DATAIN_0(49)=> DIA49, 
+       DATAIN_0(50)=> DIA50, 
+       DATAIN_0(51)=> DIA51, 
+       DATAIN_0(52)=> DIA52, 
+       DATAIN_0(53)=> DIA53, 
+       DATAIN_1(0)=> DIB0, 
+       DATAIN_1(1)=> DIB1, 
+       DATAIN_1(2)=> DIB2, 
+       DATAIN_1(3)=> DIB3, 
+       DATAIN_1(4)=> DIB4, 
+       DATAIN_1(5)=> DIB5, 
+       DATAIN_1(6)=> DIB6, 
+       DATAIN_1(7)=> DIB7, 
+       DATAIN_1(8)=> DIB8, 
+       DATAIN_1(9)=> DIB9, 
+       DATAIN_1(10)=> DIB10, 
+       DATAIN_1(11)=> DIB11, 
+       DATAIN_1(12)=> DIB12, 
+       DATAIN_1(13)=> DIB13, 
+       DATAIN_1(14)=> DIB14, 
+       DATAIN_1(15)=> DIB15, 
+       DATAIN_1(16)=> DIB16, 
+       DATAIN_1(17)=> DIB17, 
+       DATAIN_1(18)=> DIB18, 
+       DATAIN_1(19)=> DIB19, 
+       DATAIN_1(20)=> DIB20, 
+       DATAIN_1(21)=> DIB21, 
+       DATAIN_1(22)=> DIB22, 
+       DATAIN_1(23)=> DIB23, 
+       DATAIN_1(24)=> DIB24, 
+       DATAIN_1(25)=> DIB25, 
+       DATAIN_1(26)=> DIB26, 
+       DATAIN_1(27)=> DIB27, 
+       DATAIN_1(28)=> DIB28, 
+       DATAIN_1(29)=> DIB29, 
+       DATAIN_1(30)=> DIB30, 
+       DATAIN_1(31)=> DIB31, 
+       DATAIN_1(32)=> DIB32, 
+       DATAIN_1(33)=> DIB33, 
+       DATAIN_1(34)=> DIB34, 
+       DATAIN_1(35)=> DIB35, 
+       DATAIN_1(36)=> DIB36, 
+       DATAIN_1(37)=> DIB37, 
+       DATAIN_1(38)=> DIB38, 
+       DATAIN_1(39)=> DIB39, 
+       DATAIN_1(40)=> DIB40, 
+       DATAIN_1(41)=> DIB41, 
+       DATAIN_1(42)=> DIB42, 
+       DATAIN_1(43)=> DIB43, 
+       DATAIN_1(44)=> DIB44, 
+       DATAIN_1(45)=> DIB45, 
+       DATAIN_1(46)=> DIB46, 
+       DATAIN_1(47)=> DIB47, 
+       DATAIN_1(48)=> DIB48, 
+       DATAIN_1(49)=> DIB49, 
+       DATAIN_1(50)=> DIB50, 
+       DATAIN_1(51)=> DIB51, 
+       DATAIN_1(52)=> DIB52, 
+       DATAIN_1(53)=> DIB53, 
+       DATAOUT_0(0)=> DOA0, 
+       DATAOUT_0(1)=> DOA1, 
+       DATAOUT_0(2)=> DOA2, 
+       DATAOUT_0(3)=> DOA3, 
+       DATAOUT_0(4)=> DOA4, 
+       DATAOUT_0(5)=> DOA5, 
+       DATAOUT_0(6)=> DOA6, 
+       DATAOUT_0(7)=> DOA7, 
+       DATAOUT_0(8)=> DOA8, 
+       DATAOUT_0(9)=> DOA9, 
+       DATAOUT_0(10)=> DOA10, 
+       DATAOUT_0(11)=> DOA11, 
+       DATAOUT_0(12)=> DOA12, 
+       DATAOUT_0(13)=> DOA13, 
+       DATAOUT_0(14)=> DOA14, 
+       DATAOUT_0(15)=> DOA15, 
+       DATAOUT_0(16)=> DOA16, 
+       DATAOUT_0(17)=> DOA17, 
+       DATAOUT_0(18)=> DOA18, 
+       DATAOUT_0(19)=> DOA19, 
+       DATAOUT_0(20)=> DOA20, 
+       DATAOUT_0(21)=> DOA21, 
+       DATAOUT_0(22)=> DOA22, 
+       DATAOUT_0(23)=> DOA23, 
+       DATAOUT_0(24)=> DOA24, 
+       DATAOUT_0(25)=> DOA25, 
+       DATAOUT_0(26)=> DOA26, 
+       DATAOUT_0(27)=> DOA27, 
+       DATAOUT_0(28)=> DOA28, 
+       DATAOUT_0(29)=> DOA29, 
+       DATAOUT_0(30)=> DOA30, 
+       DATAOUT_0(31)=> DOA31, 
+       DATAOUT_0(32)=> DOA32, 
+       DATAOUT_0(33)=> DOA33, 
+       DATAOUT_0(34)=> DOA34, 
+       DATAOUT_0(35)=> DOA35, 
+       DATAOUT_0(36)=> DOA36, 
+       DATAOUT_0(37)=> DOA37, 
+       DATAOUT_0(38)=> DOA38, 
+       DATAOUT_0(39)=> DOA39, 
+       DATAOUT_0(40)=> DOA40, 
+       DATAOUT_0(41)=> DOA41, 
+       DATAOUT_0(42)=> DOA42, 
+       DATAOUT_0(43)=> DOA43, 
+       DATAOUT_0(44)=> DOA44, 
+       DATAOUT_0(45)=> DOA45, 
+       DATAOUT_0(46)=> DOA46, 
+       DATAOUT_0(47)=> DOA47, 
+       DATAOUT_0(48)=> DOA48, 
+       DATAOUT_0(49)=> DOA49, 
+       DATAOUT_0(50)=> DOA50, 
+       DATAOUT_0(51)=> DOA51, 
+       DATAOUT_0(52)=> DOA52, 
+       DATAOUT_0(53)=> DOA53, 
+       DATAOUT_1(0)=> DOB0, 
+       DATAOUT_1(1)=> DOB1, 
+       DATAOUT_1(2)=> DOB2, 
+       DATAOUT_1(3)=> DOB3, 
+       DATAOUT_1(4)=> DOB4, 
+       DATAOUT_1(5)=> DOB5, 
+       DATAOUT_1(6)=> DOB6, 
+       DATAOUT_1(7)=> DOB7, 
+       DATAOUT_1(8)=> DOB8, 
+       DATAOUT_1(9)=> DOB9, 
+       DATAOUT_1(10)=> DOB10, 
+       DATAOUT_1(11)=> DOB11, 
+       DATAOUT_1(12)=> DOB12, 
+       DATAOUT_1(13)=> DOB13, 
+       DATAOUT_1(14)=> DOB14, 
+       DATAOUT_1(15)=> DOB15, 
+       DATAOUT_1(16)=> DOB16, 
+       DATAOUT_1(17)=> DOB17, 
+       DATAOUT_1(18)=> DOB18, 
+       DATAOUT_1(19)=> DOB19, 
+       DATAOUT_1(20)=> DOB20, 
+       DATAOUT_1(21)=> DOB21, 
+       DATAOUT_1(22)=> DOB22, 
+       DATAOUT_1(23)=> DOB23, 
+       DATAOUT_1(24)=> DOB24, 
+       DATAOUT_1(25)=> DOB25, 
+       DATAOUT_1(26)=> DOB26, 
+       DATAOUT_1(27)=> DOB27, 
+       DATAOUT_1(28)=> DOB28, 
+       DATAOUT_1(29)=> DOB29, 
+       DATAOUT_1(30)=> DOB30, 
+       DATAOUT_1(31)=> DOB31, 
+       DATAOUT_1(32)=> DOB32, 
+       DATAOUT_1(33)=> DOB33, 
+       DATAOUT_1(34)=> DOB34, 
+       DATAOUT_1(35)=> DOB35, 
+       DATAOUT_1(36)=> DOB36, 
+       DATAOUT_1(37)=> DOB37, 
+       DATAOUT_1(38)=> DOB38, 
+       DATAOUT_1(39)=> DOB39, 
+       DATAOUT_1(40)=> DOB40, 
+       DATAOUT_1(41)=> DOB41, 
+       DATAOUT_1(42)=> DOB42, 
+       DATAOUT_1(43)=> DOB43, 
+       DATAOUT_1(44)=> DOB44, 
+       DATAOUT_1(45)=> DOB45, 
+       DATAOUT_1(46)=> DOB46, 
+       DATAOUT_1(47)=> DOB47, 
+       DATAOUT_1(48)=> DOB48, 
+       DATAOUT_1(49)=> DOB49, 
+       DATAOUT_1(50)=> DOB50, 
+       DATAOUT_1(51)=> DOB51, 
+       DATAOUT_1(52)=> DOB52, 
+       DATAOUT_1(53)=> DOB53, 
+ CLK => CKA,  WRITE_0_BAR => WEAN, WRITE_1_BAR => WEBN,   ENABLE_0_BAR => CSAN , ENABLE_1_BAR => CSBN);
 end SimpleWrap;
 ------------------------------------------------------------------------------------------------
 --
@@ -21753,7 +25102,6 @@ begin  -- SimModel
 
  qDGt1: if queue_depth > 1 generate 
   NTB: block 
-   signal queue_array : QueueArray(queue_depth-1 downto 0);
    signal read_pointer, write_pointer, write_pointer_plus_1: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
    signal next_read_pointer, next_write_pointer: unsigned ((Ceil_Log2(queue_depth))-1 downto 0);
 
@@ -21802,35 +25150,43 @@ begin  -- SimModel
     end process;
     wrpReg: SynchResetRegisterUnsigned generic map (name => name & ":wrpreg", data_width => write_pointer'length)
 		port map (clk => clk, reset => reset, din => next_write_pointer, dout => write_pointer);
+
+  -----------------------------------------  declared the array if not distrib ram case ------------------------
   notDistribRam: if not global_use_vivado_distributed_ram_queue generate
-    -- bottom pointer gives the data in FIFO mode..
-    process (read_pointer, queue_array)
-	variable data_out_var : std_logic_vector(data_width-1 downto 0);
-    begin
-	data_out_var := (others =>  '0');
-        for I in 0 to queue_depth-1 loop
-	    if(I = To_Integer(read_pointer)) then
-    		data_out_var := queue_array(I);
-	    end if;
-	end loop;
-	base_data_out <= data_out_var;
-    end process;
+    QueueArrayBlock: block
+   	signal queue_array : QueueArray(queue_depth-1 downto 0);
+    begin 
+        -- bottom pointer gives the data in FIFO mode..
+        process (read_pointer, queue_array)
+	    variable data_out_var : std_logic_vector(data_width-1 downto 0);
+        begin
+	    data_out_var := (others =>  '0');
+            for I in 0 to queue_depth-1 loop
+	        if(I = To_Integer(read_pointer)) then
+    		    data_out_var := queue_array(I);
+	        end if;
+	    end loop;
+	    base_data_out <= data_out_var;
+        end process;
 
-    -- write to queue-array.
-    Wgen: for W in 0 to queue_depth-1 generate
-       process(clk, reset, write_flag, write_pointer, data_in) 
-       begin
-		if(clk'event and (clk = '1')) then
-			if(reset = '1') then
-                             queue_array(W) <= (others => '0');
-			elsif (write_flag and (W = write_pointer)) then
-			     queue_array(W) <= data_in;
-			end if;
-		end if;
-       end process;
-    end generate Wgen;
+        -- write to queue-array.
+        Wgen: for W in 0 to queue_depth-1 generate
+           process(clk, reset, write_flag, write_pointer, data_in) 
+           begin
+		    if(clk'event and (clk = '1')) then
+			    if(reset = '1') then
+                                 queue_array(W) <= (others => '0');
+			    elsif (write_flag and (W = write_pointer)) then
+			         queue_array(W) <= data_in;
+			    end if;
+		    end if;
+           end process;
+        end generate Wgen;
+    end block QueueArrayBlock;
   end generate notDistribRam;
+  -----------------------------------------  end non distrib ram case -------------------------------------------
 
+  -----------------------------------------  begin distrib ram case   -------------------------------------------
   write_enable <= '1' when write_flag else '0';
   DistribRam: if global_use_vivado_distributed_ram_queue generate
       distrib_ram_inst:
@@ -21848,6 +25204,7 @@ begin  -- SimModel
 					clk => clk
 				);
   end generate DistribRam;
+  -----------------------------------------  end distrib ram case   -------------------------------------------
   
    not_rbypGen: if not reverse_bypass_flag generate
 
@@ -24752,6 +28109,211 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
+
+--
+-- An optimized version of the unload buffer, to be used when the buffer_size is > 1.
+--     Uses a standard queue followed by a state machine..
+--
+entity UnloadBufferOptimized is
+  generic (name: string; buffer_size: integer ; data_width : integer; 
+		bypass_flag: boolean; nonblocking_read_flag : boolean := false);
+  port ( write_req: in std_logic;
+        write_ack: out std_logic;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        unload_req: in boolean;
+        unload_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data : out std_logic;
+        clk : in std_logic;
+        reset: in std_logic);
+end UnloadBufferOptimized;
+
+architecture default_arch of UnloadBufferOptimized is
+
+  signal pop_req, pop_ack : std_logic;
+  signal unload_ack_sig: boolean; 
+  signal empty, full: std_logic;
+
+   type FsmState is (sA, sB, sC, sD);
+   signal fsm_state: FsmState;
+
+   signal queue_data_out: std_logic_vector(data_width-1 downto 0);
+
+begin  -- default_arch
+
+  assert (buffer_size /= 1) report "UnloadBufferOptimized must have queue-size != 1" severity failure;
+
+  has_data <= not empty;
+
+  qinst: QueueBaseWithEmptyFull
+		generic map (name => name & ":qinst",
+				queue_depth => buffer_size,
+				data_width => data_width,
+				reverse_bypass_flag => bypass_flag
+			    )
+		port map (
+				empty => empty,
+				full  => full,
+				push_req => write_req,
+				push_ack => write_ack,
+				pop_req => pop_req,
+				pop_ack => pop_ack,
+				data_in => write_data,
+				data_out => queue_data_out,
+				clk => clk,
+				reset => reset);	
+
+	-- FSM
+        process(clk, reset, pop_ack, fsm_state, unload_req, queue_data_out)
+		variable next_fsm_state_var:  FsmState;
+		variable unload_ack_var: boolean;
+		variable pop_req_var: std_logic;
+   		variable read_data_var: std_logic_vector(data_width-1 downto 0);
+	begin
+		next_fsm_state_var := fsm_state;
+		unload_ack_var := false;
+		pop_req_var := '0';
+		read_data_var := queue_data_out;
+
+		case fsm_state is
+			when sA =>
+				-- In the beginning, nothing has
+				-- been read from the queue.
+				if unload_req then
+					next_fsm_state_var := sB;
+				end if;
+			when sB =>
+				--
+				-- Ack if queue has data 
+				--
+				-- Careful about the non-blocking
+				-- behaviour.
+				if (pop_ack = '1') then		     -- p
+					unload_ack_var := true;
+					if unload_req then
+						-- pop from the queue
+						-- since the next-req
+						-- has arrived.
+						pop_req_var := '1';
+					else
+						next_fsm_state_var := sC;
+					end if;
+				elsif nonblocking_read_flag then -- (~p).n
+					-- non-blocking... as if pop_ack is
+					-- asserted except that read data 
+					-- will be zero-ed out.
+					read_data_var := (others => '0');
+
+					-- ack the zero data..
+					unload_ack_var := true;
+
+					if unload_req then
+						-- do not pop here
+						-- The queue data has not 
+						-- been used yet.
+						next_fsm_state_var := sB;
+					else
+						-- wait for update req
+						-- but ensure that read_data
+						-- is zero-ed out.
+						next_fsm_state_var := sD;
+					end if;
+				end if;
+			when sC =>
+				--
+				-- you will come to this state only
+				-- if pop_ack = '1'... you are waiting
+				-- for an update-req to start the
+				-- next cycle.
+				if unload_req then
+					-- pop only when signaled by
+					-- unload_req
+					pop_req_var := '1';
+
+					-- go to sB before reacting
+					-- to the update-req.
+					next_fsm_state_var := sB;
+				end if;
+
+			when SD =>
+				--
+				-- you got here because pop_ack was false
+				-- and non-block was true.  zero out the
+				-- read_data until the next unload_req.
+				-- 
+				-- you are waiting for an update-req to
+				-- start the next cycle.
+				--
+				-- Keep read_data_var = 0 here.  you
+				-- do not want the changed queue output
+				-- to sneak to the user.
+				--
+				read_data_var := (others => '0');
+				if unload_req then
+					--
+					-- do not pop!  
+					-- 
+					-- go to sB before reacting
+					-- to the update-req.
+					next_fsm_state_var := sB;
+				end if;
+		end case;
+
+		pop_req <= pop_req_var;
+		unload_ack <= unload_ack_var;
+		read_data <= read_data_var;
+
+		if(clk'event and (clk = '1')) then
+			if (reset = '1') then
+				fsm_state <= sA;
+			else
+				fsm_state <= next_fsm_state_var;
+			end if;
+		end if;
+	end process;
+
+end default_arch;
+------------------------------------------------------------------------------------------------
+--
+-- Copyright (C) 2010-: Madhav P. Desai
+-- All Rights Reserved.
+--  
+-- Permission is hereby granted, free of charge, to any person obtaining a
+-- copy of this software and associated documentation files (the
+-- "Software"), to deal with the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject to
+-- the following conditions:
+-- 
+--  * Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimers.
+--  * Redistributions in binary form must reproduce the above
+--    copyright notice, this list of conditions and the following
+--    disclaimers in the documentation and/or other materials provided
+--    with the distribution.
+--  * Neither the names of the AHIR Team, the Indian Institute of
+--    Technology Bombay, nor the names of its contributors may be used
+--    to endorse or promote products derived from this Software
+--    without specific prior written permission.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+-- OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+-- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+-- IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+-- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+------------------------------------------------------------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
 use ahir.GlobalConstants.all;
 -- Synopsys DC ($^^$@!)  needs you to declare an attribute
 -- to infer a synchronous set/reset ... unbelievable.
@@ -24820,15 +28382,15 @@ architecture default_arch of UnloadBuffer is
   -- and allows us to use 2-depth buffers to cut long
   -- combinational paths.
   --
-  function DecrDepth (buffer_size: integer; bypass: boolean)
+  function DecrDepth (buf_size: integer; bypass: boolean)
 	return integer is
-      variable actual_buffer_size: integer;
+      variable ret_val: integer;
   begin
-      actual_buffer_size := buffer_size;
+      ret_val := buf_size;
       if((not bypass) and (buffer_size = 1)) then
-	actual_buffer_size := buffer_size - 1;
+	ret_val := buf_size - 1;
       end if;
-      return actual_buffer_size;
+      return ret_val;
   end function DecrDepth;
 
   constant actual_buffer_size  : integer  := DecrDepth (buffer_size, bypass_flag);
@@ -24837,14 +28399,31 @@ architecture default_arch of UnloadBuffer is
 
   constant shallow_flag : boolean :=    (buffer_size < global_pipe_shallowness_threshold);
 
-  constant revised_case: boolean := ((buffer_size > 0) and shallow_flag and (not use_unload_register) and (not nonblocking_read_flag));
-  -- constant revised_case: boolean := false;
+  constant revised_case_blocking: boolean := 
+		((buffer_size > 0) 
+			and (bypass_flag or (buffer_size > 1))
+                        and shallow_flag 
+			and (not use_unload_register) 
+			and (not nonblocking_read_flag));
 
+  constant revised_case_non_blocking: boolean := 
+		global_use_optimized_unload_buffer and
+			((buffer_size > 1) and (not bypass_flag) and
+				 shallow_flag and  nonblocking_read_flag);
+
+
+  constant un_revised_case: boolean :=  (not revised_case_blocking) and 
+						(not revised_case_non_blocking) and
+							shallow_flag;
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
 begin  -- default_arch
 
-  RevisedCase: if revised_case generate
+  RevisedCaseBlocking: if revised_case_blocking generate
+
+         assert false report "ULB REVISED BLOCKING  " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+
 	ulb_revised: UnloadBufferRevised
 			generic map (name => name & "-revised",
 					buffer_size => buffer_size, data_width => data_width,
@@ -24858,9 +28437,32 @@ begin  -- default_arch
 				read_data => read_data, 
 				has_data => has_data,
 				clk => clk, reset => reset);
-  end generate RevisedCase;
+  end generate RevisedCaseBlocking;
+
+  RevisedCaseNonblocking: if revised_case_non_blocking generate
+
+         assert false report "ULB REVISED NONBLOCKING  " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+
+	ulb_revised: UnloadBufferRevisedNonblocking
+			generic map (name => name & "-revised",
+					buffer_size => buffer_size, data_width => data_width,
+						bypass_flag => bypass_flag)
+			port map (
+				write_req => write_req,
+				write_ack => write_ack,
+				unload_req => unload_req,
+				unload_ack => unload_ack,
+				write_data => write_data,
+				read_data => read_data, 
+				has_data => has_data,
+				clk => clk, reset => reset);
+  end generate RevisedCaseNonblocking;
 
   DeepCase: if not shallow_flag generate
+         assert false report "ULB DEEP " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+
 	ulb_deep: UnloadBufferDeep
 			generic map (name => name & "-deep",
 					buffer_size => buffer_size, data_width => data_width,
@@ -24876,9 +28478,12 @@ begin  -- default_arch
 				clk => clk, reset => reset);
   end generate DeepCase;
 
-  NotRevisedCase: if not revised_case generate
+  NotRevisedCase: if un_revised_case generate
 
     ShallowCase: if shallow_flag  generate
+      assert false report "ULB with ULREG " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+
       bufGt0: if actual_buffer_size > 0 generate
 
   	has_data <= '1' when pipe_has_data else '0';
@@ -30062,6 +33667,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
+use ahir.GlobalConstants.all;
 
 -- Synopsys DC ($^^$@!)  needs you to declare an attribute
 -- to infer a synchronous set/reset ... unbelievable.
@@ -30096,7 +33702,19 @@ architecture default_arch of InterlockBuffer is
 
   signal has_data: std_logic;
 
-  constant use_unload_register : boolean := not cut_through;
+  -- Don't F-around with this.
+  constant use_unload_register : boolean := 
+		((not global_use_optimized_unload_buffer) and (not cut_through))
+		or (global_use_optimized_unload_buffer and (not cut_through) and (buffer_size /= 2));
+
+  --
+  -- Do not slow down the interlock buffer!
+  --
+  constant use_simple_ilock_implementation :boolean 
+			:= global_use_optimized_unload_buffer and
+					(not flow_through) and  (buffer_size = 1) and
+						(not bypass_flag); 
+			
   
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
@@ -30145,61 +33763,89 @@ begin  -- default_arch
         buf_write_data <= write_data(data_width-1 downto 0);
         read_data  <= buf_read_data;
       end generate outSmaller;
-  
-      -- write FSM to pipe.
-      process(clk,reset, l_fsm_state, buf_write_ack, write_req)
-        variable nstate : LoadFsmState;
-      begin
-        nstate := l_fsm_state;
-        buf_write_req <= '0';
-        write_ack <= false;
-        if(l_fsm_state = l_idle) then
-	  if(write_req) then
-            buf_write_req <= '1';
-            if(buf_write_ack = '1') then
-              write_ack <= true;
-            else
-              nstate := l_busy;
-            end if;
-	  end if;
-        else
-	  buf_write_req <= '1';
-	  if(buf_write_ack = '1') then
-            nstate := l_idle;
-            write_ack <= true;
-	  end if;
-        end if;
-  
-        if(clk'event and clk = '1') then
-	  if(reset = '1') then
-            l_fsm_state <= l_idle;
-	  else
-            l_fsm_state <= nstate;
-	  end if;
-        end if;
-      end process;
-  
-      -- the unload buffer.
-      buf : UnloadBuffer generic map (
-        name =>  name & " buffer ",
-        data_width => data_width,
-        buffer_size => buffer_size, 
-	use_unload_register => use_unload_register,
-        bypass_flag => bypass_flag)
-        port map (
-          write_req   => buf_write_req,
-          write_ack   => buf_write_ack,
-          write_data  => buf_write_data,
-          unload_req  => read_req,
-          unload_ack  => read_ack,
-          read_data   => buf_read_data,
- 	  has_data => has_data,
-          clk         => clk,
-          reset       => reset);
+      
+      SimpleImplGen: if use_simple_ilock_implementation  generate
+         sb: block
+             signal joined_sig: boolean;
+         begin
 
-    end generate interlockBuf;
-  end generate NoFlowThrough;
+		cj: join2 generic map (bypass => true, name => "simpleImplGen:join2")
+			port map (pred0 => write_req, pred1 => read_req, 
+					symbol_out => joined_sig, 
+						clk => clk, reset => reset);
 
+		write_ack <= joined_sig;
+		process(clk, reset, joined_sig, buf_write_data)
+		begin
+			if (clk'event and (clk = '1')) then 
+				if(reset = '1') then
+					read_ack <= false;
+				else
+					if(joined_sig) then
+						buf_read_data <= buf_write_data;
+					end if;
+					read_ack <= joined_sig;
+				end if;
+			 end if;	
+		end process;
+         end block sb;
+      end generate SimpleImplGen;
+
+      ulbImplGen: if (not use_simple_ilock_implementation) generate
+         -- write FSM to pipe.
+         process(clk,reset, l_fsm_state, buf_write_ack, write_req)
+           variable nstate : LoadFsmState;
+         begin
+           nstate := l_fsm_state;
+           buf_write_req <= '0';
+           write_ack <= false;
+           if(l_fsm_state = l_idle) then
+	     if(write_req) then
+               buf_write_req <= '1';
+               if(buf_write_ack = '1') then
+                 write_ack <= true;
+               else
+                 nstate := l_busy;
+               end if;
+	     end if;
+           else
+	     buf_write_req <= '1';
+	     if(buf_write_ack = '1') then
+               nstate := l_idle;
+               write_ack <= true;
+	     end if;
+           end if;
+     
+           if(clk'event and clk = '1') then
+	     if(reset = '1') then
+               l_fsm_state <= l_idle;
+	     else
+               l_fsm_state <= nstate;
+	     end if;
+           end if;
+         end process;
+     
+         -- the unload buffer.
+         buf : UnloadBuffer generic map (
+           name =>  name & " buffer ",
+           data_width => data_width,
+           buffer_size => buffer_size, 
+	   use_unload_register => use_unload_register,
+           bypass_flag => bypass_flag)
+           port map (
+             write_req   => buf_write_req,
+             write_ack   => buf_write_ack,
+             write_data  => buf_write_data,
+             unload_req  => read_req,
+             unload_ack  => read_ack,
+             read_data   => buf_read_data,
+ 	     has_data => has_data,
+             clk         => clk,
+             reset       => reset);
+  
+	end generate ulbImplGen; 
+       end generate interlockBuf;
+     end generate NoFlowThrough;
 end default_arch;
 ------------------------------------------------------------------------------------------------
 --
@@ -33342,6 +36988,137 @@ use ahir.GlobalConstants.all;
 -- when buffer-size > 1.
 --  
 --
+entity UnloadBufferRevisedNonblocking is
+
+  generic (name: string; 
+		buffer_size: integer ; 
+		data_width : integer ; 
+		bypass_flag: boolean );
+
+  port ( write_req: in std_logic;
+        write_ack: out std_logic;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        unload_req: in boolean;
+        unload_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
+        clk : in std_logic;
+        reset: in std_logic);
+
+end UnloadBufferRevisedNonblocking;
+
+architecture default_arch of UnloadBufferRevisedNonblocking is
+
+  signal pop_req, pop_ack, push_req, push_ack: std_logic_vector(0 downto 0);
+
+  signal pipe_data_out, ufsm_bypass_write_data, ufsm_write_data:  std_logic_vector(data_width-1 downto 0);
+  signal pipe_has_data: boolean;
+
+
+  signal write_to_pipe: boolean;
+  signal unload_from_pipe : boolean;
+
+  signal empty, full: std_logic;
+  signal ufsm_write_req, ufsm_write_ack: std_logic;
+  signal ufsm_bypass_write_req, ufsm_bypass_write_ack: std_logic;
+
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
+begin  -- default_arch
+
+	ufsm_write_data <= pipe_data_out;
+	ufsm_write_req  <= pop_ack(0);
+	pop_req(0) <= ufsm_write_ack;
+
+	push_req(0) <= write_req;
+	write_ack   <= push_ack(0);
+
+	ufsm: UnloadFsmNoblock generic map (name => name & ":ufsm", data_width => data_width)
+		port map (
+			   write_req => ufsm_write_req,
+			   write_ack => ufsm_write_ack,
+			   unload_req => unload_req,
+			   unload_ack => unload_ack,
+			   data_in => ufsm_write_data,
+			   data_out => read_data,
+			   clk => clk, reset => reset);
+
+  	pipe_has_data <= (empty = '0');
+  	has_data <= '1' when pipe_has_data else '0';
+
+
+  	bufPipe : QueueBaseWithEmptyFull generic map (
+        	name =>  name & "-blocking_read-bufPipe",
+        	data_width => data_width,
+		reverse_bypass_flag => bypass_flag,
+        	queue_depth      => buffer_size)
+      	port map (
+        	pop_req   => pop_req(0),
+        	pop_ack   => pop_ack(0),
+        	data_out  => pipe_data_out,
+        	push_req  => push_req(0),
+        	push_ack  => push_ack(0),
+        	data_in => write_data,
+		empty => empty,
+		full => full,
+        	clk        => clk,
+        	reset      => reset);
+
+	
+end default_arch;
+------------------------------------------------------------------------------------------------
+--
+-- Copyright (C) 2010-: Madhav P. Desai
+-- All Rights Reserved.
+--  
+-- Permission is hereby granted, free of charge, to any person obtaining a
+-- copy of this software and associated documentation files (the
+-- "Software"), to deal with the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject to
+-- the following conditions:
+-- 
+--  * Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimers.
+--  * Redistributions in binary form must reproduce the above
+--    copyright notice, this list of conditions and the following
+--    disclaimers in the documentation and/or other materials provided
+--    with the distribution.
+--  * Neither the names of the AHIR Team, the Indian Institute of
+--    Technology Bombay, nor the names of its contributors may be used
+--    to endorse or promote products derived from this Software
+--    without specific prior written permission.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+-- OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+-- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+-- IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+-- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+------------------------------------------------------------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+use ahir.GlobalConstants.all;
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
+--  
+--
+-- A more "optimized" version of the old UnloadBuffer.
+-- tries to avoid the use of an extra register.  Use
+-- when buffer-size > 1.
+--  
+--
 entity UnloadBufferRevised is
 
   generic (name: string; 
@@ -33419,6 +37196,177 @@ begin  -- default_arch
         	reset      => reset);
 
 	
+end default_arch;
+------------------------------------------------------------------------------------------------
+--
+-- Copyright (C) 2010-: Madhav P. Desai
+-- All Rights Reserved.
+--  
+-- Permission is hereby granted, free of charge, to any person obtaining a
+-- copy of this software and associated documentation files (the
+-- "Software"), to deal with the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject to
+-- the following conditions:
+-- 
+--  * Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimers.
+--  * Redistributions in binary form must reproduce the above
+--    copyright notice, this list of conditions and the following
+--    disclaimers in the documentation and/or other materials provided
+--    with the distribution.
+--  * Neither the names of the AHIR Team, the Indian Institute of
+--    Technology Bombay, nor the names of its contributors may be used
+--    to endorse or promote products derived from this Software
+--    without specific prior written permission.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+-- OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+-- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+-- IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+-- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+------------------------------------------------------------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+
+-- Synopsys DC ($^^$@!)  needs you to declare an attribute
+-- to infer a synchronous set/reset ... unbelievable.
+--##decl_synopsys_attribute_lib##
+
+--  A non-blocking version of the state machine for
+--  handling the revised case of the unload-buffer.
+--
+-- BUG ALERT:  there is something wrong about this 
+--             which causes incorrect behaviour. 
+--             Am stymied for the moment (MPD)
+--
+entity UnloadFsmNoBlock is
+  generic (name: string; data_width: integer);
+  port ( 
+	 write_req: in std_logic;
+         write_ack: out std_logic;
+         unload_req: in boolean;
+         unload_ack: out boolean;
+	 data_in :  in std_logic_vector(data_width-1 downto 0);
+	 data_out :  out std_logic_vector(data_width-1 downto 0);
+         clk : in std_logic;
+         reset: in std_logic
+	);
+end UnloadFsmNoBlock;
+
+architecture default_arch of UnloadFsmNoBlock is
+	signal unload_ack_sig : boolean;
+	signal unload_ack_d_sig : boolean;
+
+	signal write_ack_sig: std_logic;
+
+	type FsmState is (Idle, WhatWillItBe, DataValid, ZeroData);
+	signal fsm_state : FsmState;
+-- see comment above..
+--##decl_synopsys_sync_set_reset##
+begin  -- default_arch
+
+	process(fsm_state, write_req, data_in,  unload_req, clk, reset)
+		variable next_fsm_state_var : FsmState;
+		variable unload_ack_d_var: boolean;
+		variable write_ack_var : std_logic;
+
+		variable data_out_var: std_logic_vector(data_width-1 downto 0);
+
+	begin
+		unload_ack_d_var := false;
+
+		write_ack_var  := '0';
+		next_fsm_state_var := fsm_state;
+
+		data_out_var := data_in;
+
+		case fsm_state is 
+			-- reset state, nothing seen so far.
+			when Idle =>
+				if(unload_req) then
+					unload_ack_d_var := true;
+					next_fsm_state_var := WhatWillItBe;
+				end if;
+			when ZeroData => 
+				-- Acked state, hold until next unload-req
+				-- hold 0 data until next unload-req.
+				data_out_var := (others => '0');
+				if(unload_req) then
+					unload_ack_d_var := true;
+					next_fsm_state_var := WhatWillItBe;
+				end if;
+			when DataValid =>
+				-- Acked state, hold until next unload-req
+				-- write_req is '1' here... 
+				if(unload_req) then
+					unload_ack_d_var := true;
+
+					-------------------------------
+					-- ack it here..
+					-------------------------------
+					write_ack_var    := '1';
+					-------------------------------
+
+					-- what will we see next?
+					next_fsm_state_var := WhatWillItBe;
+				end if;
+			when WhatWillItBe =>
+				-- 
+				-- Acked state, but data will be determined
+				-- in this state.
+				--
+				if(write_req = '0') then
+
+					-- zero data..
+					data_out_var := (others => '0');
+					
+
+					if(unload_req) then
+						unload_ack_d_var := true;
+					else
+						-- hold zero data.	
+						next_fsm_state_var := ZeroData;
+					end if;
+				else 
+					-- valid data, must hold until next
+					-- unload-req.
+						
+
+					if(unload_req) then
+						unload_ack_d_var := true;
+
+						-------------------------------
+						-- ack it here..
+						-------------------------------
+						write_ack_var    := '1';
+						-------------------------------
+					else
+						next_fsm_state_var := DataValid;
+					end if;
+				end if;
+		end case;
+
+		write_ack_sig <= write_ack_var;
+		data_out <= data_out_var;
+
+		if(clk'event and clk='1') then
+			if(reset = '1') then
+				fsm_state <= Idle;
+				unload_ack_d_sig <= false;
+			else
+				fsm_state <= next_fsm_state_var;
+				unload_ack_d_sig <= unload_ack_d_var;
+			end if;
+		end if;
+	end process;
+
+	unload_ack <= unload_ack_d_sig;
+	write_ack  <= write_ack_sig;
+
 end default_arch;
 ------------------------------------------------------------------------------------------------
 --
@@ -34106,6 +38054,7 @@ use ahir.Components.all;
 use ahir.BaseComponents.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
+use ahir.GlobalConstants.all;
 
 --  input port specialized for P2P ports.
 entity InputPort_P2P is
@@ -34136,6 +38085,10 @@ architecture Base of InputPort_P2P is
   type SampleFsmState is (IDLE, WAITING);
   signal fsm_state: SampleFsmState;
   signal has_data: std_logic;
+
+  -- Don't f-around with this.
+  constant use_unload_register :boolean :=  (not global_use_optimized_unload_buffer) or bypass_flag;
+
 begin
 
     noBarrier: if (not barrier_flag) or nonblocking_read_flag generate
@@ -34179,7 +38132,8 @@ begin
 				data_width => data_width,
 				   buffer_size => queue_depth, 
 					bypass_flag => bypass_flag,  
-						nonblocking_read_flag => nonblocking_read_flag)
+						use_unload_register => use_unload_register,
+							nonblocking_read_flag => nonblocking_read_flag)
 	port map (write_req => oack, write_ack => oreq, 
 					write_data => odata,
 				unload_req => update_req,

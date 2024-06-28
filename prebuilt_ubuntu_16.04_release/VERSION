@@ -1,19 +1,17 @@
-commit a135b16e76e37b24bb56094c0af377e57d6a748f
-Author: madhav <madhav@localhost.localdomain>
-Date:   Thu Feb 22 18:30:02 2024 +0530
+commit bd579e98086c6b01ebc41c015af8226b066b707c
+Author: Madhav Pandurang Desai <madhav@ee.iitb.ac.in>
+Date:   Thu Jun 20 01:25:24 2024 +0530
 
-    Bug fix:  when Phi statement was updating an
-    output argument of a module, forward dependencies
-    from the Phi to statements in the body were not
-    being correctly set up.
+    Went a bit too far in optimizing the control path,
+    causing a place-overflow to happen in the control
+    path.   Need to revisit this.  In the meantime, withdraw.
 ----------------------------------------------------------------------------
-Thu Feb 29 23:04:16 IST 2024
-commit a135b16e76e37b24bb56094c0af377e57d6a748f
-Author: madhav <madhav@localhost.localdomain>
-Date:   Thu Feb 22 18:30:02 2024 +0530
+Thu Jun 20 01:26:36 IST 2024
+commit bd579e98086c6b01ebc41c015af8226b066b707c
+Author: Madhav Pandurang Desai <madhav@ee.iitb.ac.in>
+Date:   Thu Jun 20 01:25:24 2024 +0530
 
-    Bug fix:  when Phi statement was updating an
-    output argument of a module, forward dependencies
-    from the Phi to statements in the body were not
-    being correctly set up.
+    Went a bit too far in optimizing the control path,
+    causing a place-overflow to happen in the control
+    path.   Need to revisit this.  In the meantime, withdraw.
 ----------------------------------------------------------------------------
