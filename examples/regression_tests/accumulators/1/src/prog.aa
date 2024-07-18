@@ -1,0 +1,24 @@
+$pipe out_data : $uint<32> $depth 2
+$pipe in_data : $uint<32> $depth 2 $p2p
+
+$pipeline $depth 3 $operator $module [accumulate] 
+	$in (init: $uint<1> u: $uint<32>) $out (v: $uint<32>) $is
+{
+	v := ($mux init u (u + v))
+}
+
+$module [p2p_check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] {
+		$dopipeline $depth 9 $buffering 2 $fullrate
+		$merge $entry $loopback 
+			$phi v    := in_data $on $entry, $loopback
+			$phi init := $one<1> $on $entry $zero<1> $on $loopback
+		$endmerge
+
+		$call accumulate (init v) (w)
+		out_data := w
+
+		$while 1
+	}
+}
