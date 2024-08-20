@@ -59,12 +59,11 @@ entity UnloadFsmNoBlock is
 end UnloadFsmNoBlock;
 
 architecture default_arch of UnloadFsmNoBlock is
-	signal unload_ack_sig : boolean;
-	signal unload_ack_d_sig : boolean;
 
+	signal unload_ack_sig : boolean;
 	signal write_ack_sig: std_logic;
 
-	type FsmState is (Idle, WhatWillItBe, DataValid, ZeroData);
+	type FsmState is (Idle, UnloadAck, DataValid, ZeroData);
 	signal fsm_state : FsmState;
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
@@ -72,14 +71,13 @@ begin  -- default_arch
 
 	process(fsm_state, write_req, data_in,  unload_req, clk, reset)
 		variable next_fsm_state_var : FsmState;
-		variable unload_ack_d_var: boolean;
+		variable unload_ack_var: boolean;
 		variable write_ack_var : std_logic;
 
 		variable data_out_var: std_logic_vector(data_width-1 downto 0);
 
 	begin
-		unload_ack_d_var := false;
-
+		unload_ack_var := false;
 		write_ack_var  := '0';
 		next_fsm_state_var := fsm_state;
 
@@ -89,83 +87,65 @@ begin  -- default_arch
 			-- reset state, nothing seen so far.
 			when Idle =>
 				if(unload_req) then
-					unload_ack_d_var := true;
-					next_fsm_state_var := WhatWillItBe;
+					next_fsm_state_var := UnloadAck;
 				end if;
+			when UnloadAck =>
+			-- have received an unload-req, unload-ack true.
+				unload_ack_var := true;
+
+				if(write_req = '0') then
+				-- noblock 0 data.
+					data_out_var := (others => '0');
+				end if;
+					
+				if(unload_req) then
+					if(write_req = '1') then
+						-- new unload-req, ack
+						-- the last write data.
+						write_ack_var := '1';
+					end if;
+				else
+					-- go to a holding state..
+					if(write_req = '1') then
+						-- valid data
+						next_fsm_state_var := DataValid;
+					else
+						-- zero data.
+						next_fsm_state_var := ZeroData;
+					end if;
+				end if;
+
 			when ZeroData => 
 				-- Acked state, hold until next unload-req
 				-- hold 0 data until next unload-req.
 				data_out_var := (others => '0');
 				if(unload_req) then
-					unload_ack_d_var := true;
-					next_fsm_state_var := WhatWillItBe;
+					next_fsm_state_var := UnloadAck;
 				end if;
 			when DataValid =>
 				-- Acked state, hold until next unload-req
 				-- write_req is '1' here... 
 				if(unload_req) then
-					unload_ack_d_var := true;
-
-					-------------------------------
-					-- ack it here..
-					-------------------------------
-					write_ack_var    := '1';
-					-------------------------------
-
-					-- what will we see next?
-					next_fsm_state_var := WhatWillItBe;
-				end if;
-			when WhatWillItBe =>
-				-- 
-				-- Acked state, but data will be determined
-				-- in this state.
-				--
-				if(write_req = '0') then
-
-					-- zero data..
-					data_out_var := (others => '0');
-					
-
-					if(unload_req) then
-						unload_ack_d_var := true;
-					else
-						-- hold zero data.	
-						next_fsm_state_var := ZeroData;
-					end if;
-				else 
-					-- valid data, must hold until next
-					-- unload-req.
-						
-
-					if(unload_req) then
-						unload_ack_d_var := true;
-
-						-------------------------------
-						-- ack it here..
-						-------------------------------
-						write_ack_var    := '1';
-						-------------------------------
-					else
-						next_fsm_state_var := DataValid;
-					end if;
+					-- write-data is no longer needed.
+					write_ack_var := '1';
+					next_fsm_state_var := UnloadAck;
 				end if;
 		end case;
 
+		unload_ack_sig <= unload_ack_var;
 		write_ack_sig <= write_ack_var;
 		data_out <= data_out_var;
 
 		if(clk'event and clk='1') then
 			if(reset = '1') then
 				fsm_state <= Idle;
-				unload_ack_d_sig <= false;
 			else
 				fsm_state <= next_fsm_state_var;
-				unload_ack_d_sig <= unload_ack_d_var;
 			end if;
 		end if;
 	end process;
 
-	unload_ack <= unload_ack_d_sig;
+	unload_ack <= unload_ack_sig;
 	write_ack  <= write_ack_sig;
 
 end default_arch;
