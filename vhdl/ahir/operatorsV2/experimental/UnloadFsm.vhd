@@ -53,11 +53,9 @@ end UnloadFsm;
 
 architecture default_arch of UnloadFsm is
 	signal unload_ack_sig : boolean;
-	signal unload_ack_d_sig : boolean;
-
 	signal write_ack_sig: std_logic;
 
-	type FsmState is (Idle, DataValid, WaitOnData);
+	type FsmState is (Idle, WaitOnData, DataValid);
 	signal fsm_state : FsmState;
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
@@ -66,14 +64,12 @@ begin  -- default_arch
 	process(fsm_state, write_req, data_in,  unload_req, clk, reset)
 		variable next_fsm_state_var : FsmState;
 		variable unload_ack_var: boolean;
-		variable unload_ack_d_var: boolean;
 		variable write_ack_var : std_logic;
 
 		variable data_out_var: std_logic_vector(data_width-1 downto 0);
 
 	begin
 		unload_ack_var := false;
-		unload_ack_d_var := false;
 
 		write_ack_var  := '0';
 		next_fsm_state_var := fsm_state;
@@ -84,23 +80,6 @@ begin  -- default_arch
 			-- reset state, nothing seen so far.
 			when Idle =>
 				if(unload_req) then
-					if(write_req = '1') then
-						next_fsm_state_var := DataValid;
-						unload_ack_d_var := true;
-					else
-						next_fsm_state_var := WaitOnData;
-					end if;
-				end if;
-			when DataValid =>
-				-- write_req = '1' got you here.  Suppress the
-				-- write ack until the next unload req.
-				if(unload_req) then
-					-- pop!
-					-- ack the writer, go to wait on data.
-					write_ack_var := '1';
-
-					-- we don't know if the next cycle will
-					-- have data or not.
 					next_fsm_state_var := WaitOnData;
 				end if;
 			when WaitOnData  =>
@@ -110,10 +89,14 @@ begin  -- default_arch
 
 					if(unload_req) then
 						write_ack_var := '1';
-						-- stay in this state..
 					else
 						next_fsm_state_var := DataValid;
 					end if;
+				end if;
+			when DataValid =>
+				if(unload_req) then
+					write_ack_var := '1';
+					next_fsm_state_var := WaitOnData;
 				end if;
 		end case;
 
@@ -124,15 +107,13 @@ begin  -- default_arch
 		if(clk'event and clk='1') then
 			if(reset = '1') then
 				fsm_state <= Idle;
-				unload_ack_d_sig <= false;
 			else
 				fsm_state <= next_fsm_state_var;
-				unload_ack_d_sig <= unload_ack_d_var;
 			end if;
 		end if;
 	end process;
 
-	unload_ack <= unload_ack_sig or unload_ack_d_sig;
+	unload_ack <= unload_ack_sig;
 	write_ack  <= write_ack_sig;
 
 end default_arch;

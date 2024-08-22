@@ -1,6 +1,6 @@
 $pipe out_data : $uint<32> $depth 2
 $pipe in_data : $uint<32> $depth 2
-$noblock $pipe mid_pipe_0 : $uint<32> $depth 2 $p2p
+$pipe mid_pipe_0 : $uint<32> $depth 3 $p2p
 $noblock $pipe mid_pipe_1 : $uint<32> $depth 2 $p2p
 
 $constant Z32: $uint<32> := 0
@@ -47,8 +47,10 @@ $module [p2p_pong_daemon] $in() $out () $is
 	$branchblock[lOoP] {
 		  $merge $entry loopback $endmerge
 	 	  CMD := mid_pipe_0
-		  $volatile snd := (CMD [] 0)
-		  $guard (snd) mid_pipe_1 := CMD
+
+		  CMD_D := CMD $buffering 2
+		  $volatile snd := (CMD_D [] 0)
+		  $guard (snd) mid_pipe_1 := CMD_D
 
 		  $place [loopback]
 	}

@@ -124,12 +124,12 @@ architecture default_arch of UnloadBuffer is
 
   constant shallow_flag : boolean :=    (buffer_size < global_pipe_shallowness_threshold);
 
-  constant revised_case_blocking: boolean := 
-		((buffer_size > 0) 
-			and (bypass_flag or (buffer_size > 1))
-                        and shallow_flag 
-			and (not use_unload_register) 
-			and (not nonblocking_read_flag));
+  constant revised_case_blocking: boolean :=  false;
+		-- ((buffer_size > 0) 
+			-- and (bypass_flag or (buffer_size > 1))
+                        -- and shallow_flag 
+			-- and (not use_unload_register) 
+			-- and (not nonblocking_read_flag));
 
   constant revised_case_non_blocking: boolean := 
 		global_use_optimized_unload_buffer and

@@ -89,7 +89,8 @@ architecture default_arch of UnloadBufferRevised is
 --##decl_synopsys_sync_set_reset##
 begin  -- default_arch
 
-	ufsm_write_data <= pipe_data_out;
+	-- To avoid a U getting into the logic...
+	ufsm_write_data <= pipe_data_out when (pop_ack(0) = '1') else (others => '0');
 	ufsm_write_req  <= pop_ack(0);
 	pop_req(0) <= ufsm_write_ack;
 
