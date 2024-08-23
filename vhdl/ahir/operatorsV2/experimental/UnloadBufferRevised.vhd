@@ -51,6 +51,12 @@ use ahir.GlobalConstants.all;
 -- when buffer-size > 1.
 --  
 --
+--
+-- NOTE: THIS IS BROKEN.   DO NOT USE UNDER ANY
+--   CONDITION.   Data must be maintained stable
+--   from unload_ack to next unload_ack.  This
+--   is currently not being done.
+--
 entity UnloadBufferRevised is
 
   generic (name: string; 
@@ -90,6 +96,7 @@ architecture default_arch of UnloadBufferRevised is
 begin  -- default_arch
 
 	-- To avoid a U getting into the logic...
+	--  Badly broken see note above.
 	ufsm_write_data <= pipe_data_out when (pop_ack(0) = '1') else (others => '0');
 	ufsm_write_req  <= pop_ack(0);
 	pop_req(0) <= ufsm_write_ack;
