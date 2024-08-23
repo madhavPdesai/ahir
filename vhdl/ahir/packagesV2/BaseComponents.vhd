@@ -688,6 +688,20 @@ package BaseComponents is
        pop_req: in std_logic);
   end component ShiftRegisterSingleBitQueue;
 
+  component QueueBaseWithEmptyFullNext is
+    -- queue_depth must be > 1.
+    generic(name : string; queue_depth: integer := 2; data_width: integer := 32);
+    port(clk: in std_logic;
+       reset: in std_logic;
+       empty, full, next_valid: out std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+  end component QueueBaseWithEmptyFullNext;
+  
   -----------------------------------------------------------------------------
   -- pipe
   -----------------------------------------------------------------------------
@@ -2533,8 +2547,7 @@ package BaseComponents is
   component UnloadBufferRevised is
     generic (name: string; 
 		buffer_size: integer ; 
-		data_width : integer ; 
-		bypass_flag: boolean := false);
+		data_width : integer );
     port ( write_req: in std_logic;
         write_ack: out std_logic;
         write_data: in std_logic_vector(data_width-1 downto 0);
@@ -2579,6 +2592,7 @@ package BaseComponents is
   component UnloadFsm is
   generic (name: string; data_width: integer);
   port ( 
+         next_valid: in std_logic;
 	 write_req: in std_logic;
          write_ack: out std_logic;
          unload_req: in boolean;

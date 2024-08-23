@@ -124,7 +124,10 @@ architecture default_arch of UnloadBuffer is
 
   constant shallow_flag : boolean :=    (buffer_size < global_pipe_shallowness_threshold);
 
-  constant revised_case_blocking: boolean :=  false;
+  constant revised_case_blocking: boolean :=  
+		global_use_optimized_unload_buffer and
+			(buffer_size > 1) and (not bypass_flag) and shallow_flag and
+				(not nonblocking_read_flag);
 		-- ((buffer_size > 0) 
 			-- and (bypass_flag or (buffer_size > 1))
                         -- and shallow_flag 
@@ -151,8 +154,7 @@ begin  -- default_arch
 
 	ulb_revised: UnloadBufferRevised
 			generic map (name => name & "-revised",
-					buffer_size => buffer_size, data_width => data_width,
-						bypass_flag => bypass_flag)
+					buffer_size => buffer_size, data_width => data_width)
 			port map (
 				write_req => write_req,
 				write_ack => write_ack,

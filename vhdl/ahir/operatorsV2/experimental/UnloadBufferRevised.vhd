@@ -61,9 +61,7 @@ entity UnloadBufferRevised is
 
   generic (name: string; 
 		buffer_size: integer ; 
-		data_width : integer ; 
-		bypass_flag: boolean );
-
+		data_width : integer ); 
   port ( write_req: in std_logic;
         write_ack: out std_logic;
         write_data: in std_logic_vector(data_width-1 downto 0);
@@ -87,7 +85,7 @@ architecture default_arch of UnloadBufferRevised is
   signal write_to_pipe: boolean;
   signal unload_from_pipe : boolean;
 
-  signal empty, full: std_logic;
+  signal empty, full, next_valid: std_logic;
   signal ufsm_write_req, ufsm_write_ack: std_logic;
   signal ufsm_bypass_write_req, ufsm_bypass_write_ack: std_logic;
 
@@ -106,6 +104,7 @@ begin  -- default_arch
 
 	ufsm: UnloadFsm generic map (name => name & ":ufsm", data_width => data_width)
 		port map (
+			   next_valid => next_valid,
 			   write_req => ufsm_write_req,
 			   write_ack => ufsm_write_ack,
 			   unload_req => unload_req,
@@ -118,10 +117,9 @@ begin  -- default_arch
   	has_data <= '1' when pipe_has_data else '0';
 
 
-  	bufPipe : QueueBaseWithEmptyFull generic map (
+  	bufPipe : QueueBaseWithEmptyFullNext generic map (
         	name =>  name & "-blocking_read-bufPipe",
         	data_width => data_width,
-		reverse_bypass_flag => bypass_flag,
         	queue_depth      => buffer_size)
       	port map (
         	pop_req   => pop_req(0),
@@ -132,6 +130,7 @@ begin  -- default_arch
         	data_in => write_data,
 		empty => empty,
 		full => full,
+                next_valid => next_valid,
         	clk        => clk,
         	reset      => reset);
 
