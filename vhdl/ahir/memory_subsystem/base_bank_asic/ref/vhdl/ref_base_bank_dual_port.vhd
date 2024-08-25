@@ -30,23 +30,20 @@
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 -- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
 ------------------------------------------------------------------------------------------------
-library ahir;
-use ahir.Utilities.all;
-use ahir.GlobalConstants.all;
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
-use ahir.mem_component_pack.all;
 use ahir.GlobalConstants.all;
+use ahir.RefBaseComponents.all;
+use ahir.mem_component_pack.all;
 --
 -- dual port synchronous memory.
 --   similar to a flip-flop as far as simultaneous read/write  is concerned
 --   if both ports try to write to the same address, the second port (1) wins
 --
-entity base_bank_dual_port is
+entity ref_base_bank_dual_port is
    generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
    port (
 	 datain_0 : in std_logic_vector(g_data_width-1 downto 0);
@@ -61,10 +58,10 @@ entity base_bank_dual_port is
          writebar_1 : in std_logic;
          clk: in std_logic;
          reset : in std_logic);
-end entity base_bank_dual_port;
+end entity ref_base_bank_dual_port;
 
 
-architecture XilinxBramInfer of base_bank_dual_port is
+architecture XilinxBramInfer of ref_base_bank_dual_port is
 	signal wea, web: std_logic;
 	signal samplea, sampleb: std_logic;
 
@@ -76,10 +73,6 @@ architecture XilinxBramInfer of base_bank_dual_port is
 
 begin  -- XilinxBramInfer
 
-  debugGen: if global_debug_flag generate
-  assert false report "MemSliceInfo base_bank_dual_port " & name & " " & " addr_width = " & Convert_To_String(g_addr_width) & " data-width = " & Convert_To_String(g_data_width) severity note;
-  assert false report "MSLICE DP " &  Convert_To_String(g_addr_width) & " " & Convert_To_String(g_data_width) severity note;
-  end generate debugGen;
 
 	wea <= not writebar_0;
 	web <= not writebar_1;

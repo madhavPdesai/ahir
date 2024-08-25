@@ -87,6 +87,8 @@ use ahir.mem_component_pack.all;
 use ahir.MemCutsPackage.all;
 use ahir.MemcutDescriptionPackage.all;
 use ahir.mem_ASIC_components.all;
+use ahir.RefBaseComponents.all;
+use ahir.Utilities.all;
 --
 -- synchronous memory with 1 write and 1 read port.
 --
@@ -135,6 +137,8 @@ architecture improved_struct of register_file_1w_1r_port is
 	constant use_side_strip: boolean :=
 			(best_cut_info(1) > 0) and
 					((best_cut_data_width*best_cut_ncols) < g_data_width);
+
+       signal dbg_dataout_1_sig: std_logic_vector(g_data_width-1 downto 0);
 begin
 	noCutFound: if (best_cut_info(1) <= 0) generate
 		regbb_inst: register_file_1w_1r_port_with_registers
@@ -234,8 +238,42 @@ begin
   	    	end process;
 	
             	dataout_1 <= dataout_1_reg when (latch_dataout_1 = '0') else dataout_1_sig;
+		dbggen: if (global_debug_mem_cuts) generate
+            		dbg_dataout_1_sig <= dataout_1_reg when (latch_dataout_1 = '0') else dataout_1_sig;
+		end generate dbggen;
             
           end block mb;
 	end generate cutFound;
+
+	------------------------------------------------------------------------------------
+	-- for debugging.
+	------------------------------------------------------------------------------------
+        debugGen: if (global_debug_mem_cuts) generate
+          bb: block 
+ 	    signal ref_dataout_1:  std_logic_vector(g_data_width-1 downto 0);
+          begin
+	    ref_inst: ref_register_file_1w_1r_port
+		generic map (name => name & ":ref ", g_addr_width => g_addr_width, g_data_width => g_data_width)
+		port map (
+	 		datain_0  => datain_0 ,
+         		addrin_0 => addrin_0,
+         		enable_0 => enable_0,
+         		dataout_1 => ref_dataout_1,
+         		addrin_1 => addrin_1,
+         		enable_1 => enable_1,
+         		clk => clk,
+         		reset => reset);
+		process(clk, reset)
+		begin
+			if(clk'event and (clk = '1')) then
+				if(reset = '0') then
+					assert (ref_dataout_1 = dbg_dataout_1_sig)
+						report ("Mismatch " & name & " " & Convert_SLV_To_String(ref_dataout_1) & 
+							" " & Convert_SLV_To_String(dbg_dataout_1_sig)) severity note;
+				end if;
+			end if;
+		end process;
+       end block bb;
+      end generate debugGen;
 
 end improved_struct;

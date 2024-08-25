@@ -38,7 +38,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.mem_component_pack.all;
+use ahir.RefBaseComponents.all;
 entity base_bank_r_wrap  is
    generic ( name: string:="mem"; g_addr_width: natural := 5; 
 	     g_data_width : natural := 20);
@@ -82,6 +84,9 @@ use ahir.MemCutsPackage.all;
 use ahir.mem_ASIC_components.all;
 use ahir.MemcutDescriptionPackage.all;
 use ahir.mem_component_pack.all;
+use ahir.GlobalConstants.all;
+use ahir.RefBaseComponents.all;
+use ahir.Utilities.all;
 
 entity base_bank is
    generic ( name: string:="mem"; g_addr_width: natural := 5; 
@@ -122,6 +127,8 @@ architecture improved_struct of base_bank is
 	constant use_side_strip: boolean :=
 			(best_cut_info(1) > 0) and
 					((best_cut_data_width*best_cut_ncols) < g_data_width);
+		
+	signal dbg_dataout_sig: std_logic_vector(g_data_width-1 downto 0);	
 begin
 	noCutFound: if (best_cut_info(1) <= 0) generate
 		regbb_inst: base_bank_with_registers
@@ -213,8 +220,43 @@ begin
   	    	end process;
 	
             	dataout <= dataout_reg when (latch_dataout = '0') else dataout_sig;
+
+		dbggen:  if (global_debug_mem_cuts) generate
+            	   dbg_dataout_sig <= dataout_reg when (latch_dataout = '0') else dataout_sig;
+		end generate dbggen;
             
           end block mb;
 	end generate cutFound;
+
+	------------------------------------------------------------------------------------
+	-- for debugging.
+	------------------------------------------------------------------------------------
+        debugGen: if (global_debug_mem_cuts) generate
+          bb: block 
+ 	    signal ref_dataout: std_logic_vector(g_data_width-1 downto 0);
+          begin
+	    ref_inst: ref_base_bank
+		generic map (name => name & ":ref ", g_addr_width => g_addr_width, g_data_width => g_data_width)
+		port map (
+	 		datain  => datain ,
+         		dataout => ref_dataout,
+         		addrin => addrin,
+         		enable => enable,
+         		writebar  => writebar,
+         		clk => clk,
+         		reset => reset);
+
+		process(clk, reset)
+		begin
+			if(clk'event and (clk = '1')) then
+				if(reset = '0') then
+					assert (ref_dataout = dbg_dataout_sig)
+						report ("Mismatch " & name & " " & Convert_SLV_To_String(ref_dataout) & 
+							" " & Convert_SLV_To_String(dbg_dataout_sig)) severity note;
+				end if;
+			end if;
+		end process;
+       end block bb;
+      end generate debugGen;
 
 end improved_struct;

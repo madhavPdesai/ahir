@@ -18,12 +18,16 @@ cat ../ahir/packagesV2/ApIntComponents.vhd >> $LIBFILE
 cat ../ahir/packagesV2/MemcutsPackage.vhd >> $LIBFILE
 cat ../ahir/memory_subsystem/base_bank_asic/$TECH/mem_ASIC_components.vhd >> $LIBFILE
 cat ../ahir/memory_subsystem/base_bank_asic/$TECH/MemcutDescriptionPack.vhd >> $LIBFILE
+#
+cat ../ahir/memory_subsystem/base_bank_asic/ref/RefBaseComponents.vhdl >> $LIBFILE
 cat ../ahir/memory_subsystem/base_bank_asic/$TECH/*_selector.vhd >> $LIBFILE
 cat ../ahir/memory_subsystem/common/*.vhd >> $LIBFILE
 cat ../ahir/memory_subsystem/base_bank_asic/*.vhd >> $LIBFILE
 cat ../ahir/memory_subsystem/base_bank_asic/for_fpga_impl_of_asic_rtl/$TECH/ReverseWrappers.vhdl >> $LIBFILE
 cat ../ahir/memory_subsystem/strictly_ordered/*.vhd >> $LIBFILE
 cat ../ahir/memory_subsystem/unordered/*.vhd >> $LIBFILE
+#
+cat ../ahir/memory_subsystem/base_bank_asic/ref/vhdl/*.vhd >> $LIBFILE
 cat ../ahir/control-path/*.vhdl >> $LIBFILE
 cat ../ahir/operatorsV2/base/*.vhd >> $LIBFILE
 cat ../ahir/operatorsV2/ieee754/*.vhd >> $LIBFILE

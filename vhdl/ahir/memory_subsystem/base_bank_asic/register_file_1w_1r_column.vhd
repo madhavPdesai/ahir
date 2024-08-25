@@ -117,7 +117,7 @@ begin
 		end if;
 	  end process;
 	  
-	  process(enable_1, resized_addrin_1)
+	  process(clk, enable_1, resized_addrin_1)
 	  	variable decoded_CSB_1_var: 
 			std_logic_vector(2**Maximum(0, g_addr_width-g_base_bank_addr_width)-1 downto 0)
 							:= (others=>'1');

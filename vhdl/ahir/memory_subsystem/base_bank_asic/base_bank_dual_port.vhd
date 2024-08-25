@@ -38,6 +38,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
+use ahir.RefBaseComponents.all;
 use ahir.mem_component_pack.all;
 
 entity base_bank_dual_port_r_wrap is
@@ -96,6 +98,8 @@ use ahir.MemCutsPackage.all;
 use ahir.mem_ASIC_components.all;
 use ahir.MemcutDescriptionPackage.all;
 use ahir.mem_component_pack.all;
+use ahir.GlobalConstants.all;
+use ahir.RefBaseComponents.all;
 
 entity base_bank_dual_port is
    generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
@@ -145,6 +149,8 @@ architecture improved_struct of base_bank_dual_port is
 	constant use_side_strip: boolean :=
 			(best_cut_info(1) > 0) and
 					((best_cut_data_width*best_cut_ncols) < g_data_width);
+         signal dbg_dataout_0_sig: std_logic_vector(g_data_width-1 downto 0);
+         signal dbg_dataout_1_sig: std_logic_vector(g_data_width-1 downto 0);
 begin
 	noCutFound: if (best_cut_info(1) <= 0) generate
 		regbb_inst: base_bank_dual_port_with_registers
@@ -274,8 +280,50 @@ begin
 	
             	dataout_0 <= dataout_0_reg when (latch_dataout_0 = '0') else dataout_0_sig;
             	dataout_1 <= dataout_1_reg when (latch_dataout_1 = '0') else dataout_1_sig;
+
+		dbggen: if (global_debug_mem_cuts) generate
+            	   dbg_dataout_0_sig <= dataout_0_reg when (latch_dataout_0 = '0') else dataout_0_sig;
+            	   dbg_dataout_1_sig <= dataout_1_reg when (latch_dataout_1 = '0') else dataout_1_sig;
+ 		end generate dbggen;
             
           end block mb;
 	end generate cutFound;
+
+	------------------------------------------------------------------------------------
+	-- for debugging.
+	------------------------------------------------------------------------------------
+        debugGen: if (global_debug_mem_cuts) generate
+          bb: block 
+ 	    signal ref_dataout_0, ref_dataout_1: std_logic_vector(g_data_width-1 downto 0);
+          begin
+	    ref_inst: ref_base_bank_dual_port
+		generic map (name => name & ":ref ", g_addr_width => g_addr_width, g_data_width => g_data_width)
+		port map (
+	 		datain_0  => datain_0 ,
+         		dataout_0 => ref_dataout_0,
+         		addrin_0 => addrin_0,
+         		enable_0 => enable_0,
+         		writebar_0  => writebar_0 ,
+	 		datain_1  => datain_1 ,
+         		dataout_1 => ref_dataout_1,
+         		addrin_1 => addrin_1,
+         		enable_1 => enable_1,
+         		writebar_1  => writebar_1 ,
+         		clk => clk,
+         		reset => reset);
+		process(clk, reset)
+		begin
+			if(clk'event and (clk = '1')) then
+				if(reset = '0') then
+					assert (ref_dataout_0 = dbg_dataout_0_sig)
+						report ("Mismatch port-0 " & name) severity note;
+
+					assert (ref_dataout_1 = dbg_dataout_1_sig)
+						report ("Mismatch port-1 " & name) severity note;
+				end if;
+			end if;
+		end process;
+       end block bb;
+      end generate debugGen;
 
 end improved_struct;

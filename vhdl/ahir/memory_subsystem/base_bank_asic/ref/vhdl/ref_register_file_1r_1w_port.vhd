@@ -1,3 +1,4 @@
+
 ------------------------------------------------------------------------------------------------
 --
 -- Copyright (C) 2010-: Madhav P. Desai
@@ -30,36 +31,67 @@
 -- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 -- SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
 ------------------------------------------------------------------------------------------------
-package GlobalConstants is
-    constant global_debug_flag: boolean := false;
-    constant global_pipe_report_flag: boolean := true;
-    constant global_use_vivado_bbank_dual_port : boolean := true;
-    constant global_use_vivado_distributed_ram_queue : boolean := true;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
-    -- clock gating using Xilinx IP?
-    constant use_xilinx_bufce: boolean := true;
+library ahir;
+use ahir.RefBaseComponents.all;
 
-    --
-    -- for guarded statements... increase this with care!
-    --
-    constant max_single_bit_queue_depth_per_stage : integer := 16;  -- this is huge.. make it smaller for effect (carefully)
+--
+-- synchronous memory with 1 write and 1 read port.
+--
+entity ref_register_file_1w_1r_port is
+   generic ( name: string; g_addr_width: natural := 10; g_data_width : natural := 16);
+   port (
+	 -- write port 0
+	 datain_0 : in std_logic_vector(g_data_width-1 downto 0);
+         addrin_0: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_0: in std_logic;
+	 -- read port 1
+         dataout_1: out std_logic_vector(g_data_width-1 downto 0);
+         addrin_1: in std_logic_vector(g_addr_width-1 downto 0);
+         enable_1: in std_logic;
+	
+         clk: in std_logic;
+         reset : in std_logic);
+end entity ref_register_file_1w_1r_port;
 
-    -- threshold for deciding if a pipe is deep or shallow
-    -- pipes shallower than this are implemented using FF's
-    -- this or deeper pipes with DPRAM.  Note: this is a hack!
-    constant global_pipe_shallowness_threshold : integer := 10;  
 
-    -- for debug of memory cuts.
-    constant global_debug_mem_cuts: boolean := false;
+architecture Struct of ref_register_file_1w_1r_port is
+	signal tied_high, tied_low: std_logic;
+	signal unused_dout_0, unused_din_1: std_logic_vector(g_data_width-1 downto 0);
+begin  -- XilinxBramInfer
 
-    -- use the optimized unload buffer implementation if possible.
-    -- this saves a substantial amount of logic, but  can result
-    -- in a slight (2.5%) performance reduction.  use it for the
-    -- minimizing resource usage.
-    --
-    -- DANGER ALERT: do not turn this to true under any circumstances.
-    --               A bug hunt is in progress.
-    --
-    constant global_use_optimized_unload_buffer : boolean := true;
 
-end package GlobalConstants;
+	tied_high <= '1';
+	tied_low  <= '0';
+
+	unused_din_1 <= (others => '0');
+
+	-- default model.. use a dual port mem.
+	-- for ASIC, need a different one.
+        dpramInst: ref_base_bank_dual_port
+		generic map (name => name & "-dpram", 
+				g_addr_width => g_addr_width,
+				g_data_width => g_data_width)
+		port map (
+				-- port 0 for write
+				datain_0 =>  datain_0,
+				dataout_0 => unused_dout_0,
+				addrin_0 =>  addrin_0,
+				enable_0 => enable_0,
+				writebar_0 => tied_low,
+				-- port 1 for read.
+				datain_1  => unused_din_1,
+				dataout_1 => dataout_1,
+				addrin_1 =>  addrin_1,
+				enable_1 => enable_1,
+				writebar_1 => tied_high,
+				-- clock pos edge..
+				clk => clk, 
+				-- reset active high.
+				reset => reset
+			 );
+
+end Struct;
