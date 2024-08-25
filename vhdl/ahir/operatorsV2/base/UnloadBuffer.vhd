@@ -133,9 +133,9 @@ architecture default_arch of UnloadBuffer is
 			-- in safe mode, no bypass is allowed!
 			and (not (use_safe_mode and bypass_flag))    -- no bypass in safe mode....
 			-- in safe mode, at queue depth is > 1.
-			and (not (use_safe_mode and (buffer_size < 2)))    -- buffer size >= 2 in safe mode.
-			-- why is this here??
-			and (bypass_flag or (buffer_size > 1))       -- bypass or deeper than 1
+			and (not (use_safe_mode and (buffer_size < 1)))  -- buffer size >= 1 in safe mode.
+			and (bypass_flag or (buffer_size > 1))       -- bypass or deeper than 1, to give fullrate
+								     -- performance...
 			-- OK shallow
                         and shallow_flag
 								     -- technically doable with non-shallow...
