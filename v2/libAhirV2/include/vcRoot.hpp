@@ -190,6 +190,7 @@ enum vcLexerKeytags
     __ALIAS,
     __BARRIER,
     __CUT_THROUGH,
+    __IN_PHI,
     __GATED_CLOCK,
     __USE_GATED_CLOCK
   };
@@ -353,6 +354,7 @@ static string vcLexerKeywords[] =
       "$A",
       "$barrier",
       "$cut_through",
+      "$in_phi",
       "$gated_clock",
       "$use_gated_clock"
   };

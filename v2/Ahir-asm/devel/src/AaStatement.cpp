@@ -2040,6 +2040,7 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 						this->Get_Is_Volatile(), // flow-through-flag
 						full_rate,
 						cut_through,
+						false, // in_phi
 						ofile);
 
 
@@ -4985,7 +4986,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				string dpe_name = src_expr->Get_VC_Driver_Name() + "_" + 
 					Int64ToStr(src_expr->Get_Index()) +  "_buf";
 				Write_VC_Interlock_Buffer(dpe_name, src_expr->Get_VC_Driver_Name(),
-						src_driver_name, "", false, full_rate, false, ofile);
+						src_driver_name, "", false, full_rate, false, true, ofile);
 				if(dws != NULL)
 				{
 					int src_buffering = src_expr->Get_Buffering();
@@ -5028,6 +5029,7 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				true, // flow-through-flag
 				true,
 				false, // cut-through
+				false, // in-phi
 				ofile);
 	}
 	else

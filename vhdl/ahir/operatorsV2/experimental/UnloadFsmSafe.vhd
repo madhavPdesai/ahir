@@ -37,9 +37,10 @@ use ieee.std_logic_1164.all;
 -- to infer a synchronous set/reset ... unbelievable.
 --##decl_synopsys_attribute_lib##
 
-entity UnloadFsm is
+entity UnloadFsmSafe is
   generic (name: string; data_width: integer);
   port ( 
+	 next_valid: in std_logic;
 	 write_req: in std_logic;
          write_ack: out std_logic;
          unload_req: in boolean;
@@ -49,36 +50,29 @@ entity UnloadFsm is
          clk : in std_logic;
          reset: in std_logic
 	);
-end UnloadFsm;
+end UnloadFsmSafe;
 
-architecture default_arch of UnloadFsm is
-	signal unload_ack_sig : boolean;
+architecture default_arch of UnloadFsmSafe is
 	signal unload_ack_d_sig : boolean;
-
 	signal write_ack_sig: std_logic;
 
-	type FsmState is (Idle, DataValid, WaitOnData);
+	type FsmState is (Idle, WaitOnWrite, WaitOnNext, DataValid);
 	signal fsm_state : FsmState;
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
 begin  -- default_arch
 
-	process(fsm_state, write_req, data_in,  unload_req, clk, reset)
+	data_out <= data_in;
+
+	process(fsm_state, write_req, data_in, next_valid, unload_req, clk, reset)
 		variable next_fsm_state_var : FsmState;
-		variable unload_ack_var: boolean;
 		variable unload_ack_d_var: boolean;
 		variable write_ack_var : std_logic;
-
-		variable data_out_var: std_logic_vector(data_width-1 downto 0);
-
 	begin
-		unload_ack_var := false;
 		unload_ack_d_var := false;
 
 		write_ack_var  := '0';
 		next_fsm_state_var := fsm_state;
-
-		data_out_var := data_in;
 
 		case fsm_state is 
 			-- reset state, nothing seen so far.
@@ -88,39 +82,33 @@ begin  -- default_arch
 						next_fsm_state_var := DataValid;
 						unload_ack_d_var := true;
 					else
-						next_fsm_state_var := WaitOnData;
+						next_fsm_state_var := WaitOnWrite;
 					end if;
 				end if;
-			when DataValid =>
-				-- write_req = '1' got you here.  Suppress the
-				-- write ack until the next unload req.
-				if(unload_req) then
-					-- pop!
-					-- ack the writer, go to wait on data.
+			when WaitOnWrite =>
+				if(write_req = '1') then
+					next_fsm_state_var := DataValid;
+					unload_ack_d_var   := true;
+				end if;
+			when WaitOnNext => 
+				if(next_valid = '1') then
+					next_fsm_state_var := DataValid;
+					unload_ack_d_var  := true;
 					write_ack_var := '1';
-
-					-- we don't know if the next cycle will
-					-- have data or not.
-					next_fsm_state_var := WaitOnData;
 				end if;
-			when WaitOnData  =>
-				-- This is the "fast" state.
-				if (write_req = '1') then
-					unload_ack_var := true;
-
-					if(unload_req) then
-						write_ack_var := '1';
-						-- stay in this state..
+			when DataValid => 
+				if(unload_req) then
+					if(next_valid = '1') then
+						unload_ack_d_var := true;
+						write_ack_var    := '1';
 					else
-						next_fsm_state_var := DataValid;
+						next_fsm_state_var := WaitOnNext;
 					end if;
 				end if;
+				
 		end case;
 
-		unload_ack_sig <= unload_ack_var;
 		write_ack_sig <= write_ack_var;
-		data_out <= data_out_var;
-
 		if(clk'event and clk='1') then
 			if(reset = '1') then
 				fsm_state <= Idle;
@@ -132,7 +120,7 @@ begin  -- default_arch
 		end if;
 	end process;
 
-	unload_ack <= unload_ack_sig or unload_ack_d_sig;
+	unload_ack <= unload_ack_d_sig;
 	write_ack  <= write_ack_sig;
 
 end default_arch;

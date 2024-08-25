@@ -1611,6 +1611,7 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 	int out_data_width = this->Get_Dout()->Get_Size();
 	bool flow_through = this->Get_Flow_Through();
 	bool cut_through  = this->Get_Cut_Through();
+	bool in_phi  = this->Get_In_Phi();
 
 	ofile << this->Get_VHDL_Id() << " : InterlockBuffer ";
 	ofile << "generic map ( -- { " << endl;
@@ -1620,7 +1621,8 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 	ofile << " cut_through => " <<  (cut_through ? " true " : " false ") << "," << endl;
 	ofile << " in_data_width => " << in_data_width << "," << endl;
 	ofile << " out_data_width => " << out_data_width <<  "," << endl;
-	ofile << " bypass_flag => " << (cut_through ? " true " : " false ")  <<  endl;
+	ofile << " bypass_flag => " << (cut_through ? " true " : " false ")  << "," << endl;
+	ofile << " in_phi => " << (in_phi ? " true " : " false ")  <<  endl;
 	ofile << " -- }" << endl << ")";
 	ofile << "port map ( -- { " << endl;
 	ofile << " write_req => wreq(0), "   << endl;
@@ -1649,6 +1651,8 @@ void vcInterlockBuffer::Print(ostream& ofile)
 		<< " ";
 	if(this->Get_Cut_Through())
 		ofile << " " << vcLexerKeywords[__CUT_THROUGH] << " ";
+	if(this->Get_In_Phi())
+		ofile << " " << vcLexerKeywords[__IN_PHI] << " ";
 	this->Print_Guard(ofile);
 	this->Print_Flow_Through(ofile);
 	ofile << endl;

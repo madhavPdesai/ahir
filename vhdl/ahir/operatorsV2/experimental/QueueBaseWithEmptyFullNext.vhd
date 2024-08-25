@@ -134,8 +134,8 @@ begin  -- SimModel
     empty_flag <= (queue_size = 0);
     full_flag  <= (queue_size = queue_depth);
 
-    -- next output of the queue is present... Note, do not bypass..
-    next_valid <= '1' when (queue_size > 1) else '0';
+    -- next output of the queue is present... 
+    next_valid <= '1' when ((queue_size > 1) or (push_req = '1'))  else '0';
 
     wrpReg: SynchResetRegisterUnsigned generic map (name => name & ":wrpreg", data_width => write_pointer'length)
 		port map (clk => clk, reset => reset, din => next_write_pointer, dout => write_pointer);

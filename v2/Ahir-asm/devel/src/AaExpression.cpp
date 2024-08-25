@@ -3358,6 +3358,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 		string src_name = this->Get_VC_Root_Address_Name();
 		string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
+		bool is_in_phi = (this->Get_Associated_Phi_Statement() != NULL);
 		Write_VC_Interlock_Buffer(dpe_name,
 				src_name,
 				tgt_name,
@@ -3365,6 +3366,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 				false, // flow-through
 				full_rate, 
 				false, // cut-through
+				is_in_phi, // in_phi
 				ofile);
 
 		//
@@ -4411,6 +4413,7 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
 		string src_name = obj_ref->Get_VC_Root_Address_Name();
 		string tgt_name = ((target != NULL) ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
+		bool is_in_phi = (this->Get_Associated_Phi_Statement() != NULL);
 		Write_VC_Interlock_Buffer(dpe_name,
 				src_name,
 				tgt_name,
@@ -4418,6 +4421,7 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
 				false,
 				full_rate,
 				false, // cut-through
+				is_in_phi, // in-phi
 				ofile);
 
 		this->Write_VC_Output_Buffering(dpe_name, tgt_name, ofile);
@@ -4681,6 +4685,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 
 		if(ilb_flag & (not flow_through))
 		{
+			bool is_in_phi = (this->Get_Associated_Phi_Statement() != NULL);
 			Write_VC_Interlock_Buffer(dpe_name,
 					src_name,
 					tgt_name,
@@ -4688,6 +4693,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 					false,
 					full_rate, 
 					false, // cut-through
+					is_in_phi, // in-phi
 					ofile);
 
 		}

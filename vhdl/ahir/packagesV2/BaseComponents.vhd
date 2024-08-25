@@ -599,6 +599,19 @@ package BaseComponents is
          pop_req: in std_logic);
   end component QueueBaseWithEmptyFull;
 
+  component QueueBaseWithEmptyFullNext is
+  generic(name : string; queue_depth: integer := 1; data_width: integer := 32);
+  port(clk: in std_logic;
+       reset: in std_logic;
+       empty, full, next_valid: out std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+  end component QueueBaseWithEmptyFullNext;
+
   component QueueEmptyFullLogic is
 	port (clk, reset: in std_logic;
 		read,write,eq_flag: in boolean;
@@ -688,20 +701,6 @@ package BaseComponents is
        pop_req: in std_logic);
   end component ShiftRegisterSingleBitQueue;
 
-  component QueueBaseWithEmptyFullNext is
-    -- queue_depth must be > 1.
-    generic(name : string; queue_depth: integer := 2; data_width: integer := 32);
-    port(clk: in std_logic;
-       reset: in std_logic;
-       empty, full, next_valid: out std_logic;
-       data_in: in std_logic_vector(data_width-1 downto 0);
-       push_req: in std_logic;
-       push_ack: out std_logic;
-       data_out: out std_logic_vector(data_width-1 downto 0);
-       pop_ack : out std_logic;
-       pop_req: in std_logic);
-  end component QueueBaseWithEmptyFullNext;
-  
   -----------------------------------------------------------------------------
   -- pipe
   -----------------------------------------------------------------------------
@@ -2412,6 +2411,7 @@ package BaseComponents is
 		out_data_width : integer := 32;
 		flow_through: boolean := false;
 		cut_through: boolean  := false;
+		in_phi     : boolean  := false;
 		bypass_flag : boolean := false); 
     port ( write_req: in boolean;
         write_ack: out boolean;
@@ -2507,8 +2507,10 @@ package BaseComponents is
 
   component UnloadBuffer 
     generic (name: string; buffer_size: integer; data_width : integer; 
-				bypass_flag: boolean := false; nonblocking_read_flag: boolean := false;
-					use_unload_register: boolean := true);
+				bypass_flag: boolean := false; 
+					nonblocking_read_flag: boolean := false;
+						use_safe_mode: boolean := false;
+							use_unload_register: boolean := true);
     port (write_req: in std_logic;
           write_ack: out std_logic;
           write_data: in std_logic_vector(data_width-1 downto 0);
@@ -2547,7 +2549,22 @@ package BaseComponents is
   component UnloadBufferRevised is
     generic (name: string; 
 		buffer_size: integer ; 
-		data_width : integer );
+		data_width : integer ; 
+		bypass_flag: boolean := false);
+    port ( write_req: in std_logic;
+        write_ack: out std_logic;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        unload_req: in boolean;
+        unload_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+	has_data: out std_logic;
+        clk : in std_logic;
+        reset: in std_logic);
+  end component;
+  component UnloadBufferRevisedSafe is
+    generic (name: string; 
+		buffer_size: integer ; 
+		data_width : integer ); 
     port ( write_req: in std_logic;
         write_ack: out std_logic;
         write_data: in std_logic_vector(data_width-1 downto 0);
@@ -2592,7 +2609,20 @@ package BaseComponents is
   component UnloadFsm is
   generic (name: string; data_width: integer);
   port ( 
-         next_valid: in std_logic;
+	 write_req: in std_logic;
+         write_ack: out std_logic;
+         unload_req: in boolean;
+         unload_ack: out boolean;
+	 data_in :  in std_logic_vector(data_width-1 downto 0);
+	 data_out :  out std_logic_vector(data_width-1 downto 0);
+         clk : in std_logic;
+         reset: in std_logic);
+  end component;
+
+  component UnloadFsmSafe is
+  generic (name: string; data_width: integer);
+  port ( 
+	 next_valid: in std_logic;
 	 write_req: in std_logic;
          write_ack: out std_logic;
          unload_req: in boolean;

@@ -50,6 +50,7 @@ entity InterlockBuffer is
   	out_data_width : integer := 32;
   	flow_through: boolean := false;
 	cut_through : boolean := false;
+	in_phi	    : boolean := false;
   	bypass_flag : boolean := false);
   port (write_req: in boolean;
         write_ack: out boolean;
@@ -74,19 +75,17 @@ architecture default_arch of InterlockBuffer is
   signal has_data: std_logic;
 
   -- Don't F-around with this.
-  constant use_unload_register : boolean := 
-		((not global_use_optimized_unload_buffer) and (not cut_through))
-		or (global_use_optimized_unload_buffer and (not cut_through) and (buffer_size /= 2));
+  --  optim cut-through in-phi  use-unload-reg
+  --    0        0        *       1
+  --    1        *        0       revised-fast
+  --    1        *        1       revised-slow
+  --
+  --   in optimized (small) case, never use the unload register
+  --   in non-optimized (fast) case, use the unload register if cut_through is false. 
+  --   in_phi if set, selects safe mode.
+  constant use_unload_register : boolean :=  
+		(not global_use_optimized_unload_buffer) and (not cut_through);
 
-  --
-  -- Do not slow down the interlock buffer!
-  --
-  constant use_simple_ilock_implementation :boolean 
-			:= global_use_optimized_unload_buffer and
-					(not flow_through) and  (buffer_size = 1) and
-						(not bypass_flag); 
-			
-  
 -- see comment above..
 --##decl_synopsys_sync_set_reset##
 
@@ -135,38 +134,11 @@ begin  -- default_arch
         read_data  <= buf_read_data;
       end generate outSmaller;
       
-      SimpleImplGen: if use_simple_ilock_implementation  generate
-         sb: block
-             signal joined_sig: boolean;
-         begin
 
-		cj: join2 generic map (bypass => true, name => "simpleImplGen:join2")
-			port map (pred0 => write_req, pred1 => read_req, 
-					symbol_out => joined_sig, 
-						clk => clk, reset => reset);
-
-		write_ack <= joined_sig;
-		process(clk, reset, joined_sig, buf_write_data)
-		begin
-			if (clk'event and (clk = '1')) then 
-				if(reset = '1') then
-					read_ack <= false;
-				else
-					if(joined_sig) then
-						buf_read_data <= buf_write_data;
-					end if;
-					read_ack <= joined_sig;
-				end if;
-			 end if;	
-		end process;
-         end block sb;
-      end generate SimpleImplGen;
-
-      ulbImplGen: if (not use_simple_ilock_implementation) generate
-         -- write FSM to pipe.
-         process(clk,reset, l_fsm_state, buf_write_ack, write_req)
+      -- write FSM to pipe.
+      process(clk,reset, l_fsm_state, buf_write_ack, write_req)
            variable nstate : LoadFsmState;
-         begin
+      begin
            nstate := l_fsm_state;
            buf_write_req <= '0';
            write_ack <= false;
@@ -194,14 +166,15 @@ begin  -- default_arch
                l_fsm_state <= nstate;
 	     end if;
            end if;
-         end process;
+       end process;
      
          -- the unload buffer.
-         buf : UnloadBuffer generic map (
+       buf : UnloadBuffer generic map (
            name =>  name & " buffer ",
            data_width => data_width,
            buffer_size => buffer_size, 
 	   use_unload_register => use_unload_register,
+	   use_safe_mode => in_phi,
            bypass_flag => bypass_flag)
            port map (
              write_req   => buf_write_req,
@@ -214,7 +187,6 @@ begin  -- default_arch
              clk         => clk,
              reset       => reset);
   
-	end generate ulbImplGen; 
        end generate interlockBuf;
      end generate NoFlowThrough;
 end default_arch;

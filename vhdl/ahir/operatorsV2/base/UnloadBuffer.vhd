@@ -71,6 +71,10 @@ entity UnloadBuffer is
 			bypass_flag : boolean := false; 
 			-- self-explanatory.
 			nonblocking_read_flag : boolean := false;
+			-- PHI statements are special and need the
+			-- safe mode of operation (see UnloadBufferRevisedSafe
+			-- for more on this..).
+			use_safe_mode: boolean := false;
 			-- if false use new revised version of the unload buffer (revised)
 			-- which does not need an unload-register.
 			use_unload_register: boolean := true);
@@ -124,20 +128,26 @@ architecture default_arch of UnloadBuffer is
 
   constant shallow_flag : boolean :=    (buffer_size < global_pipe_shallowness_threshold);
 
-  constant revised_case_blocking: boolean :=  
-		global_use_optimized_unload_buffer and
-			(buffer_size > 1) and (not bypass_flag) and shallow_flag and
-				(not nonblocking_read_flag);
-		-- ((buffer_size > 0) 
-			-- and (bypass_flag or (buffer_size > 1))
-                        -- and shallow_flag 
-			-- and (not use_unload_register) 
-			-- and (not nonblocking_read_flag));
+  constant revised_case_blocking: boolean := 
+		((buffer_size > 0) 
+			-- in safe mode, no bypass is allowed!
+			and (not (use_safe_mode and bypass_flag))    -- no bypass in safe mode....
+			-- in safe mode, at queue depth is > 1.
+			and (not (use_safe_mode and (buffer_size < 2)))    -- buffer size >= 2 in safe mode.
+			-- why is this here??
+			and (bypass_flag or (buffer_size > 1))       -- bypass or deeper than 1
+			-- OK shallow
+                        and shallow_flag
+								     -- technically doable with non-shallow...
+							             -- in non-safe mode..
+			and (not use_unload_register) 
+			and (not nonblocking_read_flag));
 
   constant revised_case_non_blocking: boolean := 
 		global_use_optimized_unload_buffer and
-			((buffer_size > 1) and (not bypass_flag) and
-				 shallow_flag and  nonblocking_read_flag);
+			((buffer_size > 1) and (not bypass_flag) 
+				and shallow_flag 		-- technically doable with non-shallow
+					and  nonblocking_read_flag);
 
 
   constant un_revised_case: boolean :=  (not revised_case_blocking) and 
@@ -149,11 +159,31 @@ begin  -- default_arch
 
   RevisedCaseBlocking: if revised_case_blocking generate
 
-         assert false report "ULB REVISED BLOCKING  " & name & ":" & Convert_To_String(data_width*buffer_size) 
+
+        fastMode: if (not use_safe_mode) generate 
+           assert false report "ULB REVISED BLOCKING  " & name & ":" & Convert_To_String(data_width*buffer_size) 
+			severity note;
+	   ulb_revised: UnloadBufferRevised
+			generic map (name => name & "-revised",
+					buffer_size => buffer_size, data_width => data_width,
+						bypass_flag => bypass_flag)
+			port map (
+				write_req  => write_req,
+				write_ack  => write_ack,
+				unload_req => unload_req,
+				unload_ack => unload_ack,
+				write_data => write_data,
+				read_data  => read_data, 
+				has_data   => has_data,
+				clk => clk, reset => reset);
+         end generate fastMode;
+
+        safeMode: if (use_safe_mode) generate 
+           assert false report "ULB REVISED SAFE  " & name & ":" & Convert_To_String(data_width*buffer_size) 
 			severity note;
 
-	ulb_revised: UnloadBufferRevised
-			generic map (name => name & "-revised",
+	   ulb_revised_safe: UnloadBufferRevisedSafe
+			generic map (name => name & "-revised-safe",
 					buffer_size => buffer_size, data_width => data_width)
 			port map (
 				write_req => write_req,
@@ -164,6 +194,8 @@ begin  -- default_arch
 				read_data => read_data, 
 				has_data => has_data,
 				clk => clk, reset => reset);
+         end generate safeMode;
+
   end generate RevisedCaseBlocking;
 
   RevisedCaseNonblocking: if revised_case_non_blocking generate

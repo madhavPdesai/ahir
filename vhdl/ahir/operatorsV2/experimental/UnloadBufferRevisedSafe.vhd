@@ -47,27 +47,25 @@ use ahir.GlobalConstants.all;
 --  
 --
 -- A more "optimized" version of the old UnloadBuffer.
--- tries to avoid the use of an extra register.  
+-- tries to avoid the use of an extra register.  Use
+-- when buffer-size > 1.
 --  
--- Implements the following invariant.
---   read_data updated by an unload_ack is
---   maintained until the next unload_req
---   is asserted.
+-- This implements the following invariant.
+--   Output read_data is updated at the same
+--   instant that unload_ack is asserted, and
+--   the read_data is maintained until the next
+--   unload_ack!   
 --
--- Sufficient for normal producer->consumer links.
+-- This is required for correct operation of
+-- PHI scheduling...
 --
--- This should not be used inside interlock buffers
--- associated with a PHI statement, because RAW
--- and WAR are suppressed in PHI statement blocks.
+-- Correct but slow.
 --
---
-entity UnloadBufferRevised is
+entity UnloadBufferRevisedSafe is
 
   generic (name: string; 
 		buffer_size: integer ; 
-		data_width : integer ; 
-		bypass_flag: boolean );
-
+		data_width : integer ); 
   port ( write_req: in std_logic;
         write_ack: out std_logic;
         write_data: in std_logic_vector(data_width-1 downto 0);
@@ -78,9 +76,9 @@ entity UnloadBufferRevised is
         clk : in std_logic;
         reset: in std_logic);
 
-end UnloadBufferRevised;
+end UnloadBufferRevisedSafe;
 
-architecture default_arch of UnloadBufferRevised is
+architecture default_arch of UnloadBufferRevisedSafe is
 
   signal pop_req, pop_ack, push_req, push_ack: std_logic_vector(0 downto 0);
 
@@ -91,7 +89,7 @@ architecture default_arch of UnloadBufferRevised is
   signal write_to_pipe: boolean;
   signal unload_from_pipe : boolean;
 
-  signal empty, full: std_logic;
+  signal empty, full, next_valid: std_logic;
   signal ufsm_write_req, ufsm_write_ack: std_logic;
   signal ufsm_bypass_write_req, ufsm_bypass_write_ack: std_logic;
 
@@ -99,15 +97,18 @@ architecture default_arch of UnloadBufferRevised is
 --##decl_synopsys_sync_set_reset##
 begin  -- default_arch
 
-	ufsm_write_data <= pipe_data_out;
+	-- To avoid a U getting into the logic...
+	--  Badly broken see note above.
+	ufsm_write_data <= pipe_data_out when (pop_ack(0) = '1') else (others => '0');
 	ufsm_write_req  <= pop_ack(0);
 	pop_req(0) <= ufsm_write_ack;
 
 	push_req(0) <= write_req;
 	write_ack   <= push_ack(0);
 
-	ufsm: UnloadFsm generic map (name => name & ":ufsm", data_width => data_width)
+	ufsm: UnloadFsmSafe generic map (name => name & ":ufsm", data_width => data_width)
 		port map (
+			   next_valid => next_valid,
 			   write_req => ufsm_write_req,
 			   write_ack => ufsm_write_ack,
 			   unload_req => unload_req,
@@ -120,10 +121,9 @@ begin  -- default_arch
   	has_data <= '1' when pipe_has_data else '0';
 
 
-  	bufPipe : QueueBaseWithEmptyFull generic map (
+  	bufPipe : QueueBaseWithEmptyFullNext generic map (
         	name =>  name & "-blocking_read-bufPipe",
         	data_width => data_width,
-		reverse_bypass_flag => bypass_flag,
         	queue_depth      => buffer_size)
       	port map (
         	pop_req   => pop_req(0),
@@ -134,6 +134,7 @@ begin  -- default_arch
         	data_in => write_data,
 		empty => empty,
 		full => full,
+                next_valid => next_valid,
         	clk        => clk,
         	reset      => reset);
 

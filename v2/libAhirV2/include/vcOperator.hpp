@@ -512,6 +512,7 @@ public:
 class vcInterlockBuffer: public vcSplitOperator
 {
   bool _cut_through;
+  bool _in_phi;
 
   public:
   vcInterlockBuffer(string id, vcWire* x, vcWire* z);
@@ -525,6 +526,9 @@ class vcInterlockBuffer: public vcSplitOperator
 
   virtual void Set_Cut_Through(bool v) {_cut_through = v;}
   bool Get_Cut_Through() {return(_cut_through);}
+
+  virtual void Set_In_Phi(bool v) {_in_phi = v;}
+  bool Get_In_Phi() {return(_in_phi);}
 
   // combinational operator..
   virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);
