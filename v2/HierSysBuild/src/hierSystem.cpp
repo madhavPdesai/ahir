@@ -375,7 +375,8 @@ void hierSystemInstance::Set_Default_Clock(string clk_id)
 	bool actual_is_input = (parent->Get_Input_Pipe_Width(clk_id) > 0);
 	bool actual_is_null  = (clk_id == "$null");
 
-	if(actual_is_null || (actual_is_clock && actual_is_input))
+	//if(actual_is_null || (actual_is_clock && actual_is_input))
+	if(actual_is_null || actual_is_clock)
 	{
 		this->_default_clock = clk_id;
 		if(!actual_is_null)
@@ -397,7 +398,8 @@ void hierSystemInstance::Set_Default_Reset(string reset_id)
 	bool actual_is_input = (parent->Get_Input_Pipe_Width(reset_id) > 0);
 	bool actual_is_null  = (reset_id == "$null");
 
-	if(actual_is_null || (actual_is_reset && actual_is_input))
+	//if(actual_is_null || (actual_is_reset && actual_is_input))
+	if(actual_is_null || actual_is_reset)
 	{
 		this->_default_reset = reset_id;
 		if(!actual_is_null)

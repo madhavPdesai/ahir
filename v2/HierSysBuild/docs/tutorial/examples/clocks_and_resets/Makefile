@@ -20,8 +20,6 @@ toplevel: hello_world.hsys
 	formatVhdlFiles.py  vhdl/
 	hierSys2C  -o aa2c Stage1/pipes.aa Stage2/pipes.aa Stage1/vhdl/Stage1.hsys Stage2/vhdl/Stage2.hsys hello_world.hsys
 
-partition:
-	hierSysPartition Stage1/pipes.aa Stage2/pipes.aa Stage1/vhdl/Stage1.hsys Stage2/vhdl/Stage2.hsys hello_world.hsys 
 
 # now build the C code.
 cmodel:
@@ -54,6 +52,8 @@ vhdlsim:
 
 clean: 
 	rm -rf Stage1/vhdl/* Stage1/aa2c/* Stage2/vhdl/* Stage2/aa2c/* objhw/ objsw/ ./bin/* vhdl/* *.o *.cf *.log top_test_bench *.ghw
+	rm -rf Stage1/*.log Stage2/*.log
+	rm -rf vhdlCStubs* Stage1/vhdlCStubs* Stage2/vhdlCStubs*
 
 
 PHONY: all clean	

@@ -65,7 +65,7 @@ is supposed to be compiled into the library sysmem\_library.
 
 \frame[containsverbatim]{\frametitle{Hierarchy}
 
-A 4-stage shift register constructed out of two simpler
+A 4-stage shift register is constructed out of two simpler
 2-stage shift registers.
 \begin{verbatim}
 $system shift_reg_4 $library shiftreg_library
@@ -258,12 +258,79 @@ $system shift_reg_4 $library shiftreg_library
 
 }
 
-\frame[containsverbatim]{\frametitle{Using RTL State Machine: example shift\_reg\_4\_rtl}
+\frame[containsverbatim]{\frametitle{Using RTL State Machines: example shift\_reg\_4\_rtl}
 \begin{itemize}
 \item Essentially the same as shift\_reg\_4 example, but without aa2c simulation setup.
 \item Examine the build and make files to see the differences.
 \item Note: only VHDL sim verificationis supported for now.
 \end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{Clocks and resets}
+\begin{itemize}
+\item By default, each block in the system operates on 
+clock {\em clk} and reset {\em reset}.  The reset is
+active high and synchronized to {\em clk}.
+\item It is possible to define alternative clock and
+reset signals used in a system.
+\item It is possible to map one of these alternative clocks
+and resets to the default clock/reset on a subsystem instance.
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{Declaring clock-like and reset-like signals}
+\begin{verbatim}
+$system Top $library TopLib
+   $in
+     $pipe A
+     $signal $clk EXTCLK 1 $depth 1
+     $signal $reset EXTRESET 1 $depth 1
+   $out
+     $pipe B
+{
+}
+\end{verbatim}
+Here, we are stating that the input signal EXTCLK is clock-like
+and the input signal RESET is reset-like.
+}
+
+\frame[containsverbatim]{\frametitle{Using clock-like and reset-like signals}
+\begin{verbatim}
+// ... as above ... 
+{
+ $pipe TMP $clk => EXTCLK $reset =>  EXTRESET
+ $instance i0  S1:Stage1
+         ..
+         $clk => EXTCLK
+         $reset => EXTRESET
+
+ $instance i1  S2:Stage2
+         ...
+         $clk => EXTCLK
+         $reset => EXTRESET
+
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{Using clock-like and reset-like signals}
+\begin{itemize}
+\item We have declared EXTCLK as clock-like and EXTRESET as reset-like.
+\item Pipe TMP and instance i0 will operate with EXTCLK connected
+to their default clock input and EXTRESET connected to their default
+reset input.
+\item We have generated a local clock EXTCLK\_REPEATED using an
+RTL machine.
+\item Instance i0 will operate with EXTCLK\_REPEATED connected
+to its default clock input and EXTRESET connected to its default
+reset input.
+\item Only a clock-like signal can be mapped to the default clock.
+\item Only a reset-like signal can be mapped to the default reset.
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{Example: using clock-like and reset-like signals}
+See the example clocks\_and\_resets.
+
 }
 
 \frame[containsverbatim]{\frametitle{Summary}

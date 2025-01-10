@@ -1,0 +1,2 @@
+$pipe  A: $uint<32>  
+$pipe TMP: $uint<32>

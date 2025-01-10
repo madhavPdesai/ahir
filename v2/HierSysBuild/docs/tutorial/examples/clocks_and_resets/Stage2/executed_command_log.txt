@@ -1,0 +1,334 @@
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/examples/hierSysTest/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/v2/HierSysBuild/docs/tutorial/examples/clocks_and_resets/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/v2/HierSysBuild/docs/tutorial/examples/clocks_and_resets/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/v2/HierSysBuild/docs/tutorial/examples/clocks_and_resets/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/v2/HierSysBuild/docs/tutorial/examples/clocks_and_resets/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/v2/HierSysBuild/docs/tutorial/examples/clocks_and_resets/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
+rm -rf /home/madhav/AHIR/gitHub/ahir/v2/HierSysBuild/docs/tutorial/examples/clocks_and_resets/Stage2/./.objhw/*
+rm -rf /home/madhav/AHIR/gitHub/ahir/v2/HierSysBuild/docs/tutorial/examples/clocks_and_resets/Stage2/./.Aa//*
+AaLinkExtMem -I 1 -E default_mem_pool  pipes.aa  stage2.aa  > ./.Aa//.linked.uaa
+vcFormat < ./.Aa//.linked.uaa > ./.Aa//linked.aa
+AaOpt -I mempool  ./.Aa//linked.aa > ./.Aa//.linked.opt.uaa
+vcFormat < ./.Aa//.linked.opt.uaa > ./.Aa//linked.opt.aa
+rm -rf /home/madhav/AHIR/gitHub/ahir/v2/HierSysBuild/docs/tutorial/examples/clocks_and_resets/Stage2/./aa2c/*
+Aa2C -o aa2c -P S2_Stage2_  -T stage_2_daemon ./.Aa//linked.opt.aa
+indent -orig aa2c/*.h
+indent -orig aa2c/*.c
+rm -rf /home/madhav/AHIR/gitHub/ahir/v2/HierSysBuild/docs/tutorial/examples/clocks_and_resets/Stage2/./.vC//*
+Aa2VC -I mempool -O -C  -P ./.Aa//linked.opt.aa  > ./.vC//.Stage2.uvc
+vcFormat < ./.vC//.Stage2.uvc > ./.vC//Stage2.vc
+rm -rf /home/madhav/AHIR/gitHub/ahir/v2/HierSysBuild/docs/tutorial/examples/clocks_and_resets/Stage2/./vhdl/*
+vc2vhdl -H -a -C -O -e Stage2 -w -s ghdl -W S2 -T stage_2_daemon -f ../.vC/Stage2.vc
+vhdlFormat < Stage2_global_package.unformatted_vhdl > S2/Stage2.vhdl
+rm -f Stage2_global_package.unformatted_vhdl
+vhdlFormat < Stage2.unformatted_vhdl >> S2/Stage2.vhdl
+rm -f Stage2.unformatted_vhdl
+vhdlFormat < Stage2_test_bench.unformatted_vhdl >> testbench/Stage2_test_bench.vhdl
+rm -f Stage2_test_bench.unformatted_vhdl
