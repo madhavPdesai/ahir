@@ -1,0 +1,9 @@
+$module [stage_2_daemon] $in () $out () $is
+{
+	$branchblock[lOoP] {
+		$merge $entry loopback $endmerge
+			x := TMP
+			B := x	
+		$place [loopback]
+	}
+}

@@ -7,28 +7,36 @@ $system Top  $library TopLib
 		$pipe B
 {
 
-	$signal $clk EXTCLK_BAR 1 $depth 1
+	// This is declared as a clock-like signal..
+	$signal $clk EXTCLK_REPEATED 1 $depth 1
 
+	// The pipe TMP uses EXTCLK as the clock
+	// and EXTRESET as the reset.
 	$pipe TMP $clk => EXTCLK $reset =>  EXTRESET 
+
+	// Stage 1 operates with EXTCLK, EXTRESET
+	//  as clock and reset.
         $instance i0  S1:Stage1 
 		$clk => EXTCLK
 		$reset => EXTRESET
 
+	// Stage 1 operates with EXTCLK_REPEATED, EXTRESET
+	//  as clock and reset.
         $instance i1  S2:Stage2 
-		$clk => EXTCLK_BAR
+		$clk => EXTCLK_REPEATED
 		$reset => EXTRESET
 
-	$thread invertClock
+	$thread replicateClock
 		$in  $signal  A: $unsigned<1>
 		$out $signal  B: $unsigned<1>
 	$default
-		B := (~ A)
+		B := A
 	<rst_state> {
 		$goto rst_state }
 	$now $tick
 
 
-	$string iClkInst:  invertClock
+	$string clkInst:  replicateClock
 		A => EXTCLK
-		B => EXTCLK_BAR
+		B => EXTCLK_REPEATED
 }

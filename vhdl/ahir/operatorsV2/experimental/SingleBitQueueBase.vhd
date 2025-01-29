@@ -138,6 +138,7 @@ begin  -- SimModel
       variable qsize : unsigned ((Ceil_Log2(queue_depth+1))-1 downto 0);
       variable push,pop : boolean;
       variable next_read_ptr,next_write_ptr : std_logic_vector(queue_depth-1 downto 0);
+      variable init_pointer_var: std_logic_vector(queue_depth -1 downto 0);
     begin
 
       qsize := queue_size;
@@ -163,6 +164,9 @@ begin  -- SimModel
           next_read_ptr := incr_read_pointer;
       end if;
   
+      -- HACK FOR SYNOPSYS W^#^U#&! DC
+      init_pointer_var := (others => '0');  -- Initialize the entire vector to '0'
+      init_pointer_var(0) := '1';
   
       -- queue size modified only in non-bypass case
       if(pop and (not push)) then
@@ -176,8 +180,8 @@ begin  -- SimModel
         
 	if(reset = '1') then
            queue_size <= (others => '0');
-           read_pointer <= (0 => '1', others => '0');
-           write_pointer <= (0 => '1', others => '0');
+           read_pointer <= init_pointer_var;
+           write_pointer <= init_pointer_var;
            queue_vector <= (others => '0'); -- initially 0.
 	else
            if(push) then
