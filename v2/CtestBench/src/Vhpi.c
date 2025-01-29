@@ -179,7 +179,7 @@ int Copy_Value(char* dest, char* src, int width)
 
   int ret_val = 0;
 
-  char src_buf[4096];
+  char src_buf[MAX_BUF_SIZE];
   int src_width = 0;
 
   // skip spaces
@@ -219,7 +219,10 @@ void Delete_Port(Port* port)
   if(port != NULL)
     {
       if(port->port_value)
+      {
 	free(port->port_value);
+	port->port_value = NULL;
+      }
       
       free(port);
     }
@@ -227,11 +230,14 @@ void Delete_Port(Port* port)
 
 void Delete_JobLink(JobLink* top)
 {
-  if(top->name)
-    free(top->name);
 
   Delete_Port(top->req_port);
+  top->req_port = NULL;
+
   Delete_Port(top->ack_port);
+  top->ack_port = NULL;
+  
+
 
 
   PortLink* nextplink = NULL;
@@ -240,6 +246,7 @@ void Delete_JobLink(JobLink* top)
     {
       nextplink = plink->next;
       Delete_Port(plink->port);
+      plink->port = NULL;
       free(plink);
       
       plink = nextplink;
@@ -252,11 +259,21 @@ void Delete_JobLink(JobLink* top)
     {
       nextplink = plink->next;
       Delete_Port(plink->port);
+      plink->port = NULL;
       free(plink);
       
       plink = nextplink;
     }
   top->outports.head = top->outports.tail = NULL;
+
+  if(top->name)
+  {
+    free(top->name);
+    top->name = NULL;
+  }
+  else
+	assert(0);
+
   free(top);
 }
 
@@ -718,7 +735,7 @@ void  Vhpi_Send()
 
 void  Vhpi_Listen()
 {
-  char payload[4096];
+  char payload[MAX_BUF_SIZE];
   int payload_length;
 
   vhpi_cycle_count++;
@@ -1076,7 +1093,7 @@ void   Modelsim_FLI_Send()
 void Modelsim_FLI_Set_Port_Value(mtiVariableIdT reg_id, mtiVariableIdT reg_val_id, int reg_width)
 {
   char name_buffer[4096];
-  char val_buffer[4096];
+  char val_buffer[MAX_BUF_SIZE];
 
   Modelsim_FLI_To_String(name_buffer,reg_id);
   Modelsim_FLI_To_String(val_buffer,reg_val_id);
@@ -1087,7 +1104,7 @@ void Modelsim_FLI_Set_Port_Value(mtiVariableIdT reg_id, mtiVariableIdT reg_val_i
 void Modelsim_FLI_Get_Port_Value(mtiVariableIdT reg_id, mtiVariableIdT reg_val_id, int reg_width)
 {
   char name_buffer[4096];
-  char val_buffer[4096];
+  char val_buffer[MAX_BUF_SIZE];
   
   Modelsim_FLI_To_String(name_buffer,reg_id);
  
@@ -1127,7 +1144,7 @@ void String_To_Modelsim_FLI(mtiVariableIdT vsim_str, char* from_string)
 
 void Modelsim_FLI_Log(mtiVariableIdT vsim_str)
 {
-	char message_buffer[4096];
+	char message_buffer[MAX_BUF_SIZE];
   	Modelsim_FLI_To_String(message_buffer,vsim_str);
 	Vhpi_Log(message_buffer);
 }

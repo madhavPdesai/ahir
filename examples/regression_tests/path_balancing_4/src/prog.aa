@@ -1,0 +1,23 @@
+$pipe in_op  : $uint<8> $depth 2
+$pipe in_data: $uint<32> $depth 2
+$pipe out_data: $uint<32> $depth 2
+
+
+
+$module [check_daemon] $in() $out () $is
+{
+	$branchblock[lOoP] 
+	{
+		$dopipeline $depth 7 $buffering 2 $fullrate
+		$merge $entry $loopback $endmerge
+		op_code := in_op 
+		$volatile get_data := (op_code [] 0)
+		$guard (get_data)
+			data := in_data
+
+		$volatile odata := ($mux (op_code [] 0) data (data + 1))
+
+		out_data := odata
+		$while 1
+	}
+}
