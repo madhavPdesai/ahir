@@ -1,6 +1,6 @@
 AA=./v2/Ahir-asm/devel
 VC=./v2/libAhirV2
-LLVM2AA=./v2/llvmbc2Aa/
+#LLVM2AA=./v2/llvmbc2Aa/
 HIERSYSBUILD=./v2/HierSysBuild/
 RELEASE=./release
 IOLIB=./v2/iolib/
@@ -33,7 +33,7 @@ Release:
 	cp -f $(VC)/bin/vcFormat $(RELEASE)/bin/
 	cp -f $(VC)/bin/vcParse $(RELEASE)/bin/
 	cp -f $(VC)/bin/vhdlFormat $(RELEASE)/bin/
-	cp -f $(LLVM2AA)/bin/llvm2aa $(RELEASE)/bin/
+	#cp -f $(LLVM2AA)/bin/llvm2aa $(RELEASE)/bin/
 	cp -f $(HIERSYSBUILD)/bin/hierSys2Vhdl $(RELEASE)/bin/
 	cp -f $(HIERSYSBUILD)/bin/hierSys2C $(RELEASE)/bin/
 	cp -f $(HIERSYSBUILD)/bin/hierSysPartition $(RELEASE)/bin/
@@ -86,7 +86,7 @@ Release:
 	cp -f ./Documents/AhirV2/AhirV2.pdf $(RELEASE)/docs/pdf/Overview.pdf
 	cp -f $(AA)/docs/*.pdf $(RELEASE)/docs/pdf/
 	cp -f $(AA)/docs/*.html $(RELEASE)/docs/html/
-	cp -f $(LLVM2AA)/docs/llvm2aa.pdf $(RELEASE)/docs/pdf/
+	#cp -f $(LLVM2AA)/docs/llvm2aa.pdf $(RELEASE)/docs/pdf/
 	cp -f $(CTESTBENCH)/docs/*.pdf $(RELEASE)/docs/pdf/
 	# scripts
 	cp -f $(SCRIPTS)/ghdlSanitize.sh $(RELEASE)/bin/
@@ -103,7 +103,7 @@ Clean:
 	rm -f $(RELEASE)/bin/Aa*
 	rm -f $(RELEASE)/bin/vc*
 	rm -f $(RELEASE)/bin/vhdlFormat
-	rm -f $(RELEASE)/bin/llvm2aa
+	#rm -f $(RELEASE)/bin/llvm2aa
 	rm -f $(RELEASE)/bin/hierSys2Vhdl
 	# rm the IOLIB
 	#rm -f $(RELEASE)/iolib/include/*.h

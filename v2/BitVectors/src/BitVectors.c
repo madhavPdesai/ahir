@@ -33,6 +33,7 @@
 #include <BitVectors.h>
 #include <string.h>
 #include <inttypes.h>
+#include <pthread.h>
 #include <Pipes.h>
 #include <SockPipes.h>
 

@@ -78,101 +78,113 @@ architecture behave of SynchLifo is
 begin  -- SimModel
   assert (queue_size < queue_depth) report "LIFO " & name & " is full." severity note;
 
-  full_sig  <= '1' when (queue_size = queue_depth) else '0';
-  empty_sig <= '1' when (queue_size = 0) else '0';
-  nearly_empty_sig <= '1' when (queue_size = 1) else '0';
-  nearly_full <= '1' when (queue_size = (queue_depth-1)) else '0';
+  trivGen: if (queue_depth = 0) generate
+
+	push_ack <= pop_req;
+	pop_ack  <= push_req;
+	data_out <= data_in;
+	nearly_full <= '0';	
+	assert false report "LIFO depth must be > 0 " severity error;
+
+  end generate trivGen;
+
+  nontrivGen: if (queue_depth > 0) generate
+
+    full_sig  <= '1' when (queue_size = queue_depth) else '0';
+    empty_sig <= '1' when (queue_size = 0) else '0';
+    nearly_empty_sig <= '1' when (queue_size = 1) else '0';
+    nearly_full <= '1' when (queue_size = (queue_depth-1)) else '0';
 
 
-  -- single process
-  process(clk,reset,
-          empty_sig,
-          full_sig,
-          queue_size,
-          push_req,
-          pop_req, pop_req_int,
-          tos_pointer,
-          write_pointer)
-    variable qsize : integer range 0 to queue_depth;
-    variable push,pop,bypass : boolean;
-    variable next_tos_ptr, next_write_ptr : integer range 0 to queue_depth-1;
-  begin
-    qsize := queue_size;
-    push  := false;
-    pop   := false;
-    next_tos_ptr := tos_pointer;
-    next_write_ptr := write_pointer;
-    
-    if((queue_size < queue_depth) and push_req = '1') then
-      push := true;
-    end if;
-
-    if((queue_size > 0) and pop_req_int = '1') then
-      pop := true;
-    end if;
-
-    bypass := push and pop;
-    
-    if push and (not pop) then
-      -- increment write pointer and tos-pointer.
-      next_write_ptr := Incr(write_pointer,queue_depth-1);
-      if(queue_size > 0) then
-        next_tos_ptr := Incr(tos_pointer,queue_depth-1);
-      else
-        next_tos_ptr := 0;
-      end if;
-      qsize := queue_size + 1;      
-    elsif pop and (not push) then
-      if(write_pointer > 0) then
-      	next_write_ptr := write_pointer-1;
-      else
-	-- if write-ptr is 0, it must have wrapped around
-        -- in the increment function.
-	next_write_ptr := queue_depth - 1;
-      end if;
-
-      if(tos_pointer > 0) then
-        next_tos_ptr := tos_pointer - 1;
-      else
-        next_tos_ptr := 0;
-      end if;
-      qsize := queue_size - 1;            
-    end if;
-    
-    if(clk'event and clk = '1') then
+    -- single process
+    process(clk,reset,
+            empty_sig,
+            full_sig,
+            queue_size,
+            push_req,
+            pop_req, pop_req_int,
+            tos_pointer,
+            write_pointer)
+      variable qsize : integer range 0 to queue_depth;
+      variable push,pop,bypass : boolean;
+      variable next_tos_ptr, next_write_ptr : integer range 0 to queue_depth-1;
+    begin
+      qsize := queue_size;
+      push  := false;
+      pop   := false;
+      next_tos_ptr := tos_pointer;
+      next_write_ptr := write_pointer;
       
-      if(reset = '1') then
-	queue_size <= 0;
-        tos_pointer <= 0;
-        write_pointer <= 0;
-        select_bypass <= '0';
-      else
-        queue_size <= qsize;
-        tos_pointer <= next_tos_ptr;
-        write_pointer <= next_write_ptr;
+      if((queue_size < queue_depth) and push_req = '1') then
+        push := true;
       end if;
-
-      if(bypass) then
-        select_bypass <= '1';
-        bypass_reg <= data_in;
-      elsif push then
-        queue_array(write_pointer) <= data_in;
-        select_bypass <= '1';
-        bypass_reg <= data_in;
-      elsif pop then
-        select_bypass <= '0';        
-	if(tos_pointer > 0) then
-        	mem_out_reg <= queue_array(tos_pointer-1);        
-	end if;
-      end if;
-    end if;  
-  end process;
-
-  push_ack <= not full_sig;
-  pop_ack  <= not empty_sig;
-  pop_req_int <= pop_req;
-  data_out <= bypass_reg when select_bypass = '1' else mem_out_reg;
   
+      if((queue_size > 0) and pop_req_int = '1') then
+        pop := true;
+      end if;
+
+      bypass := push and pop;
+    
+      if push and (not pop) then
+        -- increment write pointer and tos-pointer.
+        next_write_ptr := Incr(write_pointer,queue_depth-1);
+        if(queue_size > 0) then
+          next_tos_ptr := Incr(tos_pointer,queue_depth-1);
+        else
+          next_tos_ptr := 0;
+        end if;
+        qsize := queue_size + 1;      
+      elsif pop and (not push) then
+        if(write_pointer > 0) then
+      	  next_write_ptr := write_pointer-1;
+        else
+	  -- if write-ptr is 0, it must have wrapped around
+          -- in the increment function.
+	  next_write_ptr := queue_depth - 1;
+        end if;
+  
+        if(tos_pointer > 0) then
+          next_tos_ptr := tos_pointer - 1;
+        else
+          next_tos_ptr := 0;
+        end if;
+        qsize := queue_size - 1;            
+      end if;
+      
+      if(clk'event and clk = '1') then
+        if(reset = '1') then
+	  queue_size <= 0;
+          tos_pointer <= 0;
+          write_pointer <= 0;
+          select_bypass <= '0';
+        else
+          queue_size <= qsize;
+          tos_pointer <= next_tos_ptr;
+          write_pointer <= next_write_ptr;
+        end if;
+  
+        if(bypass) then
+          select_bypass <= '1';
+          bypass_reg <= data_in;
+        elsif push then
+          queue_array(write_pointer) <= data_in;
+          select_bypass <= '1';
+          bypass_reg <= data_in;
+        elsif pop then
+          select_bypass <= '0';        
+	  if(tos_pointer > 0) then
+        	  mem_out_reg <= queue_array(tos_pointer-1);        
+	  end if;
+        end if;
+      end if;  
+    end process;
+  
+    push_ack <= not full_sig;
+    pop_ack  <= not empty_sig;
+    pop_req_int <= pop_req;
+    data_out <= bypass_reg when select_bypass = '1' else mem_out_reg;
+
+  end generate nonTrivGen; 
 end behave;
 
 

@@ -1,5 +1,6 @@
 SConscript(['Value/SConscript'])
-SConscript(['iolib/SConscript', 'llvmbc2Aa/SConscript', 'libAhirV2/SConscript','Ahir-asm/devel/SConscript'])
+SConscript(['iolib/SConscript',  'libAhirV2/SConscript','Ahir-asm/devel/SConscript'])
+#SConscript([ 'llvmbc2Aa/SConscript'])
 SConscript(['CtestBench/SConscript'])
 SConscript(['pipeHandler/SConscript'])
 SConscript(['functionLibrary/SConscript'])

@@ -28,6 +28,7 @@
 // ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 // TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+#include <pthread.h>
 #include <BitVectors.h>
 	
 void check_error(bit_vector* c, uint64_t A, uint64_t B, char* op_string,  uint64_t expected,  int* ret_val, uint64_t bit_width)

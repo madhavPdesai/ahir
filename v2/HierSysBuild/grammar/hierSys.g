@@ -966,8 +966,10 @@ aA_Integer_Parameter_Expression[map<string, int>& global_parameter_map]  returns
 				line_number = sid->getLine();
 				if(iter == global_parameter_map.end())
 				{
-					cout << "Error: parameter " << sid->getText() << " not found (line " << line_number 
+					cerr << "Error: parameter " << sid->getText() << " not found, returning 0 (line " << line_number 
 						<< ")" << endl;	
+					expr_value = 0;
+					assert(0);
 				}
 				else
 				{

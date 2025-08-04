@@ -4,7 +4,7 @@ AHIR_RELEASE=os.environ['AHIR_RELEASE']
 
 env.Append(CPPPATH = './src/:./include/:../CtestBench/include:../pipeHandler/include:')
 env.Library('lib/libBitVectors', Glob('src/*.c'), CCFLAGS='-g ')
-env.Program('bin/test_bit_vectors','util/test_bit_vectors.c',CCFLAGS='-g',LINKFLAGS='-g', LIBS=['BitVectors', 'SockPipes', 'PipeHandler', 'pthread' ], LIBPATH=['./lib',  '../BitVectors/lib', '../pipeHandler/lib', '../CtestBench/lib/' ])
+env.Program('bin/test_bit_vectors','util/test_bit_vectors.c',CCFLAGS='-g',LINKFLAGS='-g', LIBS=[ 'pthread', 'BitVectors', 'SockPipes', 'PipeHandler', 'pthread' ], LIBPATH=['./lib',  '../BitVectors/lib', '../pipeHandler/lib', '../CtestBench/lib/', '/usr/lib' ])
 
 
 

@@ -189,7 +189,7 @@ begin  -- default_arch
           reset    => reset);
      end generate saveSlot;
 
-     notSaveSlot: if ((not save_slot) and (not bypass)) or (depth = 0) generate
+     notSaveSlot: if ((not lifo_mode) and (((not save_slot) and (not bypass)) or (depth = 0))) generate
 
       queue : QueueBase generic map (	
         name => name & "-queue",	
@@ -206,7 +206,7 @@ begin  -- default_arch
           reset    => reset);
      end generate notSaveSlot;
 
-     bypassCase: if (not save_slot) and bypass and (depth > 0) generate
+     bypassCase: if ((not lifo_mode) and ((not save_slot) and bypass and (depth > 0))) generate
 
       queue : QueueWithBypass generic map (	
         name => name & "-queue",	

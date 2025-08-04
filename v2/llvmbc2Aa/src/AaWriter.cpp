@@ -30,7 +30,7 @@
 // SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
 #include <llvm/Constants.h>
 #include <llvm/Function.h>
-#include <llvm/Target/TargetData.h>
+//#include <llvm/Target/TargetData.h>
 #include <llvm/User.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/CFG.h>
