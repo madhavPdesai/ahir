@@ -261,6 +261,7 @@ uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int pipe
 uint32_t register_port(char* id, int pipe_width, int is_input)
 {
 	register_signal(id, pipe_width);
+    return -1;
 }
 
 uint32_t register_signal(char* id, int pipe_width)

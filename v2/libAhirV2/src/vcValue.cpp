@@ -486,6 +486,7 @@ vcArrayValue& vcArrayValue::operator=( vcArrayValue& v)
   this->_value_array.clear();
   for(int idx = 0; idx < v.Get_Number_Of_Values(); idx++)
     this->_value_array.push_back(v[idx]);
+  return v;
 };
 
 vcType* vcArrayValue::Get_Element_Type()

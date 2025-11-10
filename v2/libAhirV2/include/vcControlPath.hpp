@@ -450,6 +450,8 @@ protected:
 public:
   vcCPBlock(vcCPBlock* parent, string id);
 
+  vector<vcCPElement*>& Get_Elements() { return _elements; }
+
   virtual void Set_Pipeline_Parent(vcCPBlock* cpb)
   {
 	  if(_pipeline_parent != NULL)
@@ -616,6 +618,9 @@ class vcTransitionMerge: public vcCPElement
 public:
   vcTransitionMerge(vcCPElement* prnt, string id);
 
+  vector<vcTransition*>& Get_In_Transitions() { return _in_transitions; }
+  vcTransition* Get_Out_Transition() { return _out_transition; }
+
   void Add_In_Transition(vcTransition* p) 
   {
     _in_transitions.push_back(p);
@@ -766,6 +771,12 @@ class vcLoopTerminator: public vcCPElement
 	vcCPElement* _exit_from_loop;
 
 	public:
+
+	vcCPElement* Get_Loop_Exit() { return _loop_exit; }
+	vcCPElement* Get_Loop_Taken() { return _loop_taken; }
+	vcCPElement* Get_Loop_Body() { return _loop_body; }
+	vcCPElement* Get_Loop_Back() { return _loop_back; }
+	vcCPElement* Get_Exit_From_Loop() { return _exit_from_loop; }
 
 	vcLoopTerminator(vcCPElement* prnt, string id):vcCPElement(prnt,id) 
 	{
@@ -951,6 +962,9 @@ class vcCPPipelinedLoopBody: public vcCPPipelinedForkBlock
 
 public:
 
+  vector<vcPhiSequencer*>& Get_Phi_Sequencers() { return _phi_sequencers; }
+  vector<vcTransitionMerge*>& Get_Transition_Merges() { return _transition_merges; }
+
   virtual string Kind() {return("vcCPPipelinedLoopBody");}
   vcCPPipelinedLoopBody(vcCPBlock* parent, string id);
 
@@ -1076,6 +1090,16 @@ class vcCPElementGroup: public vcRoot
   bool _bypass_flag;
 
 public:
+  bool Get_Has_Input_Transition() { return _has_input_transition; }
+  bool Get_Has_Output_Transition() { return _has_output_transition; }
+  bool Get_Is_Merge() { return _is_merge; }
+  bool Get_Is_Fork() { return _is_fork; }
+  vcTransition* Get_Input_Transition() { return _input_transition; }
+  vector<vcTransition*>& Get_Output_Transitions() { return _output_transitions; }
+  set<vcCPElementGroup*>& Get_Predecessors() { return _predecessors; }
+  set<vcCPElementGroup*>& Get_Marked_Predecessors() { return _marked_predecessors; }
+  set<vcCPElement*>& Get_Elements() { return _elements; }
+
   vcCPElementGroup(vcControlPath* cp):vcRoot()
   {
     _cp = cp;
@@ -1255,6 +1279,10 @@ protected:
 
 public:
   static int64_t _free_index;
+
+  set<vcCPElementGroup*, vcRoot_Compare>& Get_CPElement_Groups() { return _cpelement_groups; }
+  map<vcCPElement*, vcCPElementGroup*>& Get_CPElement_To_Group_Map() { return _cpelement_to_group_map; }
+  set<vcCPSimpleLoopBlock*>& Get_Simple_Loop_Blocks() { return _simple_loop_blocks; }
 
   vcControlPath(string id);
   virtual string Kind() {return("vcControlPath");}

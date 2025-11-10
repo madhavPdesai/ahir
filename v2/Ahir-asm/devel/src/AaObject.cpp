@@ -450,6 +450,7 @@ bool AaForeignStorageObject::Set_Addressed_Object_Representative(AaStorageObject
 		this->_addressed_object_representative = obj;
 		this->_addressed_objects.insert(obj);
 	}
+    return true;
 }
 
 //---------------------------------------------------------------------

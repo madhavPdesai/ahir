@@ -978,6 +978,7 @@ bool AaSimpleObjectReference::Is_Pipe_Read()
 	{
 		return(!this->Get_Is_Target());
 	}
+    return true;
 }
 
 bool AaSimpleObjectReference::Is_Pipe_Write()
@@ -988,6 +989,7 @@ bool AaSimpleObjectReference::Is_Pipe_Write()
 	{
 		return(this->Get_Is_Target());
 	}
+    return true;
 }
 
 //

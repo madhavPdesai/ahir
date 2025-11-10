@@ -99,6 +99,12 @@ class vcModule: public vcRoot
 
  public:
   vcModule(vcSystem* sys, string module_name);
+
+  vector<string>& Get_Ordered_Input_Arguments() { return _ordered_input_arguments; }
+  vector<string>& Get_Ordered_Output_Arguments() { return _ordered_output_arguments; }
+  map<string, vcWire*>& Get_Input_Arguments() { return _input_arguments; }
+  map<string, vcWire*>& Get_Output_Arguments() { return _output_arguments; }
+
   vcSystem* Get_Parent() {return(this->_parent);}
 
   virtual void Print(ostream& ofile);

@@ -1187,6 +1187,7 @@ bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObjec
 
 	this->AaExpression::Set_Addressed_Object_Representative(obj);
 
+    return true;
 }
 
 void AaSimpleObjectReference::Collect_Root_Sources(set<AaRoot*>& root_set)
@@ -2573,6 +2574,7 @@ bool AaArrayObjectReference::Set_Addressed_Object_Representative(AaStorageObject
 			obj->Add_Access_Width(((AaPointerType*)(this->_type))->Get_Ref_Type()->Size());
 	}
 	this->AaExpression::Set_Addressed_Object_Representative(obj);
+    return true;
 }
 
 void AaArrayObjectReference::Update_Type()

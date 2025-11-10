@@ -105,6 +105,7 @@ rtlValue* rtlUnsignedValue::Resize(int w)
 {
 	_type = Find_Or_Make_Unsigned_Type(w);
 	((Unsigned*)_value)->Resize(w);
+    return nullptr;
 }
 
 void rtlUnsignedValue::Not() 
@@ -230,6 +231,7 @@ rtlValue* rtlSignedValue::Resize(int w)
 {
 	_type = Find_Or_Make_Signed_Type(w);
 	((Signed*)_value)->Resize(w);
+    return nullptr;
 }
 
 void rtlSignedValue::Shr(rtlValue* other)
@@ -497,6 +499,7 @@ rtlValue* Perform_Binary_Operation(rtlOperation op, rtlValue* f, rtlValue* s)
 		default:
 			break;
 	}
+    return nullptr;
 }
 
 bool  Is_Zero(rtlValue* v)

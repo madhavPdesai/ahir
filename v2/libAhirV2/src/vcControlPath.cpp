@@ -2143,6 +2143,7 @@ bool vcCPSimpleLoopBlock::Check_Structure()
 {
 	// normal branch block related stuff.
 	this->vcCPBranchBlock::Check_Structure();
+    return true;
 }
 
 void vcCPSimpleLoopBlock::Update_Predecessor_Successor_Links()
@@ -4045,6 +4046,7 @@ bool vcControlPath::Check_Structure()
 		this->vcCPSeriesBlock::Check_Structure();
 
 	this->Construct_Reduced_Group_Graph();
+    return true;
 }
 
 void vcControlPath::Print_Compatibility_Labels(ostream& ofile)
@@ -4158,4 +4160,5 @@ bool vcControlPathPipelined::Check_Structure()
 {
 	this->vcCPSeriesBlock::Update_Predecessor_Successor_Links();
 	this->vcCPSeriesBlock::Check_Structure();
+    return true;
 }

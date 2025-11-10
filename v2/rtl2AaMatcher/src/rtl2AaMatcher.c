@@ -51,6 +51,7 @@ PipeMatcherRec* makePipeMatcher(const char* pipe_name, int pipe_width)
 	
 	ret_val->_state = _IDLE;
 	ret_val->_next = NULL;
+    return NULL;
 }
 
 
@@ -206,6 +207,7 @@ SignalMatcherRec* SignalMatcher(const char* signal_name, int signal_width)
 	pthread_mutex_init(&(ret_val->_lock_mutex), NULL);
 
 	ret_val->_next = NULL;
+    return NULL;
 }
 
 void setNextSignal(SignalMatcherRec* mrec, SignalMatcherRec* next)
@@ -282,5 +284,6 @@ SignalMatcherRec* makeSignalMatcher(const char* signal_name, int pipe_width)
 	pthread_mutex_init(&(ret_val->_lock_mutex), NULL);
 	
 	ret_val->_next = NULL;
+    return NULL;
 }
 

@@ -549,6 +549,8 @@ public:
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);
 
+  unsigned int Get_High_Index() { return _high_index; }
+  unsigned int Get_Low_Index() { return _low_index; }
 
   // combinational operator..
   virtual void Print_Flow_Through_VHDL(bool level_mode, ostream& ofile);

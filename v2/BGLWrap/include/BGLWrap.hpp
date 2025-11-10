@@ -185,6 +185,7 @@ class GraphBase
       {
         prec_order.push_back(this->_bgl_graph[reverse_prec_order[idx] ]._aa_rep);
       }
+    return true;
   }
 
   bool Strongly_Connected_Components (std::map<void*,int>& scc_map)
@@ -208,6 +209,7 @@ class GraphBase
     		std::cout << "Vertex " << i <<" is in component " << component[i] << std::endl;
 #endif
 	}
+    return true;
   }
 
   void Print(ostream& ofile)

@@ -850,6 +850,7 @@ void Signed::Swap(const Signed& v)
 Signed& Signed::operator=(const Signed v)
 {
 	this->Swap((Signed&) v);
+    return (Signed&) v;
 }
 
 Signed& Signed::operator=(Unsigned v)

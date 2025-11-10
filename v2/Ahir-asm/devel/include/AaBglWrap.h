@@ -185,6 +185,7 @@ class AaGraphBase
       {
 	prec_order.push_back(this->_bgl_graph[reverse_prec_order[idx] ]._aa_rep);
       }
+    return true;
   }
 
 };

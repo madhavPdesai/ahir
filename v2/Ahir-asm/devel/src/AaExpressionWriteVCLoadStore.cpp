@@ -1484,6 +1484,7 @@ string AaObjectReference::Get_VC_Memory_Space_Name()
 		AaStorageObject* so = ((AaExpression*)(this->_object))->Get_Addressed_Object_Representative();
 		return(so->Get_VC_Memory_Space_Name());
 	}
+    return "Unexpected end of AaObjectReference::Get_VC_Memory_Space_Name";
 }
 
 int AaObjectReference::Get_VC_Memory_Space_Index()
@@ -1499,6 +1500,7 @@ int AaObjectReference::Get_VC_Memory_Space_Index()
 		AaStorageObject* so = ((AaExpression*)(this->_object))->Get_Addressed_Object_Representative();
 		return(so->Get_Mem_Space_Index());
 	}
+    return -1;
 }
 
 // if the object reference is to an indexed expression..
@@ -1560,6 +1562,7 @@ string AaObjectReference::Get_VC_Base_Address_Name()
 	{
 		return(((AaObject*)(this->_object))->Get_VC_Name());
 	}
+    return "Unexpected end of AaObjectReference::Get_VC_Base_Address_Name";
 }
 
 string AaObjectReference::Get_VC_Offset_Scale_Factor_Name(int idx)
@@ -1761,6 +1764,7 @@ int AaPointerDereferenceExpression::Get_Word_Size()
 	{
 		AaRoot::Error("could not associate memory space with pointer ", this);
 	}
+    return -1;
 }
 
 int AaPointerDereferenceExpression::Get_Address_Width()
@@ -1774,6 +1778,7 @@ int AaPointerDereferenceExpression::Get_Address_Width()
 	{
 		AaRoot::Error("could not associate memory space with pointer ", this);
 	}
+    return -1;
 }
 
 int AaPointerDereferenceExpression::Get_Base_Address()

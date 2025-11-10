@@ -66,6 +66,8 @@ class vcMemorySpace: public vcRoot
 
  public:
 
+  map<string, vcStorageObject*>& Get_Object_Map() { return _object_map; }
+
   vcModule* Get_Scope() {return(this->_scope);}
 
   void Set_Ordered_Flag(bool v) { _ordered_flag = true;}

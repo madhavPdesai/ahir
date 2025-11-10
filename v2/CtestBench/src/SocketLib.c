@@ -37,6 +37,7 @@
 #endif
 #include <fcntl.h>
 #include <SocketLib.h>
+#include <sys/time.h>
 
 #define __SLEEP__(n) usleep(n)
 

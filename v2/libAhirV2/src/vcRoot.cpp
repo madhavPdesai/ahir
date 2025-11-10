@@ -200,6 +200,7 @@ string vcRoot::Find_Attribute_Value(string tag)
 	{
 		return(this->_attribute_map[tag]);
 	}
+    return "Unexpected end of vcRoot::Find_Attribute_Value";
 }
 
 string vcRoot::Get_Id() 

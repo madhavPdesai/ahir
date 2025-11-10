@@ -38,7 +38,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <SocketLib.h>
-#include <pipeHandler.h>
+#include <ctbpipeHandler.h>
 #include <pthread.h>
 #include <pthreadUtils.h>
 

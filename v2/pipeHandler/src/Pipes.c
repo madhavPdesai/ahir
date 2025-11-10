@@ -33,7 +33,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <bits/wordsize.h>
 #include <Pipes.h>
 #include <pipeHandler.h>
 
@@ -46,6 +45,12 @@
 #endif 
 
 #define WARNBUFLEN___(w, id,b) {fprintf(stderr,"Warning:  0-length %s to pipe %s\n", (w ? "write" : "read"), id);}
+
+#if defined __x86_64__ && !defined __ILP32__
+# define __WORDSIZE 64
+#else
+# define __WORDSIZE 32
+#endif
 
 MUTEX_DECL(log_mutex);
 #define __LOCKLOG__  MUTEX_LOCK(log_mutex);
