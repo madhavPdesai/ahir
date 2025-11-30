@@ -537,10 +537,19 @@ int vcCall::Get_Deterministic_Pipeline_Delay()
 	int ret_val = 0;
 	vcModule* called_module = this->_called_module;
 
-	assert(this->_called_module && 
+	int assert_condition =
+	    (this->_called_module && 
 		(this->_called_module->Get_Volatile_Flag() ||
 				this->_called_module->Get_Pipeline_Deterministic_Flag()));
-	
+	if(!assert_condition)
+	{
+		vcSystem::Error ("deterministic module call from " + this->_parent_module->Get_Label() 
+				+ " calls non-volatile/non-detrministic module " + 
+				called_module->Get_Label());
+		assert(0);
+	}
+
+
 	if(!this->_called_module->Get_Volatile_Flag())
 	{
 		if(this->_called_module->Get_Deterministic_Longest_Path() < 0)
@@ -564,7 +573,7 @@ int vcCall::Estimate_Buffering_Bits()
 	{
 		vcSystem::Info("estimated buffering for operator " + this->Get_VHDL_Id() +  " (call to " + 
 				this->_called_module->Get_VHDL_Id()  + ")  = " +
-			IntToStr(ret_val));
+				IntToStr(ret_val));
 	}
 	return(ret_val);
 }

@@ -428,6 +428,13 @@ aA_Atomic_Statement[AaScope* scope, vector<AaStatement*>& slist]
 				stmt->Add_Synch_Or_Marked_Delay(false, delay_stmts[J].first, delay_stmts[J].second, false);
 			}
 
+			if((stmt->Get_Guard_Expression() != NULL) &&
+				(stmt->Get_Module() != NULL) && (stmt->Get_Module()->Get_Pipeline_Deterministic_Flag()))
+			{
+				AaRoot::Error ("deterministic module " + stmt->Get_Module()->Get_Label() + 
+							" has a statement with a guard", stmt);
+			}
+
 			// add the statement!
 			slist.push_back(stmt);
 		}  

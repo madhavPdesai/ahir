@@ -471,7 +471,7 @@ void AaProgram::Add_Module(AaModule* obj)
     }
   else
     {
-      AaRoot::Warning("Duplicate module " + obj->Get_Label() + " ignored", obj);
+      AaRoot::Error("Duplicate module " + obj->Get_Label() + " ignored", obj);
     }
 }
 

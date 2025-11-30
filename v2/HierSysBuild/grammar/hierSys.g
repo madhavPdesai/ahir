@@ -339,6 +339,7 @@ hier_system_Pipe_Declaration[map<string, hierPipe* >& pipe_map, map<string, int>
     int pipe_width = 0;
 
 
+
     bool lifo_flag = false;
     bool noblock_mode = false;
     bool in_mode = false;
@@ -357,9 +358,8 @@ hier_system_Pipe_Declaration[map<string, hierPipe* >& pipe_map, map<string, int>
 	    )?  
 		PIPE 
 		(psid:SIMPLE_IDENTIFIER {oname_list.push_back(psid->getText());})+
-		COLON UINT LESS wid:UINTEGER GREATER  
-        {pipe_width = atoi(wid->getText().c_str());} 
-        (DEPTH pipe_depth = aA_Integer_Parameter_Expression[global_parameter_map])?
+		COLON UINT LESS pipe_width = aA_Integer_Parameter_Expression[global_parameter_map]  GREATER  
+        	(DEPTH pipe_depth = aA_Integer_Parameter_Expression[global_parameter_map])?
 		(SIGNAL {is_signal = true;})?
 		(P2P    {is_p2p = true;})?
 		(BYPASS {bypass_flag = true;})?

@@ -44,6 +44,7 @@ extern int optind;
 extern char *optarg;
 int opt;
 int option_index = 0;
+int line_number = 0;
 
 struct option long_options[] = {
     {"relaxed-component-visibility", 0, 0, 0},
@@ -101,6 +102,9 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 		if(infile.eof() || isspace(inchar) || (inchar == '\\'))
 		{
 			terminating_char = inchar;
+			if((inchar == '\n') || (inchar == '\r'))
+				line_number++;
+
 			break;
 		}
 		keyword.push_back(inchar);
@@ -147,7 +151,7 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 		}
 		else
 		{
-			cerr << "Error: unmatched #endif" << endl;
+			cerr << "Error: unmatched #endif line " << line_number << endl;
 			err = 1;
 		}
 	}
@@ -180,7 +184,8 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 			}
 			if(!ok_flag)
 			{
-				cerr << "Error:AaInclude could not include file " << incl_filename << endl;
+				cerr << "Error:AaInclude could not include file " << incl_filename << " line " << line_number
+				       			<< endl;
 				err = 1;
 			}
 		}
@@ -202,7 +207,7 @@ int IncludeAndPrint(ifstream& infile,vector<string>& include_directories,map<str
 			}	
 			else
 			{
-				cerr << "Error: could not find define to paste " << keyword << endl;
+				cerr << "Error: could not find define to paste " << keyword << " line " << line_number <<  endl;
 				err = 1;
 			}
 		}

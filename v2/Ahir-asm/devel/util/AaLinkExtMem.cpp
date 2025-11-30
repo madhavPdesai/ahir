@@ -164,12 +164,20 @@ int main(int argc, char* argv[])
       AaProgram::Make_Extmem_Object();
     }
 
+  set<string> parsed_files;
   for(int i = optind; i < argc; i++)
     {
       
       string filename = argv[i];      
-      AaParse(filename);
-      cerr << "Info: finished parsing file " << filename << endl;
+      if(parsed_files.find(filename) == parsed_files.end())
+      {
+	      AaParse(filename);
+	      cerr << "Info: finished parsing file " << filename << endl;
+      }
+      else
+      {
+	      cerr << "Error: file " << filename << " repeated." << endl;
+      }
       
       if(AaRoot::Get_Error_Flag())
 	{
