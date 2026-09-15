@@ -557,7 +557,16 @@ public:
 	{
 		hierPipe* p = this->Add_Pipe(pid, pipe_width, depth, "out-pipe");
 		_out_pipes[pid] = p;
-		p->Set_Is_Output(true);
+
+		if(p->Get_Is_Output())
+		{
+			this->Report_Error("pipe " + pid + " in system " + this->_id + " has multiple drivers?");
+		}
+		else
+		{
+			p->Set_Is_Output(true);
+		}
+
 		if(noblock_flag)
 			p->Set_Is_Noblock(true);
 		if(p2p_flag)

@@ -43,6 +43,7 @@ use ieee.std_logic_1164.all;
 -- BUG ALERT:  there is something wrong about this 
 --             which causes incorrect behaviour. 
 --             Am stymied for the moment (MPD)
+-- BUG ALERT cancelled.
 --
 entity UnloadFsmNoBlock is
   generic (name: string; data_width: integer);

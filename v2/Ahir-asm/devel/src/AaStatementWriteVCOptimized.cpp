@@ -600,8 +600,11 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 		// Pipe and memory space information into ls and pipe maps.
 		AaModule* cm = this->Get_Called_Module();
-		cm->Update_Pipe_Map (pipe_map, this);
-		cm->Update_Memory_Space_Map (ls_map, this);
+		if((cm != NULL) && !cm->Get_Opaque_Flag())
+		{
+			cm->Update_Pipe_Map (pipe_map, this);
+			cm->Update_Memory_Space_Map (ls_map, this);
+		}
 	}
 	ofile << "// end: " << this->To_String() << endl;
 }

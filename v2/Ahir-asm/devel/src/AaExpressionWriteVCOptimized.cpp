@@ -978,6 +978,7 @@ bool AaSimpleObjectReference::Is_Pipe_Read()
 	{
 		return(!this->Get_Is_Target());
 	}
+	else return(false);
 }
 
 bool AaSimpleObjectReference::Is_Pipe_Write()
@@ -988,6 +989,8 @@ bool AaSimpleObjectReference::Is_Pipe_Write()
 	{
 		return(this->Get_Is_Target());
 	}
+	else
+		return(false);
 }
 
 //
@@ -2475,8 +2478,13 @@ void AaFunctionCallExpression::Write_VC_Control_Path_Optimized(bool pipeline_fla
 
 		// Update the pipe map
 		AaModule* cm = this->Get_Called_Module();
-		cm->Update_Pipe_Map(pipe_map, this);
-		cm->Update_Memory_Space_Map(ls_map, this);
+
+		// opaque modules are not chased down..
+		if((cm != NULL) && !cm->Get_Opaque_Flag())
+		{
+			cm->Update_Pipe_Map(pipe_map, this);
+			cm->Update_Memory_Space_Map(ls_map, this);
+		}
 	}
 	visited_elements.insert(this);
 }
@@ -3016,6 +3024,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 
 	vector<int> non_constant_indices;
+	vector< pair<string,string> >   to_be_guarded;
 
 	string index_sum_calculated = this->Get_VC_Name() + "_index_sum_calculated";
 	string offset_calculated = this->Get_VC_Name() + "_offset_calculated";
@@ -3121,6 +3130,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 					__J(index_resized,idx_resize_update_complete);
 					index_chain_complete_map[idx] = index_resized;
 
+					to_be_guarded.push_back 
+						(pair<string,string> (idx_resize_sample_start, idx_resize_sample_complete));
+
 					if(pipeline_flag)
 					{
 						for(set<string>::iterator iiter = index_chain_reenable_map[idx].begin(), 
@@ -3181,6 +3193,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 					ofile << ";;[" << idx_scale_update_regn << "] { " << endl;
 					ofile << "$T [cr] $T [ca] " << endl;
 					ofile << "}" << endl;
+						
+					to_be_guarded.push_back 
+							(pair<string,string> (idx_scale_sample_start, idx_scale_sample_complete));
 
 					__F(index_chain_complete_map[idx],idx_scale_sample_start);
 					__F(idx_scale_sample_start,idx_scale_sample_regn);
@@ -3315,6 +3330,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 						index_chain_unmarked_reenable_map[I0].clear();
 						index_chain_unmarked_reenable_map[I1].clear();
 					}
+
+					to_be_guarded.push_back 
+						(pair<string,string> (sample_start, sample_complete));
 				}
 				else
 				{
@@ -3395,6 +3413,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 			__F(update_start, update_regn);
 			__J(offset_calculated, update_regn);
+
+			to_be_guarded.push_back 
+					(pair<string,string> (last_sum_complete, sample_complete));
 
 			if(pipeline_flag)
 			{
@@ -3479,6 +3500,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		__J(bpo_update_complete, bpo_update_regn);
 
 
+		to_be_guarded.push_back 
+				(pair<string,string> (bpo_sample_start, bpo_sample_complete));
+
 		if(base_addr < 0)
 		{
 			__F(base_address_resized,bpo_sample_start);
@@ -3533,10 +3557,37 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		}
 		__J(root_address_calculated,(this->Get_VC_Name() + "_base_plus_offset"));
 	}
+
+	ofile << "// Guard dependencies for address calculations" << endl;
+	
+	AaExpression* guard_expr = this->Get_Guard_Expression();
+	if(guard_expr == NULL)
+		guard_expr = this->Get_Associated_Statement()->Get_Guard_Expression();
+
+	if(guard_expr != NULL)
+	{
+		int I, fI;
+		for(I = 0, fI = to_be_guarded.size(); I < fI; I++)
+		{
+			string sr = to_be_guarded[I].first;
+			string sa = to_be_guarded[I].second;
+
+			ofile << "// Guard dependency for address calculations" << endl;
+			guard_expr->Write_Forward_Dependency_From_Roots (sr, this->Get_Index(),
+					visited_elements,
+					ofile);
+
+			if(pipeline_flag)
+			{
+				guard_expr->Write_VC_Update_Reenables (this, sa, true, 
+						visited_elements, ofile);
+			}
+
+		}
+		to_be_guarded.clear();
+	}
+
 }
-
-
-
 
 
 void AaObjectReference::

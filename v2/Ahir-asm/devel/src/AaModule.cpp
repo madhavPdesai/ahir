@@ -182,12 +182,14 @@ void AaModule::Print(ostream& ofile)
 			if(this->Get_Pipeline_Deterministic_Flag())
 				ofile << "$deterministic ";
 		}
+
+		if(this->Get_Opaque_Flag())
+			ofile << "$opaque ";
+
 		if(this->Get_Operator_Flag())
 			ofile << "$operator ";
 		else if(this->Get_Volatile_Flag())
 			ofile << "$volatile ";
-		if(this->Get_Opaque_Flag())
-			ofile << "$opaque ";
 
 		if(this->Get_Noopt_Flag())
 			ofile << "$noopt ";
@@ -257,7 +259,7 @@ void AaModule::Print_Attributes(ostream& ofile)
 
 	// print if calculated and not already attributed.
 	if(!delay_found && this->_pipeline_flag && AaProgram::_balance_loop_pipeline_bodies)
-		ofile << "$attribute delay " << this->Get_Delay() << endl;
+		ofile << "$attribute delay " << this->Get_Delay() << " // " << this->Get_Label() << endl;
 }
 
 AaRoot* AaModule::Find_Child(string tag)
@@ -331,7 +333,7 @@ void AaModule::Write_C_Header(ofstream& ofile)
   {
 	if(this->Get_Has_Declared_Storage_Object())
 	{
-		AaRoot::Error("Operator module " + this->Get_Label() + " with storage object called multiple times... may get unexpected results in Aa2C code.",
+		AaRoot::Warning("Operator module " + this->Get_Label() + " with storage object called multiple times... may get unexpected results in Aa2C code.",
 					NULL);
 	}
   }

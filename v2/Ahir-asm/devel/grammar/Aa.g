@@ -172,7 +172,7 @@ aA_Use_Gated_Clock_Statement
 ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Module: (FOREIGN | PIPELINE )? (OPERATOR | VOLATILE | OPAQUE )? (NOOPT)? (USEONCE)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
+// aA_Module: (FOREIGN | PIPELINE )? (OPAQUE)?  (OPERATOR | VOLATILE)? (NOOPT)? (USEONCE)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 aA_Module returns [AaModule* new_module]
 {
@@ -204,7 +204,8 @@ aA_Module returns [AaModule* new_module]
 		(FULLRATE {full_rate_flag = true;})?
 		(DETERMINISTIC {deterministic_flag = true;})?
 	) | (INLINE {inline_flag = true;}) | (MACRO {macro_flag = true;}) )? 
-	((OPERATOR {operator_flag = true;}) | (VOLATILE {volatile_flag = true;}) | (OPAQUE {opaque_flag = true;}))?
+	(OPAQUE {opaque_flag = true;})?
+	((OPERATOR {operator_flag = true;}) | (VOLATILE {volatile_flag = true;}))?
 	(NOOPT {noopt_flag = true;})?
 	(USEONCE {use_once_flag = true;})?
 	mt: MODULE 

@@ -1,0 +1,3 @@
+custom_vhdl contains add2_Operator,
+which is inserted into ahir_system
+from outside.
