@@ -100,17 +100,17 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,hierPipe*>&  global_pipe
 	// interface, pipe
 	IN 
 	( 
-	  hier_system_Pipe_Base [sys, global_pipe_map, true,false]
+	  hier_system_Pipe_Base [sys, global_pipe_map, global_parameter_map, true,false]
         )*
 
 	OUT
 	( 
-	  hier_system_Pipe_Base [sys, global_pipe_map, false,true]
+	  hier_system_Pipe_Base [sys, global_pipe_map, global_parameter_map, false,true]
 	)*
 
 	LBRACE
 	( 
-	  hier_system_Pipe_Base [sys, global_pipe_map, false,false]
+	  hier_system_Pipe_Base [sys, global_pipe_map, global_parameter_map, false,false]
 	)*
 
 	(
@@ -158,7 +158,8 @@ hier_System[vector<hierSystem*>& sys_vector, map<string,hierPipe*>&  global_pipe
 ;
 
 
-hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map, bool in_flag, bool out_flag]
+hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map, 
+					map<string,int>& global_parameter_map, bool in_flag, bool out_flag]
 {
 	bool	noblock_flag = false;
 	bool    signal_flag = false;
@@ -190,8 +191,9 @@ hier_system_Pipe_Base[hierSystem* sys, map<string,hierPipe* >&  global_pipe_map,
 				)?
 			       ))
 
-		sidi: SIMPLE_IDENTIFIER  (uidi: UINTEGER {width_specified = true; pipe_width = atoi(uidi->getText().c_str());})?
-				(DEPTH didi: UINTEGER {depth_specified = true; depth = atoi(didi->getText().c_str());})?
+		sidi: SIMPLE_IDENTIFIER  
+				(pipe_width = aA_Integer_Parameter_Expression_Trivial[global_parameter_map] {width_specified = true;})?
+				 (DEPTH depth = aA_Integer_Parameter_Expression[global_parameter_map] {depth_specified = true;})?
 			{
 				string pipe_name = sidi->getText();
 				if(!width_specified || !depth_specified)
@@ -978,6 +980,30 @@ aA_Integer_Parameter_Expression[map<string, int>& global_parameter_map]  returns
 			    })
 	|
   (expr_value = aA_Integer_Parameter_Expression_Nontrivial [global_parameter_map])
+;
+
+
+aA_Integer_Parameter_Expression_Trivial [map<string,int>& global_parameter_map] returns [int expr_value]
+{
+	int line_number;
+}:
+	(uid: UINTEGER {expr_value = atoi(uid->getText().c_str());}) |
+		(sid: SIMPLE_IDENTIFIER 
+			{
+				map<string,int>::iterator iter = global_parameter_map.find(sid->getText());
+				line_number = sid->getLine();
+				if(iter == global_parameter_map.end())
+				{
+					cerr << "Error: parameter " << sid->getText() << " not found, returning 0 (line " << line_number 
+						<< ")" << endl;	
+					expr_value = 0;
+					assert(0);
+				}
+				else
+				{
+					expr_value = (*iter).second;	
+				}
+			})
 ;
 
 
